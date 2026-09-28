@@ -645,7 +645,9 @@ public class CourseTestService {
         course = courseRepo.save(course);
         course.setTitle("Renamed with a legacy time zone");
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
-        assertThat(courseRepo.findByIdElseThrow(course.getId()).getTitle()).isEqualTo("Renamed with a legacy time zone");
+        Course updatedCourse = courseRepo.findByIdElseThrow(course.getId());
+        assertThat(updatedCourse.getTitle()).isEqualTo("Renamed with a legacy time zone");
+        assertThat(updatedCourse.getTimeZone()).isEqualTo("Legacy/Zone");
     }
 
     // Test

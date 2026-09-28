@@ -2007,6 +2007,17 @@ describe('Course Management Update Component Create', () => {
         expect(timeZone.hasError('invalidTimeZone')).toBe(true);
     });
 
+    it('refreshes the suggestions of a search made before the server list arrived', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+        component.onTimeZoneSearch({ query: 'kyi' });
+        expect(component.filteredTimeZones()).toEqual([]);
+
+        httpMock.expectOne('api/course/time-zones').flush(['Europe/Berlin', 'Europe/Kyiv']);
+
+        expect(component.filteredTimeZones()).toEqual(['Europe/Kyiv']);
+    });
+
     it('keeps the browser time zones when the server list cannot be loaded', () => {
         fixture.detectChanges();
         httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');

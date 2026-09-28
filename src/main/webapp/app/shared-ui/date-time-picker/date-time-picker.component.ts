@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, booleanAttribute, computed, forwardRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, booleanAttribute, computed, effect, forwardRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -11,6 +11,9 @@ import { TUM_AET_UI_FORM_FIELD, TumAetUiTooltipDirective } from '@tumaet/ui-angu
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+/** Id of the text input when the consumer gives none; E2E helpers look the input up by it. */
+const DEFAULT_INPUT_ID = 'date-input-field';
 
 export enum DateTimePickerType {
     CALENDAR,
@@ -76,7 +79,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
                 // An undefined value removes the attribute again, so each one follows its state both ways.
                 'aria-required': this.requiredField() || this.inputRequired() ? 'true' : undefined,
                 'aria-invalid': this.showErrorBorder() || this.formField?.invalid() ? 'true' : undefined,
-                'aria-describedby': this.formField?.describedBy() ?? undefined,
+                'aria-describedby': this.describedBy(),
             },
         },
     }));
@@ -88,7 +91,20 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     hideValidationMessage = input<boolean>(false);
     // Id of the inner input, so a consumer can pair its own <label for> and keep ids unique when several
     // pickers share a page (e.g. the audits from/to filter).
-    inputId = input<string>('date-input-field');
+    inputId = input<string>(DEFAULT_INPUT_ID);
+
+    /**
+     * The id the text input gets. Inside a TUM AET UI form field it is the one the field's label points at: the id the
+     * field was told to label, else the one given here, else the field's generated one. Outside a field it is
+     * {@link inputId}.
+     */
+    protected readonly resolvedInputId = computed(() => {
+        const ownId = this.inputId();
+        if (!this.formField) {
+            return ownId;
+        }
+        return this.formField.explicitControlId() ?? (ownId === DEFAULT_INPUT_ID ? this.formField.labelTargetId() : ownId);
+    });
     labelTooltip = input<string>();
     // Internal CVA value holder. Not a public input/model: consumers bind the value via the
     // ControlValueAccessor (formControlName / ngModel), never via [value]/[(value)]. Keeping it a
@@ -169,6 +185,22 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
      * the inner picker's change-detection timing.
      */
     protected showErrorBorder = computed(() => !!this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()));
+
+    /** Whether the picker shows its own message for a missing or unparseable date. */
+    protected readonly showValidationMessage = computed(() => !this.hideValidationMessage() && (!this.isInputValid() || (this.requiredField() && !this.dateInputValue())));
+
+    /** Id of the picker's own validation message, which describes the input while it is shown. */
+    protected readonly validationMessageId = computed(() => `${this.resolvedInputId()}-validation-message`);
+
+    /**
+     * The text describing the input: the picker's own validation message while it is shown, and the hint or error of an
+     * enclosing form field. The course form, for instance, leaves an unparseable date to the picker's message and does
+     * not mark its field invalid for it, so without the picker's own message the input would be invalid without saying why.
+     */
+    private readonly describedBy = computed(() => {
+        const ids = [this.showValidationMessage() ? this.validationMessageId() : undefined, this.formField?.describedBy()].filter(Boolean);
+        return ids.length ? ids.join(' ') : undefined;
+    });
 
     /**
      * Backwards-compatible accessor: a few consumers (e.g. the exercise-update components) read
@@ -262,6 +294,16 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
      * the form control is wired up), so push the already-written value once the view exists. This is what
      * makes edit forms that are created with a value (e.g. each tutorial free-period tab) show it.
      */
+    constructor() {
+        // Tell an enclosing form field which id to label whenever this picker was given one of its own.
+        effect(() => {
+            const ownId = this.inputId();
+            if (ownId !== DEFAULT_INPUT_ID) {
+                this.formField?.adoptControlId(ownId);
+            }
+        });
+    }
+
     ngAfterViewInit() {
         const current = this.value();
         if (current != undefined) {

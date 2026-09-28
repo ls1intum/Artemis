@@ -174,6 +174,8 @@ export class CourseUpdateComponent implements OnInit {
 
     timeZones: string[] = [];
     readonly filteredTimeZones = signal<string[]>([]);
+    /** The latest time zone search, kept to refresh the suggestions once the server's list arrives. */
+    private timeZoneQuery = '';
     /** The time zone the course was loaded with; a course keeps it once set, so the field is required from then on. */
     readonly originalTimeZone = signal<string | undefined>(undefined);
     /** The browser's time zone, in which the course dates are entered. */
@@ -446,6 +448,8 @@ export class CourseUpdateComponent implements OnInit {
                 next: (timeZones) => {
                     this.timeZones = timeZones;
                     this.courseForm.controls['timeZone'].updateValueAndValidity();
+                    // A search made before the list arrived showed only the browser's matches.
+                    this.filterTimeZones();
                 },
                 error: () => {
                     // The browser's list is a working, if shorter, fallback, and the server still checks the time zone on save.
@@ -454,7 +458,12 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     onTimeZoneSearch(event: TumAetUiAutoCompleteSearchEvent): void {
-        const term = event.query;
+        this.timeZoneQuery = event.query;
+        this.filterTimeZones();
+    }
+
+    private filterTimeZones(): void {
+        const term = this.timeZoneQuery;
         this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
     }
 
