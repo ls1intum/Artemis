@@ -165,8 +165,10 @@
 [data-theme='dark'] {
     color-scheme: dark;
 
-    --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 80%, white);
-    --tumaet-ui-primary-contrast-color: var(--module-bg);
+    /* A solid blue with a white label, matching the legacy Bootstrap primary button (and light mode), rather than a
+       pale tint with near-black text that reads as washed-out on a dark page. */
+    --tumaet-ui-primary-color: var(--primary);
+    --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
     --tumaet-ui-accent-color: color-mix(in srgb, var(--primary) 80%, white);
     --tumaet-ui-focus-color: color-mix(in srgb, var(--primary) 80%, white);
     --tumaet-ui-state-danger: var(--artemis-alert-danger-color);
