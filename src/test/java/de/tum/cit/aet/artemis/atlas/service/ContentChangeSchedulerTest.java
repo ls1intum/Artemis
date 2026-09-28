@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -193,9 +194,9 @@ class ContentChangeSchedulerTest {
         // orchestrator nor counts it as a processed change.
         MutableClock clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
         AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP, 30000L, 10);
-        ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties,
-                courseConfigurationRepository);
         LectureUnitRepositoryApi lectureUnitRepositoryApi = mock(LectureUnitRepositoryApi.class);
+        ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties,
+                courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
         AutonomousCompetencyLectureUnitEventListener listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService,
                 courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
         scheduler = new ContentChangeScheduler(realAccumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository, clock);
@@ -219,6 +220,49 @@ class ContentChangeSchedulerTest {
         assertThat(payload.getValue().exerciseCount()).isEqualTo(1);
         assertThat(payload.getValue().successCount()).isEqualTo(1);
         assertThat(payload.getValue().failureCount()).isEqualTo(0);
+    }
+
+    @Test
+    void tick_textUnitBlankedDuringFailedRun_isNotRequeuedWhileExerciseRetries() {
+        // End-to-end over the real accumulator and listener: the claim clears the buffered ids, so a blanking edit
+        // made while the run is in flight has nothing to remove. When that run then fails, the requeue must re-check
+        // the persisted unit instead of restoring it, so the retry neither passes nor counts the blank unit.
+        MutableClock clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP, 30000L, 10);
+        LectureUnitRepositoryApi lectureUnitRepositoryApi = mock(LectureUnitRepositoryApi.class);
+        ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties,
+                courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
+        AutonomousCompetencyLectureUnitEventListener listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService,
+                courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
+        scheduler = new ContentChangeScheduler(realAccumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository, clock);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
+        TextUnit nonblank = courseTextUnit(30L, "Recursion calls itself until a base case is reached.");
+        TextUnit blank = courseTextUnit(30L, " ");
+        when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(nonblank), Optional.of(blank));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.of(blank));
+        when(orchestrationService.runBatch(COURSE_ID, Set.of(10L), Set.of(30L))).thenAnswer(invocation -> {
+            listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(blank));
+            return CompetencyOrchestrationResultDTO.failed("nope", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+        });
+        when(orchestrationService.runBatch(COURSE_ID, Set.of(10L), Set.of())).thenReturn(CompetencyOrchestrationResultDTO.success("done", List.of()));
+
+        realAccumulator.record(COURSE_ID, 10L);
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(nonblank));
+        clock.advanceSeconds(RESOLVED_WINDOW_SECONDS + 1);
+        scheduler.tick();
+        clock.advanceSeconds(RESOLVED_WINDOW_SECONDS + 1);
+        scheduler.tick();
+
+        verify(orchestrationService).runBatch(COURSE_ID, Set.of(10L), Set.of(30L));
+        verify(orchestrationService).runBatch(COURSE_ID, Set.of(10L), Set.of());
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService, times(2)).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        AutoOrchestrationSummaryDTO retry = payload.getAllValues().get(1);
+        assertThat(retry.outcome()).isEqualTo(AutoOrchestrationSummaryDTO.Outcome.SUCCESS);
+        assertThat(retry.exerciseCount()).as("the retry counts only the requeued exercise").isEqualTo(1);
+        // Nothing stays queued for the blank unit, so it cannot trigger a further claim.
+        assertThat(realAccumulator.listDueCourseIds()).isEmpty();
     }
 
     @Test

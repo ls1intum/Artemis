@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -14,6 +15,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,7 +27,11 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
 /**
  * Exercises the accumulator's debounce, per-day cap and requeue logic against a
@@ -43,6 +49,8 @@ class ContentChangeAccumulatorServiceTest {
 
     private CourseConfigurationRepository courseConfigurationRepository;
 
+    private LectureUnitRepositoryApi lectureUnitRepositoryApi;
+
     private static final int DEBOUNCE_WINDOW_SECONDS = 60;
 
     private static final int DAILY_CAP = 3;
@@ -56,7 +64,9 @@ class ContentChangeAccumulatorServiceTest {
         // Default: every course resolves to the global defaults (no per-course override).
         lenient().when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(anyLong()))
                 .thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
-        service = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties, courseConfigurationRepository);
+        lectureUnitRepositoryApi = mock(LectureUnitRepositoryApi.class);
+        service = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties, courseConfigurationRepository,
+                Optional.of(lectureUnitRepositoryApi));
         service.clearForTesting();
     }
 
@@ -307,8 +317,94 @@ class ContentChangeAccumulatorServiceTest {
         assertThat(service.listDueCourseIds()).containsExactly(1L);
     }
 
+    /** Stub the persisted state the requeue path re-checks lecture units against. */
+    private void stubPersistedLectureUnits(TextUnit... units) {
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.of(units));
+    }
+
+    private static TextUnit textUnit(long courseId, long id, String content) {
+        Course course = new Course();
+        course.setId(courseId);
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        TextUnit unit = new TextUnit();
+        unit.setId(id);
+        unit.setContent(content);
+        unit.setLecture(lecture);
+        return unit;
+    }
+
+    @Test
+    void requeueAfterFailedRun_unitBlankedAfterClaim_isDroppedWhileExerciseStaysQueued() {
+        stubCourseConfig(1L, null, 2);
+        service.record(1L, 10L);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+        assertThat(claim.lectureUnitIds()).containsExactly(30L);
+
+        // The unit is blanked while the claimed run is in flight: the refresh finds no buffered id to remove.
+        service.refreshLectureUnit(1L, 30L, () -> false);
+        stubPersistedLectureUnits(textUnit(1L, 30L, "   "));
+        service.requeueAfterFailedRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim retry = service.claimDueBatch(1L).orElseThrow();
+        assertThat(retry.exerciseIds()).containsExactly(10L);
+        assertThat(retry.lectureUnitIds()).as("the blanked unit must not be restored by the requeue").isEmpty();
+    }
+
+    @Test
+    void requeueAfterFailedRun_unitOnlyBatchBlankedAfterClaim_spendsNoFurtherDailySlot() {
+        stubCourseConfig(1L, null, 2);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+
+        service.refreshLectureUnit(1L, 30L, () -> false);
+        stubPersistedLectureUnits(textUnit(1L, 30L, ""));
+        service.requeueAfterFailedRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.listDueCourseIds()).isEmpty();
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+        // The failed run keeps its own reservation, but the dropped unit never consumes the second slot.
+        service.record(1L, 100L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L).orElseThrow().lectureUnitIds()).isEmpty();
+        service.record(1L, 101L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("daily cap reached").isEmpty();
+    }
+
+    @Test
+    void requeueAfterConcurrentRun_dropsDeletedAndForeignUnitsButStillRefundsReservation() {
+        stubCourseConfig(1L, null, 1);
+        service.refreshLectureUnit(1L, 30L, () -> true);
+        service.refreshLectureUnit(1L, 31L, () -> true);
+        service.refreshLectureUnit(1L, 32L, () -> true);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+
+        // 30 was deleted (absent from the lookup) and 32 moved to another course; only 31 is still eligible here.
+        stubPersistedLectureUnits(textUnit(1L, 31L, "Still relevant"), textUnit(2L, 32L, "Moved"));
+        service.requeueAfterConcurrentRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim retry = service.claimDueBatch(1L).orElseThrow();
+        assertThat(retry.lectureUnitIds()).containsExactly(31L);
+
+        // Even when every unit is dropped the concurrent-run refund still applies, so the cap-1 course can run again.
+        stubPersistedLectureUnits();
+        service.requeueAfterConcurrentRun(1L, retry.exerciseIds(), retry.lectureUnitIds());
+        assertThat(service.listDueCourseIds()).isEmpty();
+        service.record(1L, 100L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).isPresent();
+    }
+
     @Test
     void requeueAfterFailedRun_reMergesBothSets() {
+        stubPersistedLectureUnits(textUnit(1L, 30L, "Recursion calls itself."));
         service.record(1L, 10L);
         service.refreshLectureUnit(1L, 30L, () -> true);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
@@ -324,6 +420,7 @@ class ContentChangeAccumulatorServiceTest {
 
     @Test
     void requeueAfterConcurrentRun_reMergesBothSetsAndRefundsQuota() {
+        stubPersistedLectureUnits(textUnit(1L, 30L, "Recursion calls itself."));
         service.record(1L, 10L);
         service.refreshLectureUnit(1L, 30L, () -> true);
 

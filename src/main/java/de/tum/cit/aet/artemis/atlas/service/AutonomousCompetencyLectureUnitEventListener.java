@@ -94,10 +94,7 @@ public class AutonomousCompetencyLectureUnitEventListener {
             accumulator.flush(courseId);
             return;
         }
-        accumulator.refreshLectureUnit(courseId, lectureUnit.getId(),
-                () -> lectureUnitRepositoryApi.flatMap(api -> api.findWithLectureById(lectureUnit.getId()))
-                        .filter(current -> current.getLecture() != null && current.getLecture().getCourse() != null
-                                && Long.valueOf(courseId).equals(current.getLecture().getCourse().getId()))
-                        .map(ContentExtractionService::isLectureUnitEligibleForOrchestration).orElse(false));
+        accumulator.refreshLectureUnit(courseId, lectureUnit.getId(), () -> lectureUnitRepositoryApi.flatMap(api -> api.findWithLectureById(lectureUnit.getId()))
+                .map(current -> ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(current, courseId)).orElse(false));
     }
 }
