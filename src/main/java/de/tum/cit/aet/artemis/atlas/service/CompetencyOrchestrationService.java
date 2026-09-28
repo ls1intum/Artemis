@@ -601,6 +601,7 @@ public class CompetencyOrchestrationService {
         Set<Long> skippedLectureUnits = new LinkedHashSet<>();
         Map<String, ExtractedContentDTO> preparedContent = new HashMap<>();
         String systemPrompt;
+        int processedCount;
         try {
             List<ExerciseChange> exerciseChanges = new ArrayList<>();
             for (Exercise exercise : exercises) {
@@ -644,6 +645,8 @@ public class CompetencyOrchestrationService {
                 return CompetencyOrchestrationResultDTO.noOp("No learning-relevant content in batch.");
             }
 
+            // Only learning objects rendered into the prompt count as processed; blank or failed extractions do not.
+            processedCount = exerciseChanges.size() + lectureUnitChanges.size();
             CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderChangeBatch(exerciseChanges, lectureUnitChanges);
@@ -665,28 +668,31 @@ public class CompetencyOrchestrationService {
         catch (AtlasToolCallBudget.LimitReachedException ex) {
             log.warn("Atlas orchestration tool budget exhausted for course {}", courseId);
             requeueSkipped(courseId, skippedExercises, skippedLectureUnits);
-            return toolLimitResult(appliedActions, ex.summary());
+            return toolLimitResult(appliedActions, ex.summary()).withProcessedCount(processedCount);
         }
         catch (IncompleteOrchestrationException ex) {
             requeueSkipped(courseId, skippedExercises, skippedLectureUnits);
-            return appliedActions.isEmpty() ? CompetencyOrchestrationResultDTO.failed(ex.getMessage(), CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)
+            CompetencyOrchestrationResultDTO result = appliedActions.isEmpty()
+                    ? CompetencyOrchestrationResultDTO.failed(ex.getMessage(), CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)
                     : CompetencyOrchestrationResultDTO.partial(ex.getMessage(), List.copyOf(appliedActions),
                             CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
+            return result.withProcessedCount(processedCount);
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) LLM call failed for course {} after applying {} action(s): {}", courseId, appliedActions.size(), ex.getMessage(), ex);
             if (appliedActions.isEmpty()) {
-                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR)
+                        .withProcessedCount(processedCount);
             }
             requeueSkipped(courseId, skippedExercises, skippedLectureUnits);
             return CompetencyOrchestrationResultDTO.partial("Atlas orchestrator run failed after applying " + appliedActions.size() + " action(s).", List.copyOf(appliedActions),
-                    CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+                    CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR).withProcessedCount(processedCount);
         }
         log.info("Atlas orchestrator (batch) completed for course {} over {} exercise(s) and {} lecture unit(s) with {} applied action(s)", courseId, exercises.size(),
                 lectureUnits.size(), appliedActions.size());
         requeueSkipped(courseId, skippedExercises, skippedLectureUnits);
         String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
-        return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
+        return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions)).withProcessedCount(processedCount);
     }
 
     /**

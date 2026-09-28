@@ -203,7 +203,8 @@ public class OrchestratorReadToolsService {
      */
     @Tool(description = "Extract the learning-relevant content for a lecture unit that belongs to the current course. Returns a title, learning text, and metadata. "
             + "Text units expose their content; online units expose their description and source metadata; attachment/video units expose their description and file/video metadata. "
-            + "A blank attachment/video description means there is no extractable learning text. Exercise-backed lecture units are not supported here; inspect their exercise instead.")
+            + "Text units with blank content and attachment/video units with a blank description have no extractable learning text and are rejected as not readable. "
+            + "Exercise-backed lecture units are not supported here; inspect their exercise instead.")
     public String getLectureUnitContent(@ToolParam(description = "id of the lecture unit whose content should be extracted") Long lectureUnitId, ToolContext toolContext) {
         markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);

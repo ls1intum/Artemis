@@ -134,8 +134,8 @@ public class ContentChangeScheduler {
     private void processBatch(long courseId, String runId, BatchClaim claim) {
         Set<Long> exerciseIds = claim.exerciseIds();
         Set<Long> lectureUnitIds = claim.lectureUnitIds();
-        // The toast counts total changed learning objects (exercises + lecture units) in this batch.
-        int changeCount = exerciseIds.size() + lectureUnitIds.size();
+        // Until the run reports otherwise, the toast counts every claimed learning object (exercises + lecture units).
+        int claimedCount = exerciseIds.size() + lectureUnitIds.size();
         log.info("atlas.automatic course {} firing run {} with {} exercise(s) and {} lecture unit(s)", courseId, runId, exerciseIds.size(), lectureUnitIds.size());
 
         CompetencyOrchestrationResultDTO result;
@@ -148,10 +148,13 @@ public class ContentChangeScheduler {
             // cannot throw here — so the changes are safe to requeue rather than discard.
             log.warn("atlas.automatic batch run failed for course {} (run {}): {}", courseId, runId, ex.getMessage(), ex);
             accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
-            broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
+            broadcastSummary(courseId, runId, claimedCount, Outcome.FAILED);
             return;
         }
 
+        // Once a prompt was built, count only the learning objects that reached it: claimed units dropped before the
+        // prompt (deleted, ineligible, blank after extraction, failed extraction) were never processed by this run.
+        int changeCount = result != null && result.processedCount() != null ? result.processedCount() : claimedCount;
         CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
         if (result != null && (result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
                 || result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)) {

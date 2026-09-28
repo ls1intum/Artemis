@@ -787,6 +787,49 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
+    void runBatch_textUnitBlankAfterFlavorStrip_isExcludedFromProcessedCount() {
+        // Nonblank raw content passes eligibility, but flavor stripping leaves no learning text, so the unit never
+        // reaches the prompt and must not be reported as processed alongside the orchestrated exercise.
+        ProgrammingExercise exercise = courseExercise(10L);
+        TextUnit strippedToBlank = courseTextUnit(30L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(exercise));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(strippedToBlank));
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Exercise Title", "Exercise body", Map.of()));
+        when(contentExtractionService.extractContent(strippedToBlank)).thenReturn(new ExtractedContentDTO("Unit 30", "", Map.of("lectureUnitType", "text")));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L), Set.of(30L));
+
+        assertThat(result.status()).isEqualTo(SUCCESS);
+        assertThat(result.processedCount()).isEqualTo(1);
+    }
+
+    @Test
+    void runBatch_llmFailureWithoutActions_reportsPromptedCount() {
+        ProgrammingExercise first = courseExercise(10L);
+        ProgrammingExercise second = courseExercise(11L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(first, second));
+        stubRunMap();
+        when(contentExtractionService.extractContent(first)).thenReturn(new ExtractedContentDTO("First", "First body", Map.of()));
+        when(contentExtractionService.extractContent(second)).thenReturn(new ExtractedContentDTO("Second", "Second body", Map.of()));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenThrow(new RuntimeException("provider down"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L, 11L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.processedCount()).isEqualTo(2);
+    }
+
+    @Test
     void runLectureUnitWithQueuedFlush_blankTextUnit_returnsUnsupportedBeforeClaiming() {
         TextUnit lectureUnit = courseTextUnit(30L);
         lectureUnit.setContent(" ");

@@ -222,6 +222,27 @@ class ContentChangeSchedulerTest {
     }
 
     @Test
+    void tick_successWithDroppedLearningObjects_countsOnlyProcessedChanges() {
+        // The run reports that only one of the three claimed learning objects reached the prompt (the others were
+        // dropped before it, e.g. blank after flavor stripping), so the toast must not count the dropped ones.
+        Set<Long> exerciseIds = Set.of(10L, 11L);
+        Set<Long> lectureUnitIds = Set.of(30L);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds, lectureUnitIds)));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds, lectureUnitIds)).thenReturn(CompetencyOrchestrationResultDTO.success("done", List.of()).withProcessedCount(1));
+
+        scheduler.tick();
+
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        assertThat(payload.getValue().exerciseCount()).isEqualTo(1);
+        assertThat(payload.getValue().successCount()).isEqualTo(1);
+        assertThat(payload.getValue().failureCount()).isEqualTo(0);
+    }
+
+    @Test
     void tick_mixedBatchFailed_requeuesBothSets() {
         Set<Long> exerciseIds = Set.of(10L);
         Set<Long> lectureUnitIds = Set.of(30L, 31L);
