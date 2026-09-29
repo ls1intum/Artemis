@@ -144,7 +144,16 @@
                     <span jhiTranslate="artemisApp.course.athenaConfig.title"></span>
                 </h5>
                 @if (isAthenaLoadFailed()) {
-                    <button tumAetUiButton type="button" size="small" severity="secondary" variant="outlined" class="mb-3" data-testid="onboarding-athena-retry" (click)="retryAthenaLoad()">
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        size="small"
+                        severity="secondary"
+                        variant="outlined"
+                        class="mb-3"
+                        data-testid="onboarding-athena-retry"
+                        (click)="retryAthenaLoad()"
+                    >
                         <span jhiTranslate="entity.action.retry"></span>
                     </button>
                 }

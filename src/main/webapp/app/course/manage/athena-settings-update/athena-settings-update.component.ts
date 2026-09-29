@@ -8,7 +8,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiCardComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 /**
  * Dedicated course-level Athena settings page, reached from the course-management sidebar like Iris's settings page.
@@ -29,6 +29,7 @@ import { TumAetUiCardComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui
         ArtemisTranslatePipe,
         TumAetUiCardComponent,
         TumAetUiToggleSwitchComponent,
+        TumAetUiButtonDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -46,6 +47,12 @@ export class AthenaSettingsUpdateComponent {
     readonly formativeEnabled = computed(() => this.state()?.formativeFeedbackEnabled() ?? false);
     readonly gradingEnabled = computed(() => this.state()?.gradingFeedbackEnabled() ?? false);
 
+    /** Until the configuration has loaded, "disabled" is only a fallback, so the switches cannot be used yet. */
+    readonly loaded = computed(() => this.state()?.loaded() ?? false);
+
+    /** A failed load keeps the switches blocked, so the instructor is offered to load it again. */
+    readonly loadFailed = computed(() => this.state()?.loadFailed() ?? false);
+
     /** The two toggle rows, rendered by one @for so the markup stays in a single place. */
     readonly features = [
         { key: 'formativeFeedbackEnabled' as const, testId: 'athena-settings-formative-feedback', enabled: this.formativeEnabled },
@@ -60,5 +67,12 @@ export class AthenaSettingsUpdateComponent {
      */
     setEnabled(feature: AthenaFeature, enabled: boolean) {
         this.state()?.setEnabled(feature, enabled);
+    }
+
+    /**
+     * Load the configuration again after it failed to load.
+     */
+    retryLoad() {
+        this.state()?.load();
     }
 }

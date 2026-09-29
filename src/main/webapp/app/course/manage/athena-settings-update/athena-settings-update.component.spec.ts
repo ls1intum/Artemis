@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AthenaSettingsUpdateComponent } from 'app/course/manage/athena-settings-update/athena-settings-update.component';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -103,5 +103,28 @@ describe('AthenaSettingsUpdateComponent', () => {
             'artemisApp.course.athenaConfig.formativeFeedbackEnabled.label',
             'artemisApp.course.athenaConfig.gradingFeedbackEnabled.label',
         ]);
+    });
+
+    it('should keep the toggles blocked after a failed load and load again on retry', () => {
+        const getSpy = vi
+            .spyOn(athenaCourseConfigService, 'getCourseConfig')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+            .mockReturnValueOnce(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+        createComponent();
+        fixture.detectChanges();
+
+        const toggles = () => fixture.debugElement.queryAll(By.directive(TumAetUiToggleSwitchComponent)).map((toggle) => toggle.componentInstance as TumAetUiToggleSwitchComponent);
+        expect(comp.loaded()).toBe(false);
+        expect(comp.loadFailed()).toBe(true);
+        expect(toggles().map((toggle) => toggle.disabled())).toEqual([true, true]);
+
+        fixture.nativeElement.querySelector('[data-testid="athena-settings-retry"]').click();
+        fixture.detectChanges();
+
+        expect(getSpy).toHaveBeenCalledTimes(2);
+        expect(comp.loaded()).toBe(true);
+        expect(comp.gradingEnabled()).toBe(true);
+        expect(toggles().map((toggle) => toggle.disabled())).toEqual([false, false]);
+        expect(fixture.nativeElement.querySelector('[data-testid="athena-settings-retry"]')).toBeNull();
     });
 });
