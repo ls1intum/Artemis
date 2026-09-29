@@ -241,6 +241,15 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | --- | --- | --- | --- | --- |
 | `BuildJob` | — | Root | No | Build queue record; `result_id` is a reference, not a parent. |
 
+### Metis
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `MetisCheck` | Participation `participation_id` | Required | No | Cascades. Reached by every participation deletion path, so course reset and account deletion need no hook. |
+| `MetisExerciseConfig` | Exercise `exercise_id` | Required | No | Holds the exercise key as its primary key; cascades. |
+| `MetisGroupWindow` | MetisExerciseConfig `exercise_id` and TutorialGroup `tutorial_group_id` | Required (all) | No | Cascades on both. |
+| `MetisQuestion` | MetisCheck `check_id` | Required | No | Cascades. Follow-ups also cascade from their main question. |
+
 ### Modeling
 
 | Entity | Belongs to | Parent required | Orphan possible | Notes |

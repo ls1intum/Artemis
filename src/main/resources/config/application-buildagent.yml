@@ -18,6 +18,8 @@ artemis:
         enabled: false
     deimos:
         enabled: false
+    metis:
+        enabled: false
     exam:
         enabled: false
     plagiarism:
