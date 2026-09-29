@@ -482,6 +482,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_DEIMOS = "deimos";
 
     /**
+     * The name of the module feature used for Metis comprehension check functionality.
+     */
+    public static final String MODULE_FEATURE_METIS = "metis";
+
+    /**
      * The name of the module feature used for Iris / Pyris functionality.
      */
     public static final String MODULE_FEATURE_IRIS = "iris";
@@ -683,6 +688,11 @@ public final class Constants {
      * The name of the property used to enable or disable the Deimos malicious participation analysis module.
      */
     public static final String DEIMOS_ENABLED_PROPERTY_NAME = "artemis.deimos.enabled";
+
+    /**
+     * The name of the property used to enable or disable the Metis comprehension check module.
+     */
+    public static final String METIS_ENABLED_PROPERTY_NAME = "artemis.metis.enabled";
 
     /**
      * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with

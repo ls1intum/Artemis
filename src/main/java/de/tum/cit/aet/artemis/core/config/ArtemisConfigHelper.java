@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROP
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.METIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.OIDC_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
@@ -110,6 +111,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isDeimosEnabled(Environment environment) {
         return getPropertyOrExitArtemis(DEIMOS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Metis comprehension check module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Metis module is enabled, false otherwise
+     */
+    public boolean isMetisEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(METIS_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -297,6 +308,9 @@ public class ArtemisConfigHelper {
         }
         if (isDeimosEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);
+        }
+        if (isMetisEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_METIS);
         }
         if (isIrisEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_IRIS);
