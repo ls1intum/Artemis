@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -53,12 +54,15 @@ public class PyrisDTOService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private final IrisProactiveProperties proactiveProperties;
 
     public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
-            IrisProactiveProperties proactiveProperties) {
+            BuildLogEntryService buildLogEntryService, IrisProactiveProperties proactiveProperties) {
         this.repositoryService = repositoryService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+        this.buildLogEntryService = buildLogEntryService;
         this.proactiveProperties = proactiveProperties;
     }
 
@@ -112,8 +116,8 @@ public class PyrisDTOService {
      * @return the converted PyrisSubmissionDTO
      */
     public PyrisSubmissionDTO toPyrisSubmissionDTO(@NonNull ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
-        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
-                .toList();
+        var buildLogEntries = buildLogEntryService.getLatestBuildLogs(submission).stream()
+                .map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog())).toList();
         var participation = (ProgrammingExerciseParticipation) submission.getParticipation();
         var committed = getFilteredRepositoryContents(participation);
         Map<String, String> committedFiles = committed.files();

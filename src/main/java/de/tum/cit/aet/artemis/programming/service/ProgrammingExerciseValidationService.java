@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENG
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -33,6 +34,8 @@ import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -279,9 +282,41 @@ public class ProgrammingExerciseValidationService {
         if (dockerFlagsDTO == null) {
             return;
         }
+        validateDockerFlagValues(dockerFlagsDTO.env(), dockerFlagsDTO.cpuCount(), dockerFlagsDTO.memory(), dockerFlagsDTO.memorySwap());
+    }
 
-        if (dockerFlagsDTO.env() != null) {
-            for (var entry : dockerFlagsDTO.env().entrySet()) {
+    /**
+     * Validates the Docker flags the containers of a build plan set for their own jobs with the rules that apply to the
+     * exercise's flags: a set field has to satisfy the same bounds, and a network has to be allowed on this instance. A
+     * field a container leaves unset takes the exercise's value, which is validated on its own.
+     *
+     * @param buildPlan the build plan whose containers are validated
+     */
+    public void validateContainerDockerFlags(BuildPlanPhasesDTO buildPlan) {
+        for (BuildContainerDTO container : buildPlan.effectiveContainers()) {
+            BuildContainerDockerFlagsDTO flags = container.dockerFlags();
+            if (flags == null) {
+                continue;
+            }
+            if (!programmingExerciseBuildConfigService.isAllowedNetwork(flags.network())) {
+                throw new BadRequestAlertException("The network " + flags.network() + " of the build container " + container.name() + " is not allowed", "Exercise",
+                        "dockerNetworkNotAllowed");
+            }
+            validateDockerFlagValues(flags.env(), flags.cpuCount(), flags.memory(), flags.memorySwap());
+        }
+    }
+
+    /**
+     * The bounds every set Docker flag has to satisfy, whether the exercise or a container sets it.
+     *
+     * @param env        the environment variables, or null for none
+     * @param cpuCount   the CPU count, or null if unset
+     * @param memory     the memory limit in MB, or null if unset
+     * @param memorySwap the memory swap limit in MB, or null if unset
+     */
+    private static void validateDockerFlagValues(@Nullable Map<String, String> env, @Nullable Integer cpuCount, @Nullable Integer memory, @Nullable Integer memorySwap) {
+        if (env != null) {
+            for (var entry : env.entrySet()) {
                 if (entry.getKey().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH || entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
                     throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
                             "envVariablesTooLong");
@@ -289,15 +324,15 @@ public class ProgrammingExerciseValidationService {
             }
         }
 
-        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY_MB) {
+        if (memory != null && memory < MIN_DOCKER_MEMORY_MB) {
             throw new BadRequestAlertException("The memory limit is invalid. The minimum memory limit is " + MIN_DOCKER_MEMORY_MB + "MB", "Exercise", "memoryLimitInvalid");
         }
 
-        if (dockerFlagsDTO.cpuCount() <= 0) {
+        if (cpuCount != null && cpuCount <= 0) {
             throw new BadRequestAlertException("The cpu count is invalid. The minimum cpu count is 1", "Exercise", "cpuCountInvalid");
         }
 
-        if (dockerFlagsDTO.memorySwap() < 0) {
+        if (memorySwap != null && memorySwap < 0) {
             throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
         }
     }
@@ -353,6 +388,7 @@ public class ProgrammingExerciseValidationService {
         }
 
         BuildPlanConfigurationValidator.validate(buildPlan, buildConfig.getTimeoutSeconds());
+        validateContainerDockerFlags(buildPlan);
     }
 
     /**

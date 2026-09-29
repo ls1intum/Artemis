@@ -339,16 +339,16 @@ describe('ExerciseTableComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            const headerCheckbox = element.querySelector('thead tum-ui-checkbox input') as HTMLInputElement;
+            const headerCheckbox = element.querySelector('thead tumaet-ui-checkbox input') as HTMLInputElement;
             expect(headerCheckbox.indeterminate).toBe(true);
-            expect(element.querySelector('thead tum-ui-checkbox svg[data-icon="minus"]')).not.toBeNull();
+            expect(element.querySelector('thead tumaet-ui-checkbox svg[data-icon="minus"]')).not.toBeNull();
 
             fixture.componentRef.setInput('selectedIds', new Set([1, 2]));
             await fixture.whenStable();
             fixture.detectChanges();
             expect(headerCheckbox.indeterminate).toBe(false);
             expect(headerCheckbox.checked).toBe(true);
-            expect(element.querySelector('thead tum-ui-checkbox svg[data-icon="check"]')).not.toBeNull();
+            expect(element.querySelector('thead tumaet-ui-checkbox svg[data-icon="check"]')).not.toBeNull();
         });
 
         it('renders a row per exercise with its title link, points and difficulty badge', () => {
@@ -360,7 +360,7 @@ describe('ExerciseTableComponent', () => {
             expect(link.getAttribute('href')).toBe('/course-management/1/text-exercises/3');
             expect(element.querySelector('.col-points')?.textContent).toContain('5pts');
 
-            const difficultyTag = element.querySelector('tum-ui-tag');
+            const difficultyTag = element.querySelector('tumaet-ui-tag');
             expect(difficultyTag?.textContent).toContain(DifficultyLevel.EASY);
             // The kit tag carries its severity on the inner pill span, not the host element.
             expect(difficultyTag?.querySelector('span')?.getAttribute('data-severity')).toBe('success');
@@ -374,7 +374,7 @@ describe('ExerciseTableComponent', () => {
 
         it('renders the quiz status and mode badges for a quiz row', () => {
             const element = renderRows([quiz]);
-            const tags = Array.from(element.querySelectorAll('tum-ui-tag')).map((tag) => tag.textContent ?? '');
+            const tags = Array.from(element.querySelectorAll('tumaet-ui-tag')).map((tag) => tag.textContent ?? '');
 
             expect(tags.some((text) => text.includes('artemisApp.quizExercise.quizStatus.visible'))).toBe(true);
             expect(tags.some((text) => text.includes('artemisApp.quizExercise.quizMode.synchronized'))).toBe(true);
@@ -384,7 +384,7 @@ describe('ExerciseTableComponent', () => {
             const bare = { id: 4, title: 'Bare', type: ExerciseType.TEXT, maxPoints: 1 } as Exercise;
             expect(renderRows([bare]).textContent).toContain('artemisApp.exerciseManagement.table.none');
             // The quiz row carries status and mode badges, so the categories cell must not fall back to the placeholder.
-            expect(renderRows([quiz]).querySelector('tum-ui-tag')).not.toBeNull();
+            expect(renderRows([quiz]).querySelector('tumaet-ui-tag')).not.toBeNull();
         });
 
         it('disables the drag handle for a non-individual quiz', () => {
@@ -403,13 +403,13 @@ describe('ExerciseTableComponent', () => {
             const element = renderRows([text]);
             // Drag-and-drop and the per-row group dropdown coexist in the group view.
             expect(element.querySelector('.drag-handle')).not.toBeNull();
-            expect(element.querySelector('tum-ui-select')).not.toBeNull();
+            expect(element.querySelector('tumaet-ui-select')).not.toBeNull();
             // The group column replaces the difficulty column, so the difficulty badge is not rendered.
-            expect(element.querySelector('tum-ui-tag')).toBeNull();
+            expect(element.querySelector('tumaet-ui-tag')).toBeNull();
         });
 
         it('labels the group dropdown of an ungrouped exercise with "no group" rather than leaving it blank', async () => {
-            // tum-ui-select renders the placeholder for an undefined value, so "no group" is modelled as a sentinel
+            // tumaet-ui-select renders the placeholder for an undefined value, so "no group" is modelled as a sentinel
             // (NO_GROUP_OPTION_VALUE) — this asserts the label the sentinel exists to keep visible.
             const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5 } as Exercise;
             fixture.componentRef.setInput('groups', [{ id: 10, title: 'Group A', exercises: [] } as CourseExerciseGroup]);
@@ -427,7 +427,7 @@ describe('ExerciseTableComponent', () => {
 
         it('reflects the active sort column in the header', () => {
             renderRows([quiz]);
-            const titleHeader = fixture.nativeElement.querySelector('th[tumUiSortableColumn="title"]') as HTMLElement;
+            const titleHeader = fixture.nativeElement.querySelector('th[tumAetUiSortableColumn="title"]') as HTMLElement;
             expect(titleHeader.getAttribute('aria-sort')).toBe('ascending');
 
             component.sortBy('title');
@@ -439,9 +439,9 @@ describe('ExerciseTableComponent', () => {
             // Proves the onSortChange adapter is wired: the kit table is controlled, so a header click only
             // emits (field, order) and this component must apply it to sortColumn/sortAsc.
             renderRows([quiz]);
-            const pointsHeader = fixture.nativeElement.querySelector('th[tumUiSortableColumn="points"]') as HTMLElement;
+            const pointsHeader = fixture.nativeElement.querySelector('th[tumAetUiSortableColumn="points"]') as HTMLElement;
             // The kit puts the activation on a real button inside the header, not on the <th> itself.
-            const pointsSortButton = pointsHeader.querySelector('.tum-ui-sort-button') as HTMLButtonElement;
+            const pointsSortButton = pointsHeader.querySelector('.tumaet-ui-sort-button') as HTMLButtonElement;
 
             pointsSortButton.click();
             fixture.detectChanges();

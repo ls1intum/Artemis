@@ -1,12 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { WritableSignal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EMPTY, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { InformationBox } from 'app/shared-ui/information-box/information-box.component';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { CourseExerciseGroupDetailComponent } from 'app/course/overview/course-exercises/group-detail/course-exercise-group-detail.component';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
@@ -19,6 +24,12 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('CourseExerciseGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseExerciseGroupDetailComponent>;
@@ -56,14 +67,14 @@ describe('CourseExerciseGroupDetailComponent', () => {
         return { id: 3, type: ExerciseType.TEXT, maxPoints: 10, includedInOverallScore, exerciseVariantGroup: reference } as unknown as Exercise;
     }
 
-    async function setup(exercises: Exercise[]): Promise<void> {
+    async function setup(exercises: Exercise[], renderTemplate = false): Promise<void> {
         const course = { id: 1, exercises } as Course;
         const route = {
             params: of({ groupId: String(GROUP_ID) }),
             parent: { parent: { snapshot: { params: { courseId: '1' } } } },
         } as unknown as ActivatedRoute;
 
-        await TestBed.configureTestingModule({
+        const testBed = TestBed.configureTestingModule({
             imports: [CourseExerciseGroupDetailComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -73,13 +84,47 @@ describe('CourseExerciseGroupDetailComponent', () => {
                 MockProvider(ArtemisServerDateService, { now: () => dayjs() }),
                 { provide: ScoresStorageService, useValue: { getStoredAchievedGroupPoints: (_courseId: number, groupId: number) => storedGroupPoints.get(groupId) } },
                 { provide: ParticipationService, useClass: MockParticipationService },
+                // The sidebar toggle button in the rendered header translates its tooltip.
+                { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
+        });
+
+        if (renderTemplate) {
+            // Keep the real template, but stub everything it projects into, so the assertions are about the header
+            // itself rather than about what an exercise card or an information box renders.
+            testBed.overrideComponent(CourseExerciseGroupDetailComponent, {
+                remove: {
+                    imports: [
+                        RouterLink,
+                        ExerciseHeadersInformationComponent,
+                        InformationBoxComponent,
+                        TumAetUiTooltipDirective,
+                        TranslateDirective,
+                        ArtemisDatePipe,
+                        ArtemisTimeAgoPipe,
+                        ArtemisTranslatePipe,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockDirective(RouterLink),
+                        MockComponent(ExerciseHeadersInformationComponent),
+                        MockComponent(InformationBoxComponent),
+                        MockDirective(TumAetUiTooltipDirective),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisDatePipe),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
+                },
+            });
+        } else {
             // Render nothing: this spec exercises the component's scoring logic, not its template.
-            .overrideComponent(CourseExerciseGroupDetailComponent, { set: { template: '' } })
-            .compileComponents();
+            testBed.overrideComponent(CourseExerciseGroupDetailComponent, { set: { template: '' } });
+        }
+        await testBed.compileComponents();
 
         fixture = TestBed.createComponent(CourseExerciseGroupDetailComponent);
     }
@@ -92,7 +137,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
         effectiveGroupMaxPoints: () => number;
         capReducesMaxPoints: () => boolean;
         variantsInfoBoxData: () => InformationBox;
-        pointsInfoBoxData: () => InformationBox;
+        pointsInfoBoxData: InformationBox;
         groupDateInfoBoxes: () => InformationBox[];
         exerciseParticipation: (exercise: Exercise) => StudentParticipation | undefined;
         exerciseLink: (exercise: Exercise) => string;
@@ -181,7 +226,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
             ).toEqual([1, 2]);
             expect(comp().exerciseSumMaxPoints()).toBe(20);
             expect(comp().variantsInfoBoxData().content.value).toBe(2);
-            expect(comp().pointsInfoBoxData().isContentComponent).toBe(true);
+            expect(comp().pointsInfoBoxData.isContentComponent).toBe(true);
         });
 
         it('resolves no group when the course has no exercises of that group', async () => {
@@ -269,6 +314,44 @@ describe('CourseExerciseGroupDetailComponent', () => {
             exercises[0].studentParticipations = [{ id: 201, testRun: true } as StudentParticipation, { id: 101 } as StudentParticipation];
             await setup(exercises);
             expect(comp().exerciseParticipation(comp().exercises()[0])?.id).toBe(101);
+        });
+    });
+
+    describe('title bar', () => {
+        /** Access to the protected sidebar state the header renders from. */
+        function sidebar(): { isSidebarCollapsed: WritableSignal<boolean>; showSidebarToggle: () => boolean } {
+            return fixture.componentInstance as never;
+        }
+
+        it('renders the compact title bar the exercise page uses, not the taller detail header', async () => {
+            // #13918: a group page and the variants it links to sit side by side in the same shell, so they must
+            // wear the same bar. `page-top-bar` is what pins it to the shell's title-bar height.
+            await setup(exercisesInGroup(undefined), true);
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('.page-top-bar'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('.detail-header-card'))).toBeNull();
+        });
+
+        it('offers the sidebar expand button only once the sidebar is collapsed', async () => {
+            await setup(exercisesInGroup(undefined), true);
+            fixture.detectChanges();
+            // Nothing has handed the page a toggle yet, so there is no button to show.
+            expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeNull();
+
+            const toggleSidebar = vi.fn();
+            fixture.componentInstance.setSidebarToggle(false, toggleSidebar);
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeNull();
+
+            sidebar().isSidebarCollapsed.set(true);
+            fixture.detectChanges();
+            const button = fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent));
+            expect(button).not.toBeNull();
+
+            // #13918: without this the collapsed sidebar could only be brought back by the keyboard shortcut.
+            (button.componentInstance as CourseSidebarToggleButtonComponent).toggleSidebar.emit();
+            expect(toggleSidebar).toHaveBeenCalledOnce();
         });
     });
 });

@@ -2,7 +2,7 @@
     <div class="d-flex flex-wrap">
         <div *titleBarTitle class="d-flex justify-content-center align-items-center">
             <jhi-course-title-bar-title title="artemisApp.competency.manage.title" />
-            <button class="ms-3 btn btn-sm btn-warning" (click)="openCourseCompetencyExplanation()">
+            <button type="button" class="ms-3 btn btn-sm btn-warning" (click)="openCourseCompetencyExplanation()">
                 <fa-icon [icon]="faCircleQuestion" />
                 <span jhiTranslate="artemisApp.courseCompetency.manage.helpButton"></span>
             </button>
@@ -14,11 +14,11 @@
                     <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>
                 </a>
             }
-            <button class="btn btn-primary btn-sm" id="openCourseCompetencyRelationsButton" (click)="openCourseCompetenciesRelationModal()">
+            <button type="button" class="btn btn-primary btn-sm" id="openCourseCompetencyRelationsButton" (click)="openCourseCompetenciesRelationModal()">
                 <fa-icon [icon]="faEdit" />
                 <span jhiTranslate="artemisApp.courseCompetency.manage.editRelationsButton"></span>
             </button>
-            <button class="btn btn-primary btn-sm" data-testid="courseCompetencyImportAllButton" (click)="openImportAllModal()">
+            <button type="button" class="btn btn-primary btn-sm" data-testid="courseCompetencyImportAllButton" (click)="openImportAllModal()">
                 <fa-icon [icon]="faFileImport" />
                 <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButton"></span>
             </button>
@@ -51,6 +51,7 @@
     <!-- Floating Agent Chat Button -->
     @if (agentChatEnabled()) {
         <button
+            type="button"
             class="btn btn-primary rounded-circle agent-chat-button"
             (click)="openAgentChatModal()"
             [attr.aria-label]="'AI Assistant'"

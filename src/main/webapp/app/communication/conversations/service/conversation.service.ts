@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -30,12 +30,12 @@ export enum ConversationMemberSearchFilter {
     STUDENT,
     CHANNEL_MODERATOR, // this is a special role that is only used for channels
 }
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ConversationService {
-    public resourceUrl = '/api/communication/courses/';
-
     private http = inject(HttpClient);
     private translationService = inject(TranslateService);
+
+    public resourceUrl = '/api/communication/courses/';
 
     getConversationName(conversation: ConversationDTO | undefined, showLogin = false): string {
         if (!conversation) {

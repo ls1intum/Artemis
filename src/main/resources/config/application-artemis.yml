@@ -8,7 +8,8 @@ artemis:
   repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
   repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
   data-export-path: ./data-exports                # a folder in which data exports are stored
-  build-logs-path: ./build-logs                   # a folder in which build logs are stored
+  build-logs-path: ./build-logs                   # a folder in which the complete log of every build job is stored, keyed by build job id, for download
+  failed-build-logs-path: ./failed-build-logs     # a folder in which the build logs of failed builds are stored, keyed by submission id, to serve the build output panel, Iris and Hyperion. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS)
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
@@ -95,8 +96,10 @@ artemis:
     artemis-authentication-token-value: myToken #must be changed to a secure value
     build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck
     build-log:
-      file-expiry-days: 30 # The amount of days until build log files can be deleted
-      cleanup-schedule: 0 0 3 * * ? # Cron expression for schedule to delete old build log files
+      file-expiry-days: 30 # The amount of days until the downloadable log of a build job can be deleted
+      cleanup-schedule: 0 0 3 * * ? # Cron expression for schedule to delete old build job log files
+      failed-build-retention-days: 365 # The amount of days the build logs of a failed build are kept. They are what the build output panel, Iris and Hyperion read, so this is a feature retention period rather than a cleanup threshold
+      failed-build-cleanup-schedule: 0 30 3 * * ? # Cron expression for schedule to delete expired failed build logs, half an hour after the build job logs so the two do not compete for the disk
     build-job:
       retention-period: 365 # Number of days before build job entries are deleted
   git:
@@ -154,6 +157,12 @@ artemis:
       # Per-run cap on AtlasML similarity-shortlist calls (one per changed exercise). Bounds the AtlasML
       # fan-out feeding the execute prompt; exercises beyond the budget contribute no candidates.
       max-atlasml-calls-per-run: 10
+    atlasllm:
+      # The LLM-backed part of Atlas: the chat agent, the autonomous competency orchestrator, and the tool surfaces
+      # they call. Disabled by default. None of it works without spring.ai.model.chat and spring.ai.openai below, and
+      # leaving it off keeps roughly thirty beans, a scheduler and an event listener out of the context entirely.
+      # Competencies, learning paths and learner profiles are the Atlas module itself and stay available either way.
+      enabled: false
     atlasml:
       enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
       base-url: <your-atlasml-url> # Required address to you own AtlasML instance

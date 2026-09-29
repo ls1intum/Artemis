@@ -112,7 +112,9 @@ Atlas contains two related but distinct Artemis-side responsibilities: native co
 
 ### Native Atlas agent and orchestration control plane
 
-`AtlasAgentResource` accepts course chat requests and delegates them through `AtlasAgentService` and `AtlasAgentDelegationService`. Artemis owns the course context, authorization, agent-session history, and tool contract. These beans require the Artemis Atlas module to be enabled.
+`AtlasAgentResource` accepts course chat requests and delegates them through `AtlasAgentService` and `AtlasAgentDelegationService`. Artemis owns the course context, authorization, agent-session history, and tool contract. These beans require `artemis.atlas.atlasllm.enabled`, which is disabled by default and additionally requires the Artemis Atlas module.
+
+The agents, the orchestrator, the tool surfaces, and the Responses adapter all sit behind that one flag, because none of them can do anything without a configured chat model. An installation that leaves it off keeps competencies, learning paths, and learner profiles, and loads none of those beans, the content-change scheduler, or the autonomous exercise event listener. `artemis.atlas.enabled` therefore describes the competency feature set alone, and the two AI submodules, `atlasml` and `atlasllm`, are opted into separately.
 
 `CompetencyOrchestrationResource` starts programming-exercise orchestration and additionally requires `Feature.AtlasAgent`. `CompetencyOrchestrationService` coordinates the workflow, while `AtlasAgentToolCallbackService` handles agent-tool callbacks. The supporting tool services (`AtlasAgentToolsService`, `CompetencyExpertToolsService`, `CompetencyMappingToolsService`, `ExerciseMappingToolsService`, and `OrchestratorToolsService`) apply Artemis-owned competency, mapping, and course operations. Their results are persisted in Artemis through the normal competency and course services.
 

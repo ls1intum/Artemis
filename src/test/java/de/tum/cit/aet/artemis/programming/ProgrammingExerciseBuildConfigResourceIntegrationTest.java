@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -193,6 +195,46 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
         var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testPersistsTheDockerFlagsOfAContainer() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        var flags = new BuildContainerDockerFlagsDTO("none", Map.of("MODE", "student"), 1, 512, null);
+        var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), flags);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(container)), HttpStatus.OK);
+
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration()).effectiveContainers().getFirst().dockerFlags()).isEqualTo(flags);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsContainerDockerFlagsBelowTheMemoryMinimum() throws Exception {
+        var flags = new BuildContainerDockerFlagsDTO(null, null, null, 1, null);
+        var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), flags);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(container)), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsADisallowedContainerDockerNetwork() throws Exception {
+        var flags = new BuildContainerDockerFlagsDTO("host", null, null, null, null);
+        var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), flags);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(container)), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsAContainerTimeoutAboveTheExerciseTimeout() throws Exception {
+        // configurationWith sets an exercise timeout of 240 seconds
+        var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), 300);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(container)), HttpStatus.BAD_REQUEST);
     }
 
     @Test

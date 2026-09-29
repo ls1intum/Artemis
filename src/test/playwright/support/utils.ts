@@ -722,7 +722,7 @@ export async function addE2EInitScript(page: Page) {
         const injectStyle = () => {
             const style = document.createElement('style');
             // The passkey setup modal is not hidden here. It used to have a CSS backup, but that rule
-            // named PrimeNG classes and stopped matching anything when the modal moved to tum-ui-dialog,
+            // named PrimeNG classes and stopped matching anything when the modal moved to tumaet-ui-dialog,
             // so it sat here as dead code while reading like a safety net. It cannot be reinstated as
             // written either: the replacement renders through the CDK, whose backdrop carries the same
             // cdk-overlay-dark-backdrop class as every other dialog, so hiding it would also hide the

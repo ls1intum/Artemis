@@ -96,6 +96,7 @@
                                 (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails())"
                             />
                         }
+                        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This wrapper only stops pointer events from reaching the post action. -->
                         <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }" (click)="$event.stopPropagation()">
                             @if (!previewMode()) {
                                 <!-- Post reactions (that appear when post is hovered) -->
@@ -134,6 +135,7 @@
         </div>
     }
     @if (!isDeleted) {
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This wrapper only stops pointer events from reaching the post action. -->
         <div
             class="post-content-padding justify-content-between post-reactions-bar"
             [ngClass]="{ 'mb-2': previewMode(), 'is-saved': posting()?.isSaved && isConsecutive() }"
@@ -183,43 +185,48 @@
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown()) {
-    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition().y, 'left.px': dropdownPosition().x }" class="dropdown-menu show" data-testid="posting-context-menu">
-        <button class="dropdown-item d-flex" (click)="addReaction($event)" data-testid="posting-menu-react">
+    <div style="position: fixed" [style.top.px]="dropdownPosition().y" [style.left.px]="dropdownPosition().x" class="dropdown-menu show" data-testid="posting-context-menu">
+        <button type="button" class="dropdown-item d-flex" (click)="addReaction($event)" data-testid="posting-menu-react">
             <fa-icon [icon]="faSmile" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
         </button>
         @if (canPin()) {
-            <button class="dropdown-item d-flex" (click)="togglePin()" data-testid="posting-menu-pin">
+            <button type="button" class="dropdown-item d-flex" (click)="togglePin()" data-testid="posting-menu-pin">
                 <fa-icon [icon]="faThumbtack" class="item-icon" />
                 <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
             </button>
         }
         @if (mayEdit()) {
-            <button class="dropdown-item d-flex" (click)="editPosting()" data-testid="posting-menu-edit">
+            <button type="button" class="dropdown-item d-flex" (click)="editPosting()" data-testid="posting-menu-edit">
                 <fa-icon [icon]="faPencilAlt" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
             </button>
         }
         @if (mayDelete()) {
-            <button class="dropdown-item d-flex" (click)="deletePost()" data-testid="posting-menu-delete">
+            <button type="button" class="dropdown-item d-flex" (click)="deletePost()" data-testid="posting-menu-delete">
                 <fa-icon [icon]="faTrash" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
             </button>
         }
-        <button class="dropdown-item d-flex" (click)="isCommunicationPage() ? openThread.emit() : reactionsBarComponent()?.openAnswerView()" data-testid="posting-menu-reply">
+        <button
+            type="button"
+            class="dropdown-item d-flex"
+            (click)="isCommunicationPage() ? openThread.emit() : reactionsBarComponent()?.openAnswerView()"
+            data-testid="posting-menu-reply"
+        >
             <fa-icon [icon]="faComments" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
         </button>
-        <button class="dropdown-item d-flex" (click)="toggleSavePost()" data-testid="posting-menu-bookmark">
+        <button type="button" class="dropdown-item d-flex" (click)="toggleSavePost()" data-testid="posting-menu-bookmark">
             <fa-icon [icon]="posting()?.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting()?.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
         </button>
-        <button class="dropdown-item d-flex" (click)="forwardMessage()" data-testid="posting-menu-forward">
+        <button type="button" class="dropdown-item d-flex" (click)="forwardMessage()" data-testid="posting-menu-forward">
             <fa-icon [icon]="faShare" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
         </button>
         @if (canMarkAsUnread()) {
-            <button class="dropdown-item d-flex" (click)="markMessageAsUnread()" data-testid="posting-menu-mark-unread">
+            <button type="button" class="dropdown-item d-flex" (click)="markMessageAsUnread()" data-testid="posting-menu-mark-unread">
                 <fa-icon [icon]="faEnvelopeOpenText" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.markAsUnread"></span>
             </button>
@@ -227,7 +234,7 @@
     </div>
 }
 
-<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin [ngStyle]="{ position: 'fixed', 'top.px': clickPosition.y, 'left.px': clickPosition.x }"></div>
+<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin style="position: fixed" [style.top.px]="clickPosition.y" [style.left.px]="clickPosition.x"></div>
 
 <ng-template
     cdkConnectedOverlay

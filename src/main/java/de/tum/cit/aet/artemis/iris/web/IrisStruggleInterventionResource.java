@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.dto.CancelStruggleJobRequestDTO;
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 @Conditional(IrisEnabled.class)
 @Lazy
 @RestController
-@FeatureUsage("chat/struggle-intervention")
+@FeatureUsage(UserFeature.IRIS_STRUGGLE_INTERVENTION)
 @RequestMapping("api/iris/chat/")
 public class IrisStruggleInterventionResource {
 

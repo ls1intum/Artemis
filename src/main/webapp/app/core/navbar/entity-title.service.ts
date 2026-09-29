@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
@@ -22,7 +22,7 @@ const FETCH_FALLBACK_TIMEOUT = 3000;
 /**
  * Provides titles for entities, currently used by breadcrumbs
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class EntityTitleService implements OnDestroy {
     private http = inject(HttpClient);
     private readonly accountService = inject(AccountService);

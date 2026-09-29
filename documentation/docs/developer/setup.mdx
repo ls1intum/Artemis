@@ -138,6 +138,8 @@ collation-server = utf8mb4_unicode_ci
 Ensure that MySQL loads this configuration file when starting the server.
 For more details, refer to the official MySQL documentation: [MySQL Option Files](https://dev.mysql.com/doc/refman/9.2/en/option-files.html).
 
+The server configuration does not cover the connection. MySQL Connector/J connects with `utf8mb4_0900_ai_ci` unless the JDBC URL sets `connectionCollation=utf8mb4_unicode_ci`, and some searches, such as those for course or conversation members, then fail with `Illegal mix of collations`. The datasource URLs of the `dev` and `docker` profiles set it; keep it when you override `spring.datasource.url`. See [MySQL Character Set and Collation](/admin/upgrade-guide#mysql-character-set-and-collation).
+
 #### Users for MySQL
 
 For the development environment, the default MySQL user is `root` with an empty password.
@@ -210,7 +212,19 @@ Instead, follow these best practices:
     - If you want to change application properties, you should do that in `application-local.yml`.
     - If needed, you can modify values such as database credentials, authentication and application settings.
 
-3. **Activate the correct profile**
+3. **Set the installation metadata (optional)**
+    - The About page shows who operates the installation. A development server starts without these values; only the production profile, as in the **Artemis (Server, Prod, LocalCI)** run configuration, requires them unless `info.testServer` is `true`. To set them, add them to `application-local.yml`, replacing the examples with your own:
+
+    ```yaml
+    info:
+        operatorName: Research group of Applied Education Technologies
+        operatorAdminName: Jane Doe
+        universityName: Technical University of Munich
+    ```
+
+    - Empty values and template values such as `Admin`, `Your University` or `<name>` are rejected, and the error names the properties to fix. See [Telemetry](/admin/telemetry#required-configuration) for details.
+
+4. **Activate the correct profile**
     - When running Artemis, ensure the `local` profile is selected in the run configurations.
     - For additional custom configurations, create `application-<name>.yml` and activate the `<name>` profile.
 
@@ -250,6 +264,8 @@ artemis:
     # Required module feature toggles
     atlas:
       enabled: true
+      atlasllm:
+        enabled: false   # Atlas chat agent and competency orchestration; needs a chat model under spring.ai (see artemis-intelligence.mdx). Competencies and learning paths work without it.
     exam:
       enabled: true
     fileupload:
@@ -376,10 +392,15 @@ To provide the required configuration, one option is to create an `application-l
 ```yaml
 # application-local.yml
 # ... all other properties from Common Configuration Options
+info:
+    # Optional: the installation metadata from step 3 of the configuration setup
+    operatorName: <operator>
+    operatorAdminName: <administrator>
+    universityName: <university>
 spring:
     datasource:
         # If your database is running in another Docker container locally on your machine, replace `<db-host>` with `host.docker.internal` (macOS/Windows) or the host's IP address (Linux).
-        url: "jdbc:mysql://<db-host>:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
+        url: "jdbc:mysql://<db-host>:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
         # Depending on your database setup, the following may be required:
         username: root
         password: ""
@@ -403,6 +424,9 @@ Alternatively, you can pass properties directly as Docker environment variables 
 ```bash
 docker run \
   -e ARTEMIS_ATLAS_ENABLED=true \
+  -e INFO_OPERATORNAME="<operator>" \
+  -e INFO_OPERATORADMINNAME="<administrator>" \
+  -e INFO_UNIVERSITYNAME="<university>" \
   -e SPRING_DATASOURCE_URL="jdbc:mysql://<db-host>:3306/Artemis?..." \
   ...
   -p 8080:8080 \

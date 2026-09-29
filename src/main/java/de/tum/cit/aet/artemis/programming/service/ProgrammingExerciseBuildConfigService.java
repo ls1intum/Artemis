@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -65,6 +66,23 @@ public class ProgrammingExerciseBuildConfigService {
      */
     @Nullable
     public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExercise programmingExercise) {
+        return getDockerRunConfig(buildConfig, programmingExercise, null);
+    }
+
+    /**
+     * Converts the Docker flags of the exercise, overridden by the flags of the container the job runs, into a
+     * {@link DockerRunConfig}. A field the container sets replaces the exercise's, its environment variables are merged
+     * on top of the exercise's by name; see {@link BuildContainerDockerFlagsDTO}.
+     *
+     * @param buildConfig         the build config containing the exercise's Docker flags
+     * @param programmingExercise the exercise the configuration belongs to
+     * @param containerFlags      the flags of the container the job runs, or null for a job that uses the exercise's flags alone
+     * @return the run config of the job, or {@code null} if neither the exercise nor the container sets any flag
+     * @throws ResponseStatusException if the container's network is not allowed on this instance
+     */
+    @Nullable
+    public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExercise programmingExercise,
+            @Nullable BuildContainerDockerFlagsDTO containerFlags) {
         DockerFlagsDTO dockerFlagsDTO = parseDockerFlags(buildConfig);
 
         String network = null;
@@ -79,6 +97,23 @@ public class ProgrammingExerciseBuildConfigService {
             memory = dockerFlagsDTO.memory();
             memorySwap = dockerFlagsDTO.memorySwap();
         }
+        if (containerFlags != null) {
+            String containerNetwork = StringUtils.trimToNull(containerFlags.network());
+            if (containerNetwork != null) {
+                requireAllowedNetwork(containerNetwork);
+                network = containerNetwork;
+            }
+            exerciseEnvironment = mergeEnvironment(exerciseEnvironment, containerFlags.env());
+            if (containerFlags.cpuCount() != null) {
+                cpuCount = containerFlags.cpuCount();
+            }
+            if (containerFlags.memory() != null) {
+                memory = containerFlags.memory();
+            }
+            if (containerFlags.memorySwap() != null) {
+                memorySwap = containerFlags.memorySwap();
+            }
+        }
 
         ProgrammingExercise exercise = programmingExercise;
         if (exercise == null) {
@@ -90,6 +125,35 @@ public class ProgrammingExerciseBuildConfigService {
         Map<String, String> environment = addLanguageSpecificEnvironment(exerciseEnvironment, programmingLanguage, projectType);
 
         return createDockerRunConfig(network, environment, cpuCount, memory, memorySwap);
+    }
+
+    /**
+     * @param exerciseEnvironment  the exercise's environment variables, or null for none
+     * @param containerEnvironment the container's environment variables, or null for none
+     * @return both by name, the container's value winning, or null if neither sets any
+     */
+    @Nullable
+    private static Map<String, String> mergeEnvironment(@Nullable Map<String, String> exerciseEnvironment, @Nullable Map<String, String> containerEnvironment) {
+        if (containerEnvironment == null || containerEnvironment.isEmpty()) {
+            return exerciseEnvironment;
+        }
+        Map<String, String> environment = new HashMap<>(exerciseEnvironment == null ? Map.of() : exerciseEnvironment);
+        environment.putAll(containerEnvironment);
+        return environment;
+    }
+
+    /**
+     * @param network a Docker network, or null or blank for the default network
+     * @return whether a container may join it on this instance
+     */
+    public boolean isAllowedNetwork(@Nullable String network) {
+        return StringUtils.isBlank(network) || allowedNetworks.contains(network);
+    }
+
+    private void requireAllowedNetwork(String network) {
+        if (!isAllowedNetwork(network)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid network: " + network);
+        }
     }
 
     @Nullable
@@ -146,8 +210,7 @@ public class ProgrammingExerciseBuildConfigService {
             throw new IllegalArgumentException("Failed to parse DockerRunConfig from JSON string: " + buildConfig.getDockerFlags(), e);
         }
 
-        boolean customDockerNetwork = dockerFlagsDTO.network() != null && !dockerFlagsDTO.network().isBlank();
-        if (customDockerNetwork && !allowedNetworks.contains(dockerFlagsDTO.network())) {
+        if (!isAllowedNetwork(dockerFlagsDTO.network())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid network: " + dockerFlagsDTO.network());
         }
 

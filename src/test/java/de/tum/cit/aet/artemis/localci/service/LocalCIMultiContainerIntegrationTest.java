@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import static de.tum.cit.aet.artemis.assessment.web.AssessmentWebsocketTopics.NEW_RESULTS;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
@@ -528,7 +528,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         verify(programmingMessagingService, timeout(2000).times(1)).notifyUserAboutNewResult(argThat(reported -> reported.getCompletionDate() != null), any());
         // Reporting the result synthesizes the merged feedback for the client, which reads the messages of rows that were
         // loaded inside the merge transaction; a report that reaches the student proves they were loaded whole.
-        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessageToUser(eq(student1Login), eq(NEW_RESULT_TOPIC), any());
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessageToUser(eq(student1Login), eq(NEW_RESULTS.at()), any());
 
         // The containers of one commit share a single submission and a single result.
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId())).hasSize(1);

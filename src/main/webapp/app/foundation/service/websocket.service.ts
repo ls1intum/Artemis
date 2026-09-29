@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { OnDestroy, Service } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
 import { IMessage } from '@stomp/stompjs';
@@ -225,7 +225,7 @@ export class ConnectionState {
  * - properly unsubscribe from server-side topics, and
  * - prevent memory leaks and unnecessary server traffic.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class WebsocketService implements IWebsocketService, OnDestroy {
     /**
      * Underlying RxStomp client instance managing the STOMP/WebSocket connection. This is lazily created in {@link connect} and cleared in {@link disconnect}.

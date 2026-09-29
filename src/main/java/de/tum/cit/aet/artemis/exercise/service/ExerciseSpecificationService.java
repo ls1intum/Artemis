@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import jakarta.persistence.criteria.Join;
@@ -78,9 +79,11 @@ public class ExerciseSpecificationService {
                 // Avoid incorrect type comparison which could lead to an exception "Data Conversion Error (CHARACTER VARYING to DECFLOAT)"
                 idMatchesSearch = criteriaBuilder.disjunction();
             }
-            Predicate exerciseTitleMatches = criteriaBuilder.like(root.get(Exercise_.TITLE), "%" + searchTerm + "%");
-            Predicate courseTitleMatches = criteriaBuilder.like(joinCourse.get(Course_.TITLE), "%" + searchTerm + "%");
-            Predicate examCourseTitleMatches = criteriaBuilder.like(joinExamCourse.get(Course_.TITLE), "%" + searchTerm + "%");
+            // Lower case on both sides: PostgreSQL compares case sensitively, so a term the user typed in any other case would match nothing.
+            String titlePattern = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
+            Predicate exerciseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(root.get(Exercise_.TITLE)), titlePattern);
+            Predicate courseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(joinCourse.get(Course_.TITLE)), titlePattern);
+            Predicate examCourseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(joinExamCourse.get(Course_.TITLE)), titlePattern);
 
             Predicate matchingCourseExercise = criteriaBuilder.or(idMatchesSearch, exerciseTitleMatches, courseTitleMatches);
             Predicate matchingExamExercise = criteriaBuilder.or(idMatchesSearch, exerciseTitleMatches, examCourseTitleMatches);

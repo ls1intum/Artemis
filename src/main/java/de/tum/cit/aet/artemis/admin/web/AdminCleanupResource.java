@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.service.DataCleanupService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for managing old data cleanup operations in Artemis.
@@ -38,7 +39,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("data-privacy/data-cleanup")
+@FeatureUsage(UserFeature.DATA_CLEANUP)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/admin/cleanup/")

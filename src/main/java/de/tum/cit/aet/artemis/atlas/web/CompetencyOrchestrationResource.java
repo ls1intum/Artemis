@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.OrchestratorDefaultsDTO;
@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for the autonomous competency management orchestrator.
@@ -30,9 +31,9 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
  * {@link Feature#AtlasAgent} feature toggle — the same toggle that controls the Atlas Companion
  * chat agent. No separate orchestrator toggle exists.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
-@FeatureUsage("ai/competency-orchestration")
+@FeatureUsage(UserFeature.COMPETENCY_ORCHESTRATION)
 @RestController
 @RequestMapping("api/atlas/orchestrator/")
 public class CompetencyOrchestrationResource {

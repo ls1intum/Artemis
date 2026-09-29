@@ -3,14 +3,14 @@ import { faCog } from '@fortawesome/free-solid-svg-icons';
 import { getInitialsFromString } from 'app/foundation/util/text.utils';
 import { getBackgroundColorHue } from 'app/foundation/util/color.utils';
 import { RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-profile-picture',
     templateUrl: './profile-picture.component.html',
     styleUrls: ['./profile-picture.component.scss'],
-    imports: [RouterLink, CommonModule, FontAwesomeModule],
+    imports: [NgOptimizedImage, RouterLink, CommonModule, FontAwesomeModule],
 })
 export class ProfilePictureComponent {
     imageSizeInRem = input<string>('2.15');

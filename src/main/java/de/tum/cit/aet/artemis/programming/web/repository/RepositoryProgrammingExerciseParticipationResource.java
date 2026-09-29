@@ -30,7 +30,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -74,7 +74,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/online-editor")
+@FeatureUsage(UserFeature.PROGRAMMING_ONLINE_EDITOR)
 @RestController
 @RequestMapping("api/programming/")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
@@ -200,6 +200,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId the participationId of the repository we want to get the files from
      * @return a map with the file path as key and the file type as value
      */
+    @FeatureUsage(UserFeature.PLAGIARISM_CHECKS)
     @GetMapping(value = "participations/{participationId}/repository/files-plagiarism-view", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, FileType>> getFilesForPlagiarismView(@PathVariable Long participationId) {
@@ -222,6 +223,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param repositoryType  the type of the repository (template, solution, tests); requires at least editor rights for the exercise
      * @return a map with the file path as key and the file content as value
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_REPOSITORY_HISTORY)
     @GetMapping(value = "repository-files-content", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getFilesAtCommit(@RequestParam(name = "commitId") String commitId, @RequestParam(required = false) Long participationId,
@@ -250,6 +252,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId participation of the student
      * @return the ResponseEntity with status 200 (OK) and a map of files with the information if they were changed/are new.
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping(value = "participations/{participationId}/repository/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
@@ -278,6 +281,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param filename        the name of the file to retrieve
      * @return the file with the given filename
      */
+    @FeatureUsage(UserFeature.PLAGIARISM_CHECKS)
     @GetMapping(value = "participations/{participationId}/repository/file-plagiarism-view", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFileForPlagiarismView(@PathVariable Long participationId, @RequestParam("file") String filename) {
@@ -434,6 +438,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *                            used.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping(value = "participations/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -460,11 +465,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(List.of());
         }
 
-        // The logs shown are the ones of the result shown, the requested one or the submission's latest; the service
-        // decides what that means for a single-container and for a multi-container build.
-        Result latestResult = programmingSubmission.getLatestResult();
-        Long shownResultId = resultId.orElse(latestResult == null ? null : latestResult.getId());
-        List<BuildLogEntry> buildLogs = buildLogService.getBuildLogsToShow(programmingSubmission, shownResultId);
+        // Without a specific result, the submission's current build state decides whether latest failed-build logs are relevant. A result-specific request must not use that
+        // flag: a later successful rebuild sets it to false while the deliberately retained logs of an earlier failed result remain available.
+        if (resultId.isEmpty() && !programmingSubmission.isBuildFailed()) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        ProgrammingSubmission selectedSubmission = programmingSubmission;
+        List<BuildLogEntry> buildLogs = resultId.map(id -> buildLogService.getBuildLogs(selectedSubmission, id))
+                .orElseGet(() -> buildLogService.getLatestBuildLogs(selectedSubmission));
         return ResponseEntity.ok(buildLogs.stream().map(BuildLogEntryDTO::of).toList());
     }
 }

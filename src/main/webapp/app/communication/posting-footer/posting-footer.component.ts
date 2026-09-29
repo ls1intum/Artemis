@@ -32,6 +32,8 @@ function withConsecutiveFlag(answerPost: AnswerPost, isConsecutive: boolean): An
     imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
 })
 export class PostingFooterComponent implements OnInit, OnDestroy {
+    private metisService = inject(MetisService);
+
     constructor() {
         effect(() => {
             // Track sortedAnswerPosts signal input (replaces ngOnChanges)
@@ -67,8 +69,6 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
     courseId!: number;
     readonly groupedAnswerPosts = signal<PostGroup[]>([]);
 
-    private metisService = inject(MetisService);
-
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
@@ -78,9 +78,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         const modal = this.answerPostCreateEditModal();
-        if (modal && typeof modal.createEditAnswerPostContainerRef === 'function') {
-            modal.createEditAnswerPostContainerRef()?.clear();
-        }
+        modal?.createEditAnswerPostContainerRef()?.clear();
     }
 
     /**

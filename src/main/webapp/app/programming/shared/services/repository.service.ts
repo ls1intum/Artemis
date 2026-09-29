@@ -1,10 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class RepositoryService {
     private http = inject(HttpClient);
 
@@ -43,7 +43,7 @@ export interface IRepositoryFileService {
     delete: (participationId: number, fileName: string) => Observable<void>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class RepositoryFileService implements IRepositoryFileService {
     private http = inject(HttpClient);
 

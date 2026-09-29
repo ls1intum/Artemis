@@ -9,7 +9,7 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
 /**
@@ -25,10 +25,10 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         TranslateDirective,
         HelpIconComponent,
         FaIconComponent,
-        TumUiInputDirective,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
+        TumAetUiInputDirective,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
         AdminTitleBarTitleDirective,
     ],
 })

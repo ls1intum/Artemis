@@ -1,10 +1,10 @@
-import { Injectable, computed, inject } from '@angular/core';
+import { Service, computed, inject } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisSearchAvailabilityService {
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);

@@ -42,7 +42,7 @@ COPY patches patches/
 # pnpm resolves the `workspace:*` dependencies while installing, so every workspace member's
 # manifest has to exist by then. Manifests only: copying sources here would invalidate the cached
 # install layer on every package edit. A new member without its own COPY aborts the install.
-COPY packages/tum-ui/package.json packages/tum-ui/
+COPY packages/tum-aet-ui/package.json packages/tum-aet-ui/
 
 # One Gradle invocation does both the cache config and the pnpm install. The
 # BuildKit pnpm-store cache mount below is reused on warm builds; pnpm's
@@ -159,7 +159,7 @@ COPY --chown=artemis:artemis --from=extractor /extract/app /opt/artemis/app
 # is hoisted to the root of the thin app/Artemis.war, so the client lives at static/** here — every
 # entry name below is relative to that flattened root, not to WEB-INF/classes/.
 # The Tailwind directive list is a denylist: revisit it whenever Tailwind gains one. The same
-# invariant is asserted for the package stylesheet in packages/tum-ui/check-styles.mjs.
+# invariant is asserted for the package stylesheet in packages/tum-aet-ui/check-styles.mjs.
 # `jar` prefix-matches entry names, so every stylesheet arrives together with its .css.map, and that
 # map embeds the original source, directives and all. Only the .css files are scanned.
 RUN set -eu; \

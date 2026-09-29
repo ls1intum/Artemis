@@ -22,6 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
@@ -34,7 +35,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/versions")
+@FeatureUsage(UserFeature.EXERCISE_VERSION_HISTORY)
 @RestController
 @RequestMapping("api/exercise/")
 public class ExerciseVersionResource {

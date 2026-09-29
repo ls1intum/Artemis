@@ -49,6 +49,10 @@
                     "name": "Atlas (Adaptives Lernen)",
                     "description": "Aktiviert kompetenzbasierte Lernfunktionen einschließlich Lernpfade, Kompetenz-Tracking und Analysen."
                 },
+                "atlasllm": {
+                    "name": "Atlas KI (LLM)",
+                    "description": "Aktiviert den Atlas-Kurs-Chat-Agenten und den autonomen Kompetenz-Orchestrator. Erfordert ein konfiguriertes Sprachmodell. Kompetenzen, Lernpfade und Analysen funktionieren auch ohne."
+                },
                 "hyperion": {
                     "name": "Hyperion (Aufgabenerstellung)",
                     "description": "Aktiviert KI-gestützte Aufgabenerstellung mit Hyperion zur Generierung von Programmieraufgaben."

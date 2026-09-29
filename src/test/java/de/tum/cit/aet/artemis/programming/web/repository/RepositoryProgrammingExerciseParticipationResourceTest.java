@@ -485,7 +485,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         participation.setSubmissions(Set.of(submission));
         var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "compilation failed"));
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
-        when(buildLogService.getBuildLogsToShow(submission, 90L)).thenReturn(logs);
+        when(buildLogService.getLatestBuildLogs(submission)).thenReturn(logs);
 
         assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.empty()).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }
@@ -498,25 +498,11 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         var log = new BuildLogEntry(java.time.ZonedDateTime.now(), "student container terminated");
         log.setContainerName("student_tests");
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
-        when(buildLogService.getBuildLogsToShow(submission, 90L)).thenReturn(List.of(log));
+        when(buildLogService.getLatestBuildLogs(submission)).thenReturn(List.of(log));
 
         var body = resource.getBuildLogs(PARTICIPATION_ID, Optional.empty()).getBody();
         assertThat(body).hasSize(1);
         assertThat(body.getFirst().containerName()).isEqualTo("student_tests");
-    }
-
-    @Test
-    void getBuildLogs_forAResultWithAttributedLogs_returnsThemAlthoughTheSubmissionIsNotFlaggedAsFailed() {
-        // Two builds of the same commit can overlap and share the submission's build-failed flag: a later build that
-        // succeeded reset it, but the failed build's logs are attributed to its result and stay visible for it.
-        var submission = submissionWithResult(50L, 90L, false);
-        participation.setSubmissions(Set.of(submission));
-        var log = new BuildLogEntry(java.time.ZonedDateTime.now(), "the failed build's line");
-        log.setResultId(90L);
-        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
-        when(buildLogService.getBuildLogsToShow(submission, 90L)).thenReturn(List.of(log));
-
-        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(90L)).getBody()).containsExactly(BuildLogEntryDTO.of(log));
     }
 
     @Test
@@ -542,7 +528,35 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "an older failure"));
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(earlier);
-        when(buildLogService.getBuildLogsToShow(earlier, 80L)).thenReturn(logs);
+        when(buildLogService.getBuildLogs(earlier, 80L)).thenReturn(logs);
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
+    }
+
+    @Test
+    void getBuildLogs_forAFailedResultAfterASuccessfulRebuild_returnsTheFailedResultLogs() {
+        // A successful rebuild changes the submission's current flag, but an explicit result request still addresses the retained failed-result log.
+        participation.setSubmissions(Set.of(submissionWithResult(50L, 90L, false)));
+        var submissionWithFailedResult = submissionWithResult(50L, 80L, false);
+        submissionWithFailedResult.setParticipation(participation);
+        var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.parse("2026-09-19T10:15:30+02:00"), "the earlier build failed"));
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(submissionWithFailedResult);
+        when(buildLogService.getBuildLogs(submissionWithFailedResult, 80L)).thenReturn(logs);
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
+    }
+
+    @Test
+    void getBuildLogs_forAnEarlierResultOfTheLatestSubmission_returnsThatResultsLogs() {
+        var submission = submissionWithResult(50L, 90L, true);
+        var earlierResult = new Result();
+        earlierResult.setId(80L);
+        submission.setResults(Set.of(earlierResult, submission.getLatestResult()));
+        participation.setSubmissions(Set.of(submission));
+        var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "the earlier failure of the same submission"));
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(buildLogService.getBuildLogs(submission, 80L)).thenReturn(logs);
 
         assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { BuildContainerEditorComponent } from './build-container-editor.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -29,11 +29,11 @@ describe('BuildContainerEditorComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(BuildContainerEditorComponent, {
-                remove: { imports: [TumUiButtonComponent, TumUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, BuildPhasesEditorComponent] },
+                remove: { imports: [TumAetUiButtonComponent, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, BuildPhasesEditorComponent] },
                 add: {
                     imports: [
-                        MockComponent(TumUiButtonComponent),
-                        MockDirective(TumUiTooltipDirective),
+                        MockComponent(TumAetUiButtonComponent),
+                        MockDirective(TumAetUiTooltipDirective),
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe, (key: string) => key),
                         MockComponent(HelpIconComponent),

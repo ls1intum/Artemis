@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -216,6 +215,7 @@ public class ProgrammingExerciseGradingService {
             Result newResult = parsed.result();
             var latestSubmission = parsed.submission();
             final boolean buildFailed = parsed.buildFailed();
+            List<BuildLogEntry> failedBuildLogs = null;
 
             if (latestSubmission.isBuildFailed() != buildFailed) {
                 // Written directly. This is one boolean on a row that already exists, and it used to reach the database
@@ -234,10 +234,10 @@ public class ProgrammingExerciseGradingService {
                     var buildLogMessages = buildLogs.stream().map(BuildLogEntry::getLog).toList();
                     mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), programmingLanguage, buildLogMessages);
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
-                    var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
-
-                    // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-                    latestSubmission.setBuildLogEntries(new LinkedHashSet<>(savedBuildLogs));
+                    // Keep the logs until the result has been persisted below. Its database id is part of the file name, so multiple failed results of this submission can
+                    // remain available independently. The entries are deliberately not put back onto the submission: they are no longer rows, so attaching them would ask
+                    // the cascade on this association to persist entities that have no submission of their own.
+                    failedBuildLogs = buildLogs;
                 }
             }
 
@@ -246,7 +246,16 @@ public class ProgrammingExerciseGradingService {
             newResult.setExerciseId(participation.getExercise().getId());
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
-            return processNewProgrammingExerciseResult(participation, newResult);
+            Result processedResult = processNewProgrammingExerciseResult(participation, newResult);
+            if (failedBuildLogs != null) {
+                buildLogService.saveBuildLogs(failedBuildLogs, latestSubmission, processedResult);
+            }
+            else if (!buildFailed) {
+                // A semi-automatic result is updated in place and keeps its id, so a build that succeeds where an earlier one failed has to take that earlier build's logs
+                // with it. Left behind, they would be read back under a result that now stands for a build that did not fail.
+                buildLogService.deleteBuildLogsOfSucceededResult(latestSubmission, processedResult);
+            }
+            return processedResult;
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
@@ -348,21 +357,14 @@ public class ProgrammingExerciseGradingService {
             ProgrammingSubmission submission = parsed.submission();
 
             Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise, aggregatedResultId);
-            // Preserve the build logs of a failed container, labeled by its name and saved next to the logs of the other
-            // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
-            // logs are only kept when the build failed). They are attributed to the build's aggregated result, which is
-            // the build group as the client sees it: it asks for the logs of a result, so an overlapping build of the
-            // same commit, which shares the submission, cannot mix its lines into this build's. The first container to
-            // merge clears the logs of the builds that are over, as saveBuildLogs does on the single-container path, so
-            // a container that failed then and succeeds now does not keep its old logs; the logs of a build still in
-            // progress stay. The submission's own log collection is deliberately not touched: saveBuildLogs would
-            // delete the logs the sibling containers already contributed.
-            if (aggregatedResultId == null) {
-                buildLogService.deleteBuildLogsOfFinishedBuilds(submission.getId());
-            }
+            // Preserve the build logs of a failed container, labeled by its name and stored next to the logs of the other
+            // containers in the file of the build's aggregated result, so a crashed container's logs survive alongside its
+            // siblings' (as for a single-container build, logs are only kept when the build failed). Every build group has an
+            // aggregate of its own, so the logs of an earlier or an overlapping build of the same commit stay under their own
+            // result and never mix with this build's.
             if (containerFailed && buildResult.hasLogs()) {
                 var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
-                buildLogService.appendBuildLogs(buildLogs, submission, containerName, aggregatedResult.getId());
+                buildLogService.appendContainerBuildLogs(buildLogs, submission, aggregatedResult, containerName);
             }
             // Whether this container built is handed back rather than written to the submission here. The flag on the
             // submission is shared by every build of the same commit, so a container of an overlapping build could

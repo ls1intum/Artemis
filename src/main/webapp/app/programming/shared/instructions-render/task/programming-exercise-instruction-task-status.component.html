@@ -17,6 +17,12 @@
             [class]="testIds().length === successfulTests().length ? 'text-success' : failedTests().length ? 'text-danger' : 'text-secondary'"
             [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: testIds().length, passedTests: successfulTests().length }"
             (click)="showDetailsForTests()"
+            #keyboardAction15
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction15.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction15.click() : undefined"
         ></span>
     } @else {
         <span class="text-secondary" [innerHTML]="translationBasePath + (testIds().length ? 'noResult' : 'noTests') | artemisTranslate"></span>

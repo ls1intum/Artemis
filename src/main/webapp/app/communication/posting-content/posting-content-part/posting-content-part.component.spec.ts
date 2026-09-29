@@ -114,6 +114,48 @@ describe('PostingContentPartComponent', () => {
         contentAfterReference = 'in my content,\n\n does it *actually* work?';
     });
 
+    it.each([true, false])('only exposes actionable user references (own reference: %s)', (own) => {
+        const ownLogin = 'own-user';
+        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ login: ownLogin } as User);
+        fixture.componentRef.setInput('postingContentPart', {
+            referenceType: ReferenceType.USER,
+            referenceStr: '@user',
+            queryParams: { referenceUserLogin: own ? ownLogin : 'other-user' },
+        });
+        fixture.detectChanges();
+        const reference = fixture.nativeElement.querySelector('a.reference') as HTMLElement;
+        const emitted = vi.spyOn(component.userReferenceClicked, 'emit');
+        expect(reference.getAttribute('role')).toBe(own ? null : 'button');
+        if (!own) {
+            reference.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            fixture.detectChanges();
+            expect(emitted).toHaveBeenCalledExactlyOnceWith('other-user');
+        }
+        expect(reference.hasAttribute('role')).toBe(false);
+        expect(reference.tabIndex).toBe(-1);
+        emitted.mockClear();
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            reference.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(emitted).not.toHaveBeenCalled();
+    });
+
+    it('removes the slide action when its image cannot load', () => {
+        fixture.componentRef.setInput('postingContentPart', { slideToReference: '/slide.png', referenceStr: 'Slide 1' });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[role="button"]')).not.toBeNull();
+        fixture.nativeElement.querySelector('img').dispatchEvent(new Event('error'));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('a.reference')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"]')).not.toBeNull();
+    });
+
     describe('For posting without reference', () => {
         it('should not contain a reference but only markdown content', () => {
             const postingContent = 'I do not want to reference a Post.';

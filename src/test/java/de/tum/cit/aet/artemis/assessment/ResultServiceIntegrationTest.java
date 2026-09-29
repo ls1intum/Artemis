@@ -21,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -44,8 +45,10 @@ import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -94,6 +97,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @Autowired
     private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private ResultService resultService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -771,6 +777,62 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     private String externalResultPath(long exerciseId, String studentLogin) {
         return "/api/assessment/exercises/" + exerciseId + "/external-submission-results?studentLogin=" + studentLogin;
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "own", "foreign", "missing" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void externalResultValidatesGradingInstructionOwnership(String instructionSource) throws Exception {
+        var originalResultIds = resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(modelingExercise.getId()).stream().map(Result::getId).toList();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        var originalState = participation.getInitializationState();
+        var draft = new ModelingSubmission();
+        draft.setSubmitted(false);
+        var submission = participationUtilService.addSubmission(participation, draft);
+        var originalSubmissionDate = submission.getSubmissionDate();
+        var exercise = instructionSource.equals("own") ? modelingExercise : programmingExercise;
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
+        long instructionId = instructionSource.equals("missing") ? Long.MAX_VALUE : criteria.getFirst().getStructuredGradingInstructions().iterator().next().getId();
+        var body = Map.of("rated", true, "score", 20, "exerciseId", exercise.getId(), "feedbacks",
+                List.of(Map.of("text", "structured feedback", "type", "MANUAL", "credits", 1, "gradingInstruction", Map.of("id", instructionId))));
+
+        var response = request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), body, ResultDTO.class,
+                instructionSource.equals("own") ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST);
+
+        if (instructionSource.equals("own")) {
+            assertThat(feedbackRepository.findByResult(resultRepository.findByIdElseThrow(response.id()))).singleElement()
+                    .satisfies(feedback -> assertThat(feedback.getGradingInstruction().getId()).isEqualTo(instructionId));
+        }
+        else {
+            assertThat(resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(modelingExercise.getId())).extracting(Result::getId)
+                    .containsExactlyInAnyOrderElementsOf(originalResultIds);
+            var unchangedSubmission = submissionRepository.findByIdElseThrow(submission.getId());
+            assertThat(unchangedSubmission.isSubmitted()).isFalse();
+            assertThat(unchangedSubmission.getSubmissionDate()).isEqualTo(originalSubmissionDate);
+            assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(originalState);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void storingFeedbackRejectsForeignGradingInstructions(boolean append) {
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(modelingExercise));
+        var instruction = criteria.getFirst().getStructuredGradingInstructions().iterator().next();
+        var submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, null, submission);
+        Feedback feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL).text("foreign instruction");
+        feedback.setGradingInstruction(instruction);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> {
+            if (append) {
+                resultService.addFeedbackToResult(result, List.of(feedback), false);
+            }
+            else {
+                resultService.storeFeedbackInResult(result, List.of(feedback), false);
+            }
+        }).withMessageContaining("grading instruction");
+        assertThat(feedback.getId()).isNull();
     }
 
     @Test

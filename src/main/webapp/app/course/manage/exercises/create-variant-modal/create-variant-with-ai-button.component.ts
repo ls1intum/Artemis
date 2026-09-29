@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
@@ -30,7 +32,7 @@ import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-
             display: contents;
         }
 
-        // The wizard is a mount point only: tum-ui-dialog portals its panel into the CDK overlay container at
+        // The wizard is a mount point only: tumaet-ui-dialog portals its panel into the CDK overlay container at
         // body level, so this element never renders anything inline. Left visible it would become a SECOND flex
         // item in the host's button row (display: contents promotes every child) and consume another \`gap\`
         // slot, doubling the space between this button and the next one.
@@ -55,13 +57,18 @@ import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-
     `,
 })
 export class CreateVariantWithAiButtonComponent {
+    private readonly profileService = inject(ProfileService);
+
     readonly exercise = input.required<Exercise>();
 
     /** Spacing utilities of the surrounding button row, applied to the button itself (see the :host note). */
     readonly styleClass = input<string>('');
 
-    /** Only editors may generate variants, and only for exercise types the generator supports. */
-    readonly supported = computed(() => (this.exercise().isAtLeastEditor ?? false) && supportsAiVariantGeneration(this.exercise()));
+    /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
+    private readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+    /** Only editors may generate variants, only with Hyperion enabled, and only for exercise types the generator supports. */
+    readonly supported = computed(() => this.hyperionEnabled && (this.exercise().isAtLeastEditor ?? false) && supportsAiVariantGeneration(this.exercise()));
 
     readonly isExamExercise = computed(() => !!this.exercise().exerciseGroup);
 

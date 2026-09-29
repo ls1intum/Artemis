@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.service.user;
 
 import static de.tum.cit.aet.artemis.account.domain.Authority.SUPER_ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_BYTES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -14,6 +15,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -427,7 +429,8 @@ public class UserService {
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
-        // Do not use a single-result lookup here: installations can still contain legacy duplicate emails during the preparation phase.
+        // The unique index makes the address the caller is registering the only decisive fact, so an existence check is
+        // all that is needed; loading the account that holds it would tell the caller who that is.
         if (newUser.getEmail() != null && userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
             throw new EmailAlreadyUsedException();
         }
@@ -682,7 +685,7 @@ public class UserService {
      * <p>
      * The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
      * <p>
-     * If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
+     * If the password is not null, it must satisfy the character length limits and the BCrypt UTF-8 byte limit.
      *
      * @param password The password to check
      */
@@ -695,6 +698,9 @@ public class UserService {
         }
         if (password.length() > PASSWORD_MAX_LENGTH) {
             throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
+        }
+        if (password.getBytes(StandardCharsets.UTF_8).length > PASSWORD_MAX_BYTES) {
+            throw new AccessForbiddenException("The password must not exceed " + PASSWORD_MAX_BYTES + " UTF-8 bytes");
         }
     }
 

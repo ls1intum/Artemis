@@ -2,11 +2,11 @@ import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { FeedbackChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FeedbackChartService {
     create = (feedbackNodes: FeedbackNode[], exercise: Exercise): FeedbackChartData => {
         const summarizedNodes = this.summarizePoints(feedbackNodes);

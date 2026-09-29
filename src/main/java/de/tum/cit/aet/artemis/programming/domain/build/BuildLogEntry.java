@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -34,15 +35,11 @@ public class BuildLogEntry extends DomainObject {
     private String log;
 
     // The name of the build container that produced this log line, or null for a submission built by a single container.
-    // It lets the build logs of a multi-container build be attributed to the container they came from.
-    @Column(name = "container_name")
+    // The logs of a failed build are stored in files (see FailedBuildLogService), which carry the name per line; it is
+    // not a column, since nothing writes this table any more.
+    @Transient
     private String containerName;
 
-    // The id of the aggregated result of the multi-container build that produced this log line, or null for a submission
-    // built by a single container. The client asks for the logs of a result, so the logs of two overlapping builds of the
-    // same commit, which share the submission, are told apart by it.
-    @Column(name = "result_id")
-    private Long resultId;
 
     @ManyToOne
     @JsonIgnore
@@ -69,13 +66,6 @@ public class BuildLogEntry extends DomainObject {
         return time;
     }
 
-    public Long getResultId() {
-        return resultId;
-    }
-
-    public void setResultId(Long resultId) {
-        this.resultId = resultId;
-    }
 
     public void setTime(ZonedDateTime time) {
         this.time = time;

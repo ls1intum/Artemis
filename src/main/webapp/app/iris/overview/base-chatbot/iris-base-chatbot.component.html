@@ -161,6 +161,7 @@
             <div class="chat-header" [class.has-content]="hasHeaderContent()">
                 @if (hasSessionSwitcher()) {
                     <button
+                        type="button"
                         class="session-title-trigger"
                         (click)="toggleSessionMenu($event)"
                         [attr.aria-expanded]="sessionMenuOpen()"
@@ -171,15 +172,15 @@
                         <fa-icon [icon]="faChevronDown" class="session-title-chevron" [class.rotated]="sessionMenuOpen()" />
                     </button>
                     @if (sessionMenuOpen()) {
-                        <div class="session-switcher-inline-menu" (click)="$event.stopPropagation()">
-                            <p-menu [model]="sessionMenuItems()" styleClass="session-switcher-menu" />
+                        <div class="session-switcher-inline-menu">
+                            <p-menu [model]="sessionMenuItems()" styleClass="session-switcher-menu" (click)="$event.stopPropagation()" />
                         </div>
                     }
                 }
                 <div class="d-flex gap-2">
                     @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
                         <div class="toolbox">
-                            <button [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
+                            <button type="button" [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
                                 <div>
                                     {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
                                 </div>
@@ -202,18 +203,23 @@
                     }
                     <div class="toolbox">
                         @if (!isChatHistoryAvailable() && !isChatGptWrapper()) {
-                            <button (click)="openAboutIrisModal()" class="header-control" [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate">
+                            <button
+                                type="button"
+                                (click)="openAboutIrisModal()"
+                                class="header-control"
+                                [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                            >
                                 <fa-icon [icon]="faCircleInfo" />
                             </button>
                         }
                         @if (!isChatHistoryAvailable() && messages().length >= 1) {
-                            <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
+                            <button type="button" id="clear-chat-button" (click)="openNewSession()" class="header-control">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
                         }
 
                         @if (fullSize() !== undefined) {
-                            <button (click)="fullSizeToggle.emit()" class="header-control">
+                            <button type="button" (click)="fullSizeToggle.emit()" class="header-control">
                                 @if (!fullSize()) {
                                     <fa-icon [icon]="faExpand" />
                                 } @else {
@@ -223,7 +229,7 @@
                         }
 
                         @if (showCloseButton()) {
-                            <button (click)="closeChat()" class="header-control">
+                            <button type="button" (click)="closeChat()" class="header-control">
                                 <fa-icon [icon]="faXmark" />
                             </button>
                         }
@@ -309,6 +315,7 @@
                                         @if (isLastAssistantMessage(i)) {
                                             <div class="rate-message-buttons toolbox">
                                                 <button
+                                                    type="button"
                                                     class="btn btn-sm rate-button-not-clicked"
                                                     (click)="copyMessage(message, i)"
                                                     [attr.aria-label]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
@@ -318,6 +325,7 @@
                                                 </button>
                                                 @if (canRateMessage(message)) {
                                                     <button
+                                                        type="button"
                                                         class="btn btn-sm"
                                                         [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
                                                         [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
@@ -330,6 +338,7 @@
                                                         <fa-icon [icon]="faThumbsUp" />
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         class="btn btn-sm"
                                                         [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
                                                         [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
@@ -366,7 +375,7 @@
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
                                 <div class="suggestions-container">
                                     @for (suggestion of suggestions(); track $index) {
-                                        <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
+                                        <button type="button" class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
                                             @if (clickedSuggestion() === suggestion) {
                                                 <fa-icon [icon]="faCircleNotch" animation="spin" />
                                             } @else {
@@ -467,12 +476,14 @@
                                     <span class="chip-preview-text">{{ chipPreviewText() }}</span>
                                 </div>
                             }
-                            <div class="textarea-controls">
-                                <jhi-context-selection
-                                    [disabled]="isInputDisabled()"
-                                    data-onboarding-target="context-selector"
-                                    (contextChanged)="onContextChangedDuringOnboarding()"
-                                />
+                            <div class="textarea-controls" [class.textarea-controls--send-only]="!isContextSelectionAvailable()">
+                                @if (isContextSelectionAvailable()) {
+                                    <jhi-context-selection
+                                        [disabled]="isInputDisabled()"
+                                        data-onboarding-target="context-selector"
+                                        (contextChanged)="onContextChangedDuringOnboarding()"
+                                    />
+                                }
                                 <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="isSendDisabled()" />
                             </div>
                         </div>

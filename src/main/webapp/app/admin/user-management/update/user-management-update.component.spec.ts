@@ -33,7 +33,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 
 // Mock Sentry before tests run to prevent actual error reporting
 vi.mock('@sentry/angular', async () => {
@@ -242,6 +242,53 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.authorities()).toEqual([Authority.STUDENT, Authority.INSTRUCTOR]);
             expect(component.authorities()).not.toContain(Authority.SUPER_ADMIN);
             expect(component.authorities()).not.toContain(Authority.ADMIN);
+        });
+    });
+
+    describe.each([true, false])('password byte limit (new user: %s)', (isNew) => {
+        beforeEach(() => {
+            const user = new User(isNew ? undefined : 123, 'byteuser', 'Byte', 'Test', 'byte@example.org', true, 'en', [Authority.STUDENT]);
+            user.internal = true;
+            component.user.set(user);
+            component['initializeForm']();
+            component.shouldRandomizePassword(false);
+        });
+
+        it.each(['ä'.repeat(37), '€'.repeat(25), '😀'.repeat(19), 'ä'.repeat(36) + 'a'])('should reject a password over 72 bytes: %s', async (password) => {
+            const createSpy = vi.spyOn(adminUserService, 'create').mockReturnValue(of(new HttpResponse({ body: component.user() })));
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user() })));
+            const confirmSpy = vi.spyOn(TestBed.inject(CredentialRevocationConfirmationService), 'confirm');
+            component.revokeCredentials.set(true);
+            component.editForm.patchValue({ password });
+
+            expect(component.editForm.get('password')!.hasError('maxbytes')).toBe(true);
+            await component.save();
+
+            expect(createSpy).not.toHaveBeenCalled();
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it.each(['ä'.repeat(36), '€'.repeat(24), '😀'.repeat(18)])('should submit a password at the 72-byte limit: %s', async (password) => {
+            const method = isNew ? 'create' : 'update';
+            const saveSpy = vi.spyOn(adminUserService, method).mockReturnValue(of(new HttpResponse({ body: component.user() })));
+            component.editForm.patchValue({ password });
+
+            expect(component.editForm.valid).toBe(true);
+            await component.save();
+
+            expect(saveSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ password }));
+        });
+
+        it('should clear an oversized password when switching back to generating or keeping it', () => {
+            component.editForm.patchValue({ password: 'ä'.repeat(37) });
+            expect(component.editForm.get('password')!.invalid).toBe(true);
+
+            component.shouldRandomizePassword(true);
+
+            expect(component.editForm.get('password')!.value).toBe('');
+            expect(component.editForm.valid).toBe(true);
         });
     });
 
@@ -901,10 +948,34 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         expect(fixture.nativeElement.querySelector('label[for="password"]')).not.toBeNull();
     });
 
+    it.each([true, false])('shows the byte limit error and disables saving for an oversized password (new user: %s)', async (isNew) => {
+        const user = new User(isNew ? undefined : 123, 'byteuser', 'Byte', 'Test', 'byte@example.org', true, 'en', [Authority.STUDENT]);
+        user.internal = true;
+        await render(user);
+        component.shouldRandomizePassword(false);
+        const password = component.editForm.get('password')!;
+        password.setValue('ä'.repeat(37));
+        password.markAsTouched();
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('#password') as HTMLInputElement;
+        const save = fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement;
+        const error = fixture.nativeElement.querySelector('[jhiTranslate="global.messages.validate.newpassword.maxbytes"]');
+        expect(error).not.toBeNull();
+        expect(input.getAttribute('aria-invalid')).toBe('true');
+        expect(save.disabled).toBe(true);
+
+        password.setValue('ä'.repeat(36));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[jhiTranslate="global.messages.validate.newpassword.maxbytes"]')).toBeNull();
+        expect(input.getAttribute('aria-invalid')).toBeNull();
+        expect(save.disabled).toBe(false);
+    });
+
     it('marks every required field with a marker hidden from assistive technology', async () => {
         await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
 
-        const markers = Array.from(fixture.nativeElement.querySelectorAll('.tum-ui-form-field-required')) as HTMLElement[];
+        const markers = Array.from(fixture.nativeElement.querySelectorAll('.tumaet-ui-form-field-required')) as HTMLElement[];
 
         expect(markers.length).toBe(4);
         markers.forEach((marker) => expect(marker.getAttribute('aria-hidden')).toBe('true'));
@@ -920,7 +991,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
 
         // The field carries a required marker and points aria-describedby at this region, so leaving it empty
         // would tell a screen reader that something is wrong without ever saying what.
-        const error = fixture.nativeElement.querySelector(`#${controlId}`).closest('tum-ui-form-field').querySelector('.tum-ui-form-field-error');
+        const error = fixture.nativeElement.querySelector(`#${controlId}`).closest('tumaet-ui-form-field').querySelector('.tumaet-ui-form-field-error');
         expect(error.hasAttribute('hidden')).toBe(false);
         expect(error.textContent.trim()).not.toBe('');
     });
@@ -941,7 +1012,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         fixture.detectChanges();
 
         const revokeHost = fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'));
-        const revokeCheckbox = revokeHost.componentInstance as TumUiCheckboxComponent;
+        const revokeCheckbox = revokeHost.componentInstance as TumAetUiCheckboxComponent;
         const revokeInput = checkboxInput('revokeCredentials')!;
         expect(component.useRandomPassword()).toBe(false);
         expect(keepPasswordCheckbox.checked).toBe(false);

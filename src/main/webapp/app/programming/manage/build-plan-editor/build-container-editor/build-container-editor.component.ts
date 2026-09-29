@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, model, output } fr
 import { FormsModule } from '@angular/forms';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -22,7 +22,7 @@ import {
 @Component({
     selector: 'jhi-build-container-editor',
     templateUrl: './build-container-editor.component.html',
-    imports: [FormsModule, TumUiButtonComponent, TumUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, BuildPhasesEditorComponent],
+    imports: [FormsModule, TumAetUiButtonComponent, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, BuildPhasesEditorComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildContainerEditorComponent {

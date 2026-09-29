@@ -692,31 +692,31 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
     }
 
     /**
-     * The first container of a build to merge clears the logs of the builds of the same submission that are over: a
-     * container that failed then and succeeds now must not keep showing its old logs next to the logs of a sibling that
-     * fails now.
+     * Every build keeps its logs under its own aggregated result: a container that failed in an earlier build of the same
+     * submission and succeeds now does not show its old logs next to the logs of a sibling that fails now, and the
+     * earlier build's logs stay available for its result.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testTheFirstContainerToMergeClearsTheLogsOfFinishedBuilds() {
+    void testEveryBuildKeepsItsLogsUnderItsOwnResult() {
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         participation.setProgrammingExercise(programmingExercise);
         String commitHash = "000000000000000000000000000000000000000e";
         ProgrammingSubmission submission = submissionOf(participation, commitHash);
         ProgrammingSubmission reloaded = programmingSubmissionRepository.findById(submission.getId()).orElseThrow();
 
-        // an earlier build: container_a failed, left its logs, and the build is over
+        // an earlier build: container_a failed and left its logs, and the build is over
         var earlier = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "container_a failed earlier"), false, "container_a", null);
         programmingExerciseGradingService.finalizeContainerResult(earlier.result().getId(), participation, true, true, ZonedDateTime.now());
-        assertThat(buildLogEntryService.getLatestBuildLogs(reloaded)).extracting(BuildLogEntry::getLog).containsExactly("container_a failed earlier");
 
         // the new build: container_a succeeds and merges first, then container_b fails
         var appendedA = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null);
-        assertThat(buildLogEntryService.getLatestBuildLogs(reloaded)).as("the new build starts without the earlier build's logs").isEmpty();
         programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "container_b failed now"), false, "container_b",
                 appendedA.result().getId());
 
-        assertThat(buildLogEntryService.getBuildLogsToShow(reloaded, appendedA.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("container_b failed now");
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, appendedA.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("container_b failed now");
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, appendedA.result().getId())).extracting(BuildLogEntry::getContainerName).containsExactly("container_b");
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, earlier.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("container_a failed earlier");
     }
 
     /**
@@ -737,12 +737,12 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         var first = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "first build failed"), false, "container_a", null);
         // the second build merges its first container while the first build is in progress
         var second = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null);
-        assertThat(buildLogEntryService.getBuildLogsToShow(reloaded, first.result().getId())).as("a build in progress keeps its logs").extracting(BuildLogEntry::getLog)
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, first.result().getId())).as("a build in progress keeps its logs").extracting(BuildLogEntry::getLog)
                 .containsExactly("first build failed");
         programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "second build failed"), false, "container_b", second.result().getId());
 
-        assertThat(buildLogEntryService.getBuildLogsToShow(reloaded, first.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("first build failed");
-        assertThat(buildLogEntryService.getBuildLogsToShow(reloaded, second.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("second build failed");
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, first.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("first build failed");
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, second.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("second build failed");
     }
 
     /** a container result that failed to build with one log line, as a crashed container reports */

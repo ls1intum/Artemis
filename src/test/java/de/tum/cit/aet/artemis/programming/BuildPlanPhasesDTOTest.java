@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import tools.jackson.core.JacksonException;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -125,6 +127,31 @@ class BuildPlanPhasesDTOTest {
 
         assertThat(containers.getFirst().repositories()).as("unscoped container keeps a null repository list").isNull();
         assertThat(containers.getLast().repositories()).as("scoped-to-nothing container keeps its empty repository list").isEmpty();
+    }
+
+    @Test
+    void testKeepsTheTimeoutOfContainers() throws Exception {
+        var bounded = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), 90);
+        var json = new BuildPlanPhasesDTO(null, null, List.of(bounded, new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(phase("test"))))).toBuildPlanConfiguration();
+
+        var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(json).effectiveContainers();
+
+        assertThat(containers.getFirst().timeoutSeconds()).isEqualTo(90);
+        assertThat(containers.getLast().timeoutSeconds()).as("a container without a timeout uses the exercise's").isNull();
+    }
+
+    @Test
+    void testKeepsDockerFlagsOfContainers() throws Exception {
+        var flags = new BuildContainerDockerFlagsDTO("none", Map.of("MODE", "student"), null, 512, null);
+        var limited = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), flags);
+        var unlimited = new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(phase("test")));
+        var json = new BuildPlanPhasesDTO(null, null, List.of(limited, unlimited)).toBuildPlanConfiguration();
+
+        var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(json).effectiveContainers();
+
+        assertThat(containers.getFirst().dockerFlags()).isEqualTo(flags);
+        assertThat(containers.getLast().dockerFlags()).as("a container without flags uses the exercise's").isNull();
+        assertThat(json).as("only the fields a container sets are written").doesNotContain("cpuCount").doesNotContain("memorySwap");
     }
 
     @Test

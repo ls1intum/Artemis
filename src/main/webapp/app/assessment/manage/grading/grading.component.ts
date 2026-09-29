@@ -34,7 +34,7 @@ import { MAX_GRADING_POINTS, MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } fr
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { faDownload, faFileImport, faMagic, faTrash } from '@fortawesome/free-solid-svg-icons';
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -102,7 +102,7 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         DeleteButtonDirective,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class GradingComponent implements OnInit {
