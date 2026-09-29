@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -274,7 +274,7 @@ public class AutonomousTutorService {
         // Build a cycle-free wire payload — same reason as PostingService.broadcastForPost: sending the raw Post
         // entity over STOMP previously walked the cyclic reactions → user → User chain that fires Jackson's
         // DeserializerCache race on the receive side.
-        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, MetisCrudAction.UPDATE);
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, CommunicationCrudAction.UPDATE);
 
         // Students must not see posts of a channel whose exercise or exam is not visible to them yet.
         boolean reachesStudents = broadcastToStudents && (!(conversation instanceof Channel visibleChannel) || visibleChannel.isVisibleToStudents());

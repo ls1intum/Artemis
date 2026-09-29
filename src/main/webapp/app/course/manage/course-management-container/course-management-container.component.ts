@@ -35,7 +35,7 @@ import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-ite
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -57,7 +57,7 @@ import { MODULE_FEATURE_ATLASLLM } from 'app/app.constants';
     selector: 'jhi-course-management-container',
     templateUrl: './course-management-container.component.html',
     styleUrls: ['course-management-container.component.scss'],
-    providers: [MetisConversationService],
+    providers: [CourseConversationsService],
     imports: [
         CdkScrollable,
         NgClass,

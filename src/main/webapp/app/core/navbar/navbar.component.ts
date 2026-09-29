@@ -302,7 +302,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
-        communication: 'artemisApp.metis.communication.label',
+        communication: 'artemisApp.communication.label',
         scores: 'entity.action.scores',
         assessment: 'artemisApp.assessment.assessment',
         export: 'artemisApp.quizExercise.export.export',
