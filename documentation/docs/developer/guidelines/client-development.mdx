@@ -710,8 +710,7 @@ private commitCourse(): void {
 
 `CourseUpdateComponent`, `GradingComponent`, `ExamParticipationComponent` and the `quizExercise` signal in
 `QuizExerciseValidationDirective` all use this. Where the state is not signal-backed, build the replacement object
-explicitly, field by field — `CommunicationService.rebuildPostReference` is the example — rather than reaching for a shallow
-copy.
+explicitly, field by field — `Post.withSameValues` is the example — rather than reaching for a shallow copy.
 
 Two things worth knowing when you do clone:
 

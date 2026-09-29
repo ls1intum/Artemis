@@ -49,8 +49,8 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * updates. Copying it to change its identity detaches the nested associations, which re-creates `track`-by-identity
  * rows and re-notifies child inputs on every change-detection pass (ending in NG0103). Declare the signal with
  * `equal: () => false` and re-set the same reference instead — see `CourseUpdateComponent.commitCourse`. Where the
- * state is not signal-backed, build the replacement object explicitly, field by field, as
- * `CommunicationService.rebuildPostReference` does.
+ * state is not signal-backed, build the replacement object explicitly, field by field, as `Post.withSameValues`
+ * does.
  *
  * Note that `equal: () => false` only reaches consumers reading the signal in the declaring component's own template.
  * A child `input()` bound to the same object is NOT notified, because Angular compares the property binding with

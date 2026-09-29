@@ -34,7 +34,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
     channelReferenceClicked = output<number>();
 
     isDeleted = input<boolean>(false);
-    isSubscribeToPosts = input<boolean>(true);
+    subscribesToPosts = input<boolean>(true);
     deleteTimerInSeconds = input<number>(0);
     onUndoDeleteEvent = output<void>();
 
@@ -59,7 +59,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
             // Track signal inputs that were monitored in ngOnChanges
             this.content();
             this.posting();
-            this.isSubscribeToPosts();
+            this.subscribesToPosts();
             this.isEdited();
             this.isDeleted();
             this.deleteTimerInSeconds();
@@ -76,7 +76,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
      * on initialization: calculate posting parts to be displayed
      */
     ngOnInit(): void {
-        if (!this.isSubscribeToPosts()) {
+        if (!this.subscribesToPosts()) {
             const patternMatches: PatternMatch[] = this.getPatternMatches();
             this.computePostingContentParts(patternMatches);
         } else {

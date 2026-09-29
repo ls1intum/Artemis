@@ -21,7 +21,11 @@ import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadca
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 
 /**
- * NOTE: NOT INJECTED IN THE ROOT MODULE
+ * Holds the conversations the current user is a member of in one course, the active conversation and the unread and
+ * code of conduct state, and keeps them current over the conversation membership websocket topic.
+ * <p>
+ * NOTE: NOT INJECTED IN THE ROOT MODULE. Components provide their own instance, mainly the course overview and course
+ * management pages, where it lives as long as the course is open.
  */
 @Injectable()
 export class CourseConversationsService implements OnDestroy {

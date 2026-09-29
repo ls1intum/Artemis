@@ -845,9 +845,9 @@ export class CommunicationService implements OnDestroy {
     };
 
     /**
-     * Determines the channel to be used for websocket communication based on the current post context filter,
-     * i.e., when being on a lecture page, the context is a certain lectureId (e.g., 1), the channel is set to '/topic/communication/lectures/1';
-     * By calling the createWebsocketSubscription method with this channel as parameter, the communication service also subscribes to that messages in this channel
+     * Subscribes to the websocket channel of the current post context filter. Only a plagiarism case has one of its own
+     * ('/topic/communication/plagiarismCase/{plagiarismCaseId}'); messages in conversations arrive through the topics other
+     * services subscribe to, so for any other context a previous channel subscription is dropped.
      */
     private createSubscriptionFromPostContextFilter(): void {
         if (this.currentPostContextFilter.plagiarismCaseId) {
