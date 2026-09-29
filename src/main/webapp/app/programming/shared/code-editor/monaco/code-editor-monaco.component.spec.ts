@@ -22,7 +22,14 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+} from 'app/assessment/shared/entities/feedback.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
@@ -201,6 +208,52 @@ describe('CodeEditorMonacoComponent', () => {
         const remaining = fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent));
         expect(remaining).toHaveLength(1);
         expect(remaining[0].componentInstance).toBe(cards[1].componentInstance);
+    });
+
+    it('keeps an unsaved accepted suggestion open through instruction linking and cancel', () => {
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const accepted = {
+            reference: 'file:file1.java_line:1',
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion`,
+            detailText: 'Original comment',
+            credits: 1,
+            type: FeedbackType.MANUAL,
+        } as Feedback;
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbacks', [accepted]);
+        fixture.detectChanges();
+        comp.onUpdateFeedback.subscribe((feedbacks) => fixture.componentRef.setInput('feedbacks', feedbacks));
+
+        const card = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
+            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
+        card.editFeedback(1);
+        TestBed.inject(GradingInstructionSelectionService).armInstruction({
+            id: 1,
+            credits: 2,
+            feedback: 'Linked feedback',
+            gradingScale: 'good',
+            instructionDescription: 'description',
+            usageCount: 0,
+        });
+        card.applyArmedInstruction();
+        fixture.detectChanges();
+
+        const linkedCard = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
+            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
+        expect(linkedCard).toBe(card);
+        expect(linkedCard.viewOnly()).toBe(false);
+        expect(fixture.debugElement.query(By.css('[data-testid="feedback-save"]'))).not.toBeNull();
+        expect(fixture.debugElement.queryAll(By.css('.inline-feedback__footer button'))).toHaveLength(2);
+        expect(comp.feedbackInternal()).toHaveLength(1);
+        expect(comp.feedbackInternal()[0].text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Suggestion`);
+
+        linkedCard.cancelFeedback();
+        fixture.detectChanges();
+        expect(comp.feedbackInternal()).toHaveLength(1);
+        expect(Feedback.areIdentical(comp.feedbackInternal()[0], accepted)).toBe(true);
+        expect(comp.feedbackInternal()[0].gradingInstruction).toBeUndefined();
+        expect(comp.feedbackInternal()[0].credits).toBe(1);
+        expect(linkedCard.viewOnly()).toBe(true);
     });
 
     it('should remove only the selected suggestion when identical text appears on another line', () => {

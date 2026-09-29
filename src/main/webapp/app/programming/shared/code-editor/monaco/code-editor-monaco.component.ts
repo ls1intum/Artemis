@@ -146,10 +146,14 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly feedbackInternal = linkedSignal<Feedback[]>(() => this.feedbacks());
     readonly feedbackSuggestionsInternal = linkedSignal<Feedback[]>(() => this.feedbackSuggestions());
+    private readonly localFeedbackKeys = new WeakMap<Feedback, object>();
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
     readonly feedbackForSelectedFile = computed(() =>
-        this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((source) => ({ source, feedback: this.attachLineAndReferenceToFeedback(source) })),
+        this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((source) => ({
+            key: source.id === undefined ? this.localFeedbackKey(source) : source.id + (source.reference ?? 'unreferenced'),
+            feedback: this.attachLineAndReferenceToFeedback(source),
+        })),
     );
     readonly feedbackSuggestionsForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
         this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
@@ -157,6 +161,15 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
         return cloneWith(feedback, { line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' });
+    }
+
+    private localFeedbackKey(feedback: Feedback): object {
+        let key = this.localFeedbackKeys.get(feedback);
+        if (!key) {
+            key = {};
+            this.localFeedbackKeys.set(feedback, key);
+        }
+        return key;
     }
 
     annotationsArray: Array<Annotation> = [];
@@ -563,6 +576,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         if (existingFeedbackIndex !== -1) {
             // Existing feedback -> update only
             const feedbackArray = [...this.feedbackInternal()];
+            if (feedback.id === undefined) {
+                this.localFeedbackKeys.set(feedback, this.localFeedbackKey(feedbackArray[existingFeedbackIndex]));
+            }
             feedbackArray[existingFeedbackIndex] = feedback;
             this.feedbackInternal.set(feedbackArray);
         } else {

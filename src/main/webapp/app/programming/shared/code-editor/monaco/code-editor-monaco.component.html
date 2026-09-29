@@ -2,7 +2,7 @@
     <jhi-code-editor-header [showTabSizeSelector]="false" [fileName]="selectedFile()" [isLoading]="loadingCount() > 0" [secondary]="secondaryHeader()" />
     <div class="card-body card-body-monaco">
         @if (selectedFile()) {
-            @for (entry of feedbackForSelectedFile(); track entry.feedback.id === undefined ? entry.source : entry.feedback.id + entry.feedback.reference) {
+            @for (entry of feedbackForSelectedFile(); track entry.key) {
                 @let feedback = entry.feedback;
                 <!-- actual, stored feedback -->
                 <jhi-code-editor-tutor-assessment-inline-feedback
