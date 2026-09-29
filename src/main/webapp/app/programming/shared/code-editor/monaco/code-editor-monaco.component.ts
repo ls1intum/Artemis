@@ -585,9 +585,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             // New feedback -> save as actual feedback.
             this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
-        }
-        if (line !== undefined) {
-            this.removePendingFeedback(line);
+            if (line !== undefined) {
+                this.removePendingFeedback(line);
+            }
         }
         this.renderFeedbackWidgets();
         this.onUpdateFeedback.emit(this.feedbackInternal());

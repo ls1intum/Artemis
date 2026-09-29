@@ -508,11 +508,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         };
         matchUnique((previous, parsed) => previous.title === parsed.title && sameInstructions(previous, parsed));
         matchUnique((previous, parsed) => !!previous.structuredGradingInstructions?.length && sameInstructions(previous, parsed));
-        // A title alone cannot identify a moved criterion when its instructions changed.
+        // A title alone cannot identify a moved criterion or distinguish criteria sharing that title.
         matchUnique(
             (previous, parsed) =>
                 previousCriteria.indexOf(previous) === parsedCriteria.indexOf(parsed) &&
-                (previous.title === parsed.title || (previous.title == undefined && parsed.title == undefined)),
+                previous.title === parsed.title &&
+                unmatchedPrevious.filter((other) => other.title === previous.title).length === 1 &&
+                unmatchedParsed.filter((other) => other.title === parsed.title).length === 1,
         );
 
         let ambiguous = unmatchedPrevious.some((previous) => previous.id !== undefined) && unmatchedParsed.length > 0;

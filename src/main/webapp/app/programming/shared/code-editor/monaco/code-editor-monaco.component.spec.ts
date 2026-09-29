@@ -1125,6 +1125,25 @@ describe('CodeEditorMonacoComponent', () => {
         expect(pendingSpy).toHaveBeenCalledExactlyOnceWith([]);
     });
 
+    it('preserves a pending draft when updating an existing card on the same line', () => {
+        const original = { id: 1, reference: 'file:file1.java_line:1', detailText: 'Original' } as Feedback;
+        const updated = { id: 1, reference: original.reference, detailText: 'Updated' } as Feedback;
+        const draft = { reference: original.reference, gradingInstruction: { id: 2 } } as Feedback;
+        fixture.componentRef.setInput('feedbacks', [original]);
+        fixture.detectChanges();
+        comp.newFeedbackLines.set([1]);
+        comp.setPendingFeedback(1, draft);
+        const pendingSpy = vi.fn();
+        comp.onPendingFeedbackChange.subscribe(pendingSpy);
+
+        comp.updateFeedback(updated, original);
+
+        expect(comp.feedbackInternal()).toEqual([updated]);
+        expect(comp.newFeedbackLines()).toEqual([1]);
+        expect(comp['pendingFeedbackByLine']().get(1)).toBe(draft);
+        expect(pendingSpy).not.toHaveBeenCalled();
+    });
+
     it('should preserve an unsaved feedback draft when the feedback input changes', () => {
         fixture.detectChanges();
         const line = 4;
