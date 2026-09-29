@@ -5,13 +5,14 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { TumAetUiFormFieldComponent } from './tumaet-ui-form-field.component';
 import { TumAetUiSelectComponent } from '../select/tumaet-ui-select.component';
 import { TumAetUiInputNumberComponent } from '../input-number/tumaet-ui-input-number.component';
+import { TumAetUiAutoCompleteComponent } from '../autocomplete/tumaet-ui-autocomplete.component';
 
 /**
  * The package controls that own their inner focusable element have to adopt an enclosing form field the same
  * way a bare `<input tumAetUiInput>` does, or the field's label would point at nothing.
  */
 @Component({
-    imports: [TumAetUiFormFieldComponent, TumAetUiSelectComponent, TumAetUiInputNumberComponent],
+    imports: [TumAetUiFormFieldComponent, TumAetUiSelectComponent, TumAetUiInputNumberComponent, TumAetUiAutoCompleteComponent],
     template: `
         <tumaet-ui-form-field label="Language" [hint]="hint()" [invalid]="invalid()" error="Pick a language">
             <tumaet-ui-select [options]="['English', 'German']" [inputId]="selectId()" />
@@ -19,12 +20,17 @@ import { TumAetUiInputNumberComponent } from '../input-number/tumaet-ui-input-nu
         <tumaet-ui-form-field label="Points" [hint]="hint()" [invalid]="invalid()" error="Points are required">
             <tumaet-ui-input-number />
         </tumaet-ui-form-field>
+        <tumaet-ui-form-field label="Time zone" [hint]="hint()" [invalid]="invalid()" error="Unknown time zone">
+            <tumaet-ui-autocomplete [inputId]="autocompleteId()" [required]="required()" />
+        </tumaet-ui-form-field>
     `,
 })
 class HostComponent {
     readonly hint = signal<string | undefined>(undefined);
     readonly invalid = signal(false);
     readonly selectId = signal<string | undefined>(undefined);
+    readonly autocompleteId = signal<string | undefined>(undefined);
+    readonly required = signal(false);
 }
 
 describe('tumaet-ui-form-field with package controls', () => {
@@ -41,6 +47,8 @@ describe('tumaet-ui-form-field with package controls', () => {
     const labels = () => fixture.debugElement.queryAll(By.css('label')).map((el) => el.nativeElement as HTMLLabelElement);
     const selectTrigger = () => fixture.debugElement.query(By.css('tumaet-ui-select button[role="combobox"]')).nativeElement as HTMLElement;
     const numberInput = () => fixture.debugElement.query(By.css('tumaet-ui-input-number input')).nativeElement as HTMLInputElement;
+    const autocompleteInput = () => fixture.debugElement.query(By.css('tumaet-ui-autocomplete input[role="combobox"]')).nativeElement as HTMLInputElement;
+    const autocompleteContainer = () => fixture.debugElement.query(By.css('tumaet-ui-autocomplete .tumaet-ui-autocomplete-container')).nativeElement as HTMLElement;
 
     it('labels a select by the id its trigger adopts from the field', () => {
         expect(selectTrigger().id).toBeTruthy();
@@ -101,5 +109,52 @@ describe('tumaet-ui-form-field with package controls', () => {
         fixture.detectChanges();
 
         expect(numberInput().getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('labels an autocomplete by the id its input adopts from the field', () => {
+        expect(autocompleteInput().id).toBeTruthy();
+        expect(labels()[2].getAttribute('for')).toBe(autocompleteInput().id);
+    });
+
+    it('labels the id an autocomplete brought with it rather than the generated one', () => {
+        host.autocompleteId.set('time-zone');
+        fixture.detectChanges();
+
+        expect(autocompleteInput().id).toBe('time-zone');
+        expect(labels()[2].getAttribute('for')).toBe('time-zone');
+    });
+
+    it('describes an autocomplete by the field hint, and by the error instead once invalid', () => {
+        host.hint.set('Where the tutorial groups meet');
+        fixture.detectChanges();
+
+        const hintId = (fixture.debugElement.queryAll(By.css('.tumaet-ui-form-field-hint'))[2].nativeElement as HTMLElement).id;
+        expect(autocompleteInput().getAttribute('aria-describedby')).toBe(hintId);
+
+        host.invalid.set(true);
+        fixture.detectChanges();
+
+        const errorId = (fixture.debugElement.queryAll(By.css('.tumaet-ui-form-field-error'))[2].nativeElement as HTMLElement).id;
+        expect(autocompleteInput().getAttribute('aria-describedby')).toBe(errorId);
+    });
+
+    it('marks an autocomplete invalid from the field, visibly and for assistive technology', () => {
+        expect(autocompleteInput().getAttribute('aria-invalid')).toBeNull();
+        expect(autocompleteContainer().className).not.toContain('tumaet:border-state-danger');
+
+        host.invalid.set(true);
+        fixture.detectChanges();
+
+        expect(autocompleteInput().getAttribute('aria-invalid')).toBe('true');
+        expect(autocompleteContainer().className).toContain('tumaet:border-state-danger');
+    });
+
+    it('reports a required autocomplete to assistive technology only when asked to', () => {
+        expect(autocompleteInput().getAttribute('aria-required')).toBeNull();
+
+        host.required.set(true);
+        fixture.detectChanges();
+
+        expect(autocompleteInput().getAttribute('aria-required')).toBe('true');
     });
 });

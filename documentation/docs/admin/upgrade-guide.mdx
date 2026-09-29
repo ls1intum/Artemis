@@ -155,21 +155,25 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
-### 10.1: Installation Metadata on Core Nodes
+### 10.1: Installation Metadata in Production
 
-Every core node refuses to start until three settings describe who runs the installation, whether or not telemetry is enabled:
+Every production core node refuses to start until three settings describe who runs the installation, whether or not telemetry is enabled:
 
 - `info.operatorName` (`INFO_OPERATORNAME`): the organization operating Artemis.
 - `info.operatorAdminName` (`INFO_OPERATORADMINNAME`): the administrator's name.
 - `info.universityName` (`INFO_UNIVERSITYNAME`): the university, school, or institution using Artemis. This setting is new.
 
-Empty values and template values such as `Admin`, `Some Artemis Operator`, `Your University`, or `Anonymous University` are rejected, and the error names each setting to correct. Build agents do not need the settings. Add all three to the configuration of every core node before you upgrade:
+Empty values and template values such as `Admin`, `Some Artemis Operator`, `Your University`, or `Anonymous University` are rejected, and the error names each setting to correct. Development servers, test servers (`info.testServer: true`), and build agents start without them. Add all three to the configuration of every production core node before you upgrade:
 
 - **Ansible:** `artemis_operator_name`, `artemis_operator_admin_name`, and `artemis_university_name`. The collection has no defaults for them and stops the play on a core node where one is missing. Run the configuration update before the version update, because a version update does not rewrite the configuration.
 - **Helm:** `artemis.config.operator.name`, `artemis.config.operator.adminName`, and `artemis.config.operator.universityName`. The chart does not render while one of them is empty.
 - **Docker Compose and manual installations:** the environment variables or `application-prod.yml`.
 
-All three values appear on the About page. See [Telemetry](/admin/telemetry#required-configuration) for the settings and for what the installation reports.
+The About page shows the values that are set. See [Telemetry](/admin/telemetry#required-configuration) for the settings and for what the installation reports.
+
+### 10.0: Connection Collation on MySQL
+
+Searches that match names, logins or titles compare both sides in lower case, so they behave the same on MySQL and PostgreSQL. On MySQL, this requires the connection to use `utf8mb4_unicode_ci`, like the tables. A JDBC URL without `connectionCollation=utf8mb4_unicode_ci` connects with `utf8mb4_0900_ai_ci`, and these searches then fail with `Illegal mix of collations`. Add the parameter to the datasource URL of every node before you upgrade. See [MySQL Character Set and Collation](#mysql-character-set-and-collation). PostgreSQL installations need no action.
 
 ### 9.9: Accounts Provisioned Through SAML2
 
@@ -245,6 +249,46 @@ Every Artemis pull request applies the baseline and the changelogs it summarises
 <Callout variant={CalloutVariant.info}>
   Ensure your database is backed up before performing any major version upgrade. Reverting to the previous release does not revert the schema, so a backup taken immediately before the migration is the only reliable way back.
 </Callout>
+
+### MySQL Character Set and Collation
+
+<Callout variant={CalloutVariant.warning}>
+  On MySQL, Artemis requires the character set `utf8mb4` with the collation `utf8mb4_unicode_ci`, and it requires them everywhere: for the server, for the `Artemis` database and its tables, and for every connection Artemis opens. Setting this up is the responsibility of the administrator. Artemis does not adapt its queries to a different collation.
+</Callout>
+
+The server gets the collation from the MySQL configuration, for example `--character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci`, and a database created afterwards inherits it. The connection does not: MySQL Connector/J connects with `utf8mb4_0900_ai_ci`, the MySQL default for `utf8mb4`, even when the server is configured with `utf8mb4_unicode_ci`. Set the connection collation in the JDBC URL with `connectionCollation=utf8mb4_unicode_ci`:
+
+```yaml
+spring:
+    datasource:
+        url: jdbc:mysql://<db-host>:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+```
+
+With the environment variable `SPRING_DATASOURCE_URL`, append the same parameter. Without it, the searches that match names, logins or titles fail with an error like the following, for example when searching for conversation members or course members:
+
+```text
+Illegal mix of collations (utf8mb4_unicode_ci,IMPLICIT), (utf8mb4_0900_ai_ci,IMPLICIT), (utf8mb4_0900_ai_ci,COERCIBLE) for operation 'like'
+```
+
+To check an installation, make sure the datasource URL of every node contains `connectionCollation=utf8mb4_unicode_ci`. Then check the defaults of the server and of the `Artemis` database, and the collation of its tables and text columns:
+
+```sql
+SHOW VARIABLES WHERE Variable_name IN ('character_set_server', 'collation_server');
+SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = 'Artemis';
+SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'Artemis' AND TABLE_COLLATION <> 'utf8mb4_unicode_ci';
+SELECT TABLE_NAME, COLUMN_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'Artemis' AND COLLATION_NAME IS NOT NULL AND COLLATION_NAME <> 'utf8mb4_unicode_ci';
+```
+
+- The first two queries should return `utf8mb4` and `utf8mb4_unicode_ci`. The server defaults matter even when the database is correct: with `createDatabaseIfNotExist=true`, a recreated `Artemis` database takes them over.
+- The other two should return no rows. A column can declare its own collation, so it can deviate even when its table does not. The Artemis schema declares no column collation, so a deviating column was changed outside of Artemis.
+
+The server configuration only applies when a database is created, so changing it later leaves the default of an existing `Artemis` database as it was. If that default differs, change it with the following statement. It applies to the tables that later migrations create and does not convert existing tables:
+
+```sql
+ALTER DATABASE Artemis CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+PostgreSQL installations are not affected.
 
 ## Technical Details
 
