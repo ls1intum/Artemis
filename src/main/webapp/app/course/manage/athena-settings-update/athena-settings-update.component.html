@@ -2,12 +2,15 @@
     <jhi-course-title-bar-title title="artemisApp.course.athenaConfig.settingsPage.title" />
 </div>
 
-<!-- As wide as Iris's settings page, so the two AI-feedback settings pages share the same content width. -->
-<div class="mx-auto flex max-w-[800px] flex-col gap-5 pt-4">
+<!-- As wide as Iris's settings page, so the two AI-feedback settings pages share the same content width. Spacing that
+     Bootstrap also defines under the same class name with another size (the 3, 4 and 5 steps) is written as an
+     arbitrary value, since Bootstrap's `!important` version would otherwise win. -->
+<div class="mx-auto flex max-w-[800px] flex-col gap-[1rem] pt-[1rem]">
     @for (feature of features; track feature.key) {
         @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
-        <tumaet-ui-card>
-            <div class="flex items-start gap-3">
+        <!-- Muted like the cards on the Iris settings page, so the two AI-feedback settings pages read as one family. -->
+        <tumaet-ui-card variant="muted">
+            <div class="flex items-start gap-[0.75rem]">
                 <tumaet-ui-toggle-switch
                     [inputId]="feature.testId + '-toggle'"
                     [ngModel]="feature.enabled()"
@@ -22,6 +25,93 @@
                     <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
                 </label>
             </div>
+            <!-- Athena only adapts students' own feedback requests on text exercises to the feedback style, so the
+                 section belongs to this switch and is only shown while it is on. Switching it off keeps the stored
+                 defaults for when it is switched on again. -->
+            @if (feature.key === 'formativeFeedbackEnabled' && feature.enabled()) {
+                <div class="mt-[1rem] border-t border-(--border-color) pt-[1rem]" data-testid="athena-settings-feedback-style">
+                    <h6 class="athena-settings-section-title" jhiTranslate="artemisApp.course.athenaConfig.feedbackStyle.title"></h6>
+                    <small class="block text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.feedbackStyle.hint"></small>
+
+                    <!-- Each style gets a box of its own, so detail and formality read as two separate settings. The
+                         sliders are laid out after Iris's "Level of Instructional Support" slider. -->
+                    <div class="mt-[1rem] flex flex-col gap-[1rem]">
+                        @for (style of feedbackStyles; track style.field) {
+                            @let styleKey = 'artemisApp.course.athenaConfig.' + style.field;
+                            <div class="rounded-lg border border-(--border-color) bg-(--module-bg) p-[1rem]" [attr.data-testid]="'athena-settings-' + style.testId">
+                                <span class="block font-medium" [jhiTranslate]="styleKey + '.label'"></span>
+                                <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="styleKey + '.tooltip'"></small>
+
+                                <!-- A slider in the WAI-ARIA sense, like the p-slider on Iris's page: the track is the one focusable
+                                     element and takes the arrow keys, Home and End, while the ticks are only click targets that
+                                     hand the focus to it rather than taking it themselves. The vertical padding keeps the
+                                     enlarged tick hit areas from being clipped. -->
+                                <div
+                                    #slider
+                                    class="relative mx-auto mt-[0.75rem] max-w-[80%] rounded-full py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
+                                    role="slider"
+                                    tabindex="0"
+                                    aria-valuemin="1"
+                                    aria-valuemax="3"
+                                    [attr.aria-valuenow]="style.level()"
+                                    [attr.aria-valuetext]="style.ticks[style.level() - 1].labelKey | artemisTranslate"
+                                    [attr.aria-label]="styleKey + '.label' | artemisTranslate"
+                                    [attr.data-testid]="'athena-settings-' + style.testId + '-slider'"
+                                    (keydown)="onFeedbackStyleKeydown(style.field, $event)"
+                                >
+                                    <div class="h-1.5 rounded-full bg-(--border-color)">
+                                        <div class="h-full rounded-full bg-(--primary)" [style.width.%]="tickPercent(style.level())"></div>
+                                    </div>
+                                    <div
+                                        class="pointer-events-none absolute top-1/2 z-3 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-(--primary) bg-(--module-bg)"
+                                        [style.left.%]="tickPercent(style.level())"
+                                    ></div>
+                                    @for (tick of style.ticks; track tick.value) {
+                                        <button
+                                            type="button"
+                                            tabindex="-1"
+                                            aria-hidden="true"
+                                            class="absolute top-1/2 z-2 size-5 -translate-x-1/2 -translate-y-1/2 cursor-pointer appearance-none border-0 bg-transparent p-0"
+                                            [style.left.%]="tickPercent(tick.value)"
+                                            [attr.data-testid]="'athena-settings-' + style.testId + '-' + tick.value"
+                                            (mousedown)="$event.preventDefault()"
+                                            (click)="selectFeedbackStyleLevel(style.field, tick.value); slider.focus()"
+                                        >
+                                            <!-- A tick behind the handle takes the primary colour; the one under it is hidden by the handle. -->
+                                            <span
+                                                class="absolute top-1/2 left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-(--module-bg) transition-colors"
+                                                [class.opacity-0]="style.level() === tick.value"
+                                                [style.border-color]="tick.value < style.level() ? 'var(--primary)' : 'var(--border-color)'"
+                                            ></span>
+                                        </button>
+                                    }
+                                </div>
+                                <div class="relative mx-auto mt-1 h-[1.5em] max-w-[80%] text-xs text-(--body-color)">
+                                    @for (tick of style.ticks; track tick.value) {
+                                        <span
+                                            class="absolute top-0 -translate-x-1/2 whitespace-nowrap"
+                                            [style.left.%]="tickPercent(tick.value)"
+                                            [jhiTranslate]="tick.labelKey"
+                                        ></span>
+                                    }
+                                </div>
+
+                                <!-- Example feedback, rendered with the same component a student's text exercise result uses: the
+                                     feedback is attached to a sentence of a sample submission and shows the title and
+                                     description Athena returns, so the selected level's effect is concrete. Boxed on a tinted
+                                     surface like the example conversation on Iris's settings page. -->
+                                <div
+                                    class="mt-[1rem] rounded-lg bg-(--hover-slightly-darker-body-bg) p-[1rem]"
+                                    [attr.data-testid]="'athena-settings-' + style.testId + '-example-box'"
+                                >
+                                    <small class="mb-2 block text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.exampleFeedbackLabel"></small>
+                                    <jhi-text-result [attr.data-testid]="'athena-settings-' + style.testId + '-example'" [result]="style.example()" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </tumaet-ui-card>
     }
 </div>
