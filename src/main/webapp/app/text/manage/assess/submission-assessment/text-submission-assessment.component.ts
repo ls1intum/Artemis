@@ -307,6 +307,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.aiExperienceOptInService.hasChosenNoAi();
     }
 
+    /** Mirrors the guard in loadFeedbackSuggestions(): suggestions only apply to a result without assessor feedback. */
+    canApplyFeedbackSuggestions(): boolean {
+        return this.assessments.length === 0 && !!this.result();
+    }
+
     onOptInToAiFeedbackSuggestions(): void {
         // The router can reuse this component for another submission while the modal or the preference update is
         // pending; only fetch for the submission that showed the hint. loadFeedbackSuggestions() checks that it is
@@ -438,7 +443,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     loadFeedbackSuggestions(): void {
         // Without a result there is nothing to attach a suggestion to. This happens for a correction round the tutor has
         // not started yet, where the submission is opened before a result exists.
-        if (this.assessments.length > 0 || !this.result()) {
+        if (!this.canApplyFeedbackSuggestions()) {
             return;
         }
         this.loadingFeedbackSuggestions.set(true);

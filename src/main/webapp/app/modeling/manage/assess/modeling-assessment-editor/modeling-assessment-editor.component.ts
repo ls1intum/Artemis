@@ -193,6 +193,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
+    canApplyFeedbackSuggestions(): boolean {
+        return this.isEligibleForFeedbackSuggestions(this.feedback);
+    }
+
     /** Whether Athena suggestions may be added to the current assessment, i.e. it has no feedback from an assessor yet. */
     private isEligibleForFeedbackSuggestions(feedbacks: Feedback[]): boolean {
         const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;

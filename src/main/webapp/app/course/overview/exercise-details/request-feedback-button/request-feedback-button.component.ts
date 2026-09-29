@@ -185,25 +185,29 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     async showLLMSelectionModal(): Promise<void> {
+        // The router can reuse this component for another exercise while the modal is open; pin the exercise and
+        // participation the student opened it for, so accepting cannot request feedback for a different one.
+        const exerciseIdAtPrompt = this.exercise().id;
+        const participationIdAtPrompt = this.participationId();
         const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
 
         switch (choice) {
             case LLMSelectionDecision.CLOUD_AI:
-                this.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+                this.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI, exerciseIdAtPrompt, participationIdAtPrompt);
                 break;
             case LLMSelectionDecision.LOCAL_AI:
-                this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
+                this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI, exerciseIdAtPrompt, participationIdAtPrompt);
                 break;
             case LLMSelectionDecision.NO_AI:
                 // Store that the user actively declined AI usage
-                this.acceptLLMUsage(LLMSelectionDecision.NO_AI);
+                this.acceptLLMUsage(LLMSelectionDecision.NO_AI, exerciseIdAtPrompt, participationIdAtPrompt);
                 break;
             case LLM_MODAL_DISMISSED:
                 break;
         }
     }
 
-    acceptLLMUsage(decision: LLMSelectionDecision) {
+    acceptLLMUsage(decision: LLMSelectionDecision, exerciseIdAtPrompt = this.exercise().id, participationIdAtPrompt = this.participationId()) {
         this.acceptSubscription?.unsubscribe();
 
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
@@ -214,7 +218,9 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
             // requestFeedback() re-fetches the participation: the click that opened the modal also closes the
             // surrounding popover, destroying this component and possibly canceling its initial participation load.
-            if (hasAccepted && this.isSubmitted()) {
+            // The choice itself is saved regardless, but feedback is only requested for the exercise the modal was opened for.
+            const isSameExercise = this.exercise().id === exerciseIdAtPrompt && this.participationId() === participationIdAtPrompt;
+            if (hasAccepted && isSameExercise && this.isSubmitted()) {
                 this.requestFeedback();
             }
         });

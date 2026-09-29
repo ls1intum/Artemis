@@ -446,7 +446,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /** Suggestions only make sense for a new assessment, i.e. one that contains nothing but automatic feedback. */
-    private isEligibleForFeedbackSuggestions(): boolean {
+    isEligibleForFeedbackSuggestions(): boolean {
         return (
             this.isFeedbackSuggestionsEnabled() &&
             (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length &&

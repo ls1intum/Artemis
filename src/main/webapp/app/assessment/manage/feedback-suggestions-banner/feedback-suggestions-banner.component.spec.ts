@@ -109,6 +109,16 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         expect(fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions'))).toBeFalsy();
     });
 
+    it('should hide the opt-in hint once the assessor has added feedback to the current assessment', () => {
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
+        fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
+        fixture.componentRef.setInput('canApplyFeedbackSuggestions', false);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions'))).toBeFalsy();
+    });
+
     it('should emit optIn when the opt-in hint button is clicked', () => {
         fixture.componentRef.setInput('isAssessor', true);
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);

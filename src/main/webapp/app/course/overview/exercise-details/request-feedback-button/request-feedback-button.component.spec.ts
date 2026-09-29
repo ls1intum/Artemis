@@ -525,6 +525,35 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
     });
 
+    it('should save the choice but not request feedback for another exercise loaded while the AI Experience modal was open', async () => {
+        // Regression test: the router reuses this component across exercises. Accepting AI in a modal opened on
+        // exercise A must not send a feedback request for exercise B that was loaded in the meantime.
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true);
+        await initAndTick();
+
+        let resolveModal: (choice: LLMSelectionDecision) => void = () => {};
+        vi.spyOn(llmModalService, 'open').mockReturnValue(new Promise((resolve) => (resolveModal = resolve)));
+        vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+        const requestFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+
+        const modal = component.showLLMSelectionModal();
+
+        const otherExercise = { ...createBaseExercise(ExerciseType.TEXT, false, participation), id: exercise.id! + 1 } as Exercise;
+        setupComponentInputs(otherExercise, true);
+        await initAndTick();
+
+        resolveModal(LLMSelectionDecision.CLOUD_AI);
+        await modal;
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        expect(requestFeedbackSpy).not.toHaveBeenCalled();
+    });
+
     it('should accept local LLM usage when modal returns local', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);

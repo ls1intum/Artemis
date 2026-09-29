@@ -20,6 +20,8 @@ export class FeedbackSuggestionsBannerComponent {
     readonly requiresAiExperienceOptIn = input<boolean>(false);
     /** Distinguishes a deliberate No AI choice from no choice yet, so the opt-in prompt can say "change" instead of "choose". */
     readonly hasChosenNoAi = input<boolean>(false);
+    /** Whether suggestions can still be added to the current assessment, i.e. the assessor has not added feedback yet. */
+    readonly canApplyFeedbackSuggestions = input<boolean>(true);
     readonly optIn = output<void>();
 
     protected readonly optInHintKey = computed(() =>

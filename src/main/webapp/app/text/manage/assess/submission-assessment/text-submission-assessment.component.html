@@ -34,6 +34,7 @@
         [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
         [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
         [hasChosenNoAi]="hasChosenNoAi()"
+        [canApplyFeedbackSuggestions]="canApplyFeedbackSuggestions()"
         (optIn)="onOptInToAiFeedbackSuggestions()"
     />
     @if (submission) {

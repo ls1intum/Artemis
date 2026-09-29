@@ -12,7 +12,7 @@
         </div>
     </tumaet-ui-message>
 }
-@if (!isLoading() && isAssessor() && !resultCompletionDate() && requiresAiExperienceOptIn()) {
+@if (!isLoading() && isAssessor() && !resultCompletionDate() && requiresAiExperienceOptIn() && canApplyFeedbackSuggestions()) {
     <tumaet-ui-message severity="secondary">
         <div class="flex items-center gap-2">
             <fa-icon [icon]="faInfoCircle" size="lg" />

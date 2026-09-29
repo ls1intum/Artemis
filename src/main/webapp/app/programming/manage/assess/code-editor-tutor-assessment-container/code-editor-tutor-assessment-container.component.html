@@ -57,6 +57,7 @@
             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
             [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
             [hasChosenNoAi]="hasChosenNoAi()"
+            [canApplyFeedbackSuggestions]="isEligibleForFeedbackSuggestions()"
             (optIn)="onOptInToAiFeedbackSuggestions()"
         />
         @if (submission()) {
