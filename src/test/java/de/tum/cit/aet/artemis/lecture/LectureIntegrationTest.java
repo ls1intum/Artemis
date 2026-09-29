@@ -615,6 +615,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getLecture_lectureDoesNotExist_shouldReturnNotFound() throws Exception {
+        // Administrators pass the access check without the lecture, so the lecture itself is looked up.
+        request.get("/api/lecture/lectures/123124123123", HttpStatus.NOT_FOUND, LectureResource.SimpleLectureDTO.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void testGetLectureTitleForNonExistingLecture() throws Exception {
         request.get("/api/lecture/lectures/123124123123/title", HttpStatus.NOT_FOUND, String.class);

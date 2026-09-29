@@ -179,6 +179,7 @@ public class AdminCourseResource {
         CourseValidator.validatePointBounds(course);
         CourseValidator.validateStartAndEndDate(course);
         CourseValidator.validateSemester(course);
+        CourseValidator.validateTimeZone(course.getTimeZone());
 
         if (course.isOnlineCourse() && ltiApi.isPresent()) {
             ltiApi.get().createOnlineCourseConfiguration(course);

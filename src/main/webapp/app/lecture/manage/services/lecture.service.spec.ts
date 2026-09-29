@@ -8,7 +8,7 @@ import { take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -114,6 +114,15 @@ describe('Lecture Service', () => {
 
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should publish the saved title for the breadcrumb and the page title', () => {
+            const titleSpy = vi.spyOn(TestBed.inject(EntityTitleService), 'setTitle');
+
+            service.update(elemDefault).pipe(take(1)).subscribe();
+            httpMock.expectOne({ url: resourceUrl, method: 'PUT' }).flush({ ...elemDefault, title: 'Renamed Lecture' });
+
+            expect(titleSpy).toHaveBeenCalledWith(EntityType.LECTURE, [elemDefault.id], 'Renamed Lecture');
         });
 
         it('should find a lecture with details in the database', async () => {
@@ -255,6 +264,39 @@ describe('Lecture Service', () => {
         it('should convert Dates from server', async () => {
             const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
             expect(results).toEqual([elemDefault, elemDefault]);
+        });
+
+        it('should convert no lectures to none', () => {
+            expect(service.convertLectureArrayDatesFromServer(undefined)).toBeUndefined();
+        });
+
+        it('should convert the dates of lectures and their units from the server', () => {
+            const lecture = { id: 3, startDate: '2026-10-01T08:00:00Z', lectureUnits: [{ id: 5, type: 'text', releaseDate: '2026-10-02T08:00:00Z' }] } as unknown as Lecture;
+
+            const [converted] = service.convertLectureArrayDatesFromServer([lecture])!;
+
+            expect(dayjs.isDayjs(converted.startDate)).toBe(true);
+            expect(dayjs.isDayjs(converted.lectureUnits![0].releaseDate)).toBe(true);
+        });
+
+        it('should convert the release dates of the units of a found lecture', () => {
+            service
+                .find(3)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            httpMock.expectOne({ url: `${resourceUrl}/3`, method: 'GET' }).flush({ id: 3, lectureUnits: [{ id: 5, type: 'text', releaseDate: '2026-10-02T08:00:00Z' }] });
+
+            expect(dayjs.isDayjs(expectedResult.body.lectureUnits[0].releaseDate)).toBe(true);
+        });
+
+        it('should create a lecture series for a course', () => {
+            const lectures = [new LectureSeriesCreateLectureDTO('Lecture 1', dayjs('2026-10-01T08:00:00Z'), dayjs('2026-10-01T09:30:00Z'))];
+
+            service.createSeries(lectures, 42).pipe(take(1)).subscribe();
+
+            const req = httpMock.expectOne({ url: 'api/lecture/courses/42/lectures', method: 'POST' });
+            expect(req.request.body).toBe(lectures);
+            req.flush(null);
         });
     });
 });

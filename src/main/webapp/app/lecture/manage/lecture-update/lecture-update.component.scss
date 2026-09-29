@@ -2,10 +2,12 @@
     height: 350px;
 }
 
-.guided-mode-button {
-    float: right;
+// Layout is Tailwind in the template; the surface and text roles have no Tailwind utility.
+.lecture-update-section {
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
 }
 
-.process-units-button {
-    float: right;
+.lecture-update-hint {
+    color: var(--text-body-secondary);
 }
