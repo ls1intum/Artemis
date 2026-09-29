@@ -178,6 +178,10 @@ artemis:
             completions-path: /api/chat/completions
             temperature: 0
 
+    # Metis asks students comprehension questions about their own solution after the due date of a programming exercise
+    metis:
+        enabled: false
+
     weaviate:
         enabled: false
 

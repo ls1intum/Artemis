@@ -19,10 +19,10 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
         "de.tum.cit.aet.artemis.course.repository", "de.tum.cit.aet.artemis.deimos.repository", "de.tum.cit.aet.artemis.exam.repository",
         "de.tum.cit.aet.artemis.exercise.repository", "de.tum.cit.aet.artemis.fileupload.repository", "de.tum.cit.aet.artemis.globalsearch.repository",
         "de.tum.cit.aet.artemis.hyperion.repository", "de.tum.cit.aet.artemis.iris.repository", "de.tum.cit.aet.artemis.lecture.repository",
-        "de.tum.cit.aet.artemis.localci.repository", "de.tum.cit.aet.artemis.lti.repository", "de.tum.cit.aet.artemis.modeling.repository",
-        "de.tum.cit.aet.artemis.notification.repository", "de.tum.cit.aet.artemis.plagiarism.repository", "de.tum.cit.aet.artemis.programming.repository",
-        "de.tum.cit.aet.artemis.quiz.repository", "de.tum.cit.aet.artemis.text.repository", "de.tum.cit.aet.artemis.tutorialgroup.repository",
-        "de.tum.cit.aet.artemis.videosource.repository" }, repositoryBaseClass = RepositoryImpl.class)
+        "de.tum.cit.aet.artemis.localci.repository", "de.tum.cit.aet.artemis.lti.repository", "de.tum.cit.aet.artemis.metis.repository",
+        "de.tum.cit.aet.artemis.modeling.repository", "de.tum.cit.aet.artemis.notification.repository", "de.tum.cit.aet.artemis.plagiarism.repository",
+        "de.tum.cit.aet.artemis.programming.repository", "de.tum.cit.aet.artemis.quiz.repository", "de.tum.cit.aet.artemis.text.repository",
+        "de.tum.cit.aet.artemis.tutorialgroup.repository", "de.tum.cit.aet.artemis.videosource.repository" }, repositoryBaseClass = RepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement
 public class DatabaseConfiguration {
