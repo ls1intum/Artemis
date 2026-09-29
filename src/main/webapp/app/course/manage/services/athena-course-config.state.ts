@@ -36,6 +36,12 @@ export class AthenaCourseConfigState {
     /** The configuration on screen; undefined until it is either loaded or switched. */
     readonly config = signal<AthenaCourseConfigDTO | undefined>(undefined);
 
+    /**
+     * Whether the load has answered, successfully or not. Until then the configuration on screen is only the "disabled"
+     * fallback, so switching a feature off would be dropped as a no-op while the stored state may well be on.
+     */
+    readonly loaded = signal(false);
+
     readonly formativeFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.formativeFeedbackEnabled ?? false);
 
     readonly gradingFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.gradingFeedbackEnabled ?? false);
@@ -87,8 +93,12 @@ export class AthenaCourseConfigState {
                         this.apply(feature, loaded[feature]);
                     }
                 }
+                this.loaded.set(true);
             },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            error: (error: HttpErrorResponse) => {
+                this.loaded.set(true);
+                onError(this.alertService, error);
+            },
         });
     }
 

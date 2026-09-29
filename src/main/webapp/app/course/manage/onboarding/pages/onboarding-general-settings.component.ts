@@ -69,6 +69,8 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly athenaConfig = computed(() => this.athenaState()?.config());
     readonly isAthenaFormativeEnabled = computed(() => this.athenaState()?.formativeFeedbackEnabled() ?? false);
     readonly isAthenaGradingEnabled = computed(() => this.athenaState()?.gradingFeedbackEnabled() ?? false);
+    /** Until the configuration has loaded, "Disabled" is only a fallback, so the Athena toggles cannot be switched yet. */
+    readonly isAthenaLoaded = computed(() => this.athenaState()?.loaded() ?? false);
 
     /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
     protected readonly athenaFeatures = [

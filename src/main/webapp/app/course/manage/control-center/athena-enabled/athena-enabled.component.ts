@@ -47,6 +47,9 @@ export class AthenaEnabledComponent {
 
     readonly masterEnabled = computed(() => this.state()?.masterEnabled() ?? false);
 
+    /** Until the configuration has loaded, "Disabled" is only a fallback, so the toggle cannot be switched yet. */
+    readonly loaded = computed(() => this.state()?.loaded() ?? false);
+
     /**
      * Route to the settings page. Computed rather than a method, because `[routerLink]="settingsRoute()"` is evaluated
      * on every change-detection pass and a fresh array each pass makes RouterLink re-process the link every time.

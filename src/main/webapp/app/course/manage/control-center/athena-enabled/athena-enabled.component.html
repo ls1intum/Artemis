@@ -1,6 +1,7 @@
 <div class="athena-controls">
     <jhi-enabled-toggle
         [enabled]="masterEnabled()"
+        [disabled]="!loaded()"
         [ariaLabel]="'artemisApp.course.athenaConfig.enabledLabel' | artemisTranslate"
         testId="athena-enabled"
         (enabledChange)="setEnabled($event)"

@@ -155,6 +155,7 @@
                         <jhi-enabled-toggle
                             class="max-w-fit"
                             [enabled]="feature.enabled()"
+                            [disabled]="!isAthenaLoaded()"
                             [ariaLabel]="labelKey + '.label' | artemisTranslate"
                             [testId]="feature.testId"
                             (enabledChange)="setAthenaFeatureEnabled(feature.key, $event)"
