@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
@@ -172,9 +173,10 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
      * Deliberately does NOT filter out tutorial lectures, unlike {@link #findAllWithAttachmentByCourseId}: a
      * course whose only attachment video units are on a tutorial lecture (or became one after content was
      * already ingested) still needs to be walked so {@code deleteOrphanedIndexRows} can garbage-collect its
-     * Iris rows. Without this, such a course drops off the walk entirely and its orphaned rows are never
-     * cleaned up. The per-unit reconcile loop still excludes tutorial units from active re-ingestion via
-     * {@link #findAllWithAttachmentByCourseId}; only the course-level cleanup traversal is unfiltered here.
+     * Iris rows via {@link #findTutorialLectureUnitIdentities}. Without this, such a course drops off the walk
+     * entirely and its orphaned rows are never cleaned up. The per-unit reconcile loop still excludes tutorial
+     * units from active re-ingestion via {@link #findAllWithAttachmentByCourseId}; only the course-level cleanup
+     * traversal is unfiltered here.
      *
      * @param courseId the course id to continue after (exclusive); pass 0 to start from the beginning
      * @param pageable pagination to limit the number of courses per walk
@@ -222,4 +224,23 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             WHERE avu.id IN :ids
             """)
     Set<Long> findExistingIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * From the given ids, return the identities of those attachment video units whose lecture is a tutorial lecture.
+     * Used by the ingestion reconciler to delete the index rows of units whose lecture became a tutorial lecture after
+     * they were ingested: such a unit still exists, so the orphan check keeps it, and the per-unit loop excludes it.
+     * The identity comes from the database rather than the census, whose lecture id is missing when the index holds
+     * only chunks of the unit, and the deletion is scoped by lecture id.
+     *
+     * @param ids candidate lecture unit ids
+     * @return course, lecture, and unit ids of the given units that belong to a tutorial lecture
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO(l.course.id, l.id, avu.id)
+            FROM AttachmentVideoUnit avu
+                JOIN avu.lecture l
+            WHERE avu.id IN :ids
+                AND l.isTutorialLecture = TRUE
+            """)
+    List<IngestionJobIdentityDTO> findTutorialLectureUnitIdentities(@Param("ids") Collection<Long> ids);
 }

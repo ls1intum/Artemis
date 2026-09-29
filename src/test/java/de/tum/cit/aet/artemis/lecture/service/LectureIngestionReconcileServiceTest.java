@@ -683,6 +683,29 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
+        void shouldDeleteRowsOfUnitsWhoseLectureBecameATutorialLecture() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            long orphanUnitId = 999L;
+            long tutorialUnitId = 555L;
+            long tutorialLectureId = 42L;
+            when(attachmentVideoUnitRepository.findExistingIds(any())).thenReturn(Set.of(unit.getId(), tutorialUnitId));
+            when(attachmentVideoUnitRepository.findTutorialLectureUnitIdentities(any()))
+                    .thenReturn(List.of(new IngestionJobIdentityDTO(COURSE_ID, tutorialLectureId, tutorialUnitId)));
+            // Only chunks of the tutorial unit are indexed, so the census does not know its lecture.
+            IngestionCensusUnitDTO chunksOnly = new IngestionCensusUnitDTO(null, tutorialUnitId, null, 0, null, null, null, 10, 1, 1, 5, 3, 3, 0, 5, 1, 5, 0, 0, "en");
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1), chunksOnly, censusEntry(orphanUnitId, "v1:whatever", 1));
+
+            reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<IngestionJobIdentityDTO>> captor = ArgumentCaptor.forClass(List.class);
+            verify(irisLectureApi).deleteLectureUnitsByIdentity(captor.capture());
+            assertThat(captor.getValue()).containsExactlyInAnyOrder(new IngestionJobIdentityDTO(COURSE_ID, lecture.getId(), orphanUnitId),
+                    new IngestionJobIdentityDTO(COURSE_ID, tutorialLectureId, tutorialUnitId));
+        }
+
+        @Test
         void shouldNotDeleteAnythingWhenAllCensusedUnitsExist() {
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);

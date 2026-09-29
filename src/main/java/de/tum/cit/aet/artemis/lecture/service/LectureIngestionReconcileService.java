@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -45,7 +46,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * <li><b>The index itself</b>: the Pyris ingestion census reports what the index actually holds, including
  * the fingerprint stamp of each unit row. A DONE unit whose stamp is missing or different lost its data
  * (backup restore, collection recreate, raced delete) and needs a re-run; a censused unit that no longer
- * exists in the database is an orphan and gets deleted.</li>
+ * exists in the database is an orphan and gets deleted, as do the rows of a unit whose lecture is a
+ * tutorial lecture.</li>
  * </ul>
  * The reconciler never certifies anything itself: every divergence is resolved by requeueing the unit
  * through the normal pipeline, whose end-of-run audit is the only thing that produces a confirmed
@@ -581,24 +583,31 @@ public class LectureIngestionReconcileService {
     }
 
     /**
-     * Delete index rows whose lecture unit no longer exists in the database.
+     * Delete index rows whose lecture unit no longer exists in the database, or whose lecture is a tutorial lecture.
      * The census reports a unit as long as ANY collection still holds rows for it, so this is what
-     * garbage-collects leftovers from failed deletions and superseded runs.
+     * garbage-collects leftovers from failed deletions and superseded runs, and the rows of units whose
+     * lecture was marked as a tutorial lecture after they were ingested, which nothing else removes.
      */
     private void deleteOrphanedIndexRows(IngestionCensusDTO census, List<AttachmentVideoUnit> courseUnits) {
         // The course unit list excludes tutorial lectures, so existence is checked against the database
         // rather than against the list: an id that exists at all is not an orphan. One batched query
         // resolves all census ids at once instead of an existsById per row.
         List<Long> censusUnitIds = census.units().stream().map(IngestionCensusUnitDTO::lectureUnitId).toList();
-        Set<Long> existingUnitIds = censusUnitIds.isEmpty() ? Set.of() : attachmentVideoUnitRepository.findExistingIds(censusUnitIds);
-        List<IngestionJobIdentityDTO> orphans = census.units().stream().filter(entry -> !existingUnitIds.contains(entry.lectureUnitId()))
-                .map(entry -> new IngestionJobIdentityDTO(census.courseId(), entry.lectureId() != null ? entry.lectureId() : 0, entry.lectureUnitId())).toList();
-        if (orphans.isEmpty()) {
+        if (censusUnitIds.isEmpty()) {
             return;
         }
-        log.info("Reconcile: deleting {} orphaned index rows for course {} (units {})", orphans.size(), census.courseId(),
-                orphans.stream().map(IngestionJobIdentityDTO::lectureUnitId).toList());
-        irisLectureApi.get().deleteLectureUnitsByIdentity(orphans);
+        Set<Long> existingUnitIds = attachmentVideoUnitRepository.findExistingIds(censusUnitIds);
+        List<IngestionJobIdentityDTO> orphans = census.units().stream().filter(entry -> !existingUnitIds.contains(entry.lectureUnitId()))
+                .map(entry -> new IngestionJobIdentityDTO(census.courseId(), entry.lectureId() != null ? entry.lectureId() : 0, entry.lectureUnitId())).toList();
+        // A tutorial lecture unit still exists, so it is never an orphan, and the per-unit loop excludes it.
+        List<IngestionJobIdentityDTO> tutorialUnits = attachmentVideoUnitRepository.findTutorialLectureUnitIdentities(censusUnitIds);
+        if (orphans.isEmpty() && tutorialUnits.isEmpty()) {
+            return;
+        }
+        log.info("Reconcile: deleting index rows for course {} of {} orphaned units {} and {} tutorial lecture units {}", census.courseId(), orphans.size(),
+                orphans.stream().map(IngestionJobIdentityDTO::lectureUnitId).toList(), tutorialUnits.size(),
+                tutorialUnits.stream().map(IngestionJobIdentityDTO::lectureUnitId).toList());
+        irisLectureApi.get().deleteLectureUnitsByIdentity(Stream.concat(orphans.stream(), tutorialUnits.stream()).toList());
     }
 
     /**
