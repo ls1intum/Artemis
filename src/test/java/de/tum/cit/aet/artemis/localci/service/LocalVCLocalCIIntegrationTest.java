@@ -573,6 +573,41 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(runConfig.env()).as("the exercise's variables, the container's on top").containsExactlyInAnyOrder("SHARED=exercise", "MODE=container");
         }
 
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testContainerTimeoutBoundsItsJob() {
+            assertJobTimeoutOfContainer(90, 90);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAStoredContainerTimeoutAboveTheExercisesIsCapped() {
+            // stored before the validator rejected it: the job still gets no more than the exercise's timeout
+            assertJobTimeoutOfContainer(300, 200);
+        }
+
+        /**
+         * Triggers a build of a plan whose one container sets the given timeout, with an exercise timeout of 200 seconds,
+         * and asserts the timeout the queued job carries.
+         */
+        private void assertJobTimeoutOfContainer(int containerTimeoutSeconds, int expectedJobTimeoutSeconds) {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            buildConfig.setTimeoutSeconds(200);
+            var container = new BuildContainerDTO("bounded", null, null, List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of())),
+                    containerTimeoutSeconds);
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            assertThat(queuedJobs.poll().buildConfig().timeoutSeconds()).isEqualTo(expectedJobTimeoutSeconds);
+        }
+
         private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {
             // Create build config.
             String dockerFlags = "{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}".formatted(networkName);

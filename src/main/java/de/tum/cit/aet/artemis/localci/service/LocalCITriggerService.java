@@ -407,8 +407,28 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
-                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, timeoutSecondsOf(container, buildConfig.getTimeoutSeconds()),
+                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+    }
+
+    /**
+     * The timeout of a container's build job: the container's own if it sets one, otherwise the exercise's. A container
+     * timeout tightens the exercise timeout, which has to cover the slowest container, so it is capped at it. The
+     * validator rejects a larger container timeout on save; the cap covers a plan stored before that rule. An exercise
+     * timeout of 0 means the instance default, which the agent applies as the bound of every job anyway.
+     *
+     * @param container              the container to build, or null for the exercise default
+     * @param exerciseTimeoutSeconds the timeout configured on the exercise, 0 for the instance default
+     * @return the timeout of the job in seconds
+     */
+    private static int timeoutSecondsOf(@Nullable BuildContainerDTO container, int exerciseTimeoutSeconds) {
+        if (container == null || container.timeoutSeconds() == null) {
+            return exerciseTimeoutSeconds;
+        }
+        if (exerciseTimeoutSeconds <= 0) {
+            return container.timeoutSeconds();
+        }
+        return Math.min(container.timeoutSeconds(), exerciseTimeoutSeconds);
     }
 
     private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {

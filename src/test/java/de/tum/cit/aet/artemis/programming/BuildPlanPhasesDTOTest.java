@@ -131,6 +131,17 @@ class BuildPlanPhasesDTOTest {
     }
 
     @Test
+    void testKeepsTheTimeoutOfContainers() throws Exception {
+        var bounded = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), 90);
+        var json = new BuildPlanPhasesDTO(null, null, List.of(bounded, new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(phase("test"))))).toBuildPlanConfiguration();
+
+        var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(json).effectiveContainers();
+
+        assertThat(containers.getFirst().timeoutSeconds()).isEqualTo(90);
+        assertThat(containers.getLast().timeoutSeconds()).as("a container without a timeout uses the exercise's").isNull();
+    }
+
+    @Test
     void testKeepsDockerFlagsOfContainers() throws Exception {
         var flags = new BuildContainerDockerFlagsDTO("none", Map.of("MODE", "student"), null, 512, null);
         var limited = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), flags);

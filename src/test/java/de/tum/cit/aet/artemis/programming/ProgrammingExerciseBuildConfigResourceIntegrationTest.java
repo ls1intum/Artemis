@@ -230,6 +230,15 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsAContainerTimeoutAboveTheExerciseTimeout() throws Exception {
+        // configurationWith sets an exercise timeout of 240 seconds
+        var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), 300);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(container)), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testRejectsMalformedDockerFlags() throws Exception {
         assertDockerFlagsRejectedAndConfigUnchanged("this is not valid json");
     }
