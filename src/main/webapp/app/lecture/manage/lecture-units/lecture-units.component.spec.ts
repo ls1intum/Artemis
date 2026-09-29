@@ -1463,14 +1463,19 @@ describe('LectureUpdateUnitsComponent', () => {
             });
         });
 
-        it('should count exercise items that are being created as content that is still being saved', () => {
-            const isCreatingUnits = signal(true);
-            wizardUnitComponent.exerciseUnitForm = signal({ isCreatingUnits } as unknown as CreateExerciseUnitComponent).asReadonly() as Signal<
-                CreateExerciseUnitComponent | undefined
-            >;
+        it('should count exercise items that are being created as content that is still being saved, also after their form closed', () => {
+            wizardUnitComponent.onCreateLectureUnit(LectureUnitType.EXERCISE);
+            wizardUnitComponentFixture.detectChanges();
+            const exerciseForm: CreateExerciseUnitComponent = wizardUnitComponentFixture.debugElement.query(By.directive(CreateExerciseUnitComponent)).componentInstance;
+            const request = new Subject<void>();
+
+            exerciseForm.trackRequest()(request).subscribe();
+            expect(wizardUnitComponent.isSavingContent()).toBe(true);
+            wizardUnitComponent.onCloseLectureUnitForms();
+            wizardUnitComponentFixture.detectChanges();
             expect(wizardUnitComponent.isSavingContent()).toBe(true);
 
-            isCreatingUnits.set(false);
+            request.complete();
             expect(wizardUnitComponent.isSavingContent()).toBe(false);
         });
 

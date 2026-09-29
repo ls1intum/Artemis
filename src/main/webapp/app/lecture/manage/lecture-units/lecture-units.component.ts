@@ -131,7 +131,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
     textUnitForm = viewChild(TextUnitFormComponent);
     onlineUnitForm = viewChild(OnlineUnitFormComponent);
     attachmentVideoUnitForm = viewChild(AttachmentVideoUnitFormComponent);
-    exerciseUnitForm = viewChild(CreateExerciseUnitComponent);
     isUnitConfigurationValid = computed(() => {
         return (
             (this.textUnitForm()?.isFormValid() || !this.isTextUnitFormOpen()) &&
@@ -231,13 +230,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * Both can be true at once, such as a failed file upload while a change of the details is sent.
      */
     readonly isSavingContent = computed(
-        () =>
-            this.isSaveInFlight() ||
-            this.pendingConfirmed().length > 0 ||
-            (!!this.pendingDetails() && !this.saveFailure()) ||
-            this.isUploadingPdfs() ||
-            this.isCreatingUnit() ||
-            !!this.exerciseUnitForm()?.isCreatingUnits(),
+        () => this.isSaveInFlight() || this.pendingConfirmed().length > 0 || (!!this.pendingDetails() && !this.saveFailure()) || this.isUploadingPdfs() || this.isCreatingUnit(),
     );
     /** Set once the page is left; a save that fails afterwards is reported in an alert, because the item is gone. */
     private isDestroyed = false;
@@ -397,13 +390,13 @@ export class LectureUpdateUnitsComponent implements OnInit {
         });
     }
 
-    /** Counts the request of a new item as content that is still being saved until it completes or fails. */
-    private trackCreation<T>(request: Observable<T>): Observable<T> {
+    /** Counts the request of a new item as content that is still being saved until it completes or fails, also after its form closed. */
+    protected readonly trackCreation = <T>(request: Observable<T>): Observable<T> => {
         return defer(() => {
             this.creatingUnits.update((count) => count + 1);
             return request.pipe(finalize(() => this.creatingUnits.update((count) => count - 1)));
         });
-    }
+    };
 
     private onUnitCreated(): void {
         this.onCloseLectureUnitForms();

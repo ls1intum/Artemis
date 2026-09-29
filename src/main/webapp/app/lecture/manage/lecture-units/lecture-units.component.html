@@ -173,6 +173,7 @@
     @if (isExerciseUnitFormOpen()) {
         <jhi-create-exercise-unit
             [shouldNavigateOnSubmit]="false"
+            [trackRequest]="trackCreation"
             (onExerciseUnitCreated)="onExerciseUnitCreated()"
             [lectureId]="lecture().id"
             [courseId]="lecture().course?.id"

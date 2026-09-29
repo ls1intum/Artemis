@@ -788,6 +788,24 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
         });
 
+        it('should count going back to the saved video URL while the confirmed one is saved as not confirmed, since the confirmed one replaces it', () => {
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', {
+                formProperties: { name: 'Lecture video', videoSource: 'https://www.youtube.com/embed/old' },
+                fileProperties: {},
+            } as AttachmentVideoUnitFormData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/first');
+            attachmentVideoUnitFormComponent.saveVideoSource();
+
+            attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/old');
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
+
+            attachmentVideoUnitFormComponent.takeOverSavedVideoSource('https://www.youtube.com/embed/first');
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
+            attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/first');
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(false);
+        });
+
         it('should show that the chosen file is uploaded while its request runs', () => {
             chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
             attachmentVideoUnitFormComponentFixture.detectChanges();

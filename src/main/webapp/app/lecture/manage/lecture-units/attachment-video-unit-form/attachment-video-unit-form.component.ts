@@ -287,11 +287,11 @@ export class AttachmentVideoUnitFormComponent {
         () => this.areDetailsValid() && !this.videoSourceControl?.invalid && (!!this.currentFileLink() || !!this.videoSourceSignal()) && !this.isVideoSourceSaveRequested(),
     );
     /**
-     * A new video link that the user entered for an item edited in place but did not confirm yet, also one typed while a confirmed link is
-     * saved; a chosen file is uploaded at once.
+     * A new video link that the user entered for an item edited in place but did not confirm yet. While a confirmed link is saved, any other
+     * link counts, also the saved one, which the confirmed link would replace. A chosen file is uploaded at once.
      */
-    readonly hasUnconfirmedContent = computed(
-        () => this.isVideoSourceChanged() && (!this.isVideoSourceSaveRequested() || (this.videoSourceSignal() || undefined) !== (this.requestedVideoSource() || undefined)),
+    readonly hasUnconfirmedContent = computed(() =>
+        this.autosave() && this.isVideoSourceSaveRequested() ? (this.videoSourceSignal() || undefined) !== (this.requestedVideoSource() || undefined) : this.isVideoSourceChanged(),
     );
 
     private detailsValid(): boolean {

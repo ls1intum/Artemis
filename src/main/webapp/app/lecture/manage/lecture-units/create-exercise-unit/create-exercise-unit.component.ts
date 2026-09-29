@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -8,7 +8,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/foundation/service/sort.service';
-import { combineLatest, forkJoin, from } from 'rxjs';
+import { Observable, combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -44,6 +44,8 @@ export class CreateExerciseUnitComponent implements OnInit {
     courseId = input<number | undefined>(undefined);
     hasCancelButton = input<boolean>();
     shouldNavigateOnSubmit = input<boolean>(true);
+    /** Lets the lecture editor follow the create requests, also after this form is closed, so it asks before it is left while they run. */
+    readonly trackRequest = input<<T>(request: Observable<T>) => Observable<T>>((request) => request);
 
     onCancel = output<void>();
     onExerciseUnitCreated = output<void>();
@@ -61,9 +63,6 @@ export class CreateExerciseUnitComponent implements OnInit {
     /** Whether the course has exercises at all, which tells an empty list apart from one whose exercises are all content already. */
     readonly hasCourseExercises = signal(false);
     exercisesToCreateUnitFor = signal<Exercise[]>([]);
-    /** The number of create requests that are running, so the lecture editor asks before it is left while items are created. */
-    private readonly runningCreations = signal(0);
-    readonly isCreatingUnits = computed(() => this.runningCreations() > 0);
 
     ngOnInit(): void {
         this.isLoading.set(true);
@@ -103,22 +102,20 @@ export class CreateExerciseUnitComponent implements OnInit {
             return unit;
         });
 
-        this.runningCreations.update((count) => count + 1);
-        from(exerciseUnitsToCreate)
-            .pipe(
+        this.trackRequest()(
+            from(exerciseUnitsToCreate).pipe(
                 concatMap((unit) => this.exerciseUnitService.create(unit, this.resolvedLectureId()!)),
                 finalize(() => {
-                    this.runningCreations.update((count) => count - 1);
                     if (this.shouldNavigateOnSubmit()) {
                         void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     } else {
                         this.onExerciseUnitCreated.emit();
                     }
                 }),
-            )
-            .subscribe({
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            ),
+        ).subscribe({
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     onSortChange(event: TumAetUiTableSortEvent): void {

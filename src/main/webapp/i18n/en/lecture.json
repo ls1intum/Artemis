@@ -81,7 +81,7 @@
                 "title": "Discard unsaved lecture changes?",
                 "message": "Unsaved changes in: {{ sections }}. Do you want to discard them?",
                 "keepEditing": "Keep editing",
-                "stillSaving": "Saving the content that is in progress continues."
+                "stillSaving": "Saving continues."
             },
             "creationMode": {
                 "singleLectureLabel": "Single Lecture",
