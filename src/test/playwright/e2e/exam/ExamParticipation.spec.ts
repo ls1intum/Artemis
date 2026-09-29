@@ -389,7 +389,12 @@ test.describe('Exam participation', () => {
                 await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, cAllSuccessfulSubmission, 'Solution', cloneMethod);
                 // Wait for build via API (student-accessible endpoint) before checking UI.
                 await waitForParticipationBuildToFinish(participationId);
-                await examParticipation.checkExerciseScore(programmingExercise.id!, 'Build successful, no tests executed', BUILD_RESULT_TIMEOUT * 2);
+                await examParticipation.checkExerciseScore(
+                    programmingExercise.id!,
+                    programmingExercise.exerciseGroup!.title!,
+                    'Build successful, no tests executed',
+                    BUILD_RESULT_TIMEOUT * 2,
+                );
                 await examParticipation.handInEarly();
                 await login(instructor);
                 await examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);

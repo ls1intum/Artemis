@@ -13,7 +13,7 @@ import { FileUploadEditorPage } from '../exercises/file-upload/FileUploadEditorP
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
-import { BUILD_RESULT_TIMEOUT } from '../../timeouts';
+import { BUILD_RESULT_TIMEOUT, RELOAD_RENDER_TIMEOUT } from '../../timeouts';
 import { annotateRecovery, getExercise } from '../../utils';
 
 export class ExamParticipationPage extends ExamParticipationActions {
@@ -155,10 +155,32 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(exerciseID: number, expectedResult: string, timeout: number = BUILD_RESULT_TIMEOUT) {
-        // In exam mode, page.reload() navigates away from the active exercise tab,
-        // so we rely on WebSocket to push build results and use Playwright's auto-retry.
+    /**
+     * Checks the result of a programming exercise that the student sees inside the running exam.
+     * <p>
+     * The result normally reaches the open exam page through the websocket as soon as the build is done. A push that gets lost (seen under heavy
+     * load on a cluster) leaves the page without the result although the server has it. The recovery for that is bounded and recorded: the page is
+     * reloaded and the exercise opened again, which loads the result from the server. Reloading is the last resort because in exam mode it leaves
+     * the exercise the student was working on.
+     *
+     * @param exerciseGroupTitle the title of the exercise group, needed to open the exercise again
+     */
+    async checkExerciseScore(exerciseID: number, exerciseGroupTitle: string, expectedResult: string, timeout: number = BUILD_RESULT_TIMEOUT) {
         const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
-        await expect(resultScore).toContainText(expectedResult, { timeout });
+        const pushTimeout = Math.min(timeout, 60_000);
+        try {
+            await expect(resultScore).toContainText(expectedResult, { timeout: pushTimeout });
+        } catch {
+            annotateRecovery(`checkExerciseScore: exercise ${exerciseID} showed no result after ${pushTimeout}ms; reloading the exam and opening the exercise again`);
+            await this.page.reload();
+            // After a reload the exam either resumes right away or shows its welcome screen again, where the student starts once more.
+            const welcomeScreen = this.page.locator('#confirmBox');
+            await expect(welcomeScreen.or(this.page.getByTestId('hand-in-early'))).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
+            if (await welcomeScreen.isVisible()) {
+                await this.examStartEnd.startExam();
+            }
+            await this.examNavigation.openOrSaveExerciseByTitle(exerciseGroupTitle);
+            await expect(resultScore).toContainText(expectedResult, { timeout });
+        }
     }
 }
