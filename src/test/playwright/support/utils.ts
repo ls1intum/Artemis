@@ -812,13 +812,19 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
  * can be assessed: the exam is over including its grace period and its results are published when this returns.
  * <p>
  * The participation runs in a generous window and the deadline is only set afterwards (see {@link ExamAPIRequests.concludeExam}),
- * so a slow or loaded run cannot cut the participation short and a fast one does not wait for a guessed end date. The page is
- * left logged in as admin.
+ * so a slow or loaded run cannot cut the participation short and a fast one does not wait for a guessed end date. With
+ * `publishResults: false` the results stay unpublished until the test publishes them. The page is left logged in as admin.
  */
-export async function prepareEndedExam(course: Course, exerciseType: ExerciseType, page: Page, numberOfCorrectionRounds: number = 1): Promise<Exam> {
+export async function prepareEndedExam(
+    course: Course,
+    exerciseType: ExerciseType,
+    page: Page,
+    numberOfCorrectionRounds: number = 1,
+    publishResults: boolean = true,
+): Promise<Exam> {
     const exam = await prepareExam(course, dayjs().add(EXAM_PARTICIPATION_WINDOW_IN_MINUTES, 'minutes'), exerciseType, page, numberOfCorrectionRounds, false);
     await Commands.login(page, admin);
-    return await new ExamAPIRequests(page).concludeExam(exam);
+    return await new ExamAPIRequests(page).concludeExam(exam, { publishResults });
 }
 
 /** How long an exam stays open while a test participates in it, before {@link prepareEndedExam} ends it. */

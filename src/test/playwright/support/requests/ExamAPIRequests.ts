@@ -450,6 +450,43 @@ export class ExamAPIRequests {
     }
 
     /**
+     * Sets the publication of the results to the given number of seconds from now on the server clock, and opens the student review
+     * period (the time in which students may complain) at the same moment for ten minutes.
+     * @returns the point in time at which the results are published
+     */
+    async publishResultsIn(exam: Exam, secondsFromNow: number): Promise<dayjs.Dayjs> {
+        const { serverNow } = await this.getExamWithServerTime(exam);
+        const publish = serverNow.add(secondsFromNow, 'seconds');
+        await this.updateExam(exam, {
+            publishResultsDate: dayjsToString(publish),
+            examStudentReviewStart: dayjsToString(publish),
+            examStudentReviewEnd: dayjsToString(publish.add(10, 'minutes')),
+        });
+        return publish;
+    }
+
+    /**
+     * Closes the student review period a moment from now and waits until it is closed on the server clock.
+     */
+    async closeReviewPeriod(exam: Exam) {
+        const { serverNow } = await this.getExamWithServerTime(exam);
+        const reviewEnd = serverNow.add(1, 'second');
+        await this.updateExam(exam, { examStudentReviewEnd: dayjsToString(reviewEnd) });
+        await this.waitUntilServerClockIsAfter(exam, reviewEnd);
+    }
+
+    /**
+     * Gets the id of the logged-in student's own student exam of a real exam.
+     */
+    async getOwnStudentExamId(exam: Exam): Promise<number> {
+        const own = await this.expectOk(
+            await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/own-student-exam`),
+            `get own student exam of exam ${exam.id}`,
+        );
+        return (await own.json()).id;
+    }
+
+    /**
      * Ends one student's attempt in the given number of seconds from now, measured on the server clock, by setting that student
      * exam's working time relative to when the student started. This is how the end of a test exam attempt is set once the student
      * is working, since a test exam attempt runs for its working time from the moment the student starts it.
@@ -489,6 +526,23 @@ export class ExamAPIRequests {
     }
 
     /**
+     * Waits until the server clock is past the given instant, with a second of margin for the resolution of the server's `Date`
+     * header. Use it to be sure that something the test does next happens after a deadline, e.g. after the regular end of an exam
+     * but still inside its grace period.
+     * @param exam any exam of the course, only used to reach the server
+     * @param instant the deadline to wait for
+     */
+    async waitUntilServerClockIsAfter(exam: Exam, instant: dayjs.Dayjs) {
+        await expect
+            .poll(async () => (await this.getExamWithServerTime(exam)).serverNow.isAfter(instant.add(1, 'second')), {
+                message: `the server clock should pass ${instant.toISOString()}`,
+                intervals: [500],
+                timeout: Math.max(instant.diff(dayjs(), 'ms'), 0) + 60_000,
+            })
+            .toBe(true);
+    }
+
+    /**
      * Ends an exam that a student has already handed in and makes it ready for assessment: the exam ends a moment from now,
      * its results are published right after the end, and the student review period opens for five minutes.
      * Returns once the exam is over including its grace period.
@@ -497,18 +551,20 @@ export class ExamAPIRequests {
      * at creation time had to be guessed, and a slow or loaded run would either cut the participation short or wait needlessly.
      *
      * @param exam the exam to conclude
+     * @param options `publishResults: false` leaves the results unpublished and the review period unset; publish them later with {@link publishResultsIn}
      * @returns the exam with its new dates
      */
-    async concludeExam(exam: Exam): Promise<Exam> {
+    async concludeExam(exam: Exam, options: { publishResults?: boolean } = {}): Promise<Exam> {
+        const { publishResults = true } = options;
         const { current, serverNow } = await this.getExamWithServerTime(exam);
         const end = serverNow.add(2, 'seconds');
         const resultDate = end.add(1, 'second');
         const concluded = await this.updateExam(exam, {
             endDate: dayjsToString(end),
             workingTime: current.testExam ? current.workingTime : end.diff(dayjs(current.startDate as any), 'seconds'),
-            publishResultsDate: dayjsToString(resultDate),
-            examStudentReviewStart: dayjsToString(resultDate),
-            examStudentReviewEnd: dayjsToString(resultDate.add(5, 'minutes')),
+            publishResultsDate: publishResults ? dayjsToString(resultDate) : null,
+            examStudentReviewStart: publishResults ? dayjsToString(resultDate) : null,
+            examStudentReviewEnd: publishResults ? dayjsToString(resultDate.add(5, 'minutes')) : null,
         });
         await this.waitUntilExamIsOver(concluded);
         return concluded;
