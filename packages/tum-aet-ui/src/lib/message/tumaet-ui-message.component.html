@@ -7,4 +7,14 @@
     } @else {
         <span class="tumaet-ui-message-text"><ng-content /></span>
     }
+    @if (dismissible()) {
+        <button
+            type="button"
+            class="tumaet-ui-message-dismiss"
+            [attr.aria-label]="dismissButtonAriaLabel() ?? ('tumAetUi.message.dismiss' | tumAetUiTranslate)"
+            (click)="dismissed.emit()"
+        >
+            <fa-icon [icon]="faXmark" />
+        </button>
+    }
 </div>
