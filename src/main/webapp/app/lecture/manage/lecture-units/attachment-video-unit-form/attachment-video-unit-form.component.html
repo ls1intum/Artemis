@@ -1,183 +1,360 @@
-<form class="row">
-    <div class="col-12">
-        <form [formGroup]="form" (ngSubmit)="submitForm()">
-            <div class="form-group">
-                <label for="name">{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.name' | artemisTranslate }} *</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="name"
-                    formControlName="name"
-                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.namePlaceHolder' | artemisTranslate"
-                />
-                @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
-                    <div class="alert alert-danger">
-                        @if (nameControl?.errors?.required) {
-                            <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.nameRequiredValidationError"></div>
+<form class="flex flex-col gap-6" [formGroup]="form" (ngSubmit)="submitForm()">
+    @let nameInvalid = !!nameControl?.invalid && (!!nameControl?.dirty || !!nameControl?.touched);
+    <tumaet-ui-form-field controlId="name" [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.name' | artemisTranslate" required [invalid]="nameInvalid">
+        <input
+            tumAetUiInput
+            id="name"
+            type="text"
+            formControlName="name"
+            required
+            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.namePlaceHolder' | artemisTranslate"
+        />
+        <ng-container tumAetUiFormFieldError>
+            @if (nameControl?.errors?.required) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.nameRequiredValidationError"></span>
+            }
+            @if (nameControl?.errors?.maxlength) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.nameMaxLengthValidationError"></span>
+            }
+        </ng-container>
+    </tumaet-ui-form-field>
+    @let descriptionInvalid = !!descriptionControl?.invalid && (!!descriptionControl?.dirty || !!descriptionControl?.touched);
+    <tumaet-ui-form-field
+        controlId="description"
+        [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.description' | artemisTranslate"
+        [invalid]="descriptionInvalid"
+        [error]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.descriptionMaxLengthValidationError' | artemisTranslate"
+    >
+        <textarea
+            tumAetUiTextarea
+            id="description"
+            rows="3"
+            formControlName="description"
+            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.descriptionPlaceHolder' | artemisTranslate"
+        ></textarea>
+    </tumaet-ui-form-field>
+    <div class="flex flex-col gap-1">
+        <!-- names the group of file controls below through aria-labelledby, so it is not a label of one control -->
+        <div class="flex flex-wrap items-center gap-2 text-sm">
+            <span id="fileLabel" class="font-medium">{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}</span>
+            <span id="fileHelp" class="text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></span>
+            @let supportedTypes = 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions };
+            <button
+                type="button"
+                class="inline-flex cursor-help border-0 bg-transparent p-0"
+                [attr.aria-label]="supportedTypes"
+                [tumAetUiTooltip]="supportedTypes"
+                tumAetUiTooltipDescribesHost="false"
+            >
+                <fa-icon [icon]="faQuestionCircle" />
+            </button>
+        </div>
+        <!-- the native input stays hidden, the buttons below open it -->
+        <input
+            #fileInput
+            id="fileInput"
+            data-testid="attachment-file-input"
+            type="file"
+            class="hidden"
+            tabindex="-1"
+            aria-hidden="true"
+            [accept]="acceptedFileExtensionsFileBrowser"
+            (change)="onFileChange($event)"
+        />
+        <div
+            role="group"
+            aria-labelledby="fileLabel"
+            aria-describedby="fileHelp"
+            class="mt-1"
+            data-testid="file-field"
+            (dragover)="onFileDragOver($event)"
+            (drop)="onFileDrop($event)"
+        >
+            @if (currentFileName(); as currentName) {
+                <div class="flex flex-wrap items-center gap-2" data-testid="current-file">
+                    <span class="flex min-w-0 items-center gap-1">
+                        <span class="shrink-0" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.currentFile"></span>
+                        <strong class="min-w-0 truncate" data-testid="current-file-name" [title]="currentName">{{ currentName }}</strong>
+                        @if (currentFileVersion(); as version) {
+                            <span class="shrink-0 text-muted-color" data-testid="current-file-version"
+                                >({{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.version' | artemisTranslate }} {{ version }})</span
+                            >
                         }
-                        @if (nameControl?.errors?.maxlength) {
-                            <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.nameMaxLengthValidationError"></div>
-                        }
-                    </div>
-                }
-            </div>
-            <div class="form-group">
-                <label for="description" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.description"></label>
-                <textarea
-                    class="form-control"
-                    id="description"
-                    rows="3"
-                    formControlName="description"
-                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.descriptionPlaceHolder' | artemisTranslate"
-                ></textarea>
-                @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
-                    <div class="alert alert-danger">
-                        @if (descriptionControl?.errors?.maxlength) {
-                            <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.descriptionMaxLengthValidationError"></div>
-                        }
-                    </div>
-                }
-            </div>
-            <div class="form-group">
-                <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}</label>
-                <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
-                <fa-icon
-                    [icon]="faQuestionCircle"
-                    [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
-                />
-                <div class="input-group background-file">
-                    <div class="custom-file overflow-ellipsis">
-                        <input
-                            #fileInput
-                            id="fileInput"
-                            type="file"
-                            class="custom-file-input"
-                            [accept]="acceptedFileExtensionsFileBrowser"
-                            (change)="onFileChange($event)"
-                            aria-describedby="fileHelp"
-                            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
-                            (click)="fileInputTouched = true"
-                        />
-                    </div>
-                </div>
-                @if (isFileTooBig()) {
-                    <div class="alert alert-danger">
-                        {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileTooBig' | artemisTranslate }}
-                        {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation' | artemisTranslate }}
-                    </div>
-                }
-                @if (!fileName() && fileInputTouched) {
-                    <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
-                }
-            </div>
-            <div class="form-group">
-                <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate" />
-            </div>
-            <div class="form-group">
-                <jhi-competency-selection
-                    id="competencies"
-                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
-                    formControlName="competencyLinks"
-                />
-            </div>
-            <div class="form-group" [hidden]="!isEditMode()">
-                <label for="updateNotificationText" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationText"></label>
-                <textarea
-                    class="form-control"
-                    id="updateNotificationText"
-                    rows="3"
-                    formControlName="updateNotificationText"
-                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextPlaceholder' | artemisTranslate"
-                    maxlength="255"
-                ></textarea>
-                @if (updateNotificationTextControl?.invalid && (updateNotificationTextControl?.dirty || updateNotificationTextControl?.touched)) {
-                    <div class="alert alert-danger">
-                        @if (updateNotificationTextControl?.errors?.maxlength) {
-                            <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextMaxLengthValidationError"></div>
-                        }
-                    </div>
-                }
-            </div>
-            <div class="form-group">
-                <label for="version" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.version"></label>
-                <input id="version" class="form-control disabled" type="text" readonly formControlName="version" />
-            </div>
-            <div class="container" style="padding: 0">
-                <div class="row">
-                    <div class="col-4">
-                        <label for="videoSource">{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.source' | artemisTranslate }}</label>
-                    </div>
-                    <div class="col-1"></div>
-                    <div class="col-7">
-                        <label for="urlHelper" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.urlVideoHelper"></label>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="videoSource"
-                            formControlName="videoSource"
-                            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.sourcePlaceHolder' | artemisTranslate"
-                        />
-                    </div>
-                    <div class="col-1 mx-auto text-center align-self-center">
-                        <button id="transformButton" type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
-                            <fa-icon [icon]="faArrowLeft" />
-                        </button>
-                    </div>
-                    <div class="col-7">
-                        <input type="text" class="form-control" id="urlHelper" formControlName="urlHelper" aria-describedby="urlHelperExplanation" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        @if (videoSourceControl?.invalid && (videoSourceControl?.dirty || videoSourceControl?.touched)) {
-                            <div class="alert alert-danger">
-                                @if (videoSourceControl?.errors?.required) {
-                                    <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.sourceRequiredValidationError"></div>
-                                }
-                                @if (videoSourceControl?.errors?.invalidVideoUrl) {
-                                    <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.sourceURLValidationError"></div>
-                                }
-                            </div>
-                        }
-                    </div>
-                    <div class="col-1"></div>
-                    <div class="col-7">
-                        <small
-                            id="urlHelperExplanation"
-                            class="form-text text-body-secondary"
-                            jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.urlHelperPlaceholder"
-                        ></small>
-                        @if (urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)) {
-                            <div class="alert alert-danger">
-                                @if (urlHelperControl?.errors?.invalidVideoUrl) {
-                                    <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.urlHelperValidationError"></div>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-            <div class="alert alert-info mt-2 py-2 small" [jhiFeatureToggleHide]="FeatureToggle.LectureContentProcessing">
-                <fa-icon [icon]="faCircleInfo" class="me-1" />
-                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.transcriptionHint"></span>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
-                        <span jhiTranslate="entity.action.submit"></span>
+                    </span>
+                    <a
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        data-testid="open-current-file-button"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        [href]="currentFileUrl()"
+                    >
+                        <fa-icon [icon]="faArrowUpRightFromSquare" />
+                        <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.openFile"></span>
+                    </a>
+                    <button
+                        #replaceFileButton
+                        type="button"
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        data-testid="replace-file-button"
+                        (click)="openFilePicker()"
+                    >
+                        <fa-icon [icon]="faFileArrowUp" />
+                        <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replaceFile"></span>
                     </button>
-                    @if (hasCancelButton()) {
-                        <button type="button" (click)="cancelForm()" class="btn btn-secondary">
-                            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                </div>
+                <div aria-live="polite">
+                    @if (isReplacingFile()) {
+                        <div class="mt-2 flex flex-wrap items-center gap-2" data-testid="replacement-file">
+                            <span class="flex min-w-0 items-center gap-1">
+                                <span class="shrink-0" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementFile"></span>
+                                <strong class="min-w-0 truncate" data-testid="replacement-file-name" [title]="fileName() ?? ''">{{ fileName() }}</strong>
+                            </span>
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="text"
+                                size="small"
+                                data-testid="keep-current-file-button"
+                                [disabled]="savingConfirmed() === 'file'"
+                                (click)="keepCurrentFile()"
+                            >
+                                <fa-icon [icon]="faRotateLeft" />
+                                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.keepCurrentFile"></span>
+                            </button>
+                        </div>
+                        <tumaet-ui-message
+                            class="mt-2"
+                            severity="warn"
+                            data-testid="replacement-hint"
+                            [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementHint' | artemisTranslate"
+                        />
+                        @if (autosave()) {
+                            <ng-container [ngTemplateOutlet]="uploadConfirm" />
+                        }
+                    }
+                </div>
+            } @else {
+                <div class="flex flex-wrap items-center gap-2">
+                    <button
+                        #chooseFileButton
+                        type="button"
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        data-testid="choose-file-button"
+                        aria-describedby="chosenFileName"
+                        (click)="openFilePicker()"
+                    >
+                        <fa-icon [icon]="faFileArrowUp" />
+                        <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile"></span>
+                    </button>
+                    <span id="chosenFileName" class="min-w-0 truncate" aria-live="polite" data-testid="chosen-file-name" [title]="fileName() ?? ''">{{
+                        fileName() ?? ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.noFileChosen' | artemisTranslate)
+                    }}</span>
+                    @if (autosave() && hasNewFile()) {
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="text"
+                            size="small"
+                            data-testid="discard-new-file-button"
+                            [disabled]="savingConfirmed() === 'file'"
+                            (click)="keepCurrentFile()"
+                        >
+                            <fa-icon [icon]="faRotateLeft" />
+                            <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.discardNewFile"></span>
                         </button>
                     }
                 </div>
-            </div>
-        </form>
+                @if (autosave() && hasNewFile()) {
+                    <ng-container [ngTemplateOutlet]="uploadConfirm" />
+                }
+            }
+        </div>
+        @if (isFileTooBig()) {
+            <tumaet-ui-message
+                class="mt-2"
+                severity="error"
+                data-testid="file-too-big-error"
+                [text]="
+                    ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileTooBig' | artemisTranslate) +
+                    ' ' +
+                    ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation' | artemisTranslate)
+                "
+            />
+        }
+        @if (isFileTypeUnsupported()) {
+            <tumaet-ui-message
+                class="mt-2"
+                severity="error"
+                data-testid="file-type-error"
+                [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileTypeUnsupported' | artemisTranslate: { extensions: allowedFileExtensions }"
+            />
+        }
+        @if (!fileName() && !videoSourceSignal() && fileInputTouched()) {
+            <tumaet-ui-message
+                class="mt-2"
+                severity="error"
+                data-testid="file-required-error"
+                [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError' | artemisTranslate"
+            />
+        }
     </div>
+    <tumaet-ui-date-picker
+        inputId="pick-releaseDate"
+        labelName="artemisApp.lectureUnit.releaseDate"
+        [value]="releaseDateControl?.value ?? undefined"
+        (valueChange)="onReleaseDateChange($event)"
+        (inputValidityChange)="onReleaseDateTextValidityChange($event)"
+    />
+    <jhi-competency-selection
+        id="competencies"
+        [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+        [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
+        formControlName="competencyLinks"
+    />
+    @if (isEditMode() && !autosave()) {
+        @let notificationInvalid = !!updateNotificationTextControl?.invalid && (!!updateNotificationTextControl?.dirty || !!updateNotificationTextControl?.touched);
+        <tumaet-ui-form-field
+            controlId="updateNotificationText"
+            [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationText' | artemisTranslate"
+            [invalid]="notificationInvalid"
+            [error]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextMaxLengthValidationError' | artemisTranslate"
+        >
+            <textarea
+                tumAetUiTextarea
+                id="updateNotificationText"
+                rows="3"
+                maxlength="255"
+                formControlName="updateNotificationText"
+                [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextPlaceholder' | artemisTranslate"
+            ></textarea>
+        </tumaet-ui-form-field>
+    }
+    @let videoSourceInvalid = !!videoSourceControl?.invalid && (!!videoSourceControl?.dirty || !!videoSourceControl?.touched);
+    <tumaet-ui-form-field controlId="videoSource" [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.source' | artemisTranslate" [invalid]="videoSourceInvalid">
+        <input
+            #videoSourceInput
+            tumAetUiInput
+            id="videoSource"
+            type="text"
+            formControlName="videoSource"
+            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.sourcePlaceHolder' | artemisTranslate"
+        />
+        <ng-container tumAetUiFormFieldError>
+            @if (videoSourceControl?.errors?.required) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.sourceRequiredValidationError"></span>
+            }
+            @if (videoSourceControl?.errors?.invalidVideoUrl) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.sourceURLValidationError"></span>
+            }
+        </ng-container>
+    </tumaet-ui-form-field>
+    @let urlHelperInvalid = !!urlHelperControl?.invalid && (!!urlHelperControl?.dirty || !!urlHelperControl?.touched);
+    <tumaet-ui-form-field
+        controlId="urlHelper"
+        [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.urlVideoHelper' | artemisTranslate"
+        [hint]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.urlHelperPlaceholder' | artemisTranslate"
+        [invalid]="urlHelperInvalid"
+        [error]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.urlHelperValidationError' | artemisTranslate"
+    >
+        <div class="flex flex-wrap gap-2">
+            <input tumAetUiInput id="urlHelper" type="text" class="min-w-0 grow" formControlName="urlHelper" />
+            <button tumAetUiButton id="transformButton" type="button" severity="secondary" variant="outlined" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
+                <fa-icon [icon]="faArrowUp" />
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.useAsVideoSource"></span>
+            </button>
+        </div>
+    </tumaet-ui-form-field>
+    @if (isVideoSourceChanged()) {
+        <!-- A new video link is transcribed and processed again, so an item edited in place saves it only when the user confirms it. -->
+        <div class="flex flex-wrap items-center gap-2" data-testid="video-source-confirm">
+            <button tumAetUiButton type="button" size="small" data-testid="save-video-source-button" [disabled]="!canSaveVideoSource()" (click)="saveVideoSource()">
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.saveVideoSource"></span>
+            </button>
+            <button
+                tumAetUiButton
+                type="button"
+                size="small"
+                severity="secondary"
+                variant="text"
+                data-testid="discard-video-source-button"
+                [disabled]="savingConfirmed() === 'videoSource'"
+                (click)="discardVideoSource()"
+            >
+                <fa-icon [icon]="faRotateLeft" />
+                <span
+                    [jhiTranslate]="
+                        hasSavedVideoSource()
+                            ? 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.discardVideoSource'
+                            : 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.discardNewVideoSource'
+                    "
+                ></span>
+            </button>
+            <span class="text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoSourceHint"></span>
+        </div>
+    }
+    <tumaet-ui-message
+        severity="info"
+        [icon]="faCircleInfo"
+        [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.transcriptionHint' | artemisTranslate"
+        [jhiFeatureToggleHide]="FeatureToggle.LectureContentProcessing"
+    />
+    @if (!autosave()) {
+        <div class="flex flex-wrap gap-2">
+            <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
+                <span jhiTranslate="entity.action.submit"></span>
+            </button>
+            @if (hasCancelButton()) {
+                <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
+                    <fa-icon [icon]="faTimes" />
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </button>
+            }
+        </div>
+    }
 </form>
+
+<!-- A new file is processed, so an item edited in place saves it only when the user confirms it. -->
+<ng-template #uploadConfirm>
+    @let replacesFile = !!currentFileName();
+    <div class="mt-2 flex flex-col gap-3.5" data-testid="replacement-confirm">
+        <div class="flex items-center gap-2">
+            <tumaet-ui-checkbox inputId="notify-students" [checked]="notifyStudents()" (checkedChange)="notifyStudents.set($event)" />
+            <label
+                class="m-0"
+                for="notify-students"
+                [jhiTranslate]="
+                    replacesFile
+                        ? 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.notifyStudents'
+                        : 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.notifyStudentsNewFile'
+                "
+            ></label>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button tumAetUiButton type="button" size="small" data-testid="upload-new-version-button" [disabled]="!canUploadFile()" (click)="uploadNewFile()">
+                <fa-icon [icon]="faFileArrowUp" />
+                @if (replacesFile) {
+                    <span>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadVersion' | artemisTranslate: { version: nextFileVersion() } }}</span>
+                } @else {
+                    <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadFile"></span>
+                }
+            </button>
+            <span
+                class="text-sm text-muted-color"
+                [jhiTranslate]="
+                    replacesFile ? 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadHint' : 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadFileHint'
+                "
+            ></span>
+        </div>
+    </div>
+</ng-template>
