@@ -1223,6 +1223,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
             expect(suggestionsSpy).toHaveBeenCalled();
         });
+
+        it('should not fetch feedback suggestions for another submission loaded while the opt-in prompt was open', () => {
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
+            let onAccepted: () => void = () => {};
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((callback) => (onAccepted = callback));
+            comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+            comp.onOptInToAiFeedbackSuggestions();
+            comp.submission.set({ id: 43 } as ProgrammingSubmission);
+            onAccepted();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch feedback suggestions once the assessor has already added feedback', () => {
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+            comp.submission.set({ id: 42 } as ProgrammingSubmission);
+            comp.unreferencedFeedback.set([{ type: FeedbackType.MANUAL_UNREFERENCED, credits: 1, detailText: 'manual' } as Feedback]);
+
+            comp.onOptInToAiFeedbackSuggestions();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should set loadingFeedbackSuggestions to true while fetching and false after', async () => {

@@ -224,6 +224,7 @@
             "personalRepositoryOnline": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Programmiereditor öffnen</i>!",
             "resumeProgrammingExercise": "Die Aufgabe wurde wieder aufgenommen. Du kannst nun weiterarbeiten!",
             "feedbackRequestSent": "Deine Feedbackanfrage wurde gesendet.",
+            "aiExperienceRefreshFailed": "Deine KI-Erfahrung konnte nicht geprüft werden, daher wurde kein Feedback angefordert. Bitte versuche es erneut.",
             "feedbackRequestAlreadySent": "Deine Feedbackanfrage wurde bereits gesendet.",
             "noSubmissionExists": "Um eine Feedbackanfrage zu senden, brauchst du mindestens eine Abgabe.",
             "lockRepositoryWarning": "Dein Repository wird gesperrt. Du kannst erst weiterarbeiten wenn deine Feedbackanfrage beantwortet wird.",

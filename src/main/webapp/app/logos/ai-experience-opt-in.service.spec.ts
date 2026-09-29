@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -83,6 +83,15 @@ describe('AiExperienceOptInService', () => {
 
             expect(refreshSpy).toHaveBeenCalled();
             expect(result).toBe(LLMSelectionDecision.NO_AI);
+        });
+
+        it('falls back to the cached selection when the refresh fails', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+            vi.spyOn(accountService, 'refreshSelectedLLMUsage').mockReturnValue(throwError(() => new Error('network error')));
+
+            const result = await new Promise((resolve) => service.refreshAiExperience().subscribe(resolve));
+
+            expect(result).toBe(LLMSelectionDecision.CLOUD_AI);
         });
     });
 

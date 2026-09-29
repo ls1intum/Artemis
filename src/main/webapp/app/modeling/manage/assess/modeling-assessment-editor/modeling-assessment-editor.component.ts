@@ -181,7 +181,27 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly hasChosenNoAi = computed(() => this.aiExperienceOptInService.hasChosenNoAi());
 
     onOptInToAiFeedbackSuggestions(): void {
-        this.aiExperienceOptInService.promptForAiUsage(() => void this.fetchAndApplyFeedbackSuggestions());
+        // The router can reuse this component for another submission while the modal or the preference update is
+        // pending; only fetch for the submission that showed the hint, and only while it is still unassessed.
+        const submissionAtPrompt = this.submission();
+        const resultAtPrompt = this.result();
+        this.aiExperienceOptInService.promptForAiUsage(() => {
+            if (this.submission() !== submissionAtPrompt || this.result() !== resultAtPrompt || !this.isEligibleForFeedbackSuggestions(this.feedback)) {
+                return;
+            }
+            void this.fetchAndApplyFeedbackSuggestions();
+        });
+    }
+
+    /** Whether Athena suggestions may be added to the current assessment, i.e. it has no feedback from an assessor yet. */
+    private isEligibleForFeedbackSuggestions(feedbacks: Feedback[]): boolean {
+        const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;
+        // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL), so an
+        // adapted suggestion still counts toward automaticFeedbackCount above even though it is no longer a fresh
+        // assessment. Excluding any feedback that already carries a suggestion marker keeps this a genuine
+        // "nothing assessed yet" check instead of re-fetching (and re-appending) suggestions on every reload.
+        const hasPersistedSuggestions = feedbacks.some((feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION);
+        return this.isFeedbackSuggestionsEnabled() && !hasPersistedSuggestions && feedbacks.length === automaticFeedbackCount;
     }
 
     ngOnInit() {
@@ -349,13 +369,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * produces a confusing generic error instead of the opt-in hint.
      */
     private async maybeAutoFetchFeedbackSuggestions(feedbacks: Feedback[]): Promise<void> {
-        const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;
-        // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL), so an
-        // adapted suggestion still counts toward automaticFeedbackCount above even though it is no longer a fresh
-        // assessment. Excluding any feedback that already carries a suggestion marker keeps this a genuine
-        // "nothing assessed yet" check instead of re-fetching (and re-appending) suggestions on every reload.
-        const hasPersistedSuggestions = feedbacks.some((feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION);
-        if (!this.isFeedbackSuggestionsEnabled() || hasPersistedSuggestions || feedbacks.length !== automaticFeedbackCount) {
+        if (!this.isEligibleForFeedbackSuggestions(feedbacks)) {
             return;
         }
         // The router can reuse this component for another submission while the refresh is pending; that

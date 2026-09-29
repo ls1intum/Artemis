@@ -805,13 +805,13 @@ describe('AccountService', () => {
                 expect(accountService.userIdentity()).toBeUndefined();
             });
 
-            it('should fall back to the cached selection when the refresh request fails', async () => {
+            it('should propagate a failed refresh request and keep the cached selection', async () => {
                 accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as User);
 
                 const resultPromise = lastValueFrom(accountService.refreshSelectedLLMUsage());
                 httpMock.expectOne({ method: 'GET', url: getUserUrl }).error(new ProgressEvent('network error'));
 
-                expect(await resultPromise).toBe(LLMSelectionDecision.LOCAL_AI);
+                await expect(resultPromise).rejects.toBeDefined();
                 expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
             });
         });

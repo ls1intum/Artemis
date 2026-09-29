@@ -352,6 +352,29 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(requestFeedbackSpy).not.toHaveBeenCalled();
     });
 
+    it('should abort the feedback request and show an error when the AI Experience refresh fails', async () => {
+        // A failed refresh must not fall back to a cached accepted choice that another tab may have revoked.
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        await initAndTick();
+
+        vi.spyOn(accountService, 'refreshSelectedLLMUsage').mockReturnValue(throwError(() => new Error('network error')));
+        vi.spyOn(alertService, 'error');
+        const modalSpy = vi.spyOn(llmModalService, 'open');
+        const requestFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+        await component.requestAIFeedback();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.aiExperienceRefreshFailed');
+        expect(modalSpy).not.toHaveBeenCalled();
+        expect(requestFeedbackSpy).not.toHaveBeenCalled();
+    });
+
     it('should not send a request for another exercise loaded into the reused component while the AI Experience refresh is pending', async () => {
         // Regression test: the router reuses this component across exercises. A click on exercise A whose refresh
         // is still pending must not continue and send a feedback request for exercise B.

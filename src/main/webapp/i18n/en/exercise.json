@@ -224,6 +224,7 @@
             "personalRepositoryOnline": "Your personal repository has been set up. Click the button <i>Open code editor</i>!",
             "resumeProgrammingExercise": "The exercise has been resumed. You can now continue working on the exercise!",
             "feedbackRequestSent": "Your feedback request has been sent.",
+            "aiExperienceRefreshFailed": "Your AI Experience setting could not be checked, so no feedback was requested. Please try again.",
             "feedbackRequestAlreadySent": "Your feedback request has already been sent.",
             "noSubmissionExists": "You have to submit your work at least once.",
             "lockRepositoryWarning": "Your repository will be locked. You can only continue working after you receive an answer.",

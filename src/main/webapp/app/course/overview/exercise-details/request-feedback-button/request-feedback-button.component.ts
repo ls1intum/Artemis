@@ -230,7 +230,13 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         // exercise and participation so the continuation cannot send a request for one the student never clicked.
         const exerciseIdAtClick = this.exercise().id;
         const participationIdAtClick = this.participationId();
-        await firstValueFrom(this.accountService.refreshSelectedLLMUsage());
+        try {
+            await firstValueFrom(this.accountService.refreshSelectedLLMUsage());
+        } catch {
+            // Falling back to the cached choice could send a request although No AI was chosen in another tab.
+            this.alertService.error('artemisApp.exercise.aiExperienceRefreshFailed');
+            return;
+        }
         if (this.exercise().id !== exerciseIdAtClick || this.participationId() !== participationIdAtClick) {
             return;
         }

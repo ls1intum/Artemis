@@ -962,5 +962,17 @@ describe('TextSubmissionAssessmentComponent', () => {
             expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
             expect(loadFeedbackSuggestionsSpy).toHaveBeenCalled();
         });
+
+        it('should not load feedback suggestions for another submission loaded while the opt-in prompt was open', () => {
+            const loadFeedbackSuggestionsSpy = vi.spyOn(component, 'loadFeedbackSuggestions');
+            let onAccepted: () => void = () => {};
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((callback) => (onAccepted = callback));
+
+            component.onOptInToAiFeedbackSuggestions();
+            component.submission = { id: (component.submission?.id ?? 0) + 1 } as TextSubmission;
+            onAccepted();
+
+            expect(loadFeedbackSuggestionsSpy).not.toHaveBeenCalled();
+        });
     });
 });

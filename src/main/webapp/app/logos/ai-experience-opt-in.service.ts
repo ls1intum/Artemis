@@ -1,5 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/account/user/shared/user.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -29,10 +29,11 @@ export class AiExperienceOptInService {
      * Re-reads the current AI Experience choice from the server. `hasAcceptedAiUsage`/`hasChosenNoAi` read a
      * per-tab cached value that another tab's change does not update, so a caller about to act on either (fetching
      * Athena feedback suggestions, sending a feedback request) must call this immediately beforehand to avoid
-     * firing a request the server will now reject.
+     * firing a request the server will now reject. Falls back to the cached value if the refresh fails: the only
+     * callers fetch Athena suggestions, which the server rejects anyway if the choice was revoked.
      */
     refreshAiExperience(): Observable<LLMSelectionDecision | undefined> {
-        return this.accountService.refreshSelectedLLMUsage();
+        return this.accountService.refreshSelectedLLMUsage().pipe(catchError(() => of(this.accountService.userIdentity()?.selectedLLMUsage)));
     }
 
     /**

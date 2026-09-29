@@ -308,7 +308,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     onOptInToAiFeedbackSuggestions(): void {
-        this.aiExperienceOptInService.promptForAiUsage(() => this.loadFeedbackSuggestions());
+        // The router can reuse this component for another submission while the modal or the preference update is
+        // pending; only fetch for the submission that showed the hint. loadFeedbackSuggestions() checks that it is
+        // still unassessed.
+        const submissionAtPrompt = this.submission;
+        const resultAtPrompt = this.result();
+        this.aiExperienceOptInService.promptForAiUsage(() => {
+            if (this.submission !== submissionAtPrompt || this.result() !== resultAtPrompt) {
+                return;
+            }
+            this.loadFeedbackSuggestions();
+        });
     }
 
     /**

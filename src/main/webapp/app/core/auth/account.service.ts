@@ -447,7 +447,8 @@ export class AccountService implements IAccountService {
      * server-visible action on the choice (e.g. requesting AI feedback) must call this immediately beforehand
      * instead of trusting the cached signal. Patches only the two related fields via {@link applyLLMSelectionDecision}
      * rather than replacing the whole identity, so nothing else observing `userIdentity` (authenticated(), the
-     * websocket/feature-toggle login effect, ...) sees a spurious flicker.
+     * websocket/feature-toggle login effect, ...) sees a spurious flicker. Errors propagate: a caller about to send
+     * a request must not fall back to a cached choice that another tab may already have revoked.
      */
     refreshSelectedLLMUsage(): Observable<LLMSelectionDecision | undefined> {
         return this.fetch().pipe(
@@ -457,9 +458,6 @@ export class AccountService implements IAccountService {
                 this.applyLLMSelectionDecision(selection, timestamp ? dayjs(timestamp) : undefined);
                 return selection;
             }),
-            // A network blip here must not block the caller forever or throw out of an event-handler-triggered
-            // async method (see RequestFeedbackButtonComponent.requestAIFeedback); fall back to the cached value.
-            catchError(() => of(this.userIdentity()?.selectedLLMUsage)),
         );
     }
 

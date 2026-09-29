@@ -1165,5 +1165,32 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
             expect(suggestionsSpy).toHaveBeenCalled();
         });
+
+        it('should not fetch feedback suggestions for another submission loaded while the opt-in prompt was open', () => {
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([]));
+            let onAccepted: () => void = () => {};
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((callback) => (onAccepted = callback));
+            component.submission.set(getSubmissionWithData());
+            component.result.set(getSubmissionWithData().results![0] as unknown as Result);
+
+            component.onOptInToAiFeedbackSuggestions();
+            component.submission.set(getSubmissionWithData());
+            component.result.set(getSubmissionWithData().results![0] as unknown as Result);
+            onAccepted();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch feedback suggestions once the assessor has already added feedback', () => {
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([]));
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+            component.submission.set(getSubmissionWithData());
+            component.result.set(getSubmissionWithData().results![0] as unknown as Result);
+            component.unreferencedFeedback.set([{ type: FeedbackType.MANUAL_UNREFERENCED, credits: 1, detailText: 'manual' } as Feedback]);
+
+            component.onOptInToAiFeedbackSuggestions();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
     });
 });

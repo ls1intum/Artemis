@@ -402,7 +402,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if (this.isFeedbackSuggestionsEnabled() && (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
+        if (this.isEligibleForFeedbackSuggestions()) {
             // Another tab may have changed the AI Experience choice since this tab cached it; re-check right before
             // deciding whether to auto-fetch, so a stale "accepted" cache doesn't fire a request the server will reject.
             // The router can reuse this component for another submission while the refresh is pending; that
@@ -433,7 +433,26 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     onOptInToAiFeedbackSuggestions(): void {
-        this.aiExperienceOptInService.promptForAiUsage(() => void this.loadFeedbackSuggestions());
+        // The router can reuse this component for another submission while the modal or the preference update is
+        // pending; only fetch for the submission that showed the hint, and only while it is still unassessed.
+        const submissionAtPrompt = this.submission();
+        const manualResultAtPrompt = this.manualResult();
+        this.aiExperienceOptInService.promptForAiUsage(() => {
+            if (this.submission() !== submissionAtPrompt || this.manualResult() !== manualResultAtPrompt || !this.isEligibleForFeedbackSuggestions()) {
+                return;
+            }
+            void this.loadFeedbackSuggestions();
+        });
+    }
+
+    /** Suggestions only make sense for a new assessment, i.e. one that contains nothing but automatic feedback. */
+    private isEligibleForFeedbackSuggestions(): boolean {
+        return (
+            this.isFeedbackSuggestionsEnabled() &&
+            (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length &&
+            this.referencedFeedback().length === 0 &&
+            this.unreferencedFeedback().length === 0
+        );
     }
 
     /**
