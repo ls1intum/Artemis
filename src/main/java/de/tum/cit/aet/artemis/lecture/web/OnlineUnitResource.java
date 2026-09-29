@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.jsoup.Jsoup;
@@ -107,7 +108,7 @@ public class OnlineUnitResource {
      */
     @PutMapping("lectures/{lectureId}/online-units")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<OnlineUnitDTO> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnitDTO onlineUnitDto) {
+    public ResponseEntity<OnlineUnitDTO> updateOnlineUnit(@PathVariable Long lectureId, @Valid @RequestBody OnlineUnitDTO onlineUnitDto) {
         log.debug("REST request to update an online unit : {}", onlineUnitDto);
         if (onlineUnitDto.id() == null) {
             throw new BadRequestException();
@@ -163,7 +164,7 @@ public class OnlineUnitResource {
      */
     @PostMapping("lectures/{lectureId}/online-units")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<OnlineUnitDTO> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnitDTO onlineUnitDto) throws URISyntaxException {
+    public ResponseEntity<OnlineUnitDTO> createOnlineUnit(@PathVariable Long lectureId, @Valid @RequestBody final OnlineUnitDTO onlineUnitDto) throws URISyntaxException {
         log.debug("REST request to create onlineUnit : {}", onlineUnitDto);
         if (onlineUnitDto.id() != null) {
             throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");

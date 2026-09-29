@@ -146,6 +146,24 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createOnlineUnit_descriptionAtMaxLength_shouldCreateOnlineUnit() throws Exception {
+        OnlineUnitDTO onlineUnitAtMaxLength = new OnlineUnitDTO(null, onlineUnit.getName(), onlineUnit.getReleaseDate(), "a".repeat(1000),
+                "https://www.youtube.com/embed/8iU8LPEa4o0", null, null);
+        var persistedOnlineUnit = request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", onlineUnitAtMaxLength, OnlineUnitDTO.class,
+                HttpStatus.CREATED);
+        assertThat(persistedOnlineUnit.description()).hasSize(1000);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createOnlineUnit_descriptionTooLong_shouldReturnBadRequest() throws Exception {
+        OnlineUnitDTO onlineUnitTooLong = new OnlineUnitDTO(null, onlineUnit.getName(), onlineUnit.getReleaseDate(), "a".repeat(1001), "https://www.youtube.com/embed/8iU8LPEa4o0",
+                null, null);
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", onlineUnitTooLong, OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
@@ -175,6 +193,34 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         assertThat(updatedOnlineUnit.source()).isEqualTo(this.onlineUnit.getSource());
         assertThat(updatedOnlineUnit.description()).isEqualTo("Changed");
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of(competency.getId())), eq(onlineUnit));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateOnlineUnit_descriptionAtMaxLength_shouldUpdateOnlineUnit() throws Exception {
+        persistOnlineUnitWithLecture();
+
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
+        this.onlineUnit.setDescription("a".repeat(1000));
+        var updatedOnlineUnit = request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit),
+                OnlineUnitDTO.class, HttpStatus.OK);
+        assertThat(updatedOnlineUnit.description()).hasSize(1000);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateOnlineUnit_descriptionTooLong_shouldReturnBadRequest() throws Exception {
+        persistOnlineUnitWithLecture();
+
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
+        this.onlineUnit.setDescription("a".repeat(1001));
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit), OnlineUnitDTO.class,
+                HttpStatus.BAD_REQUEST);
+
+        OnlineUnit unchanged = onlineUnitRepository.findById(this.onlineUnit.getId()).orElseThrow();
+        assertThat(unchanged.getDescription()).isEqualTo("LoremIpsum");
     }
 
     @Test
