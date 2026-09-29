@@ -6,6 +6,11 @@
         testId="athena-enabled"
         (enabledChange)="setEnabled($event)"
     />
+    @if (loadFailed()) {
+        <button tumAetUiButton type="button" size="small" severity="secondary" variant="outlined" data-testid="athena-retry" (click)="retryLoad()">
+            <span jhiTranslate="entity.action.retry"></span>
+        </button>
+    }
     <a tumAetUiButton severity="secondary" variant="outlined" [routerLink]="settingsRoute()" data-testid="athena-configure-link">
         <span jhiTranslate="artemisApp.course.athenaConfig.configure"></span>
         <fa-icon [icon]="faArrowRight" />

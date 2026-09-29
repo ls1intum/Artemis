@@ -50,6 +50,9 @@ export class AthenaEnabledComponent {
     /** Until the configuration has loaded, "Disabled" is only a fallback, so the toggle cannot be switched yet. */
     readonly loaded = computed(() => this.state()?.loaded() ?? false);
 
+    /** A failed load keeps the toggle blocked, so the instructor is offered to load it again. */
+    readonly loadFailed = computed(() => this.state()?.loadFailed() ?? false);
+
     /**
      * Route to the settings page. Computed rather than a method, because `[routerLink]="settingsRoute()"` is evaluated
      * on every change-detection pass and a fresh array each pass makes RouterLink re-process the link every time.
@@ -63,5 +66,12 @@ export class AthenaEnabledComponent {
      */
     setEnabled(enabled: boolean) {
         this.state()?.setMasterEnabled(enabled);
+    }
+
+    /**
+     * Load the configuration again after it failed to load.
+     */
+    retryLoad() {
+        this.state()?.load();
     }
 }
