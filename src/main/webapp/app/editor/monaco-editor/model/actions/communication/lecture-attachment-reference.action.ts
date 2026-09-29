@@ -1,8 +1,8 @@
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { ReferenceType } from 'app/communication/metis.util';
+import { ReferenceType } from 'app/communication/communication.util';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -34,12 +34,12 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     lecturesWithDetails: LectureWithDetails[] = [];
 
     constructor(
-        private readonly metisService: MetisService,
+        private readonly communicationService: CommunicationService,
         private readonly lectureService: LectureService,
         private readonly fileService: FileService,
     ) {
-        super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
-        void firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
+        super(LectureAttachmentReferenceAction.ID, 'artemisApp.communication.editor.lecture');
+        void firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.communicationService.getCourse().id!)).then((response) => {
             const lectures = response.body;
             if (lectures) {
                 this.lecturesWithDetails = lectures
@@ -105,7 +105,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     insertLectureReference(editor: TextEditor, lecture: LectureWithDetails): void {
         this.replaceTextAtCurrentSelection(
             editor,
-            `[lecture]${sanitizeStringForMarkdownEditor(lecture.title)}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`,
+            `[lecture]${sanitizeStringForMarkdownEditor(lecture.title)}(${this.communicationService.getLinkForLecture(lecture.id.toString())})[/lecture]`,
         );
     }
 

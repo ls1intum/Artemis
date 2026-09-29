@@ -207,7 +207,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via a single course-wide broadcast, not per user
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
-        // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
+        // One broadcast in total over the whole window: a restored legacy mirror topic would make it two.
         // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
         verify(websocketMessagingService, after(2000).times(1)).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
     }
@@ -307,7 +307,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via a single course-wide broadcast, not per user
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
-        // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
+        // One broadcast in total over the whole window: a restored legacy mirror topic would make it two.
         // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
         verify(websocketMessagingService, after(2000).times(1)).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
     }
@@ -1500,7 +1500,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
      * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
      * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
-     * nothing else - in particular neither the retired {@code /topic/metis/} mirror nor an unrelated destination, both
+     * nothing else - in particular neither the retired legacy mirror topic nor an unrelated destination, both
      * of which a bare {@code anyString()} would have accepted.
      *
      * @return a Mockito matcher for a canonical post broadcast destination

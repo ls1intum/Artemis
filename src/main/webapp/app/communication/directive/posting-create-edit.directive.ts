@@ -1,8 +1,8 @@
 import { Directive, OnInit, effect, inject, model, output, signal, untracked } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { MetisService } from 'app/communication/service/metis.service';
-import { PostingEditType } from 'app/communication/metis.util';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { PostingEditType } from 'app/communication/communication.util';
 
 import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 
@@ -11,7 +11,7 @@ export const MAX_CONTENT_LENGTH = 5000;
 
 @Directive()
 export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit {
-    protected metisService = inject(MetisService);
+    protected communicationService = inject(CommunicationService);
     protected formBuilder = inject(FormBuilder);
 
     readonly posting = model<T>();
