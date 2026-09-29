@@ -218,14 +218,14 @@ public class LectureUnitResource {
      * GET /lecture-units/:lectureUnitId/for-learning-path-node-details : Gets lecture unit for the details view of a learning path node.
      *
      * @param lectureUnitId the id of the lecture unit that should be fetched
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found) if the lecture unit does not exist
      */
     @FeatureUsage(UserFeature.LEARNING_PATHS)
     @GetMapping("lecture-units/{lectureUnitId}/for-learning-path-node-details")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureUnitForLearningPathNodeDetailsDTO> getLectureUnitForLearningPathNodeDetails(@PathVariable long lectureUnitId) {
         log.info("REST request to get lecture unit for learning path node details with id: {}", lectureUnitId);
-        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
     }
 

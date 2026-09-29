@@ -1735,14 +1735,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * Returns a page of users in the given course that have the given role, matching the search term and sort from {@code search}.
      *
-     * @param search   pagination, search term, and sort info
+     * @param pageable the page to return; must be unsorted, since the sort comes from {@code search}
+     * @param search   search term and sort info (its page fields are not read)
      * @param courseId the ID of the course
      * @param role     the {@link CourseRole} to filter by
      * @return page of matching {@link User} entities
      */
-    default Page<User> searchUsersInCourseRole(CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
+    default Page<User> searchUsersInCourseRole(Pageable pageable, CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
         // orderByColumn() applies the sort as a query.orderBy() side effect, so the Pageable itself stays unsorted.
-        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginNameEmailOrRegistrationNumber(search.searchTerm()))
                 .and(orderByColumn(search.sortedColumn(), search.sortingOrder()));
         return findAll(spec, pageable);
