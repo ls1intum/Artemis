@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { Page, expect } from '@playwright/test';
 import { StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
@@ -47,6 +48,31 @@ export class ExamScoresPage {
                 timeout: 10000,
             })
             .toBe(true);
+    }
+
+    /**
+     * Exports the results of the exam as a CSV file and returns the file's content.
+     */
+    async exportResultsAsCsv(): Promise<string> {
+        await this.page.getByRole('button', { name: 'Export', exact: true }).click();
+        const dialog = this.page.getByRole('dialog');
+        await dialog.getByRole('tab', { name: 'CSV' }).click();
+        const download = this.page.waitForEvent('download');
+        await dialog.locator('#finish-button').click();
+        return fs.readFileSync(await (await download).path(), 'utf-8');
+    }
+
+    /**
+     * Checks that an exported CSV file holds a line per student with the student's login, points and grade.
+     */
+    checkExportedResults(csv: string, studentResults: StudentResult[]) {
+        const lines = csv.split(/\r?\n/).filter(Boolean);
+        for (const studentResult of studentResults) {
+            const line = lines.find((candidate) => candidate.includes(studentResult.login!));
+            expect(line, `the export has a line for ${studentResult.login}:\n${csv}`).toBeDefined();
+            expect(line, `points of ${studentResult.login}`).toContain(Math.floor(studentResult.overallPointsAchieved!).toString());
+            expect(line, `grade of ${studentResult.login}`).toContain(studentResult.overallGrade!);
+        }
     }
 
     async checkStudentResults(studentResults: StudentResult[]) {

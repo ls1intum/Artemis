@@ -722,6 +722,10 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
         await examScores.checkGradeDistributionChart(examStatisticsSample.gradingScale.gradeSteps.length);
         const scores = await examAPIRequests.getExamScores(exam);
         await examScores.checkStudentResults(scores.studentResults);
+
+        // The exported file holds the same results as the page.
+        const exported = await examScores.exportResultsAsCsv();
+        examScores.checkExportedResults(exported, scores.studentResults);
     });
 
     test.afterEach('Delete exam', async ({ examAPIRequests }) => {

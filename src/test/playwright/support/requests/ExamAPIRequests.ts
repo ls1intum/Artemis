@@ -482,6 +482,18 @@ export class ExamAPIRequests {
     }
 
     /**
+     * Sets the publication of the example solutions of the exam to the given number of seconds from now on the server clock.
+     * The server only accepts a date after the end of the exam.
+     * @returns the point in time at which the example solutions are published
+     */
+    async publishExampleSolutionIn(exam: Exam, secondsFromNow: number): Promise<dayjs.Dayjs> {
+        const { serverNow } = await this.getExamWithServerTime(exam);
+        const publish = serverNow.add(secondsFromNow, 'seconds');
+        await this.updateExam(exam, { exampleSolutionPublicationDate: dayjsToString(publish) });
+        return publish;
+    }
+
+    /**
      * Closes the student review period a moment from now and waits until it is closed on the server clock.
      */
     async closeReviewPeriod(exam: Exam) {
