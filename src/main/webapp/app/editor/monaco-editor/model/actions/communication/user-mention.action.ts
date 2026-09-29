@@ -2,7 +2,7 @@ import { faAt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { firstValueFrom } from 'rxjs';
 import { UserNameAndLoginDTO } from 'app/account/user/user.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
@@ -22,9 +22,9 @@ export class UserMentionAction extends TextEditorAction {
 
     constructor(
         private readonly courseManagementService: CourseManagementService,
-        private readonly metisService: MetisService,
+        private readonly communicationService: CommunicationService,
     ) {
-        super(UserMentionAction.ID, 'artemisApp.metis.editor.user', faAt);
+        super(UserMentionAction.ID, 'artemisApp.communication.editor.user', faAt);
     }
 
     /**
@@ -60,7 +60,7 @@ export class UserMentionAction extends TextEditorAction {
     }
 
     async loadUsersForSearchTerm(searchTerm: string = ''): Promise<UserNameAndLoginDTO[]> {
-        const response = await firstValueFrom(this.courseManagementService.searchMembersForUserMentions(this.metisService.getCourse().id!, searchTerm));
+        const response = await firstValueFrom(this.courseManagementService.searchMembersForUserMentions(this.communicationService.getCourse().id!, searchTerm));
         return response.body ?? [];
     }
 }

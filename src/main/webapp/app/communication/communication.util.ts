@@ -31,7 +31,7 @@ export enum PostSortCriterion {
     CREATION_DATE = 'CREATION_DATE',
 }
 
-export enum MetisPostAction {
+export enum CommunicationCrudAction {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
     DELETE = 'DELETE',
@@ -133,7 +133,7 @@ export interface ContextInformation {
  */
 export type RouteComponents = (string | number)[];
 
-export const MetisWebsocketChannelPrefix = '/topic/communication/';
+export const CommunicationWebsocketChannelPrefix = '/topic/communication/';
 
 /**
  * whitespace accepted only together with a character excluding newline character
