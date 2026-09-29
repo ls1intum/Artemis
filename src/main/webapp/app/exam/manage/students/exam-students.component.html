@@ -158,6 +158,7 @@
             outlined
             [pTooltip]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
             tooltipPosition="top"
+            data-testid="reseat-student-button"
             (click)="reseatingDialog.openDialog(toExamUserForReseating(examUser))"
             [disabled]="isTestExam()"
         >
