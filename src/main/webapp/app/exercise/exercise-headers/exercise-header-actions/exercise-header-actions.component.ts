@@ -209,11 +209,11 @@ export class ExerciseHeaderActionsComponent {
     });
 
     readonly userLLMSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
-    readonly aiFeedbackPopoverDisabledDescriptionKey = computed(() =>
-        this.userLLMSelection() === LLMSelectionDecision.NO_AI
-            ? 'artemisApp.exercise.aiFeedbackPopover.descriptionNoAi'
-            : 'artemisApp.exercise.aiFeedbackPopover.descriptionDisabled',
-    );
+    /** Names On-premise only when the AI Experience selection offers it, which requires a local LLM deployment. */
+    readonly aiFeedbackPopoverDisabledDescriptionKey = computed(() => {
+        const key = this.userLLMSelection() === LLMSelectionDecision.NO_AI ? 'descriptionNoAi' : 'descriptionDisabled';
+        return `artemisApp.exercise.aiFeedbackPopover.${key}${this.profileService.isLLMDeploymentEnabled() ? '' : 'CloudOnly'}`;
+    });
     readonly hasUserAcceptedLLM = computed(() => isAcceptedLLMSelection(this.userLLMSelection()));
     readonly showFeedbackPopover = computed(() => {
         const exercise = this.exercise();

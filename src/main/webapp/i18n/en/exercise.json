@@ -238,8 +238,10 @@
             "aiFeedbackPopover": {
                 "title": "AI Feedback",
                 "description": "Get AI-generated feedback for your submission. It's preliminary and can include mistakes. Consider checking important information.",
-                "descriptionDisabled": "This exercise supports AI-generated feedback on your submission. Choose your AI Experience to use it for this and future exercises.",
-                "descriptionNoAi": "Change your AI Experience to get AI-generated feedback.",
+                "descriptionDisabled": "This exercise supports AI-generated feedback on your submission. Choose Cloud or On-premise as your AI Experience to get it.",
+                "descriptionNoAi": "Change your AI Experience to Cloud or On-premise to get AI-generated feedback.",
+                "descriptionDisabledCloudOnly": "This exercise supports AI-generated feedback on your submission. Choose Cloud as your AI Experience to get it.",
+                "descriptionNoAiCloudOnly": "Change your AI Experience to Cloud to get AI-generated feedback.",
                 "selectedAiType": "Using: {{ type }}",
                 "dontShowAgain": "Don't show this again",
                 "aiType": {

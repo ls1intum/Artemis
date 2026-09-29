@@ -1,10 +1,11 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faInfoCircle, faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TumAetUiButtonComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
@@ -12,6 +13,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [TumAetUiMessageComponent, TumAetUiButtonComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackSuggestionsBannerComponent {
+    private readonly profileService = inject(ProfileService);
+
     readonly isLoading = input.required<boolean>();
     readonly hasAutomaticFeedback = input.required<boolean>();
     readonly isAssessor = input.required<boolean>();
@@ -24,9 +27,11 @@ export class FeedbackSuggestionsBannerComponent {
     readonly canApplyFeedbackSuggestions = input<boolean>(true);
     readonly optIn = output<void>();
 
-    protected readonly optInHintKey = computed(() =>
-        this.hasChosenNoAi() ? 'artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHintNoAi' : 'artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint',
-    );
+    /** Names On-premise only when the AI Experience selection offers it, which requires a local LLM deployment. */
+    protected readonly optInHintKey = computed(() => {
+        const key = this.hasChosenNoAi() ? 'aiExperienceOptInHintNoAi' : 'aiExperienceOptInHint';
+        return `artemisApp.assessment.feedbackSuggestions.${key}${this.profileService.isLLMDeploymentEnabled() ? '' : 'CloudOnly'}`;
+    });
     protected readonly optInActionKey = computed(() =>
         this.hasChosenNoAi() ? 'artemisApp.assessment.feedbackSuggestions.changeAiExperience' : 'artemisApp.assessment.feedbackSuggestions.chooseAiExperience',
     );

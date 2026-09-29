@@ -8,15 +8,21 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('FeedbackSuggestionsBannerComponent', () => {
     let fixture: ComponentFixture<FeedbackSuggestionsBannerComponent>;
+    let onPremiseAvailable: boolean;
 
     const translationKeys = () => fixture.debugElement.queryAll(By.directive(TranslateDirective)).map((element) => element.injector.get(TranslateDirective).jhiTranslate());
 
     beforeEach(() => {
+        onPremiseAvailable = true;
         return TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useValue: { isLLMDeploymentEnabled: () => onPremiseAvailable } },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -92,6 +98,20 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         const messages = fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent));
         expect(messages).toHaveLength(1);
         expect(translationKeys()).toEqual(['artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHintNoAi', 'artemisApp.assessment.feedbackSuggestions.changeAiExperience']);
+    });
+
+    it.each([
+        { hasChosenNoAi: false, hintKey: 'aiExperienceOptInHintCloudOnly' },
+        { hasChosenNoAi: true, hintKey: 'aiExperienceOptInHintNoAiCloudOnly' },
+    ])('should only name Cloud in the opt-in hint when On-premise AI is unavailable (hasChosenNoAi: $hasChosenNoAi)', ({ hasChosenNoAi, hintKey }) => {
+        onPremiseAvailable = false;
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
+        fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
+        fixture.componentRef.setInput('hasChosenNoAi', hasChosenNoAi);
+        fixture.detectChanges();
+
+        expect(translationKeys()[0]).toBe(`artemisApp.assessment.feedbackSuggestions.${hintKey}`);
     });
 
     it('should hide the opt-in hint when the assessor is not the current user or the result is already completed', () => {

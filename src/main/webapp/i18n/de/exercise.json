@@ -238,8 +238,10 @@
             "aiFeedbackPopover": {
                 "title": "KI-Feedback",
                 "description": "Erhalte KI-generiertes Feedback zu deiner Abgabe. Es ist vorläufig und kann Fehler enthalten. Bitte überprüfe wichtige Informationen.",
-                "descriptionDisabled": "Diese Aufgabe unterstützt KI-generiertes Feedback zu deiner Abgabe. Wähle deine KI-Erfahrung, um es für diese und zukünftige Aufgaben zu nutzen.",
-                "descriptionNoAi": "Ändere deine KI-Erfahrung, um KI-generiertes Feedback zu erhalten.",
+                "descriptionDisabled": "Diese Aufgabe unterstützt KI-generiertes Feedback zu deiner Abgabe. Wähle Cloud oder Lokal als deine KI-Erfahrung, um es zu erhalten.",
+                "descriptionNoAi": "Ändere deine KI-Erfahrung zu Cloud oder Lokal, um KI-generiertes Feedback zu erhalten.",
+                "descriptionDisabledCloudOnly": "Diese Aufgabe unterstützt KI-generiertes Feedback zu deiner Abgabe. Wähle Cloud als deine KI-Erfahrung, um es zu erhalten.",
+                "descriptionNoAiCloudOnly": "Ändere deine KI-Erfahrung zu Cloud, um KI-generiertes Feedback zu erhalten.",
                 "selectedAiType": "Verwendet: {{ type }}",
                 "dontShowAgain": "Nicht mehr anzeigen",
                 "aiType": {

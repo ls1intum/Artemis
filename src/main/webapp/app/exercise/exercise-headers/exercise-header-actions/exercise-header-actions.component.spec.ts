@@ -51,8 +51,11 @@ describe('ExerciseHeaderActionsComponent', () => {
         return exercise;
     }
 
-    function createComponent(exercise: Exercise, options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; llmSelection?: LLMSelectionDecision } = {}) {
-        const { athenaEnabled = true, examMode = false, llmAccepted = true, llmSelection } = options;
+    function createComponent(
+        exercise: Exercise,
+        options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; llmSelection?: LLMSelectionDecision; onPremiseAvailable?: boolean } = {},
+    ) {
+        const { athenaEnabled = true, examMode = false, llmAccepted = true, llmSelection, onPremiseAvailable = true } = options;
 
         const accountService = new MockAccountService();
         if (llmSelection) {
@@ -73,7 +76,7 @@ describe('ExerciseHeaderActionsComponent', () => {
                     getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
                         participations.find((participation) => !!participation.testRun === testRun),
                 }),
-                { provide: ProfileService, useValue: { isModuleFeatureActive: () => athenaEnabled } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: () => athenaEnabled, isLLMDeploymentEnabled: () => onPremiseAvailable } },
                 { provide: AccountService, useValue: accountService },
             ],
         });
@@ -238,6 +241,15 @@ describe('ExerciseHeaderActionsComponent', () => {
             { llmSelection: LLMSelectionDecision.NO_AI, descriptionKey: 'descriptionNoAi' },
         ])('explains the AI-disabled popover with $descriptionKey when the AI Experience selection is $llmSelection', ({ llmSelection, descriptionKey }) => {
             createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false, llmSelection });
+
+            expect(fixture.componentInstance.aiFeedbackPopoverDisabledDescriptionKey()).toBe(`artemisApp.exercise.aiFeedbackPopover.${descriptionKey}`);
+        });
+
+        it.each([
+            { llmSelection: undefined, descriptionKey: 'descriptionDisabledCloudOnly' },
+            { llmSelection: LLMSelectionDecision.NO_AI, descriptionKey: 'descriptionNoAiCloudOnly' },
+        ])('only names Cloud in the AI-disabled popover when On-premise AI is unavailable and the selection is $llmSelection', ({ llmSelection, descriptionKey }) => {
+            createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false, llmSelection, onPremiseAvailable: false });
 
             expect(fixture.componentInstance.aiFeedbackPopoverDisabledDescriptionKey()).toBe(`artemisApp.exercise.aiFeedbackPopover.${descriptionKey}`);
         });
