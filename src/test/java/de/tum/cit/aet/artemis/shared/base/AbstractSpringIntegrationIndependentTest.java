@@ -27,8 +27,9 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 // PROFILE_DEMO only adds the lazy beans that seed the demo course, which tests invoke directly: the startup event that triggers seeding is never published in tests.
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_DEMO })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.iris.enabled=true", "artemis.deimos.enabled=true", "artemis.lti.enabled=true",
-        "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.iris.enabled=true", "artemis.deimos.enabled=true",
+        "artemis.metis.enabled=true", "artemis.lti.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true",
+        "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
         // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
         "artemis.continuous-integration.build-job.retention-period=30" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTestBase {
