@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -41,17 +42,21 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseArchiveService;
+import de.tum.cit.aet.artemis.course.service.CourseOperationClaim;
+import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 
 /**
  * REST controller for archiving and cleaning course.
  */
 @Profile(PROFILE_CORE)
-@FeatureUsage("management/archive")
+@FeatureUsage(UserFeature.COURSE_ARCHIVE)
 @RestController
 @RequestMapping("api/course/")
 @Lazy
@@ -67,15 +72,18 @@ public class CourseArchiveResource {
 
     private final CourseArchiveService courseArchiveService;
 
+    private final CourseOperationProgressService progressService;
+
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
     public CourseArchiveResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            CourseArchiveService courseArchiveService) {
+            CourseArchiveService courseArchiveService, CourseOperationProgressService progressService) {
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.courseArchiveService = courseArchiveService;
+        this.progressService = progressService;
     }
 
     /**
@@ -90,13 +98,30 @@ public class CourseArchiveResource {
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
         log.info("REST request to archive Course : {}", courseId);
-        final Course course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Archiving a course is only possible after the course is over
         if (now().isBefore(course.getEndDate())) {
             throw new BadRequestAlertException("You cannot archive a course that is not over.", Course.ENTITY_NAME, "courseNotOver", true);
         }
-        courseArchiveService.archiveCourse(course);
+        ZonedDateTime startedAt = now();
+        CourseOperationClaim operationClaim = progressService.startOperation(courseId, CourseOperationType.ARCHIVE, "Creating directories",
+                CourseArchiveService.TOTAL_ARCHIVE_STEPS, startedAt);
+        boolean archiveScheduled = false;
+        try {
+            Course courseToArchive = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courseId);
+            courseArchiveService.archiveCourse(courseToArchive, operationClaim);
+            archiveScheduled = true;
+        }
+        catch (RuntimeException e) {
+            progressService.failOperation(operationClaim, "Archive failed", 0, CourseArchiveService.TOTAL_ARCHIVE_STEPS, 0, e.getMessage(), 0);
+            throw e;
+        }
+        finally {
+            if (!archiveScheduled) {
+                progressService.releaseOperationClaim(operationClaim);
+            }
+        }
 
         // Note: in the first version, we do not store the results with feedback and other metadata, as those will stay available in Artemis, the main focus is to allow
         // instructors to download student repos in order to delete those in the VCS
@@ -164,6 +189,7 @@ public class CourseArchiveResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing
      *         a set of DTOs, which contain the courses with id, title, semester, color, icon
      */
+    @FeatureUsage(UserFeature.COURSE_DASHBOARD)
     @GetMapping("courses/for-archive")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)

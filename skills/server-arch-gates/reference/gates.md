@@ -113,6 +113,32 @@ provider, so a TTL configured there would silently not apply under a different p
 
 Full guidance: `documentation/docs/developer/guidelines/distributed-data.mdx`.
 
+## Websocket topics
+
+**Rule.** Every destination the server sends to is a declared topic. A broadcast `WebsocketTopic`
+carries a `WebsocketTopicAccess` rule that decides who may subscribe; a `WebsocketUserTopic` is
+delivered to one user. Both are `public static final` constants of the module's
+`web/<Module>WebsocketTopics` class, a lazy `@Component` implementing `WebsocketTopicProvider` with
+the module's profile or condition. `WebsocketMessagingService` only accepts their destinations.
+
+**Enforced by.**
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/WebsocketTopicArchitectureTest.java`
+(topic constants, provider classes, no other broker access, no `@SubscribeMapping`, `@MessageMapping`
+relative to `/app`) and
+`src/test/java/de/tum/cit/aet/artemis/core/config/websocket/WebsocketSecurityConfigurationTest.java`
+(the inbound channel runs Spring Security and the subscription check).
+
+**Why it is not merely stylistic.** A broadcast topic delivers every message to every subscriber.
+The registry rejects subscriptions to undeclared destinations, so a topic that is sent but not
+declared reaches nobody, and a topic with a rule wider than the payload exposes it.
+
+**Choosing the rule.** Pick the narrowest rule that fits the payload and never allow more than the
+REST endpoint that returns the same data. Rules that need module data are custom checks on the
+provider. Add cases for an admitted and a rejected user to
+`src/test/java/de/tum/cit/aet/artemis/core/security/websocket/WebsocketTopicAuthorizationTest.java`.
+
+Full guidance: `documentation/docs/developer/guidelines/websocket.mdx`.
+
 ## Caching
 
 **Rule.** No `@Cache` (Hibernate second-level) annotations on entities or associations.
@@ -211,6 +237,26 @@ or a bean can trip it, and the failure surfaces in a step whose name does not me
 **Query quality.** A new `@EntityGraph` with more fetch paths than the baseline allows fails the
 Query Quality Check job in `.github/workflows/ci-quality.yml`. Reuse an existing counted method
 where you can. Local check: `supporting_scripts/find_slow_queries.py`.
+
+## Column mapping
+
+**Rule.** No field or method is annotated `@Lob`.
+
+**Enforced by.** `testNoLobAnnotation` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
+
+**Why.** A CLOB on PostgreSQL is a large object: Hibernate writes the value into `pg_largeobject` and
+stores the object's id in the column, then reads the column back as that id. The long text columns
+here are Liquibase `longtext`, and `tool_activity` is `clob`; both become `text` on PostgreSQL, so
+the column holds the text itself, and a row written by anything but that same mapping fails the read
+with `Bad value for type long`, taking the whole query with it rather than just the one column. The large objects are never
+reclaimed either, because nothing unlinks them when the row is deleted.
+
+**What to write instead.** Nothing: a `String`, or an attribute converted to one, round-trips as text
+on both databases whatever its length, since a length in the mapping only shapes generated DDL and
+Artemis generates none (`Exercise.problemStatement`). For a structured value,
+`@JdbcTypeCode(SqlTypes.JSON)` over a `json` column (`IrisMessage.accessedMemories`) - at the cost of
+the column's equality operator on PostgreSQL, so a query fetching the entity cannot use `DISTINCT`.
 
 ## Database
 

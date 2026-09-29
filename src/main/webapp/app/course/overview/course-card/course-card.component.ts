@@ -4,8 +4,8 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -26,7 +26,7 @@ import { filter, switchMap } from 'rxjs';
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
     styleUrls: ['course-card.scss'],
-    imports: [CourseCardHeaderComponent, TumUiDoughnutChartComponent, NgClass, TranslateDirective, RouterLink, FontAwesomeModule],
+    imports: [CourseCardHeaderComponent, TumAetUiDoughnutChartComponent, NgClass, TranslateDirective, RouterLink, FontAwesomeModule],
 })
 export class CourseCardComponent {
     private router = inject(Router);
@@ -84,7 +84,7 @@ export class CourseCardComponent {
     readonly doughnutChartEntries = this._doughnutChartEntries.asReadonly();
 
     readonly chartData = computed(() => singleSeriesChart(this.doughnutChartEntries(), [GraphColors.GREEN, GraphColors.RED]));
-    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiDoughnutChartConfig>(() => ({
         arcWidth: 0.3,
         legend: false,
         tooltip: {

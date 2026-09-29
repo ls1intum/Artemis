@@ -3,9 +3,13 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -128,9 +132,12 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
+        resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
         if (assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
+        // the update is copied onto a new result below, but the feedback ids are still read while the request is mapped
+        checkFeedbackBelongsToResultElseThrow(assessmentUpdate.feedbacks(), originalResult);
         // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.complaintResponse());
 
@@ -313,6 +320,14 @@ public class AssessmentService {
             result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId).orElse(null);
         }
 
+        if (result != null && (result.getSubmission() == null || !result.getSubmission().getId().equals(submission.getId()))) {
+            throw new BadRequestAlertException("The result does not belong to the assessed submission.", "result", "resultSubmissionMismatch");
+        }
+        resultService.validateGradingInstructions(feedbackList, exerciseId);
+
+        // run before a missing result is created, since saveNewEmptyResult commits the empty result on its own and a request refused afterwards would leave it behind
+        checkFeedbackBelongsToResultElseThrow(feedbackList, result);
+
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission, exerciseId);
         }
@@ -350,6 +365,25 @@ public class AssessmentService {
         result = resultRepository.save(result);
         result.setAssessor(assessor);
         return result;
+    }
+
+    /**
+     * Checks that an assessment only contains feedback of the result it is saved to. A feedback id is the id of a stored row, so an id of another result would be written to this
+     * result instead of being added to it.
+     *
+     * @param feedbackList the feedback list sent by the client
+     * @param result       the result the assessment is saved to, or {@code null} if it does not exist yet
+     */
+    protected void checkFeedbackBelongsToResultElseThrow(final Collection<Feedback> feedbackList, final Result result) {
+        if (feedbackList == null) {
+            return;
+        }
+        // a result that does not exist yet owns no feedback, so any stored feedback id is foreign
+        final Set<Long> ownFeedbackIds = result == null ? Set.of() : result.getFeedbacks().stream().map(Feedback::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // a negative id belongs to a synthesized view of the typed automatic feedback of a programming exercise and not to a stored row
+        if (feedbackList.stream().map(Feedback::getId).anyMatch(id -> id != null && id > 0 && !ownFeedbackIds.contains(id))) {
+            throw new BadRequestAlertException("The assessment contains feedback of another result", "Feedback", "feedbackIdMismatch");
+        }
     }
 
     /**

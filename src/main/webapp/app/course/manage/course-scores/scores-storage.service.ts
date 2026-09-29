@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -10,7 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
  * The method {@link CourseManagementService#findAllForDashboard} retrieves the scores and participation results in addition to the {@link Course} objects and saves the scores and participation results in this service.
  * This way, multiple components that need the scores and participation results can access them without having to retrieve them again from the server.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ScoresStorageService implements OnDestroy {
     private readonly accountService = inject(AccountService);
 

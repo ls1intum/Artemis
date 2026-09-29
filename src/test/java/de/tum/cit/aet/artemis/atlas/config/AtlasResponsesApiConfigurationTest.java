@@ -25,7 +25,8 @@ class AtlasResponsesApiConfigurationTest {
     private final ChatModel sharedChatModel = mock(ChatModel.class);
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner().withUserConfiguration(PropertiesConfiguration.class, AtlasResponsesApiConfiguration.class)
-            .withPropertyValues("artemis.atlas.enabled=true", "spring.ai.openai.api-key=test-key", "spring.ai.openai.base-url=http://localhost:1/v1")
+            .withPropertyValues("artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=true", "spring.ai.model.chat=openai", "spring.ai.openai.api-key=test-key",
+                    "spring.ai.openai.base-url=http://localhost:1/v1")
             .withBean(JsonMapper.class, JsonMapper::new).withBean(MeterRegistry.class, SimpleMeterRegistry::new).withBean(ChatClient.class, () -> sharedChatClient)
             .withBean(ChatModel.class, () -> sharedChatModel).withBean(AtlasPromptTemplateService.class, () -> mock(AtlasPromptTemplateService.class))
             .withBean(AtlasAgentDelegationService.class);
@@ -62,6 +63,38 @@ class AtlasResponsesApiConfigurationTest {
             assertThat(context).doesNotHaveBean(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_OPENAI_CLIENT);
             assertThat(context.getBean(ChatClient.class)).isSameAs(sharedChatClient);
         });
+    }
+
+    /**
+     * The state every installation without an LLM is in: Atlas on for competencies and learning paths, AtlasLLM off,
+     * and no Spring AI configuration at all, so {@code OpenAiCommonProperties} does not exist. The beans below are the
+     * only ones in Atlas that cannot be created without it, so the condition on them is what decides whether such an
+     * installation starts.
+     */
+    @Test
+    void atlasLLMDisabledStartsWithoutAnyOpenAiConfiguration() {
+        new ApplicationContextRunner().withUserConfiguration(AtlasResponsesApiConfiguration.class)
+                .withPropertyValues("artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=false", "spring.ai.model.chat=none").withBean(JsonMapper.class, JsonMapper::new)
+                .withBean(MeterRegistry.class, SimpleMeterRegistry::new).run(context -> {
+                    assertThat(context).as("an installation without a chat model still starts").hasNotFailed();
+                    assertThat(context).doesNotHaveBean(AtlasResponsesApiConfiguration.AtlasResponsesChatClient.class);
+                    assertThat(context).doesNotHaveBean(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_OPENAI_CLIENT);
+                });
+    }
+
+    /**
+     * Turning AtlasLLM on without configuring a chat model is a misconfiguration, and it must still leave a startable
+     * installation: the adapter drops out rather than failing the context on a bean it cannot build.
+     */
+    @Test
+    void atlasLLMEnabledWithoutAChatModelLeavesTheAdapterOut() {
+        new ApplicationContextRunner().withUserConfiguration(AtlasResponsesApiConfiguration.class)
+                .withPropertyValues("artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=true", "spring.ai.model.chat=none").withBean(JsonMapper.class, JsonMapper::new)
+                .withBean(MeterRegistry.class, SimpleMeterRegistry::new).run(context -> {
+                    assertThat(context).as("a misconfigured installation still starts").hasNotFailed();
+                    assertThat(context).doesNotHaveBean(AtlasResponsesApiConfiguration.AtlasResponsesChatClient.class);
+                    assertThat(context).doesNotHaveBean(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_OPENAI_CLIENT);
+                });
     }
 
     @org.springframework.context.annotation.Lazy

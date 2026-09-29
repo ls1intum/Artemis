@@ -557,14 +557,14 @@ describe('CodeEditorContainerIntegration', () => {
         const participation = { id: 1 } as Participation;
         containerFixture.componentRef.setInput('participation', participation);
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
-        containerFixture.componentRef.setInput('feedbackSuggestions', [
-            { reference: 'file:src/Test1.java_line:2' },
-            { reference: 'file:src/Test2.java_line:2' },
-            { reference: 'file:src/Test2.java_line:4' },
-            { reference: 'file:src/Test3.java_line:4' },
-            { reference: 'file:src/Test3.java_line:10' },
-            { reference: 'file:src/Test3.java_line:11' },
-        ]);
+        containerFixture.componentRef.setInput('referencedFeedback', [
+            { reference: 'file:src/Test1.java_line:2', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test2.java_line:2', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test2.java_line:4', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test3.java_line:4', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test3.java_line:10', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test3.java_line:11', text: 'FeedbackSuggestion:' },
+        ] as Feedback[]);
         containerFixture.detectChanges();
         container.updateFileBadges();
         expect(container.fileBadges()).toEqual({

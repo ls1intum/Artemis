@@ -11,6 +11,7 @@ export const USERNAME_MIN_LENGTH = 4;
 export const USERNAME_MAX_LENGTH = 50;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 50;
+export const PASSWORD_MAX_BYTES = 72;
 
 export const EXAM_START_WAIT_TIME_MINUTES = 5;
 
@@ -61,6 +62,8 @@ export const MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN = 'passkey-admin';
 
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
+export const MODULE_FEATURE_ATLASLLM = 'atlasllm';
+
 export const MODULE_FEATURE_HYPERION = 'hyperion';
 
 export const MODULE_FEATURE_DEIMOS = 'deimos';
@@ -99,6 +102,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
     | typeof MODULE_FEATURE_ATLAS
+    | typeof MODULE_FEATURE_ATLASLLM
     | typeof MODULE_FEATURE_HYPERION
     | typeof MODULE_FEATURE_DEIMOS
     | typeof MODULE_FEATURE_IRIS

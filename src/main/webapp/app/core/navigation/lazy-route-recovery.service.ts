@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -32,7 +32,7 @@ const CHUNK_LOAD_FAILURE_PATTERNS = [
  * A marker in session storage makes that recovery one-shot per url. Should the reloaded document fail on the same
  * url again, the chunk is genuinely gone rather than momentarily unreachable, and the user is told instead.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LazyRouteRecoveryService {
     private readonly injectedWindow = inject<Window>(WINDOW_INJECTOR_TOKEN);
     private readonly alertService = inject(AlertService);

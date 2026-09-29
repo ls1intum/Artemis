@@ -5,6 +5,9 @@ import java.util.List;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.json.JsonMapper;
@@ -14,6 +17,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 
 @Converter
 public class IrisMessageToolActivityConverter implements AttributeConverter<List<PyrisActivityDTO>, String> {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisMessageToolActivityConverter.class);
 
     private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
@@ -40,7 +45,11 @@ public class IrisMessageToolActivityConverter implements AttributeConverter<List
             return objectMapper.readValue(jsonData, type);
         }
         catch (JacksonException e) {
-            throw new IllegalArgumentException("Could not convert JSON to Iris tool activities", e);
+            // A stored value that is not a tool trail is read as no trail at all, rather than failing the read. The
+            // trail is a rendering detail of one message, while the read that fails is the one loading a whole chat
+            // session: a single unreadable value would otherwise leave the user unable to open the chat.
+            log.warn("Ignoring unreadable Iris tool activities", e);
+            return null;
         }
     }
 }

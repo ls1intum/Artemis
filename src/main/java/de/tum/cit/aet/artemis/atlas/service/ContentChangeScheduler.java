@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import static de.tum.cit.aet.artemis.atlas.web.AtlasWebsocketTopics.ORCHESTRATION_SUMMARY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Clock;
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
@@ -38,15 +39,13 @@ import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
  * orchestrator invocation, so the model reasons across all changed exercises at once rather than
  * one LLM call per exercise.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Profile(PROFILE_SCHEDULING)
 @Lazy
 @Component
 public class ContentChangeScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(ContentChangeScheduler.class);
-
-    private static final String TOPIC_TEMPLATE = "/topic/atlas/orchestrator/%d";
 
     private final ContentChangeAccumulatorService accumulator;
 
@@ -188,6 +187,6 @@ public class ContentChangeScheduler {
     private void broadcastSummary(long courseId, String runId, int exerciseCount, boolean success) {
         AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, exerciseCount, success ? exerciseCount : 0, success ? 0 : exerciseCount,
                 Instant.now(clock));
-        websocketMessagingService.sendMessage(TOPIC_TEMPLATE.formatted(courseId), summary);
+        websocketMessagingService.sendMessage(ORCHESTRATION_SUMMARY.at(courseId), summary);
     }
 }

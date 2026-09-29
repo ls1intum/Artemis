@@ -102,9 +102,10 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission.setSubmitted(true);
         }
 
-        // if athena results are present than create new submission on submit
-        if (!textSubmission.getResults().isEmpty()) {
-            log.debug("Creating a new submission due to Athena results for user: {}", user.getLogin());
+        // Once a result exists, the assessed submission must stay unchanged. Clients do not necessarily receive unreleased
+        // results, so this decision must use persisted state rather than the submitted entity.
+        if (textSubmission.getId() != null && resultRepository.existsBySubmissionId(textSubmission.getId())) {
+            log.debug("Creating a new submission because the existing submission has a result for user: {}", user.getLogin());
             textSubmission.setId(null);
         }
 

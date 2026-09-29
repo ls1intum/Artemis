@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExerciseDueDateDTO;
@@ -61,7 +62,7 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/course-management")
+@FeatureUsage(UserFeature.COURSE_MANAGEMENT_OVERVIEW)
 @RestController
 @RequestMapping("api/course/")
 public class CourseManagementResource {
@@ -128,6 +129,7 @@ public class CourseManagementResource {
      * @param search The pageable search containing the page size, page number and query string
      * @return the ResponseEntity with status 200 (OK) and with body the desired page
      */
+    @FeatureUsage(UserFeature.COURSE_MATERIAL_IMPORT)
     @GetMapping("courses/for-import")
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(SearchTermPageableSearchDTO<String> search) {
@@ -174,6 +176,7 @@ public class CourseManagementResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/for-assessment-dashboard")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseAssessmentDashboardDTO> getCourseForAssessmentDashboard(@PathVariable long courseId) {
@@ -238,6 +241,7 @@ public class CourseManagementResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/locked-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<LockedCourseSubmissionDTO>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {

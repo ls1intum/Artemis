@@ -17,9 +17,10 @@ import jakarta.persistence.Table;
  * one that is hard to answer any other way. Endpoint rows are therefore written at startup from Spring's mapping
  * table rather than lazily on first call.
  * <p>
- * One row is one endpoint, never one logical feature. {@link #featureLabel} is only a grouping attribute, filled from
- * {@code @FeatureUsage}. Keeping the grain at the endpoint means annotating an endpoint later relabels its existing
- * row, so historic data regroups immediately and no detail is ever lost.
+ * One row is one endpoint, never one logical feature. {@link #featureLabel} and {@link #interaction} are only grouping
+ * attributes, derived from {@code @FeatureUsage} and {@code @UsageInteraction} on every startup. Keeping the grain at the
+ * endpoint means reassigning an endpoint later relabels its existing row, so historic data regroups immediately and no
+ * detail is ever lost.
  */
 @Entity
 @Table(name = "tracked_feature")
@@ -39,6 +40,21 @@ public class TrackedFeature extends DomainObject {
     @Column(name = "feature_label", length = 128)
     private String featureLabel;
 
+    /**
+     * Whether a call is a user action, a view, an automatic call by the client or a call by another system. Static per
+     * endpoint, which is why an endpoint serving two purposes has to be split for the report to tell them apart.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "interaction", length = 16, nullable = false)
+    private FeatureInteraction interaction;
+
+    /**
+     * The simple name of the controller that serves the endpoint, so the report can show which resource implements a
+     * feature. Only present for {@link FeatureKind#REST}.
+     */
+    @Column(name = "resource", length = 128)
+    private String resource;
+
     @Column(name = "first_seen_at", nullable = false)
     private Instant firstSeenAt;
 
@@ -56,11 +72,13 @@ public class TrackedFeature extends DomainObject {
         // needed by Hibernate
     }
 
-    public TrackedFeature(FeatureKind featureKind, String module, String identifier, String featureLabel, Instant firstSeenAt) {
+    public TrackedFeature(FeatureKind featureKind, String module, String identifier, String featureLabel, FeatureInteraction interaction, String resource, Instant firstSeenAt) {
         this.featureKind = featureKind;
         this.module = module;
         this.identifier = identifier;
         this.featureLabel = featureLabel;
+        this.interaction = interaction;
+        this.resource = resource;
         this.firstSeenAt = firstSeenAt;
         this.lastRegisteredAt = firstSeenAt;
     }
@@ -95,6 +113,22 @@ public class TrackedFeature extends DomainObject {
 
     public void setFeatureLabel(String featureLabel) {
         this.featureLabel = featureLabel;
+    }
+
+    public FeatureInteraction getInteraction() {
+        return interaction;
+    }
+
+    public void setInteraction(FeatureInteraction interaction) {
+        this.interaction = interaction;
+    }
+
+    public String getResource() {
+        return resource;
+    }
+
+    public void setResource(String resource) {
+        this.resource = resource;
     }
 
     public Instant getFirstSeenAt() {

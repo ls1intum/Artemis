@@ -1,12 +1,13 @@
 @if (isProgrammingExerciseResults) {
     <div ngbDropdown class="d-inline">
-        <button id="export-results-dropdown" class="btn btn-info btn-sm me-1" ngbDropdownToggle>
+        <button type="button" id="export-results-dropdown" class="btn btn-info btn-sm me-1" ngbDropdownToggle>
             <fa-icon [icon]="faDownload" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.results.title"></span>
         </button>
         <div ngbDropdownMenu="export-results-dropdown">
-            <button ngbDropdownItem (click)="exportResults(false, false)" jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"></button>
+            <button type="button" ngbDropdownItem (click)="exportResults(false, false)" jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"></button>
             <button
+                type="button"
                 ngbTooltip="{{ 'artemisApp.exercise.export.results.withTestCasesTooltip' | artemisTranslate }}"
                 placement="left"
                 ngbDropdownItem
@@ -14,6 +15,7 @@
                 jhiTranslate="artemisApp.exercise.export.results.withTestCases"
             ></button>
             <button
+                type="button"
                 ngbTooltip="{{ 'artemisApp.exercise.export.results.withTestCasesAndFeedbackTooltip' | artemisTranslate }}"
                 placement="left"
                 ngbDropdownItem
@@ -26,7 +28,7 @@
     </div>
 }
 @if (!isProgrammingExerciseResults) {
-    <button class="btn btn-info btn-sm me-1" (click)="exportResults(false, false)">
+    <button type="button" class="btn btn-info btn-sm me-1" (click)="exportResults(false, false)">
         <fa-icon [icon]="faDownload" />
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.results.title"></span>
     </button>

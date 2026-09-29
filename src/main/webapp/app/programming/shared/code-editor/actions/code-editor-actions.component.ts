@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -294,6 +294,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     resetRepository() {
+        if (this.isResolvingConflict()) {
+            return;
+        }
         this.conflictModalRef =
             this.dialogService.open(CodeEditorResolveConflictModalComponent, {
                 header: this.translateService.instant('artemisApp.editor.conflict.conflictExplanationShort'),
@@ -304,18 +307,24 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 dismissableMask: false,
             }) ?? undefined;
         this.conflictModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            if (!confirmed) {
+            // The dialog can report a confirmation more than once (e.g. a double click on its submit button),
+            // so ignore it while a reset is already running
+            if (!confirmed || this.isResolvingConflict()) {
                 return;
             }
-            this.repositoryService.resetRepository().subscribe({
-                next: () => {
-                    this.conflictService.notifyConflictState(GitConflictState.OK);
-                    this.executeRefresh();
-                },
-                error: () => {
-                    this.onError.emit('resetFailed');
-                },
-            });
+            this.isResolvingConflict.set(true);
+            this.repositoryService
+                .resetRepository()
+                .pipe(finalize(() => this.isResolvingConflict.set(false)))
+                .subscribe({
+                    next: () => {
+                        this.conflictService.notifyConflictState(GitConflictState.OK);
+                        this.executeRefresh();
+                    },
+                    error: () => {
+                        this.onError.emit('resetFailed');
+                    },
+                });
         });
     }
 }

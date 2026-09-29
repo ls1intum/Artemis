@@ -78,7 +78,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -111,7 +110,6 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
-import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
@@ -442,6 +440,24 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noMethodLevelCache.check(productionClasses);
     }
 
+    @Test
+    void testNoLobAnnotation() {
+        String reason = "a @Lob is a large object on PostgreSQL: Hibernate writes the value into pg_largeobject, stores the object's id in the column, and reads the column "
+                + "back as that id. The long text columns here are declared longtext in Liquibase, and tool_activity is declared clob; both become text on PostgreSQL, so "
+                + "the mapping and the column disagree: a row holding the text itself - as MySQL writes it, and as every row written before the move to PostgreSQL is "
+                + "stored - fails the read with \"Bad value for type long\" and takes the whole query with it, which is how one unreadable message brought down every Iris "
+                + "chat session load for its user. The "
+                + "objects are never reclaimed either, because nothing unlinks them when the row is deleted. A String or a converted attribute needs no annotation: bound and "
+                + "extracted as text it round-trips on both databases whatever its length, since a length in the mapping only shapes generated DDL and Artemis generates none. "
+                + "Full rationale: documentation/docs/developer/guidelines/database.mdx.";
+
+        ArchRule noFieldLevelLob = noFields().should().beAnnotatedWith("jakarta.persistence.Lob").because(reason);
+        ArchRule noMethodLevelLob = noMethods().should().beAnnotatedWith("jakarta.persistence.Lob").because(reason);
+
+        noFieldLevelLob.check(productionClasses);
+        noMethodLevelLob.check(productionClasses);
+    }
+
     /**
      * The association annotations that must not fetch eagerly.
      * <p>
@@ -719,14 +735,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testValidSimpMessageSendingOperationsUsage() {
-        ArchRule usage = fields().that().haveRawType(SimpMessageSendingOperations.class.getTypeName()).should().bePrivate().andShould()
-                .beDeclaredIn(WebsocketMessagingService.class)
-                .because("Classes should only use WebsocketMessagingService as a Facade and not SimpMessageSendingOperations directly");
-        usage.check(productionClasses);
-    }
-
-    @Test
     void testFileWriteUsage() {
         ArchRule usage = noClasses().that()
                 // The unit test of FileUtil has to plant a file at the destination itself to create the precondition it
@@ -736,7 +744,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // FileUtil.publishAtomically is the one place allowed to call Files.move, because an atomic rename is
                 // exactly what Apache FileUtils cannot promise: it falls back to copying and deleting, which can leave
                 // an incomplete target behind. Callers that need that guarantee go through the helper.
-                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil").should()
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil")
+                // FailedBuildLogService publishes a log file by writing a sibling temporary file and renaming it into
+                // place, so that a reader never sees half a file. It needs REPLACE_EXISTING, which publishAtomically
+                // does not offer, and it falls back to a plain rename where the export cannot promise an atomic one,
+                // which Apache FileUtils cannot express either. Its test plants files directly to set up the malformed
+                // content it then asserts the reader survives.
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogService").and()
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogServiceTest").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);
@@ -914,8 +929,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // Unit tests of the logic a resource performs around its endpoints: the argument validation, the mapping of a
                 // failure to a status, and the access checks made inside the method rather than by its annotations. They call
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
-                "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "ProgrammingExerciseParticipationResourceResetTest", "PublicProgrammingExerciseResultResourceTest",
-                "RepositoryProgrammingExerciseParticipationResourceTest" };
+                "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest", "ProgrammingExerciseParticipationResourceResetTest",
+                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

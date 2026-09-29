@@ -78,14 +78,13 @@ public class ComplaintService {
 
     /**
      * Create a new complaint by checking if the user is still allowed to submit complaints and in the case of normal course exercises
-     * whether the user still enough complaints left.
+     * whether the user still enough complaints left. For exam exercises, the review period is checked on the exam of the exercise the result belongs to.
      *
      * @param complaintRequest the complaint to create
      * @param principal        the current Principal
-     * @param examId           the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
-    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Optional<Long> examId, Principal principal) {
+    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaintRequest.resultId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
 
@@ -111,9 +110,8 @@ public class ComplaintService {
         }
 
         // checking if it is allowed to create a complaint
-        if (examId.isPresent()) {
-            ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
-            final Exam exam = api.findByIdElseThrow(examId.get());
+        if (studentParticipation.getExercise().isExamExercise()) {
+            final Exam exam = studentParticipation.getExercise().getExam();
             final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {
