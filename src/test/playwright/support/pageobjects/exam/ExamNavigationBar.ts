@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { annotateRecovery } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the navigation bar in an open exam.
@@ -19,7 +20,7 @@ export class ExamNavigationBar {
      * page occasionally finishes rendering only after the static app shell + footer
      * (the same lazy-chunk race the goto wrapper guards against), leaving the navbar
      * exercise group titles missing for 30s+. When the first 30s visibility wait fails
-     * we reload once and try again — typically recovers within one round trip.
+     * we reload once and try again; the recovery is recorded in the report.
      */
     async openOrSaveExerciseByTitle(exerciseGroupTitle: string) {
         // Fail loudly and legibly if the title is missing. Passing undefined to getByText() throws a
@@ -40,6 +41,7 @@ export class ExamNavigationBar {
                 .then(() => true)
                 .catch(() => false);
         if (!(await visibleWithin(30000))) {
+            annotateRecovery(`openOrSaveExerciseByTitle: '${exerciseGroupTitle}' not visible after 30s at ${this.page.url()}; reloading`);
             await this.page.reload();
             await this.page.waitForLoadState('load');
             await exerciseLink.waitFor({ state: 'visible', timeout: 30000 });

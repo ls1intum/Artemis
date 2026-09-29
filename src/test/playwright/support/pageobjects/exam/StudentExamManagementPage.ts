@@ -12,8 +12,9 @@ export class StudentExamManagementPage {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/generate-student-exams`);
         await this.openManageStudentExamsMenu();
         await this.page.locator('[data-testid="exam-students-menu-item"]', { hasText: 'Generate individual exams' }).last().click();
-        await responsePromise;
+        const response = await responsePromise;
         await this.page.keyboard.press('Escape');
+        return response;
     }
 
     async clickRegisterCourseStudents() {

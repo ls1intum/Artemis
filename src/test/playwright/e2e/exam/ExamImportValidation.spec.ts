@@ -38,6 +38,11 @@ test.describe('Exam import validation messages', { tag: '@fast' }, () => {
         textExercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Text ' + generateUUID());
     });
 
+    test.afterEach('Delete the exam', async ({ login, examAPIRequests }) => {
+        await login(admin);
+        await examAPIRequests.deleteExam(exam);
+    });
+
     test('shows actionable error messages below invalid fields during exam import', async ({ login, page }) => {
         // Importing the exam into its own course renders the exercise-import table with editable group / exercise fields.
         await login(instructor, `/course-management/${course.id}/exams/import/${exam.id}`);
@@ -89,6 +94,8 @@ const targetCourse = { id: SEED_COURSES.import.id } as any;
 test.describe('Exam import with a clashing programming exercise', { tag: '@slow' }, () => {
     let sourceExam: Exam;
     let programmingExercise: ProgrammingExercise;
+    let clashingTargetExercise: ProgrammingExercise;
+    let importedExamId: number | undefined;
     let clashTitle: string;
     let clashShortName: string;
 
@@ -101,7 +108,8 @@ test.describe('Exam import with a clashing programming exercise', { tag: '@slow'
             clashShortName = 'clash' + uuid;
 
             // The target course already contains a programming exercise with this title / short name ...
-            await exerciseAPIRequests.createProgrammingExercise({ course: targetCourse, title: clashTitle, programmingShortName: clashShortName });
+            clashingTargetExercise = await exerciseAPIRequests.createProgrammingExercise({ course: targetCourse, title: clashTitle, programmingShortName: clashShortName });
+            importedExamId = undefined;
 
             // ... and the exam we will import has a programming exercise with the SAME title / short name (in a different
             // course, so both can be created). Importing it into the target course is exactly the clash the live validation catches.
@@ -158,12 +166,23 @@ test.describe('Exam import with a clashing programming exercise', { tag: '@slow'
 
         // We land on the detail page of the freshly imported exam.
         await page.waitForURL(new RegExp(`/course-management/${targetCourse.id}/exams/\\d+$`), { timeout: 30000 });
-        const importedExamId = Number(page.url().split('/').pop());
+        importedExamId = Number(page.url().split('/').pop());
         expect(importedExamId).not.toBe(sourceExam.id);
 
         // The imported exam really contains the (renamed) programming exercise -> the import worked end to end.
         const groups = await examAPIRequests.getExerciseGroups({ id: importedExamId, course: targetCourse } as Exam);
         const importedExercises = groups.flatMap((group) => group.exercises ?? []);
         expect(importedExercises.some((exercise) => exercise.title === newTitle)).toBe(true);
+    });
+
+    // Everything this test created lives in seed courses that other tests share: the source exam, the imported exam and the exercise that
+    // was created in the target course to provoke the clash.
+    test.afterEach('Delete the exams and the clashing exercise', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
+        await login(admin);
+        if (importedExamId !== undefined) {
+            await examAPIRequests.deleteExam({ id: importedExamId, course: targetCourse } as Exam);
+        }
+        await examAPIRequests.deleteExam(sourceExam);
+        await exerciseAPIRequests.deleteProgrammingExercise(clashingTargetExercise.id!);
     });
 });

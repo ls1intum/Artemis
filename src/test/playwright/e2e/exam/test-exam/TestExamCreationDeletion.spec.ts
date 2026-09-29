@@ -76,9 +76,17 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
             exam = await examAPIRequests.createExam(examConfig);
         });
 
-        test('Deletes an existing test exam', async ({ page, examDetails }) => {
+        test('Deletes an existing test exam', async ({ page, examDetails, examManagement }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
-            await examDetails.deleteExam(examData.title);
+            const response = await examDetails.deleteExam(examData.title);
+            expect(response.status()).toBe(200);
+
+            // The user is taken back to the exam list, which no longer offers the test exam ...
+            await page.waitForURL(`**/course-management/${course.id}/exams`);
+            await expect(examManagement.getExamSelector(examData.title)).toHaveCount(0);
+            // ... and the server no longer knows it.
+            const lookup = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}`);
+            expect(lookup.status()).toBe(404);
         });
     });
 

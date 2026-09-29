@@ -13,7 +13,7 @@ import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/asses
 import { StudentAssessmentPage } from '../../support/pageobjects/assessment/StudentAssessmentPage';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { test } from '../../support/fixtures';
-import { generateUUID, newBrowserPage, prepareExam, startAssessing, waitForExamBuildAndTestAfterDueDate, waitForExamEnd } from '../../support/utils';
+import { generateUUID, newBrowserPage, prepareEndedExam, startAssessing, waitForExamBuildAndTestAfterDueDate } from '../../support/utils';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
@@ -38,19 +38,10 @@ test.describe('Exam assessment', () => {
         // `waitForExamBuildAndTestAfterDueDate`.
         test.describe.configure({ timeout: 180_000 });
         let exam: Exam;
-        let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            // 180s window (was 60s): programming exercise creation involves cloning a C
-            // template repository, which routinely takes 30-60s under multi-node CI load.
-            // The student must finish startParticipation + handInEarly inside this window
-            // — at 60s, setup occasionally overran the exam end and the conduction page
-            // redirected, leaving `[data-testid="hand-in-early"]` un-clickable. 180s leaves comfortable
-            // headroom; the test still doesn't wait the full window since
-            // `waitForExamEnd` returns once the exam ends.
-            examEnd = dayjs().add(180, 'seconds');
             const page = await newBrowserPage(browser);
-            exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page, 2);
+            exam = await prepareEndedExam(course, ExerciseType.PROGRAMMING, page, 2);
         });
 
         test('Assess a programming exercise submission (MANUAL)', async ({
@@ -65,7 +56,6 @@ test.describe('Exam assessment', () => {
             test.slow();
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(exam, page);
             await waitForExamBuildAndTestAfterDueDate(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
@@ -117,12 +107,10 @@ test.describe('Exam assessment', () => {
 
     test.describe.serial('Modeling exercise assessment', { tag: '@slow' }, () => {
         let exam: Exam;
-        let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
-            exam = await prepareExam(course, examEnd, ExerciseType.MODELING, page, 2);
+            exam = await prepareEndedExam(course, ExerciseType.MODELING, page, 2);
         });
 
         test('Assess a modeling exercise submission', async ({
@@ -137,7 +125,6 @@ test.describe('Exam assessment', () => {
         }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await modelingExerciseAssessment.addNewFeedback(5, 'Good');
@@ -196,18 +183,15 @@ test.describe('Exam assessment', () => {
 
     test.describe.serial('Text exercise assessment', { tag: '@slow' }, () => {
         let exam: Exam;
-        let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
-            exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page, 2);
+            exam = await prepareEndedExam(course, ExerciseType.TEXT, page, 2);
         });
 
         test('Assess a text exercise submission', async ({ page, login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(7, 'Good job');
@@ -241,12 +225,10 @@ test.describe('Exam assessment', () => {
 
     test.describe.serial('File upload exercise assessment', { tag: '@slow' }, () => {
         let exam: Exam;
-        let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(40, 'seconds');
             const page = await newBrowserPage(browser);
-            exam = await prepareExam(course, examEnd, ExerciseType.FILE_UPLOAD, page, 2);
+            exam = await prepareEndedExam(course, ExerciseType.FILE_UPLOAD, page, 2);
         });
 
         test('Assess a file upload exercise submission', async ({
@@ -260,7 +242,6 @@ test.describe('Exam assessment', () => {
         }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await fileUploadExerciseAssessment.addNewFeedback(7, 'Good job');
@@ -297,32 +278,21 @@ test.describe('Exam assessment', () => {
 
     test.describe('Quiz exercise assessment', { tag: '@slow' }, () => {
         let exam: Exam;
-        let examEnd: Dayjs;
-        let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(30, 'seconds');
-            resultDate = examEnd.add(5, 'seconds');
             const page = await newBrowserPage(browser);
-            exam = await prepareExam(course, examEnd, ExerciseType.QUIZ, page);
+            exam = await prepareEndedExam(course, ExerciseType.QUIZ, page);
         });
 
         test('Assesses quiz automatically', async ({ page, login, examManagement, courseAssessment, examParticipation }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            // Wait for exam end + grace period (10s) so the evaluate button is enabled on load.
-            // The button's disabled state is computed once during component init and not re-evaluated.
-            const graceEnd = examEnd.add(10, 'seconds');
-            if (dayjs().isBefore(graceEnd)) {
-                await page.waitForTimeout(graceEnd.diff(dayjs(), 'ms') + 5000);
-            }
+            // The exam is already over including its grace period, so the evaluate button is enabled on load; its disabled state
+            // is computed once during component init and not re-evaluated.
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
             await page.waitForLoadState('domcontentloaded');
             const response = await courseAssessment.clickEvaluateQuizzes();
             expect(response.status()).toBe(200);
-            if (dayjs().isBefore(resultDate)) {
-                await page.waitForTimeout(resultDate.diff(dayjs(), 'ms') + 3000);
-            }
             await examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '[5 / 10 Points] 50%');
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('50%');
@@ -343,13 +313,11 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
 
     const dashboardCourse = { id: SEED_COURSES.examAssessment.id } as any;
     let exam: Exam;
-    let examEnd: Dayjs;
     let exerciseId: number;
 
     test.beforeAll('Prepare exam', async ({ browser }) => {
-        examEnd = dayjs().add(40, 'seconds');
         const page = await newBrowserPage(browser);
-        exam = await prepareExam(dashboardCourse, examEnd, ExerciseType.TEXT, page, 2);
+        exam = await prepareEndedExam(dashboardCourse, ExerciseType.TEXT, page, 2);
         // prepareExam leaves the page signed in as the student who took the exam, and reading the exercise groups needs
         // staff rights.
         await Commands.login(page, admin);
@@ -360,7 +328,6 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
     test('Dashboard offers only the first round until the second correction is enabled', async ({ page, login, examManagement, courseAssessment, exerciseAssessment }) => {
         await login(instructor);
         await examManagement.verifySubmitted(dashboardCourse.id!, exam.id!, studentOneName);
-        await waitForExamEnd(exam, page);
 
         await login(tutor);
         await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
@@ -511,13 +478,11 @@ test.describe.serial('Cancelling one correction round leaves the other one alone
 
     const cancelCourse = { id: SEED_COURSES.examAssessment.id } as any;
     let exam: Exam;
-    let examEnd: Dayjs;
     let exerciseId: number;
 
     test.beforeAll('Prepare exam', async ({ browser }) => {
-        examEnd = dayjs().add(40, 'seconds');
         const page = await newBrowserPage(browser);
-        exam = await prepareExam(cancelCourse, examEnd, ExerciseType.TEXT, page, 2);
+        exam = await prepareEndedExam(cancelCourse, ExerciseType.TEXT, page, 2);
         await Commands.login(page, admin);
         const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
         exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
@@ -526,7 +491,6 @@ test.describe.serial('Cancelling one correction round leaves the other one alone
     test('First round is assessed and the second one is left as a draft', async ({ page, login, examAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
         await login(instructor);
         await examManagement.verifySubmitted(cancelCourse.id!, exam.id!, studentOneName);
-        await waitForExamEnd(exam, page);
 
         // The tutor finishes the first round.
         await login(tutor);
@@ -598,7 +562,7 @@ test.describe.serial('A test run of an exam with two correction rounds', { tag: 
 
     test.beforeAll('Prepare exam', async ({ browser }) => {
         const page = await newBrowserPage(browser);
-        exam = await prepareExam(testRunCourse, dayjs().add(40, 'seconds'), ExerciseType.TEXT, page, 2);
+        exam = await prepareEndedExam(testRunCourse, ExerciseType.TEXT, page, 2);
         await Commands.login(page, admin);
         const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
         exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
@@ -632,12 +596,10 @@ test.describe.serial('A test run of an exam with two correction rounds', { tag: 
 test.describe('Exam grading', { tag: '@slow' }, () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
-        let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
-            exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page);
+            exam = await prepareEndedExam(course, ExerciseType.TEXT, page);
         });
 
         test('Set exam gradings', async ({ login, page, examManagement, examGrading }) => {
@@ -658,7 +620,6 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
         test('Check student grade', async ({ page, login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(7, 'Good job');
@@ -679,10 +640,9 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
 });
 
 test.describe('Exam statistics', { tag: '@slow' }, () => {
-    // This test creates an exam, has 4 students participate, waits for the exam to end,
-    // assesses all submissions, and then checks statistics — all within the test timeout.
-    // A generous timeout is needed because the exam must end before assessment can begin;
-    // on multi-node CI the worst-case run hovers around 280s, so we budget 360s.
+    // This test creates an exam, has 4 students participate, ends the exam, assesses all submissions, and then checks
+    // statistics, all within the test timeout. Four sequential participations and assessments on a loaded multi-node
+    // run are what the budget is for.
     test.describe.configure({ timeout: 360_000 });
 
     let exam: Exam;
@@ -692,13 +652,9 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
 
     test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
-        // 180s window (was 60s): the 'Participate in exam' beforeEach below has 4 students
-        // each go through startParticipation + open exercise + submit + handInEarly. Under
-        // multi-node CI load this routinely takes >60s, by which time the exam has ended and
-        // the conduction page redirects, leaving the navigation bar's exercise group title
-        // missing. 180s leaves comfortable headroom for the 4-student sequential loop while
-        // still letting `waitForExamEnd` return promptly once everyone has handed in.
-        examEnd = dayjs().add(180, 'seconds');
+        // The four students take the exam one after the other, which takes as long as it takes. The exam therefore stays open for a
+        // generous window and is only ended once everybody has handed in (see the assessment step below).
+        examEnd = dayjs().add(30, 'minutes');
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
@@ -707,8 +663,7 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
             endDate: examEnd,
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
-            // no grace period: assessment only opens after the exam end plus the grace period, and this spec's
-            // budget is already tight without waiting out createExam's 30s default
+            // no grace period: assessment only opens after the exam end plus the grace period, so none keeps the wait short
             gracePeriod: 0,
         };
         exam = await examAPIRequests.createExam(examConfig);
@@ -736,9 +691,10 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
         }
     });
 
-    test.beforeEach('Assess a text exercise submission', async ({ login, page, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
+    test.beforeEach('Assess a text exercise submission', async ({ login, examAPIRequests, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
+        await login(admin);
+        exam = await examAPIRequests.concludeExam(exam);
         await login(tutor);
-        await waitForExamEnd(exam, page);
         await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
 
         const assessment = examStatisticsSample.assessment;

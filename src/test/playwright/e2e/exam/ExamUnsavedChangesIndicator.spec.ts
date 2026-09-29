@@ -1,10 +1,8 @@
 import { test } from '../../support/fixtures';
 import { ExerciseType } from '../../support/constants';
 import { admin, studentOne } from '../../support/users';
-import { generateUUID } from '../../support/utils';
 import { expect } from '@playwright/test';
 import { SEED_COURSES } from '../../support/seedData';
-import dayjs from 'dayjs';
 
 const course = { id: SEED_COURSES.examParticipation.id } as any;
 
@@ -33,19 +31,16 @@ test.describe('Exam unsaved changes indicator', { tag: '@slow' }, () => {
 
     test.beforeEach('Create an exam with a text exercise', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
-        exam = await examAPIRequests.createExam({
-            course,
-            title: 'exam' + generateUUID(),
-            visibleDate: dayjs().subtract(3, 'minutes'),
-            startDate: dayjs().subtract(2, 'minutes'),
-            endDate: dayjs().add(1, 'hour'),
-            examMaxPoints: 10,
-            numberOfExercisesInExam: 1,
-        });
+        exam = await examAPIRequests.createRunningExam({ course });
         textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture: 'loremIpsum.txt' });
         await examAPIRequests.registerStudentForExam(exam, studentOne);
         await examAPIRequests.generateMissingIndividualExams(exam);
         await examAPIRequests.prepareExerciseStartForExam(exam);
+    });
+
+    test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+        await login(admin);
+        await examAPIRequests.deleteExam(exam);
     });
 
     test('shows unsaved changes as soon as the student edits, and clears it on save', async ({ page, examParticipation, examNavigation }) => {

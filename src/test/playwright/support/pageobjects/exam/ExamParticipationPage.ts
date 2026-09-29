@@ -14,6 +14,7 @@ import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
 import { BUILD_RESULT_TIMEOUT } from '../../timeouts';
+import { annotateRecovery, getExercise } from '../../utils';
 
 export class ExamParticipationPage extends ExamParticipationActions {
     private readonly examNavigation: ExamNavigationBar;
@@ -67,8 +68,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
     async makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
         const content = await Fixtures.get(textFixture);
         await this.textExerciseEditor.typeSubmission(exerciseID, content!);
-        // Wait for the text to be processed by Angular change detection
-        await this.page.waitForTimeout(1000);
+        // The character badge is rendered from the client's copy of the answer, so once it shows the typed length the
+        // text has been taken over from the textarea and is part of what the next save or hand-in sends.
+        const typedLength = (await getExercise(this.page, exerciseID).locator('#text-editor').inputValue()).length;
+        await expect(getExercise(this.page, exerciseID).getByTestId('character-count')).toContainText(`${typedLength}`);
     }
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false, skipBuildResultCheck = false) {
@@ -113,28 +116,24 @@ export class ExamParticipationPage extends ExamParticipationActions {
     async openExam(student: UserCredentials, course: Course, exam: Exam) {
         const examUrl = `/courses/${course.id}/exams/${exam.id}`;
         const urlPattern = `**/exams/${exam.id}**`;
-        // Under heavy multi-node load the exam landing page's Angular router occasionally
-        // leaves the page on /courses after login when a lazy chunk fails to bootstrap.
-        // A bare waitForURL then consumes the whole test budget. Re-issue the navigation
-        // up to two extra times on URL miss; pre-warm alone doesn't address this because
-        // exam routes have a no-navbar configuration that bypasses the navbar reload check.
         await Commands.login(this.page, student, examUrl);
-        const urlSettles = async (timeoutMs: number): Promise<boolean> =>
-            this.page
-                .waitForURL(urlPattern, { timeout: timeoutMs })
-                .then(() => true)
-                .catch(() => false);
-        if (await urlSettles(30_000)) {
+        if (await this.urlSettles(urlPattern, 30_000)) {
             return;
         }
-        for (let attempt = 0; attempt < 2; attempt++) {
-            await this.page.goto(examUrl);
-            await this.page.waitForLoadState('load');
-            if (await urlSettles(20_000)) {
-                return;
-            }
+        // Under heavy multi-node load the router occasionally stays on /courses after login because a lazy chunk failed to
+        // bootstrap. One more navigation recovers that; it is recorded, and a second miss fails the test.
+        annotateRecovery(`openExam: ${student.username} did not reach ${urlPattern}, landed at ${this.page.url()}; navigating again`);
+        await this.page.goto(examUrl);
+        if (!(await this.urlSettles(urlPattern, 30_000))) {
+            throw new Error(`openExam: expected URL matching ${urlPattern} but landed at ${this.page.url()} for student ${student.username}`);
         }
-        throw new Error(`openExam: expected URL matching ${urlPattern} but landed at ${this.page.url()} for student ${student.username}`);
+    }
+
+    private async urlSettles(urlPattern: string, timeoutMs: number): Promise<boolean> {
+        return this.page
+            .waitForURL(urlPattern, { timeout: timeoutMs })
+            .then(() => true)
+            .catch(() => false);
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {

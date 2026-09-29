@@ -800,7 +800,10 @@ export class ExerciseAPIRequests {
      * @param exam - The exam for which to evaluate the quiz exercises.
      */
     async evaluateExamQuizzes(exam: Exam) {
-        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        if (!response.ok()) {
+            throw new Error(`Failed to evaluate quiz exercises of exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
     }
 
     /**

@@ -395,6 +395,9 @@ export class CourseManagementAPIRequests {
             workingTime: 1080,
         };
         const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create test run for exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
         return response.json();
     }
 

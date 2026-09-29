@@ -1,12 +1,10 @@
 import { expect } from '@playwright/test';
+import dayjs from 'dayjs';
 import { admin, instructor, studentOne } from '../../support/users';
-import { generateUUID, newBrowserPage } from '../../support/utils';
+import { generateUUID } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { Commands } from '../../support/commands';
-import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
-import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
 
 const course = { id: SEED_COURSES.examManagement.id } as any;
@@ -125,22 +123,21 @@ test.describe('Exam management', { tag: '@fast' }, () => {
         });
     });
 
-    test.describe.serial('Manage Students', () => {
+    test.describe('Manage Students', () => {
         let exam: Exam;
 
-        test.beforeAll('Create exam and exercises', async ({ browser }) => {
-            const page = await newBrowserPage(browser);
-            const examAPIRequests = new ExamAPIRequests(page);
-            const exerciseAPIRequests = new ExerciseAPIRequests(page);
-
-            await Commands.login(page, admin);
+        // Every test gets an exam of its own, so the tests do not depend on each other or on their order.
+        test.beforeEach('Create exam and exercises', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
+            await login(admin);
             exam = await examAPIRequests.createExam({ course, title: 'Exam ' + generateUUID() });
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+            await login(instructor);
         });
 
-        test.beforeEach(async ({ login }) => {
-            await login(instructor);
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
+            await examAPIRequests.deleteExam(exam);
         });
 
         test('Registers the course students for the exam', async ({ page, studentExamManagement }) => {
@@ -148,21 +145,38 @@ test.describe('Exam management', { tag: '@fast' }, () => {
             const response = await studentExamManagement.clickRegisterCourseStudents();
             expect(response.status()).toBe(200);
             await studentExamManagement.checkStudent(studentOne.username);
+            // Every student of the course is now registered, not just the first one.
+            const registeredRows = await studentExamManagement.getStudentExamRows().count();
+            expect(registeredRows).toBeGreaterThanOrEqual(4);
         });
 
-        test('Generates student exams', async ({ page, studentExamManagement }) => {
+        test('Generates student exams', async ({ page, login, examAPIRequests, studentExamManagement }) => {
+            await login(admin);
+            await examAPIRequests.registerAllCourseStudentsForExam(exam);
+            await login(instructor);
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/students`);
-            await studentExamManagement.clickGenerateStudentExams();
+            await expect(studentExamManagement.getStudentExamRows().first()).toBeVisible();
+            const registeredStudents = await studentExamManagement.getStudentExamRows().count();
+            expect(registeredStudents).toBeGreaterThanOrEqual(4);
+
+            const response = await studentExamManagement.clickGenerateStudentExams();
+            expect(response.status()).toBe(200);
+
+            // Exactly one untouched student exam per registered student, with the working time of the exam.
+            const studentExams = await examAPIRequests.getAllStudentExams(exam);
+            expect(studentExams).toHaveLength(registeredStudents);
+            expect(await response.json()).toHaveLength(registeredStudents);
+            const duration = dayjs(exam.endDate as any).diff(dayjs(exam.startDate as any), 'seconds');
+            for (const studentExam of studentExams) {
+                expect(studentExam.testRun).toBe(false);
+                expect(studentExam.submitted).toBe(false);
+                expect(studentExam.workingTime).toBe(duration);
+            }
+
+            // Nothing is missing any more, so the menu no longer offers to generate the missing ones.
             await page.waitForLoadState('domcontentloaded');
             await studentExamManagement.openManageStudentExamsMenu();
             await expect(studentExamManagement.getGenerateMissingStudentExamsButton()).toBeDisabled();
-        });
-
-        test.afterAll('Delete exam', async ({ browser }) => {
-            const page = await newBrowserPage(browser);
-            const examAPIRequests = new ExamAPIRequests(page);
-            await Commands.login(page, admin);
-            await examAPIRequests.deleteExam(exam);
         });
     });
 });

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { test as baseTest } from '@playwright/test';
 import type { Dayjs as ModelDayjs } from 'dayjs/esm';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
@@ -338,6 +339,34 @@ export async function readResponseJson<T = any>(response: Response, recoverIdemp
 /**
  * Generates a unique identifier.
  */
+/**
+ * Records that a test had to recover from a page that did not settle (typically a lazy chunk that failed to load under heavy load and
+ * left the router on the wrong route). The recovery is bounded to one attempt and shows up as an annotation in the report, so a test
+ * that only passes thanks to it stays visible instead of turning into a silent flake.
+ */
+export function annotateRecovery(what: string) {
+    console.warn(`[recovery] ${what}`);
+    try {
+        baseTest.info().annotations.push({ type: 'recovered-navigation', description: what });
+    } catch {
+        // Not running inside a test (e.g. a plain script): the console warning above is all there is to record.
+    }
+}
+
+/**
+ * Runs a callback with exam API requests of an admin in a browser context of its own, so that a test can change an exam
+ * (for example shorten it) while a student is logged in on the test's own page.
+ */
+export async function asAdmin<T>(browser: Browser, callback: (examAPIRequests: ExamAPIRequests) => Promise<T>): Promise<T> {
+    const adminPage = await newBrowserPage(browser);
+    try {
+        await Commands.login(adminPage, admin);
+        return await callback(new ExamAPIRequests(adminPage));
+    } finally {
+        await adminPage.context().close();
+    }
+}
+
 export function generateUUID() {
     const uuid = uuidv4().replace(/-/g, '');
     return uuid.substr(0, 9);
@@ -778,7 +807,31 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
  * Exam utility functions
  */
 
-export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page, numberOfCorrectionRounds: number = 1): Promise<Exam> {
+/**
+ * Creates an exam with one exercise of the given type, lets student one take it and hand in early, and then ends the exam so that it
+ * can be assessed: the exam is over including its grace period and its results are published when this returns.
+ * <p>
+ * The participation runs in a generous window and the deadline is only set afterwards (see {@link ExamAPIRequests.concludeExam}),
+ * so a slow or loaded run cannot cut the participation short and a fast one does not wait for a guessed end date. The page is
+ * left logged in as admin.
+ */
+export async function prepareEndedExam(course: Course, exerciseType: ExerciseType, page: Page, numberOfCorrectionRounds: number = 1): Promise<Exam> {
+    const exam = await prepareExam(course, dayjs().add(EXAM_PARTICIPATION_WINDOW_IN_MINUTES, 'minutes'), exerciseType, page, numberOfCorrectionRounds, false);
+    await Commands.login(page, admin);
+    return await new ExamAPIRequests(page).concludeExam(exam);
+}
+
+/** How long an exam stays open while a test participates in it, before {@link prepareEndedExam} ends it. */
+const EXAM_PARTICIPATION_WINDOW_IN_MINUTES = 30;
+
+export async function prepareExam(
+    course: Course,
+    end: dayjs.Dayjs,
+    exerciseType: ExerciseType,
+    page: Page,
+    numberOfCorrectionRounds: number = 1,
+    publishResultsAtEnd: boolean = true,
+): Promise<Exam> {
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
@@ -805,9 +858,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         startDate: dayjs(),
         endDate: end,
         numberOfCorrectionRoundsInExam: numberOfCorrectionRounds,
-        examStudentReviewStart: resultDate,
-        examStudentReviewEnd: resultDate.add(5, 'minutes'),
-        publishResultsDate: resultDate,
+        ...(publishResultsAtEnd ? { examStudentReviewStart: resultDate, examStudentReviewEnd: resultDate.add(5, 'minutes'), publishResultsDate: resultDate } : {}),
         gracePeriod: EXAM_GRACE_PERIOD_IN_SECONDS,
     };
     const exam = await examAPIRequests.createExam(examConfig);
@@ -853,27 +904,8 @@ export async function makeExamSubmission(
     await examParticipation.startParticipation(studentOne, course, exam);
     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-    await page.waitForTimeout(1000);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
-}
-
-/**
- * Waits for the exam to end if it hasn't already, including its grace period.
- * This is necessary because the assessment dashboard button only appears after the exam ends, and because the server
- * refuses to open an assessment until the last student can no longer hand in, which is the exam end plus the grace
- * period (see SubmissionService#checkThatAssessmentIsPossibleElseThrow). The grace period is read from the exam itself,
- * so that exams which do not configure one (and therefore get the server default of 180s) are waited out correctly.
- * @param exam - The exam to wait for, as returned by the create call
- * @param page - The Playwright page object (used for waitForTimeout)
- */
-export async function waitForExamEnd(exam: Exam, page: Page) {
-    const assessableFrom = getExamEndDateWithGrace(exam);
-    if (assessableFrom.isAfter(dayjs())) {
-        const timeToWait = assessableFrom.diff(dayjs()) + 2000; // Add 2 second buffer
-        console.log(`Waiting ${timeToWait}ms for exam (including its ${exam.gracePeriod ?? 0}s grace period) to end...`);
-        await page.waitForTimeout(timeToWait);
-    }
 }
 
 export async function startAssessing(
