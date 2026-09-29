@@ -150,22 +150,24 @@
             <!-- Cancel asks first, because it drops changes; without changes there is nothing to confirm, and the page just goes back. -->
             @if (hasChanges()) {
                 <jhi-confirm-button
-                    title="artemisApp.attachment.pdfPreview.cancelButton"
+                    [title]="'artemisApp.attachment.pdfPreview.cancelButton'"
                     confirmationText="artemisApp.attachment.pdfPreview.cancelEditingQuestion"
                     confirmationTitle="artemisApp.attachment.pdfPreview.confirmCancelEditing"
                     [translateText]="true"
                     [icon]="faCancel"
                     [btnType]="ButtonType.SECONDARY"
+                    [disabled]="isSaving()"
                     (onConfirm)="navigateBack()"
                     class="mx-1"
                     data-testid="pdf-preview-cancel"
                 />
             } @else {
                 <jhi-button
-                    title="entity.action.back"
+                    [title]="'entity.action.back'"
                     [icon]="faArrowLeft"
                     [btnType]="ButtonType.SECONDARY"
                     [shouldSubmit]="false"
+                    [disabled]="isSaving()"
                     (onClick)="navigateBack()"
                     class="mx-1"
                     data-testid="pdf-preview-back"

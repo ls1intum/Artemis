@@ -8,7 +8,8 @@
         <p class="m-0 text-sm text-muted-color" data-testid="split-detection-hint" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.detectionHint"></p>
         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.hint"></p>
     </div>
-    @if (units().length < 1) {
+    <!-- Only a proposal that was loaded can lack sections; a failed load shows its own error. -->
+    @if (numberOfPages() > 0 && units().length === 0) {
         <tumaet-ui-message
             severity="warn"
             [icon]="faExclamationTriangle"

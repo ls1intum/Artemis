@@ -166,6 +166,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             .sort((a, b) => a.order - b.order);
     });
 
+    /** Set once the page is left, after which a request that completes late must not navigate. */
+    private isDestroyed = false;
+
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -336,6 +339,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.isDestroyed = true;
         this.attachmentVideoUnitSub?.unsubscribe();
 
         const sources = this.sourcePDFs();
@@ -860,8 +864,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Goes back to the page the user came from, such as the lecture editor, or else to the content page of the lecture the unit belongs to.
+     * A save or deletion that completes after the user left the page does not go back once more from wherever the user is now.
      */
     navigateBack(): void {
+        if (this.isDestroyed) {
+            return;
+        }
         this.navigationUtilService.navigateBack(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id!, 'unit-management']);
     }
 }

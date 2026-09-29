@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -23,8 +23,8 @@ describe('PdfPreviewComponent', () => {
     let attachmentVideoUnitService: { update: ReturnType<typeof vi.fn>; updateStudentVersion: ReturnType<typeof vi.fn>; getAttachmentFile: ReturnType<typeof vi.fn> };
     let lectureUnitService: { delete: ReturnType<typeof vi.fn> };
     let alertService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
-    let router: { navigate: ReturnType<typeof vi.fn> };
     let navigationUtilService: { navigateBack: ReturnType<typeof vi.fn> };
+    let dialogService: { open: ReturnType<typeof vi.fn> };
     // Mutable route data so ngOnInit-driven tests can inject an attachmentVideoUnit resolver payload.
     let routeData: any;
 
@@ -38,8 +38,8 @@ describe('PdfPreviewComponent', () => {
         attachmentVideoUnitService = { update: vi.fn(() => of({})), updateStudentVersion: vi.fn(() => of({})), getAttachmentFile: vi.fn(() => of(new Blob())) };
         lectureUnitService = { delete: vi.fn(() => of({})) };
         alertService = { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() };
-        router = { navigate: vi.fn() };
         navigationUtilService = { navigateBack: vi.fn() };
+        dialogService = { open: vi.fn() };
         routeData = {};
         // `data` is read lazily inside ngOnInit, so wrapping the current `routeData` in a getter lets each
         // test set the resolver payload before it manually calls ngOnInit().
@@ -56,13 +56,12 @@ describe('PdfPreviewComponent', () => {
                 provideHttpClient(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useValue: router },
                 { provide: ArtemisNavigationUtilService, useValue: navigationUtilService },
                 { provide: AlertService, useValue: alertService },
                 { provide: AttachmentVideoUnitService, useValue: attachmentVideoUnitService },
                 { provide: LectureUnitService, useValue: lectureUnitService },
                 { provide: PdfEngineService, useValue: engineService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: DialogService, useValue: dialogService },
             ],
         }).compileComponents();
 
@@ -222,6 +221,8 @@ describe('PdfPreviewComponent', () => {
         expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
         expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
         expect(alertService.success).toHaveBeenCalled();
+        // Saving goes back to where the user came from, such as the lecture editor.
+        expect(navigationUtilService.navigateBack).toHaveBeenCalledOnce();
     });
 
     it('should replace the instructor PDF when slide splitting has not created stable slide IDs yet', async () => {
@@ -606,13 +607,47 @@ describe('PdfPreviewComponent', () => {
             expect(navigationUtilService.navigateBack).toHaveBeenCalledExactlyOnceWith(['course-management', 5, 'lectures', 4, 'unit-management']);
         });
 
-        it('should offer Cancel, which asks first, once something changed', () => {
+        it('should offer Cancel once something changed, which goes back only after the user confirms', () => {
+            const decision = new Subject<{ confirmed: boolean } | undefined>();
+            dialogService.open.mockReturnValue({ onClose: decision });
             fixture.detectChanges();
             component.isFileChanged.set(true);
             fixture.detectChanges();
 
             expect(footerButton('pdf-preview-back')).toBeNull();
+            footerButton('pdf-preview-cancel').querySelector('button').click();
+
+            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(navigationUtilService.navigateBack).not.toHaveBeenCalled();
+            decision.next({ confirmed: true });
+            expect(navigationUtilService.navigateBack).toHaveBeenCalledExactlyOnceWith(['course-management', 5, 'lectures', 4, 'unit-management']);
+        });
+
+        it('should offer Cancel after a page was hidden from the grid, which records no operation', () => {
+            fixture.detectChanges();
+
+            component.hiddenPages.set({ '11': { date: dayjs().add(1, 'day'), exerciseId: undefined } });
+            fixture.detectChanges();
+
+            expect(component.operations()).toEqual([]);
+            expect(footerButton('pdf-preview-back')).toBeNull();
             expect(footerButton('pdf-preview-cancel')).not.toBeNull();
+        });
+
+        it('should not offer to leave while the changes are saved', () => {
+            fixture.detectChanges();
+            component.isSaving.set(true);
+            fixture.detectChanges();
+
+            expect(footerButton('pdf-preview-back').querySelector('button').disabled).toBe(true);
+        });
+
+        it('should not go back once more when a deletion completes after the user left the page', async () => {
+            component.ngOnDestroy();
+
+            await component.deleteAttachmentFile();
+
+            expect(lectureUnitService.delete).toHaveBeenCalledOnce();
             expect(navigationUtilService.navigateBack).not.toHaveBeenCalled();
         });
     });
