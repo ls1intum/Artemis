@@ -44,15 +44,16 @@ describe('RequestFeedbackButtonComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let llmModalService: LLMSelectionModalService;
 
-    const mockLLMModalService = {
-        open: vi.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
-    } as any;
-
-    const mockUserService = {
-        updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
-    } as any;
-
     beforeEach(async () => {
+        // Created per test: vi.restoreAllMocks() does not clear the call history of shared vi.fn() mocks,
+        // so calls from an earlier test would otherwise count towards a later test's assertions.
+        const mockLLMModalService = {
+            open: vi.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
+        } as any;
+        const mockUserService = {
+            updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
+        } as any;
+
         await TestBed.configureTestingModule({
             imports: [RequestFeedbackButtonComponent],
             providers: [
@@ -634,13 +635,11 @@ describe('RequestFeedbackButtonComponent', () => {
         await initAndTick();
 
         vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
-        // Reset the mock to clear any calls from previous tests
-        mockUserService.updateLLMSelectionDecision.mockClear();
 
         await component.showLLMSelectionModal();
         await vi.advanceTimersByTimeAsync(0);
 
-        expect(mockUserService.updateLLMSelectionDecision).not.toHaveBeenCalled();
+        expect(userService.updateLLMSelectionDecision).not.toHaveBeenCalled();
     });
 
     it('should handle Athena assessment result and increment feedback count', async () => {
@@ -1291,13 +1290,12 @@ describe('RequestFeedbackButtonComponent', () => {
             component.hasUserAcceptedLLMUsage.set(false);
             component.currentFeedbackRequestCount.set(component.feedbackRequestLimit);
 
-            mockLLMModalService.open.mockClear();
             const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
 
             await component.requestAIFeedback();
             await vi.advanceTimersByTimeAsync(0);
 
-            expect(mockLLMModalService.open).not.toHaveBeenCalled();
+            expect(llmModalService.open).not.toHaveBeenCalled();
             expect(requestSpy).not.toHaveBeenCalled();
         });
 
