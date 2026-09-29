@@ -654,7 +654,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 return undefined;
             }
         }
-        if (this.exercise().gradingInstructionFeedbackUsed && unmatched.some((entry) => !entry.previousCriterion) && unusedFallbackCriteria.length > 0) {
+        if (
+            this.exercise().gradingInstructionFeedbackUsed &&
+            unmatched.some((entry) => !entry.previousCriterion && unusedFallbackCriteria.some((candidate) => this.criteriaShareIdentityAffinity(candidate, entry.parsedCriterion)))
+        ) {
             return undefined;
         }
         // Multiple unmatched rows cannot safely replace used or multiple persisted leftovers.
@@ -694,7 +697,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             } else if (unmatchedInstructions.length > 0 && unusedInstructions.length > 0) {
                 return undefined;
             }
-            if (this.exercise().gradingInstructionFeedbackUsed && unmatchedInstructions.some((entry) => !entry.previousInstruction) && unusedFallbackInstructions.length > 0) {
+            if (
+                this.exercise().gradingInstructionFeedbackUsed &&
+                unmatchedInstructions.some(
+                    (entry) =>
+                        !entry.previousInstruction && unusedFallbackInstructions.some((candidate) => this.instructionsShareIdentityAffinity(candidate, entry.parsedInstruction)),
+                )
+            ) {
                 return undefined;
             }
             plan.push({ parsedCriterion, previousCriterion, instructions: instructionEntries });
@@ -712,13 +721,23 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         return matchIndex < 0 ? undefined : unused.splice(matchIndex, 1)[0];
     }
 
-    /** Title-less pair, or sharing an instruction fingerprint — enough to sole-remainder reclaim. */
+    /** Same title, title-less pair, or shared instruction fingerprint indicates identity affinity. */
     private criteriaShareIdentityAffinity(previous: GradingCriterion, parsed: GradingCriterion): boolean {
+        if (previous.title && previous.title === parsed.title) {
+            return true;
+        }
         if (!previous.title && !parsed.title) {
             return true;
         }
         const previousFingerprints = new Set((previous.structuredGradingInstructions ?? []).map((instruction) => this.instructionFingerprint(instruction)));
         return (parsed.structuredGradingInstructions ?? []).some((instruction) => previousFingerprints.has(this.instructionFingerprint(instruction)));
+    }
+
+    private instructionsShareIdentityAffinity(previous: GradingInstruction, parsed: GradingInstruction): boolean {
+        return (
+            (!!previous.instructionDescription && previous.instructionDescription === parsed.instructionDescription) ||
+            (!!previous.feedback && previous.feedback === parsed.feedback)
+        );
     }
 
     /**
@@ -954,6 +973,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                     if (!isEqual(generationSnapshot, currentSnapshot)) {
                         return;
                     }
+                    this.identityBaseline = [];
+                    this.instructionBaseline.clear();
                     currentExercise.gradingCriteria = criteria;
                     this.criteria.set(criteria);
                     this.criteriaGenerated.emit();

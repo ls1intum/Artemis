@@ -453,6 +453,29 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(exercise.gradingCriteria).toEqual([generatedCriterion]);
         });
 
+        it('allows a text-mode addition after generated criteria replace persisted feedback-linked criteria', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            const generatedInstruction = { credits: 2, gradingScale: 'generated', instructionDescription: 'generated', feedback: 'generated', usageCount: 0 } as GradingInstruction;
+            const addedInstruction = { credits: 3, gradingScale: 'added', instructionDescription: 'added', feedback: 'added', usageCount: 0 } as GradingInstruction;
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [generatedInstruction] } as GradingCriterion;
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => confirmation.accept());
+            generationService.generate.mockReturnValue(of([generatedCriterion]));
+
+            component.generateAssessmentCriteria();
+            component.showEditMode.set(false);
+            const markdown = `${component.generateMarkdown()}[criterion] Added\n\t${component.generateInstructionText(addedInstruction)}`;
+            component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(true);
+            expect(exercise.gradingCriteria).toHaveLength(2);
+            expect(exercise.gradingCriteria![0]).toBe(generatedCriterion);
+            expect(exercise.gradingCriteria![1].title).toBe('Added');
+            expect(exercise.gradingCriteria![1].id).toBeUndefined();
+        });
+
         it('should abort when edit-as-text syntax cannot be parsed', () => {
             const markdownEditor = {
                 flushLiveMarkdownAndParse: vi.fn(() => {
@@ -755,6 +778,29 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(cutInstruction.feedback).toBe('other');
         });
 
+        it('allows a distinct new criterion after deleting a persisted one when feedback is used', () => {
+            const removedInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            const removedCriterion = { id: 2, title: 'Other criterion', structuredGradingInstructions: [removedInstruction] } as GradingCriterion;
+            const newInstruction = { credits: 3, gradingScale: 'new', instructionDescription: 'new', feedback: 'new', usageCount: 0 } as GradingInstruction;
+            exercise.gradingCriteria = [gradingCriterion, removedCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const markdown = component
+                .generateMarkdown()
+                .replace('[criterion] Other criterion', '[criterion] New criterion')
+                .replace(component.generateInstructionText(removedInstruction), component.generateInstructionText(newInstruction));
+
+            component.onDomainActionsFound(getDomainActionArray());
+            component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(true);
+            expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+            expect(exercise.gradingCriteria![1].title).toBe('New criterion');
+            expect(exercise.gradingCriteria![1].id).toBeUndefined();
+            expect(exercise.gradingCriteria![1].structuredGradingInstructions[0].id).toBeUndefined();
+        });
+
         it('should reclaim a cut instruction after a debounced partial parse', () => {
             const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
             gradingCriterion.structuredGradingInstructions.push(cutInstruction);
@@ -788,6 +834,26 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction]);
             expect(cutInstruction.id).toBe(2);
             expect(cutInstruction.feedback).toBe('other');
+        });
+
+        it('allows a distinct new instruction after deleting a persisted one when feedback is used', () => {
+            const removedInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            const newInstruction = { credits: 3, gradingScale: 'new', instructionDescription: 'new', feedback: 'new', usageCount: 0 } as GradingInstruction;
+            gradingCriterion.structuredGradingInstructions.push(removedInstruction);
+            exercise.gradingCriteria = [gradingCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const markdown = component.generateMarkdown().replace(component.generateInstructionText(removedInstruction), component.generateInstructionText(newInstruction));
+
+            component.onDomainActionsFound(getDomainActionArray());
+            component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(true);
+            expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+            expect(gradingCriterion.structuredGradingInstructions[0]).toBe(gradingInstruction);
+            expect(gradingCriterion.structuredGradingInstructions[1].feedback).toBe('new');
+            expect(gradingCriterion.structuredGradingInstructions[1].id).toBeUndefined();
         });
 
         it('should flush the live monaco buffer before switching to structured mode', () => {
