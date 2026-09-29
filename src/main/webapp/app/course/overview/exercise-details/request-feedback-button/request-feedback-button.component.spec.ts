@@ -554,6 +554,33 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(requestFeedbackSpy).not.toHaveBeenCalled();
     });
 
+    it('should not send a feedback request when another exercise is loaded while the participation is refetched', async () => {
+        // Regression test: the refetch for exercise A can resolve after the reused component switched to exercise B;
+        // the request must not combine B's exercise ID with A's participation.
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true);
+        await initAndTick();
+
+        const pendingDetails = new Subject<HttpResponse<any>>();
+        vi.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(pendingDetails.asObservable());
+        const requestFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+
+        component.requestFeedback();
+
+        const otherExercise = { ...createBaseExercise(ExerciseType.TEXT, false, participation), id: exercise.id! + 1 } as Exercise;
+        setupComponentInputs(otherExercise, true);
+        fixture.detectChanges();
+
+        pendingDetails.next(new HttpResponse({ body: { exercise } }));
+        pendingDetails.complete();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(requestFeedbackSpy).not.toHaveBeenCalled();
+    });
+
     it('should accept local LLM usage when modal returns local', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);

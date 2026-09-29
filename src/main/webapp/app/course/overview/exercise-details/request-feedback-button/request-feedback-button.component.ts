@@ -289,15 +289,22 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     requestFeedback() {
+        // The router can reuse this component for another exercise while the details are refetched; pin the
+        // exercise and participation, and drop the request if the inputs changed, so the request never mixes
+        // one exercise's ID with another's participation.
+        const exerciseId = this.exercise().id!;
         const participationId = this.participationId();
-        this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
+        this.exerciseService.getExerciseDetails(exerciseId).subscribe({
             next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+                if (this.exercise().id !== exerciseId || this.participationId() !== participationId) {
+                    return;
+                }
                 const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
                 const participation = this.selectParticipation(participations, participationId);
                 if (this.isFeedbackRequestBlockedForParticipation(participation) || !this.assureConditionsSatisfied(participation)) {
                     return;
                 }
-                this.processFeedbackRequest(participation);
+                this.processFeedbackRequest(exerciseId, participation);
             },
             error: (error: HttpErrorResponse) => {
                 this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
@@ -312,8 +319,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         return !!pendingAthenaResult || countSuccessfulAthenaFeedbackRequests(participation) >= this.feedbackRequestLimit;
     }
 
-    private processFeedbackRequest(participation = this.participation) {
-        this.courseExerciseService.requestFeedback(this.exercise().id!, participation!.id!).subscribe({
+    private processFeedbackRequest(exerciseId: number, participation: StudentParticipation | undefined) {
+        this.courseExerciseService.requestFeedback(exerciseId, participation!.id!).subscribe({
             next: () => {
                 if (this.participationId() === undefined || this.participationId() === participation?.id) {
                     this.isFeedbackRequestPending.set(true);
