@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
@@ -457,6 +457,22 @@ describe('NavbarComponent', () => {
         expect(languageChangeSpy).not.toHaveBeenCalled();
     });
 
+    it('should update the tab title when the lecture is renamed after the page loaded', () => {
+        const titleService = TestBed.inject(Title);
+        const lectureTitle = new BehaviorSubject('Old lecture');
+        entityTitleServiceStub.mockImplementation((type: EntityType) =>
+            type === EntityType.LECTURE ? lectureTitle : of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()),
+        );
+        router.setUrl('/course-management/1/lectures/2/edit');
+        fixture.detectChanges();
+        expect(titleService.getTitle()).toContain('Old lecture');
+
+        lectureTitle.next('Renamed lecture');
+
+        expect(titleService.getTitle()).toContain('Renamed lecture');
+        expect(component.breadcrumbs().some((crumb) => crumb.label === 'Renamed lecture')).toBe(true);
+    });
+
     it('should not build breadcrumbs for students', () => {
         const testUrl = '/courses/1/exercises';
         router.setUrl(testUrl);
@@ -498,7 +514,59 @@ describe('NavbarComponent', () => {
         expect(component.gitUsername()).toBe('Max Musterman');
     });
 
+    it('should leave the tab title to the route while there are no breadcrumbs', () => {
+        router.setUrl('/courses/1/exercises');
+        fixture.detectChanges();
+        const setTitleSpy = vi.spyOn(TestBed.inject(Title), 'setTitle');
+
+        component.buildTabTitles();
+
+        expect(setTitleSpy).not.toHaveBeenCalled();
+    });
+
     describe('Special Cases for Breadcrumbs', () => {
+        it('submissions link to the scores, since there is no list of submissions only', () => {
+            router.setUrl('/course-management/1/text-exercises/2/submissions');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().some((crumb) => crumb.uri === '/course-management/1/text-exercises/2/scores/')).toBe(true);
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/submissions/'))).toBe(false);
+        });
+
+        it('tutorial lectures link to the course, which lists them', () => {
+            router.setUrl('/course-management/1/tutorial-lectures/5');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('tutorial-lectures'))).toBe(false);
+        });
+
+        it('tutorial group holidays skip the configuration routing layer', () => {
+            router.setUrl('/course-management/1/tutorial-groups/configuration/5/tutorial-free-days');
+
+            fixture.detectChanges();
+
+            const tutorialGroupsCrumb = {
+                label: 'artemisApp.breadcrumb.title',
+                translate: true,
+                uri: '/course-management/1/tutorial-groups/',
+            } as MockBreadcrumb;
+            const holidaysCrumb = {
+                label: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
+                translate: true,
+                uri: '/course-management/1/tutorial-groups/configuration/5/tutorial-free-days/',
+            } as MockBreadcrumb;
+
+            // Course, Tutorial Groups, Holidays - no "Configuration" crumb and no configuration id between them.
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual(tutorialGroupsCrumb);
+            expect(component.breadcrumbs()[3]).toEqual(holidaysCrumb);
+            expect(component.breadcrumbs().some((crumb) => crumb.label === 'global.menu.admin.sidebar.configuration')).toBe(false);
+        });
+
         it('programming exercise import', () => {
             const testUrl = '/course-management/1/programming-exercises/import/2';
             router.setUrl(testUrl);
