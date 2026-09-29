@@ -343,22 +343,38 @@ export class ExamAPIRequests {
      * @param exam the exam the student took
      */
     async getOwnStudentExamSummary(exam: Exam): Promise<StudentExam> {
-        const base = `api/exam/courses/${exam.course!.id}/exams/${exam.id}`;
         let studentExamId: number;
         if (exam.testExam) {
             // Asking a test exam for "the" student exam of the student would start a new attempt, so pick the latest attempt that was handed in.
-            const attempts = await this.expectOk(await this.page.request.get(`api/exam/courses/${exam.course!.id}/test-exams-per-user`), `get test exam attempts of the student`);
-            const submitted = ((await attempts.json()) as StudentExam[]).filter((attempt) => attempt.exam?.id === exam.id && attempt.submitted);
+            const attempts = await this.getOwnTestExamAttempts(exam);
+            const submitted = attempts.filter((attempt) => attempt.submitted);
             if (submitted.length === 0) {
                 throw new Error(`The student has not handed in any attempt of test exam ${exam.id}`);
             }
             studentExamId = Math.max(...submitted.map((attempt) => attempt.id!));
         } else {
-            const own = await this.expectOk(await this.page.request.get(`${base}/own-student-exam`), `get own student exam of exam ${exam.id}`);
-            studentExamId = (await own.json()).id;
+            studentExamId = await this.getOwnStudentExamId(exam);
         }
-        const summary = await this.expectOk(await this.page.request.get(`${base}/student-exams/${studentExamId}/summary`), `get summary of student exam ${studentExamId}`);
+        return await this.getStudentExamSummary(exam, studentExamId);
+    }
+
+    /**
+     * Gets the summary of one student exam of the logged-in student, e.g. one attempt of a test exam.
+     */
+    async getStudentExamSummary(exam: Exam, studentExamId: number): Promise<StudentExam> {
+        const summary = await this.expectOk(
+            await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExamId}/summary`),
+            `get summary of student exam ${studentExamId}`,
+        );
         return (await summary.json()) as StudentExam;
+    }
+
+    /**
+     * Gets all attempts (started or not, handed in or not) the logged-in student has of a test exam.
+     */
+    async getOwnTestExamAttempts(exam: Exam): Promise<StudentExam[]> {
+        const attempts = await this.expectOk(await this.page.request.get(`api/exam/courses/${exam.course!.id}/test-exams-per-user`), `get test exam attempts of the student`);
+        return ((await attempts.json()) as StudentExam[]).filter((attempt) => attempt.exam?.id === exam.id);
     }
 
     /**
@@ -476,6 +492,13 @@ export class ExamAPIRequests {
     }
 
     /**
+     * Gets the id of the own student exam of the student who is logged in on another page, for a test that acts as somebody else on its own page.
+     */
+    async getOwnStudentExamIdOf(studentPage: Page, exam: Exam): Promise<number> {
+        return await new ExamAPIRequests(studentPage).getOwnStudentExamId(exam);
+    }
+
+    /**
      * Gets the id of the logged-in student's own student exam of a real exam.
      */
     async getOwnStudentExamId(exam: Exam): Promise<number> {
@@ -523,6 +546,20 @@ export class ExamAPIRequests {
                 { message: `exam ${exam.id} should be over including its grace period`, intervals: [1000], timeout: (gracePeriodInSeconds + 120) * 1000 },
             )
             .toBe(true);
+    }
+
+    /**
+     * Triggers the attendance check of a student who is taking the exam: the student is shown a live event with the optional message.
+     * @param exam the exam the student takes
+     * @param studentLogin the login of the student
+     * @param message an optional message for the student
+     * @returns the response of the server, so that a test can also check that somebody is not allowed to do this
+     */
+    async triggerAttendanceCheck(exam: Exam, studentLogin: string, message?: string) {
+        return await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/students/${studentLogin}/attendance-check`, {
+            data: message ?? '',
+            headers: { 'Content-Type': 'text/plain' },
+        });
     }
 
     /**

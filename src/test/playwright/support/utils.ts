@@ -20,7 +20,7 @@ import { ExamNavigationBar } from './pageobjects/exam/ExamNavigationBar';
 import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { Commands } from './commands';
-import { admin, studentOne } from './users';
+import { admin, studentOne, UserCredentials } from './users';
 import cPartiallySuccessful from '../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from './pageobjects/assessment/CourseAssessmentDashboardPage';
@@ -354,17 +354,22 @@ export function annotateRecovery(what: string) {
 }
 
 /**
- * Runs a callback with exam API requests of an admin in a browser context of its own, so that a test can change an exam
+ * Runs a callback with exam API requests of the given user in a browser context of its own, so that a test can change an exam
  * (for example shorten it) while a student is logged in on the test's own page.
  */
-export async function asAdmin<T>(browser: Browser, callback: (examAPIRequests: ExamAPIRequests) => Promise<T>): Promise<T> {
-    const adminPage = await newBrowserPage(browser);
+export async function asUser<T>(browser: Browser, user: UserCredentials, callback: (examAPIRequests: ExamAPIRequests) => Promise<T>): Promise<T> {
+    const userPage = await newBrowserPage(browser);
     try {
-        await Commands.login(adminPage, admin);
-        return await callback(new ExamAPIRequests(adminPage));
+        await Commands.login(userPage, user);
+        return await callback(new ExamAPIRequests(userPage));
     } finally {
-        await adminPage.context().close();
+        await userPage.context().close();
     }
+}
+
+/** {@link asUser} for the admin. */
+export async function asAdmin<T>(browser: Browser, callback: (examAPIRequests: ExamAPIRequests) => Promise<T>): Promise<T> {
+    return await asUser(browser, admin, callback);
 }
 
 export function generateUUID() {

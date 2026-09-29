@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { admin, studentOne, studentTwo } from '../../support/users';
+import { admin, instructor, studentOne, studentTwo } from '../../support/users';
 import { newBrowserPage } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -83,5 +83,45 @@ test.describe('Exam working time', { tag: '@slow' }, () => {
         const afterwards: StudentExam[] = await examAPIRequests.getAllStudentExams(exam);
         expect(afterwards.find((studentExam) => studentExam.id === extendedStudentExamId)!.workingTime).toBe(Math.round((4320 * 4020) / 3720));
         expect(afterwards.find((studentExam) => studentExam.id !== extendedStudentExamId)!.workingTime).toBe(4020);
+    });
+
+    test('An instructor extends the working time of a student on the student exam page and the student is informed', async ({
+        browser,
+        page,
+        login,
+        examAPIRequests,
+        exerciseAPIRequests,
+    }) => {
+        await login(admin);
+        exam = await examAPIRequests.createRunningExam({ course });
+        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
+        await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+        await examAPIRequests.registerStudentForExam(exam, studentOne);
+        await examAPIRequests.generateMissingIndividualExams(exam);
+        await examAPIRequests.prepareExerciseStartForExam(exam);
+
+        const studentPage = await newBrowserPage(browser);
+        await Commands.login(studentPage, studentOne);
+        await studentPage.goto(`/courses/${course.id}/exams/${exam.id}`);
+        await new ExamStartEndPage(studentPage).startExam();
+        await expect(studentPage.getByTestId('displayTime')).toContainText('59min');
+        const studentExamId = await examAPIRequests.getOwnStudentExamIdOf(studentPage, exam);
+
+        // The instructor sets the student's working time on the student exam page: one hour and twelve minutes instead of one hour and two.
+        await login(instructor, `/course-management/${course.id}/exams/${exam.id}/student-exams/${studentExamId}`);
+        await expect(page.locator('#workingTimeHours')).toHaveValue('1');
+        await expect(page.locator('#workingTimeMinutes')).toHaveValue('2');
+        await page.locator('#workingTimeMinutes').fill('12');
+        const saved = page.waitForResponse((response) => response.request().method() === 'PATCH' && response.url().endsWith(`/student-exams/${studentExamId}/working-time`));
+        await page.locator('#save').click();
+        expect((await saved).status()).toBe(200);
+
+        // The student is told, the timer follows, and the server holds the new working time.
+        const dialog = new ModalDialogBox(studentPage);
+        await expect(dialog.getModalDialogContent()).toContainText('Your personal working time of the exam has been changed.');
+        await dialog.checkExamTimeChangeDialog('1h 2min', '1h 12min');
+        await dialog.closeDialog();
+        await expect(studentPage.getByTestId('displayTime')).toContainText('1h');
+        expect((await examAPIRequests.getAllStudentExams(exam))[0].workingTime).toBe(4320);
     });
 });
