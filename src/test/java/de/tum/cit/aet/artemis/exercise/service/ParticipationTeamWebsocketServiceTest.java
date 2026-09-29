@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.RETURNS_MOCKS;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.security.Principal;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,9 +24,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
@@ -131,7 +134,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubscribeToParticipationTeamWebsocketTopic() {
-        participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock("fakeSessionId"));
+        participationTeamWebsocketService.subscribe(participation.getId(), "fakeSessionId");
         verify(websocketMessagingService).sendMessage(topic(websocketTopic(participation)), eq(List.of()));
         assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was added to destination tracker.").hasSize(1);
         assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
@@ -154,6 +157,46 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testHandlesSubscriptionEventsWhileTheFrameHeadersAreStillModified() throws InterruptedException {
+        // Spring publishes the subscribe event after it handed the frame to the inbound channel, so a handler still adds headers to the very same mutable map on
+        // another thread, e.g. AbstractMethodMessageHandler adds the lookup destination. A listener that copies those headers loses that race and fails with a
+        // ConcurrentModificationException, which is why the headers have to be read in place.
+        StompHeaderAccessor headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+        headers.setLeaveMutable(true);
+        headers.setSessionId("concurrent-session");
+        headers.setSubscriptionId("concurrent-subscription");
+        headers.setDestination(websocketTopic(teamTextParticipation));
+        headers.setUser(getPrincipalMock("student2"));
+        Message<byte[]> message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+        var event = new SessionSubscribeEvent(this, message, headers.getUser());
+
+        AtomicBoolean keepModifying = new AtomicBoolean(true);
+        Thread modifier = new Thread(() -> {
+            // Adding and removing a header keeps modifying the map structurally without letting it grow.
+            for (int i = 0; keepModifying.get(); i++) {
+                MessageHeaderAccessor accessor = MessageHeaderAccessor.getMutableAccessor(message);
+                accessor.setHeader("probeHeader" + (i % 16), i);
+                accessor.setHeader("probeHeader" + ((i + 1) % 16), null);
+            }
+        });
+        modifier.setDaemon(true);
+        modifier.start();
+
+        try {
+            assertThatCode(() -> {
+                for (int i = 0; i < 2000; i++) {
+                    participationTeamWebsocketService.handleSubscribe(event);
+                }
+            }).doesNotThrowAnyException();
+        }
+        finally {
+            keepModifying.set(false);
+            modifier.join(5000);
+        }
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTriggerSendOnlineTeamMembers() {
         participationTeamWebsocketService.triggerSendOnlineTeamStudents(teamTextParticipation.getId(), getPrincipalMock("student1"));
@@ -170,16 +213,13 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnsubscribeFromParticipationTeamWebsocketTopic() {
-        StompHeaderAccessor stompHeaderAccessor1 = getStompHeaderAccessorMock("fakeSessionId1");
-        StompHeaderAccessor stompHeaderAccessor2 = getStompHeaderAccessorMock("fakeSessionId2");
-
-        participationTeamWebsocketService.subscribe(participation.getId(), stompHeaderAccessor1);
-        participationTeamWebsocketService.subscribe(participation.getId(), stompHeaderAccessor2);
-        participationTeamWebsocketService.unsubscribe(stompHeaderAccessor1.getSessionId());
+        participationTeamWebsocketService.subscribe(participation.getId(), "fakeSessionId1");
+        participationTeamWebsocketService.subscribe(participation.getId(), "fakeSessionId2");
+        participationTeamWebsocketService.unsubscribe("fakeSessionId1");
 
         verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(topic(websocketTopic(participation)), eq(List.of()));
         assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was removed from destination tracker.").hasSize(1);
-        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Correct session was removed.").containsKey("fakeSessionId2");
     }
 
     @Test
@@ -306,12 +346,6 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     void testStartTypingIgnoresNonMembers() {
         participationTeamWebsocketService.startTyping(teamTextParticipation.getId(), getPrincipalMock("student2"));
         verify(websocketMessagingService, after(1000).never()).sendMessage(topic(websocketTopic(teamTextParticipation)), any(Object.class));
-    }
-
-    private StompHeaderAccessor getStompHeaderAccessorMock(String fakeSessionId) {
-        StompHeaderAccessor stompHeaderAccessor = mock(StompHeaderAccessor.class, RETURNS_MOCKS);
-        when(stompHeaderAccessor.getSessionId()).thenReturn(fakeSessionId);
-        return stompHeaderAccessor;
     }
 
     private Principal getPrincipalMock(String username) {
