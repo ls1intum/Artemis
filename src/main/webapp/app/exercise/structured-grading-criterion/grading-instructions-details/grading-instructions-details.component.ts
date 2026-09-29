@@ -89,7 +89,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     private readonly accountService = inject(AccountService);
 
     private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
-    private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    private readonly markdownEditor = viewChild<MarkdownEditorMonacoComponent>('markdownEditor');
     /** Exercise whose assessment instructions are displayed and edited. */
     readonly exercise = input.required<Exercise>();
     /** Whether the user may edit or generate assessment criteria. */
@@ -313,7 +313,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.gradingInstructionsBeforeParse = this.exercise().gradingInstructions;
         this.cleanupExerciseGradingInstructions();
         try {
-            this.markdownEditor().parseMarkdown();
+            this.markdownEditor()?.parseMarkdown();
         } finally {
             this.gradingInstructionsBeforeParse = undefined;
         }
@@ -531,9 +531,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             }
         }
         if (ambiguous) {
+            this.alertService.error('artemisApp.exercise.assessmentCriteriaGeneration.ambiguousEdit');
             this.exercise().gradingCriteria = previousCriteria;
             this.exercise().gradingInstructions = previousInstructions;
             this.criteria.set(previousCriteria);
+            const markdown = this.exercise().gradingInstructionFeedbackUsed ? this.initializeExerciseGradingInstructionText() : this.generateMarkdown();
+            this.markdownEditorText.set(markdown);
+            this.markdownEditor()?.setMarkdown(markdown);
         }
     }
 
@@ -810,7 +814,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                     } else {
                         this.markdownEditorText.set(this.generateMarkdown());
                         if (!this.showEditMode()) {
-                            this.markdownEditor().setMarkdown(this.markdownEditorText());
+                            this.markdownEditor()?.setMarkdown(this.markdownEditorText());
                         }
                     }
                     this.alertService.success('artemisApp.exercise.assessmentCriteriaGeneration.success');

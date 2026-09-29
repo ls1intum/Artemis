@@ -121,6 +121,7 @@
                 "disabledMaxPoints": "Lege vor der Generierung eine gültige maximale Punktzahl größer als null fest.",
                 "disabledBonusPoints": "Lege vor der Generierung von Bewertungskriterien eine endliche Bonuspunktzahl von null oder größer fest.",
                 "invalidSyntax": "Der Text der Bewertungsanweisungen konnte nicht verarbeitet werden. Korrigiere vor der Generierung die Syntax.",
+                "ambiguousEdit": "Die Änderung der Bewertungsanweisungen konnte bestehenden Kriterien nicht eindeutig zugeordnet werden. Deine Änderungen wurden nicht übernommen.",
                 "confirmationHeader": "Bewertungskriterien ersetzen?",
                 "confirmation": "Neue Bewertungskriterien ersetzen alle aktuell strukturierten Kriterien. Der allgemeine Text der Bewertungsanweisungen bleibt erhalten.",
                 "confirmationUsed": "Das Speichern dieser Änderungen kann eine Neubewertung vorhandener Bewertungen erfordern.",

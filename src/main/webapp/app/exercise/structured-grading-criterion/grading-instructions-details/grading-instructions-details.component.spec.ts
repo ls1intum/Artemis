@@ -762,18 +762,21 @@ describe('GradingInstructionsDetailsComponent', () => {
     it('keeps the previous criterion when both its title and instruction feedback change', () => {
         exercise.gradingCriteria = [gradingCriterion];
         exercise.gradingInstructions = 'Previous general instructions';
-        exercise.gradingInstructionFeedbackUsed = true;
         const actions = getDomainActionArray();
         actions[0].text = 'renamed';
         actions[5].text = 'changed feedback';
-        Object.defineProperty(component, 'markdownEditor', { value: () => ({ parseMarkdown: () => component.onDomainActionsFound(actions) }) });
-        Object.defineProperty(component, 'markdownEditors', { value: () => [] });
+        const setMarkdown = vi.fn();
+        Object.defineProperty(component, 'markdownEditor', { value: () => ({ parseMarkdown: () => component.onDomainActionsFound(actions), setMarkdown }) });
+        vi.spyOn(alertService, 'error');
 
         component.prepareForSave();
 
         expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
         expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
         expect(exercise.gradingInstructions).toBe('Previous general instructions');
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.assessmentCriteriaGeneration.ambiguousEdit');
+        expect(setMarkdown).toHaveBeenCalledWith(component.generateMarkdown());
+        expect(component.markdownEditorText()).toBe(component.generateMarkdown());
     });
 
     it('keeps criterion and instruction IDs with distinct instructions when titles are exchanged', () => {
