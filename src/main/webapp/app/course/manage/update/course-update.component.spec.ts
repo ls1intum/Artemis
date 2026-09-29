@@ -309,6 +309,26 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('description validation', () => {
+        beforeEach(async () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+        });
+
+        it('should accept a 2000-character description (boundary)', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2000));
+            comp.courseForm.get('description')!.updateValueAndValidity();
+            expect(comp.courseForm.get('description')!.errors?.maxlength).toBeUndefined();
+        });
+
+        it('should reject a 2001-character description', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            comp.courseForm.get('description')!.updateValueAndValidity();
+            expect(comp.courseForm.get('description')!.errors?.maxlength).toBeDefined();
+        });
+    });
+
     describe('save', () => {
         it('should call update service on save for existing entity', async () => {
             // GIVEN
