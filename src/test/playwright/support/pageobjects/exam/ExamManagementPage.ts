@@ -150,7 +150,7 @@ export class ExamManagementPage {
         const row = this.page.locator('tbody tr', { hasText: username }).first();
         await row.waitFor({ state: 'visible' });
         await row.getByRole('link', { name: 'View exam' }).click();
-        await this.page.locator('.summery').click();
+        await this.page.getByTestId('student-exam-summary-link').click();
         await expect(this.page.locator('[data-testid="exercise-result-score"]')).toHaveText(score, { useInnerText: true });
     }
 

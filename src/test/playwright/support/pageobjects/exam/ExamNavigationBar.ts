@@ -56,7 +56,7 @@ export class ExamNavigationBar {
     }
 
     async openOverview() {
-        await this.page.getByText('Overview').nth(0).click();
+        await this.page.getByTestId('exam-overview-card').click();
     }
 
     /**

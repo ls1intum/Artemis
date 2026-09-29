@@ -245,7 +245,8 @@ test.describe('Exam assessment', () => {
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await fileUploadExerciseAssessment.addNewFeedback(7, 'Good job');
-            await fileUploadExerciseAssessment.submitFeedback();
+            const response = await fileUploadExerciseAssessment.submitFeedback();
+            expect(response.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('70%');
         });
@@ -263,7 +264,8 @@ test.describe('Exam assessment', () => {
             // The second round starts from a copy of the first one, so the feedback the tutor left is already there and
             // gets a new value instead of being added again.
             await fileUploadExerciseAssessment.fillFeedback(9, 'Better than it looks');
-            await fileUploadExerciseAssessment.submitFeedback();
+            const response = await fileUploadExerciseAssessment.submitFeedback();
+            expect(response.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('90%');
         });

@@ -160,7 +160,7 @@
             <h5><span jhiTranslate="artemisApp.studentExams.summary"></span></h5>
             <div class="d-flex flex-row">
                 @if (course()?.isAtLeastInstructor) {
-                    <a class="btn btn-primary summery ms-4" [routerLink]="'./summary'">
+                    <a class="btn btn-primary summery ms-4" data-testid="student-exam-summary-link" [routerLink]="'./summary'">
                         <span jhiTranslate="artemisApp.exam.summary"></span>
                     </a>
                     <div ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam()?.submitted!">

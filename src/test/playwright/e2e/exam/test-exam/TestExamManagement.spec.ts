@@ -48,7 +48,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await textExerciseCreation.setTitle(textExerciseTitle);
             await textExerciseCreation.typeMaxPoints(10);
             const response = await textExerciseCreation.create();
-            expect(response.status()).toBe(201);
+            expect(response.status(), await response.text()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, textExerciseTitle);
         });
@@ -60,7 +60,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await quizExerciseCreation.setTitle(quizExerciseTitle);
             await quizExerciseCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
             const response = await quizExerciseCreation.saveQuiz();
-            expect(response.status()).toBe(201);
+            expect(response.status(), await response.text()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, quizExerciseTitle);
         });
@@ -72,7 +72,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await modelingExerciseCreation.setTitle(modelingExerciseTitle);
             await modelingExerciseCreation.setPoints(10);
             const response = await modelingExerciseCreation.save();
-            expect(response.status()).toBe(201);
+            expect(response.status(), await response.text()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, modelingExerciseTitle);
         });
@@ -88,7 +88,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await programmingExerciseCreation.setPackageName('de.test');
             await programmingExerciseCreation.setPoints(10);
             const response = await programmingExerciseCreation.generate();
-            expect(response.status()).toBe(201);
+            expect(response.status(), await response.text()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, programmingExerciseTitle);
         });

@@ -47,7 +47,7 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
 
         const examResponse = await examCreation.submit();
         exam = { ...(await readResponseJson(examResponse)), course };
-        expect(examResponse.status()).toBe(201);
+        expect(examResponse.status(), await examResponse.text()).toBe(201);
         expect(exam.title).toBe(examData.title);
         expect(exam.testExam).toBe(true);
         expect(trimDate(String(exam.visibleDate))).toBe(trimDate(dayjsToString(examData.visibleDate)));
