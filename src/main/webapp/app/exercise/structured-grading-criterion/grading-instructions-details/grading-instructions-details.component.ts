@@ -505,6 +505,26 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (!this.editable()) {
             return;
         }
+        let awaitingUsageCount = false;
+        for (const { action } of textWithDomainActions) {
+            if (action instanceof GradingInstructionAction || action instanceof GradingCriterionAction) {
+                if (awaitingUsageCount) {
+                    this.parseAccepted = false;
+                    return;
+                }
+                awaitingUsageCount = action instanceof GradingInstructionAction;
+            } else if (action instanceof GradingUsageCountAction) {
+                if (!awaitingUsageCount) {
+                    this.parseAccepted = false;
+                    return;
+                }
+                awaitingUsageCount = false;
+            }
+        }
+        if (awaitingUsageCount) {
+            this.parseAccepted = false;
+            return;
+        }
         const previousCriteria = this.exercise().gradingCriteria ?? [];
         const previousInstructions = this.instructions;
         const previousGradingInstructions = this.exercise().gradingInstructions;

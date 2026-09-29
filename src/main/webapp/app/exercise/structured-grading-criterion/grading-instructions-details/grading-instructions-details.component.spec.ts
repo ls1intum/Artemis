@@ -1421,6 +1421,27 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingInstructions).toBe('original text');
     });
 
+    it('rejects a missing usage-count marker before a second persisted instruction', () => {
+        const secondInstruction = { id: 2, credits: 2, gradingScale: 'second', instructionDescription: 'second', feedback: 'second', usageCount: 0 } as GradingInstruction;
+        gradingCriterion.structuredGradingInstructions.push(secondInstruction);
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        component.ngOnInit();
+        component.showEditMode.set(false);
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component.generateMarkdown().replace('\t[maxCountInScore] 0\n', '');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(component.prepareForSave()).toBe(false);
+        component.setEditMode('structured');
+        expect(component.showEditMode()).toBe(false);
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondInstruction.feedback).toBe('second');
+    });
+
     it('should apply a cross-criterion content move without preserving the moved instruction id', () => {
         const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;
         const instructionB = { id: 20, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
