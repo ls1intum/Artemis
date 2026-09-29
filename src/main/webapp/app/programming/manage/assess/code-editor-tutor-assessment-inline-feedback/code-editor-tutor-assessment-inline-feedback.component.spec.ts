@@ -3,8 +3,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockModule } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
-import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+} from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -172,6 +179,43 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         expect(onUpdateSpy).toHaveBeenCalledExactlyOnceWith(comp.currentFeedback());
         expect(onPendingSpy).not.toHaveBeenCalled();
+    });
+
+    it.each(['drop', 'keyboard'])('keeps an unsaved accepted suggestion matchable when linking an instruction by %s', (method) => {
+        const original = {
+            type: FeedbackType.MANUAL,
+            reference: `file:${fileName}_line:${codeLine}`,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion`,
+            detailText: 'Suggested comment',
+            credits: 1,
+        } as Feedback;
+        const originalIdentity = deepClone(original);
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'instruction feedback', gradingScale: 'good', instructionDescription: 'description', usageCount: 0 };
+        fixture.componentRef.setInput('feedback', original);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+        const onUpdateSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateSpy);
+
+        if (method === 'drop') {
+            vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
+                feedback.gradingInstruction = instruction;
+                feedback.credits = instruction.credits;
+            });
+            comp.updateFeedbackOnDrop(new Event('drop'));
+        } else {
+            TestBed.inject(GradingInstructionSelectionService).armInstruction(instruction);
+            comp.applyArmedInstruction();
+        }
+
+        expect(original.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion`);
+        expect(original.gradingInstruction).toBeUndefined();
+        expect(onUpdateSpy).toHaveBeenCalledOnce();
+        const updated = onUpdateSpy.mock.calls[0][0] as Feedback;
+        expect(updated).not.toBe(original);
+        expect(updated.text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Suggestion`);
+        expect(updated.gradingInstruction).toEqual(instruction);
+        expect(Feedback.areIdentical(original, originalIdentity)).toBe(true);
     });
 
     it('should restore and emit onUpdateFeedback when canceling an existing card edit', () => {

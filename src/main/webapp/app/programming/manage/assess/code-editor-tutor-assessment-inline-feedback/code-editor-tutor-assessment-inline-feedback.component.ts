@@ -82,10 +82,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     readonly currentFeedback = linkedSignal<Feedback>(() => this.feedback() ?? new Feedback());
 
-    /**
-     * Bumped when {@link currentFeedback} content changes in place (textarea / instruction link) so {@link saveEnabled}
-     * re-evaluates — a plain method read of the same object identity would stay stale under signal CD.
-     */
+    /** Bumped when an instruction is unlinked in place so {@link saveEnabled} re-evaluates. */
     private readonly contentRevision = signal(0);
 
     /** Reactive stand-in for {@link canSave} in the template. */
@@ -138,8 +135,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly oldFeedback = signal<Feedback>(new Feedback());
 
     /**
-     * Criterion title for instruction-linked feedback, else suggestion title. Method (not computed): drop/unlink
-     * mutate {@link currentFeedback}.gradingInstruction in place without a new signal identity.
+     * Criterion title for instruction-linked feedback, else suggestion title. Method (not computed): unlink
+     * mutates {@link currentFeedback}.gradingInstruction in place without a new signal identity.
      */
     protected displayTitle(): string | undefined {
         const feedback = this.currentFeedback();
@@ -293,12 +290,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * @param event Drop event with SGI data
      */
     updateFeedbackOnDrop(event: Event) {
-        const feedback = this.currentFeedback();
+        const feedback = deepClone(this.currentFeedback());
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
-        feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
-        this.contentRevision.update((revision) => revision + 1);
-        this.notifyInstructionLinkChange(feedback);
+        this.linkInstruction(feedback);
     }
 
     /** Applies a previously armed instruction to this feedback. */
@@ -306,13 +300,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         if (!this.isKeyboardDropTarget()) {
             return;
         }
-        const feedback = this.currentFeedback();
+        const feedback = deepClone(this.currentFeedback());
         if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedback)) {
             return;
         }
+        this.linkInstruction(feedback);
+    }
+
+    private linkInstruction(feedback: Feedback): void {
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
-        this.contentRevision.update((revision) => revision + 1);
+        feedback.text = Feedback.isFeedbackSuggestion(feedback)
+            ? Feedback.markAdaptedIfAcceptedSuggestion(feedback.text!)
+            : `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        this.currentFeedback.set(feedback);
         this.notifyInstructionLinkChange(feedback);
     }
 
