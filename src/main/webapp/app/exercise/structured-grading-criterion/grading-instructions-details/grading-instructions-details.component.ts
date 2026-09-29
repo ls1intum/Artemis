@@ -480,7 +480,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
         const unmatchedPrevious = [...previousCriteria];
-        const unmatchedParsed = [...(this.exercise().gradingCriteria ?? [])];
+        const parsedCriteria = this.exercise().gradingCriteria ?? [];
+        const unmatchedParsed = [...parsedCriteria];
         const matched: Array<[GradingCriterion, GradingCriterion]> = [];
         const sameInstruction = (previous: GradingInstruction, parsed: GradingInstruction) =>
             previous.credits === parsed.credits &&
@@ -507,7 +508,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         };
         matchUnique((previous, parsed) => previous.title === parsed.title && sameInstructions(previous, parsed));
         matchUnique((previous, parsed) => !!previous.structuredGradingInstructions?.length && sameInstructions(previous, parsed));
-        matchUnique((previous, parsed) => previous.title === parsed.title || (previous.title == undefined && parsed.title == undefined));
+        // A title alone cannot identify a moved criterion when its instructions changed.
+        matchUnique(
+            (previous, parsed) =>
+                previousCriteria.indexOf(previous) === parsedCriteria.indexOf(parsed) &&
+                (previous.title === parsed.title || (previous.title == undefined && parsed.title == undefined)),
+        );
 
         let ambiguous = unmatchedPrevious.some((previous) => previous.id !== undefined) && unmatchedParsed.length > 0;
         for (const [previous, parsed] of matched) {

@@ -798,6 +798,25 @@ describe('GradingInstructionsDetailsComponent', () => {
         ]);
     });
 
+    it('rejects exchanged titles when both instructions also change', () => {
+        const first = { id: 11, title: 'first', structuredGradingInstructions: [{ ...gradingInstruction, id: 101, feedback: 'first feedback' }] } as GradingCriterion;
+        const second = { id: 22, title: 'second', structuredGradingInstructions: [{ ...gradingInstruction, id: 202, feedback: 'second feedback' }] } as GradingCriterion;
+        exercise.gradingCriteria = [first, second];
+        const firstActions = getDomainActionArray();
+        firstActions[0].text = 'second';
+        firstActions[5].text = 'changed first feedback';
+        const secondActions = getDomainActionArray();
+        secondActions[0].text = 'first';
+        secondActions[5].text = 'changed second feedback';
+        vi.spyOn(alertService, 'error');
+
+        component.onDomainActionsFound([...firstActions, ...secondActions]);
+
+        expect(exercise.gradingCriteria?.[0]).toBe(first);
+        expect(exercise.gradingCriteria?.[1]).toBe(second);
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.assessmentCriteriaGeneration.ambiguousEdit');
+    });
+
     it('keeps a persisted instruction ID when only its feedback changes', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const actions = getDomainActionArray();
