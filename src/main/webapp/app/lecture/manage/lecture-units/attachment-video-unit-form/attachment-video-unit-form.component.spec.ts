@@ -744,32 +744,68 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#updateNotificationText')).toBeNull();
         });
 
-        it('should let a video item get its first file only when confirmed, and let the chosen file be discarded', () => {
+        it('should upload the first file of a video item as soon as it is chosen, and let a file that was not saved yet be discarded', () => {
             attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', {
                 formProperties: { name: 'Lecture video', videoSource: 'https://www.youtube.com/embed/old' },
                 fileProperties: {},
             } as AttachmentVideoUnitFormData);
             attachmentVideoUnitFormComponentFixture.detectChanges();
             const uploadSpy = vi.fn();
+            const withdrawnSpy = vi.fn();
             attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
+            attachmentVideoUnitFormComponent.confirmedContentWithdrawn.subscribe(withdrawnSpy);
+            expect(query('upload-hint').nativeElement.textContent).toContain('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.newFileHint');
 
             chooseFile(new File(['content'], 'Slides.pdf', { type: 'application/pdf' }));
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
-            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
-            expect(query('replacement-confirm')).not.toBeNull();
-            query('upload-new-version-button').nativeElement.click();
             expect(uploadSpy).toHaveBeenCalledOnce();
-
-            chooseFile(new File(['content'], 'Other slides.pdf', { type: 'application/pdf' }));
-            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(false);
             query('discard-new-file-button').nativeElement.click();
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
+            expect(withdrawnSpy).toHaveBeenCalledExactlyOnceWith('file');
             expect(attachmentVideoUnitFormComponent.fileName()).toBeUndefined();
-            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(false);
-            expect(query('replacement-confirm')).toBeNull();
             expect(document.activeElement).toBe(query('choose-file-button').nativeElement);
+        });
+
+        it('should show that the chosen file is uploaded while its request runs', () => {
+            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(query('file-uploading')).toBeNull();
+
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('savingConfirmed', 'file');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('file-uploading')).not.toBeNull();
+            expect(query('replacement-hint')).toBeNull();
+        });
+
+        it('should neither take nor upload a file that is too big or of a type the server does not accept', () => {
+            const uploadSpy = vi.fn();
+            attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
+            const tooBig = new File([''], 'Huge.pdf', { type: 'application/pdf' });
+            Object.defineProperty(tooBig, 'size', { value: MAX_FILE_SIZE + 1 });
+
+            chooseFile(tooBig);
+            expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBe(true);
+            chooseFile(new File(['content'], 'Slides.exe'));
+
+            expect(uploadSpy).not.toHaveBeenCalled();
+            expect(attachmentVideoUnitFormComponent.file).toBeUndefined();
+            expect(attachmentVideoUnitFormComponent.fileName()).toBe(storedLink);
+            expect(attachmentVideoUnitFormComponent.isFileTypeUnsupported()).toBe(true);
+        });
+
+        it('should upload a file with the name filled in from the file name when the item has none', () => {
+            const uploadSpy = vi.fn();
+            attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
+            attachmentVideoUnitFormComponent.nameControl!.setValue('');
+
+            chooseFile(new File(['content'], 'Week 2.pdf', { type: 'application/pdf' }));
+
+            expect(uploadSpy.mock.lastCall![0].formProperties.name).toBe('Week 2');
+            expect(changes.at(-1)).toEqual(expect.objectContaining({ valid: true }));
         });
 
         it('should not offer to take back a file or video URL whose request runs already', () => {
@@ -791,7 +827,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
         it('should take the uploaded file as the current one when the user kept the old file while it was uploaded', () => {
             const uploaded = new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' });
             chooseFile(uploaded);
-            attachmentVideoUnitFormComponent.uploadNewFile();
             attachmentVideoUnitFormComponent.keepCurrentFile();
 
             attachmentVideoUnitFormComponent.takeOverSavedFile('attachments/attachment-video-units/7/Slides_v2.pdf', 2, uploaded);
@@ -802,16 +837,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
         });
 
         it('should notice the name turning invalid while the video URL is invalid already', () => {
-            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
             attachmentVideoUnitFormComponent.videoSourceControl!.setValue('not a link');
             attachmentVideoUnitFormComponentFixture.detectChanges();
-            expect(query('upload-new-version-button').nativeElement.disabled).toBe(false);
+            expect(attachmentVideoUnitFormComponent.areDetailsValid()).toBe(true);
 
             // The whole form stays invalid, so only the change of the name tells the details apart.
             attachmentVideoUnitFormComponent.nameControl!.setValue('');
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
-            expect(query('upload-new-version-button').nativeElement.disabled).toBe(true);
+            expect(attachmentVideoUnitFormComponent.areDetailsValid()).toBe(false);
         });
 
         it('should remove the video URL only from an item that keeps its file', () => {
@@ -828,41 +862,36 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(attachmentVideoUnitFormComponent.canSaveVideoSource()).toBe(false);
         });
 
-        it('should upload a new file only when confirmed, once, and notify students only when asked', () => {
+        it('should upload a new file as soon as it is chosen, once, and notify students only when asked before', () => {
             const uploadSpy = vi.fn();
             attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
             const replacement = new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' });
+            // What the upload does is said before the file is chosen, since nothing is confirmed afterwards.
+            expect(query('upload-options')).not.toBeNull();
+            expect(query('upload-hint').nativeElement.textContent).toContain('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replaceFileHint');
+            attachmentVideoUnitFormComponent.notifyStudents.set(true);
 
             chooseFile(replacement);
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
             expect(changes).toEqual([]);
-            expect(attachmentVideoUnitFormComponent.nextFileVersion()).toBe(2);
-            // The server does not use a notification text, so the confirmation offers none.
-            expect(attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#updateNotificationText')).toBeNull();
-            attachmentVideoUnitFormComponent.notifyStudents.set(true);
-            query('upload-new-version-button').nativeElement.click();
-            attachmentVideoUnitFormComponentFixture.detectChanges();
-            query('upload-new-version-button').nativeElement.click();
-
             expect(uploadSpy).toHaveBeenCalledOnce();
             expect(uploadSpy.mock.lastCall![0].fileProperties).toEqual({ file: replacement, fileName: 'Slides v2.pdf', notifyStudents: true });
-            expect(query('upload-new-version-button').nativeElement.disabled).toBe(true);
+            expect(attachmentVideoUnitFormComponent.nextFileVersion()).toBe(2);
             expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(false);
+            expect(query('upload-new-version-button')).toBeNull();
         });
 
-        it('should take back a confirmed file when the current one is kept or another one is chosen', () => {
+        it('should take back a file that was not saved yet when the current one is kept or another one is chosen', () => {
             const withdrawnSpy = vi.fn();
             attachmentVideoUnitFormComponent.confirmedContentWithdrawn.subscribe(withdrawnSpy);
             chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
-            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
 
-            attachmentVideoUnitFormComponent.uploadNewFile();
             chooseFile(new File(['content'], 'Slides v3.pdf', { type: 'application/pdf' }));
             expect(withdrawnSpy).toHaveBeenCalledExactlyOnceWith('file');
-            expect(attachmentVideoUnitFormComponent.isFileUploadRequested()).toBe(false);
+            // The file chosen next is uploaded again.
+            expect(attachmentVideoUnitFormComponent.isFileUploadRequested()).toBe(true);
 
-            attachmentVideoUnitFormComponent.uploadNewFile();
             attachmentVideoUnitFormComponentFixture.detectChanges();
             query('keep-current-file-button').nativeElement.click();
             expect(withdrawnSpy).toHaveBeenCalledTimes(2);
@@ -870,39 +899,37 @@ describe('AttachmentVideoUnitFormComponent', () => {
         });
 
         it('should save the details although the video link helper holds a link it cannot turn into a video URL', () => {
+            const uploadSpy = vi.fn();
+            attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
             attachmentVideoUnitFormComponent.urlHelperControl!.setValue('not a video page');
             attachmentVideoUnitFormComponent.descriptionControl!.setValue('Week 1');
             chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
-            attachmentVideoUnitFormComponentFixture.detectChanges();
 
             expect(changes.at(-1)).toEqual(expect.objectContaining({ valid: true }));
-            expect(query('upload-new-version-button').nativeElement.disabled).toBe(false);
+            expect(uploadSpy).toHaveBeenCalledOnce();
         });
 
-        it('should not confirm a file or video URL while the details cannot be saved', () => {
+        it('should upload a file while the details cannot be saved, since the page sends it with the last valid details, but not confirm a video URL', () => {
             const uploadSpy = vi.fn();
             const videoSpy = vi.fn();
             attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
             attachmentVideoUnitFormComponent.videoSourceSaveRequested.subscribe(videoSpy);
-            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
             attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/new');
+            attachmentVideoUnitFormComponent.descriptionControl!.setValue('x'.repeat(1001));
 
-            attachmentVideoUnitFormComponent.nameControl!.setValue('');
+            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
-            expect(query('upload-new-version-button').nativeElement.disabled).toBe(true);
+            expect(uploadSpy).toHaveBeenCalledOnce();
             expect(query('save-video-source-button').nativeElement.disabled).toBe(true);
-            attachmentVideoUnitFormComponent.uploadNewFile();
             attachmentVideoUnitFormComponent.saveVideoSource();
-            expect(uploadSpy).not.toHaveBeenCalled();
             expect(videoSpy).not.toHaveBeenCalled();
         });
 
         it('should take the saved file over and keep what else was typed', () => {
             const uploaded = new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' });
-            chooseFile(uploaded);
             attachmentVideoUnitFormComponent.notifyStudents.set(true);
-            attachmentVideoUnitFormComponent.uploadNewFile();
+            chooseFile(uploaded);
             attachmentVideoUnitFormComponent.nameControl!.setValue('Slides week 1');
 
             attachmentVideoUnitFormComponent.takeOverSavedFile('attachments/attachment-video-units/7/Slides_v2.pdf', 2, uploaded);
@@ -913,7 +940,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(attachmentVideoUnitFormComponent.nextFileVersion()).toBe(3);
             expect(attachmentVideoUnitFormComponent.notifyStudents()).toBe(false);
             expect(attachmentVideoUnitFormComponent.nameControl?.value).toBe('Slides week 1');
-            expect(query('replacement-confirm')).toBeNull();
+            expect(query('replacement-file')).toBeNull();
             expect(changes.map((change) => change.data.formProperties.name)).toEqual(['Slides week 1']);
         });
 
@@ -921,7 +948,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
             const uploaded = new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' });
             const chosenMeanwhile = new File(['content'], 'Slides v3.pdf', { type: 'application/pdf' });
             chooseFile(uploaded);
-            attachmentVideoUnitFormComponent.uploadNewFile();
             chooseFile(chosenMeanwhile);
 
             attachmentVideoUnitFormComponent.takeOverSavedFile('attachments/attachment-video-units/7/Slides_v2.pdf', 2, uploaded);

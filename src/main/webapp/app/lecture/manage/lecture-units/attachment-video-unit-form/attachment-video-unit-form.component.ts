@@ -3,7 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { buildEmbedUrl, parseVideoUrl } from './video-url-parser';
-import { faArrowUp, faArrowUpRightFromSquare, faCircleInfo, faFileArrowUp, faQuestionCircle, faRotateLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faArrowUpRightFromSquare, faCircleInfo, faFileArrowUp, faQuestionCircle, faRotateLeft, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE, UPLOAD_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
@@ -144,6 +144,7 @@ export class AttachmentVideoUnitFormComponent {
     protected readonly faFileArrowUp = faFileArrowUp;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly faRotateLeft = faRotateLeft;
+    protected readonly faSpinner = faSpinner;
     protected readonly FeatureToggle = FeatureToggle;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
@@ -158,12 +159,12 @@ export class AttachmentVideoUnitFormComponent {
     onCancel = output<void>();
 
     /**
-     * Reports changes instead of offering Submit, for an item that is edited in place and saved automatically. A new file or video
-     * link is saved only when the user confirms it, because Artemis then processes the content again.
+     * Reports changes instead of offering Submit, for an item that is edited in place and saved automatically. A chosen file is uploaded
+     * at once; a new video link is saved only when the user confirms it, because Artemis then transcribes the video.
      */
     readonly autosave = input<boolean>(false);
     readonly formChanged = output<UnitFormChange<AttachmentVideoUnitFormData>>();
-    /** Emits when the user confirms the new file, with whether to notify students. */
+    /** Emits when the user chose a new file, with whether to notify students. */
     readonly fileUploadRequested = output<AttachmentVideoUnitFormData>();
     /** Emits when the user confirms a new video link. */
     readonly videoSourceSaveRequested = output<AttachmentVideoUnitFormData>();
@@ -171,9 +172,9 @@ export class AttachmentVideoUnitFormComponent {
     readonly confirmedContentWithdrawn = output<ConfirmedContent>();
     /** The confirmed file or video link whose request runs; it can no longer be taken back. */
     readonly savingConfirmed = input<ConfirmedContent | undefined>(undefined);
-    /** Whether students hear about the new version of the file. */
+    /** Whether students hear about the next file the user chooses. */
     readonly notifyStudents = signal(false);
-    /** Set once the new file or video link was confirmed, until it is saved or taken back, so it is not confirmed twice. */
+    /** Set once the new file was sent or the video link confirmed, until it is saved or taken back, so it is not sent twice. */
     readonly isFileUploadRequested = signal(false);
     readonly isVideoSourceSaveRequested = signal(false);
     /** Set while the form takes over the data of the item, which is not a change of the user. */
@@ -279,15 +280,12 @@ export class AttachmentVideoUnitFormComponent {
         this.formEvent();
         return this.detailsValid();
     });
-    readonly canUploadFile = computed(() => this.areDetailsValid() && !this.isFileTooBig() && !this.isFileUploadRequested());
     /** An item keeps a file or a video link, so the link can only be removed from an item that has a file. */
     readonly canSaveVideoSource = computed(
         () => this.areDetailsValid() && !this.videoSourceControl?.invalid && (!!this.currentFileLink() || !!this.videoSourceSignal()) && !this.isVideoSourceSaveRequested(),
     );
-    /** A new file or video link that the user chose for an item edited in place but did not confirm yet. */
-    readonly hasUnconfirmedContent = computed(
-        () => this.autosave() && ((this.hasNewFile() && !this.isFileUploadRequested()) || (this.isVideoSourceChanged() && !this.isVideoSourceSaveRequested())),
-    );
+    /** A new video link that the user entered for an item edited in place but did not confirm yet; a chosen file is uploaded at once. */
+    readonly hasUnconfirmedContent = computed(() => this.isVideoSourceChanged() && !this.isVideoSourceSaveRequested());
 
     private detailsValid(): boolean {
         // A control reports its change before the form takes it over, so the form's own validity lags one change behind in its valueChanges.
@@ -318,12 +316,13 @@ export class AttachmentVideoUnitFormComponent {
         this.reportChange(false);
     }
 
-    /** Confirms the new file once; saving it splits the slides again and processes the content for Iris again. It is sent with the details, so they have to be valid. */
-    uploadNewFile(): void {
-        if (this.file && this.canUploadFile()) {
-            this.isFileUploadRequested.set(true);
-            this.fileUploadRequested.emit(this.currentFormData());
-        }
+    /**
+     * Uploads the chosen file of an item edited in place; saving it splits the slides again and processes the content for Iris again. The item
+     * sends it with its newest valid details, so the details may be invalid meanwhile.
+     */
+    private uploadNewFile(): void {
+        this.isFileUploadRequested.set(true);
+        this.fileUploadRequested.emit(this.currentFormData());
     }
 
     /** Confirms the new video link once; saving it has the video transcribed and processed for Iris. It is sent with the details, so they have to be valid. */
@@ -335,7 +334,7 @@ export class AttachmentVideoUnitFormComponent {
     }
 
     /**
-     * Takes the file as the item's own after the user confirmed it and it was saved. Everything else stays as typed, including a
+     * Takes the file as the item's own after it was uploaded and saved. Everything else stays as typed, including a
      * file the user chose meanwhile.
      * @param fileLink the stored link of the saved file
      * @param version the version of the saved file
@@ -418,6 +417,13 @@ export class AttachmentVideoUnitFormComponent {
         if (this.isFileTypeUnsupported()) {
             return;
         }
+        // An item edited in place uploads the file at once, so a file the server would reject is not taken either.
+        if (this.autosave()) {
+            this.isFileTooBig.set(file.size > MAX_FILE_SIZE);
+            if (this.isFileTooBig()) {
+                return;
+            }
+        }
         // A new choice replaces a confirmed file that was not saved yet.
         this.withdraw('file');
         this.file = file;
@@ -430,6 +436,9 @@ export class AttachmentVideoUnitFormComponent {
             });
         }
         this.isFileTooBig.set(file.size > MAX_FILE_SIZE);
+        if (this.autosave()) {
+            this.uploadNewFile();
+        }
     }
 
     /**

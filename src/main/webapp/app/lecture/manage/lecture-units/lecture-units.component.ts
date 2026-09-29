@@ -34,8 +34,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { concatMap, filter, map } from 'rxjs/operators';
-import { Observable, from } from 'rxjs';
+import { concatMap, filter, finalize, map } from 'rxjs/operators';
+import { Observable, defer, from } from 'rxjs';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
@@ -70,7 +70,7 @@ interface PendingUnitSave {
     confirmed?: ConfirmedUnitSave;
 }
 
-/** A confirmed save that failed; it is sent again only on Retry or Save, not with every later change. */
+/** A confirmed save that failed; it is sent again only on Retry or Done, not with every later change. */
 interface HeldUnitSave {
     save: ConfirmedUnitSave;
     reason?: string;
@@ -146,6 +146,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
     isOnlineUnitFormOpen = signal<boolean>(false);
     isAttachmentVideoUnitFormOpen = signal<boolean>(false);
     isUploadingPdfs = signal<boolean>(false);
+    /** How many items the creation form sends right now; the form can be submitted again while a request runs. */
+    private readonly creatingUnits = signal(0);
+    readonly isCreatingUnit = computed(() => this.creatingUnits() > 0);
 
     /** The content of the lecture as the list shows it. */
     readonly lectureUnits = signal<LectureUnit[]>([]);
@@ -188,7 +191,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     readonly savingConfirmed = computed(() => (this.isSaveInFlight() ? this.inFlight()?.confirmed : undefined));
     /** Whether the form reported last that it cannot be saved as it is. */
     private readonly isFormInvalid = signal(false);
-    /** Set when Save, opening another item or adding one waited for a new file or video link that the user did not confirm or discard. */
+    /** Set when Done, opening another item or adding one waited for a new video link that the user did not confirm or discard. */
     private readonly isCloseBlocked = signal(false);
     readonly showsUnconfirmedContentHint = computed(() => this.isCloseBlocked() && !!this.attachmentVideoUnitForm()?.hasUnconfirmedContent());
     /** A failed save of the details, which the next change or Retry sends again. */
@@ -212,7 +215,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     readonly isSaving = computed(() => this.isSaveInFlight() || !!this.pendingDetails() || this.pendingConfirmed().length > 0);
     /**
      * Whether leaving the page now would lose a change of the item that is edited in place: one that failed, a form that cannot be saved,
-     * or a new file or video link that was not confirmed. A change that can be saved is saved on leaving.
+     * or a new video link that was not confirmed. The user has to decide about such a change.
      */
     readonly hasUnsavedContent = computed(
         () =>
@@ -220,6 +223,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
             this.heldConfirmed().length > 0 ||
             this.isFormInvalid() ||
             (this.isEditingLectureUnit() && !!this.attachmentVideoUnitForm()?.hasUnconfirmedContent()),
+    );
+    /**
+     * Whether content is still being saved: a save of the item that is edited in place waits or runs, PDFs dropped on the page are uploaded,
+     * or the creation form sends a new item. A change held for Retry after a failure does not count; {@link hasUnsavedContent} covers it.
+     * Both can be true at once, such as a failed file upload while a change of the details is sent.
+     */
+    readonly isSavingContent = computed(
+        () => this.isSaveInFlight() || this.pendingConfirmed().length > 0 || (!!this.pendingDetails() && !this.saveFailure()) || this.isUploadingPdfs() || this.isCreatingUnit(),
     );
     /** Set once the page is left; a save that fails afterwards is reported in an alert, because the item is gone. */
     private isDestroyed = false;
@@ -230,7 +241,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     /** The newest details of the file item that can be saved, which a confirmed file or video link is sent with. */
     private latestAttachmentDetails?: AttachmentVideoUnitFormData;
     private autosaveTimer?: ReturnType<typeof setTimeout>;
-    /** Runs once the item is saved, such as closing its form after Save. */
+    /** Runs once the item is saved, such as closing its form after Done. */
     private afterAutosave?: () => void;
 
     constructor() {
@@ -319,7 +330,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         textUnit.content = formData.content;
         textUnit.competencyLinks = formData.competencyLinks;
 
-        this.textUnitService.create(textUnit, this.lecture().id!).subscribe({
+        this.trackCreation(this.textUnitService.create(textUnit, this.lecture().id!)).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -336,7 +347,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         onlineUnit.source = formData.source || undefined;
         onlineUnit.competencyLinks = formData.competencyLinks || undefined;
 
-        this.onlineUnitService.create(onlineUnit, this.lecture().id!).subscribe({
+        this.trackCreation(this.onlineUnitService.create(onlineUnit, this.lecture().id!)).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -363,7 +374,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
         formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        this.attachmentVideoUnitService.create(formData, this.lecture().id!).subscribe({
+        this.trackCreation(this.attachmentVideoUnitService.create(formData, this.lecture().id!)).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse | Error) => {
                 if (res instanceof Error) {
@@ -376,6 +387,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
                     onError(this.alertService, res);
                 }
             },
+        });
+    }
+
+    /** Counts the request of a new item as content that is still being saved until it completes or fails. */
+    private trackCreation<T>(request: Observable<T>): Observable<T> {
+        return defer(() => {
+            this.creatingUnits.update((count) => count + 1);
+            return request.pipe(finalize(() => this.creatingUnits.update((count) => count - 1)));
         });
     }
 
@@ -487,7 +506,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     /**
-     * Saves the item that is edited in place at once and closes its form, as its Save button does. A form that cannot be saved
+     * Saves the item that is edited in place at once and closes its form, as its Done button does. A form that cannot be saved
      * stays open with its message, so nothing typed is lost.
      * @param then runs after the form closed, such as opening the next item
      */
@@ -506,13 +525,13 @@ export class LectureUpdateUnitsComponent implements OnInit {
         if (this.isFormInvalid()) {
             return;
         }
-        // A new file or video link is saved only on confirmation, so closing would drop it without asking; the rest is saved already.
+        // A new video link is saved only on confirmation, so closing would drop it without asking; the rest is saved already.
         if (this.attachmentVideoUnitForm()?.hasUnconfirmedContent()) {
             this.isCloseBlocked.set(true);
             this.flushAutosave();
             return;
         }
-        // Save is a retry of a confirmed file or link that failed.
+        // Done is a retry of a file or confirmed link that failed.
         this.requeueHeldSaves();
         if (this.isSaving()) {
             this.afterAutosave = close;
@@ -529,7 +548,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.focusEditButtonOf(unitId);
     }
 
-    /** The form and the Save button of the item are gone once it closes, so the keyboard focus continues at its Edit button. */
+    /** The form and the Done button of the item are gone once it closes, so the keyboard focus continues at its Edit button. */
     private focusEditButtonOf(unitId: number | undefined): void {
         if (unitId !== undefined) {
             afterNextRender(() => this.unitManagementComponent()?.focusEditButton(unitId), { injector: this.injector });
@@ -574,7 +593,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         });
     }
 
-    /** Saves the file the user confirmed as the next version of the item, and notifies students if they asked for it. */
+    /** Saves the file the user chose as the next version of the item, and notifies students if they asked for it. */
     onAttachmentFileUploadRequested(data: AttachmentVideoUnitFormData): void {
         this.queueConfirmed({ confirmed: 'file', data });
     }
@@ -594,6 +613,17 @@ export class LectureUpdateUnitsComponent implements OnInit {
     onEditorFocusOut(): void {
         this.textUnitForm()?.flushPendingEdits();
         this.flushAutosave();
+    }
+
+    /**
+     * Before the page decides whether it can be left: reports text that the markdown editor still holds back and sends a change that waits for
+     * the pause. A failed save is not sent again here, so leaving asks about it instead of retrying it silently.
+     */
+    flushBufferedEdits(): void {
+        this.textUnitForm()?.flushPendingEdits();
+        if (!this.saveFailure() && !this.heldConfirmed().length) {
+            this.flushAutosave();
+        }
     }
 
     /**
@@ -648,7 +678,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
         if (!this.editingUnit()) {
             return;
         }
-        this.latestAttachmentDetails = pending.data;
+        // A file is uploaded as soon as it is chosen, also while the details cannot be saved; it is then sent with the newest valid details.
+        if (!this.isFormInvalid()) {
+            this.latestAttachmentDetails = pending.data;
+        }
         // A newer confirmation of the same kind replaces one that waits or failed; a change of the details never does.
         this.heldConfirmed.update((held) => held.filter((failed) => failed.save.confirmed !== pending.confirmed));
         this.pendingConfirmed.update((waiting) => [...waiting.filter((save) => save.confirmed !== pending.confirmed), pending]);

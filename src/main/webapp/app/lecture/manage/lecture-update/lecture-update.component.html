@@ -121,6 +121,7 @@
             [savedAt]="lastSavedAt()"
             [changedSections]="unsavedSections()"
             [hasUnsavedContent]="!!unitSection()?.hasUnsavedContent()"
+            [isSavingContent]="!!unitSection()?.isSavingContent()"
             [isEditMode]="isEditMode()"
             (save)="save()"
             (leave)="previousState()"

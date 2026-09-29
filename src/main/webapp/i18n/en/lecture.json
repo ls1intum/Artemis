@@ -71,15 +71,17 @@
                 "saved": "Lecture details saved at {{ time }}",
                 "contentHint": "Content changes are saved automatically.",
                 "createHint": "Save the lecture to add content to it.",
-                "nothingToSave": "There are no changes to save.",
+                "nothingToSave": "The lecture details have no changes to save. Content is saved automatically.",
                 "detailsIncomplete": "Fill in the required details to save.",
-                "periodInvalid": "Correct the lecture period to save."
+                "periodInvalid": "Correct the lecture period to save.",
+                "savingContent": "Saving content…"
             },
             "newLectureUnit": "New content item",
             "dismissChangesModal": {
                 "title": "Discard unsaved lecture changes?",
                 "message": "Unsaved changes in: {{ sections }}. Do you want to discard them?",
-                "keepEditing": "Keep editing"
+                "keepEditing": "Keep editing",
+                "stillSaving": "Content that is still being saved is saved anyway."
             },
             "creationMode": {
                 "singleLectureLabel": "Single Lecture",
@@ -159,7 +161,13 @@
                 "retry": "Retry",
                 "discard": "Discard change and close",
                 "failedAfterLeaving": "A change of lecture content could not be saved. Open the lecture again to check its content.",
-                "unconfirmedContent": "Save or discard the new file or video URL first."
+                "unconfirmedContent": "Save or discard the new video URL first.",
+                "done": "Done"
+            },
+            "leaveWhileSavingModal": {
+                "title": "Content is still being saved",
+                "message": "Wait until your content changes are saved before you leave. If you leave now and saving fails, these changes are lost.",
+                "leave": "Leave anyway"
             }
         },
         "attachment": {

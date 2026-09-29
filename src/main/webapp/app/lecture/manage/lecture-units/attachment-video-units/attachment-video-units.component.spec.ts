@@ -20,6 +20,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Location } from '@angular/common';
+import { By } from '@angular/platform-browser';
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />', standalone: true })
 class LectureUnitLayoutStubComponent {
@@ -308,7 +310,8 @@ describe('AttachmentVideoUnitsComponent', () => {
         expect(attachmentVideoUnitsComponent.foundSections()).toBe(3);
         expect(attachmentVideoUnitsComponent.summaryKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.summary');
         expect(attachmentVideoUnitsComponent.createLabelKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.create');
-        expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-summary"]')).not.toBeNull();
+        // The result is a message of the page, not part of its description.
+        expect(attachmentVideoUnitsComponentFixture.debugElement.query(By.css('[data-testid="split-summary"]')).componentInstance.severity()).toBe('info');
         expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-create"]')).not.toBeNull();
     });
 
@@ -336,7 +339,17 @@ describe('AttachmentVideoUnitsComponent', () => {
         expect(attachmentVideoUnitsComponent.summaryKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.summaryNone');
         expect(attachmentVideoUnitsComponent.createLabelKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.createEmpty');
         attachmentVideoUnitsComponentFixture.detectChanges();
-        expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-summary"]')).not.toBeNull();
+        // Finding no sections is no error: the items can be added by hand, which the message says.
+        const summary = attachmentVideoUnitsComponentFixture.debugElement.query(By.css('[data-testid="split-summary"]')).componentInstance;
+        expect(summary.severity()).toBe('warn');
+        expect(summary.text()).toContain('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.addRows');
+    });
+
+    it('should show no result while the PDF is still being read', () => {
+        attachmentVideoUnitsComponent.numberOfPages.set(0);
+        attachmentVideoUnitsComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-summary"]')).toBeNull();
     });
 
     it('should let the user try again when the items cannot be created', () => {
@@ -351,16 +364,21 @@ describe('AttachmentVideoUnitsComponent', () => {
     });
 
     describe('when the lecture editor opened the page', () => {
-        const editorRoute = ['course-management', '1', 'lectures', '1', 'edit'];
         let lectureUnitService: LectureUnitService;
         let navigateSpy: MockInstance<Router['navigate']>;
         let deleteSpy: MockInstance<LectureUnitService['delete']>;
         let createSpy: MockInstance<AttachmentVideoUnitService['createUnits']>;
+        let backSpy: MockInstance<Location['back']>;
 
-        function open(state: Record<string, unknown>) {
-            vi.spyOn(router, 'currentNavigation').mockReturnValue({
-                extras: { state: { file: new File(['%PDF'], 'Slides.pdf', { type: 'application/pdf' }), fileName: 'Slides.pdf', returnToEditor: true, ...state } },
-            } as any);
+        function open(state: Record<string, unknown>, fromHistory = false) {
+            const fullState = { file: new File(['%PDF'], 'Slides.pdf', { type: 'application/pdf' }), fileName: 'Slides.pdf', returnToEditor: true, ...state };
+            if (fromHistory) {
+                // After a reload, the router no longer passes the state, but the history entry still holds it.
+                vi.spyOn(router, 'currentNavigation').mockReturnValue(null);
+                vi.spyOn(TestBed.inject(Location), 'getState').mockReturnValue(fullState);
+            } else {
+                vi.spyOn(router, 'currentNavigation').mockReturnValue({ extras: { state: fullState } } as any);
+            }
             attachmentVideoUnitsComponentFixture = TestBed.createComponent(AttachmentVideoUnitsComponent);
             attachmentVideoUnitsComponent = attachmentVideoUnitsComponentFixture.componentInstance;
             attachmentVideoUnitsComponentFixture.detectChanges();
@@ -377,7 +395,14 @@ describe('AttachmentVideoUnitsComponent', () => {
             deleteSpy = vi.spyOn(lectureUnitService, 'delete').mockReturnValue(of(new HttpResponse<object>({ status: 200 })));
             createSpy = vi.spyOn(attachmentVideoUnitService, 'createUnits');
             navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            backSpy = vi.spyOn(TestBed.inject(Location), 'back').mockImplementation(() => {});
         });
+
+        function expectBackToEditor() {
+            // Going back leaves the editor in the history once, so its Close leaves at once.
+            expect(backSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).not.toHaveBeenCalled();
+        }
 
         it('should remove the PDF item by default once its sections are items and go back to the editor', () => {
             open({ sourceUnit: { id: 9, name: 'Slides' } });
@@ -388,7 +413,7 @@ describe('AttachmentVideoUnitsComponent', () => {
 
             expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(9, 1);
             expect(createSpy.mock.invocationCallOrder[0]).toBeLessThan(deleteSpy.mock.invocationCallOrder[0]);
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute, { replaceUrl: true });
+            expectBackToEditor();
         });
 
         it('should keep the PDF item when the user chooses so', () => {
@@ -398,7 +423,7 @@ describe('AttachmentVideoUnitsComponent', () => {
             attachmentVideoUnitsComponent.createAttachmentVideoUnits();
 
             expect(deleteSpy).not.toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute, { replaceUrl: true });
+            expectBackToEditor();
         });
 
         it('should go back to the editor and report it when the PDF item cannot be removed', () => {
@@ -409,7 +434,7 @@ describe('AttachmentVideoUnitsComponent', () => {
             attachmentVideoUnitsComponent.createAttachmentVideoUnits();
 
             expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.403');
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute, { replaceUrl: true });
+            expectBackToEditor();
             expect(attachmentVideoUnitsComponent.isLoading()).toBe(false);
         });
 
@@ -420,7 +445,7 @@ describe('AttachmentVideoUnitsComponent', () => {
             attachmentVideoUnitsComponent.createAttachmentVideoUnits();
 
             expect(deleteSpy).not.toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute, { replaceUrl: true });
+            expectBackToEditor();
         });
 
         it('should keep the PDF item and stay when the items cannot be created', () => {
@@ -431,6 +456,7 @@ describe('AttachmentVideoUnitsComponent', () => {
 
             expect(deleteSpy).not.toHaveBeenCalled();
             expect(navigateSpy).not.toHaveBeenCalled();
+            expect(backSpy).not.toHaveBeenCalled();
             expect(attachmentVideoUnitsComponent.isLoading()).toBe(false);
         });
 
@@ -439,7 +465,36 @@ describe('AttachmentVideoUnitsComponent', () => {
 
             attachmentVideoUnitsComponent.cancelSplit();
 
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute);
+            expectBackToEditor();
+        });
+
+        it('should continue the split with the file of the history entry after a reload', () => {
+            const uploadSpy = vi.spyOn(attachmentVideoUnitService, 'uploadSlidesForProcessing');
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+            open({ sourceUnit: { id: 9, name: 'Slides' } }, true);
+
+            expect(warningSpy).not.toHaveBeenCalled();
+            expect(uploadSpy).toHaveBeenCalledWith(1, expect.objectContaining({ name: 'Slides.pdf' }));
+            expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-remove-source"]')).not.toBeNull();
+            attachmentVideoUnitsComponent.cancelSplit();
+            expectBackToEditor();
+        });
+
+        it('should lead to the lecture editor when the page was opened without a file', () => {
+            vi.spyOn(router, 'currentNavigation').mockReturnValue(null);
+            vi.spyOn(TestBed.inject(Location), 'getState').mockReturnValue(undefined);
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+            attachmentVideoUnitsComponentFixture = TestBed.createComponent(AttachmentVideoUnitsComponent);
+            attachmentVideoUnitsComponent = attachmentVideoUnitsComponentFixture.componentInstance;
+            attachmentVideoUnitsComponentFixture.detectChanges();
+
+            expect(warningSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noFile');
+            expect(attachmentVideoUnitsComponent.isLoading()).toBe(false);
+            // The route stub only has the lecture id where the component reads both, so the course id is 0 here.
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['course-management', '0', 'lectures', '1', 'edit'], { replaceUrl: true });
+            expect(backSpy).not.toHaveBeenCalled();
         });
     });
 });

@@ -108,6 +108,9 @@
                         <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replaceFile"></span>
                     </button>
                 </div>
+                @if (autosave()) {
+                    <ng-container [ngTemplateOutlet]="uploadOptions" />
+                }
                 <div aria-live="polite">
                     @if (isReplacingFile()) {
                         <div class="mt-2 flex flex-wrap items-center gap-2" data-testid="replacement-file">
@@ -115,6 +118,7 @@
                                 <span class="shrink-0" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementFile"></span>
                                 <strong class="min-w-0 truncate" data-testid="replacement-file-name" [title]="fileName() ?? ''">{{ fileName() }}</strong>
                             </span>
+                            <ng-container [ngTemplateOutlet]="uploadingStatus" />
                             <button
                                 type="button"
                                 tumAetUiButton
@@ -129,14 +133,14 @@
                                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.keepCurrentFile"></span>
                             </button>
                         </div>
-                        <tumaet-ui-message
-                            class="mt-2"
-                            severity="warn"
-                            data-testid="replacement-hint"
-                            [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementHint' | artemisTranslate"
-                        />
-                        @if (autosave()) {
-                            <ng-container [ngTemplateOutlet]="uploadConfirm" />
+                        <!-- An item edited in place says this before a file is chosen, because the file is uploaded at once. -->
+                        @if (!autosave()) {
+                            <tumaet-ui-message
+                                class="mt-2"
+                                severity="warn"
+                                data-testid="replacement-hint"
+                                [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementHint' | artemisTranslate"
+                            />
                         }
                     }
                 </div>
@@ -160,6 +164,7 @@
                         fileName() ?? ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.noFileChosen' | artemisTranslate)
                     }}</span>
                     @if (autosave() && hasNewFile()) {
+                        <ng-container [ngTemplateOutlet]="uploadingStatus" />
                         <button
                             type="button"
                             tumAetUiButton
@@ -175,8 +180,8 @@
                         </button>
                     }
                 </div>
-                @if (autosave() && hasNewFile()) {
-                    <ng-container [ngTemplateOutlet]="uploadConfirm" />
+                @if (autosave()) {
+                    <ng-container [ngTemplateOutlet]="uploadOptions" />
                 }
             }
         </div>
@@ -324,10 +329,10 @@
     }
 </form>
 
-<!-- A new file is processed, so an item edited in place saves it only when the user confirms it. -->
-<ng-template #uploadConfirm>
+<!-- An item edited in place uploads a chosen file at once, so what the upload does is said before the file is chosen. -->
+<ng-template #uploadOptions>
     @let replacesFile = !!currentFileName();
-    <div class="mt-2 flex flex-col gap-3.5" data-testid="replacement-confirm">
+    <div class="mt-2 flex flex-col gap-2" data-testid="upload-options">
         <div class="flex items-center gap-2">
             <tumaet-ui-checkbox inputId="notify-students" [checked]="notifyStudents()" (checkedChange)="notifyStudents.set($event)" />
             <label
@@ -340,21 +345,21 @@
                 "
             ></label>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <button tumAetUiButton type="button" size="small" data-testid="upload-new-version-button" [disabled]="!canUploadFile()" (click)="uploadNewFile()">
-                <fa-icon [icon]="faFileArrowUp" />
-                @if (replacesFile) {
-                    <span>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadVersion' | artemisTranslate: { version: nextFileVersion() } }}</span>
-                } @else {
-                    <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadFile"></span>
-                }
-            </button>
-            <span
-                class="text-sm text-muted-color"
-                [jhiTranslate]="
-                    replacesFile ? 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadHint' : 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadFileHint'
-                "
-            ></span>
-        </div>
+        <span class="text-sm text-muted-color" data-testid="upload-hint">
+            @if (replacesFile) {
+                {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replaceFileHint' | artemisTranslate: { version: nextFileVersion() } }}
+            } @else {
+                {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.newFileHint' | artemisTranslate }}
+            }
+        </span>
     </div>
+</ng-template>
+
+<ng-template #uploadingStatus>
+    @if (savingConfirmed() === 'file') {
+        <span class="flex items-center gap-1.5 text-sm text-muted-color" data-testid="file-uploading">
+            <fa-icon [icon]="faSpinner" animation="spin" />
+            <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploading"></span>
+        </span>
+    }
 </ng-template>
