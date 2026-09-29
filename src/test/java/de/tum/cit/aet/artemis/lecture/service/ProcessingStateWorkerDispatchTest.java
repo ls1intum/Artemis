@@ -282,6 +282,32 @@ class ProcessingStateWorkerDispatchTest {
     }
 
     @Test
+    void renewWorkerLeasesKeepsRenewingTheBatchWhenAClientPushFails() {
+        // The first renewal commits, then pushing it to clients fails. That must not abort the batch: every later
+        // lease of this healthy worker would go unrenewed and lapse, and its revoked tokens would never be reported.
+        testState.setPhase(ProcessingPhase.INGESTING);
+        testState.setIngestionJobToken("token-push-fails");
+        LectureUnitProcessingState laterState = new LectureUnitProcessingState(testUnit);
+        laterState.setId(501L);
+        laterState.setPhase(ProcessingPhase.INGESTING);
+        laterState.setIngestionJobToken("token-later");
+        when(processingStateRepository.findByIngestionJobToken("token-push-fails")).thenReturn(Optional.of(testState));
+        when(processingStateRepository.findByIngestionJobToken("token-later")).thenReturn(Optional.of(laterState));
+        when(processingStateRepository.findByIngestionJobToken("token-unknown")).thenReturn(Optional.empty());
+        when(processingStateRepository.renewLease(eq(500L), eq("token-push-fails"), any(), eq(WORKER_BOOT_ID))).thenReturn(1);
+        when(processingStateRepository.renewLease(eq(501L), eq("token-later"), any(), eq(WORKER_BOOT_ID))).thenReturn(1);
+        when(processingStateRepository.findById(500L)).thenThrow(new RuntimeException("connection reset while re-reading the renewed row"));
+        when(processingStateRepository.findById(501L)).thenReturn(Optional.of(laterState));
+
+        List<String> revoked = callbackService.renewWorkerLeases(WORKER_BOOT_ID, List.of("token-push-fails", "token-later", "token-unknown"));
+
+        assertThat(revoked).containsExactly("token-unknown");
+        verify(processingStateRepository).renewLease(eq(501L), eq("token-later"), any(), eq(WORKER_BOOT_ID));
+        // Only the later run reaches clients; the failed push is logged and skipped.
+        verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), ArgumentCaptor.forClass(Object.class).capture());
+    }
+
+    @Test
     void markClaimedUnitSkippedMarksSkippedWhenTheClaimIsStillCurrent() {
         String claimedAt = "claim-current";
         when(processingStateRepository.markSkippedIfStillClaimed(eq(100L), eq(claimedAt), any())).thenReturn(1);

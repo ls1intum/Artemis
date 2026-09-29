@@ -599,7 +599,14 @@ public class ProcessingStateCallbackService {
             }
             // Push a fresh read, not the row read above: a stage heartbeat can commit while the renewal waits on a row
             // lock (e.g. a checkpoint's transcription insert), and the older snapshot would briefly roll the badge back.
-            processingStateRepository.findById(state.getId()).ifPresent(notificationService::notifyWithTranscriptionStatus);
+            // The renewal above is committed, so a failed push must not abort the batch: the worker's later leases
+            // would go unrenewed and lapse, and its revoked tokens would never be reported back.
+            try {
+                processingStateRepository.findById(state.getId()).ifPresent(notificationService::notifyWithTranscriptionStatus);
+            }
+            catch (Exception e) {
+                log.warn("Renewed the lease of unit {} but could not push the state change to clients: {}", state.getLectureUnit().getId(), e.getMessage());
+            }
         }
         if (!revoked.isEmpty()) {
             log.warn("Worker {} heartbeat listed {} run(s) Artemis no longer tracks, reporting them revoked", workerBootId, revoked.size());
