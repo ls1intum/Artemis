@@ -131,6 +131,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     textUnitForm = viewChild(TextUnitFormComponent);
     onlineUnitForm = viewChild(OnlineUnitFormComponent);
     attachmentVideoUnitForm = viewChild(AttachmentVideoUnitFormComponent);
+    exerciseUnitForm = viewChild(CreateExerciseUnitComponent);
     isUnitConfigurationValid = computed(() => {
         return (
             (this.textUnitForm()?.isFormValid() || !this.isTextUnitFormOpen()) &&
@@ -226,11 +227,17 @@ export class LectureUpdateUnitsComponent implements OnInit {
     );
     /**
      * Whether content is still being saved: a save of the item that is edited in place waits or runs, PDFs dropped on the page are uploaded,
-     * or the creation form sends a new item. A change held for Retry after a failure does not count; {@link hasUnsavedContent} covers it.
+     * or a creation form sends a new item. A change held for Retry after a failure does not count; {@link hasUnsavedContent} covers it.
      * Both can be true at once, such as a failed file upload while a change of the details is sent.
      */
     readonly isSavingContent = computed(
-        () => this.isSaveInFlight() || this.pendingConfirmed().length > 0 || (!!this.pendingDetails() && !this.saveFailure()) || this.isUploadingPdfs() || this.isCreatingUnit(),
+        () =>
+            this.isSaveInFlight() ||
+            this.pendingConfirmed().length > 0 ||
+            (!!this.pendingDetails() && !this.saveFailure()) ||
+            this.isUploadingPdfs() ||
+            this.isCreatingUnit() ||
+            !!this.exerciseUnitForm()?.isCreatingUnits(),
     );
     /** Set once the page is left; a save that fails afterwards is reported in an alert, because the item is gone. */
     private isDestroyed = false;
@@ -534,7 +541,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
         // Done is a retry of a file or confirmed link that failed.
         this.requeueHeldSaves();
         if (this.isSaving()) {
-            this.afterAutosave = close;
+            // A video link typed while the confirmed one is saved keeps the form open once that save completes.
+            this.afterAutosave = () => {
+                if (this.attachmentVideoUnitForm()?.hasUnconfirmedContent()) {
+                    this.isCloseBlocked.set(true);
+                } else {
+                    close();
+                }
+            };
             this.flushAutosave();
             return;
         }

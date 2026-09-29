@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -61,6 +61,9 @@ export class CreateExerciseUnitComponent implements OnInit {
     /** Whether the course has exercises at all, which tells an empty list apart from one whose exercises are all content already. */
     readonly hasCourseExercises = signal(false);
     exercisesToCreateUnitFor = signal<Exercise[]>([]);
+    /** The number of create requests that are running, so the lecture editor asks before it is left while items are created. */
+    private readonly runningCreations = signal(0);
+    readonly isCreatingUnits = computed(() => this.runningCreations() > 0);
 
     ngOnInit(): void {
         this.isLoading.set(true);
@@ -100,10 +103,12 @@ export class CreateExerciseUnitComponent implements OnInit {
             return unit;
         });
 
+        this.runningCreations.update((count) => count + 1);
         from(exerciseUnitsToCreate)
             .pipe(
                 concatMap((unit) => this.exerciseUnitService.create(unit, this.resolvedLectureId()!)),
                 finalize(() => {
+                    this.runningCreations.update((count) => count - 1);
                     if (this.shouldNavigateOnSubmit()) {
                         void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     } else {

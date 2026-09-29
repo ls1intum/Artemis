@@ -181,6 +181,8 @@ export class AttachmentVideoUnitFormComponent {
     private applyingFormData = false;
     /** The video link the item has, to tell a new link, which needs confirming, apart from the saved one. */
     private readonly savedVideoSource = signal<string | undefined>(undefined);
+    /** The video link the user confirmed last, to tell it apart from a link typed while it is saved. */
+    private readonly requestedVideoSource = signal<string | undefined>(undefined);
 
     /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
     readonly isReleaseDateTextValid = signal(true);
@@ -284,8 +286,13 @@ export class AttachmentVideoUnitFormComponent {
     readonly canSaveVideoSource = computed(
         () => this.areDetailsValid() && !this.videoSourceControl?.invalid && (!!this.currentFileLink() || !!this.videoSourceSignal()) && !this.isVideoSourceSaveRequested(),
     );
-    /** A new video link that the user entered for an item edited in place but did not confirm yet; a chosen file is uploaded at once. */
-    readonly hasUnconfirmedContent = computed(() => this.isVideoSourceChanged() && !this.isVideoSourceSaveRequested());
+    /**
+     * A new video link that the user entered for an item edited in place but did not confirm yet, also one typed while a confirmed link is
+     * saved; a chosen file is uploaded at once.
+     */
+    readonly hasUnconfirmedContent = computed(
+        () => this.isVideoSourceChanged() && (!this.isVideoSourceSaveRequested() || (this.videoSourceSignal() || undefined) !== (this.requestedVideoSource() || undefined)),
+    );
 
     private detailsValid(): boolean {
         // A control reports its change before the form takes it over, so the form's own validity lags one change behind in its valueChanges.
@@ -329,6 +336,7 @@ export class AttachmentVideoUnitFormComponent {
     saveVideoSource(): void {
         if (this.canSaveVideoSource()) {
             this.isVideoSourceSaveRequested.set(true);
+            this.requestedVideoSource.set(this.videoSourceSignal());
             this.videoSourceSaveRequested.emit(this.currentFormData());
         }
     }

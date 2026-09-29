@@ -318,6 +318,19 @@ describe('LectureUpdateComponent', () => {
             expect(withDetails.preventDefault).toHaveBeenCalledOnce();
         });
 
+        it('should send text the markdown editor still holds before the browser decides, so a reload right after typing asks too', async () => {
+            await configureValidLectureUpdateForm();
+            const isSavingContent = signal(false);
+            const flushBufferedEdits = vi.fn(() => isSavingContent.set(true));
+            lectureUpdateComponent.unitSection = unitSectionWith({ isSavingContent, flushBufferedEdits });
+
+            const event = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(event);
+
+            expect(flushBufferedEdits).toHaveBeenCalledOnce();
+            expect(event.preventDefault).toHaveBeenCalledOnce();
+        });
+
         it('should keep asking while the details of an existing lecture are saved, since the save does not cover content that could not be saved', async () => {
             await configureValidLectureUpdateForm();
             lectureUpdateComponent.unitSection = unitSectionWith({ hasUnsavedContent: () => true });

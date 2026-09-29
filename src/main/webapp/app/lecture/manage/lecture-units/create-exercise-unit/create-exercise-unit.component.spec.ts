@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -157,6 +157,28 @@ describe('CreateExerciseUnitComponent', () => {
         await createExerciseUnitComponentFixture.whenStable();
         expect(createStub).toHaveBeenCalledTimes(3);
     });
+    it('should report the create requests as running until they complete', () => {
+        const course = new Course();
+        const exercise = new TextExercise(course, undefined);
+        exercise.id = 1;
+        const response = new Subject<HttpResponse<ExerciseUnit>>();
+        createStub.mockReturnValue(response);
+        const createdSpy = vi.fn();
+        createExerciseUnitComponent.onExerciseUnitCreated.subscribe(createdSpy);
+        createExerciseUnitComponentFixture.componentRef.setInput('shouldNavigateOnSubmit', false);
+        createExerciseUnitComponentFixture.componentRef.setInput('lectureId', 1);
+        createExerciseUnitComponent.exercisesToCreateUnitFor.set([exercise]);
+        expect(createExerciseUnitComponent.isCreatingUnits()).toBe(false);
+
+        createExerciseUnitComponent.createExerciseUnits();
+        expect(createExerciseUnitComponent.isCreatingUnits()).toBe(true);
+
+        response.next(new HttpResponse({ body: new ExerciseUnit(), status: 201 }));
+        response.complete();
+        expect(createExerciseUnitComponent.isCreatingUnits()).toBe(false);
+        expect(createdSpy).toHaveBeenCalledOnce();
+    });
+
     describe('choosing exercises', () => {
         let textExercise: TextExercise;
         let modelingExercise: ModelingExercise;

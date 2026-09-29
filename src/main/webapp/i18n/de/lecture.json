@@ -81,7 +81,7 @@
                 "title": "Ungespeicherte Änderungen der Vorlesung verwerfen?",
                 "message": "Ungespeicherte Änderungen in: {{ sections }}. Willst du sie verwerfen?",
                 "keepEditing": "Weiter bearbeiten",
-                "stillSaving": "Inhalte, die gerade gespeichert werden, werden trotzdem gespeichert."
+                "stillSaving": "Das laufende Speichern der Inhalte wird fortgesetzt."
             },
             "creationMode": {
                 "singleLectureLabel": "Einzelne Vorlesung",

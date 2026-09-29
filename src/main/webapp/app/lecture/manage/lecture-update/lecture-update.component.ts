@@ -303,7 +303,12 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      * @param event the beforeunload event
      */
     onBeforeUnload(event: BeforeUnloadEvent): void {
-        if (this.shouldDisplayDismissWarning && (this.hasUnsavedChanges() || !!this.unitSection()?.isSavingContent())) {
+        if (!this.shouldDisplayDismissWarning) {
+            return;
+        }
+        // Text typed just before, which the markdown editor still holds back, counts as content that is being saved.
+        this.unitSection()?.flushBufferedEdits();
+        if (this.hasUnsavedChanges() || !!this.unitSection()?.isSavingContent()) {
             event.preventDefault();
         }
     }

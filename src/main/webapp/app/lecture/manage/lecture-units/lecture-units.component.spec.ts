@@ -1463,6 +1463,17 @@ describe('LectureUpdateUnitsComponent', () => {
             });
         });
 
+        it('should count exercise items that are being created as content that is still being saved', () => {
+            const isCreatingUnits = signal(true);
+            wizardUnitComponent.exerciseUnitForm = signal({ isCreatingUnits } as unknown as CreateExerciseUnitComponent).asReadonly() as Signal<
+                CreateExerciseUnitComponent | undefined
+            >;
+            expect(wizardUnitComponent.isSavingContent()).toBe(true);
+
+            isCreatingUnits.set(false);
+            expect(wizardUnitComponent.isSavingContent()).toBe(false);
+        });
+
         describe('file and video items', () => {
             let updateSpy: MockInstance<AttachmentVideoUnitService['update']>;
             let formMock: { takeOverSavedFile: Mock; takeOverSavedVideoSource: Mock; hasUnconfirmedContent: Mock };
@@ -1704,6 +1715,25 @@ describe('LectureUpdateUnitsComponent', () => {
                 expect(wizardUnitComponent.showsUnconfirmedContentHint()).toBe(true);
                 // What can be saved is saved anyway.
                 expect(updateSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should keep the item open on Done when another video URL was typed while the confirmed one was saved', () => {
+                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                updateSpy.mockReset();
+                updateSpy.mockReturnValue(running);
+                wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/first' }));
+
+                wizardUnitComponent.saveAndCloseEditor();
+                expect(wizardUnitComponent.editingUnitId()).toBe(5);
+                formMock.hasUnconfirmedContent.mockReturnValue(true);
+                const savedUnit = savedFileUnit();
+                savedUnit.videoSource = 'https://live.rbg.tum.de/w/first';
+                running.next(new HttpResponse({ body: savedUnit, status: 200 }));
+                running.complete();
+
+                expect(formMock.takeOverSavedVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/first');
+                expect(wizardUnitComponent.editingUnitId()).toBe(5);
+                expect(wizardUnitComponent.showsUnconfirmedContentHint()).toBe(true);
             });
 
             it('should ask before a new video URL that was not confirmed is left', () => {
