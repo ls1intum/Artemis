@@ -15,12 +15,12 @@
     }
 </div>
 @if (userSettings()) {
-    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate">
+    <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate">
         @for (settingGroup of userSettings().groups; track settingGroup) {
             @for (setting of settingGroup.settings; track setting) {
-                <li tumUiListItem *jhiHasAnyAuthority="settingGroup.restrictionLevels">
+                <li tumAetUiListItem *jhiHasAnyAuthority="settingGroup.restrictionLevels">
                     <div class="flex items-start gap-2">
-                        <tum-ui-toggle-switch
+                        <tumaet-ui-toggle-switch
                             [inputId]="setting.settingId"
                             [ngModel]="setting.active"
                             [ngModelOptions]="{ standalone: true }"
@@ -34,5 +34,5 @@
                 </li>
             }
         }
-    </tum-ui-list>
+    </tumaet-ui-list>
 }

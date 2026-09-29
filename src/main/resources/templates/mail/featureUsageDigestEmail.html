@@ -83,57 +83,65 @@
             <div th:unless="${digest.isEmpty()}">
                 <div class="headline">
                     <p>
-                        <span th:text="#{email.featureUsageDigest.totalCalls}">Tracked calls:</span>
-                        <strong th:text="${digest.totalCalls()}">0</strong>
-                        <span th:if="${digest.previousTotalCalls() > 0}" class="caveat"
-                              th:text="#{email.featureUsageDigest.previousPeriod(${digest.previousTotalCalls()})}">(previous period: 0)</span>
+                        <span th:text="#{email.featureUsageDigest.useCount}">Uses (actions and views):</span>
+                        <strong th:text="${digest.useCount()}">0</strong>
+                        <span th:if="${digest.previousUseCount() > 0}" class="caveat"
+                              th:text="#{email.featureUsageDigest.previousPeriod(${digest.previousUseCount()})}">(previous period: 0)</span>
                     </p>
                     <p>
                         <span th:text="#{email.featureUsageDigest.featuresUsed}">Features used:</span>
-                        <strong th:text="|${digest.usedFeatures()} / ${digest.trackedFeatures()}|">0 / 0</strong>
+                        <strong th:text="|${digest.usedFeatures()} / ${digest.availableFeatures()}|">0 / 0</strong>
                     </p>
                     <p class="actionable">
                         <span th:text="#{email.featureUsageDigest.unusedFeatures}">Offered but unused:</span>
                         <span th:text="${digest.unusedFeatures()}">0</span>
                     </p>
-                    <p th:if="${digest.retiredFeatures() > 0}" class="caveat"
-                       th:text="#{email.featureUsageDigest.retiredFeatures(${digest.retiredFeatures()})}">
-                        0 entries are no longer offered by this version and are excluded from the counts above.
+                    <p th:if="${digest.onlyAutomatic() > 0}" class="caveat"
+                       th:text="#{email.featureUsageDigest.onlyAutomatic(${digest.onlyAutomatic()})}">
+                        0 of them only received automatic calls, such as a status check on a frequently visited page, and were not used by anyone.
+                    </p>
+                    <p th:if="${digest.retiredEndpoints() > 0}" class="caveat"
+                       th:text="#{email.featureUsageDigest.retiredEndpoints(${digest.retiredEndpoints()})}">
+                        0 endpoints are no longer offered by this version.
                     </p>
                 </div>
 
-                <h3 th:text="#{email.featureUsageDigest.perModuleTitle}">Usage per module</h3>
+                <h3 th:text="#{email.featureUsageDigest.perAreaTitle}">Usage per area</h3>
                 <table class="summary-table">
                     <tr>
-                        <th th:text="#{email.featureUsageDigest.module}">Module</th>
-                        <th class="numeric" th:text="#{email.featureUsageDigest.calls}">Calls</th>
+                        <th th:text="#{email.featureUsageDigest.areaColumn}">Area</th>
+                        <th class="numeric" th:text="#{email.featureUsageDigest.uses}">Uses</th>
                         <th class="numeric" th:text="#{email.featureUsageDigest.change}">Change</th>
+                        <th class="numeric" th:text="#{email.featureUsageDigest.actions}">Actions</th>
                         <th class="numeric" th:text="#{email.featureUsageDigest.used}">Used</th>
                         <th class="numeric" th:text="#{email.featureUsageDigest.unused}">Unused</th>
                         <th class="numeric" th:text="#{email.featureUsageDigest.errors}">Errors</th>
                     </tr>
-                    <tr th:each="module : ${digest.activeModules()}">
-                        <td th:text="${module.module()}">programming</td>
-                        <td class="numeric" th:text="${module.callCount()}">0</td>
+                    <tr th:each="area : ${digest.activeAreas()}">
+                        <td th:text="#{${'email.featureUsageDigest.area.' + area.area().name()}}">Programming exercises</td>
+                        <td class="numeric" th:text="${area.useCount()}">0</td>
                         <td class="numeric">
-                            <span th:if="${module.changePercent() == null}" class="caveat" th:text="#{email.featureUsageDigest.noComparison}">n/a</span>
-                            <span th:if="${module.changePercent() != null}"
-                                  th:classappend="${module.changePercent() >= 0} ? 'change-up' : 'change-down'"
-                                  th:text="${(module.changePercent() >= 0 ? '+' : '') + module.changePercent() + '%'}">+0%</span>
+                            <span th:if="${area.changePercent() == null}" class="caveat" th:text="#{email.featureUsageDigest.noComparison}">n/a</span>
+                            <span th:if="${area.changePercent() != null}"
+                                  th:classappend="${area.changePercent() >= 0} ? 'change-up' : 'change-down'"
+                                  th:text="${(area.changePercent() >= 0 ? '+' : '') + area.changePercent() + '%'}">+0%</span>
                         </td>
-                        <td class="numeric" th:text="|${module.usedFeatures()} / ${module.trackedFeatures()}|">0 / 0</td>
-                        <td class="numeric" th:text="${module.unusedFeatures()}">0</td>
-                        <td class="numeric" th:text="${module.errorCount()}">0</td>
+                        <td class="numeric" th:text="${area.actionCount()}">0</td>
+                        <td class="numeric" th:text="|${area.usedFeatures()} / ${area.availableFeatures()}|">0 / 0</td>
+                        <td class="numeric" th:text="${area.unusedFeatures()}">0</td>
+                        <td class="numeric" th:text="${area.errorCount()}">0</td>
                     </tr>
                 </table>
 
-                <div th:if="${!digest.quietModules().isEmpty()}" class="quiet-modules">
+                <div th:if="${!digest.quietAreas().isEmpty()}" class="quiet-modules">
                     <p>
-                        <strong th:text="#{email.featureUsageDigest.quietModulesTitle}">Modules with no usage at all</strong>
+                        <strong th:text="#{email.featureUsageDigest.quietAreasTitle}">Areas with no use at all</strong>
                     </p>
-                    <p th:text="${#strings.listJoin(digest.quietModules(), ', ')}">quiz, lecture</p>
-                    <p class="caveat" th:text="#{email.featureUsageDigest.quietModulesHint}">
-                        These still offer features but saw no call in this period.
+                    <p>
+                        <th:block th:each="area, iteration : ${digest.quietAreas()}"><span th:text="#{${'email.featureUsageDigest.area.' + area.name()}}">Quizzes</span><span th:unless="${iteration.last}">, </span></th:block>
+                    </p>
+                    <p class="caveat" th:text="#{email.featureUsageDigest.quietAreasHint}">
+                        These offer features, but none of them saw an action or a view in this period.
                     </p>
                 </div>
             </div>

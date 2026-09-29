@@ -20,7 +20,7 @@ import { Message } from 'primeng/message';
  * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
  * This guarantees a unified look and feel for both interfaces.
- * Depending Components need to perform actions based on the save/submit/cancel/nextSubmission/navigateBack outputs.
+ * Depending Components need to perform actions based on the save/submit/cancel/nextSubmission outputs.
  */
 @Component({
     selector: 'jhi-assessment-header',

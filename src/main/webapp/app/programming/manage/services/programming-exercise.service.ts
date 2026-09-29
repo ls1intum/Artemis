@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -49,7 +49,7 @@ export type ProgrammingExerciseResetOptions = {
     recreateBuildPlans: boolean;
 };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);

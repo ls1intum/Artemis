@@ -29,6 +29,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private readonly scienceService = inject(ScienceService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     courseId = input<number>();
     private _resolvedCourseId?: number;
@@ -40,7 +41,6 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     readonly prerequisites = signal<Competency[]>([]);
     parentParamSubscription?: Subscription;
     private tabReselectionSubscription?: Subscription;
-    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     isCollapsed = true;
     faAngleDown = faAngleDown;

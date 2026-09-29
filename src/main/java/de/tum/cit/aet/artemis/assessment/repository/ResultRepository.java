@@ -492,6 +492,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsBySubmissionId(long submissionId);
 
     /**
+     * Checks if the given submission has a manual result (manual or semi-automatic) for the given correction round.
+     *
+     * @param submissionId    the ID of the submission to check.
+     * @param correctionRound the correction round of the result.
+     * @return true if the submission has a manual result for the given correction round, false otherwise.
+     */
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM Result r
+            WHERE r.submission.id = :submissionId
+                AND r.correctionRound = :correctionRound
+                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+            """)
+    boolean existsManualResultBySubmissionIdAndCorrectionRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
+
+    /**
      * Returns the manual results of the given submissions together with the correction round each belongs to.
      * <p>
      * Two callers need this. The scores overview renders assessment actions per correction round, so it needs one entry

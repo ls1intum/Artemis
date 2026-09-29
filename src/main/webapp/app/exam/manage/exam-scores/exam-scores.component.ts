@@ -110,6 +110,7 @@ export class ExamScoresComponent implements OnInit {
     private participantScoresService = inject(ParticipantScoresService);
     private gradingService = inject(GradingService);
     private courseManagementService = inject(CourseManagementService);
+    private readonly translateService = inject(TranslateService);
 
     readonly examScoreDTO = signal<ExamScoreDTO>(undefined!);
     readonly exerciseGroups = signal<ExerciseGroup[]>(undefined!);
@@ -160,7 +161,6 @@ export class ExamScoresComponent implements OnInit {
     readonly presentationScoreThreshold = signal<number | undefined>(undefined);
 
     readonly course = signal<Course | undefined>(undefined);
-    private readonly translateService = inject(TranslateService);
     private readonly currentLanguage = toSignal(this.translateService.onLangChange);
 
     // Icons

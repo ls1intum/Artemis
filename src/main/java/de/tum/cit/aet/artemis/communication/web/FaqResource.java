@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -54,7 +55,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("content/faq")
+@FeatureUsage(UserFeature.FAQ)
 @RestController
 @RequestMapping("api/communication/")
 public class FaqResource {
@@ -255,6 +256,7 @@ public class FaqResource {
      * @param faqId    If this id is present then only ingest this one faq of the respective course
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
+    @FeatureUsage(UserFeature.IRIS_CONTENT_INGESTION)
     @PostMapping("courses/{courseId}/faqs/ingest")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestFaqInIris(@PathVariable long courseId, @RequestParam(required = false) Optional<Long> faqId) {

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
@@ -18,9 +18,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
  * Handles fetching, storing, updating, and tracking notification data for courses.
  * Provides observables for notification counts and content.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseNotificationService implements OnDestroy {
     public static readonly NOTIFICATION_TYPE_ICON_MAP = {
         newPostNotification: faComments,
@@ -83,12 +81,11 @@ export class CourseNotificationService implements OnDestroy {
 
     // Parameter keys that should be rendered as markdown
     public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent', 'replyMarkdownContent'];
+    private http = inject(HttpClient);
+    private readonly accountService = inject(AccountService);
 
     private readonly apiEndpoint = '/api/notification/courses/';
     public readonly pageSize = 10;
-
-    private http = inject(HttpClient);
-    private readonly accountService = inject(AccountService);
 
     private courseNotificationMap: Record<number, CourseNotification[]> = {};
     private courseNotificationPageMap: Record<number, boolean> = {};
@@ -213,6 +210,18 @@ export class CourseNotificationService implements OnDestroy {
                 statusType: statusType,
             })
             .subscribe();
+    }
+
+    /**
+     * Marks notifications as seen on the server because the overview displayed them, not because the user acted on them.
+     * Kept apart from {@link setNotificationStatus} so that the server's feature usage report can count the user's own
+     * actions on notifications separately from this automatic update.
+     *
+     * @param courseId - The ID of the course
+     * @param notificationIds - The IDs of the displayed notifications
+     */
+    public markDisplayedNotificationsAsSeen(courseId: number, notificationIds: number[]): void {
+        this.http.put(this.apiEndpoint + courseId + '/seen', { notificationIds }).subscribe();
     }
 
     /**

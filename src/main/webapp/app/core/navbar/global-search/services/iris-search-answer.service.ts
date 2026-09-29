@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, filter, shareReplay, timeout } from 'rxjs';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
@@ -11,9 +11,7 @@ export const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 60_000;
 /** STOMP channel on which Artemis pushes global search answer updates for the current user. */
 const GLOBAL_SEARCH_ANSWER_WS_CHANNEL = '/user/topic/iris/global-search-answer';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class IrisSearchAnswerService {
     private readonly http = inject(HttpClient);
     private readonly websocketService = inject(WebsocketService);

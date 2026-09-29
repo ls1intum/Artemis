@@ -422,7 +422,6 @@ $lecture-unit-card-body-background: white;
 $lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
-$lecture-unit-create-row-hover-background: $gray-400;
 
 // Notification sidebar
 $notification-sb-background: $brighter-body-bg;
@@ -551,7 +550,7 @@ $apollon-border-subtle: $gray-200;
 // inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
 // of Artemis uses — not the legacy Bootstrap $border-radius-* values, which are
 // roughly half the size and made the editor's buttons read as visibly squarer
-// than every other TUM UI button on the page.
+// than every other TUM AET UI button on the page.
 $apollon-radius: var(--tumaet-ui-radius-md);
 $apollon-radius-sm: var(--tumaet-ui-radius-sm);
 $apollon-radius-md: var(--tumaet-ui-radius-md);

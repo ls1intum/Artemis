@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { Observable } from 'rxjs';
 
@@ -8,7 +8,7 @@ import { CourseMaterialImportOptionsDTO, CourseMaterialImportResultDTO } from '.
 /**
  * Service for importing course material from one course to another.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseMaterialImportService {
     private readonly http = inject(HttpClient);
     private readonly resourceUrl = 'api/course/courses';

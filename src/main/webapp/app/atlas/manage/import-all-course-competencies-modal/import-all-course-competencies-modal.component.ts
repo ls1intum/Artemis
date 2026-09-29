@@ -52,12 +52,12 @@ export interface ImportAllCourseCompetenciesModalData {
     templateUrl: './import-all-course-competencies-modal.component.html',
 })
 export class ImportAllCourseCompetenciesModalComponent {
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
+
     protected readonly tableColumns = tableColumns;
 
     protected readonly closeIcon = faXmark;
-
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     readonly courseId = signal<number>(0);
     readonly disabledIds = computed(() => [+this.courseId()]);

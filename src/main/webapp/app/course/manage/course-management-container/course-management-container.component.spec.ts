@@ -256,7 +256,7 @@ describe('CourseManagementContainerComponent', () => {
         const getSidebarItems = vi.spyOn(component, 'getSidebarItems');
         const subscribeToCourseUpdates = vi.spyOn(component as any, 'subscribeToCourseUpdates');
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(getCourseStub).toHaveBeenCalledWith(1);
         expect(getSidebarItems).toHaveBeenCalledOnce();
@@ -269,7 +269,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should subscribe to profileService and set values correctly', async () => {
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isProduction).toBe(true);
         expect(component.isTestServer).toBe(false);
@@ -611,7 +611,7 @@ describe('CourseManagementContainerComponent', () => {
     it('should get collapse state from localStorage on init', async () => {
         localStorageService.store<boolean>('navbar.collapseState', true);
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isNavbarCollapsed()).toBe(true);
 
@@ -625,7 +625,7 @@ describe('CourseManagementContainerComponent', () => {
     it('should set isNavbarCollapsed to false by default if not in localStorageService', async () => {
         localStorageService.remove('navbar.collapseState');
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isNavbarCollapsed()).toBe(false);
     });
@@ -654,7 +654,7 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should subscribe to course modifications', async () => {
         const eventSubscription = vi.spyOn(eventManager, 'subscribe');
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(eventSubscription).toHaveBeenCalledWith('courseModification', expect.any(Function));
     });
@@ -788,13 +788,13 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should set isSettingsPage to false when not on settings page', async () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
         expect(component.isSettingsPage()).toBe(false);
     });
     it('should set isSettingsPage to true when on settings page', async () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/settings');
         vi.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1/settings', '')));
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
         expect(component.isSettingsPage()).toBe(true);
     });
 
@@ -803,7 +803,7 @@ describe('CourseManagementContainerComponent', () => {
         // Nothing publishes to the orchestrator topic on such a server, so the subscription must not be opened.
         const subscribeSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(subscribeSpy).not.toHaveBeenCalled();
     });
@@ -815,7 +815,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ProfileInfo);
         const subscribeSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(subscribeSpy).toHaveBeenCalled();
     });

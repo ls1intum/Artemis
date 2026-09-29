@@ -1,12 +1,12 @@
-import { Component, computed, effect, inject, input, model, output } from '@angular/core';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Component, computed, effect, inject, input, model } from '@angular/core';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiButtonDirective, TumUiMessageComponent, TumUiTagComponent, TumUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
@@ -15,14 +15,14 @@ export interface FeedbackGroup {
     translateTitle: boolean;
     feedbacks: Feedback[];
     points: number;
-    pointsSeverity: TumUiTagSeverity;
+    pointsSeverity: TumAetUiTagSeverity;
 }
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: ['./unreferenced-feedback.component.scss'],
-    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumUiButtonDirective, TumUiTagComponent, TumUiMessageComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiMessageComponent, ArtemisTranslatePipe],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -34,7 +34,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
 
     readonly readOnly = input<boolean>(undefined!);
     readonly highlightDifferences = input<boolean>(undefined!);
-    readonly useDefaultFeedbackSuggestionBadgeText = input(false);
     readonly resultId = input<number>(undefined!);
 
     /**
@@ -63,9 +62,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     readonly addReferenceIdForExampleSubmission = input(false);
 
     readonly feedbacks = model<Feedback[]>([]);
-    readonly feedbackSuggestions = model<Feedback[]>([]);
-    readonly onAcceptSuggestion = output<Feedback>();
-    readonly onDiscardSuggestion = output<Feedback>();
 
     /** Feedback used for scoring: full assessment when the parent supplies it, otherwise this list only. */
     private readonly scoringFeedbacks = computed(() => {
@@ -201,7 +197,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      */
     updateFeedback(feedback: Feedback) {
         const unreferencedFeedback = [...this.unreferencedFeedback];
-        const indexToUpdate = unreferencedFeedback.indexOf(feedback);
+        const indexToUpdate = feedback.id != undefined ? unreferencedFeedback.findIndex((existing) => existing.id === feedback.id) : unreferencedFeedback.indexOf(feedback);
         if (indexToUpdate < 0) {
             unreferencedFeedback.push(feedback);
         } else {
@@ -261,28 +257,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         return Math.max(...references.concat([0])) + 1;
     }
 
-    /**
-     * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
-     */
-    acceptSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
-        // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
-        // and will be filtered out in all kinds of places
-        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-        // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
-        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
-        this.updateFeedback(feedback); // Make it "real" feedback
-        this.onAcceptSuggestion.emit(feedback);
-    }
-
-    /**
-     * Discard a feedback suggestion: Remove the suggestion card and emit the event
-     */
-    discardSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
-        this.onDiscardSuggestion.emit(feedback);
-    }
-
     createAssessmentOnDrop(event: Event) {
         this.addUnreferencedFeedback();
         const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
@@ -307,7 +281,7 @@ function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number>
 
 function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {
     const points = feedbacks.reduce((sum, feedback) => sum + (contributingCredits.get(feedback) ?? 0), 0);
-    let pointsSeverity: TumUiTagSeverity = 'secondary';
+    let pointsSeverity: TumAetUiTagSeverity = 'secondary';
     if (points > 0) {
         pointsSeverity = 'success';
     } else if (points < 0) {

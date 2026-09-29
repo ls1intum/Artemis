@@ -1,131 +1,735 @@
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
-            <div class="container headline">
-                <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
-                @if (croppedImage(); as croppedImage) {
-                    <div class="position-relative">
-                        <jhi-image class="secured-image" [src]="croppedImage" />
+@if (course.id) {
+    <!-- Editing renders inside the course management shell, whose title bar already names the page. -->
+    <ng-container *ngTemplateOutlet="courseFormTemplate" />
+} @else {
+    <!-- Creating has no course shell yet, so the page brings the same frame: a title bar that stays in view above a
+         scrolling content card. -->
+    <div class="course-create-layout" data-testid="course-create-layout">
+        <div id="course-create-title-bar" class="module-bg rounded-lg px-3">
+            <h1 id="jhi-course-heading-create" class="course-create-title" jhiTranslate="artemisApp.course.home.createLabel"></h1>
+        </div>
+        <div id="course-create-body" class="module-bg rounded-lg">
+            <ng-container *ngTemplateOutlet="courseFormTemplate" />
+        </div>
+    </div>
+}
 
-                        <button
-                            id="delete-course-icon"
-                            type="button"
-                            class="icon-button-wrapper bg-state-danger position-absolute bottom-0 start-0 text-surface-0"
-                            (click)="deleteCourseIcon()"
-                        >
-                            <fa-icon [icon]="faTrash" />
-                        </button>
-
-                        <button
-                            id="edit-course-icon"
-                            type="button"
-                            class="icon-button-wrapper bg-state-warning position-absolute bottom-0 end-0 text-surface-0"
-                            (click)="triggerFileInput()"
-                        >
-                            <fa-icon [icon]="faPen" />
-                        </button>
-                    </div>
-                }
-                @if (!croppedImage()) {
-                    <div id="no-image-placeholder" class="no-image clickable me-2 lh-sm" (click)="triggerFileInput()">
-                        <div class="h3 my-0 font-weight-bold">+</div>
-                        <div class="small" jhiTranslate="artemisApp.course.imageCropper.uploadTitle"></div>
-                    </div>
-                }
-                <div class="col ps-3">
-                    @if (!course.id) {
-                        <h3 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h3>
-                    } @else {
-                        <h3 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h3>
-                    }
-                </div>
-            </div>
-            @if (course.id) {
-                <div class="mb-3">
-                    <a
-                        tumUiButton
-                        size="small"
-                        variant="outlined"
-                        [routerLink]="['/course-management', course.id, 'onboarding']"
-                        jhiTranslate="artemisApp.course.onboarding.replayWizard"
-                    ></a>
-                </div>
-            }
+<ng-template #courseFormTemplate>
+    <form class="course-form" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
+        <div class="course-form-sections">
             <!-- Section: General -->
-            <hr />
-            <h4 class="form-group" jhiTranslate="artemisApp.course.form.sections.general"></h4>
-            <div>
-                <div class="row">
-                    <div class="col">
-                        <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.title" for="field_title"></label>
-                            <input type="text" tumUiInput class="w-full" name="title" id="field_title" formControlName="title" required />
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <div class="form-group" style="position: relative">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.color"></label>
-                            <div
-                                class="color-preview form-control"
-                                role="button"
-                                [attr.aria-label]="'artemisApp.course.color' | artemisTranslate"
-                                [ngStyle]="{ backgroundColor: courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR }"
-                                (click)="openColorSelector($event)"
-                            ></div>
-                            <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.shortName" for="field_shortName"></label>
-                    <input
-                        required
-                        type="text"
-                        tumUiInput
-                        class="w-full"
-                        name="shortName"
-                        id="field_shortName"
-                        formControlName="shortName"
-                        [readOnly]="course.id"
-                        [attr.maxlength]="COURSE_SHORT_NAME_MAX_LENGTH"
-                    />
-                    @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                        @if ((shortName.errors! | keyvalue | removekeys: ['required']).length > 0) {
-                            <tum-ui-message severity="error" class="mt-2">
-                                @for (e of shortName.errors! | keyvalue | removekeys: ['required']; track e) {
-                                    <div>{{ 'artemisApp.course.form.shortname.' + e.key | artemisTranslate }}</div>
-                                }
-                            </tum-ui-message>
-                        }
-                    }
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>
-                    <textarea id="field_description" tumUiTextarea class="w-full" rows="2" formControlName="description"></textarea>
-                </div>
-                @if (isAdmin()) {
-                    <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.organizations"></label>
-                        <div class="mb-2 flex flex-wrap gap-2">
-                            @for (organization of courseOrganizations(); track organization) {
-                                <tum-ui-chip
-                                    id="removeOrganizationButton-{{ organization.id }}"
-                                    [label]="organization.name"
-                                    [removable]="true"
-                                    (removed)="removeOrganizationFromCourse(organization)"
-                                />
-                            }
-                        </div>
-                        <button
-                            id="addOrganizationButton"
-                            type="button"
-                            tumUiButton
+            <section class="course-form-section" aria-labelledby="course-section-general">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 id="course-section-general" class="course-form-section-title" jhiTranslate="artemisApp.course.form.sections.general"></h2>
+                    @if (course.id) {
+                        <a
+                            tumAetUiButton
                             size="small"
                             variant="outlined"
-                            (click)="openOrganizationsModal()"
-                            jhiTranslate="entity.action.add"
-                        ></button>
-                        <tum-ui-dialog
+                            [routerLink]="['/course-management', course.id, 'onboarding']"
+                            jhiTranslate="artemisApp.course.onboarding.replayWizard"
+                        ></a>
+                    }
+                </div>
+
+                <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+                    <!-- Course icon -->
+                    <div class="flex shrink-0 flex-col items-start gap-1.5">
+                        <span class="course-form-label" jhiTranslate="artemisApp.course.courseIcon"></span>
+                        <input type="file" #fileInput class="hidden" accept="image/*" (change)="setCourseImage($event)" />
+                        @if (croppedImage(); as croppedImage) {
+                            <div class="course-icon">
+                                <jhi-image class="course-icon-image" [src]="croppedImage" />
+                                <button
+                                    id="delete-course-icon"
+                                    type="button"
+                                    class="course-icon-action course-icon-action-start"
+                                    tumAetUiButton
+                                    size="small"
+                                    severity="danger"
+                                    [attr.aria-label]="'artemisApp.course.delete.icon' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.course.delete.icon' | artemisTranslate"
+                                    (click)="deleteCourseIcon()"
+                                >
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
+                                <button
+                                    id="edit-course-icon"
+                                    type="button"
+                                    class="course-icon-action course-icon-action-end"
+                                    tumAetUiButton
+                                    size="small"
+                                    severity="secondary"
+                                    [attr.aria-label]="'artemisApp.course.form.changeIcon' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.course.form.changeIcon' | artemisTranslate"
+                                    (click)="triggerFileInput()"
+                                >
+                                    <fa-icon [icon]="faPen" />
+                                </button>
+                            </div>
+                        } @else {
+                            <button
+                                id="no-image-placeholder"
+                                type="button"
+                                class="course-icon course-icon-placeholder"
+                                data-testid="course-icon-placeholder"
+                                (click)="triggerFileInput()"
+                            >
+                                <fa-icon [icon]="faPlus" />
+                                <span class="text-sm" jhiTranslate="artemisApp.course.imageCropper.uploadTitle"></span>
+                            </button>
+                        }
+                    </div>
+
+                    <div class="flex min-w-0 flex-1 flex-col gap-4">
+                        <div class="flex items-start gap-4">
+                            <tumaet-ui-form-field
+                                class="min-w-0 flex-1"
+                                [label]="'artemisApp.course.title' | artemisTranslate"
+                                required
+                                controlId="field_title"
+                                [invalid]="showError('title')"
+                            >
+                                <input type="text" tumAetUiInput class="w-full" name="title" id="field_title" formControlName="title" required />
+                                <ng-container tumAetUiFormFieldError>
+                                    @if (courseForm.get('title')?.hasError('required')) {
+                                        <span jhiTranslate="artemisApp.course.form.title.required"></span>
+                                    } @else if (courseForm.get('title')?.hasError('maxlength')) {
+                                        <span jhiTranslate="artemisApp.course.form.title.maxlength" [translateValues]="{ max: COURSE_TITLE_LIMIT }"></span>
+                                    }
+                                </ng-container>
+                            </tumaet-ui-form-field>
+                            <!-- The selector positions itself relative to this wrapper. -->
+                            <div class="relative flex shrink-0 flex-col gap-1.5">
+                                <span id="course-color-label" class="course-form-label" jhiTranslate="artemisApp.course.color"></span>
+                                <button
+                                    id="field_color"
+                                    type="button"
+                                    class="course-color-swatch"
+                                    aria-labelledby="course-color-label"
+                                    [style.background-color]="courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR"
+                                    (click)="openColorSelector($event)"
+                                ></button>
+                                <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
+                            </div>
+                        </div>
+
+                        <tumaet-ui-form-field
+                            [label]="'artemisApp.course.shortName' | artemisTranslate"
+                            required
+                            controlId="field_shortName"
+                            [hint]="(course.id ? 'artemisApp.course.form.shortname.hintReadOnly' : 'artemisApp.course.form.shortname.hint') | artemisTranslate"
+                            [invalid]="showError('shortName')"
+                        >
+                            <input
+                                required
+                                type="text"
+                                tumAetUiInput
+                                class="w-full"
+                                name="shortName"
+                                id="field_shortName"
+                                formControlName="shortName"
+                                [readOnly]="course.id"
+                                [attr.maxlength]="COURSE_SHORT_NAME_MAX_LENGTH"
+                            />
+                            <ng-container tumAetUiFormFieldError>
+                                @if (shortName.hasError('required')) {
+                                    <span jhiTranslate="artemisApp.course.form.shortname.required"></span>
+                                } @else if (shortName.hasError('minlength')) {
+                                    <span jhiTranslate="artemisApp.course.form.shortname.minlength"></span>
+                                } @else if (shortName.hasError('maxlength')) {
+                                    <span jhiTranslate="artemisApp.course.form.shortname.maxlength"></span>
+                                } @else if (shortName.hasError('forbidden')) {
+                                    <span jhiTranslate="artemisApp.course.form.shortname.forbidden"></span>
+                                }
+                            </ng-container>
+                        </tumaet-ui-form-field>
+                    </div>
+                </div>
+
+                <tumaet-ui-form-field [label]="'artemisApp.course.description' | artemisTranslate" controlId="field_description">
+                    <textarea id="field_description" tumAetUiTextarea class="w-full" rows="2" formControlName="description"></textarea>
+                </tumaet-ui-form-field>
+
+                <!-- The semester comes first because choosing it fills in the start and end date below. -->
+                <tumaet-ui-form-field
+                    [label]="'artemisApp.course.semester' | artemisTranslate"
+                    required
+                    controlId="semester"
+                    [hint]="'artemisApp.course.form.semester.hint' | artemisTranslate"
+                    [invalid]="showError('semester')"
+                    [error]="'artemisApp.course.form.semester.required' | artemisTranslate"
+                >
+                    <tumaet-ui-select
+                        class="course-form-select"
+                        inputId="semester"
+                        required
+                        formControlName="semester"
+                        [options]="semesters()"
+                        [placeholder]="'artemisApp.course.form.semester.placeholder' | artemisTranslate"
+                    />
+                </tumaet-ui-form-field>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <tumaet-ui-form-field
+                        class="min-w-0"
+                        [label]="'artemisApp.course.startDate' | artemisTranslate"
+                        required
+                        controlId="field_startDate_input"
+                        [invalid]="showDateMissing('startDate') || isDateOrderInvalid"
+                    >
+                        <jhi-date-time-picker
+                            id="field_startDate"
+                            inputId="field_startDate_input"
+                            formControlName="startDate"
+                            inputRequired
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [error]="showDateMissing('startDate') || isDateOrderInvalid"
+                        />
+                        <ng-container tumAetUiFormFieldError>
+                            @if (showDateMissing('startDate')) {
+                                <span jhiTranslate="artemisApp.course.form.startDate.required"></span>
+                            } @else if (isDateOrderInvalid) {
+                                <span jhiTranslate="artemisApp.course.form.startDate.invalid"></span>
+                            }
+                        </ng-container>
+                    </tumaet-ui-form-field>
+                    <tumaet-ui-form-field
+                        class="min-w-0"
+                        [label]="'artemisApp.course.endDate' | artemisTranslate"
+                        required
+                        controlId="field_endDate_input"
+                        [invalid]="showDateMissing('endDate') || isDateOrderInvalid"
+                    >
+                        <jhi-date-time-picker
+                            id="field_endDate"
+                            inputId="field_endDate_input"
+                            formControlName="endDate"
+                            inputRequired
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [error]="showDateMissing('endDate') || isDateOrderInvalid"
+                        />
+                        <ng-container tumAetUiFormFieldError>
+                            @if (showDateMissing('endDate')) {
+                                <span jhiTranslate="artemisApp.course.form.endDate.required"></span>
+                            } @else if (isDateOrderInvalid) {
+                                <span jhiTranslate="artemisApp.course.form.endDate.invalid"></span>
+                            }
+                        </ng-container>
+                    </tumaet-ui-form-field>
+                </div>
+                <p class="course-form-hint -mt-2" jhiTranslate="entity.timeZoneWarning" [translateValues]="{ timeZone: currentTimeZone }"></p>
+
+                <!-- Optional until a course has a time zone: the server keeps it from then on, so it cannot be cleared again. -->
+                <tumaet-ui-form-field
+                    [label]="'artemisApp.forms.configurationForm.timeZoneInput.label' | artemisTranslate"
+                    controlId="timeZone"
+                    [required]="!!originalTimeZone()"
+                    [hint]="'artemisApp.forms.configurationForm.timeZoneInput.explanation' | artemisTranslate"
+                    [invalid]="showError('timeZone')"
+                    [error]="
+                        (courseForm.get('timeZone')?.hasError('timeZoneRequired')
+                            ? 'artemisApp.course.form.timeZone.required'
+                            : 'artemisApp.forms.configurationForm.timeZoneInput.invalidTimeZone'
+                        ) | artemisTranslate
+                    "
+                >
+                    <tumaet-ui-autocomplete
+                        inputId="timeZone"
+                        formControlName="timeZone"
+                        [required]="!!originalTimeZone()"
+                        [suggestions]="filteredTimeZones()"
+                        (searchRequested)="onTimeZoneSearch($event)"
+                        [minLength]="3"
+                        [debounceMs]="200"
+                        [completeOnFocus]="true"
+                        placeholder="Europe/Berlin"
+                        class="w-full"
+                    />
+                </tumaet-ui-form-field>
+                @if (timeZoneChanged) {
+                    <tumaet-ui-message severity="warn">{{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}</tumaet-ui-message>
+                }
+
+                <div class="flex flex-col gap-3">
+                    <div class="course-form-option">
+                        <tumaet-ui-checkbox inputId="field_testCourse" name="testCourse" formControlName="testCourse" (changed)="changeTestCourseEnabled()" />
+                        <label class="course-form-option-label" jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.testCourse.description' | artemisTranslate" />
+                    </div>
+                    <!-- Test courses are never part of the automatic student-data deletion, so their retention settings have no effect. -->
+                    @if (!courseForm.get('testCourse')?.value) {
+                        <div class="course-form-option">
+                            <tumaet-ui-checkbox inputId="field_gradeRelevant" name="gradeRelevant" formControlName="gradeRelevant" />
+                            <label class="course-form-option-label" jhiTranslate="artemisApp.course.gradeRelevant.title" for="field_gradeRelevant"></label>
+                            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.gradeRelevant.description' | artemisTranslate" />
+                        </div>
+                        <div class="course-form-option">
+                            <tumaet-ui-checkbox inputId="field_dataRetentionHold" name="dataRetentionHold" formControlName="dataRetentionHold" />
+                            <label class="course-form-option-label" jhiTranslate="artemisApp.course.dataRetentionHold.title" for="field_dataRetentionHold"></label>
+                            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.dataRetentionHold.description' | artemisTranslate" />
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <!-- Section: Exercises & Grading -->
+            <section class="course-form-section" aria-labelledby="course-section-exercises">
+                <h2 id="course-section-exercises" class="course-form-section-title" jhiTranslate="artemisApp.course.form.sections.exercises"></h2>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <tumaet-ui-form-field class="min-w-0" controlId="field_maxPoints" [invalid]="showError('maxPoints')">
+                        <span tumAetUiFormFieldLabel class="flex items-center gap-1">
+                            <span jhiTranslate="artemisApp.course.maxPoints.title"></span>
+                            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.maxPoints.info' | artemisTranslate" />
+                        </span>
+                        <input
+                            type="number"
+                            tumAetUiInput
+                            class="w-full"
+                            name="maxPoints"
+                            id="field_maxPoints"
+                            min="1"
+                            step="1"
+                            [attr.max]="MAX_GRADING_POINTS"
+                            formControlName="maxPoints"
+                        />
+                        <ng-container tumAetUiFormFieldError>
+                            @if (courseForm.get('maxPoints')?.hasError('min')) {
+                                <span jhiTranslate="artemisApp.course.maxPoints.min"></span>
+                            } @else if (courseForm.get('maxPoints')?.hasError('max')) {
+                                <span jhiTranslate="artemisApp.course.maxPoints.max" [translateValues]="{ max: MAX_GRADING_POINTS }"></span>
+                            } @else if (courseForm.get('maxPoints')?.hasError('notInteger')) {
+                                <span jhiTranslate="artemisApp.course.maxPoints.wholeNumber"></span>
+                            }
+                        </ng-container>
+                    </tumaet-ui-form-field>
+                    <tumaet-ui-form-field
+                        class="min-w-0"
+                        required
+                        controlId="field_accuracyOfScores"
+                        [invalid]="showError('accuracyOfScores')"
+                        [error]="'artemisApp.course.form.accuracyOfScoresRange' | artemisTranslate"
+                    >
+                        <span tumAetUiFormFieldLabel class="flex items-center gap-1">
+                            <span jhiTranslate="artemisApp.course.accuracyOfScores.title"></span>
+                            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.accuracyOfScores.info' | artemisTranslate" />
+                        </span>
+                        <input
+                            required
+                            type="number"
+                            tumAetUiInput
+                            class="w-full"
+                            name="accuracyOfScores"
+                            id="field_accuracyOfScores"
+                            min="1"
+                            max="5"
+                            formControlName="accuracyOfScores"
+                        />
+                    </tumaet-ui-form-field>
+                </div>
+                <tumaet-ui-form-field [label]="'artemisApp.course.defaultProgrammingLanguage' | artemisTranslate" controlId="programmingLanguage">
+                    <tumaet-ui-select
+                        class="course-form-select"
+                        inputId="programmingLanguage"
+                        formControlName="defaultProgrammingLanguage"
+                        [options]="programmingLanguageOptions"
+                        [placeholder]="'artemisApp.course.form.noDefaultProgrammingLanguage' | artemisTranslate"
+                        showClear
+                        filter
+                    />
+                </tumaet-ui-form-field>
+
+                <div class="flex flex-col gap-3">
+                    <div class="course-form-option">
+                        <tumaet-ui-checkbox
+                            inputId="field_maxComplaintSettingEnabled"
+                            name="complaintsEnabled"
+                            formControlName="complaintsEnabled"
+                            (changed)="changeComplaintsEnabled()"
+                        />
+                        <label class="course-form-option-label" jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.complaintsEnabled.description' | artemisTranslate" />
+                    </div>
+                    @if (complaintsEnabled()) {
+                        <div class="course-form-nested">
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <ng-container
+                                    *ngTemplateOutlet="
+                                        numberField;
+                                        context: {
+                                            control: 'maxComplaints',
+                                            id: 'field_maxComplaints',
+                                            label: 'artemisApp.course.maxComplaints.title',
+                                            help: 'artemisApp.course.maxComplaints.description',
+                                        }
+                                    "
+                                />
+                                <ng-container
+                                    *ngTemplateOutlet="
+                                        numberField;
+                                        context: {
+                                            control: 'maxTeamComplaints',
+                                            id: 'field_maxTeamComplaints',
+                                            label: 'artemisApp.course.maxTeamComplaints.title',
+                                            help: 'artemisApp.course.maxTeamComplaints.description',
+                                        }
+                                    "
+                                />
+                            </div>
+                            <ng-container
+                                *ngTemplateOutlet="
+                                    numberField;
+                                    context: {
+                                        control: 'maxComplaintTimeDays',
+                                        id: 'field_maxComplaintTimeDays',
+                                        label: 'artemisApp.course.maxComplaintTimeDays.title',
+                                        help: 'artemisApp.course.maxComplaintTimeDays.description',
+                                    }
+                                "
+                            />
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <ng-container
+                                    *ngTemplateOutlet="
+                                        numberField;
+                                        context: {
+                                            control: 'maxComplaintTextLimit',
+                                            id: 'field_maxComplaintTextLimit',
+                                            label: 'artemisApp.course.maxComplaintTextLimit.title',
+                                            help: 'artemisApp.course.maxComplaintTextLimit.description',
+                                        }
+                                    "
+                                />
+                                <ng-container
+                                    *ngTemplateOutlet="
+                                        numberField;
+                                        context: {
+                                            control: 'maxComplaintResponseTextLimit',
+                                            id: 'field_maxComplaintResponseTextLimit',
+                                            label: 'artemisApp.course.maxComplaintResponseTextLimit.title',
+                                            help: 'artemisApp.course.maxComplaintResponseTextLimit.description',
+                                        }
+                                    "
+                                />
+                            </div>
+                        </div>
+                    }
+                    <div class="course-form-option">
+                        <tumaet-ui-checkbox
+                            inputId="field_maxRequestMoreFeedbackSettingEnabled"
+                            name="requestMoreFeedbackEnabled"
+                            formControlName="requestMoreFeedbackEnabled"
+                            (changed)="changeRequestMoreFeedbackEnabled()"
+                        />
+                        <label
+                            class="course-form-option-label"
+                            jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title"
+                            for="field_maxRequestMoreFeedbackSettingEnabled"
+                        ></label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-muted-color"
+                            [tumAetUiTooltip]="'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate"
+                        />
+                    </div>
+                    @if (requestMoreFeedbackEnabled()) {
+                        <div class="course-form-nested">
+                            <ng-container
+                                *ngTemplateOutlet="
+                                    numberField;
+                                    context: {
+                                        control: 'maxRequestMoreFeedbackTimeDays',
+                                        id: 'field_maxRequestMoreFeedbackTimeDays',
+                                        label: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
+                                        help: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.description',
+                                    }
+                                "
+                            />
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <!-- Section: Additional Course Features -->
+            <section class="course-form-section" aria-labelledby="course-section-features">
+                <div class="flex flex-col gap-1">
+                    <h2 id="course-section-features" class="course-form-section-title" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.title"></h2>
+                    <p class="course-form-hint" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.info"></p>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <jhi-feature-overlay [enabled]="atlasEnabled()">
+                        <div class="flex flex-col gap-3">
+                            <div class="course-form-option" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
+                                <tumaet-ui-checkbox inputId="field_learningPathsEnabled" name="learningPathsEnabled" formControlName="learningPathsEnabled" />
+                                <label class="course-form-option-label" jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
+                                <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.learningPaths.tooltip' | artemisTranslate" />
+                            </div>
+                            <!-- Auto-orchestration is configured per existing course; the create DTO does not carry these
+                                 fields, so only expose the controls in edit mode to avoid silently dropping them on creation.
+                                 Changing the settings is admin-only (server-enforced), so only admins see the controls. -->
+                            @if (course.id && isAdmin() && atlasLLMEnabled()) {
+                                <div class="flex flex-col gap-3" [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent">
+                                    <div class="course-form-option">
+                                        <tumaet-ui-checkbox
+                                            inputId="field_autoOrchestratorEnabled"
+                                            name="autoOrchestratorEnabled"
+                                            formControlName="autoOrchestratorEnabled"
+                                            (changed)="changeAutoOrchestratorEnabled()"
+                                        />
+                                        <label
+                                            class="course-form-option-label"
+                                            jhiTranslate="artemisApp.course.autoOrchestration.label"
+                                            for="field_autoOrchestratorEnabled"
+                                        ></label>
+                                        <fa-icon
+                                            [icon]="faQuestionCircle"
+                                            class="text-muted-color"
+                                            [tumAetUiTooltip]="'artemisApp.course.autoOrchestration.tooltip' | artemisTranslate"
+                                        />
+                                    </div>
+                                    @if (courseForm.get('autoOrchestratorEnabled')?.value) {
+                                        <div class="course-form-nested">
+                                            <div class="grid gap-4 md:grid-cols-2">
+                                                <tumaet-ui-form-field
+                                                    class="min-w-0"
+                                                    [label]="'artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.label' | artemisTranslate"
+                                                    controlId="field_debounceWindowSecondsOverride"
+                                                    [hint]="'artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.hint' | artemisTranslate"
+                                                    [invalid]="showError('debounceWindowSecondsOverride')"
+                                                    [error]="'artemisApp.course.form.invalidNumber' | artemisTranslate"
+                                                >
+                                                    <input
+                                                        type="number"
+                                                        tumAetUiInput
+                                                        class="w-full"
+                                                        min="1"
+                                                        step="1"
+                                                        name="debounceWindowSecondsOverride"
+                                                        id="field_debounceWindowSecondsOverride"
+                                                        formControlName="debounceWindowSecondsOverride"
+                                                        [placeholder]="
+                                                            debounceWindowSecondsDefault() !== undefined
+                                                                ? ('artemisApp.course.autoOrchestration.overridePlaceholderWithValue'
+                                                                  | artemisTranslate: { value: debounceWindowSecondsDefault() })
+                                                                : ('artemisApp.course.autoOrchestration.overridePlaceholder' | artemisTranslate)
+                                                        "
+                                                    />
+                                                </tumaet-ui-form-field>
+                                                <tumaet-ui-form-field
+                                                    class="min-w-0"
+                                                    [label]="'artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.label' | artemisTranslate"
+                                                    controlId="field_maxDailyOrchestrationOverride"
+                                                    [hint]="'artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.hint' | artemisTranslate"
+                                                    [invalid]="showError('maxDailyOrchestrationOverride')"
+                                                    [error]="'artemisApp.course.form.invalidNumber' | artemisTranslate"
+                                                >
+                                                    <input
+                                                        type="number"
+                                                        tumAetUiInput
+                                                        class="w-full"
+                                                        min="1"
+                                                        step="1"
+                                                        name="maxDailyOrchestrationOverride"
+                                                        id="field_maxDailyOrchestrationOverride"
+                                                        formControlName="maxDailyOrchestrationOverride"
+                                                        [placeholder]="
+                                                            maxDailyOrchestrationDefault() !== undefined
+                                                                ? ('artemisApp.course.autoOrchestration.overridePlaceholderWithValue'
+                                                                  | artemisTranslate: { value: maxDailyOrchestrationDefault() })
+                                                                : ('artemisApp.course.autoOrchestration.overridePlaceholder' | artemisTranslate)
+                                                        "
+                                                    />
+                                                </tumaet-ui-form-field>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </jhi-feature-overlay>
+                    <!-- Not part of model -->
+                    <div class="course-form-option">
+                        <tumaet-ui-checkbox
+                            inputId="field_communicationEnabled"
+                            [(ngModel)]="communicationEnabled"
+                            [ngModelOptions]="{ standalone: true }"
+                            (changed)="changeCommunicationEnabled()"
+                        />
+                        <label
+                            class="course-form-option-label"
+                            for="field_communicationEnabled"
+                            jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"
+                        ></label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-muted-color"
+                            [tumAetUiTooltip]="'artemisApp.course.courseCommunicationSetting.communicationEnabled.tooltip' | artemisTranslate"
+                        />
+                    </div>
+                    <!-- Not part of model -->
+                    @if (communicationEnabled) {
+                        <div class="course-form-nested">
+                            <div class="course-form-option">
+                                <tumaet-ui-checkbox inputId="field_messagingEnabled" [(ngModel)]="messagingEnabled" [ngModelOptions]="{ standalone: true }" />
+                                <label
+                                    class="course-form-option-label"
+                                    for="field_messagingEnabled"
+                                    jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.label"
+                                ></label>
+                                <fa-icon
+                                    [icon]="faQuestionCircle"
+                                    class="text-muted-color"
+                                    [tumAetUiTooltip]="'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate"
+                                />
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <span class="course-form-label flex items-center gap-1">
+                                    <span jhiTranslate="artemisApp.codeOfConduct.title"></span>
+                                    <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.codeOfConduct.tooltip' | artemisTranslate" />
+                                </span>
+                                <jhi-markdown-editor-monaco
+                                    class="markdown-editor"
+                                    [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
+                                    (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
+                                />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <!-- Section: Enrollment -->
+            <section class="course-form-section" aria-labelledby="course-section-enrollment">
+                <h2 id="course-section-enrollment" class="course-form-section-title" jhiTranslate="artemisApp.course.form.sections.enrollment"></h2>
+                <div class="flex flex-col gap-3">
+                    @if (ltiEnabled() && !course.enrollmentEnabled) {
+                        <div class="course-form-option">
+                            <tumaet-ui-checkbox inputId="field_onlineCourse" name="onlineCourse" formControlName="onlineCourse" (changed)="changeOnlineCourse()" />
+                            <label class="course-form-option-label" jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse"></label>
+                            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.onlineCourse.description' | artemisTranslate" />
+                        </div>
+                    }
+                    @if (!course.onlineCourse) {
+                        <div class="course-form-option">
+                            <tumaet-ui-checkbox
+                                inputId="field_enrollmentEnabled"
+                                name="enrollmentEnabled"
+                                [checked]="!!course.enrollmentEnabled"
+                                (changed)="changeEnrollmentEnabled()"
+                            />
+                            <label class="course-form-option-label" jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_enrollmentEnabled"></label>
+                            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.enrollmentEnabled.description' | artemisTranslate" />
+                        </div>
+                    }
+                    @if (course.enrollmentEnabled) {
+                        <div class="course-form-nested">
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <tumaet-ui-form-field
+                                    class="min-w-0"
+                                    [label]="'artemisApp.course.enrollmentStartDate' | artemisTranslate"
+                                    controlId="field_enrollmentStartDate_input"
+                                    [invalid]="!isValidEnrollmentPeriod"
+                                    [error]="'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate"
+                                >
+                                    <jhi-date-time-picker
+                                        id="field_enrollmentStartDate"
+                                        inputId="field_enrollmentStartDate_input"
+                                        formControlName="enrollmentStartDate"
+                                        [shouldDisplayTimeZoneWarning]="false"
+                                        [error]="!isValidEnrollmentPeriod"
+                                    />
+                                </tumaet-ui-form-field>
+                                <tumaet-ui-form-field
+                                    class="min-w-0"
+                                    [label]="'artemisApp.course.enrollmentEndDate' | artemisTranslate"
+                                    controlId="field_enrollmentEndDate_input"
+                                    [invalid]="!isValidEnrollmentPeriod"
+                                    [error]="'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate"
+                                >
+                                    <jhi-date-time-picker
+                                        id="field_enrollmentEndDate"
+                                        inputId="field_enrollmentEndDate_input"
+                                        formControlName="enrollmentEndDate"
+                                        [shouldDisplayTimeZoneWarning]="false"
+                                        [error]="!isValidEnrollmentPeriod"
+                                    />
+                                </tumaet-ui-form-field>
+                            </div>
+                            <div class="flex flex-col gap-1.5" id="field_enrollmentConfirmationMessage" tabindex="-1">
+                                <span class="course-form-label" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage"></span>
+                                <jhi-markdown-editor-monaco
+                                    class="markdown-editor"
+                                    [(markdown)]="course.enrollmentConfirmationMessage"
+                                    (markdownChange)="updateEnrollmentConfirmationMessage($event)"
+                                />
+                            </div>
+                            <div class="course-form-option">
+                                <tumaet-ui-checkbox
+                                    inputId="field_unenrollmentEnabled"
+                                    name="unenrollmentEnabled"
+                                    [checked]="!!course.unenrollmentEnabled"
+                                    (changed)="changeUnenrollmentEnabled()"
+                                />
+                                <label class="course-form-option-label" jhiTranslate="artemisApp.course.unenrollmentEnabled.title" for="field_unenrollmentEnabled"></label>
+                                <fa-icon
+                                    [icon]="faQuestionCircle"
+                                    class="text-muted-color"
+                                    [tumAetUiTooltip]="'artemisApp.course.unenrollmentEnabled.description' | artemisTranslate"
+                                />
+                            </div>
+                            @if (course.unenrollmentEnabled) {
+                                <div class="course-form-nested">
+                                    <tumaet-ui-form-field
+                                        class="min-w-0 md:w-1/2"
+                                        [label]="'artemisApp.course.unenrollmentEndDate' | artemisTranslate"
+                                        controlId="field_unenrollmentEndDate_input"
+                                        [invalid]="!isValidUnenrollmentEndDate"
+                                        [error]="'artemisApp.course.form.unenrollmentEndDate.invalid' | artemisTranslate"
+                                    >
+                                        <jhi-date-time-picker
+                                            id="field_unenrollmentEndDate"
+                                            inputId="field_unenrollmentEndDate_input"
+                                            formControlName="unenrollmentEndDate"
+                                            [shouldDisplayTimeZoneWarning]="false"
+                                            [error]="!isValidUnenrollmentEndDate"
+                                        />
+                                    </tumaet-ui-form-field>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <!-- Organizations only restrict who may enroll themselves, so they are opt-in and live with the enrollment settings. -->
+                    @if (isAdmin()) {
+                        <div class="course-form-option">
+                            <tumaet-ui-checkbox inputId="field_organizationsEnabled" [checked]="organizationsEnabled()" (changed)="setOrganizationsEnabled($event.checked)" />
+                            <label class="course-form-option-label" jhiTranslate="artemisApp.course.form.organizations.toggle" for="field_organizationsEnabled"></label>
+                            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.form.organizations.description' | artemisTranslate" />
+                        </div>
+                        @if (organizationsEnabled()) {
+                            <div class="course-form-nested">
+                                <span class="course-form-label" jhiTranslate="artemisApp.course.organizations"></span>
+                                @if (courseOrganizations()?.length) {
+                                    <div class="flex flex-wrap gap-2">
+                                        @for (organization of courseOrganizations(); track organization.id) {
+                                            <tumaet-ui-chip
+                                                id="removeOrganizationButton-{{ organization.id }}"
+                                                [label]="organization.name"
+                                                [removable]="true"
+                                                (removed)="removeOrganizationFromCourse(organization)"
+                                            />
+                                        }
+                                    </div>
+                                } @else {
+                                    <p class="course-form-hint" jhiTranslate="artemisApp.course.form.organizations.empty"></p>
+                                }
+                                <div>
+                                    <button id="addOrganizationButton" type="button" tumAetUiButton size="small" variant="outlined" (click)="openOrganizationsModal()">
+                                        <fa-icon [icon]="faPlus" />
+                                        <span jhiTranslate="artemisApp.course.form.organizations.add"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        <tumaet-ui-dialog
                             [(visible)]="orgSelectorVisible"
                             [dismissableMask]="true"
                             size="large"
@@ -138,489 +742,75 @@
                                     (cancelled)="orgSelectorVisible.set(false)"
                                 />
                             }
-                        </tum-ui-dialog>
-                    </div>
-                }
-                <div class="row g-2">
-                    <div class="form-group col-md">
-                        <jhi-date-time-picker
-                            id="field_startDate"
-                            labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
-                            formControlName="startDate"
-                            [error]="isDateOrderInvalid"
-                            [requiredField]="true"
-                        />
-                        @if (isDateOrderInvalid) {
-                            <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</tum-ui-message>
-                        }
-                    </div>
-                    <div class="form-group col-md">
-                        <jhi-date-time-picker
-                            id="field_endDate"
-                            labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
-                            formControlName="endDate"
-                            [error]="isDateOrderInvalid"
-                            [requiredField]="true"
-                        />
-                        @if (isDateOrderInvalid) {
-                            <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</tum-ui-message>
-                        }
-                    </div>
-                </div>
-                <div class="form-group flex items-center gap-2">
-                    <tum-ui-checkbox
-                        inputId="field_testCourse"
-                        name="testCourse"
-                        formControlName="testCourse"
-                        [checked]="!!course.testCourse"
-                        (changed)="changeTestCourseEnabled()"
-                    />
-                    <label jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.testCourse.description' | artemisTranslate" />
-                </div>
-                <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input" name="gradeRelevant" id="field_gradeRelevant" formControlName="gradeRelevant" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.gradeRelevant.title" for="field_gradeRelevant"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.gradeRelevant.description' | artemisTranslate" />
-                </div>
-                <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input" name="dataRetentionHold" id="field_dataRetentionHold" formControlName="dataRetentionHold" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.dataRetentionHold.title" for="field_dataRetentionHold"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.dataRetentionHold.description' | artemisTranslate" />
-                </div>
-                <div class="form-group">
-                    <label for="semester" jhiTranslate="artemisApp.course.semester"></label>
-                    <select id="semester" class="form-select" formControlName="semester" required>
-                        @for (semester of semesters(); track semester) {
-                            <option [value]="semester">{{ semester }}</option>
-                        }
-                    </select>
-                    @if (courseForm.get('semester')?.invalid && courseForm.get('semester')?.touched) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.course.form.semester.required"></div>
+                        </tumaet-ui-dialog>
                     }
                 </div>
-                <!-- timezone -->
-                <div class="form-group">
-                    <label class="form-control-label" for="timeZone" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.label"></label>
-                    <tum-ui-autocomplete
-                        inputId="timeZone"
-                        formControlName="timeZone"
-                        [suggestions]="filteredTimeZones()"
-                        (searchRequested)="onTimeZoneSearch($event)"
-                        [minLength]="3"
-                        [debounceMs]="200"
-                        [completeOnFocus]="true"
-                        placeholder="Europe/Berlin"
-                        class="w-full"
-                    />
-                    <div class="text-sm text-muted-color" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.explanation"></div>
-                    @if (courseForm.get('timeZone')?.hasError('invalidTimeZone') && (courseForm.get('timeZone')?.dirty || courseForm.get('timeZone')?.touched)) {
-                        <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.forms.configurationForm.timeZoneInput.invalidTimeZone' | artemisTranslate }}</tum-ui-message>
-                    }
-                    @if (timeZoneChanged) {
-                        <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}</tum-ui-message>
-                    }
-                </div>
-                <!-- Section: Exercises & Grading -->
-                <hr />
-                <h4 class="form-group" jhiTranslate="artemisApp.course.form.sections.exercises"></h4>
-                <div class="row">
-                    <div class="form-group col-xl mb-2 mb-xl-3">
-                        <label class="form-control-label" for="field_maxPoints" jhiTranslate="artemisApp.course.maxPoints.title"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxPoints.info' | artemisTranslate" />
-                        <input
-                            type="number"
-                            tumUiInput
-                            class="w-full"
-                            name="maxPoints"
-                            id="field_maxPoints"
-                            min="1"
-                            step="1"
-                            [attr.max]="MAX_GRADING_POINTS"
-                            formControlName="maxPoints"
-                        />
-                        @if (courseForm.get('maxPoints')?.hasError('min')) {
-                            <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.course.maxPoints.min' | artemisTranslate }}</tum-ui-message>
-                        }
-                        @if (courseForm.get('maxPoints')?.hasError('max')) {
-                            <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.course.maxPoints.max' | artemisTranslate: { max: MAX_GRADING_POINTS } }}</tum-ui-message>
-                        }
-                        @if (courseForm.get('maxPoints')?.hasError('notInteger')) {
-                            <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.course.maxPoints.wholeNumber' | artemisTranslate }}</tum-ui-message>
-                        }
-                    </div>
-                    <div class="form-group col-xl">
-                        <label class="form-control-label" for="field_accuracyOfScores" jhiTranslate="artemisApp.course.accuracyOfScores.title"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.accuracyOfScores.info' | artemisTranslate" />
-                        <input
-                            required
-                            type="number"
-                            tumUiInput
-                            class="w-full"
-                            name="accuracyOfScores"
-                            id="field_accuracyOfScores"
-                            min="0"
-                            max="5"
-                            formControlName="accuracyOfScores"
-                        />
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="programmingLanguage" jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
-                    <select id="programmingLanguage" class="form-select" formControlName="defaultProgrammingLanguage">
-                        <option [ngValue]="null"></option>
-                        @for (programmingLanguage of ProgrammingLanguage | keyvalue; track programmingLanguage) {
-                            <option [value]="programmingLanguage.key">{{ programmingLanguage.value }}</option>
-                        }
-                    </select>
-                </div>
-                <div class="nested-form-group-head flex items-center gap-2">
-                    <tum-ui-checkbox
-                        inputId="field_maxComplaintSettingEnabled"
-                        name="complaintsEnabled"
-                        formControlName="complaintsEnabled"
-                        [checked]="complaintsEnabled()"
-                        (changed)="changeComplaintsEnabled()"
-                    />
-                    <label jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.complaintsEnabled.description' | artemisTranslate" />
-                </div>
-                @if (complaintsEnabled()) {
-                    <div>
-                        <div class="row nested-form-group">
-                            <div class="col-md">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints.title" for="field_maxComplaints"></label>
-                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxComplaints.description' | artemisTranslate" />
-                                <input required type="number" tumUiInput class="w-full" name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
-                            </div>
-                            <div class="col-md">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title" for="field_maxTeamComplaints"></label>
-                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxTeamComplaints.description' | artemisTranslate" />
-                                <input required type="number" tumUiInput class="w-full" name="maxTeamComplaints" id="field_maxTeamComplaints" formControlName="maxTeamComplaints" />
-                            </div>
-                        </div>
-                        <div class="nested-form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title" for="field_maxComplaintTimeDays"></label>
-                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxComplaintTimeDays.description' | artemisTranslate" />
-                            <input
-                                required
-                                type="number"
-                                tumUiInput
-                                class="w-full"
-                                name="maxComplaintTimeDays"
-                                id="field_maxComplaintTimeDays"
-                                formControlName="maxComplaintTimeDays"
-                            />
-                        </div>
-                        <div class="row nested-form-group last">
-                            <div class="col-xl mb-2 mb-xl-3">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTextLimit.title" for="field_maxComplaintTextLimit"></label>
-                                <fa-icon
-                                    [icon]="faQuestionCircle"
-                                    class="text-secondary"
-                                    [tumUiTooltip]="'artemisApp.course.maxComplaintTextLimit.description' | artemisTranslate"
-                                />
-                                <input
-                                    required
-                                    type="number"
-                                    tumUiInput
-                                    class="w-full"
-                                    name="maxComplaintTextLimit"
-                                    id="field_maxComplaintTextLimit"
-                                    formControlName="maxComplaintTextLimit"
-                                />
-                            </div>
-                            <div class="col-xl">
-                                <label
-                                    class="form-control-label"
-                                    jhiTranslate="artemisApp.course.maxComplaintResponseTextLimit.title"
-                                    for="field_maxComplaintResponseTextLimit"
-                                ></label>
-                                <fa-icon
-                                    [icon]="faQuestionCircle"
-                                    class="text-secondary"
-                                    [tumUiTooltip]="'artemisApp.course.maxComplaintResponseTextLimit.description' | artemisTranslate"
-                                />
-                                <input
-                                    required
-                                    type="number"
-                                    tumUiInput
-                                    class="w-full"
-                                    name="maxComplaintResponseTextLimit"
-                                    id="field_maxComplaintResponseTextLimit"
-                                    formControlName="maxComplaintResponseTextLimit"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                }
-                <div class="nested-form-group-head flex items-center gap-2">
-                    <tum-ui-checkbox
-                        inputId="field_maxRequestMoreFeedbackSettingEnabled"
-                        name="requestMoreFeedbackEnabled"
-                        formControlName="requestMoreFeedbackEnabled"
-                        [checked]="requestMoreFeedbackEnabled()"
-                        (changed)="changeRequestMoreFeedbackEnabled()"
-                    />
-                    <label jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate" />
-                </div>
-                @if (requestMoreFeedbackEnabled()) {
-                    <div class="nested-form-group last">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title" for="field_maxRequestMoreFeedbackTimeDays"></label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            [tumUiTooltip]="'artemisApp.course.maxRequestMoreFeedbackTimeDays.description' | artemisTranslate"
-                        />
-                        <input
-                            required
-                            type="number"
-                            tumUiInput
-                            class="w-full"
-                            name="maxRequestMoreFeedbackTimeDays"
-                            id="field_maxRequestMoreFeedbackTimeDays"
-                            formControlName="maxRequestMoreFeedbackTimeDays"
-                        />
-                    </div>
-                }
-                <!-- Section: Additional Course Features -->
-                <hr />
-                <h4 class="form-group" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.title"></h4>
-                <span class="d-block form-text mb-3" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.info"></span>
-                <jhi-feature-overlay [enabled]="atlasEnabled()">
-                    <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
-                        <div class="flex items-center gap-2">
-                            <tum-ui-checkbox inputId="field_learningPathsEnabled" name="learningPathsEnabled" formControlName="learningPathsEnabled" />
-                            <label jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
-                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.learningPaths.tooltip' | artemisTranslate" />
-                        </div>
-                    </div>
-                    <!-- Auto-orchestration is configured per existing course; the create DTO does not carry these
-                         fields, so only expose the controls in edit mode to avoid silently dropping them on creation.
-                         Changing the settings is admin-only (server-enforced), so only admins see the controls. -->
-                    @if (course.id && isAdmin() && atlasLLMEnabled()) {
-                        <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent">
-                            <div class="form-check">
-                                <input
-                                    type="checkbox"
-                                    class="form-check-input"
-                                    name="autoOrchestratorEnabled"
-                                    id="field_autoOrchestratorEnabled"
-                                    formControlName="autoOrchestratorEnabled"
-                                    (change)="changeAutoOrchestratorEnabled()"
-                                />
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.autoOrchestration.label" for="field_autoOrchestratorEnabled"></label>
-                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.autoOrchestration.tooltip' | artemisTranslate" />
-                            </div>
-                            @if (courseForm.get('autoOrchestratorEnabled')?.value) {
-                                <div class="row mt-2">
-                                    <div class="col">
-                                        <label
-                                            class="form-control-label"
-                                            jhiTranslate="artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.label"
-                                            for="field_debounceWindowSecondsOverride"
-                                        ></label>
-                                        <input
-                                            type="number"
-                                            class="form-control"
-                                            min="1"
-                                            step="1"
-                                            name="debounceWindowSecondsOverride"
-                                            id="field_debounceWindowSecondsOverride"
-                                            formControlName="debounceWindowSecondsOverride"
-                                            [placeholder]="
-                                                debounceWindowSecondsDefault() !== undefined
-                                                    ? ('artemisApp.course.autoOrchestration.overridePlaceholderWithValue'
-                                                      | artemisTranslate: { value: debounceWindowSecondsDefault() })
-                                                    : ('artemisApp.course.autoOrchestration.overridePlaceholder' | artemisTranslate)
-                                            "
-                                        />
-                                        <span class="form-text text-muted" jhiTranslate="artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.hint"></span>
-                                    </div>
-                                    <div class="col">
-                                        <label
-                                            class="form-control-label"
-                                            jhiTranslate="artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.label"
-                                            for="field_maxDailyOrchestrationOverride"
-                                        ></label>
-                                        <input
-                                            type="number"
-                                            class="form-control"
-                                            min="1"
-                                            step="1"
-                                            name="maxDailyOrchestrationOverride"
-                                            id="field_maxDailyOrchestrationOverride"
-                                            formControlName="maxDailyOrchestrationOverride"
-                                            [placeholder]="
-                                                maxDailyOrchestrationDefault() !== undefined
-                                                    ? ('artemisApp.course.autoOrchestration.overridePlaceholderWithValue'
-                                                      | artemisTranslate: { value: maxDailyOrchestrationDefault() })
-                                                    : ('artemisApp.course.autoOrchestration.overridePlaceholder' | artemisTranslate)
-                                            "
-                                        />
-                                        <span class="form-text text-muted" jhiTranslate="artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.hint"></span>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-                </jhi-feature-overlay>
-                <!-- Not part of model -->
-                <div class="nested-form-group-head flex items-center gap-2">
-                    <tum-ui-checkbox
-                        inputId="field_communicationEnabled"
-                        [(ngModel)]="communicationEnabled"
-                        [ngModelOptions]="{ standalone: true }"
-                        (changed)="changeCommunicationEnabled()"
-                    />
-                    <label for="field_communicationEnabled" jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"></label>
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        class="text-secondary"
-                        [tumUiTooltip]="'artemisApp.course.courseCommunicationSetting.communicationEnabled.tooltip' | artemisTranslate"
-                    />
-                </div>
-                <!-- Not part of model -->
-                @if (communicationEnabled) {
-                    <div>
-                        <div class="nested-form-group flex items-center gap-2">
-                            <tum-ui-checkbox inputId="field_messagingEnabled" [(ngModel)]="messagingEnabled" [ngModelOptions]="{ standalone: true }" />
-                            <label for="field_messagingEnabled" jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.label"></label>
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                class="text-secondary"
-                                [tumUiTooltip]="'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate"
-                            />
-                        </div>
-                        <div class="nested-form-group last">
-                            <label class="form-control-label" jhiTranslate="artemisApp.codeOfConduct.title"></label>
-                            <jhi-help-icon text="artemisApp.codeOfConduct.tooltip" />
-                            <jhi-markdown-editor-monaco
-                                class="markdown-editor"
-                                [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
-                                (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
-                            />
-                        </div>
-                    </div>
-                }
-                <!-- Section: Enrollment -->
-                <hr />
-                <h4 jhiTranslate="artemisApp.course.form.sections.enrollment"></h4>
-                @if (ltiEnabled() && !course.enrollmentEnabled) {
-                    <div class="form-group flex items-center gap-2">
-                        <tum-ui-checkbox
-                            inputId="field_onlineCourse"
-                            name="onlineCourse"
-                            formControlName="onlineCourse"
-                            [checked]="!!course.onlineCourse"
-                            (changed)="changeOnlineCourse()"
-                        />
-                        <label jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.onlineCourse.description' | artemisTranslate" />
-                    </div>
-                }
-                <!-- enrollment -->
-                @if (!course.onlineCourse) {
-                    <div class="nested-form-group-head flex items-center gap-2">
-                        <tum-ui-checkbox inputId="field_enrollmentEnabled" name="enrollmentEnabled" [checked]="!!course.enrollmentEnabled" (changed)="changeEnrollmentEnabled()" />
-                        <label jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_enrollmentEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.enrollmentEnabled.description' | artemisTranslate" />
-                    </div>
-                }
-                @if (course.enrollmentEnabled) {
-                    <div>
-                        <div class="nested-form-group row g-2">
-                            <div class="col-md">
-                                <jhi-date-time-picker
-                                    id="field_enrollmentStartDate"
-                                    labelName="{{ 'artemisApp.course.enrollmentStartDate' | artemisTranslate }}"
-                                    formControlName="enrollmentStartDate"
-                                    [error]="!isValidEnrollmentPeriod"
-                                />
-                                @if (!isValidEnrollmentPeriod) {
-                                    <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate }}</tum-ui-message>
-                                }
-                            </div>
-                            <div class="col-md">
-                                <jhi-date-time-picker
-                                    id="field_enrollmentEndDate"
-                                    labelName="{{ 'artemisApp.course.enrollmentEndDate' | artemisTranslate }}"
-                                    formControlName="enrollmentEndDate"
-                                    [error]="!isValidEnrollmentPeriod"
-                                />
-                                @if (!isValidEnrollmentPeriod) {
-                                    <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</tum-ui-message>
-                                }
-                            </div>
-                        </div>
-                        <div class="nested-form-group last" id="field_enrollmentConfirmationMessage">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage" for="field_enrollmentConfirmationMessage"></label>
-                            <jhi-markdown-editor-monaco
-                                class="markdown-editor"
-                                [(markdown)]="course.enrollmentConfirmationMessage"
-                                (markdownChange)="updateEnrollmentConfirmationMessage($event)"
-                            />
-                        </div>
-                        <div class="nested-form-group">
-                            <div class="nested-form-group-head">
-                                <div class="flex items-center gap-2">
-                                    <tum-ui-checkbox
-                                        inputId="field_unenrollmentEnabled"
-                                        name="unenrollmentEnabled"
-                                        [checked]="!!course.unenrollmentEnabled"
-                                        (changed)="changeUnenrollmentEnabled()"
-                                    />
-                                    <label jhiTranslate="artemisApp.course.unenrollmentEnabled.title" for="field_unenrollmentEnabled"></label>
-                                    <fa-icon
-                                        [icon]="faQuestionCircle"
-                                        class="text-secondary"
-                                        [tumUiTooltip]="'artemisApp.course.unenrollmentEnabled.description' | artemisTranslate"
-                                    />
-                                </div>
-                                @if (course.unenrollmentEnabled) {
-                                    <div class="nested-form-group last">
-                                        <jhi-date-time-picker
-                                            id="field_unenrollmentEndDate"
-                                            labelName="{{ 'artemisApp.course.unenrollmentEndDate' | artemisTranslate }}"
-                                            formControlName="unenrollmentEndDate"
-                                            [error]="!isValidUnenrollmentEndDate"
-                                        />
-                                        @if (!isValidUnenrollmentEndDate) {
-                                            <tum-ui-message severity="error" class="mt-1">{{
-                                                'artemisApp.course.form.unenrollmentEndDate.invalid' | artemisTranslate
-                                            }}</tum-ui-message>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-            <div class="mt-3 d-flex">
-                <button type="button" id="cancel-save" tumUiButton severity="secondary" (click)="previousState()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                </button>
-                @if (courseForm.invalid) {
-                    <span [tumUiTooltip]="'artemisApp.course.form.invalidForm' | artemisTranslate">
-                        <ng-container *ngTemplateOutlet="saveButtonTpl" />
-                    </span>
-                } @else {
-                    <ng-container *ngTemplateOutlet="saveButtonTpl" />
-                }
-                <ng-template #saveButtonTpl>
-                    <button type="submit" id="save-entity" tumUiButton class="ml-2" [disabled]="courseForm.invalid || isSaving() || !isValidConfiguration">
-                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                    </button>
-                </ng-template>
-            </div>
-        </form>
-    </div>
-</div>
+            </section>
+        </div>
 
-<tum-ui-dialog [visible]="!!imageToCrop()" (visibleChange)="imageToCrop.set(undefined)" [header]="'artemisApp.course.courseIcon' | artemisTranslate" size="small">
+        <!-- Stays at the bottom of the scroll area, so the actions and what still blocks them are always in view. -->
+        <div id="course-form-footer" class="course-form-footer" tabindex="-1">
+            <div id="course-form-status" class="course-form-status text-sm" aria-live="polite">
+                @if (issues().length) {
+                    <div class="flex items-start gap-2" [class]="submitAttempted() ? 'text-state-danger' : 'text-muted-color'" data-testid="course-form-issues">
+                        <fa-icon class="mt-0.5" [icon]="faCircleExclamation" />
+                        <p class="m-0">
+                            <span
+                                [jhiTranslate]="issues().length === 1 ? 'artemisApp.course.form.issues.one' : 'artemisApp.course.form.issues.other'"
+                                [translateValues]="{ count: issues().length }"
+                            ></span>
+                            @for (issue of issues(); track issue.targetId; let last = $last) {
+                                <!-- The comma stays with its link, so a wrapped line never starts with one. -->
+                                <span class="whitespace-nowrap"
+                                    ><button type="button" class="course-form-issue-link" (click)="focusIssue(issue)">{{ issue.labelKey | artemisTranslate }}</button
+                                    >{{ last ? '' : ',' }}</span
+                                >{{ last ? '' : ' ' }}
+                            }
+                        </p>
+                    </div>
+                } @else {
+                    <span class="text-muted-color" jhiTranslate="artemisApp.course.form.requiredLegend"></span>
+                }
+            </div>
+            <div class="ms-auto flex shrink-0 items-center gap-4">
+                <button type="button" id="cancel-save" tumAetUiButton severity="secondary" variant="outlined" (click)="previousState()">
+                    <fa-icon [icon]="faBan" />
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </button>
+                <!-- aria-disabled rather than disabled: the button stays focusable and, when pressed, shows what is missing. -->
+                <button
+                    type="submit"
+                    id="save-entity"
+                    tumAetUiButton
+                    class="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+                    [attr.aria-disabled]="issues().length > 0 || isSaving()"
+                    [attr.aria-describedby]="issues().length ? 'course-form-status' : null"
+                >
+                    @if (isSaving()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    } @else {
+                        <fa-icon [icon]="faSave" />
+                    }
+                    <span jhiTranslate="entity.action.save"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- A number input for a setting inside a checked option; every one of them is required while its option is on. -->
+        <ng-template #numberField let-control="control" let-id="id" let-label="label" let-help="help">
+            <tumaet-ui-form-field class="min-w-0" required [controlId]="id" [invalid]="showError(control)" [error]="'artemisApp.course.form.invalidNumber' | artemisTranslate">
+                <span tumAetUiFormFieldLabel class="flex items-center gap-1">
+                    <span [jhiTranslate]="label"></span>
+                    <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="help | artemisTranslate" />
+                </span>
+                <input required type="number" tumAetUiInput class="w-full" [name]="control" [id]="id" [formControlName]="control" />
+            </tumaet-ui-form-field>
+        </ng-template>
+    </form>
+</ng-template>
+
+<tumaet-ui-dialog [visible]="!!imageToCrop()" (visibleChange)="imageToCrop.set(undefined)" [header]="'artemisApp.course.courseIcon' | artemisTranslate" size="small">
     @if (imageToCrop(); as file) {
         <jhi-image-cropper-modal [uploadFile]="file" (cropped)="onImageCropped($event)" (cancelled)="imageToCrop.set(undefined)" />
     }
-</tum-ui-dialog>
+</tumaet-ui-dialog>

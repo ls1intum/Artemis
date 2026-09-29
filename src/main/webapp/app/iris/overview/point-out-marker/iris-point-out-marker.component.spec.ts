@@ -121,7 +121,7 @@ describe('IrisPointOutMarkerComponent', () => {
     it('should render one kit button per marker and navigate with forceOpen on click', async () => {
         await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, lectureId: 27, page: 3, displayPage: 9, timestamp: 150 }));
 
-        const buttons = fixture.nativeElement.querySelectorAll('button[tumUiButton]');
+        const buttons = fixture.nativeElement.querySelectorAll('button[tumAetUiButton]');
         expect(buttons).toHaveLength(1);
         // Also the assertion that a marker naming both targets joins them into one label.
         expect(buttons[0].textContent).toContain('Navigated to page 9 and timestamp 2:30');

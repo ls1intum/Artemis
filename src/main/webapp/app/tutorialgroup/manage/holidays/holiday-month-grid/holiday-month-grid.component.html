@@ -1,11 +1,11 @@
 <div class="flex items-center justify-between gap-3 px-4 py-3">
     <h2 class="m-0 text-xl font-semibold" data-testid="holiday-calendar-month">{{ monthLabel() }}</h2>
     <div class="flex items-center gap-2">
-        <button tumUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-calendar-today" (click)="showCurrentMonth()">
+        <button tumAetUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-calendar-today" (click)="showCurrentMonth()">
             <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.calendar.today"></span>
         </button>
         <button
-            tumUiButton
+            tumAetUiButton
             size="small"
             severity="secondary"
             variant="outlined"
@@ -17,7 +17,7 @@
             <fa-icon [icon]="faChevronLeft" />
         </button>
         <button
-            tumUiButton
+            tumAetUiButton
             size="small"
             severity="secondary"
             variant="outlined"
