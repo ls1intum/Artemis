@@ -746,6 +746,19 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
     });
 
+    it('saves a feedback edit to a persisted title-less criterion without losing its IDs', () => {
+        exercise.gradingCriteria = [{ id: 3, structuredGradingInstructions: [gradingInstruction] } as GradingCriterion];
+        component.ngOnInit();
+        const markdown = component.generateMarkdown().replace('[feedback] feedback', '[feedback] edited feedback');
+        Object.defineProperty(component, 'markdownEditor', {
+            value: () => ({ parseMarkdown: () => component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor)) }),
+        });
+
+        component.prepareForSave();
+
+        expect(exercise.gradingCriteria?.[0]).toMatchObject({ id: 3, structuredGradingInstructions: [{ id: 1, feedback: 'edited feedback' }] });
+    });
+
     it('keeps the previous criterion when both its title and instruction feedback change', () => {
         exercise.gradingCriteria = [gradingCriterion];
         exercise.gradingInstructions = 'Previous general instructions';

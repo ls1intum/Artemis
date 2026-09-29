@@ -507,7 +507,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         };
         matchUnique((previous, parsed) => previous.title === parsed.title && sameInstructions(previous, parsed));
         matchUnique((previous, parsed) => !!previous.structuredGradingInstructions?.length && sameInstructions(previous, parsed));
-        matchUnique((previous, parsed) => previous.title !== undefined && previous.title === parsed.title);
+        matchUnique((previous, parsed) => previous.title === parsed.title || (previous.title == undefined && parsed.title == undefined));
 
         let ambiguous = unmatchedPrevious.some((previous) => previous.id !== undefined) && unmatchedParsed.length > 0;
         for (const [previous, parsed] of matched) {

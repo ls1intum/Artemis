@@ -116,64 +116,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let lockAndGetProgrammingSubmissionParticipationStub: ReturnType<typeof vi.spyOn>;
     let findWithParticipationsStub: ReturnType<typeof vi.spyOn>;
 
-    const user = <User>{ id: 99 };
-    const result: Result = {
-        feedbacks: [new Feedback()],
-        score: 80,
-        successful: true,
-        submission: new ProgrammingSubmission(),
-        assessor: user,
-        hasComplaint: true,
-        assessmentType: AssessmentType.SEMI_AUTOMATIC,
-        id: 2,
-    };
-    result.submission!.id = 1;
-
-    const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-    const exercise = {
-        id: 1,
-        templateParticipation: {
-            id: 3,
-            repositoryUri: 'test2',
-            results: [{ id: 9, submission: { id: 1, buildFailed: false } }],
-        },
-        maxPoints: 100,
-        gradingInstructions: 'Grading Instructions',
-        course: <Course>{},
-    } as unknown as ProgrammingExercise;
-
-    const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-    participation.exercise = exercise;
-    participation.id = 1;
-    participation.student = { login: 'student1' } as User;
-    participation.repositoryUri = 'http://student1@artemis.tum.de/git/TEST/test-repo-student1.git';
-    result.submission!.participation = participation;
-
-    const submission: ProgrammingSubmission = new ProgrammingSubmission();
-    submission.results = [result];
-    submission.participation = participation;
-    submission.id = 1234;
-    submission.latestResult = result;
-    participation.submissions = [submission];
-
-    const unassessedSubmission = new ProgrammingSubmission();
-    unassessedSubmission.id = 12;
-
-    const afterComplaintResult = new Result();
-    afterComplaintResult.score = 100;
-
-    const afterOverrideResult: Result = new Result();
-    afterOverrideResult.feedbacks = [
-        {
-            type: FeedbackType.AUTOMATIC,
-            testCase: { testName: 'testCase1' },
-            detailText: 'testCase1 failed',
-            credits: 0,
-        },
-    ];
-    afterOverrideResult.assessor = user;
-
-    const overrideEntityResponse: EntityResponseType = new HttpResponse({ body: afterOverrideResult });
+    let user: User;
+    let result: Result;
+    let complaint: Complaint;
+    let exercise: ProgrammingExercise;
+    let participation: ProgrammingExerciseStudentParticipation;
+    let submission: ProgrammingSubmission;
+    let unassessedSubmission: ProgrammingSubmission;
+    let afterComplaintResult: Result;
+    let afterOverrideResult: Result;
+    let overrideEntityResponse: EntityResponseType;
 
     const route = (): ActivatedRoute =>
         ({
@@ -182,9 +134,62 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             snapshot: { queryParams: { 'correction-round': '0', testRun: 'false' } },
         }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
-    const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
+    let templateFileSessionReturn: { [fileName: string]: string };
 
     beforeEach(async () => {
+        templateFileSessionReturn = { 'folder/file1': fileContent };
+        user = <User>{ id: 99 };
+        result = {
+            feedbacks: [new Feedback()],
+            score: 80,
+            successful: true,
+            submission: new ProgrammingSubmission(),
+            assessor: user,
+            hasComplaint: true,
+            assessmentType: AssessmentType.SEMI_AUTOMATIC,
+            id: 2,
+        };
+        result.submission!.id = 1;
+        complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
+        exercise = {
+            id: 1,
+            templateParticipation: {
+                id: 3,
+                repositoryUri: 'test2',
+                results: [{ id: 9, submission: { id: 1, buildFailed: false } }],
+            },
+            maxPoints: 100,
+            gradingInstructions: 'Grading Instructions',
+            course: <Course>{},
+        } as unknown as ProgrammingExercise;
+        participation = new ProgrammingExerciseStudentParticipation();
+        participation.exercise = exercise;
+        participation.id = 1;
+        participation.student = { login: 'student1' } as User;
+        participation.repositoryUri = 'http://student1@artemis.tum.de/git/TEST/test-repo-student1.git';
+        result.submission!.participation = participation;
+        submission = new ProgrammingSubmission();
+        submission.results = [result];
+        submission.participation = participation;
+        submission.id = 1234;
+        submission.latestResult = result;
+        participation.submissions = [submission];
+        unassessedSubmission = new ProgrammingSubmission();
+        unassessedSubmission.id = 12;
+        afterComplaintResult = new Result();
+        afterComplaintResult.score = 100;
+        afterOverrideResult = new Result();
+        afterOverrideResult.feedbacks = [
+            {
+                type: FeedbackType.AUTOMATIC,
+                testCase: { testName: 'testCase1' },
+                detailText: 'testCase1 failed',
+                credits: 0,
+            },
+        ];
+        afterOverrideResult.assessor = user;
+        overrideEntityResponse = new HttpResponse({ body: afterOverrideResult });
+
         await TestBed.configureTestingModule({
             imports: [CodeEditorMonacoComponent],
             providers: [
@@ -242,8 +247,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        result.assessor = user;
-        result.hasComplaint = true;
     });
 
     it('should highlight lines that were changed', async () => {
