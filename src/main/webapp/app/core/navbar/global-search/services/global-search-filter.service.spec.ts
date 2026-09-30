@@ -700,6 +700,50 @@ describe('GlobalSearchFilterService', () => {
             expect(service.deadEnd()).toBe(false);
             expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
         });
+
+        it('opens a fresh operator after an accepted literal and closes it without touching the literal', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+            service.tokens.set([{ facet: 'course', value: '10' }]);
+
+            service.onChipSelected(0);
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle course:');
+            expect(service.operator()?.facet).toBe('course');
+            expect(service.searchText()).toBe('nsjkfncs type:candle');
+
+            // A second click does not stack, and stepping back removes only the live operator.
+            service.onChipSelected(0);
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle course:');
+            service.back();
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.filterMenuOpen()).toBe(true);
+            expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
+        });
+
+        it('keeps an accepted literal when Escape steps back from the exclude level', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+            service.openFilterPicker();
+            service.excludeMode.set(true);
+
+            service.handleMenuKey(keydown('Escape'));
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.excludeMode()).toBe(false);
+            expect(service.filterPickerOpen()).toBe(true);
+        });
+
+        it('leaves the filter menu over an accepted literal with a live operator by dropping only the operator', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+            service.tokens.set([{ facet: 'course', value: '10' }]);
+            service.onChipSelected(0);
+
+            service.leaveFilterMenu();
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.filterMenuOpen()).toBe(false);
+        });
     });
 
     describe('deriveContextTokens', () => {

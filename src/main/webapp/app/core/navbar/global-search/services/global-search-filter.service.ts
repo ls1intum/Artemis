@@ -126,9 +126,14 @@ export class GlobalSearchFilterService {
         const from = this.literalFrom();
         return from !== undefined && this.searchQuery().startsWith(from);
     });
-    // The `facet:` operator being typed (drives the value menu + operator colouring), if any. Suppressed
-    // once the user has accepted the text as a literal search, which is what closes the menu on that choice.
-    readonly operator = computed(() => (this.literalAccepted() ? undefined : parseOperator(this.searchQuery())));
+    // The `facet:` operator being typed (drives the value menu + operator colouring), if any. One inside text the
+    // user accepted as a literal search is text, which is what closes the menu on that choice; one opened after
+    // the accepted text (a chip click, or a freshly typed `facet:`) is live, so a literal can still be filtered.
+    readonly operator = computed(() => {
+        const op = parseOperator(this.searchQuery());
+        const literalLength = this.literalAccepted() ? (this.literalFrom()?.length ?? 0) : 0;
+        return op && op.start >= literalLength ? op : undefined;
+    });
     /**
      * The text sent to the server: everything before a trailing operator, or the whole input. Because it is
      * independent of the operator, the results for the query keep updating behind an open filter menu.
@@ -334,7 +339,7 @@ export class GlobalSearchFilterService {
         const editing = this.editingChip();
         this.editingChip.set(-1);
         // Only the operator leaves the input; whatever the user was searching for stays exactly as typed.
-        this.searchQuery.set(stripOperator(this.searchQuery()));
+        this.searchQuery.set(this.withoutOperator());
         this.filterPickerOpen.set(false);
         this.excludeMode.set(false);
         this.sideEffects.requestFocus();
@@ -357,7 +362,7 @@ export class GlobalSearchFilterService {
     /** Steps one level back: an exclude value menu returns to the exclude chooser, everything else to the root. */
     back(): void {
         const op = this.operator();
-        this.searchQuery.set(stripOperator(this.searchQuery()));
+        this.searchQuery.set(this.withoutOperator());
         this.excludeMode.set(!!op?.negate);
         this.filterPickerOpen.set(true);
         this.editingChip.set(-1);
@@ -390,22 +395,28 @@ export class GlobalSearchFilterService {
             this.sideEffects.refreshSearch();
             return;
         }
-        if (!this.literalAccepted()) {
-            this.searchQuery.set(stripOperator(this.searchQuery()));
-        }
+        this.searchQuery.set(this.withoutOperator());
     }
 
     /**
-     * Puts an operator prefix at the end of the input, keeping the search text in front of it. Only one operator
-     * can be pending, so one that is still being composed is replaced rather than joined by a second: stacking
-     * them turned every earlier operator into search text. Text the user owns stays, which is an accepted literal
-     * or a value that matches nothing.
+     * The input without the live operator. Only the operator the store recognises is removed: the raw input may
+     * also end in a `facet:` that belongs to an accepted literal, and that one is text.
+     */
+    private withoutOperator(): string {
+        return this.operator() ? stripOperator(this.searchQuery()) : this.searchQuery();
+    }
+
+    /**
+     * Replaces whatever operator is pending with the given prefix, keeping the search text in front of it. Only
+     * one operator can be pending, so a second is never stacked behind the first: stacking them turned every
+     * earlier operator into search text. A value that matches nothing is not an operator and stays as text.
+     * <p>
+     * Whether the pending value is a dead end depends on which chip is being edited, because the menu offers
+     * that chip's own value. Callers that move the edited chip therefore call this first and move the chip after.
      */
     private appendPrefix(prefix: string): void {
-        const ownsTrailingText = this.literalAccepted() || this.deadEnd();
-        const head = ownsTrailingText ? this.searchQuery() : stripOperator(this.searchQuery());
-        this.literalFrom.set(undefined);
-        this.searchQuery.set(appendOperator(head, prefix));
+        this.dropOperatorWithoutLosingText();
+        this.searchQuery.set(appendOperator(this.searchQuery(), prefix));
         this.excludeMode.set(false);
         this.menuActiveIndex.set(0);
         this.sideEffects.requestFocus();
@@ -462,9 +473,10 @@ export class GlobalSearchFilterService {
      * touched, which is the whole point: composing a filter must not cost the user what they were looking for.
      */
     openFilterPicker(): void {
+        // Settled before the edited chip is released, for the reason given on appendPrefix.
+        this.dropOperatorWithoutLosingText();
         this.editingChip.set(-1);
         this.selectedChip.set(-1);
-        this.dropOperatorWithoutLosingText();
         this.excludeMode.set(false);
         this.filterPickerOpen.set(true);
         this.menuActiveIndex.set(0);
@@ -488,8 +500,9 @@ export class GlobalSearchFilterService {
         }
         this.selectedChip.set(-1);
         this.filterPickerOpen.set(false);
-        this.editingChip.set(index);
+        // Settled before this chip takes over from the one the pending operator was opened for (see appendPrefix).
         this.appendPrefix(token.negate ? `-${token.facet}:` : `${token.facet}:`);
+        this.editingChip.set(index);
     }
 
     /** Removes the chip at the given index (its remove button was clicked). */
