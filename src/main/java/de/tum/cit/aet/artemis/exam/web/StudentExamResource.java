@@ -606,6 +606,11 @@ public class StudentExamResource {
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
         User targetUser = userId == null ? currentUser : userRepository.findByIdWithAuthoritiesElseThrow(userId);
         StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, studentExamId);
+        // The student exam is addressed by its id, so it has to belong to the user whose grades are requested and to the exam of the path
+        if (studentExam.getUser() == null || !Objects.equals(studentExam.getUser().getId(), targetUser.getId())) {
+            throw new AccessForbiddenException("The student exam does not belong to the user whose grade info is requested");
+        }
+        validateExamRequestParametersElseThrow(studentExam, examId, courseId);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
         if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
