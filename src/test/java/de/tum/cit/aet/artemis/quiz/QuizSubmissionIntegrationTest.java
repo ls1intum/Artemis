@@ -17,6 +17,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
@@ -76,10 +80,13 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
@@ -124,6 +131,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private QuizBatchService quizBatchService;
+
+    @Autowired
+    private QuizSubmissionService quizSubmissionService;
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
@@ -1109,6 +1119,60 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             assertThat(updatedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
             // check whether submission date was set
             assertThat(updatedSubmission.getSubmissionDate()).isNotNull();
+        }
+
+        /**
+         * A student who changes an answer and submits right after: the save and the submit reach the server together. Both of them replace the answers of the
+         * submission, and used to insert theirs side by side, so that the submission held several answers to a question and any of them could be scored.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void testQuizSubmitLiveMode_saveAndSubmitTogether_keepOneAnswerPerQuestion() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            var payload = jsonMapper.readValue(jsonMapper.writeValueAsString(QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null)),
+                    QuizSubmissionFromLiveClientDTO.class);
+            long exerciseId = quizExercise.getId();
+
+            int requests = 8;
+            var executor = Executors.newFixedThreadPool(requests);
+            var start = new CountDownLatch(1);
+            try {
+                // the last request is the submit, the ones before it are saves
+                var futures = new ArrayList<Future<?>>();
+                for (int i = 0; i < requests; i++) {
+                    boolean submit = i == requests - 1;
+                    futures.add(executor.submit(() -> {
+                        start.await();
+                        try {
+                            quizSubmissionService.saveSubmissionForLiveMode(exerciseId, payload, student, submit);
+                        }
+                        catch (QuizSubmissionException e) {
+                            // a save that comes after the submit is rejected, as the quiz has been submitted
+                            assertThat(submit).isFalse();
+                            assertThat(e).hasMessage("You have already submitted the quiz");
+                        }
+                        return null;
+                    }));
+                }
+                start.countDown();
+                for (var future : futures) {
+                    future.get(30, TimeUnit.SECONDS);
+                }
+            }
+            finally {
+                executor.shutdownNow();
+            }
+
+            var submission = quizSubmissionTestRepository
+                    .findWithEagerSubmittedAnswersByParticipationId(participationRepository.findByExerciseId(exerciseId).iterator().next().getId()).getFirst();
+            assertThat(submission.isSubmitted()).isTrue();
+            assertThat(submission.getSubmittedAnswers()).hasSameSizeAs(payload.submittedAnswers());
+            assertThat(submission.getSubmittedAnswers().stream().map(answer -> answer.getQuizQuestion().getId())).doesNotHaveDuplicates();
         }
 
         @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
