@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -30,8 +29,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
@@ -56,16 +53,9 @@ public class PresentationAssessmentResource {
 
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
-    private final CourseRepository courseRepository;
-
-    private final CourseConfigurationRepository courseConfigurationRepository;
-
-    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, PresentationAssessmentRepository presentationAssessmentRepository,
-            CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository) {
+    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, PresentationAssessmentRepository presentationAssessmentRepository) {
         this.presentationAssessmentService = presentationAssessmentService;
         this.presentationAssessmentRepository = presentationAssessmentRepository;
-        this.courseRepository = courseRepository;
-        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -78,7 +68,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PresentationAssessmentDTO>> getPresentationAssessments(@PathVariable long courseId) {
         log.debug("REST request to get presentation assessments for course {}", courseId);
-        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         List<PresentationAssessmentDTO> presentationAssessments = presentationAssessmentRepository.findAllByCourseId(courseId).stream().map(PresentationAssessmentDTO::of).toList();
         return ResponseEntity.ok(presentationAssessments);
     }
@@ -94,7 +84,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentDTO> getPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get presentation assessment {} for course {}", assessmentId, courseId);
-        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId)));
     }
 
@@ -112,7 +102,7 @@ public class PresentationAssessmentResource {
             throws URISyntaxException {
         log.debug("REST request to create presentation assessment for course {}: {}", courseId, dto);
         validatePresentationAssessmentCourseId(courseId, dto);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        Course course = presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         PresentationAssessment presentationAssessment = presentationAssessmentService.create(course, dto);
         PresentationAssessmentDTO result = PresentationAssessmentDTO.of(presentationAssessment);
         return ResponseEntity.created(new URI("/api/presentation/courses/" + courseId + "/presentation-assessments/" + result.id())).body(result);
@@ -131,7 +121,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<Void> updatePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @Valid @RequestBody PresentationAssessmentDTO dto) {
         log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
         validatePresentationAssessmentCourseId(courseId, dto);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        Course course = presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.update(course, assessmentId, dto);
         return ResponseEntity.ok().build();
     }
@@ -147,7 +137,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deletePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to delete presentation assessment {} for course {}", assessmentId, courseId);
-        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.delete(courseId, assessmentId);
         return ResponseEntity.noContent().build();
     }
@@ -156,7 +146,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentInstanceDTO> createPresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId,
             @Valid @RequestBody PresentationAssessmentInstanceDTO dto) throws URISyntaxException {
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        Course course = presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         PresentationAssessmentInstance instance = presentationAssessmentService.createInstance(course, assessmentId, dto);
         return ResponseEntity.created(new URI("/api/presentation/courses/" + courseId + "/presentation-assessments/" + assessmentId + "/instances/" + instance.getId()))
                 .body(PresentationAssessmentInstanceDTO.of(instance));
@@ -174,7 +164,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PresentationAssessmentInstanceDTO>> savePresentationAssessmentInstances(@PathVariable long courseId, @PathVariable long assessmentId,
             @Valid @RequestBody PresentationAssessmentInstanceDTO dto) {
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        Course course = presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         return ResponseEntity.ok(presentationAssessmentService.saveInstances(course, assessmentId, dto).stream().map(PresentationAssessmentInstanceDTO::of).toList());
     }
 
@@ -182,24 +172,16 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentInstanceDTO> updatePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId,
             @PathVariable long instanceId, @Valid @RequestBody PresentationAssessmentInstanceDTO dto) {
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        Course course = presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         return ResponseEntity.ok(PresentationAssessmentInstanceDTO.of(presentationAssessmentService.updateInstance(course, assessmentId, instanceId, dto)));
     }
 
     @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deletePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable long instanceId) {
-        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        presentationAssessmentService.findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.deleteInstance(courseId, assessmentId, instanceId);
         return ResponseEntity.noContent().build();
-    }
-
-    private Course findCourseAndCheckPresentationAssessmentsEnabled(long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (courseConfigurationRepository.findPresentationAssessmentsEnabledByCourseId(courseId).filter(Boolean::booleanValue).isEmpty()) {
-            throw new AccessForbiddenException("Presentation assessments are disabled for this course.");
-        }
-        return course;
     }
 
     private void validatePresentationAssessmentCourseId(long courseId, PresentationAssessmentDTO dto) {

@@ -16,9 +16,12 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
@@ -46,12 +49,33 @@ public class PresentationAssessmentService {
 
     private final PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
+    private final CourseRepository courseRepository;
+
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository) {
+            PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseRepository courseRepository,
+            CourseConfigurationRepository courseConfigurationRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.presentationAssessmentInstanceRepository = presentationAssessmentInstanceRepository;
+        this.courseRepository = courseRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
+    }
+
+    /**
+     * Loads a course and verifies that presentation assessments are enabled for it.
+     *
+     * @param courseId the course id
+     * @return the course
+     */
+    public Course findCourseAndCheckPresentationAssessmentsEnabled(long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (courseConfigurationRepository.findPresentationAssessmentsEnabledByCourseId(courseId).filter(Boolean::booleanValue).isEmpty()) {
+            throw new AccessForbiddenException("Presentation assessments are disabled for this course.");
+        }
+        return course;
     }
 
     private PresentationAssessment findByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
