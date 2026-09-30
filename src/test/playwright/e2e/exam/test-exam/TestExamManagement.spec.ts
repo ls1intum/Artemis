@@ -54,7 +54,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await textExerciseCreation.setTitle(textExerciseTitle);
             await textExerciseCreation.typeMaxPoints(10);
             const response = await textExerciseCreation.create();
-            expect(response.status(), await response.text()).toBe(201);
+            expect(response.status()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, textExerciseTitle);
             await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: textExerciseTitle, type: ExerciseType.TEXT, maxPoints: 10 });
@@ -67,7 +67,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await quizExerciseCreation.setTitle(quizExerciseTitle);
             await quizExerciseCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
             const response = await quizExerciseCreation.saveQuiz();
-            expect(response.status(), await response.text()).toBe(201);
+            expect(response.status()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, quizExerciseTitle);
             await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: quizExerciseTitle, type: ExerciseType.QUIZ, maxPoints: 10 });
@@ -80,7 +80,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await modelingExerciseCreation.setTitle(modelingExerciseTitle);
             await modelingExerciseCreation.setPoints(10);
             const response = await modelingExerciseCreation.save();
-            expect(response.status(), await response.text()).toBe(201);
+            expect(response.status()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, modelingExerciseTitle);
             await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: modelingExerciseTitle, type: ExerciseType.MODELING, maxPoints: 10 });
@@ -97,7 +97,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await programmingExerciseCreation.setPackageName('de.test');
             await programmingExerciseCreation.setPoints(10);
             const response = await programmingExerciseCreation.generate();
-            expect(response.status(), await response.text()).toBe(201);
+            expect(response.status()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, programmingExerciseTitle);
             await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: programmingExerciseTitle, type: ExerciseType.PROGRAMMING, maxPoints: 10 });

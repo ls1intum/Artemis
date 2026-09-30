@@ -21,7 +21,7 @@ test.describe('Exam exercise group order', { tag: '@slow' }, () => {
 
     /** The titles of the groups in the order in which the page lists them. */
     async function listedGroupTitles(page: Page): Promise<string[]> {
-        return (await page.locator('.group-title').allInnerTexts()).map((text) => text.replace(/\s*\(\d+\)$/, ''));
+        return (await page.getByTestId('exercise-group-title').allInnerTexts()).map((text) => text.replace(/\s*\(\d+\)$/, ''));
     }
 
     test('An instructor reorders the exercise groups and students find their exercises in that order', async ({
@@ -73,7 +73,6 @@ test.describe('Exam exercise group order', { tag: '@slow' }, () => {
         await examAPIRequests.generateMissingIndividualExams(exam);
         await examAPIRequests.prepareExerciseStartForExam(exam);
         await examParticipation.startParticipation(studentOne, course, exam);
-        const sidebarTitles = (await page.getByTestId('sidebar-card-title').allInnerTexts()).map((text) => text.trim()).filter((text) => text.includes(uid));
-        expect(sidebarTitles).toEqual(finalOrder);
+        await expect(page.getByTestId('sidebar-card-title').filter({ hasText: uid })).toHaveText(finalOrder);
     });
 });

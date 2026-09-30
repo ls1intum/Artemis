@@ -63,15 +63,30 @@ export class ExamScoresPage {
     }
 
     /**
-     * Checks that an exported CSV file holds a line per student with the student's login, points and grade.
+     * Checks that an exported CSV file holds a line per student whose columns hold the student's points, score and grade exactly.
      */
     checkExportedResults(csv: string, studentResults: StudentResult[]) {
-        const lines = csv.split(/\r?\n/).filter(Boolean);
+        const [header, ...rows] = parseCsv(csv);
+        const column = (name: string) => {
+            const index = header.indexOf(name);
+            expect(index, `the export has a column '${name}', but only: ${header.join(' | ')}`).toBeGreaterThanOrEqual(0);
+            return index;
+        };
+        const usernameColumn = column('Username');
+        const pointsColumn = column('Overall Exam Points');
+        const scoreColumn = column('Overall Exam Score');
+        const gradeColumn = header.indexOf('Grades');
+        // Scores are exported as a percentage (for example '50 %'), points as plain numbers, both with the decimal separator of the export.
+        const asNumber = (value: string) => Number(value.replace(',', '.').replace(/[^0-9.-]/g, ''));
         for (const studentResult of studentResults) {
-            const line = lines.find((candidate) => candidate.includes(studentResult.login!));
-            expect(line, `the export has a line for ${studentResult.login}:\n${csv}`).toBeDefined();
-            expect(line, `points of ${studentResult.login}`).toContain(Math.floor(studentResult.overallPointsAchieved!).toString());
-            expect(line, `grade of ${studentResult.login}`).toContain(studentResult.overallGrade!);
+            const row = rows.filter((candidate) => candidate[usernameColumn] === studentResult.login);
+            expect(row, `the export has exactly one line for ${studentResult.login}:\n${csv}`).toHaveLength(1);
+            expect(asNumber(row[0][pointsColumn]), `points of ${studentResult.login}`).toBeCloseTo(studentResult.overallPointsAchieved!, 1);
+            expect(asNumber(row[0][scoreColumn]), `score of ${studentResult.login}`).toBeCloseTo(studentResult.overallScoreAchieved!, 1);
+            if (studentResult.overallGrade !== undefined) {
+                expect(gradeColumn, 'the export has a grade column').toBeGreaterThanOrEqual(0);
+                expect(row[0][gradeColumn], `grade of ${studentResult.login}`).toBe(studentResult.overallGrade);
+            }
         }
     }
 
@@ -95,4 +110,49 @@ export class ExamScoresPage {
         await expect(studentResultRow.getByTestId('overall-score').getByText(Math.floor(overallScoreAchieved).toString())).toBeVisible({ timeout: 10000 });
         await expect(studentResultRow.getByTestId('overall-grade').getByText(overallGrade)).toBeVisible({ timeout: 10000 });
     }
+}
+
+/** Splits a CSV file into rows of cells, honoring quoted cells; the separator is taken from the header line. */
+function parseCsv(csv: string): string[][] {
+    const text = csv.replace(/^\uFEFF/, '');
+    const separator = /^"?Name"?([,;\t])/.exec(text)?.[1] ?? ',';
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let cell = '';
+    let quoted = false;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (quoted) {
+            if (char === '"' && text[i + 1] === '"') {
+                cell += '"';
+                i++;
+            } else if (char === '"') {
+                quoted = false;
+            } else {
+                cell += char;
+            }
+        } else if (char === '"') {
+            quoted = true;
+        } else if (char === separator) {
+            row.push(cell);
+            cell = '';
+        } else if (char === '\n' || char === '\r') {
+            if (char === '\r' && text[i + 1] === '\n') {
+                i++;
+            }
+            row.push(cell);
+            cell = '';
+            if (row.some((value) => value !== '')) {
+                rows.push(row);
+            }
+            row = [];
+        } else {
+            cell += char;
+        }
+    }
+    if (cell !== '' || row.length > 0) {
+        row.push(cell);
+        rows.push(row);
+    }
+    return rows;
 }

@@ -129,6 +129,8 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
         expect(await examAPIRequests.getOwnTestExamAttempts(exam), 'no attempt was created').toHaveLength(0);
 
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
+        // The page has rendered the exam, and offers no way to start it.
+        await expect(page.getByText(exam.title!).first()).toBeVisible();
         await expect(page.getByTestId('start-exam')).toHaveCount(0);
     });
 });

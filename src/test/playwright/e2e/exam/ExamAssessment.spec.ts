@@ -333,9 +333,7 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
     test.beforeAll('Prepare exam', async ({ browser }) => {
         const page = await newBrowserPage(browser);
         exam = await prepareEndedExam(dashboardCourse, ExerciseType.TEXT, page, 2);
-        // prepareExam leaves the page signed in as the student who took the exam, and reading the exercise groups needs
-        // staff rights.
-        await Commands.login(page, admin);
+        // prepareEndedExam leaves the page signed in as admin, which reading the exercise groups needs.
         const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
         exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
     });
@@ -498,7 +496,6 @@ test.describe.serial('Cancelling one correction round leaves the other one alone
     test.beforeAll('Prepare exam', async ({ browser }) => {
         const page = await newBrowserPage(browser);
         exam = await prepareEndedExam(cancelCourse, ExerciseType.TEXT, page, 2);
-        await Commands.login(page, admin);
         const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
         exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
     });
@@ -578,7 +575,6 @@ test.describe.serial('A test run of an exam with two correction rounds', { tag: 
     test.beforeAll('Prepare exam', async ({ browser }) => {
         const page = await newBrowserPage(browser);
         exam = await prepareEndedExam(testRunCourse, ExerciseType.TEXT, page, 2);
-        await Commands.login(page, admin);
         const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
         exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
     });
@@ -694,7 +690,7 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
 
     test.beforeEach('Set exam grading', async ({ examAPIRequests, login }) => {
         await login(instructor);
-        await examAPIRequests.setExamGradingScale(exam, examStatisticsSample.gradingScale);
+        await examAPIRequests.createGradingScale(exam, examStatisticsSample.gradingScale);
     });
 
     test.beforeEach('Participate in exam', async ({ examParticipation, examNavigation }) => {

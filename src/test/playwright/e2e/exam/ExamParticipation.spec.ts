@@ -192,7 +192,7 @@ test.describe('Exam participation', () => {
             await textExerciseEditor.clearSubmission(textExercise.id!);
             // The old answer must really be gone, on screen and in the client's copy that the character badge is rendered from.
             await expect(page.locator(`#exercise-${textExercise.id} #text-editor`)).toHaveValue('');
-            await expect(page.locator(`#exercise-${textExercise.id}`).getByTestId('character-count')).toContainText('0');
+            await expect(page.locator(`#exercise-${textExercise.id}`).getByTestId('character-count')).toHaveText(/:\s*0\s*$/);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textFixtureShort);
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 

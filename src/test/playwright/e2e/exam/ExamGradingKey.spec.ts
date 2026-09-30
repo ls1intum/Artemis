@@ -33,19 +33,26 @@ const BONUS_STEPS = [
 /** Takes an exam with one text exercise, ends it and lets the tutor give the points; the results stay unpublished. */
 async function prepareAssessedExam(page: Page, points: number): Promise<Exam> {
     const exam = await prepareEndedExam(course, ExerciseType.TEXT, page, 1, false);
-    await Commands.login(page, tutor);
-    await startAssessing(
-        course.id!,
-        exam.id!,
-        EXAM_DASHBOARD_TIMEOUT,
-        new ExamManagementPage(page),
-        new CourseAssessmentDashboardPage(page),
-        new ExerciseAssessmentDashboardPage(page),
-    );
-    const examAssessment = new ExamAssessmentPage(page);
-    await examAssessment.addNewFeedback(points, 'Graded');
-    expect((await examAssessment.submitTextAssessment()).status()).toBe(200);
-    return exam;
+    // A failed assessment must not leave the exam behind: the caller only learns of the exam when this returns.
+    try {
+        await Commands.login(page, tutor);
+        await startAssessing(
+            course.id!,
+            exam.id!,
+            EXAM_DASHBOARD_TIMEOUT,
+            new ExamManagementPage(page),
+            new CourseAssessmentDashboardPage(page),
+            new ExerciseAssessmentDashboardPage(page),
+        );
+        const examAssessment = new ExamAssessmentPage(page);
+        await examAssessment.addNewFeedback(points, 'Graded');
+        expect((await examAssessment.submitTextAssessment()).status()).toBe(200);
+        return exam;
+    } catch (error) {
+        await Commands.login(page, admin);
+        await new ExamAPIRequests(page).deleteExam(exam);
+        throw error;
+    }
 }
 
 /**

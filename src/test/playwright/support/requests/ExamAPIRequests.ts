@@ -159,7 +159,7 @@ export class ExamAPIRequests {
                 return;
             }
             attempts++;
-            if (attempts === 2) {
+            if (attempts === 1) {
                 annotateRecovery(`deleteExam: exam ${exam.id} could not be deleted at first (${response.status()}), retrying while its builds finish`);
             }
             throw new Error(`Failed to delete exam ${exam.id}: ${response.status()} ${await response.text()}`);
@@ -274,22 +274,6 @@ export class ExamAPIRequests {
         return await response.json();
     }
 
-    /**
-     * Sets the exam grading scale
-     * @param exam the exam for which the grading scale is set
-     * @param gradingScale the grading scale to set
-     */
-    async setExamGradingScale(exam: Exam, gradingScale: any) {
-        const data = {
-            exam,
-            ...gradingScale,
-        };
-        await this.expectOk(
-            await this.page.request.post(`api/assessment/courses/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data }),
-            `set grading scale of exam ${exam.id}`,
-        );
-    }
-
     async getGradeSummary(exam: Exam, studentExam: StudentExam) {
         const response = await this.expectOk(
             await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExam.id}/grade-summary`),
@@ -316,25 +300,24 @@ export class ExamAPIRequests {
      * @param exam the exam the student exam belongs to
      * @param studentExamId the id of the student exam
      */
-    async getStudentExam(exam: Exam, studentExamId: number): Promise<StudentExam> {
+    async getStudentExam(exam: Exam, studentExamId: number): Promise<{ studentExam: StudentExam; maxPoints?: number; maxBonusPoints?: number; gradeType?: string }> {
         const response = await this.expectOk(
             await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExamId}`),
             `get student exam ${studentExamId}`,
         );
-        return (await response.json()) as StudentExam;
+        return await response.json();
     }
 
     /**
      * Gets the logged-in student's own student exam including its exercises, participations and submissions, exactly as
-     * the client loads it when the exam is conducted. The student must already be inside the exam's start window.
+     * the client loads it when the exam is conducted. The student must already be inside the exam's start window. Like every load of
+     * the exam by the client, this records an exam session of the student (without a browser fingerprint).
      * @param exam the exam the student takes
      */
     async getOwnStudentExamForConduction(exam: Exam): Promise<StudentExam> {
-        const base = `api/exam/courses/${exam.course!.id}/exams/${exam.id}`;
-        const own = await this.expectOk(await this.page.request.get(`${base}/own-student-exam`), `get own student exam of exam ${exam.id}`);
-        const studentExamId = (await own.json()).id;
+        const studentExamId = await this.getOwnStudentExamId(exam);
         const conduction = await this.expectOk(
-            await this.page.request.get(`${base}/student-exams/${studentExamId}/conduction`),
+            await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExamId}/conduction`),
             `get conduction data of student exam ${studentExamId}`,
         );
         return (await conduction.json()) as StudentExam;
@@ -491,8 +474,8 @@ export class ExamAPIRequests {
     async createGradingScale(
         exam: Exam,
         gradingScale: {
-            gradeType: 'GRADE' | 'BONUS';
-            bonusStrategy?: 'GRADES_CONTINUOUS' | 'GRADES_DISCRETE' | 'POINTS';
+            gradeType: string;
+            bonusStrategy?: string;
             gradeSteps: {
                 lowerBoundPercentage: number;
                 lowerBoundInclusive: boolean;
@@ -572,13 +555,6 @@ export class ExamAPIRequests {
         const reviewEnd = serverNow.add(1, 'second');
         await this.updateExam(exam, { examStudentReviewEnd: dayjsToString(reviewEnd) });
         await this.waitUntilServerClockIsAfter(exam, reviewEnd);
-    }
-
-    /**
-     * Gets the id of the own student exam of the student who is logged in on another page, for a test that acts as somebody else on its own page.
-     */
-    async getOwnStudentExamIdOf(studentPage: Page, exam: Exam): Promise<number> {
-        return await new ExamAPIRequests(studentPage).getOwnStudentExamId(exam);
     }
 
     /**

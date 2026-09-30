@@ -4,6 +4,7 @@ import { admin, studentFour, studentOne, studentThree, studentTwo } from '../../
 import { generateUUID } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 const course = { id: SEED_COURSES.examParticipation.id } as any;
 const students = [studentOne, studentTwo, studentThree, studentFour];
@@ -58,9 +59,9 @@ test.describe('Exam individual exams', { tag: '@slow' }, () => {
         // The rules hold for every student exam, whichever exercises the server picked.
         const listed = await examAPIRequests.getAllStudentExams(exam);
         expect(listed).toHaveLength(students.length);
-        const studentExams: { id: number; workingTime?: number; exercises?: { id?: number }[] }[] = [];
+        const studentExams: StudentExam[] = [];
         for (const entry of listed) {
-            studentExams.push(((await examAPIRequests.getStudentExam(exam, entry.id)) as unknown as { studentExam: (typeof studentExams)[number] }).studentExam);
+            studentExams.push((await examAPIRequests.getStudentExam(exam, entry.id)).studentExam);
         }
         for (const studentExam of studentExams) {
             const assigned: number[] = (studentExam.exercises ?? []).map((exercise) => exercise.id!);

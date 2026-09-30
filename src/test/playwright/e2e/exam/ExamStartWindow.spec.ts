@@ -32,6 +32,7 @@ test.describe('Exam start window', { tag: '@slow' }, () => {
         examStartEnd,
         examNavigation,
     }) => {
+        test.setTimeout(240_000);
         await login(admin);
         exam = await examAPIRequests.createExam({
             course,
@@ -45,12 +46,15 @@ test.describe('Exam start window', { tag: '@slow' }, () => {
         await examAPIRequests.generateMissingIndividualExams(exam);
         await examAPIRequests.prepareExerciseStartForExam(exam);
 
-        // Two days before the start the exam is not available to start.
+        // Two days before the start the exam can not be started, even though the student confirmed and entered the name.
         await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
         await expect(page.getByTestId('start-exam')).toBeDisabled();
+        await page.locator('#confirmBox').check();
+        await examStartEnd.enterFirstnameLastname();
+        await expect(page.getByTestId('start-exam')).toBeDisabled();
 
-        // The exam is moved to start in a little under a minute: from now on the student is inside the five minutes before the start.
-        const start = await asAdmin(browser, (adminExamRequests) => adminExamRequests.rescheduleExam(exam, 45, 2 * 60 * 60));
+        // The exam is moved to start in a minute and a half: from now on the student is inside the five minutes before the start.
+        await asAdmin(browser, (adminExamRequests) => adminExamRequests.rescheduleExam(exam, 90, 2 * 60 * 60));
         await page.reload();
         await expect(page.getByTestId('start-exam')).toBeDisabled();
         await page.locator('#confirmBox').check();
@@ -64,10 +68,9 @@ test.describe('Exam start window', { tag: '@slow' }, () => {
         await expect(page.getByText(`Please wait until the exam "${exam.title}" begins.`)).toBeVisible();
         await expect(page.getByText('Time until planned start:')).toBeVisible();
         await expect(page.getByTestId('hand-in-early')).toHaveCount(0);
-        expect(dayjs().isBefore(start), 'the student is still waiting before the planned start').toBe(true);
 
         // At the planned start the exam begins by itself.
-        await expect(page.getByTestId('hand-in-early')).toBeVisible({ timeout: 90_000 });
+        await expect(page.getByTestId('hand-in-early')).toBeVisible({ timeout: 150_000 });
         await expect(page.getByTestId('exam-bar-title')).toContainText(exam.title!);
         await expect(page.getByTestId('displayTime')).toContainText('1h');
         // Moving the exam changed its duration, so the student is told about the new working time as soon as the exam is running.

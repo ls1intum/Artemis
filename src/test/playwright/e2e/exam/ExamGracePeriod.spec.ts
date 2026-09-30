@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
-import { asAdmin } from '../../support/utils';
+import { asAdmin, prepareRunningTextExam } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ModalDialogBox } from '../../support/pageobjects/exam/ModalDialogBox';
@@ -21,12 +21,9 @@ test.describe('Exam grace period', { tag: '@slow' }, () => {
     let exam: Exam;
 
     async function prepareRunningExamWithTextExercise(gracePeriodInSeconds: number, examAPIRequests: ExamAPIRequests, exerciseAPIRequests: ExerciseAPIRequests) {
-        exam = await examAPIRequests.createRunningExam({ course, gracePeriod: gracePeriodInSeconds });
-        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
-        const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
-        await examAPIRequests.registerStudentForExam(exam, studentOne);
-        await examAPIRequests.generateMissingIndividualExams(exam);
-        await examAPIRequests.prepareExerciseStartForExam(exam);
+        const prepared = await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course, examOptions: { gracePeriod: gracePeriodInSeconds } });
+        exam = prepared.exam;
+        const { exerciseGroup, exercise } = prepared;
         return { exerciseGroup, exercise };
     }
 

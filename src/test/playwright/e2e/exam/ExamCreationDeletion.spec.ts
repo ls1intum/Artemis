@@ -43,7 +43,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
         await examCreation.setConfirmationEndText(examData.confirmationEndText);
 
         const response = await examCreation.submit();
-        expect(response.status(), await response.text()).toBe(201);
+        expect(response.status()).toBe(201);
         const createdExam: Exam = await readResponseJson(response);
 
         await expect(examManagement.getExamTitle()).toContainText(examData.title);

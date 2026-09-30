@@ -1,7 +1,7 @@
-import { expect } from '@playwright/test';
+import { expect, Browser, Page } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne, studentTwo } from '../../support/users';
-import { newBrowserPage } from '../../support/utils';
+import { newBrowserPage, prepareRunningTextExam } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
@@ -17,7 +17,19 @@ const course = { id: SEED_COURSES.examParticipation.id } as any;
 test.describe('Exam suspicious behavior analysis', { tag: '@slow' }, () => {
     let exam: Exam;
 
+    /** Browser contexts opened by the test, closed again however the test ends. */
+    let openedPages: Page[] = [];
+    async function openPage(browser: Browser): Promise<Page> {
+        const page = await newBrowserPage(browser);
+        openedPages.push(page);
+        return page;
+    }
+
     test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+        for (const openedPage of openedPages) {
+            await openedPage.context().close();
+        }
+        openedPages = [];
         await login(admin);
         await examAPIRequests.deleteExam(exam);
     });
@@ -30,17 +42,11 @@ test.describe('Exam suspicious behavior analysis', { tag: '@slow' }, () => {
         exerciseAPIRequests,
     }) => {
         await login(admin);
-        exam = await examAPIRequests.createRunningExam({ course });
-        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
-        await exerciseAPIRequests.createTextExercise({ exerciseGroup });
-        await examAPIRequests.registerStudentForExam(exam, studentOne);
-        await examAPIRequests.registerStudentForExam(exam, studentTwo);
-        await examAPIRequests.generateMissingIndividualExams(exam);
-        await examAPIRequests.prepareExerciseStartForExam(exam);
+        exam = (await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course, students: [studentOne, studentTwo] })).exam;
 
         // Both students take the exam from this machine, so each of them has a session with this IP address and browser fingerprint.
         for (const student of [studentOne, studentTwo]) {
-            const studentPage = await newBrowserPage(browser);
+            const studentPage = await openPage(browser);
             await Commands.login(studentPage, student);
             await studentPage.goto(`/courses/${course.id}/exams/${exam.id}`);
             await new ExamStartEndPage(studentPage).startExam();

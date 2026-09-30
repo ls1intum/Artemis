@@ -71,7 +71,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
         // The character badge is rendered from the client's copy of the answer, so once it shows the typed length the
         // text has been taken over from the textarea and is part of what the next save or hand-in sends.
         const typedLength = (await getExercise(this.page, exerciseID).locator('#text-editor').inputValue()).length;
-        await expect(getExercise(this.page, exerciseID).getByTestId('character-count')).toContainText(`${typedLength}`);
+        await expect(getExercise(this.page, exerciseID).getByTestId('character-count')).toHaveText(new RegExp(`:\\s*${typedLength}\\s*$`));
     }
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false, skipBuildResultCheck = false) {

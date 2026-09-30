@@ -337,9 +337,6 @@ export async function readResponseJson<T = any>(response: Response, recoverIdemp
 }
 
 /**
- * Generates a unique identifier.
- */
-/**
  * Records that a test had to recover from a page that did not settle (typically a lazy chunk that failed to load under heavy load and
  * left the router on the wrong route). The recovery is bounded to one attempt and shows up as an annotation in the report, so a test
  * that only passes thanks to it stays visible instead of turning into a silent flake.
@@ -351,6 +348,26 @@ export function annotateRecovery(what: string) {
     } catch {
         // Not running inside a test (e.g. a plain script): the console warning above is all there is to record.
     }
+}
+
+/**
+ * Creates a running exam (see {@link ExamAPIRequests.createRunningExam}) with one text exercise in one group, registers the given students
+ * (student one by default) and prepares their exams, so that they can start right away.
+ */
+export async function prepareRunningTextExam(
+    examAPIRequests: ExamAPIRequests,
+    exerciseAPIRequests: ExerciseAPIRequests,
+    options: { course: Course; students?: UserCredentials[]; examOptions?: Omit<Parameters<ExamAPIRequests['createRunningExam']>[0], 'course'> },
+) {
+    const exam = await examAPIRequests.createRunningExam({ ...options.examOptions, course: options.course });
+    const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
+    const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+    for (const student of options.students ?? [studentOne]) {
+        await examAPIRequests.registerStudentForExam(exam, student);
+    }
+    await examAPIRequests.generateMissingIndividualExams(exam);
+    await examAPIRequests.prepareExerciseStartForExam(exam);
+    return { exam, exerciseGroup, exercise };
 }
 
 /**
@@ -372,6 +389,9 @@ export async function asAdmin<T>(browser: Browser, callback: (examAPIRequests: E
     return await asUser(browser, admin, callback);
 }
 
+/**
+ * Generates a unique identifier.
+ */
 export function generateUUID() {
     const uuid = uuidv4().replace(/-/g, '');
     return uuid.substr(0, 9);
@@ -829,7 +849,23 @@ export async function prepareEndedExam(
 ): Promise<Exam> {
     const exam = await prepareExam(course, dayjs().add(EXAM_PARTICIPATION_WINDOW_IN_MINUTES, 'minutes'), exerciseType, page, numberOfCorrectionRounds, false);
     await Commands.login(page, admin);
-    return await new ExamAPIRequests(page).concludeExam(exam, { publishResults });
+    const examAPIRequests = new ExamAPIRequests(page);
+    try {
+        return await examAPIRequests.concludeExam(exam, { publishResults });
+    } catch (error) {
+        await deleteQuietly(page, examAPIRequests, exam);
+        throw error;
+    }
+}
+
+/** Deletes an exam of a failed preparation as admin; a failure to delete must not hide the failure of the preparation. */
+async function deleteQuietly(page: Page, examAPIRequests: ExamAPIRequests, exam: Exam) {
+    try {
+        await Commands.login(page, admin);
+        await examAPIRequests.deleteExam(exam);
+    } catch (deleteError) {
+        console.warn(`[cleanup] could not delete exam ${exam.id} after a failed preparation: ${deleteError}`);
+    }
 }
 
 /** How long an exam stays open while a test participates in it, before {@link prepareEndedExam} ends it. */
@@ -873,34 +909,40 @@ export async function prepareExam(
         gracePeriod: EXAM_GRACE_PERIOD_IN_SECONDS,
     };
     const exam = await examAPIRequests.createExam(examConfig);
-    let additionalData = {};
-    switch (exerciseType) {
-        case ExerciseType.PROGRAMMING:
-            additionalData = {
-                submission: cPartiallySuccessful,
-                progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
-                programmingLanguage: ProgrammingLanguage.C,
-                skipBuildResultCheck: true,
-            };
-            break;
-        case ExerciseType.TEXT:
-            additionalData = { textFixture: 'loremIpsum-short.txt' };
-            break;
-        case ExerciseType.QUIZ:
-            additionalData = { quizExerciseID: 0 };
-            break;
-        case ExerciseType.FILE_UPLOAD:
-            additionalData = { fileUploadFixture: 'pdf-test-file.pdf' };
-            break;
-    }
+    // The exam is deleted again when the preparation fails, so that a failed setup does not leave it behind for the next run.
+    try {
+        let additionalData = {};
+        switch (exerciseType) {
+            case ExerciseType.PROGRAMMING:
+                additionalData = {
+                    submission: cPartiallySuccessful,
+                    progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                    programmingLanguage: ProgrammingLanguage.C,
+                    skipBuildResultCheck: true,
+                };
+                break;
+            case ExerciseType.TEXT:
+                additionalData = { textFixture: 'loremIpsum-short.txt' };
+                break;
+            case ExerciseType.QUIZ:
+                additionalData = { quizExerciseID: 0 };
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                additionalData = { fileUploadFixture: 'pdf-test-file.pdf' };
+                break;
+        }
 
-    const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
-    await examAPIRequests.registerStudentForExam(exam, studentOne);
-    await examAPIRequests.generateMissingIndividualExams(exam);
-    await examAPIRequests.prepareExerciseStartForExam(exam);
-    exercise.additionalData = additionalData;
-    await makeExamSubmission(course, exam, exercise, page, examParticipation, examNavigation, examStartEnd);
-    return exam;
+        const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
+        await examAPIRequests.registerStudentForExam(exam, studentOne);
+        await examAPIRequests.generateMissingIndividualExams(exam);
+        await examAPIRequests.prepareExerciseStartForExam(exam);
+        exercise.additionalData = additionalData;
+        await makeExamSubmission(course, exam, exercise, page, examParticipation, examNavigation, examStartEnd);
+        return exam;
+    } catch (error) {
+        await deleteQuietly(page, examAPIRequests, exam);
+        throw error;
+    }
 }
 
 export async function makeExamSubmission(

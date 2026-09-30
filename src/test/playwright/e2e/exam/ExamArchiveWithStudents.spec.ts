@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import path from 'path';
-import * as os from 'os';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 
@@ -20,8 +19,13 @@ const course = { id: SEED_COURSES.examManagement.id } as any;
  */
 test.describe('Exam archive and cleanup with a student', { tag: '@slow' }, () => {
     let exam: Exam;
+    let downloadDirectories: string[] = [];
 
-    test.afterEach('Deletes the exam', async ({ login, examAPIRequests }) => {
+    test.afterEach('Deletes the exam and the downloaded archives', async ({ login, examAPIRequests }) => {
+        for (const directory of downloadDirectories) {
+            fs.rmSync(directory, { recursive: true, force: true });
+        }
+        downloadDirectories = [];
         await login(admin);
         await examAPIRequests.deleteExam(exam);
     });
@@ -59,6 +63,7 @@ test.describe('Exam archive and cleanup with a student', { tag: '@slow' }, () =>
 
         // The archive nests the repository of the student.
         const { filePath } = await downloadArchive(page, () => downloadButton.click());
+        downloadDirectories.push(path.dirname(filePath));
         const nestedNames = (await readArchiveEntries(filePath)).filter((entry) => entry.name.endsWith('.zip')).map((entry) => entry.name);
         expect(
             nestedNames.some((name) => name.toLowerCase().includes(studentOne.username.toLowerCase())),
@@ -85,8 +90,7 @@ test.describe('Exam archive and cleanup with a student', { tag: '@slow' }, () =>
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}`);
         await expect(page.locator('[data-testid="archive-download-button"][data-mode="Exam"]')).toBeVisible();
         const again = await downloadArchive(page, () => page.locator('[data-testid="archive-download-button"][data-mode="Exam"]').click());
+        downloadDirectories.push(path.dirname(again.filePath));
         expect(fs.statSync(again.filePath).size, 'the archive can still be downloaded and is not empty').toBeGreaterThan(0);
-        fs.rmSync(path.dirname(again.filePath), { recursive: true, force: true });
-        fs.rmSync(path.join(os.tmpdir(), path.basename(filePath)), { force: true });
     });
 });

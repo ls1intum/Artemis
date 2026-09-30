@@ -82,7 +82,7 @@ test.describe('Exam form validation', { tag: '@fast' }, () => {
 
         // Saving works, and the exam holds what the form finally said.
         const response = await examCreation.submit();
-        expect(response.status(), await response.text()).toBe(201);
+        expect(response.status()).toBe(201);
         createdExam = await readResponseJson<Exam>(response);
         expect(createdExam.title).toBe(title);
         expect(createdExam.numberOfExercisesInExam).toBe(4);
@@ -116,7 +116,7 @@ test.describe('Exam form validation', { tag: '@fast' }, () => {
 
         // The exam is saved as a test exam with the attempt length that was chosen.
         const response = await examCreation.submit();
-        expect(response.status(), await response.text()).toBe(201);
+        expect(response.status()).toBe(201);
         createdExam = await readResponseJson<Exam>(response);
         expect(createdExam.testExam).toBe(true);
         expect(createdExam.workingTime).toBe(45 * 60);

@@ -74,13 +74,14 @@ test.describe.serial('Student exam management of an ended exam', { tag: '@slow' 
     });
 
     test('The sessions recorded while the student took the exam are listed', async ({ page }) => {
-        const sessions = page.locator('.exam-session-table-wrapper tbody tr');
-        await expect(sessions).toHaveCount(1);
-        const cells = sessions.first().locator('td');
-        // id, session token, user agent, browser fingerprint, instance, IP address, creation date
-        await expect(cells.nth(1)).not.toBeEmpty();
-        await expect(cells.nth(2)).toContainText('Chrome');
-        await expect(cells.nth(5)).not.toBeEmpty();
-        await expect(cells.nth(6)).not.toBeEmpty();
+        // Every time the student loads the exam a session is recorded, so a recovery reload adds one; at least the first one is there.
+        const sessions = page.getByTestId('exam-session-row');
+        await expect(sessions.first()).toBeVisible();
+        for (const session of await sessions.all()) {
+            await expect(session.getByTestId('exam-session-token')).not.toBeEmpty();
+            await expect(session.getByTestId('exam-session-user-agent')).toContainText('Chrome');
+            await expect(session.getByTestId('exam-session-ip-address')).not.toBeEmpty();
+            await expect(session.getByTestId('exam-session-created-date')).not.toBeEmpty();
+        }
     });
 });

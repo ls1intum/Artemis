@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, Browser, Page } from '@playwright/test';
 import dayjs from 'dayjs';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
@@ -21,7 +21,19 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
         await login(admin);
     });
 
+    /** Browser contexts opened by the test, closed again however the test ends. */
+    let openedPages: Page[] = [];
+    async function openPage(browser: Browser): Promise<Page> {
+        const page = await newBrowserPage(browser);
+        openedPages.push(page);
+        return page;
+    }
+
     test.afterEach('Delete exams', async ({ login, examAPIRequests }) => {
+        for (const openedPage of openedPages) {
+            await openedPage.context().close();
+        }
+        openedPages = [];
         // The tests end as a student, who is not allowed to delete an exam.
         await login(admin);
         for (const exam of exams) {
@@ -94,6 +106,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             examAPIRequests,
             exerciseAPIRequests,
             courseOverview,
+            examStartEnd,
         }) => {
             const exam = await createPreparedExam(examAPIRequests, exerciseAPIRequests, {
                 visible: dayjs().subtract(5, 'days'),
@@ -108,7 +121,9 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await page.getByRole('link', { name: exam.title! }).click();
             await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
-            // The exam is visible, but two days before its start the student can neither confirm nor start it.
+            // The exam is visible and the student can confirm and enter the name, but two days before its start the exam can not be started.
+            await page.locator('#confirmBox').check();
+            await examStartEnd.enterFirstnameLastname();
             await expect(page.getByTestId('start-exam')).toBeDisabled();
         });
 
@@ -188,14 +203,13 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             const submission = (await Fixtures.get('loremIpsum-short.txt'))!;
             await textExerciseEditor.typeSubmission(exercise.id!, submission);
             await examNavigation.openOrSaveExerciseByTitle(exerciseGroup.title!);
-            await page.hover('.fa-save-success');
-            await expect(page.getByText('Exercise saved').nth(1)).toBeVisible();
+            await expect(page.getByTestId('sidebar-exercise-status')).toHaveAttribute('data-status', 'synced saved');
 
             // With two hours left the timer is calm.
             await expect(page.getByTestId('displayTime')).toHaveAttribute('data-critical', 'false');
 
             // The instructor side ends the exam shortly from now. The student learns about it through the working-time live event.
-            const adminPage = await newBrowserPage(browser);
+            const adminPage = await openPage(browser);
             await Commands.login(adminPage, admin);
             const adminExamRequests = new ExamAPIRequests(adminPage);
             await adminExamRequests.endExamIn(exam, 20);
@@ -219,7 +233,6 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examStartEnd.pressShowSummary();
             await examParticipation.verifyTextExerciseOnFinalPage(exercise.id!, 'loremIpsum-short.txt');
             await examParticipation.checkExamTitle(exam.title!);
-            await adminPage.context().close();
         });
     });
 });

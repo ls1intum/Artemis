@@ -1,8 +1,8 @@
-import { expect, Page } from '@playwright/test';
+import { expect, Page, Browser } from '@playwright/test';
 import dayjs from 'dayjs';
 import { test } from '../../support/fixtures';
 import { admin, studentOne, studentTwo, tutor } from '../../support/users';
-import { asUser, newBrowserPage } from '../../support/utils';
+import { asUser, newBrowserPage, prepareRunningTextExam } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
@@ -19,22 +19,28 @@ const course = { id: SEED_COURSES.examParticipation.id } as any;
 test.describe('Exam attendance check', { tag: '@slow' }, () => {
     let exam: Exam;
 
+    /** Browser contexts opened by the test, closed again however the test ends. */
+    let openedPages: Page[] = [];
+    async function openPage(browser: Browser): Promise<Page> {
+        const page = await newBrowserPage(browser);
+        openedPages.push(page);
+        return page;
+    }
+
     test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+        for (const openedPage of openedPages) {
+            await openedPage.context().close();
+        }
+        openedPages = [];
         await login(admin);
         await examAPIRequests.deleteExam(exam);
     });
 
     test('A tutor triggers the attendance check of one student, who is shown the check', async ({ browser, login, examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
-        exam = await examAPIRequests.createRunningExam({ course });
-        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
-        await exerciseAPIRequests.createTextExercise({ exerciseGroup });
-        await examAPIRequests.registerStudentForExam(exam, studentOne);
-        await examAPIRequests.registerStudentForExam(exam, studentTwo);
-        await examAPIRequests.generateMissingIndividualExams(exam);
-        await examAPIRequests.prepareExerciseStartForExam(exam);
+        exam = (await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course, students: [studentOne, studentTwo] })).exam;
 
-        const [checkedStudentPage, otherStudentPage] = [await newBrowserPage(browser), await newBrowserPage(browser)];
+        const [checkedStudentPage, otherStudentPage] = [await openPage(browser), await openPage(browser)];
         for (const [studentPage, student] of [
             [checkedStudentPage, studentOne],
             [otherStudentPage, studentTwo],
@@ -50,14 +56,14 @@ test.describe('Exam attendance check', { tag: '@slow' }, () => {
         expect(byStudent.status()).toBe(403);
 
         // A tutor may.
+        const triggeredFrom = dayjs();
         const response = await asUser(browser, tutor, (tutorRequests) => tutorRequests.triggerAttendanceCheck(exam, studentOne.username));
         expect(response.status()).toBe(200);
 
         // The student is shown the check, with its time, and can carry on afterwards.
-        const triggeredAt = dayjs();
         const dialog = new ModalDialogBox(checkedStudentPage);
         await dialog.checkDialogType('Attendance Check');
-        await dialog.checkDialogTime(triggeredAt);
+        await dialog.checkDialogTime(triggeredFrom, dayjs());
         await expect(dialog.getModalDialogContent()).toContainText(
             'An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor.',
         );

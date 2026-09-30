@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { expect, Page } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { admin, instructor } from '../../support/users';
+import { admin, instructor, studentOne } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
@@ -15,6 +15,9 @@ const roomNumber = '5602.EG.001';
  * a single student can be moved to another seat, and the dialog says when a room does not have enough seats for everybody.
  */
 test.describe('Exam room distribution', { tag: '@slow' }, () => {
+    // Every test uploads the same room, and no other test touches rooms: one test at a time keeps the upload of one from replacing the room under another.
+    test.describe.configure({ mode: 'serial' });
+
     let exam: Exam;
 
     test.beforeEach('Provide the room and an exam with registered students', async ({ login, page, examAPIRequests }) => {
@@ -106,10 +109,10 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
         const before = await seating(page);
 
         // Student One moves to the seat in row 5, seat 5.
-        const studentRow = page.locator('p-table tbody tr', { hasText: 'artemis_test_user_1' });
+        const studentRow = page.locator('p-table tbody tr', { hasText: new RegExp(`${studentOne.username}(?!\\d)`) });
         await studentRow.getByTestId('reseat-student-button').click();
         const reseating = page.getByRole('dialog');
-        await expect(reseating).toContainText('artemis_test_user_1');
+        await expect(reseating).toContainText(studentOne.username);
         const seatSearch = reseating.getByPlaceholder('Leave empty to automatically find a seat');
         await seatSearch.click();
         await seatSearch.fill('5, 5');
@@ -121,8 +124,8 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
         // Only that student moved.
         await expect(studentRow).toContainText('5, 5');
         const after = await seating(page);
-        expect(after['artemis_test_user_1'].seat).toBe('5, 5');
-        for (const login of Object.keys(before).filter((candidate) => candidate !== 'artemis_test_user_1')) {
+        expect(after[studentOne.username].seat).toBe('5, 5');
+        for (const login of Object.keys(before).filter((candidate) => candidate !== studentOne.username)) {
             expect(after[login], `${login} keeps the seat`).toEqual(before[login]);
         }
     });

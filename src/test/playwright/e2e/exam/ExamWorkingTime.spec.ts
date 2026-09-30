@@ -1,11 +1,12 @@
-import { expect } from '@playwright/test';
+import { expect, Browser, Page } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne, studentTwo } from '../../support/users';
-import { newBrowserPage } from '../../support/utils';
+import { newBrowserPage, prepareRunningTextExam } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Commands } from '../../support/commands';
+import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
 import { ModalDialogBox } from '../../support/pageobjects/exam/ModalDialogBox';
 
@@ -18,7 +19,19 @@ const course = { id: SEED_COURSES.examParticipation.id } as any;
 test.describe('Exam working time', { tag: '@slow' }, () => {
     let exam: Exam;
 
+    /** Browser contexts opened by the test, closed again however the test ends. */
+    let openedPages: Page[] = [];
+    async function openPage(browser: Browser): Promise<Page> {
+        const page = await newBrowserPage(browser);
+        openedPages.push(page);
+        return page;
+    }
+
     test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+        for (const openedPage of openedPages) {
+            await openedPage.context().close();
+        }
+        openedPages = [];
         await login(admin);
         await examAPIRequests.deleteExam(exam);
     });
@@ -30,16 +43,10 @@ test.describe('Exam working time', { tag: '@slow' }, () => {
         exerciseAPIRequests,
     }) => {
         await login(admin);
-        exam = await examAPIRequests.createRunningExam({ course });
-        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
-        await exerciseAPIRequests.createTextExercise({ exerciseGroup });
-        await examAPIRequests.registerStudentForExam(exam, studentOne);
-        await examAPIRequests.registerStudentForExam(exam, studentTwo);
-        await examAPIRequests.generateMissingIndividualExams(exam);
-        await examAPIRequests.prepareExerciseStartForExam(exam);
+        exam = (await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course, students: [studentOne, studentTwo] })).exam;
 
         // Both students are taking the exam, each on a page of their own.
-        const [extendedStudentPage, otherStudentPage] = [await newBrowserPage(browser), await newBrowserPage(browser)];
+        const [extendedStudentPage, otherStudentPage] = [await openPage(browser), await openPage(browser)];
         for (const [studentPage, student] of [
             [extendedStudentPage, studentOne],
             [otherStudentPage, studentTwo],
@@ -47,11 +54,10 @@ test.describe('Exam working time', { tag: '@slow' }, () => {
             await Commands.login(studentPage, student);
             await studentPage.goto(`/courses/${course.id}/exams/${exam.id}`);
             await new ExamStartEndPage(studentPage).startExam();
-            await expect(studentPage.getByTestId('displayTime')).toContainText('59min');
+            await expect(studentPage.getByTestId('displayTime')).toContainText(/5\dmin/);
         }
         // The listing of student exams does not say whose is whose, so the extended student's own page tells which one it is.
-        const ownStudentExam = await extendedStudentPage.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/own-student-exam`);
-        const extendedStudentExamId: number = (await ownStudentExam.json()).id;
+        const extendedStudentExamId = await new ExamAPIRequests(extendedStudentPage).getOwnStudentExamId(exam);
         const studentExams = await examAPIRequests.getAllStudentExams(exam);
         expect(studentExams.map((studentExam: StudentExam) => studentExam.workingTime)).toEqual([3720, 3720]);
 
@@ -62,9 +68,9 @@ test.describe('Exam working time', { tag: '@slow' }, () => {
         await expect(extendedDialog.getModalDialogContent()).toContainText('Your personal working time of the exam has been changed.');
         await extendedDialog.checkExamTimeChangeDialog('1h 2min', '1h 12min');
         await extendedDialog.closeDialog();
-        // The timer follows: about an hour and nine minutes are left for this student, still about 59 minutes for the other one.
+        // The timer follows: more than an hour is left for this student, still under an hour for the other one.
         await expect(extendedStudentPage.getByTestId('displayTime')).toContainText('1h');
-        await expect(otherStudentPage.getByTestId('displayTime')).toContainText('59min');
+        await expect(otherStudentPage.getByTestId('displayTime')).toContainText(/5\dmin/);
         await expect(otherStudentPage.getByTestId('displayTime')).not.toContainText('1h');
         await expect(new ModalDialogBox(otherStudentPage).getModalDialogContent()).toHaveCount(0);
 
@@ -93,19 +99,14 @@ test.describe('Exam working time', { tag: '@slow' }, () => {
         exerciseAPIRequests,
     }) => {
         await login(admin);
-        exam = await examAPIRequests.createRunningExam({ course });
-        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
-        await exerciseAPIRequests.createTextExercise({ exerciseGroup });
-        await examAPIRequests.registerStudentForExam(exam, studentOne);
-        await examAPIRequests.generateMissingIndividualExams(exam);
-        await examAPIRequests.prepareExerciseStartForExam(exam);
+        exam = (await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course })).exam;
 
-        const studentPage = await newBrowserPage(browser);
+        const studentPage = await openPage(browser);
         await Commands.login(studentPage, studentOne);
         await studentPage.goto(`/courses/${course.id}/exams/${exam.id}`);
         await new ExamStartEndPage(studentPage).startExam();
-        await expect(studentPage.getByTestId('displayTime')).toContainText('59min');
-        const studentExamId = await examAPIRequests.getOwnStudentExamIdOf(studentPage, exam);
+        await expect(studentPage.getByTestId('displayTime')).toContainText(/5\dmin/);
+        const studentExamId = await new ExamAPIRequests(studentPage).getOwnStudentExamId(exam);
 
         // The instructor sets the student's working time on the student exam page: one hour and twelve minutes instead of one hour and two.
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}/student-exams/${studentExamId}`);

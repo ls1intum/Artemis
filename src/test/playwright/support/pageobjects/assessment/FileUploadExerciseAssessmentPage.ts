@@ -26,7 +26,7 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
             const responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/file-upload-submissions/*/feedback*`);
             await this.page.locator('#submit').click();
             response = await responsePromise;
-            if (response.status() < 400) {
+            if (response.status() < 400 || attempt === 1) {
                 break;
             }
             annotateRecovery(`submitFeedback: the server answered ${response.status()} to the first submit of the file upload assessment; submitting again`);

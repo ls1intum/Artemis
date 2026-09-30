@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { admin, instructor, studentOne } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, readResponseJson } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { expectExerciseInGroup } from '../../support/examGroupAssertions';
 import { ExerciseType } from '../../support/constants';
@@ -38,7 +38,7 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await textExerciseCreation.setTitle(textExerciseTitle);
                 await textExerciseCreation.typeMaxPoints(10);
                 const response = await textExerciseCreation.create();
-                expect(response.status(), await response.text()).toBe(201);
+                expect(response.status()).toBe(201);
                 await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
                 await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, textExerciseTitle);
                 await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: textExerciseTitle, type: ExerciseType.TEXT, maxPoints: 10 });
@@ -51,7 +51,7 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await quizExerciseCreation.setTitle(quizExerciseTitle);
                 await quizExerciseCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
                 const response = await quizExerciseCreation.saveQuiz();
-                expect(response.status(), await response.text()).toBe(201);
+                expect(response.status()).toBe(201);
                 await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
                 await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, quizExerciseTitle);
                 await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: quizExerciseTitle, type: ExerciseType.QUIZ, maxPoints: 10 });
@@ -64,7 +64,7 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await modelingExerciseCreation.setTitle(modelingExerciseTitle);
                 await modelingExerciseCreation.setPoints(10);
                 const response = await modelingExerciseCreation.save();
-                expect(response.status(), await response.text()).toBe(201);
+                expect(response.status()).toBe(201);
                 await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
                 await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, modelingExerciseTitle);
                 await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: modelingExerciseTitle, type: ExerciseType.MODELING, maxPoints: 10 });
@@ -82,7 +82,7 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await programmingExerciseCreation.setPackageName('de.test');
                 await programmingExerciseCreation.setPoints(10);
                 const response = await programmingExerciseCreation.generate();
-                expect(response.status(), await response.text()).toBe(201);
+                expect(response.status()).toBe(201);
                 await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
                 await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, programmingExerciseTitle);
                 await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: programmingExerciseTitle, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
@@ -182,7 +182,7 @@ test.describe('Exam management', { tag: '@fast' }, () => {
             // Exactly one untouched student exam per registered student, with the working time of the exam.
             const studentExams = await examAPIRequests.getAllStudentExams(exam);
             expect(studentExams).toHaveLength(registeredStudents);
-            expect(await response.json()).toHaveLength(registeredStudents);
+            expect(await readResponseJson(response)).toHaveLength(registeredStudents);
             const duration = dayjs(exam.endDate as any).diff(dayjs(exam.startDate as any), 'seconds');
             for (const studentExam of studentExams) {
                 expect(studentExam.testRun).toBe(false);

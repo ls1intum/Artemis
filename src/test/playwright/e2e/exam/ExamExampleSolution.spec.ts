@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
-import { asAdmin, getExercise } from '../../support/utils';
+import { asAdmin, getExercise, prepareRunningTextExam } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
@@ -33,12 +33,9 @@ test.describe('Exam example solution', { tag: '@slow' }, () => {
         examNavigation,
     }) => {
         await login(admin);
-        exam = await examAPIRequests.createRunningExam({ course, gracePeriod: 5 });
-        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
-        const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
-        await examAPIRequests.registerStudentForExam(exam, studentOne);
-        await examAPIRequests.generateMissingIndividualExams(exam);
-        await examAPIRequests.prepareExerciseStartForExam(exam);
+        const prepared = await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course, examOptions: { gracePeriod: 5 } });
+        exam = prepared.exam;
+        const { exerciseGroup, exercise } = prepared;
 
         await examParticipation.startParticipation(studentOne, course, exam);
         await examNavigation.openOrSaveExerciseByTitle(exerciseGroup.title!);
