@@ -30,8 +30,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
@@ -151,7 +151,7 @@ describe('CourseExamsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
             ],
         })
             .compileComponents()
