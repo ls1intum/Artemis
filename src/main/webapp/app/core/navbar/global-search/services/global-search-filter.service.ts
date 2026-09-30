@@ -375,7 +375,7 @@ export class GlobalSearchFilterService {
      * dead-end row, or by pressing Escape there, where "cancel" cannot mean deleting text the user typed.
      */
     private acceptLiteral(): void {
-        this.literalFrom.set(this.searchQuery());
+        this.rememberLiteral();
         this.filterPickerOpen.set(false);
         this.excludeMode.set(false);
         this.editingChip.set(-1);
@@ -391,11 +391,19 @@ export class GlobalSearchFilterService {
      */
     private dropOperatorWithoutLosingText(): void {
         if (this.deadEnd()) {
-            this.literalFrom.set(this.searchQuery());
+            this.rememberLiteral();
             this.sideEffects.refreshSearch();
             return;
         }
         this.searchQuery.set(this.withoutOperator());
+    }
+
+    /**
+     * Marks the current input as accepted literal text. Trailing whitespace is left out of the marker, because
+     * appending an operator trims it off the input and the marker would otherwise stop matching.
+     */
+    private rememberLiteral(): void {
+        this.literalFrom.set(this.searchQuery().replace(/\s+$/, ''));
     }
 
     /**
