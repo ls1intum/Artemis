@@ -36,7 +36,11 @@
                                         [(ngModel)]="exerciseGroup.title"
                                     />
                                     @if (getExerciseGroupTitleError(exerciseGroup); as groupTitleError) {
-                                        <div class="invalid-feedback d-block text-start small" [jhiTranslate]="groupTitleError"></div>
+                                        <div
+                                            class="invalid-feedback d-block text-start small"
+                                            [attr.data-testid]="'exercise-group-' + groupIndex + '-title-error'"
+                                            [jhiTranslate]="groupTitleError"
+                                        ></div>
                                     }
                                 </td>
                             </tr>
@@ -110,7 +114,11 @@
                                                 [(ngModel)]="exercise.title"
                                             />
                                             @if (getNonProgrammingExerciseTitleError(exercise); as titleError) {
-                                                <div class="invalid-feedback d-block text-start small" [jhiTranslate]="titleError"></div>
+                                                <div
+                                                    class="invalid-feedback d-block text-start small"
+                                                    [attr.data-testid]="'exercise-' + exercise.id + '-title-error'"
+                                                    [jhiTranslate]="titleError"
+                                                ></div>
                                             }
                                         }
                                         @if (exercise.type === exerciseType.PROGRAMMING) {
@@ -124,7 +132,11 @@
                                                 (change)="checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, true)"
                                             />
                                             @if (getProgrammingExerciseTitleError(exercise); as titleError) {
-                                                <div class="invalid-feedback d-block text-start small" [jhiTranslate]="titleError"></div>
+                                                <div
+                                                    class="invalid-feedback d-block text-start small"
+                                                    [attr.data-testid]="'exercise-' + exercise.id + '-title-error'"
+                                                    [jhiTranslate]="titleError"
+                                                ></div>
                                             }
                                         }
                                     </td>
@@ -140,7 +152,11 @@
                                                 (change)="checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, false)"
                                             />
                                             @if (getProgrammingExerciseShortNameError(exercise); as shortNameError) {
-                                                <div class="invalid-feedback d-block text-start small" [jhiTranslate]="shortNameError"></div>
+                                                <div
+                                                    class="invalid-feedback d-block text-start small"
+                                                    [attr.data-testid]="'programming-exercise-' + exercise.id + '-shortName-error'"
+                                                    [jhiTranslate]="shortNameError"
+                                                ></div>
                                             }
                                         </td>
                                     }
