@@ -6,7 +6,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { ConversationWebsocketDTO } from 'app/communication/shared/entities/conversation/conversation-websocket-dto.model';
-import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/communication/metis.util';
+import { CommunicationCrudAction, CommunicationWebsocketChannelPrefix, RouteComponents } from 'app/communication/communication.util';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
@@ -17,14 +17,18 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
-import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
+import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 
 /**
- * NOTE: NOT INJECTED IN THE ROOT MODULE
+ * Holds the conversations the current user is a member of in one course, the active conversation and the unread and
+ * code of conduct state, and keeps them current over the conversation membership websocket topic.
+ * <p>
+ * NOTE: NOT INJECTED IN THE ROOT MODULE. Components provide their own instance, mainly the course overview and course
+ * management pages, where it lives as long as the course is open.
  */
 @Injectable()
-export class MetisConversationService implements OnDestroy {
+export class CourseConversationsService implements OnDestroy {
     private groupChatService = inject(GroupChatService);
     private oneToOneChatService = inject(OneToOneChatService);
     private channelService = inject(ChannelService);
@@ -82,8 +86,8 @@ export class MetisConversationService implements OnDestroy {
             }
             this.userId = user.id!;
             const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
-            this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
-                if (postDTO.action === MetisPostAction.CREATE && postDTO.post?.author?.id !== this.userId) {
+            this.activeConversationSubscription = this.websocketService.subscribe<PostBroadcastDTO>(conversationTopic).subscribe((postDTO: PostBroadcastDTO) => {
+                if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post?.author?.id !== this.userId) {
                     this.handleNewMessage(postDTO.post?.conversation?.id, postDTO.post?.conversation?.lastMessageDate);
                 }
             });
@@ -152,7 +156,7 @@ export class MetisConversationService implements OnDestroy {
             }
             this.alertService.addAlert({
                 type: AlertType.WARNING,
-                message: 'artemisApp.metis.channel.notAMember',
+                message: 'artemisApp.communication.channel.notAMember',
             });
             // Keep whatever is currently open instead of closing it. Replacing it with nothing empties the view, and the
             // active conversation subscriber reacts to that by removing the conversationId from the URL, so a reload can
@@ -459,7 +463,7 @@ export class MetisConversationService implements OnDestroy {
      * - Channels/GroupChats: When the user is added to the channel or group chat (channel or group chat shows up when user is added)
      */
     private getConversationMembershipTopic(courseId: number, userId: number) {
-        const courseTopicName = '/user' + MetisWebsocketChannelPrefix + 'courses/' + courseId;
+        const courseTopicName = '/user' + CommunicationWebsocketChannelPrefix + 'courses/' + courseId;
         return courseTopicName + '/conversations/user/' + userId;
     }
 
@@ -495,16 +499,16 @@ export class MetisConversationService implements OnDestroy {
         const action = websocketDTO.action;
 
         switch (action) {
-            case MetisPostAction.CREATE:
+            case CommunicationCrudAction.CREATE:
                 this.handleCreateConversation(conversationDTO);
                 break;
-            case MetisPostAction.UPDATE:
+            case CommunicationCrudAction.UPDATE:
                 this.handleUpdateConversation(conversationDTO);
                 break;
-            case MetisPostAction.DELETE:
+            case CommunicationCrudAction.DELETE:
                 this.handleDeleteConversation(conversationDTO);
                 break;
-            case MetisPostAction.NEW_MESSAGE:
+            case CommunicationCrudAction.NEW_MESSAGE:
                 this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
                 break;
         }
