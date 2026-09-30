@@ -360,14 +360,20 @@ export async function prepareRunningTextExam(
     options: { course: Course; students?: UserCredentials[]; examOptions?: Omit<Parameters<ExamAPIRequests['createRunningExam']>[0], 'course'> },
 ) {
     const exam = await examAPIRequests.createRunningExam({ ...options.examOptions, course: options.course });
-    const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
-    const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
-    for (const student of options.students ?? [studentOne]) {
-        await examAPIRequests.registerStudentForExam(exam, student);
+    // The caller only learns of the exam when this returns, so a failed setup deletes it again instead of leaving it in the shared course.
+    try {
+        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
+        const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+        for (const student of options.students ?? [studentOne]) {
+            await examAPIRequests.registerStudentForExam(exam, student);
+        }
+        await examAPIRequests.generateMissingIndividualExams(exam);
+        await examAPIRequests.prepareExerciseStartForExam(exam);
+        return { exam, exerciseGroup, exercise };
+    } catch (error) {
+        await deleteQuietly(examAPIRequests.page, examAPIRequests, exam);
+        throw error;
     }
-    await examAPIRequests.generateMissingIndividualExams(exam);
-    await examAPIRequests.prepareExerciseStartForExam(exam);
-    return { exam, exerciseGroup, exercise };
 }
 
 /**
