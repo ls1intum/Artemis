@@ -731,10 +731,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.assessmentsAreValid.set(true);
             return;
         }
-        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback());
-        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
-        // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
+        // Every manual feedback, inline or general, needs points and a description (or a grading instruction's text):
+        // the title is only a heading and is filled with a default when left empty, so the description carries the comment.
+        const manualFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
+        this.assessmentsAreValid.set(Feedback.haveCreditsAndComments(manualFeedback));
     }
 
     /**

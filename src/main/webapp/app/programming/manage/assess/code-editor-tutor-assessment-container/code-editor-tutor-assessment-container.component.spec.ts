@@ -812,6 +812,29 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(sentFeedbacks.some((feedback) => feedback.detailText === 'STALE')).toBe(false);
     });
 
+    it('should not allow saving an inline feedback without a description, even next to a valid general feedback', () => {
+        const inlineFeedback: Feedback = { type: FeedbackType.MANUAL, text: 'Positive', credits: 1, reference: 'file:src/Main.java_line:3' };
+        comp.referencedFeedback.set([inlineFeedback]);
+        comp.unreferencedFeedback.set([{ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 1 }]);
+
+        comp.validateFeedback();
+        expect(comp.assessmentsAreValid()).toBe(false);
+
+        inlineFeedback.detailText = 'The loop never terminates.';
+        comp.validateFeedback();
+        expect(comp.assessmentsAreValid()).toBe(true);
+    });
+
+    it('should accept an inline feedback whose grading instruction provides the description', () => {
+        comp.referencedFeedback.set([
+            { type: FeedbackType.MANUAL, text: 'Positive', credits: 1, reference: 'file:src/Main.java_line:3', gradingInstruction: { feedback: 'Correct loop bounds' } as any },
+        ]);
+        comp.unreferencedFeedback.set([]);
+
+        comp.validateFeedback();
+        expect(comp.assessmentsAreValid()).toBe(true);
+    });
+
     it('should validate assessments after submission is received during component init', async () => {
         // make assessment valid
         submission.results![0].feedbacks = [

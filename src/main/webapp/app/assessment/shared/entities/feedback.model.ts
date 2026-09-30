@@ -168,6 +168,15 @@ export class Feedback implements BaseEntity {
         return text;
     }
 
+    /** Translation keys of the points-based default titles a feedback gets when its title is left empty. */
+    public static readonly DEFAULT_TITLE_KEYS = ['artemisApp.feedback.type.positive', 'artemisApp.feedback.type.needsRevision', 'artemisApp.feedback.type.feedback'];
+
+    /** The translation key of the default title for the given points: "Positive", "Needs Revision" or "Feedback". */
+    public static getDefaultTitleKey(credits: number | undefined): string {
+        const points = credits ?? 0;
+        return this.DEFAULT_TITLE_KEYS[points > 0 ? 0 : points < 0 ? 1 : 2];
+    }
+
     /**
      * Rewrites an accepted feedback suggestion's `text` prefix to adapted, leaving everything else unchanged. A
      * suggestion transitions to adapted the moment it is edited in any way; every other state (already adapted,
@@ -228,6 +237,7 @@ export class Feedback implements BaseEntity {
      * Get the referenced line range for referenced programming feedbacks, or undefined.
      * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13-15`.
      * Example output in this case: `{ start: 13, end: 15 }`
+     * Lines are 0-based editor lines, so `_line:0` refers to the first line of the file.
      */
     public static getReferenceLineRange(feedback: Feedback): { start: number; end: number } | undefined {
         if (!feedback.reference?.startsWith(this.PROGRAMMING_REFERENCE_PREFIX)) {
@@ -243,7 +253,7 @@ export class Feedback implements BaseEntity {
         const lineRange = feedback.reference.substring(indexOfLine + this.PROGRAMMING_REFERENCE_LINE_SEPERATOR.length).match(/^(\d+)(?:-(\d+))?$/);
         const start = Number(lineRange?.[1]);
         const end = Number(lineRange?.[2] ?? lineRange?.[1]);
-        if (!lineRange || start <= 0 || end <= 0 || end < start) {
+        if (!lineRange || end < start) {
             return undefined;
         }
         return { start, end };

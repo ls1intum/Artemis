@@ -297,7 +297,16 @@ export class FeedbackComponent implements OnInit {
                         reference.lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
                     }
                 });
-                this.feedbackItemNodes.update((nodes) => (nodes ? [...nodes] : nodes));
+                const exercise = this.resolvedExercise();
+                if (!exercise) {
+                    return;
+                }
+                // FeedbackNodeComponent reads its node once on init, so lines added to nodes already on screen never
+                // render. Regrouping hands the @for new node identities, and the groups keep whether they were open.
+                const wasOpen = new Map((this.feedbackItemNodes() ?? []).filter(isFeedbackGroup).map((group) => [group.name, group.open]));
+                const nodes = this.feedbackItemService.group(feedbackItems, exercise);
+                nodes.filter(isFeedbackGroup).forEach((group) => (group.open = wasOpen.get(group.name) ?? group.open));
+                this.feedbackItemNodes.set(nodes);
             });
     }
 

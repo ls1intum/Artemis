@@ -239,8 +239,27 @@ describe('ProgrammingFeedbackItemService', () => {
         expect(item.title).toBe('File src/main/java/Example.java at lines 11-13');
         expect(item.codeReference).toEqual({
             filePath: 'src/main/java/Example.java',
-            line: 11,
-            lineEnd: 13,
+            line: 12,
+            lineEnd: 14,
+        });
+    });
+
+    it('should show the file and lines of a non-graded feedback titled by Athena', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Extract a helper method`,
+            detailText: 'The loop body is repeated.',
+            reference: 'file:src/main/java/Example.java_line:11-13',
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.title).toBe('Extract a helper method');
+        expect(item.codeReference).toEqual({
+            filePath: 'src/main/java/Example.java',
+            line: 12,
+            lineEnd: 14,
         });
     });
 
@@ -257,8 +276,73 @@ describe('ProgrammingFeedbackItemService', () => {
 
         expect(item.codeReference).toEqual({
             filePath: 'src/main/java/Example.java',
-            line: 11,
+            line: 12,
         });
+    });
+
+    it('should show the file and line of a manual inline feedback', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: 'File src/main/java/Example.java at line 12',
+            detailText: 'This loop never terminates.',
+            reference: 'file:src/main/java/Example.java_line:11',
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.type).toBe('Reviewer');
+        expect(item.codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 12 });
+    });
+
+    it('should show the file and line of a manual inline feedback that uses a grading instruction', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: 'File src/main/java/Example.java at line 12',
+            reference: 'file:src/main/java/Example.java_line:11',
+            gradingInstruction: { feedback: 'gradingInstruction.feedback' } as GradingInstruction,
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.text).toBe('gradingInstruction.feedback');
+        expect(item.codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 12 });
+    });
+
+    it('should show a feedback on the first line of a file as line 1', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: 'File src/main/java/Example.java at line 1',
+            detailText: 'Missing package declaration.',
+            reference: 'file:src/main/java/Example.java_line:0',
+        } as Feedback;
+
+        expect(service.create([feedback], false)[0].codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 1 });
+    });
+
+    it('should not add a code reference to unreferenced manual feedback', () => {
+        const feedback = { id: 1, type: FeedbackType.MANUAL_UNREFERENCED, text: 'General', detailText: 'Well structured.' } as Feedback;
+
+        expect(service.create([feedback], false)[0].codeReference).toBeUndefined();
+    });
+
+    it.each([
+        [2.5, 'artemisApp.feedback.type.positive'],
+        [-1, 'artemisApp.feedback.type.needsRevision'],
+        [0, 'artemisApp.feedback.type.feedback'],
+    ])('should title a suggestion whose title the assessor cleared by its credits (%s)', (credits, expectedTitle) => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+            detailText: 'Good start.',
+            credits,
+            reference: 'file:src/main/java/Example.java_line:5',
+        } as Feedback;
+
+        expect(service.create([feedback], false)[0].title).toBe(expectedTitle);
     });
 
     it('should strip the adapted-suggestion prefix from a feedback suggestion title', () => {

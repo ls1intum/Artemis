@@ -17,7 +17,12 @@ describe('Feedback', () => {
             expect(Feedback.getReferenceLineRange({ reference: 'file:src/Main.java_line:3' })).toEqual({ start: 3, end: 3 });
         });
 
-        it.each(['file:_line:1', 'file:   _line:1', 'file:src/Main.java_line:0', 'file:src/Main.java_line:0-2', 'file:src/Main.java_line:1-0'])(
+        it('should accept the first line of a file, since reference lines are 0-based', () => {
+            expect(Feedback.getReferenceLineRange({ reference: 'file:src/Main.java_line:0' })).toEqual({ start: 0, end: 0 });
+            expect(Feedback.getReferenceLineRange({ reference: 'file:src/Main.java_line:0-2' })).toEqual({ start: 0, end: 2 });
+        });
+
+        it.each(['file:_line:1', 'file:   _line:1', 'file:src/Main.java_line:1-0', 'file:src/Main.java_line:-1'])(
             'should reject malformed programming reference %s',
             (reference) => {
                 expect(Feedback.getReferenceLineRange({ reference })).toBeUndefined();
@@ -79,6 +84,15 @@ describe('Feedback', () => {
             const feedback = { text: 'File Main.java at line 3', gradingInstruction } as Feedback;
 
             expect(buildFeedbackTextForReview(feedback, false)).toBe('Poor');
+        });
+    });
+
+    describe('getDefaultTitleKey', () => {
+        it('should choose the default title by the sign of the points', () => {
+            expect(Feedback.getDefaultTitleKey(2)).toBe('artemisApp.feedback.type.positive');
+            expect(Feedback.getDefaultTitleKey(-0.5)).toBe('artemisApp.feedback.type.needsRevision');
+            expect(Feedback.getDefaultTitleKey(0)).toBe('artemisApp.feedback.type.feedback');
+            expect(Feedback.getDefaultTitleKey(undefined)).toBe('artemisApp.feedback.type.feedback');
         });
     });
 });
