@@ -664,6 +664,8 @@ export class ExerciseAPIRequests {
         duration?: number;
         quizMode?: QuizMode;
         competencyLinks?: { competency: { id: number }; weight: number }[];
+        /** The background image of a drag and drop question; its name is the `backgroundFilePath` of the question. */
+        backgroundFile?: { name: string; mimeType: string; buffer: Buffer };
     }): Promise<QuizExercise> {
         const {
             body,
@@ -675,6 +677,7 @@ export class ExerciseAPIRequests {
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
             competencyLinks,
+            backgroundFile,
         } = options;
 
         const quizExercise: any = {
@@ -712,12 +715,13 @@ export class ExerciseAPIRequests {
             newQuizExercise.competencyLinks = competencyLinks;
         }
         const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
-        const multipartData = {
+        const multipartData: Record<string, { name: string; mimeType: string; buffer: Buffer }> = {
             exercise: {
                 name: 'exercise',
                 mimeType: 'application/json',
                 buffer: Buffer.from(JSON.stringify(quizExerciseDTO)),
             },
+            ...(backgroundFile ? { files: backgroundFile } : {}),
         };
 
         const response = await this.page.request.post(url, {
