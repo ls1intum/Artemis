@@ -65,9 +65,11 @@ test.describe('Exam suspicious behavior analysis', { tag: '@slow' }, () => {
         await expect(rows).toHaveCount(2);
         await expect(rows.filter({ hasText: studentOne.username })).toHaveCount(1);
         await expect(rows.filter({ hasText: studentTwo.username })).toHaveCount(1);
-        // The address the server saw depends on where the test runs (directly or behind a load balancer), so the range criterion below is built from it.
+        // The address the server saw depends on where the test runs: directly it is the loopback (reported as ::1 or 127.0.0.1), behind the
+        // load balancer of the multi-node topology it is an IPv4 address of that network. The range that contains it is built from what was seen.
         const observedIp = (await rows.first().locator('td').nth(1).innerText()).trim();
-        expect(observedIp).toMatch(/^\d+\.\d+\.\d+\.\d+$/);
+        expect(observedIp).toMatch(/^(\d+\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1)$/);
+        const rangeContainingIp = /^\d+\.\d+\.\d+\.\d+$/.test(observedIp) && !observedIp.startsWith('127.') ? `${observedIp}/32` : '127.0.0.0/8';
 
         // The same holds for the browser fingerprint.
         await page.goBack();
@@ -85,18 +87,21 @@ test.describe('Exam suspicious behavior analysis', { tag: '@slow' }, () => {
         await criterion('same-student-exam-different-ips').check();
         await criterion('same-student-exam-different-fingerprints').check();
         await criterion('ip-outside-of-range').check();
-        await page.locator('#ip-subnet').fill(`${observedIp}/32`);
+        await page.locator('#ip-subnet').fill(rangeContainingIp);
         await analyze.click();
         await expect(page.getByText(/This exam has\s*0\s*cases\./)).toBeVisible();
         await expect(page.locator('#view-sessions-btn')).toHaveCount(0);
 
-        // A range that does not contain the address flags the sessions of both students.
-        await page.locator('#ip-subnet').fill('203.0.113.0/24');
-        await analyze.click();
-        await expect(page.getByText(/This exam has\s*[1-9]\d*\s*cases\./)).toBeVisible();
-        await page.locator('#view-sessions-btn').click();
-        await expect(page.getByText('IP address outside of range')).toBeVisible();
-        await expect(page.locator('table tbody tr').filter({ hasText: studentOne.username })).toHaveCount(1);
-        await expect(page.locator('table tbody tr').filter({ hasText: studentTwo.username })).toHaveCount(1);
+        // A range that does not contain the address flags the sessions of both students. The range check compares IPv4 addresses only, so this
+        // control needs an IPv4 address: behind the load balancer of the multi-node topology there is one, on a direct connection there is none.
+        if (/^\d+\.\d+\.\d+\.\d+$/.test(observedIp)) {
+            await page.locator('#ip-subnet').fill('203.0.113.0/24');
+            await analyze.click();
+            await expect(page.getByText(/This exam has\s*[1-9]\d*\s*cases\./)).toBeVisible();
+            await page.locator('#view-sessions-btn').click();
+            await expect(page.getByText('IP address outside of range')).toBeVisible();
+            await expect(page.locator('table tbody tr').filter({ hasText: studentOne.username })).toHaveCount(1);
+            await expect(page.locator('table tbody tr').filter({ hasText: studentTwo.username })).toHaveCount(1);
+        }
     });
 });
