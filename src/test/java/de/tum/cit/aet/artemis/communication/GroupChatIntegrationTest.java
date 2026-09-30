@@ -20,8 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
@@ -69,8 +69,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         assertThat(chat).isNotNull();
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
         // all conversation participants should be notified that the conversation has been "created"
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student2", "student3");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, chat.getId(), "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.CREATE);
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
@@ -131,7 +131,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // The broadcast wraps the entity in a cycle-free PostBroadcastDTO (see PostingService.broadcastForPost).
         verify(websocketMessagingService, timeout(10000).times(3)).sendMessage(aCanonicalPostBroadcastTopic(),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO broadcast && post.id().equals(broadcast.post().id())));
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.NEW_MESSAGE);
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.NEW_MESSAGE);
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
@@ -151,8 +151,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         var updatedGroupChat = groupChatRepository.findById(chat.getId()).orElseThrow();
         assertParticipants(updatedGroupChat.getId(), 3, "student1", "student2", "student3");
         assertThat(updatedGroupChat.getName()).isEqualTo("updated");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE);
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
@@ -214,9 +214,9 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
                 List.of(testPrefix + "student1", testPrefix + "student2", testPrefix + "student4", testPrefix + "student5"), HttpStatus.OK);
         // then
         assertParticipants(chat.getId(), 5, "student1", "student2", "student3", "student4", "student5");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student4", "student5");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, chat.getId(), "student4", "student5");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.CREATE, CommunicationCrudAction.UPDATE);
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
@@ -297,9 +297,9 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
                 HttpStatus.OK);
         // then
         assertParticipants(chat.getId(), 2, "student1", "student3");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, chat.getId(), "student2");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student3");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE, MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.DELETE, chat.getId(), "student2");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, chat.getId(), "student1", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.DELETE, CommunicationCrudAction.UPDATE);
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
@@ -316,9 +316,9 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
                 HttpStatus.OK);
         // then
         assertParticipants(chat.getId(), 2, "student2", "student3");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, chat.getId(), "student1");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student2", "student3");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE, MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.DELETE, chat.getId(), "student1");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, chat.getId(), "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.DELETE, CommunicationCrudAction.UPDATE);
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
@@ -411,7 +411,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
      * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
      * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
      * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
-     * nothing else - in particular neither the retired {@code /topic/metis/} mirror nor an unrelated destination, both
+     * nothing else - in particular neither the retired legacy mirror topic nor an unrelated destination, both
      * of which a bare {@code anyString()} would have accepted.
      *
      * @return a Mockito matcher for a canonical post broadcast destination

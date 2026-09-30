@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
@@ -58,7 +58,7 @@ public class AnswerMessageService extends PostingService {
 
     private static final Logger log = LoggerFactory.getLogger(AnswerMessageService.class);
 
-    private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
+    private static final String ANSWER_POST_ENTITY_NAME = "messages.answerPost";
 
     private final AnswerPostRepository answerPostRepository;
 
@@ -202,7 +202,7 @@ public class AnswerMessageService extends PostingService {
 
         // checks
         if (!Objects.equals(answerMessage.id(), answerMessageId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ANSWER_POST_ENTITY_NAME, "idnull");
         }
         AnswerPost existingAnswerMessage = this.findById(answerMessageId);
 
@@ -307,7 +307,7 @@ public class AnswerMessageService extends PostingService {
         var savedPosts = savedPostRepository.findSavedPostByPostIdAndPostType(answerMessageId, PostingType.ANSWER);
         savedPostRepository.deleteAll(savedPosts);
 
-        broadcastForPost(updatedMessage, MetisCrudAction.UPDATE, course.getId(), null);
+        broadcastForPost(updatedMessage, CommunicationCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -315,7 +315,7 @@ public class AnswerMessageService extends PostingService {
      */
     @Override
     public String getEntityName() {
-        return METIS_ANSWER_POST_ENTITY_NAME;
+        return ANSWER_POST_ENTITY_NAME;
     }
 
     /**
@@ -368,13 +368,13 @@ public class AnswerMessageService extends PostingService {
 
         AnswerPost existingAnswerMessage = answerPostRepository.findAnswerMessageWithPostConversationAndVerifierByIdElseThrow(answerMessageId);
         if (!existingAnswerMessage.getPost().getConversation().getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("Answer message does not belong to the specified course", METIS_ANSWER_POST_ENTITY_NAME, "invalidCourse");
+            throw new BadRequestAlertException("Answer message does not belong to the specified course", ANSWER_POST_ENTITY_NAME, "invalidCourse");
         }
         if (!existingAnswerMessage.getAuthor().isBot()) {
-            throw new BadRequestAlertException("Only Iris-generated answers can be verified", METIS_ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
+            throw new BadRequestAlertException("Only Iris-generated answers can be verified", ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
         }
         if (existingAnswerMessage.isVerified()) {
-            throw new BadRequestAlertException("Answer message is already verified", METIS_ANSWER_POST_ENTITY_NAME, "alreadyVerified");
+            throw new BadRequestAlertException("Answer message is already verified", ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
         // The acting tutor must belong to the conversation, mirroring mayUpdateOrDeleteAnswerMessageElseThrow:
         // any course member may verify in a course-wide channel, but a restricted channel requires membership.
@@ -389,7 +389,7 @@ public class AnswerMessageService extends PostingService {
         // The isVerified() check above is only a fast rejection for the common case; two tutors pressing approve at the
         // same moment both pass it. This is the one that decides, because the guard lives inside the statement.
         if (!answerPostRepository.verifyIfUnverified(answerMessageId, user, ZonedDateTime.now(), updatedContent)) {
-            throw new BadRequestAlertException("Answer message is already verified", METIS_ANSWER_POST_ENTITY_NAME, "alreadyVerified");
+            throw new BadRequestAlertException("Answer message is already verified", ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
 
         // The update above is a bulk statement and does not touch the instance read before it, so re-read what is

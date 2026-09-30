@@ -1,6 +1,6 @@
 {
     "artemisApp": {
-        "metis": {
+        "communication": {
             "loadingPosts": "Nachrichten laden...",
             "noPosts": "Keine Nachrichten gefunden.",
             "imagePreviewTitle": "Bildvorschau",
@@ -60,11 +60,9 @@
                 "noChannel": "Es ist kein Kanal verfügbar.",
                 "notAMember": "Du bist kein Mitglied in dieser Unterhaltung."
             },
-            "communication": {
-                "label": "Kommunikation",
-                "show": "Kommunikation anzeigen",
-                "hide": "Kommunikation einklappen"
-            },
+            "label": "Kommunikation",
+            "show": "Kommunikation anzeigen",
+            "hide": "Kommunikation einklappen",
             "discussionSection": {
                 "searchBarDefault": "Suche nach Nachrichten",
                 "sortByDate": "Datum:",
