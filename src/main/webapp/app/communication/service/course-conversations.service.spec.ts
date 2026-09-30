@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -20,13 +20,13 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationWebsocketDTO } from 'app/communication/shared/entities/conversation/conversation-websocket-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MetisPostAction } from 'app/communication/metis.util';
+import { CommunicationCrudAction } from 'app/communication/communication.util';
 import dayjs from 'dayjs/esm';
-import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
+import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 
-describe('MetisConversationService', () => {
-    let metisConversationService: MetisConversationService;
+describe('CourseConversationsService', () => {
+    let courseConversationsService: CourseConversationsService;
     let conversationService: ConversationService;
     let groupChatService: GroupChatService;
     let oneToOneChatService: OneToOneChatService;
@@ -43,7 +43,7 @@ describe('MetisConversationService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: MetisConversationService, useClass: MetisConversationService },
+                { provide: CourseConversationsService, useClass: CourseConversationsService },
                 MockProvider(CourseManagementService),
                 MockProvider(GroupChatService),
                 MockProvider(ChannelService),
@@ -57,7 +57,7 @@ describe('MetisConversationService', () => {
         groupChat = generateExampleGroupChatDTO({ id: 1 });
         oneToOneChat = generateOneToOneChatDTO({ id: 2 });
         channel = generateExampleChannelDTO({ id: 3 } as ChannelDTO);
-        metisConversationService = TestBed.inject(MetisConversationService);
+        courseConversationsService = TestBed.inject(CourseConversationsService);
         groupChatService = TestBed.inject(GroupChatService);
         oneToOneChatService = TestBed.inject(OneToOneChatService);
         channelService = TestBed.inject(ChannelService);
@@ -77,15 +77,15 @@ describe('MetisConversationService', () => {
     });
 
     it('should create', () => {
-        expect(metisConversationService).toBeTruthy();
+        expect(courseConversationsService).toBeTruthy();
     });
 
     it('should set up the service correctly', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    expect(metisConversationService.course).toEqual(course);
-                    forkJoin([metisConversationService.isLoading$, metisConversationService.activeConversation$, metisConversationService.conversationsOfUser$]).subscribe({
+                    expect(courseConversationsService.course).toEqual(course);
+                    forkJoin([courseConversationsService.isLoading$, courseConversationsService.activeConversation$, courseConversationsService.conversationsOfUser$]).subscribe({
                         next: ([isLoading, activeConversation, conversations]) => {
                             expect(isLoading).toBe(false);
                             expect(activeConversation).toBeUndefined();
@@ -93,9 +93,9 @@ describe('MetisConversationService', () => {
                             done({});
                         },
                     });
-                    metisConversationService._isLoading$.complete();
-                    metisConversationService._activeConversation$.complete();
-                    metisConversationService._conversationsOfUser$.complete();
+                    courseConversationsService._isLoading$.complete();
+                    courseConversationsService._activeConversation$.complete();
+                    courseConversationsService._conversationsOfUser$.complete();
                 },
             });
         });
@@ -103,10 +103,10 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.setActiveConversation(groupChat);
-                    metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                    courseConversationsService.setActiveConversation(groupChat);
+                    courseConversationsService.activeConversation$.subscribe((activeConversation) => {
                         expect(activeConversation).toEqual(groupChat);
                         done({});
                     });
@@ -117,10 +117,10 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation by id', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.setActiveConversation(groupChat.id);
-                    metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                    courseConversationsService.setActiveConversation(groupChat.id);
+                    courseConversationsService.activeConversation$.subscribe((activeConversation) => {
                         expect(activeConversation).toEqual(groupChat);
                         done({});
                     });
@@ -132,10 +132,10 @@ describe('MetisConversationService', () => {
     it('should set has unread messages to true', () => {
         groupChat.unreadMessagesCount = 1;
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.setActiveConversation(groupChat);
-                    metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages) => {
+                    courseConversationsService.setActiveConversation(groupChat);
+                    courseConversationsService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages) => {
                         expect(hasUnreadMessages).toBe(true);
                         done({});
                     });
@@ -147,11 +147,11 @@ describe('MetisConversationService', () => {
     it("should show alert if channel doesn't exist", () => {
         groupChat.unreadMessagesCount = 1;
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const addAlertSpy = vi.spyOn(alertService, 'addAlert');
 
-                    metisConversationService.setActiveConversation(4);
+                    courseConversationsService.setActiveConversation(4);
                     expect(addAlertSpy).toHaveBeenCalledOnce();
                     done({});
                 },
@@ -161,12 +161,12 @@ describe('MetisConversationService', () => {
 
     it('should get conversations of users again if force refresh is called', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.setActiveConversation(groupChat);
+                    courseConversationsService.setActiveConversation(groupChat);
                     const getConversationsOfUserSpy = vi.spyOn(conversationService, 'getConversationsOfUser');
                     getConversationsOfUserSpy.mockClear();
-                    metisConversationService.forceRefresh().subscribe({
+                    courseConversationsService.forceRefresh().subscribe({
                         complete: () => {
                             expect(getConversationsOfUserSpy).toHaveBeenCalledOnce();
                             expect(getConversationsOfUserSpy).toHaveBeenCalledWith(1);
@@ -180,15 +180,15 @@ describe('MetisConversationService', () => {
 
     it('should keep the open conversation when a conversation that is not cached is requested', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.setActiveConversation(groupChat);
+                    courseConversationsService.setActiveConversation(groupChat);
 
-                    metisConversationService.setActiveConversation(9999);
+                    courseConversationsService.setActiveConversation(9999);
 
                     // closing the open conversation would empty the view and strip its id from the URL, so a reload
                     // could not restore it either
-                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
                         expect(activeConversation?.id).toBe(groupChat.id);
                         done({});
                     });
@@ -202,11 +202,11 @@ describe('MetisConversationService', () => {
         // fetches them is still in flight, because the route emits its query parameters straight away. Dropping that
         // request left the page on an empty view, because it is the only request that is ever made.
         return new Promise((done) => {
-            metisConversationService.setActiveConversation(groupChat.id);
+            courseConversationsService.setActiveConversation(groupChat.id);
 
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
                         expect(activeConversation?.id).toBe(groupChat.id);
                         done({});
                     });
@@ -220,7 +220,7 @@ describe('MetisConversationService', () => {
         // both wrong and, to the user, the only visible symptom of the race.
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
 
-        metisConversationService.setActiveConversation(4);
+        courseConversationsService.setActiveConversation(4);
 
         expect(addAlertSpy).not.toHaveBeenCalled();
     });
@@ -233,9 +233,9 @@ describe('MetisConversationService', () => {
         vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(conversationsResponse.asObservable());
 
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
                         expect(activeConversation?.id).toBe(groupChat.id);
                         done({});
                     });
@@ -243,8 +243,8 @@ describe('MetisConversationService', () => {
             });
 
             // Still loading: neither of these can be resolved against the cache yet.
-            metisConversationService.setActiveConversation(9999);
-            metisConversationService.setActiveConversation(groupChat.id);
+            courseConversationsService.setActiveConversation(9999);
+            courseConversationsService.setActiveConversation(groupChat.id);
 
             conversationsResponse.next(new HttpResponse({ body: [groupChat, oneToOneChat, channel] }));
             conversationsResponse.complete();
@@ -253,13 +253,13 @@ describe('MetisConversationService', () => {
 
     it('should still clear the active conversation when it is cleared on purpose', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.setActiveConversation(groupChat);
+                    courseConversationsService.setActiveConversation(groupChat);
 
-                    metisConversationService.setActiveConversation(undefined);
+                    courseConversationsService.setActiveConversation(undefined);
 
-                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
                         expect(activeConversation).toBeUndefined();
                         done({});
                     });
@@ -270,19 +270,19 @@ describe('MetisConversationService', () => {
 
     it('should keep the cached conversations and the active conversation when a force refresh fails', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.setActiveConversation(groupChat);
+                    courseConversationsService.setActiveConversation(groupChat);
                     vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-                    metisConversationService.forceRefresh().subscribe({
+                    courseConversationsService.forceRefresh().subscribe({
                         // the failure is passed on, so that subscribers cannot mistake it for an up to date list
                         error: () => {
                             // A failed refresh must not be mistaken for "the user has no conversations": dropping the cache
                             // would clear the active conversation and strip its id from the URL, so a reload could not restore it
                             forkJoin({
-                                conversations: metisConversationService.conversationsOfUser$.pipe(take(1)),
-                                activeConversation: metisConversationService.activeConversation$.pipe(take(1)),
+                                conversations: courseConversationsService.conversationsOfUser$.pipe(take(1)),
+                                activeConversation: courseConversationsService.activeConversation$.pipe(take(1)),
                             }).subscribe(({ conversations, activeConversation }) => {
                                 expect(conversations).toEqual([groupChat, oneToOneChat, channel]);
                                 expect(activeConversation?.id).toBe(groupChat.id);
@@ -299,9 +299,9 @@ describe('MetisConversationService', () => {
         return new Promise((done) => {
             vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             const isServiceSetUpValues: boolean[] = [];
-            metisConversationService.isServiceSetup$.subscribe((isSetUp) => isServiceSetUpValues.push(isSetUp));
+            courseConversationsService.isServiceSetup$.subscribe((isSetUp) => isServiceSetUpValues.push(isSetUp));
 
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 // the failure is passed on, so the caller does not record the service as instantiated
                 error: () => {
                     // announcing the service as ready with an empty cache would make every conversation opened from the
@@ -315,7 +315,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation to newly created channel', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newChannel = generateExampleChannelDTO({ id: 99 } as ChannelDTO);
                     const createChannelSpy = vi.spyOn(channelService, 'create').mockReturnValue(of(new HttpResponse({ body: newChannel })));
@@ -323,11 +323,11 @@ describe('MetisConversationService', () => {
                         .spyOn(conversationService, 'getConversationsOfUser')
                         .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newChannel] })));
                     createChannelSpy.mockClear();
-                    metisConversationService.createChannel(newChannel).subscribe({
+                    courseConversationsService.createChannel(newChannel).subscribe({
                         complete: () => {
                             expect(createChannelSpy).toHaveBeenCalledOnce();
                             expect(createChannelSpy).toHaveBeenCalledWith(course.id, newChannel);
-                            metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                            courseConversationsService.activeConversation$.subscribe((activeConversation) => {
                                 expect(activeConversation).toBe(newChannel);
                                 expect(getConversationSpy).toHaveBeenCalledTimes(2);
                                 done({});
@@ -341,7 +341,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation to newly created groupChat', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newGroupChat = generateExampleGroupChatDTO({ id: 99 });
                     const createGroupChatSpy = vi.spyOn(groupChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newGroupChat })));
@@ -349,11 +349,11 @@ describe('MetisConversationService', () => {
                         .spyOn(conversationService, 'getConversationsOfUser')
                         .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newGroupChat] })));
                     createGroupChatSpy.mockClear();
-                    metisConversationService.createGroupChat(['login']).subscribe({
+                    courseConversationsService.createGroupChat(['login']).subscribe({
                         complete: () => {
                             expect(createGroupChatSpy).toHaveBeenCalledOnce();
                             expect(createGroupChatSpy).toHaveBeenCalledWith(course.id, ['login']);
-                            metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                            courseConversationsService.activeConversation$.subscribe((activeConversation) => {
                                 expect(activeConversation).toBe(newGroupChat);
                                 expect(getConversationSpy).toHaveBeenCalledTimes(2);
                                 done({});
@@ -367,7 +367,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation to newly created one to one chat', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newOneToOneChat = generateOneToOneChatDTO({ id: 99 });
                     const createOneToOneChatSpy = vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newOneToOneChat })));
@@ -375,11 +375,11 @@ describe('MetisConversationService', () => {
                         .spyOn(conversationService, 'getConversationsOfUser')
                         .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newOneToOneChat] })));
                     createOneToOneChatSpy.mockClear();
-                    metisConversationService.createOneToOneChat('login').subscribe({
+                    courseConversationsService.createOneToOneChat('login').subscribe({
                         complete: () => {
                             expect(createOneToOneChatSpy).toHaveBeenCalledOnce();
                             expect(createOneToOneChatSpy).toHaveBeenCalledWith(course.id, 'login');
-                            metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                            courseConversationsService.activeConversation$.subscribe((activeConversation) => {
                                 expect(activeConversation).toBe(newOneToOneChat);
                                 expect(getConversationSpy).toHaveBeenCalledTimes(2);
                                 done({});
@@ -393,7 +393,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation to newly created one to one chat when calling with id', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newOneToOneChat = generateOneToOneChatDTO({ id: 99 });
                     const createOneToOneChatSpy = vi.spyOn(oneToOneChatService, 'createWithId').mockReturnValue(of(new HttpResponse({ body: newOneToOneChat })));
@@ -401,11 +401,11 @@ describe('MetisConversationService', () => {
                         .spyOn(conversationService, 'getConversationsOfUser')
                         .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newOneToOneChat] })));
                     createOneToOneChatSpy.mockClear();
-                    metisConversationService.createOneToOneChatWithId(1).subscribe({
+                    courseConversationsService.createOneToOneChatWithId(1).subscribe({
                         complete: () => {
                             expect(createOneToOneChatSpy).toHaveBeenCalledOnce();
                             expect(createOneToOneChatSpy).toHaveBeenCalledWith(course.id, 1);
-                            metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                            courseConversationsService.activeConversation$.subscribe((activeConversation) => {
                                 expect(activeConversation).toBe(newOneToOneChat);
                                 expect(getConversationSpy).toHaveBeenCalledTimes(2);
                                 done({});
@@ -419,14 +419,14 @@ describe('MetisConversationService', () => {
 
     it('should add new conversation to conversations of user on conversation create received', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.action = MetisPostAction.CREATE;
+                    websocketDTO.action = CommunicationCrudAction.CREATE;
                     websocketDTO.conversation = generateExampleChannelDTO({ id: 99 } as ChannelDTO);
 
                     receiveMockSubject.next(websocketDTO);
-                    metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
+                    courseConversationsService.conversationsOfUser$.subscribe((conversationsOfUser) => {
                         expect(conversationsOfUser).toEqual([groupChat, oneToOneChat, channel, websocketDTO.conversation]);
                         done({});
                     });
@@ -437,14 +437,14 @@ describe('MetisConversationService', () => {
 
     it('should update conversation in conversations of user on conversation update received', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.action = MetisPostAction.UPDATE;
+                    websocketDTO.action = CommunicationCrudAction.UPDATE;
                     websocketDTO.conversation = { ...channel, name: 'newtitle' } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
-                    metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
+                    courseConversationsService.conversationsOfUser$.subscribe((conversationsOfUser) => {
                         expect(conversationsOfUser).toContainEqual(websocketDTO.conversation);
                         expect(conversationsOfUser).not.toContainEqual(channel);
                         expect(conversationsOfUser).toContainEqual(groupChat);
@@ -459,16 +459,16 @@ describe('MetisConversationService', () => {
 
     it('should update conversation last message date in conversations of user on conversation new message received', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.action = MetisPostAction.NEW_MESSAGE;
+                    websocketDTO.action = CommunicationCrudAction.NEW_MESSAGE;
                     // 1 of january 2022
                     const lastMessageDate = dayjs('2022-01-01T00:00:00.000Z');
                     websocketDTO.conversation = { ...channel, lastMessageDate } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
-                    metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
+                    courseConversationsService.conversationsOfUser$.subscribe((conversationsOfUser) => {
                         // find updated conversation in cache
                         const updatedConversation = conversationsOfUser.find((conversation) => conversation.id === channel.id);
                         expect(updatedConversation!.lastMessageDate!.isSame(lastMessageDate)).toBe(true);
@@ -481,14 +481,14 @@ describe('MetisConversationService', () => {
 
     it('should remove conversation in conversations of user on conversation delete received', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(course).subscribe({
+            courseConversationsService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.action = MetisPostAction.DELETE;
+                    websocketDTO.action = CommunicationCrudAction.DELETE;
                     websocketDTO.conversation = { ...channel } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
-                    metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
+                    courseConversationsService.conversationsOfUser$.subscribe((conversationsOfUser) => {
                         expect(conversationsOfUser).not.toContainEqual(channel);
                         expect(conversationsOfUser).toContainEqual(groupChat);
                         expect(conversationsOfUser).toContainEqual(oneToOneChat);
@@ -504,28 +504,28 @@ describe('MetisConversationService', () => {
         vi.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(of(new HttpResponse<boolean>({ body: unreadMessages })));
         let numberOfSubscriptions = 0;
 
-        metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
+        courseConversationsService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
             expect(hasUnreadMessages).toBe(true);
             numberOfSubscriptions++;
         });
 
-        metisConversationService.checkForUnreadMessages(course);
+        courseConversationsService.checkForUnreadMessages(course);
 
         expect(numberOfSubscriptions).toBe(unreadMessages ? 1 : 0);
     });
 
     it('should set code of conduct', () => {
-        metisConversationService.setCodeOfConduct();
-        metisConversationService.isCodeOfConductPresented$.subscribe((isCodeOfConductPresented: boolean) => {
+        courseConversationsService.setCodeOfConduct();
+        courseConversationsService.isCodeOfConductPresented$.subscribe((isCodeOfConductPresented: boolean) => {
             expect(isCodeOfConductPresented).toBe(true);
         });
     });
 
     it('should check and accept code of conduct', () => {
         const checkStub = vi.spyOn(conversationService, 'checkIsCodeOfConductAccepted').mockReturnValue(of(new HttpResponse<boolean>({ body: false })));
-        metisConversationService.checkIsCodeOfConductAccepted(course);
+        courseConversationsService.checkIsCodeOfConductAccepted(course);
         let lastValue: boolean | undefined;
-        const sub = metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
+        const sub = courseConversationsService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
             lastValue = isCodeOfConductAccepted;
         });
         expect(lastValue).toBe(false);
@@ -533,9 +533,9 @@ describe('MetisConversationService', () => {
         expect(checkStub).toHaveBeenCalledOnce();
 
         const acceptStub = vi.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
-        metisConversationService.acceptCodeOfConduct(course);
+        courseConversationsService.acceptCodeOfConduct(course);
         let acceptedValue: boolean | undefined;
-        const sub2 = metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
+        const sub2 = courseConversationsService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
             acceptedValue = isCodeOfConductAccepted;
         });
         expect(acceptedValue).toBe(true);
@@ -544,24 +544,24 @@ describe('MetisConversationService', () => {
     });
 
     it('should handle new message', () => {
-        const postDTO: MetisPostDTO = {
+        const postDTO: PostBroadcastDTO = {
             post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
-            action: MetisPostAction.CREATE,
+            action: CommunicationCrudAction.CREATE,
         };
-        metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 0 } as ConversationDTO];
-        metisConversationService.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
-        expect(metisConversationService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
+        courseConversationsService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 0 } as ConversationDTO];
+        courseConversationsService.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
+        expect(courseConversationsService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
     });
 
     it('should mark messages as read', () => {
-        metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 1 } as ConversationDTO, { id: 2, unreadMessageCount: 1 } as ConversationDTO];
-        metisConversationService.markAsRead(2);
-        expect(metisConversationService['conversationsOfUser'][1].unreadMessagesCount).toBe(0);
+        courseConversationsService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 1 } as ConversationDTO, { id: 2, unreadMessageCount: 1 } as ConversationDTO];
+        courseConversationsService.markAsRead(2);
+        expect(courseConversationsService['conversationsOfUser'][1].unreadMessagesCount).toBe(0);
     });
 
     it('should call refresh after marking all channels as read', () => {
         const markAllChannelAsReadSpy = vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of());
-        metisConversationService.markAllChannelsAsRead(course);
+        courseConversationsService.markAllChannelsAsRead(course);
         expect(markAllChannelAsReadSpy).toHaveBeenCalledOnce();
     });
 
@@ -569,34 +569,34 @@ describe('MetisConversationService', () => {
         it('should update last read date and unread messages count of the conversation', () => {
             groupChat.unreadMessagesCount = 0;
             groupChat.hasUnreadMessage = false;
-            (metisConversationService as any).activeConversation = groupChat;
-            (metisConversationService as any).conversationsOfUser = [groupChat];
+            (courseConversationsService as any).activeConversation = groupChat;
+            (courseConversationsService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
             const conversationId = groupChat.id;
             const lastReadDate = dayjs();
             const unreadMessagesCount = 4;
-            (metisConversationService as any).updateConversationUnreadState(conversationId, lastReadDate, unreadMessagesCount);
+            (courseConversationsService as any).updateConversationUnreadState(conversationId, lastReadDate, unreadMessagesCount);
 
-            expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(unreadMessagesCount);
-            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBe(true);
-            expect((metisConversationService as any).activeConversation.lastReadDate).toBeDefined();
+            expect((courseConversationsService as any).activeConversation.unreadMessagesCount).toBe(unreadMessagesCount);
+            expect((courseConversationsService as any).activeConversation.hasUnreadMessage).toBe(true);
+            expect((courseConversationsService as any).activeConversation.lastReadDate).toBeDefined();
 
-            expect((metisConversationService as any).conversationsOfUser[0].unreadMessagesCount).toBe(unreadMessagesCount);
-            expect((metisConversationService as any).conversationsOfUser[0].hasUnreadMessage).toBe(true);
-            expect((metisConversationService as any).conversationsOfUser[0].lastReadDate).toBeDefined();
+            expect((courseConversationsService as any).conversationsOfUser[0].unreadMessagesCount).toBe(unreadMessagesCount);
+            expect((courseConversationsService as any).conversationsOfUser[0].hasUnreadMessage).toBe(true);
+            expect((courseConversationsService as any).conversationsOfUser[0].lastReadDate).toBeDefined();
 
-            expect((metisConversationService as any).isMarkedAsUnread).toBe(true);
-            expect(nextSpy).toHaveBeenCalledWith((metisConversationService as any).conversationsOfUser);
+            expect((courseConversationsService as any).isMarkedAsUnread).toBe(true);
+            expect(nextSpy).toHaveBeenCalledWith((courseConversationsService as any).conversationsOfUser);
         });
 
         it('should not update conversationsOfUser if conversation is not found in the array', () => {
             const nonExistentConversation = { ...groupChat, id: 999 };
-            (metisConversationService as any).conversationsOfUser = [groupChat];
+            (courseConversationsService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
 
-            (metisConversationService as any).updateConversationUnreadState(nonExistentConversation.id, dayjs(), 5);
+            (courseConversationsService as any).updateConversationUnreadState(nonExistentConversation.id, dayjs(), 5);
 
             expect(nextSpy).not.toHaveBeenCalled();
         });
@@ -604,14 +604,14 @@ describe('MetisConversationService', () => {
         it('should not update active conversation if conversationId does not match', () => {
             groupChat.unreadMessagesCount = 0;
             groupChat.hasUnreadMessage = false;
-            (metisConversationService as any).activeConversation = groupChat;
-            (metisConversationService as any).conversationsOfUser = [groupChat];
+            (courseConversationsService as any).activeConversation = groupChat;
+            (courseConversationsService as any).conversationsOfUser = [groupChat];
             const nonExistentConversation = { ...oneToOneChat, id: 999 };
 
-            (metisConversationService as any).updateConversationUnreadState(nonExistentConversation.id, dayjs(), 5);
+            (courseConversationsService as any).updateConversationUnreadState(nonExistentConversation.id, dayjs(), 5);
 
-            expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
-            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBe(false);
+            expect((courseConversationsService as any).activeConversation.unreadMessagesCount).toBe(0);
+            expect((courseConversationsService as any).activeConversation.hasUnreadMessage).toBe(false);
         });
     });
 
@@ -619,43 +619,43 @@ describe('MetisConversationService', () => {
         it('should update last read date and unread messages count for active conversation', () => {
             groupChat.unreadMessagesCount = 5;
             groupChat.hasUnreadMessage = true;
-            (metisConversationService as any).activeConversation = groupChat;
-            (metisConversationService as any).conversationsOfUser = [groupChat];
+            (courseConversationsService as any).activeConversation = groupChat;
+            (courseConversationsService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
 
-            (metisConversationService as any).updateConversationAsRead();
+            (courseConversationsService as any).updateConversationAsRead();
 
-            expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
-            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBe(false);
-            expect((metisConversationService as any).activeConversation.lastReadDate).toBeDefined();
+            expect((courseConversationsService as any).activeConversation.unreadMessagesCount).toBe(0);
+            expect((courseConversationsService as any).activeConversation.hasUnreadMessage).toBe(false);
+            expect((courseConversationsService as any).activeConversation.lastReadDate).toBeDefined();
 
-            expect((metisConversationService as any).conversationsOfUser[0].unreadMessagesCount).toBe(0);
-            expect((metisConversationService as any).conversationsOfUser[0].hasUnreadMessage).toBe(false);
-            expect((metisConversationService as any).conversationsOfUser[0].lastReadDate).toBeDefined();
+            expect((courseConversationsService as any).conversationsOfUser[0].unreadMessagesCount).toBe(0);
+            expect((courseConversationsService as any).conversationsOfUser[0].hasUnreadMessage).toBe(false);
+            expect((courseConversationsService as any).conversationsOfUser[0].lastReadDate).toBeDefined();
 
-            expect(nextSpy).toHaveBeenCalledWith((metisConversationService as any).conversationsOfUser);
+            expect(nextSpy).toHaveBeenCalledWith((courseConversationsService as any).conversationsOfUser);
         });
 
         it('should not update anything if there is no active conversation', () => {
-            (metisConversationService as any).activeConversation = undefined;
-            (metisConversationService as any).conversationsOfUser = [groupChat];
+            (courseConversationsService as any).activeConversation = undefined;
+            (courseConversationsService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
 
-            (metisConversationService as any).updateConversationAsRead();
+            (courseConversationsService as any).updateConversationAsRead();
 
             expect(nextSpy).not.toHaveBeenCalled();
         });
 
         it('should not update anything if isMarkedAsUnread flag is true', () => {
-            (metisConversationService as any).activeConversation = groupChat;
-            (metisConversationService as any).conversationsOfUser = [groupChat];
-            (metisConversationService as any).isMarkedAsUnread = true;
+            (courseConversationsService as any).activeConversation = groupChat;
+            (courseConversationsService as any).conversationsOfUser = [groupChat];
+            (courseConversationsService as any).isMarkedAsUnread = true;
 
-            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
 
-            (metisConversationService as any).updateConversationAsRead();
+            (courseConversationsService as any).updateConversationAsRead();
 
             expect(nextSpy).not.toHaveBeenCalled();
         });
@@ -664,35 +664,35 @@ describe('MetisConversationService', () => {
             groupChat.unreadMessagesCount = 5;
             groupChat.hasUnreadMessage = true;
             const nonExistentConversation = { ...groupChat, id: 999 };
-            (metisConversationService as any).activeConversation = nonExistentConversation;
-            (metisConversationService as any).conversationsOfUser = [groupChat];
+            (courseConversationsService as any).activeConversation = nonExistentConversation;
+            (courseConversationsService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
 
-            (metisConversationService as any).updateConversationAsRead();
+            (courseConversationsService as any).updateConversationAsRead();
 
             expect(nextSpy).not.toHaveBeenCalled();
 
-            expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
-            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBe(false);
+            expect((courseConversationsService as any).activeConversation.unreadMessagesCount).toBe(0);
+            expect((courseConversationsService as any).activeConversation.hasUnreadMessage).toBe(false);
         });
     });
 
     it('should return correct params object with conversationId', () => {
         const conversationId = 42;
-        const result = MetisConversationService.getQueryParamsForConversation(conversationId);
+        const result = CourseConversationsService.getQueryParamsForConversation(conversationId);
         expect(result).toEqual({ conversationId: 42 });
     });
 
     it('should return correct route components for given courseId', () => {
         const courseId = 123;
-        const result = MetisConversationService.getLinkForConversation(courseId);
+        const result = CourseConversationsService.getLinkForConversation(courseId);
         expect(result).toEqual(['/courses', 123, 'communication']);
     });
 
     describe('markAllChannelsAsRead', () => {
         it('should update all conversations and call service', () => {
-            (metisConversationService as any).conversationsOfUser = [
+            (courseConversationsService as any).conversationsOfUser = [
                 { ...groupChat, unreadMessagesCount: 3, hasUnreadMessage: true },
                 { ...oneToOneChat, unreadMessagesCount: 2, hasUnreadMessage: true },
                 { ...channel, unreadMessagesCount: 1, hasUnreadMessage: true },
@@ -701,17 +701,17 @@ describe('MetisConversationService', () => {
             // @ts-ignore
             const markAllChannelsAsReadSpy = vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of({}));
 
-            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((courseConversationsService as any)._conversationsOfUser$, 'next');
 
-            metisConversationService.markAllChannelsAsRead(course);
+            courseConversationsService.markAllChannelsAsRead(course);
 
             // @ts-ignore
-            (metisConversationService as any).conversationsOfUser.forEach((conversation) => {
+            (courseConversationsService as any).conversationsOfUser.forEach((conversation) => {
                 expect(conversation.unreadMessagesCount).toBe(0);
                 expect(conversation.hasUnreadMessage).toBe(false);
             });
 
-            expect(nextSpy).toHaveBeenCalledWith((metisConversationService as any).conversationsOfUser);
+            expect(nextSpy).toHaveBeenCalledWith((courseConversationsService as any).conversationsOfUser);
 
             expect(markAllChannelsAsReadSpy).toHaveBeenCalledWith(course.id);
         });
@@ -721,7 +721,7 @@ describe('MetisConversationService', () => {
 
             const markAllChannelsAsReadSpy = vi.spyOn(conversationService, 'markAllChannelsAsRead');
 
-            const result = metisConversationService.markAllChannelsAsRead(courseWithoutId);
+            const result = courseConversationsService.markAllChannelsAsRead(courseWithoutId);
 
             result.subscribe({
                 complete: () => {
@@ -738,7 +738,7 @@ describe('MetisConversationService', () => {
 
             const errorSpy = vi.spyOn(alertService, 'error');
 
-            metisConversationService.markAllChannelsAsRead(course);
+            courseConversationsService.markAllChannelsAsRead(course);
 
             expect(errorSpy).not.toHaveBeenCalled();
         });
@@ -746,22 +746,22 @@ describe('MetisConversationService', () => {
 
     it('should set hasUnreadMessages to true only if there are unread messages in non-muted conversations', () => {
         // All unread in muted conversations
-        (metisConversationService as any).conversationsOfUser = [
+        (courseConversationsService as any).conversationsOfUser = [
             { unreadMessagesCount: 2, isMuted: true },
             { unreadMessagesCount: 0, isMuted: false },
         ];
-        (metisConversationService as any).hasUnreadMessagesCheck();
+        (courseConversationsService as any).hasUnreadMessagesCheck();
         // hasUnreadMessages starts as false and check finds no unread non-muted, so value stays false (no emission)
-        expect((metisConversationService as any).hasUnreadMessages).toBe(false);
+        expect((courseConversationsService as any).hasUnreadMessages).toBe(false);
 
         // Unread in non-muted conversation
-        (metisConversationService as any).conversationsOfUser = [
+        (courseConversationsService as any).conversationsOfUser = [
             { unreadMessagesCount: 2, isMuted: false },
             { unreadMessagesCount: 0, isMuted: true },
         ];
-        (metisConversationService as any).hasUnreadMessagesCheck();
+        (courseConversationsService as any).hasUnreadMessagesCheck();
         let hasUnreadValue: boolean | undefined;
-        const sub = metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
+        const sub = courseConversationsService.hasUnreadMessages$.subscribe((hasUnread) => {
             hasUnreadValue = hasUnread;
         });
         expect(hasUnreadValue).toBe(true);

@@ -4,7 +4,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import dayjs from 'dayjs';
 
-export class MockMetisConversationService {
+export class MockCourseConversationsService {
     get course(): Course | undefined {
         return undefined;
     }

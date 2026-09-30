@@ -25,9 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
@@ -112,7 +112,7 @@ public class GroupChatResource extends ConversationManagementResource {
         courseNotificationService.sendCourseNotification(addedToChannelNotification,
                 chatMembers.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
 
-        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
+        conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, groupChat, chatMembers);
 
         return ResponseEntity.created(new URI("/api/group-chats/" + groupChat.getId())).body(conversationDTOService.convertGroupChatToDto(requestingUser, groupChat));
     }

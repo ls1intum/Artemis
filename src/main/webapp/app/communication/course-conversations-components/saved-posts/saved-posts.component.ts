@@ -79,7 +79,7 @@ export class SavedPostsComponent implements OnDestroy {
             .pipe(take(1))
             .subscribe({
                 next: () => this.hiddenPosts.update((hiddenPosts) => [...hiddenPosts, post.id!]),
-                error: () => this.alertService.error('artemisApp.metis.post.changeSavedStatusError'),
+                error: () => this.alertService.error('artemisApp.communication.post.changeSavedStatusError'),
             });
     }
 
@@ -89,7 +89,7 @@ export class SavedPostsComponent implements OnDestroy {
             .pipe(take(1))
             .subscribe({
                 next: () => this.hiddenPosts.update((hiddenPosts) => [...hiddenPosts, post.id!]),
-                error: () => this.alertService.error('artemisApp.metis.post.removeBookmarkError'),
+                error: () => this.alertService.error('artemisApp.communication.post.removeBookmarkError'),
             });
     }
 
