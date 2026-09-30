@@ -21,9 +21,9 @@
             />
             <!-- Tick markers for each discrete submission timestamp (a native range input has no tick marks). A tick at
                  `left: (i / (count - 1)) * 100%` aligns with the handle at step i. Decorative, so hidden from assistive tech. -->
-            <div class="relative mt-0.5 mb-8 h-1.5 w-[98%]" aria-hidden="true">
+            <div class="relative mt-0.5 mb-12 h-1.5 w-[98%]" aria-hidden="true">
                 @for (percentage of submissionTickPercentages(); track $index) {
-                    <span class="absolute top-0 size-1.5 -translate-x-1/2 rounded-full bg-muted-color" [style.left.%]="percentage"></span>
+                    <span class="absolute top-0 size-1.5 -translate-x-1/2 rounded-full bg-(--p-text-muted-color)" [style.left.%]="percentage"></span>
                 }
             </div>
         </div>

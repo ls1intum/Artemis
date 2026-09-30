@@ -78,13 +78,13 @@
                                     <th colspan="3" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
                                 }
                                 @if (gradingScaleExists() && !isBonus()) {
-                                    <th colspan="3" style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
+                                    <th colspan="3" class="correction-divider" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
                                 }
                                 @if (!gradingScaleExists() || isBonus()) {
                                     <th colspan="2" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
                                 }
                                 @if (!gradingScaleExists() || isBonus()) {
-                                    <th colspan="2" style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
+                                    <th colspan="2" class="correction-divider" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
                                 }
                             </tr>
                         </thead>
@@ -98,13 +98,10 @@
                             <th jhiTranslate="artemisApp.examScores.submittedColumn"></th>
                             <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
                             @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                                <th style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.passedColumn"></th>
+                                <th class="correction-divider" jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <th
-                                    [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid grey' : undefined"
-                                    jhiTranslate="artemisApp.examScores.submittedColumn"
-                                ></th>
+                                <th [class.correction-divider]="!gradingScaleExists() || isBonus()" jhiTranslate="artemisApp.examScores.submittedColumn"></th>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
                                 <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
@@ -128,10 +125,10 @@
                                 {{ tableState.absoluteAmountOfTotalExams }}
                             </td>
                             @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                                <td style="border-left: 3px solid lightgrey"></td>
+                                <td class="correction-divider"></td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <td [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid lightgrey' : undefined"></td>
+                                <td [class.correction-divider]="!gradingScaleExists() || isBonus()"></td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
                                 <td></td>
@@ -153,7 +150,7 @@
                             <td>{{ tableState.averagePointsSubmitted }} ({{ tableState.averageScoreSubmitted }}%)</td>
                             <td>{{ tableState.averagePointsTotal }} ({{ tableState.averageScoreTotal }}%)</td>
                             @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                                <td style="border-left: 3px solid lightgrey">
+                                <td class="correction-divider">
                                     {{
                                         aggregatedExamResults().meanPointsPassedInFirstCorrection !== null
                                             ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsPassedInFirstCorrection)
@@ -168,7 +165,7 @@
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <td [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid lightgrey' : undefined">
+                                <td [class.correction-divider]="!gradingScaleExists() || isBonus()">
                                     {{ tableState.averagePointsSubmittedInFirstCorrection }}
                                     ({{ tableState.averageScoreSubmittedInFirstCorrection }}%)
                                 </td>
@@ -189,12 +186,12 @@
                                 <td>{{ tableState.averageGradeSubmitted }}</td>
                                 <td>{{ tableState.averageGradeTotal }}</td>
                                 @if (hasSecondCorrectionAndStarted() && !isBonus()) {
-                                    <td style="border-left: 3px solid lightgrey">
+                                    <td class="correction-divider">
                                         {{ aggregatedExamResults().meanGradePassedInFirstCorrection !== null ? aggregatedExamResults().meanGradePassedInFirstCorrection : '-' }}
                                     </td>
                                 }
                                 @if (hasSecondCorrectionAndStarted()) {
-                                    <td [style.border-left]="isBonus() ? '3px solid lightgrey' : undefined">
+                                    <td [class.correction-divider]="isBonus()">
                                         {{ tableState.averageGradeSubmittedInFirstCorrection }}
                                     </td>
                                 }
@@ -225,7 +222,7 @@
                                 ({{ tableState.medianScoreTotal }}%)
                             </td>
                             @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                                <td style="border-left: 3px solid lightgrey">
+                                <td class="correction-divider">
                                     {{
                                         aggregatedExamResults().medianPassedInFirstCorrection !== null
                                             ? roundAndPerformLocalConversion(aggregatedExamResults().medianPassedInFirstCorrection)
@@ -240,7 +237,7 @@
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <td [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid lightgrey' : undefined">
+                                <td [class.correction-divider]="!gradingScaleExists() || isBonus()">
                                     {{ tableState.medianPointsSubmittedInFirstCorrection }}
                                     ({{ tableState.medianScoreSubmittedInFirstCorrection }}%)
                                 </td>
@@ -261,14 +258,12 @@
                                 <td>{{ tableState.medianGradeSubmitted }}</td>
                                 <td>{{ tableState.medianGradeTotal }}</td>
                                 @if (!isBonus() && hasSecondCorrectionAndStarted()) {
-                                    <td style="border-left: 3px solid lightgrey">
-                                        >{{
-                                            aggregatedExamResults().medianGradePassedInFirstCorrection !== null ? aggregatedExamResults().medianGradePassedInFirstCorrection : '-'
-                                        }}
+                                    <td class="correction-divider">
+                                        {{ aggregatedExamResults().medianGradePassedInFirstCorrection !== null ? aggregatedExamResults().medianGradePassedInFirstCorrection : '-' }}
                                     </td>
                                 }
                                 @if (hasSecondCorrectionAndStarted()) {
-                                    <td [style.border-left]="isBonus() ? '3px solid lightgrey' : undefined">
+                                    <td [class.correction-divider]="isBonus()">
                                         {{ tableState.medianGradeSubmittedInFirstCorrection }}
                                     </td>
                                 }
@@ -295,7 +290,7 @@
                             </td>
                             <td>{{ tableState.standardDeviationTotal }}</td>
                             @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                                <td style="border-left: 3px solid lightgrey">
+                                <td class="correction-divider">
                                     {{
                                         aggregatedExamResults().standardDeviationPassedInFirstCorrection !== null
                                             ? roundAndPerformLocalConversion(aggregatedExamResults().standardDeviationPassedInFirstCorrection)
@@ -304,7 +299,7 @@
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <td [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid lightgrey' : undefined">
+                                <td [class.correction-divider]="!gradingScaleExists() || isBonus()">
                                     {{ tableState.standardDeviationSubmittedInFirstCorrection }}
                                 </td>
                             }
@@ -333,7 +328,7 @@
                                     {{ tableState.standardGradeDeviationTotal }}
                                 </td>
                                 @if (hasSecondCorrectionAndStarted() && !isBonus()) {
-                                    <td style="border-left: 3px solid lightgrey">
+                                    <td class="correction-divider">
                                         {{
                                             aggregatedExamResults().standardGradeDeviationPassedInFirstCorrection !== null
                                                 ? roundAndPerformLocalConversion(aggregatedExamResults().standardGradeDeviationPassedInFirstCorrection)
@@ -342,7 +337,7 @@
                                     </td>
                                 }
                                 @if (hasSecondCorrectionAndStarted()) {
-                                    <td [style.border-left]="isBonus() ? '3px solid lightgrey' : undefined">
+                                    <td [class.correction-divider]="isBonus()">
                                         {{ tableState.standardGradeDeviationSubmittedInFirstCorrection }}
                                     </td>
                                 }
@@ -631,12 +626,12 @@
                                     </td>
                                 }
                                 @if (gradingScaleExists() && !isBonus() && studentResult.overallGrade && studentResult.hasPassed) {
-                                    <td style="text-align: center">
+                                    <td class="text-center">
                                         <fa-icon [icon]="faCheckCircle" class="text-2xl text-state-success" />
                                     </td>
                                 }
                                 @if (gradingScaleExists() && !isBonus() && studentResult.overallGrade && !studentResult.hasPassed) {
-                                    <td style="text-align: center">
+                                    <td class="text-center">
                                         <fa-icon [icon]="faTimes" class="text-2xl text-state-danger" />
                                     </td>
                                 }

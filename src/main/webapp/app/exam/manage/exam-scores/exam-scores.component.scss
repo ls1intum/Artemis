@@ -4,3 +4,8 @@
         background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
     }
 }
+
+// Separates the columns of the first correction from those of the second correction.
+.correction-divider {
+    border-left: 3px solid var(--tumaet-ui-border-color);
+}

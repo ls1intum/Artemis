@@ -1,5 +1,5 @@
 <tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.examManagement.editWorkingTime.title' | artemisTranslate" size="medium">
-    <form name="workingTimeForm" (ngSubmit)="confirmUpdateWorkingTime()" #editForm="ngForm">
+    <form name="workingTimeForm" (ngSubmit)="editForm.valid && !isLoading() && confirmUpdateWorkingTime()" #editForm="ngForm">
         <div class="flex flex-col items-start gap-4">
             <jhi-working-time-control
                 name="workingTimeSeconds"

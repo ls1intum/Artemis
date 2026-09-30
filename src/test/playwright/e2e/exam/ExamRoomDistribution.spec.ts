@@ -62,7 +62,7 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
         const search = page.getByPlaceholder('Search by room number, name, and/or building');
         await search.click();
         await search.pressSequentially('Bauer');
-        await page.getByRole('option').first().click();
+        await page.getByRole('option', { name: /Bauer/ }).first().click();
         return page.getByRole('dialog');
     }
 

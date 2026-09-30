@@ -1,5 +1,5 @@
-<div class="m-4">
-    <div class="flex flex-col gap-4">
+<div class="m-2">
+    <div class="flex flex-col gap-2">
         <h2 class="m-0"><span jhiTranslate="artemisApp.examRooms.management.title"></span></h2>
         <div>
             <span jhiTranslate="artemisApp.examRooms.management.introText"></span>
@@ -31,7 +31,7 @@
             <div jhiTranslate="entity.action.saving"></div>
         }
         @if (hasUploadInformation()) {
-            <tumaet-ui-card>
+            <tumaet-ui-card class="mt-4">
                 <h3 class="m-0 mb-2"><span jhiTranslate="artemisApp.examRooms.management.uploadSummary.title"></span></h3>
                 <ul class="m-0 ps-6">
                     <li><strong jhiTranslate="artemisApp.examRooms.management.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
@@ -44,7 +44,7 @@
             <div jhiTranslate="artemisApp.examRooms.management.deleting"></div>
         }
         @if (hasDeletionInformation()) {
-            <tumaet-ui-card>
+            <tumaet-ui-card class="mt-4">
                 <h3 class="m-0 mb-2"><span jhiTranslate="artemisApp.examRooms.management.deletionSummary.title"></span></h3>
                 <ul class="m-0 ps-6">
                     <li><strong jhiTranslate="artemisApp.examRooms.management.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>

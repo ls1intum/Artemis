@@ -40,8 +40,7 @@
                                             @for (exercise of exerciseGroup.exercises; track exercise) {
                                                 @let selected = isSelected(exercise, exerciseGroup);
                                                 <tr
-                                                    class="cursor-pointer"
-                                                    [class.bg-selected]="selected"
+                                                    [class]="selected ? 'cursor-pointer bg-highlight!' : 'cursor-pointer'"
                                                     [attr.aria-selected]="selected"
                                                     [id]="'exercise-' + exercise.id"
                                                     (click)="onSelectExercise(exercise, exerciseGroup)"

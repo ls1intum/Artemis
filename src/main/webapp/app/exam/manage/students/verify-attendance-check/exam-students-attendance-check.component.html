@@ -8,7 +8,7 @@
             <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
         </div>
     } @else {
-        <div class="flex border-b border-border pb-2">
+        <div class="flex border-b border-(--border-color) pb-2">
             @if (!hasExamStarted()) {
                 <div data-testid="exam-not-started">
                     <tumaet-ui-tag severity="danger">

@@ -661,10 +661,6 @@
                     "AttendanceNotChecked": "Attendance check failed",
                     "AttendanceChecked": "Attendance check passed"
                 },
-                "filterGroup": {
-                    "progress": "Progress",
-                    "attendance": "Attendance"
-                },
                 "menu": {
                     "manageStudents": "Students",
                     "examLogistics": "Logistics",

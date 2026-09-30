@@ -178,17 +178,20 @@
                 <fa-icon [icon]="faEye" />
             </a>
         } @else {
-            <button
-                type="button"
-                tumAetUiButton
-                size="small"
-                severity="secondary"
-                variant="outlined"
-                disabled
-                [attr.aria-label]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
-            >
-                <fa-icon [icon]="faEye" />
-            </button>
+            <!-- A disabled button gets no pointer events, so the tooltip sits on the wrapper. -->
+            <span class="inline-flex" [tumAetUiTooltip]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    severity="secondary"
+                    variant="outlined"
+                    disabled
+                    [attr.aria-label]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faEye" />
+                </button>
+            </span>
         }
         <button
             type="button"

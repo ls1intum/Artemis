@@ -25,7 +25,7 @@
                     [initChannelName]="isImport() || exam.id === undefined"
                 />
                 @if (!exam.title?.trim()) {
-                    <div class="text-state-danger text-sm mt-n2 block" data-testid="title-validation-message" jhiTranslate="artemisApp.examManagement.titleMissingOrNotValid"></div>
+                    <div class="-mt-2 block text-sm text-state-danger" data-testid="title-validation-message" jhiTranslate="artemisApp.examManagement.titleMissingOrNotValid"></div>
                 }
             </div>
             <div class="mb-4">
@@ -115,8 +115,10 @@
                             </tumaet-ui-dialog>
                         }
                         <div class="mb-4 flex flex-col gap-1">
-                            <label for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
-                            <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
+                            <div>
+                                <label for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
+                                <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
+                            </div>
                             @if (!exam.testExam) {
                                 <input tumAetUiInput id="workingTimeInMinutes" readonly disabled type="text" class="w-full" [value]="workingTimeInMinutesRounded" />
                                 @if (isWorkingTimeTooHigh) {
@@ -143,8 +145,10 @@
                             }
                         </div>
                         <div class="flex flex-col gap-1">
-                            <label for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
-                            <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
+                            <div>
+                                <label for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
+                                <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
+                            </div>
                             <input
                                 tumAetUiInput
                                 id="gracePeriod"
@@ -300,7 +304,6 @@
             <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <jhi-date-time-picker
-                        class="form-element"
                         name="exampleSolutionPublicationDate"
                         labelName="{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.exampleSolutionPublicationDateTooltip' | artemisTranslate }}"

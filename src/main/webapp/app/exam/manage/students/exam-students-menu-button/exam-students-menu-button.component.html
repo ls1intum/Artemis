@@ -22,13 +22,18 @@
                 data-testid="exam-students-menu-entry"
                 [disabled]="item.disabled ?? false"
                 [class.text-state-danger]="item.danger"
-                [tumAetUiTooltip]="item.tooltip ? (item.tooltip | artemisTranslate) : ''"
                 (triggered)="item.command()"
             >
                 @if (item.icon) {
                     <fa-icon [fixedWidth]="true" [icon]="item.icon" />
                 }
-                <span data-testid="exam-students-menu-item" [jhiTranslate]="item.label"></span>
+                <!-- A disabled entry ignores the pointer, so the label takes it back to show why the entry is unavailable. -->
+                <span
+                    data-testid="exam-students-menu-item"
+                    class="pointer-events-auto"
+                    [tumAetUiTooltip]="item.tooltip ? (item.tooltip | artemisTranslate) : ''"
+                    [jhiTranslate]="item.label"
+                ></span>
             </button>
         }
     </tumaet-ui-menu>
