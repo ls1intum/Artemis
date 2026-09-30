@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
@@ -445,16 +446,32 @@ public class LocalCIResultProcessingService {
             }
             log.info("Finalized build group {} of participation {}, whose aggregated result had stayed in progress", buildGroupId, participation.getId());
             programmingMessagingService.notifyUserAboutNewResult(finalizedResult, participation);
-            // A solution build of a tests push carries the tests commit as the commit it built, see LocalCITriggerService.
             if (buildJob.getRepositoryType() == RepositoryType.SOLUTION
                     && (buildJob.getTriggeredByPushTo() == RepositoryType.TESTS || buildJob.getTriggeredByPushTo() == RepositoryType.AUXILIARY)) {
-                triggerTemplateBuild(buildJob.getExerciseId(), buildJob.getBuildJobId(), buildJob.getCommitHash(), buildJob.getTriggeredByPushTo());
+                triggerTemplateBuild(buildJob.getExerciseId(), buildJob.getBuildJobId(), testCommitHashOf(finalizedResult, buildJob), buildJob.getTriggeredByPushTo());
             }
             return true;
         }
         finally {
             aggregationLocks.unlock(buildGroupId);
         }
+    }
+
+    /**
+     * The commit of the test repository that a solution build of a tests or auxiliary push was built against. The build
+     * config that names it is gone once the job has left the queue, but the build's result belongs to the submission the
+     * push created for that commit. The job itself only carries the commit for a tests push (see LocalCITriggerService);
+     * an auxiliary push is triggered without one.
+     *
+     * @param finalizedResult the finalized result of the solution build
+     * @param buildJob        a job of the solution build
+     * @return the test commit of the result's submission, or the job's commit if the result has no such submission
+     */
+    private static String testCommitHashOf(Result finalizedResult, BuildJob buildJob) {
+        if (finalizedResult.getSubmission() instanceof ProgrammingSubmission submission && submission.getType() == SubmissionType.TEST && submission.getCommitHash() != null) {
+            return submission.getCommitHash();
+        }
+        return buildJob.getCommitHash();
     }
 
     /**

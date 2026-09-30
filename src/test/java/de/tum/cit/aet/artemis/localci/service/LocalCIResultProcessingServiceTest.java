@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -715,6 +716,31 @@ class LocalCIResultProcessingServiceTest {
         // the job carries the tests commit as the commit it built, which is what the template is built against
         verify(programmingTriggerService, timeout(2000)).triggerTemplateBuildAndNotifyUser(EXERCISE_ID, "commit", SubmissionType.TEST, RepositoryType.TESTS);
         verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, solutionParticipation);
+    }
+
+    @Test
+    void theSweepRebuildsTheTemplateAgainstTheTestCommitAfterASolutionBuildOfAnAuxiliaryPush() {
+        // An auxiliary push triggers the solution build without a commit, so its jobs carry none. The template build is
+        // triggered with the test commit of the submission the push created, as on the direct path, which reads it from
+        // the build config; without it the template's submission would have no commit to match its result by.
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
+        withACompleteGroupInProgress(containerJob(RepositoryType.SOLUTION, RepositoryType.AUXILIARY, "group-1", 2, "container_b"), completionDate);
+        buildJobRepository.findAllByBuildGroupId("group-1").forEach(job -> job.setCommitHash(null));
+        var solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(PARTICIPATION_ID);
+        solutionParticipation.setProgrammingExercise(exercise);
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.of(solutionParticipation));
+        ProgrammingSubmission testSubmission = new ProgrammingSubmission();
+        testSubmission.setType(SubmissionType.TEST);
+        testSubmission.setCommitHash("test-commit");
+        Result finalizedResult = new Result();
+        finalizedResult.setCompletionDate(completionDate);
+        finalizedResult.setSubmission(testSubmission);
+        when(programmingExerciseGradingService.finalizeContainerResult(7L, solutionParticipation, true, false, completionDate)).thenReturn(finalizedResult);
+
+        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+
+        verify(programmingTriggerService, timeout(2000)).triggerTemplateBuildAndNotifyUser(EXERCISE_ID, "test-commit", SubmissionType.TEST, RepositoryType.AUXILIARY);
     }
 
     @Test
