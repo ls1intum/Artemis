@@ -46,27 +46,17 @@ export class StudentExamManagementPage {
         return this.page.locator('p-table tbody tr');
     }
 
-    private async checkPropertyValue(property: string, value: string, studentName: string) {
+    private async checkPropertyValue(column: string, value: string, studentName: string) {
         const table = this.page.locator('p-table').first();
         await table.waitFor({ state: 'visible' });
-        const headers = table.locator('thead th');
-        let propertyIndex: number | undefined;
-
-        for (let index = 0; index < (await headers.count()); index++) {
-            if (await headers.nth(index).filter({ hasText: property }).isVisible()) {
-                propertyIndex = index;
-                break;
-            }
-        }
-
-        expect(propertyIndex).toBeDefined();
         const row = table.locator('tbody tr', { hasText: studentName }).first();
-        await expect(row.locator('td').nth(propertyIndex!)).toContainText(value);
+        await expect(row.locator(`[data-testid="table-cell"][data-column="${column}"]`)).toContainText(value);
     }
 
-    async checkStudentExamProperty(username: string, property: string, value: string) {
+    /** @param column the field of the column in the table, for example `progress` or `workingTime` */
+    async checkStudentExamProperty(username: string, column: string, value: string) {
         const studentInfo = await users.getUserInfo(username, this.page);
-        await this.checkPropertyValue(property, value, studentInfo.name!);
+        await this.checkPropertyValue(column, value, studentInfo.name!);
     }
 
     async checkStudent(username: string) {

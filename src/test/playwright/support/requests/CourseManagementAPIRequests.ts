@@ -59,6 +59,7 @@ export class CourseManagementAPIRequests {
      *   - allowCommunication: if communication should be enabled for the course
      *   - allowMessaging: if messaging should be enabled for the course
      *   - timeZone: the IANA time zone of the course (default: undefined; required before tutorial groups can be added)
+     *   - testCourse: whether the course is a test course (default: true); exams of test courses are left out of the admin overview of upcoming exams
      * @returns Promise<Course> representing the course created
      */
     async createCourse(
@@ -73,6 +74,7 @@ export class CourseManagementAPIRequests {
             allowCommunication?: boolean;
             allowMessaging?: boolean;
             timeZone?: string;
+            testCourse?: boolean;
         } = {},
     ): Promise<Course> {
         const {
@@ -88,12 +90,13 @@ export class CourseManagementAPIRequests {
             allowCommunication = true,
             allowMessaging = true,
             timeZone,
+            testCourse = true,
         } = options;
 
         const course = new Course();
         course.title = courseName;
         course.shortName = courseShortName;
-        course.testCourse = true;
+        course.testCourse = testCourse;
         course.startDate = asModelDate(start);
         course.endDate = asModelDate(end);
         course.semester = semester;

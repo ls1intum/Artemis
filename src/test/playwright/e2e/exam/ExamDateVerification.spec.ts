@@ -156,19 +156,22 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await expect(page.getByTestId('displayTime')).toHaveText(/\S/);
             await expect(page.getByTestId('hand-in-early')).toBeVisible();
 
-            await page.hover('.fa-hourglass-half');
-            await expect(page.getByText('Exercise not started')).toBeVisible();
+            const saveState = page.getByTestId('sidebar-exercise-status');
+            await expect(saveState).toHaveAttribute('data-status', 'synced');
+            await saveState.hover();
+            await expect(page.getByRole('tooltip')).toContainText('Exercise not started');
             await examNavigation.openOrSaveExerciseByTitle(exerciseGroup.title!);
             const submission = (await Fixtures.get('loremIpsum-short.txt'))!;
             await textExerciseEditor.typeSubmission(exercise.id!, submission);
 
-            await page.hover('.fa-save-warning');
-            await expect(page.getByText('Exercise not saved')).toBeVisible();
+            await expect(saveState).toHaveAttribute('data-status', 'notSynced');
+            await saveState.hover();
+            await expect(page.getByRole('tooltip')).toContainText('Exercise not saved');
             await examNavigation.openOrSaveExerciseByTitle(exerciseGroup.title!);
 
-            await page.hover('.fa-save-success');
-            // nth(0) is the button, nth(1) is the ngtooltip, which is tested
-            await expect(page.getByText('Exercise saved').nth(1)).toBeVisible();
+            await expect(saveState).toHaveAttribute('data-status', 'synced saved');
+            await saveState.hover();
+            await expect(page.getByRole('tooltip')).toContainText('Exercise saved');
 
             // "Saved" must mean saved: the server holds exactly what the student typed.
             const conduction = await examAPIRequests.getOwnStudentExamForConduction(exam);

@@ -215,6 +215,9 @@
     <img
         style="max-width: 60px"
         [id]="dto.id"
+        data-testid="student-image"
+        [attr.data-login]="dto.login"
+        [attr.data-has-image]="!!dto.studentImagePath"
         class="img-fluid"
         [src]="dto.studentImagePath ? addPublicFilePrefix(dto.studentImagePath) : missingImage"
         [alt]="dto.name || ''"
