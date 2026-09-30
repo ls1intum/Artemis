@@ -4,6 +4,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, UserRole } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { readResponseJson } from '../../support/utils';
 
 const course = { id: SEED_COURSES.examManagement.id } as any;
 const imagesPdf = path.resolve(__dirname, '../../../../test/resources/test-data/exam-users/studentsWithImages.pdf');
@@ -56,7 +57,10 @@ test.describe.serial('Exam student images', { tag: '@slow' }, () => {
         await dialog.locator('#import').click();
         const response = await saved;
         expect(response.status()).toBe(200);
-        return { dialog, result: (await response.json()) as { numberOfUsersNotFound: number; numberOfImagesSaved: number; listOfExamUserRegistrationNumbers: string[] } };
+        return {
+            dialog,
+            result: (await readResponseJson(response)) as { numberOfUsersNotFound: number; numberOfImagesSaved: number; listOfExamUserRegistrationNumbers: string[] },
+        };
     }
 
     test('The pictures of the PDF are assigned to the registered students and shown in the list', async ({ page, login, examAPIRequests }) => {

@@ -5,6 +5,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { readResponseJson } from '../../support/utils';
 
 const course = { id: SEED_COURSES.examParticipation.id } as any;
 const roomZip = path.resolve(__dirname, '../../../../test/resources/test-data/exam-room/single-room.zip');
@@ -174,7 +175,7 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
             await page.locator('#roomDataDeleteOutdatedAndUnused').click();
             const response = await cleaned;
             expect(response.status()).toBe(200);
-            return ((await response.json()) as { numberOfDeletedExamRooms: number }).numberOfDeletedExamRooms;
+            return ((await readResponseJson(response)) as { numberOfDeletedExamRooms: number }).numberOfDeletedExamRooms;
         };
         await deletedRooms();
         await expect(page.locator('li', { hasText: 'Deleted Rooms:' })).toBeVisible();
