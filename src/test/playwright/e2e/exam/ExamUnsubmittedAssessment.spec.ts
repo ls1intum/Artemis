@@ -68,13 +68,17 @@ test.describe('Exam assessment of unsubmitted and empty work', { tag: '@slow' },
         const outcomeOfAll = async () => {
             const outcome: Record<string, { submitted: boolean; text?: string; submissionSubmitted: boolean; scores: number[] }> = {};
             for (const studentExam of (await examAPIRequests.getAllStudentExams(exam)) as StudentExam[]) {
-                const { studentExam: detail } = await examAPIRequests.getGradeSummary(exam, studentExam);
-                const submission = detail.exercises[0].studentParticipations[0].submissions[0];
-                outcome[detail.user.login] = {
-                    submitted: detail.submitted,
+                const { studentExam: detail } = await examAPIRequests.getStudentExam(exam, studentExam.id!);
+                const submission = detail.exercises![0].studentParticipations![0].submissions![0] as unknown as {
+                    text?: string;
+                    submitted: boolean;
+                    results?: { score: number }[];
+                };
+                outcome[detail.user!.login!] = {
+                    submitted: detail.submitted!,
                     text: submission.text,
                     submissionSubmitted: submission.submitted,
-                    scores: (submission.results ?? []).map((result: { score: number }) => result.score),
+                    scores: (submission.results ?? []).map((result) => result.score),
                 };
             }
             return outcome;

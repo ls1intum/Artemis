@@ -94,7 +94,7 @@ const targetCourse = { id: SEED_COURSES.import.id } as any;
 test.describe('Exam import with a clashing programming exercise', { tag: '@slow' }, () => {
     let sourceExam: Exam;
     let programmingExercise: ProgrammingExercise;
-    let clashingTargetExercise: ProgrammingExercise;
+    let clashingTargetExercise: ProgrammingExercise | undefined;
     let importedExamId: number | undefined;
     let clashTitle: string;
     let clashShortName: string;
@@ -103,6 +103,9 @@ test.describe('Exam import with a clashing programming exercise', { tag: '@slow'
         'Create a target-course programming exercise and a source exam whose programming exercise clashes with it',
         async ({ login, examAPIRequests, exerciseAPIRequests }) => {
             await login(admin);
+            // Nothing of an earlier test may be taken for something this test created.
+            clashingTargetExercise = undefined;
+            importedExamId = undefined;
             const uuid = generateUUID();
             clashTitle = 'Clash ' + uuid;
             clashShortName = 'clash' + uuid;
@@ -183,6 +186,9 @@ test.describe('Exam import with a clashing programming exercise', { tag: '@slow'
             await examAPIRequests.deleteExam({ id: importedExamId, course: targetCourse } as Exam);
         }
         await examAPIRequests.deleteExam(sourceExam);
-        await exerciseAPIRequests.deleteProgrammingExercise(clashingTargetExercise.id!);
+        // The setup may have failed before the exercise existed.
+        if (clashingTargetExercise?.id !== undefined) {
+            await exerciseAPIRequests.deleteProgrammingExercise(clashingTargetExercise.id);
+        }
     });
 });

@@ -75,7 +75,9 @@ test.describe('Exam suspicious behavior analysis', { tag: '@slow' }, () => {
         // load balancer of the multi-node topology it is an IPv4 address of that network. The range that contains it is built from what was seen.
         const observedIp = (await rows.first().getByTestId('suspicious-session-ip-address').innerText()).trim();
         expect(observedIp).toMatch(/^(\d+\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1)$/);
-        const rangeContainingIp = /^\d+\.\d+\.\d+\.\d+$/.test(observedIp) && !observedIp.startsWith('127.') ? `${observedIp}/32` : '127.0.0.0/8';
+        // The range has to be of the family of the address, because the check treats an address of another family as inside the range.
+        const isIpv4 = /^\d+\.\d+\.\d+\.\d+$/.test(observedIp);
+        const rangeContainingIp = isIpv4 ? (observedIp.startsWith('127.') ? '127.0.0.0/8' : `${observedIp}/32`) : `${observedIp}/128`;
 
         // The same holds for the browser fingerprint.
         await page.goBack();

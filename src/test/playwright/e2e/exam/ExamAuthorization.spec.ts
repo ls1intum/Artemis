@@ -27,6 +27,10 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
     let otherStudentExamId: number;
     let calls: { instructorOnly: Call[]; editorOnly: Call[]; tutorLevel: Call[] };
 
+    test.afterAll('Delete the exam', async ({ browser }) => {
+        await asAdmin(browser, (examAPIRequests) => examAPIRequests.deleteExam(exam));
+    });
+
     test.beforeAll('Prepare a running exam with two registered students and describe the calls', async ({ browser }) => {
         await asAdmin(browser, async (examAPIRequests) => {
             const prepared = await prepareRunningTextExam(examAPIRequests, new ExerciseAPIRequests(examAPIRequests.page), { course, students: [studentOne, studentTwo] });
@@ -198,6 +202,45 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
         ]) {
             const response = await page.request.get(path);
             expect(response.status(), `the instructor may read ${path}`).toBe(200);
+        }
+    });
+});
+
+/**
+ * Once results are published, a student reads their own summary and grade summary, and nobody else's: the endpoints hand the data out by the id of the
+ * student exam, so the server has to compare the owner with the caller. The exams are handed in by the instructor, which is what makes the summary
+ * available, and the results are published with the end of the exam.
+ */
+test.describe('Exam authorization of published results', { tag: '@slow' }, () => {
+    let resultExam: Exam;
+    let ownId: number;
+    let otherId: number;
+
+    test.beforeAll('Hand in and end an exam of two students with published results', async ({ browser }) => {
+        await asAdmin(browser, async (examAPIRequests) => {
+            const prepared = await prepareRunningTextExam(examAPIRequests, new ExerciseAPIRequests(examAPIRequests.page), { course, students: [studentOne, studentTwo] });
+            resultExam = prepared.exam;
+            // The student exams can be handed in by the instructor once the exam is over.
+            await examAPIRequests.concludeExam(resultExam, { publishResults: true });
+            for (const studentExam of (await examAPIRequests.getAllStudentExams(resultExam)) as StudentExam[]) {
+                const toggled = await examAPIRequests.page.request.put(`api/exam/courses/${course.id}/exams/${resultExam.id}/student-exams/${studentExam.id}/toggle-to-submitted`);
+                expect(toggled.status(), `hand in student exam ${studentExam.id}`).toBe(200);
+            }
+        });
+        ownId = await asUser(browser, studentOne, (requests) => requests.getOwnStudentExamId(resultExam));
+        otherId = await asUser(browser, studentTwo, (requests) => requests.getOwnStudentExamId(resultExam));
+    });
+
+    test.afterAll('Delete the exam', async ({ browser }) => {
+        await asAdmin(browser, (examAPIRequests) => examAPIRequests.deleteExam(resultExam));
+    });
+
+    test('A student reads their own summary and grade summary, but not those of another student', async ({ page, login }) => {
+        const examBase = `api/exam/courses/${course.id}/exams/${resultExam.id}`;
+        await login(studentOne);
+        for (const endpoint of ['summary', 'grade-summary']) {
+            expect((await page.request.get(`${examBase}/student-exams/${ownId}/${endpoint}`)).status(), `the student reads their own ${endpoint}`).toBe(200);
+            expect((await page.request.get(`${examBase}/student-exams/${otherId}/${endpoint}`)).status(), `the student must not read the ${endpoint} of another student`).toBe(403);
         }
     });
 });

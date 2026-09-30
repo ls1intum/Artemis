@@ -4,6 +4,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne, studentTwo } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { parseCsv } from '../../support/csv';
 
 const course = { id: SEED_COURSES.examManagement.id } as any;
 const unknownLogin = 'no_such_user_for_the_import';
@@ -61,14 +62,21 @@ test.describe('Exam students CSV import and export', { tag: '@fast' }, () => {
         const download = page.waitForEvent('download');
         await exportDialog.getByRole('button', { name: 'Export', exact: true }).click();
         const exported = fs.readFileSync(await (await download).path(), 'utf-8');
-        const lines = exported.split(/\r?\n/).filter(Boolean);
-        expect(lines, `exported file:\n${exported}`).toHaveLength(3);
-        expect(lines[0].toLowerCase()).toContain('login');
-        const studentOneLine = lines.find((line) => line.includes(studentOne.username))!;
-        const studentTwoLine = lines.find((line) => line.includes(studentTwo.username))!;
-        expect(studentOneLine).toContain('HS1');
-        expect(studentOneLine).toContain('A1');
-        expect(studentTwoLine).toContain('A2');
+        const [header, ...lines] = parseCsv(exported);
+        expect(lines, `exported file:\n${exported}`).toHaveLength(2);
+        const columnOf = (name: string) => {
+            const index = header.findIndex((cell) => cell.trim().toLowerCase() === name);
+            expect(index, `the export has a column '${name}', but only: ${header.join(' | ')}`).toBeGreaterThanOrEqual(0);
+            return index;
+        };
+        const [loginColumn, roomColumn, seatColumn] = [columnOf('login'), columnOf('room'), columnOf('seat')];
+        const exportedRow = (login: string) => {
+            const rows = lines.filter((line) => line[loginColumn] === login);
+            expect(rows, `one row for ${login}`).toHaveLength(1);
+            return { room: rows[0][roomColumn], seat: rows[0][seatColumn] };
+        };
+        expect(exportedRow(studentOne.username)).toEqual({ room: 'HS1', seat: 'A1' });
+        expect(exportedRow(studentTwo.username).seat).toBe('A2');
         expect(exported).not.toContain(unknownLogin);
     });
 });
