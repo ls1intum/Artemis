@@ -2,10 +2,8 @@ import { test } from '../../support/fixtures';
 import { expect } from '@playwright/test';
 import { admin, studentTwo } from '../../support/users';
 import { generateUUID, getExercise } from '../../support/utils';
-import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType } from '../../support/constants';
-import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
 
 /**
@@ -29,7 +27,7 @@ test.describe('Exam quiz multiple-choice add-to-saved-selection retention', { ta
 
     test.beforeEach('Create exam with a multiple-choice quiz', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
-        exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID() });
+        exam = await examAPIRequests.createRunningExam({ course, title: 'exam' + generateUUID() });
         quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
         // The seeded MC template has 4 answer options (2 correct, 2 wrong). additionalData.quizExerciseID is the question id.
         questionId = quizExercise.additionalData!.quizExerciseID!;
@@ -92,16 +90,3 @@ test.describe('Exam quiz multiple-choice add-to-saved-selection retention', { ta
         await examAPIRequests.deleteExam(exam);
     });
 });
-
-async function createExam(course: any, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
-    const defaultExamConfig = {
-        course,
-        title: 'exam' + generateUUID(),
-        visibleDate: dayjs().subtract(3, 'minutes'),
-        startDate: dayjs().subtract(2, 'minutes'),
-        endDate: dayjs().add(1, 'hour'),
-        examMaxPoints: 10,
-        numberOfExercisesInExam: 1,
-    };
-    return await examAPIRequests.createExam({ ...defaultExamConfig, ...customExamConfig });
-}

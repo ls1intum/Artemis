@@ -46,15 +46,15 @@
                                 @if (showIncludedInScoreColumn()) {
                                     <td class="text-center">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                                 }
-                                <td class="text-center">
+                                <td class="text-center" data-testid="exercise-achieved-points">
                                     {{ achievedPointsForExercise(exercise.id!) }}
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center" data-testid="exercise-max-points">
                                     @if (exercise.maxPoints !== undefined) {
                                         <span>{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}</span>
                                     }
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center" data-testid="exercise-achieved-percentage">
                                     @if (exerciseInfos()[exercise.id!] !== undefined && exerciseInfos()[exercise.id!].achievedPercentage !== undefined) {
                                         <span [class]="exerciseInfos()[exercise.id!].colorClass"> {{ exerciseInfos()[exercise.id!].achievedPercentage }} % </span>
                                     } @else {
