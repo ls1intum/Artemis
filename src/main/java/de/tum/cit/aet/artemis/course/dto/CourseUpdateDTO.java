@@ -128,9 +128,6 @@ public record CourseUpdateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
-        if (presentationAssessmentsEnabled != null) {
-            course.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
-        }
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
@@ -163,6 +160,9 @@ public record CourseUpdateDTO(
         // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to
         // the cleanup again.
         configuration.setDataRetentionHold(dataRetentionHold == null ? configuration.isDataRetentionHold() : dataRetentionHold);
+        if (presentationAssessmentsEnabled != null) {
+            configuration.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
+        }
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);

@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 
 class CourseUpdateDTOTest {
@@ -15,7 +16,8 @@ class CourseUpdateDTOTest {
     @ValueSource(booleans = { true, false })
     void omittedPresentationFlagPreservesExistingValue(boolean enabled) throws Exception {
         Course course = new Course();
-        course.setPresentationAssessmentsEnabled(enabled);
+        CourseConfiguration configuration = attachConfiguration(course);
+        configuration.setPresentationAssessmentsEnabled(enabled);
         CourseUpdateDTO dto = JsonObjectMapper.get().readValue("{}", CourseUpdateDTO.class);
 
         dto.applyTo(course);
@@ -28,11 +30,19 @@ class CourseUpdateDTOTest {
     @ValueSource(booleans = { true, false })
     void explicitPresentationFlagUpdatesExistingValue(boolean enabled) throws Exception {
         Course course = new Course();
-        course.setPresentationAssessmentsEnabled(!enabled);
+        CourseConfiguration configuration = attachConfiguration(course);
+        configuration.setPresentationAssessmentsEnabled(!enabled);
         CourseUpdateDTO dto = JsonObjectMapper.get().readValue("{\"presentationAssessmentsEnabled\":" + enabled + "}", CourseUpdateDTO.class);
 
         dto.applyTo(course);
 
         assertThat(course.getPresentationAssessmentsEnabled()).isEqualTo(enabled);
+    }
+
+    private static CourseConfiguration attachConfiguration(Course course) {
+        CourseConfiguration configuration = new CourseConfiguration();
+        configuration.setCourse(course);
+        course.setCourseConfiguration(configuration);
+        return configuration;
     }
 }

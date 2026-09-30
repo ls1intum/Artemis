@@ -134,25 +134,7 @@
         }
     </div>
 
-    <jhi-course-group
-        [(allGroupUsers)]="assignedStudents"
-        [courseRoleSlug]="studentsCourseGroup"
-        [isAdmin]="false"
-        [course]="presentationStudentCourse()"
-        [addUserToGroup]="addStudent"
-        [removeUserFromGroup]="removeStudent"
-        [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
-        [exportFileName]="'Presentation Instance Students'"
-        [userSearch]="studentSearch"
-        [hiddenColumnFields]="hiddenStudentColumnFields"
-        [paginated]="false"
-        [allowAddingUsers]="!instance()"
-        [allowRemovingUsers]="!instance()"
-        removeUserQuestionKey="artemisApp.presentationAssessment.students.removeQuestion"
-        profilePictureHeaderKey="artemisApp.presentationAssessment.picture"
-    >
-        <span><span jhiTranslate="artemisApp.presentationAssessment.presenters"></span> <span aria-hidden="true">*</span> ({{ assignedStudents().length }})</span>
-    </jhi-course-group>
+    <jhi-presentation-assessment-presenter-selector [(presenters)]="assignedStudents" [courseId]="courseId()" [editable]="!instance()" />
     @if (assignedStudents().length === 0 && editForm.touched) {
         <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></tumaet-ui-message>
     }

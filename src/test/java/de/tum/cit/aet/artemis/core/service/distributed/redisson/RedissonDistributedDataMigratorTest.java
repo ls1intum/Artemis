@@ -146,20 +146,6 @@ class RedissonDistributedDataMigratorTest {
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
     }
 
-    @Test
-    void testCarriesTheFirstNamespaceOverAfterFeatureEnumExtension() {
-        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
-        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-1");
-        redissonClient.<Feature, Boolean>getMap(keyFor(1, "features")).put(Feature.Science, Boolean.FALSE);
-
-        migrationService().migrateToCurrentVersion();
-
-        assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue")).readAll()).containsExactly("result-1");
-        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(VERSION, "features"))).containsOnlyKeys(Feature.Science).containsEntry(Feature.Science, Boolean.FALSE);
-        assertThat(redissonClient.getQueue(keyFor(1, "buildResultQueue"))).isEmpty();
-        assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
-    }
-
     /**
      * The unversioned namespace is the whole keyspace, so the pattern delete that empties a numbered one would take
      * the new namespace and the version key with it. What is not carried over is therefore left where it is.

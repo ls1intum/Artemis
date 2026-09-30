@@ -29,6 +29,10 @@
                 'bg-group-selected': containsActiveVariant(),
             }"
             [routerLinkActive]="'bg-selected border-selected'"
+            [attr.role]="sidebarItem().disableNavigation ? 'button' : null"
+            [attr.tabindex]="sidebarItem().disableNavigation ? 0 : null"
+            (keydown.enter)="onSelectionCardKeydown($event)"
+            (keydown.space)="onSelectionCardKeydown($event)"
         >
             <a
                 class="block min-w-0 flex-1 px-1 py-2 text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-2"
@@ -40,10 +44,6 @@
                           : ['./', sidebarItem().id]
                 "
                 (click)="onNonExamCardClicked($event)"
-                [attr.role]="sidebarItem().disableNavigation ? 'button' : null"
-                [attr.tabindex]="sidebarItem().disableNavigation ? 0 : null"
-                (keydown.enter)="onSelectionCardKeydown($event)"
-                (keydown.space)="onSelectionCardKeydown($event)"
             >
                 <jhi-sidebar-card-item
                     [unreadCount]="this.sidebarItem().conversation?.unreadMessagesCount ?? 0"

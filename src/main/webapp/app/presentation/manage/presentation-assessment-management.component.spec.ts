@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import type { ParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -30,6 +31,7 @@ describe('PresentationAssessmentManagementComponent', () => {
     };
     let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let router: { navigate: ReturnType<typeof vi.fn> };
+    let routeParamMap: BehaviorSubject<ParamMap>;
     let languageChanges: Subject<LangChangeEvent>;
     let translationChanges: Subject<TranslationChangeEvent>;
 
@@ -81,6 +83,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         };
         alertService = { success: vi.fn(), addAlert: vi.fn() };
         router = { navigate: vi.fn().mockResolvedValue(true) };
+        routeParamMap = new BehaviorSubject(convertToParamMap({}));
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentManagementComponent],
@@ -97,6 +100,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         snapshot: { paramMap: convertToParamMap({ courseId }) },
+                        paramMap: routeParamMap,
                         parent: {
                             snapshot: { paramMap: convertToParamMap({ courseId }) },
                             data: of({ course }),
@@ -152,7 +156,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.findCourseStudents).not.toHaveBeenCalled();
     });
 
-    it('should expose the linked exercise to the student perspective switch while its presentation is selected', () => {
+    it('should represent the selected linked presentation in the route', () => {
         const linkedPresentation = { ...presentationAssessment, id: 43, exerciseId: 7 };
         component.presentationAssessments.set([linkedPresentation]);
         router.navigate.mockClear();
@@ -160,22 +164,23 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.selectPresentation(linkedPresentation);
         fixture.detectChanges();
 
-        expect(router.navigate).toHaveBeenCalledWith([], {
-            relativeTo: expect.anything(),
-            queryParams: { presentationExerciseId: 7 },
-            queryParamsHandling: 'merge',
-            replaceUrl: true,
-        });
-
-        router.navigate.mockClear();
-        component.presentationAssessments.set([{ ...linkedPresentation, exerciseId: 8 }]);
-        fixture.detectChanges();
-        expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { presentationExerciseId: 8 } }));
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management', courseId, 'presentations', 43, 'exercises', 7], { replaceUrl: false });
 
         router.navigate.mockClear();
         component.setViewMode('students');
         fixture.detectChanges();
-        expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { presentationExerciseId: null } }));
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management', courseId, 'presentations']);
+    });
+
+    it('should restore the selected presentation from the route', () => {
+        const linkedPresentation = { ...presentationAssessment, id: 43, exerciseId: 7 };
+        component.presentationAssessments.set([linkedPresentation]);
+
+        routeParamMap.next(convertToParamMap({ presentationId: 43, exerciseId: 7 }));
+        fixture.detectChanges();
+
+        expect(component.selectedPresentationId()).toBe(43);
+        expect(component.viewMode()).toBe('presentations');
     });
 
     it('should switch views and filter the student overview', () => {

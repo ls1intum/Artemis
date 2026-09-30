@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
@@ -57,11 +58,14 @@ public class PresentationAssessmentResource {
 
     private final CourseRepository courseRepository;
 
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, PresentationAssessmentRepository presentationAssessmentRepository,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository) {
         this.presentationAssessmentService = presentationAssessmentService;
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.courseRepository = courseRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -192,7 +196,7 @@ public class PresentationAssessmentResource {
 
     private Course findCourseAndCheckPresentationAssessmentsEnabled(long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!course.getPresentationAssessmentsEnabled()) {
+        if (courseConfigurationRepository.findPresentationAssessmentsEnabledByCourseId(courseId).filter(Boolean::booleanValue).isEmpty()) {
             throw new AccessForbiddenException("Presentation assessments are disabled for this course.");
         }
         return course;

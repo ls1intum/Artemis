@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import type { Route } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
@@ -9,6 +10,19 @@ import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 import { presentationAssessmentFeatureGuard } from 'app/presentation/manage/presentation-assessment-feature.guard';
+
+function presentationAssessmentManagementRoute(path: string): Route {
+    return {
+        path,
+        loadComponent: () => import('app/presentation/manage/presentation-assessment-management.component').then((m) => m.PresentationAssessmentManagementComponent),
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.presentationAssessment.home.title',
+            transparentCourseBody: true,
+        },
+        canActivate: [UserRouteAccessService, presentationAssessmentFeatureGuard],
+    };
+}
 
 export const courseManagementRoutes: Routes = [
     {
@@ -274,16 +288,9 @@ export const courseManagementRoutes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                     },
-                    {
-                        path: 'presentations',
-                        loadComponent: () =>
-                            import('app/presentation/manage/presentation-assessment-management.component').then((m) => m.PresentationAssessmentManagementComponent),
-                        data: {
-                            authorities: IS_AT_LEAST_INSTRUCTOR,
-                            pageTitle: 'artemisApp.presentationAssessment.home.title',
-                        },
-                        canActivate: [UserRouteAccessService, presentationAssessmentFeatureGuard],
-                    },
+                    presentationAssessmentManagementRoute('presentations/:presentationId/exercises/:exerciseId'),
+                    presentationAssessmentManagementRoute('presentations/:presentationId'),
+                    presentationAssessmentManagementRoute('presentations'),
                     {
                         path: 'competency-management',
                         loadComponent: () => import('app/atlas/manage/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),

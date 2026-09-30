@@ -292,8 +292,9 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeUndefined();
     });
 
-    it('should keep the transparent presentation layout when the URL contains query parameters', () => {
-        (router as unknown as MockRouter).setUrl('/course-management/1/presentations?presentationExerciseId=7');
+    it('should keep the transparent presentation layout for a selected exercise-linked presentation', () => {
+        route.snapshot.firstChild!.data = { transparentCourseBody: true };
+        (router as unknown as MockRouter).setUrl('/course-management/1/presentations/17/exercises/7');
 
         expect(component.hasTransparentCourseBody()).toBe(true);
     });

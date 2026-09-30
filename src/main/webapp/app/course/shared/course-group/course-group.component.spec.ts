@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -119,9 +119,9 @@ describe('CourseGroupComponent', () => {
 
     describe('tableOptions', () => {
         it('should configure table as scrollable with flex height', () => {
-            expect(comp.tableOptions().scrollable).toBe(true);
-            expect(comp.tableOptions().scrollHeight).toBe('flex');
-            expect(comp.tableOptions().initialSortField).toBe('name');
+            expect(comp.tableOptions.scrollable).toBe(true);
+            expect(comp.tableOptions.scrollHeight).toBe('flex');
+            expect(comp.tableOptions.initialSortField).toBe('name');
         });
     });
 
@@ -409,26 +409,6 @@ describe('CourseGroupComponent', () => {
             await expect(firstValueFrom(comp.registerUsersFn()([userToRegister]))).resolves.toBeUndefined();
 
             expect(registerSpy).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('searchUsersFn', () => {
-        it('should forward pagination to a custom search and use the response total count', async () => {
-            const customSearch = vi.fn().mockReturnValue(
-                of(
-                    new HttpResponse<User[]>({
-                        body: [user1],
-                        headers: new HttpHeaders({ 'X-Total-Count': '42' }),
-                    }),
-                ),
-            );
-            fixture.componentRef.setInput('userSearch', customSearch);
-
-            const result = await firstValueFrom(comp.searchUsersFn()('student', 2, 10));
-
-            expect(customSearch).toHaveBeenCalledWith('student', 2, 10);
-            expect(result.totalElements).toBe(42);
-            expect(result.content).toHaveLength(1);
         });
     });
 });

@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, merge } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 
 import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -69,6 +69,11 @@ function studentRowKey(row: PresentationStudentRow | SelectedPresentationStudent
     return `${row.instance?.id ?? 'new'}:${row.studentLogin}`;
 }
 
+function positiveRouteId(value: string | null): number | undefined {
+    const id = Number(value);
+    return Number.isSafeInteger(id) && id > 0 ? id : undefined;
+}
+
 @Component({
     selector: 'jhi-presentation-assessment-management',
     templateUrl: './presentation-assessment-management.component.html',
@@ -107,6 +112,15 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly translateService = inject(TranslateService);
     private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
+    private readonly routeSelection = toSignal(
+        this.route.paramMap.pipe(
+            map((params) => ({
+                presentationId: positiveRouteId(params.get('presentationId')),
+                exerciseId: positiveRouteId(params.get('exerciseId')),
+            })),
+        ),
+        { initialValue: { presentationId: undefined, exerciseId: undefined } },
+    );
 
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faPlus = faPlus;
@@ -121,6 +135,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly courseId = signal<number>(0);
     readonly course = signal<Course | undefined>(undefined);
     readonly presentationAssessments = signal<PresentationAssessment[]>([]);
+    private readonly presentationAssessmentsLoaded = signal(false);
     readonly isSaving = signal(false);
     readonly isLoadingAssignedStudents = signal(false);
     readonly exercises = signal<Exercise[]>([]);
@@ -222,21 +237,34 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             this.faLink,
         );
     });
-    private readonly studentViewExerciseId = computed(() => (this.viewMode() === 'presentations' ? this.selectedPresentation()?.exerciseId : undefined));
-
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor() {
         effect(() => {
-            const exerciseId = this.studentViewExerciseId();
+            const { presentationId, exerciseId } = this.routeSelection();
+            const assessments = this.presentationAssessments();
+            const assessmentsLoaded = this.presentationAssessmentsLoaded();
             untracked(() => {
-                void this.router.navigate([], {
-                    relativeTo: this.route,
-                    queryParams: { presentationExerciseId: exerciseId ?? null },
-                    queryParamsHandling: 'merge',
-                    replaceUrl: true,
-                });
+                if (presentationId === undefined) {
+                    this.viewMode.set('students');
+                    return;
+                }
+
+                const presentation = assessments.find((assessment) => assessment.id === presentationId);
+                if (!presentation && assessmentsLoaded) {
+                    void this.router.navigate(['/course-management', this.courseId(), 'presentations'], { replaceUrl: true });
+                    return;
+                }
+                if (!presentation) {
+                    return;
+                }
+
+                this.selectedPresentationId.set(presentation.id);
+                this.viewMode.set('presentations');
+                if (presentation.exerciseId !== exerciseId) {
+                    this.navigateToPresentation(presentation, true);
+                }
             });
         });
     }
@@ -256,6 +284,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             next: (res: HttpResponse<PresentationAssessment[]>) => {
                 const assessments = res.body ?? [];
                 this.presentationAssessments.set(assessments);
+                this.presentationAssessmentsLoaded.set(true);
                 if (!assessments.some((assessment) => assessment.id === this.selectedPresentationId())) {
                     this.selectedPresentationId.set(assessments[0]?.id);
                 }
@@ -271,6 +300,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     selectPresentation(presentationAssessment: PresentationAssessment): void {
         this.selectedPresentationId.set(presentationAssessment.id);
         this.viewMode.set('presentations');
+        this.navigateToPresentation(presentationAssessment);
     }
 
     onSidebarItemSelected(itemId: string | number): void {
@@ -286,6 +316,9 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     setViewMode(viewMode: PresentationViewMode): void {
         this.viewMode.set(viewMode);
+        if (viewMode === 'students') {
+            void this.router.navigate(['/course-management', this.courseId(), 'presentations']);
+        }
     }
 
     updateStudentSearch(searchTerm: string): void {
@@ -370,7 +403,12 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     const remainingAssessments = this.presentationAssessments().filter((assessment) => assessment.id !== presentationAssessment.id);
                     this.presentationAssessments.set(remainingAssessments);
                     if (this.selectedPresentationId() === presentationAssessment.id) {
-                        this.selectedPresentationId.set(remainingAssessments[0]?.id);
+                        const nextPresentation = remainingAssessments[0];
+                        if (nextPresentation) {
+                            this.selectPresentation(nextPresentation);
+                        } else {
+                            this.setViewMode('students');
+                        }
                     }
                     if (this.presentationFilter() === presentationAssessment.id) {
                         this.presentationFilter.set('all');
@@ -379,6 +417,17 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
+    }
+
+    private navigateToPresentation(presentationAssessment: PresentationAssessment, replaceUrl = false): void {
+        if (!presentationAssessment.id) {
+            return;
+        }
+        const commands: (string | number)[] = ['/course-management', this.courseId(), 'presentations', presentationAssessment.id];
+        if (presentationAssessment.exerciseId) {
+            commands.push('exercises', presentationAssessment.exerciseId);
+        }
+        void this.router.navigate(commands, { replaceUrl });
     }
 
     private openPresentationDialog(presentationAssessment?: PresentationAssessment): void {

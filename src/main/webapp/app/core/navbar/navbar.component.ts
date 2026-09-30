@@ -399,7 +399,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const path = fullURI.split(/[?#]/)[0].replace(/\/+$/, '');
+        const path = fullURI.split('?')[0].replace(/\/+$/, '');
         if (!path.startsWith('/course-management/') || path === '/course-management/new') {
             return;
         }
@@ -788,12 +788,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private getStudentViewLinkFromRoute(url: string, courseId: string): string[] {
         const baseStudentPath = ['/courses', courseId];
-        const [urlWithoutFragment] = url.split('#');
-        const [path, query = ''] = urlWithoutFragment.split('?');
-        const presentationExerciseId = new URLSearchParams(query).get('presentationExerciseId');
-        if (path.endsWith('/presentations') && presentationExerciseId && /^[1-9]\d*$/.test(presentationExerciseId)) {
-            return [...baseStudentPath, 'exercises', presentationExerciseId];
-        }
+
         const routeMappings = [
             { urlParts: ['exams'], targetPath: [...baseStudentPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseStudentPath, 'exercises'] },

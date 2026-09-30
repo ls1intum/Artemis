@@ -1,8 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { HttpResponse } from '@angular/common/http';
-import { Observable, merge, of, pairwise } from 'rxjs';
+import { merge, pairwise } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,13 +11,10 @@ import { TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiInputNumberCom
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
-import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessment, PresentationAssessmentInstance, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const resultPoints = control.get('resultPoints')?.value;
@@ -42,7 +38,7 @@ const minimumPresentationDate: ValidatorFn = (control: AbstractControl): Validat
         TranslateDirective,
         ArtemisTranslatePipe,
         FormDateTimePickerComponent,
-        CourseGroupComponent,
+        PresentationAssessmentPresenterSelectorComponent,
         TumAetUiButtonComponent,
         TumAetUiInputDirective,
         TumAetUiInputNumberComponent,
@@ -52,12 +48,10 @@ const minimumPresentationDate: ValidatorFn = (control: AbstractControl): Validat
 })
 export class PresentationAssessmentInstanceFormDialogComponent {
     private readonly formBuilder = inject(FormBuilder);
-    private readonly courseManagementService = inject(CourseManagementService);
     private readonly translateService = inject(TranslateService);
     private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
 
     readonly courseId = input.required<number>();
-    readonly course = input.required<Course>();
     readonly presentationAssessment = input.required<PresentationAssessment>();
     readonly instance = input<PresentationAssessmentInstance>();
     readonly initialAssignedStudents = input<User[]>([]);
@@ -67,10 +61,8 @@ export class PresentationAssessmentInstanceFormDialogComponent {
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    protected readonly studentsCourseGroup = CourseRoleSlug.STUDENTS;
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
     protected readonly DateTimePickerType = DateTimePickerType;
-    protected readonly hiddenStudentColumnFields = ['id', 'visibleRegistrationNumber', 'email'];
     protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
     protected readonly acceptedPointsDecimalSeparators = ['.', ','];
     protected readonly minPresentationDate = MIN_PRESENTATION_DATE;
@@ -90,13 +82,6 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     });
 
     readonly assignedStudents = signal<User[]>([]);
-    readonly filteredAssignedStudentsSize = signal(0);
-
-    readonly presentationStudentCourse = computed(() => {
-        const presentationCourse: Course = deepClone(this.course());
-        presentationCourse.isAtLeastInstructor = false;
-        return presentationCourse;
-    });
 
     editForm = this.formBuilder.group(
         {
@@ -175,14 +160,4 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     cancel(): void {
         this.cancelled.emit();
     }
-
-    studentSearch = (loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> => {
-        if (loginOrName.length < 3) {
-            return of(new HttpResponse<User[]>({ body: [] }));
-        }
-        return this.courseManagementService.searchStudents(this.courseId(), loginOrName, page, size);
-    };
-    addStudent = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
-    removeStudent = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
-    handleAssignedStudentsSizeChange = (size: number): void => this.filteredAssignedStudentsSize.set(size);
 }

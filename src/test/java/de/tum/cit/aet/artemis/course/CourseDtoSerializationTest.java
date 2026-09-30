@@ -19,6 +19,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.dto.ActiveExamForCourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
@@ -60,8 +61,12 @@ class CourseDtoSerializationTest {
     void shouldPreservePresentationAssessmentFlagInCourseManagementResponse() {
         Course course = new Course();
         course.setId(42L);
+        CourseConfiguration configuration = new CourseConfiguration();
+        configuration.setId(43L);
+        configuration.setCourse(course);
+        course.setCourseConfiguration(configuration);
         for (boolean enabled : new boolean[] { true, false }) {
-            course.setPresentationAssessmentsEnabled(enabled);
+            configuration.setPresentationAssessmentsEnabled(enabled);
             CourseManagementDTO dto = CourseManagementDTO.of(course);
             assertThat(dto.presentationAssessmentsEnabled()).isEqualTo(enabled);
             JsonNode json = objectMapper.valueToTree(dto);

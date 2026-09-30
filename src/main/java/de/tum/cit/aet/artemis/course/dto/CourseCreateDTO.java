@@ -122,7 +122,6 @@ public record CourseCreateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
@@ -137,6 +136,7 @@ public record CourseCreateDTO(
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         CourseConfiguration configuration = new CourseConfiguration();
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        configuration.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
