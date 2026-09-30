@@ -130,6 +130,65 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
         }
     });
 
+    test('The room management page uploads room data and lists the rooms with their capacity', async ({ page, login }) => {
+        await login(instructor, '/exams/rooms');
+        // The room of the set-up is listed already; uploading the file again replaces it and reports what the file holds.
+        await page.locator('#roomDataFileSelect').setInputFiles(roomZip);
+        const uploaded = page.waitForResponse((response) => response.url().includes('rooms/upload') && response.request().method() === 'POST');
+        await page.locator('#roomDataUpload').click();
+        expect((await uploaded).status()).toBe(200);
+        const summary = page.locator('li', { hasText: 'Uploaded Rooms:' });
+        await expect(summary).toContainText(/Uploaded Rooms:\s*1$/);
+        await expect(page.locator('li', { hasText: 'Uploaded Seats:' })).not.toContainText(/:\s*0\s*$/);
+
+        // The overview lists the room with its number, name, building and capacities.
+        const row = page.locator('tbody tr', { hasText: roomNumber });
+        await expect(row).toHaveCount(1);
+        await expect(row).toContainText('Friedrich L. Bauer Hörsaal');
+        const capacities = (await row.locator('td').allInnerTexts()).slice(3).map((text) => Number(text.trim()));
+        expect(capacities[0], 'the default capacity is a number above zero').toBeGreaterThan(0);
+        expect(capacities[1], 'the maximum capacity is not below the default capacity').toBeGreaterThanOrEqual(capacities[0]);
+    });
+
+    test('Cleaning up the rooms deletes an outdated version of a room once no exam uses it', async ({ page, login, examAPIRequests }) => {
+        // The room of the set-up is the current version, and the exam seats its students in it.
+        await login(instructor);
+        const distributionData = await page.request.get('api/exam/rooms/distribution-data');
+        const version1 = ((await distributionData.json()) as { id: number; roomNumber: string }[]).find((candidate) => candidate.roomNumber === roomNumber)!;
+        expect(version1, 'the room is offered for the distribution').toBeDefined();
+        const distributed = await page.request.post(`api/exam/courses/${course.id}/exams/${exam.id}/distribute-registered-students?useOnlyDefaultLayouts=true&reserveFactor=0`, {
+            data: [version1.id],
+        });
+        expect(distributed.status()).toBe(200);
+        // Uploading the same room again makes that version outdated.
+        const upload = await page.request.post('api/exam/rooms/upload', {
+            multipart: { file: { name: 'single-room.zip', mimeType: 'application/zip', buffer: fs.readFileSync(roomZip) } },
+        });
+        expect(upload.status()).toBe(200);
+        expect((await page.request.get(`api/exam/rooms/${version1.id}/seats`)).status(), 'the outdated version still exists').toBe(200);
+
+        // Only an administrator may clean up. The outdated version is used by the exam, so it stays; a second run finds nothing more.
+        await login(admin, '/exams/rooms');
+        const deletedRooms = async () => {
+            const cleaned = page.waitForResponse((response) => response.url().includes('outdated-and-unused') && response.request().method() === 'DELETE');
+            await page.locator('#roomDataDeleteOutdatedAndUnused').click();
+            const response = await cleaned;
+            expect(response.status()).toBe(200);
+            return ((await response.json()) as { numberOfDeletedExamRooms: number }).numberOfDeletedExamRooms;
+        };
+        await deletedRooms();
+        await expect(page.locator('li', { hasText: 'Deleted Rooms:' })).toBeVisible();
+        expect(await deletedRooms(), 'nothing else is outdated and unused').toBe(0);
+        expect((await page.request.get(`api/exam/rooms/${version1.id}/seats`)).status(), 'the outdated version is kept while the exam uses it').toBe(200);
+
+        // Without the exam nothing uses the outdated version any more, and the cleanup deletes exactly that one. The current version stays.
+        await examAPIRequests.deleteExam(exam);
+        expect(await deletedRooms(), 'only the outdated version is deleted').toBe(1);
+        expect((await page.request.get(`api/exam/rooms/${version1.id}/seats`)).ok(), 'the outdated version is gone').toBe(false);
+        await page.reload();
+        await expect(page.locator('tbody tr', { hasText: roomNumber }), 'the current version of the room is listed').toHaveCount(1);
+    });
+
     // KNOWN BUG: the dialog takes the number of students from `exam.numberOfExamUsers`, which the exam of the student list does not carry
     // (the exam is loaded without it), so it always reports "You can seat all 0 students", also when the room is too small.
     test.fixme('The dialog reports how many of the registered students the room can seat', async ({ page }) => {
