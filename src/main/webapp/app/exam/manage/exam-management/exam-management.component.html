@@ -31,7 +31,7 @@
                     <!-- Inject page specific title -->
                     @if (courseTitleBarService.titleTemplate()) {
                         @if (currentExam()) {
-                            <fa-icon class="text-secondary shrink-0" [icon]="faChevronRight" />
+                            <fa-icon class="text-muted-color shrink-0" [icon]="faChevronRight" />
                         }
                         <div class="min-w-0 shrink-0">
                             <ng-container *ngTemplateOutlet="courseTitleBarService.titleTemplate()!" />

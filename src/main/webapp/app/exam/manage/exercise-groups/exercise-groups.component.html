@@ -137,3 +137,9 @@
 @if (groupEditTarget(); as editTarget) {
     <jhi-exam-exercise-group-edit-modal [(visible)]="groupEditVisible" [group]="editTarget" [isNew]="groupEditIsNew()" (saved)="onGroupEditSaved($event)" />
 }
+
+@if (groupImportVisible()) {
+    <tumaet-ui-dialog [(visible)]="groupImportVisible" [header]="'artemisApp.examManagement.importExam' | artemisTranslate" size="large">
+        <jhi-exam-import [subsequentExerciseGroupSelection]="true" [targetCourseId]="courseId()" [targetExamId]="examId()" (imported)="onExerciseGroupsImported($event)" />
+    </tumaet-ui-dialog>
+}

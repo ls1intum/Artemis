@@ -1,25 +1,24 @@
-<div class="row justify-content-between align-items-start exam-navigation pt-3">
-    <div class="col m-0">
+<div class="exam-navigation flex items-start justify-between pt-4">
+    <div class="m-0 min-w-0 flex-1">
         @if (exercises() && exercises().length > 0) {
             <div
-                class="col d-none d-lg-block h3 m-0 text-overflow"
+                class="text-overflow m-0 hidden text-2xl font-medium lg:block"
                 jhiTranslate="artemisApp.examParticipation.progress"
                 [translateValues]="{ current: exerciseIndex() + 1, all: exercises().length }"
             ></div>
             <div
-                class="col d-block d-lg-none h3 m-0 text-overflow"
-                style="flex: 0.2"
+                class="text-overflow m-0 block text-2xl font-medium lg:hidden"
                 jhiTranslate="artemisApp.examParticipation.progressSmall"
                 [translateValues]="{ current: exerciseIndex() + 1, all: exercises().length }"
             ></div>
         }
     </div>
-    <div class="col">
-        <div class="d-flex justify-content-center">
+    <div class="min-w-0 flex-1">
+        <div class="flex justify-center">
             <div class="navigation-item">
-                <button type="button" class="btn btn-secondary w-100" (click)="changePage(exerciseIndex() - 1)" [disabled]="exerciseIndex() <= 0">
+                <button type="button" tumAetUiButton severity="secondary" class="w-full" (click)="changePage(exerciseIndex() - 1)" [disabled]="exerciseIndex() <= 0">
                     <span aria-hidden="true">&laquo;</span>
-                    <span class="visually-hidden" jhiTranslate="artemisApp.examParticipation.navigation.previousButton"></span>
+                    <span class="sr-only" jhiTranslate="artemisApp.examParticipation.navigation.previousButton"></span>
                 </button>
             </div>
             @for (exercise of exercises(); track exercise; let i = $index) {
@@ -31,10 +30,10 @@
                     i <= exerciseIndex() + itemsVisiblePerSide() - (exerciseIndex() - itemsVisiblePerSide() <= 0 ? exerciseIndex() - itemsVisiblePerSide() : 0)
                 ) {
                     <div class="navigation-item">
-                        <button type="button" id="exam-exercise-{{ i }}" class="btn btn-primary w-100" [ngClass]="getExerciseButtonStatus(i)" (click)="changePage(i)">
+                        <button type="button" id="exam-exercise-{{ i }}" tumAetUiButton class="w-full" [ngClass]="getExerciseButtonStatus(i)" (click)="changePage(i)">
                             <fa-icon [icon]="faCheck" [attr.aria-hidden]="true" />
                             <span
-                                class="visually-hidden"
+                                class="sr-only"
                                 jhiTranslate="artemisApp.examParticipation.navigation.exerciseButton"
                                 [translateValues]="{ number: i + 1, title: exercise.title }"
                             ></span>
@@ -46,18 +45,20 @@
             <div class="navigation-item">
                 <button
                     type="button"
-                    class="btn btn-secondary w-100"
+                    tumAetUiButton
+                    severity="secondary"
+                    class="w-full"
                     (click)="changePage(exerciseIndex() + 1)"
                     [disabled]="exerciseIndex() >= exercises().length - 1 || exerciseIndex() < 0"
                 >
                     <span aria-hidden="true">&raquo;</span>
-                    <span class="visually-hidden" jhiTranslate="artemisApp.examParticipation.navigation.nextButton"></span>
+                    <span class="sr-only" jhiTranslate="artemisApp.examParticipation.navigation.nextButton"></span>
                 </button>
             </div>
         </div>
     </div>
     <!-- Empty third column: it balances the first one so that the middle column stays centered in the
-         `justify-content-between` row. It used to hold the save button, the hand-in-early button and the exam timer,
+         `justify-between` row. It used to hold the save button, the hand-in-early button and the exam timer,
          none of which apply to the timeline. -->
-    <div class="col"></div>
+    <div class="min-w-0 flex-1"></div>
 </div>

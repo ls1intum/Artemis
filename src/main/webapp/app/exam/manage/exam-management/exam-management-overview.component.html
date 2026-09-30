@@ -25,27 +25,19 @@
     }
 </ng-template>
 @if (exams()?.length) {
-    <div class="table-responsive flex-1 overflow-auto" id="exams-table">
-        <table class="table table-striped">
+    <div class="flex-1 overflow-auto" id="exams-table">
+        <table tumAetUiTable striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                    <th class="d-md-table-cell" jhiSortBy="id">
-                        <span jhiTranslate="global.field.id"></span>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="title">
-                        <span jhiTranslate="artemisApp.exam.title"></span>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th class="d-md-table-cell">
-                        <span jhiTranslate="artemisApp.examStatus.columnTitle"></span>
-                    </th>
+                <tr>
+                    <th tumAetUiSortableColumn="id"><span jhiTranslate="global.field.id"></span></th>
+                    <th tumAetUiSortableColumn="title"><span jhiTranslate="artemisApp.exam.title"></span></th>
+                    <th><span jhiTranslate="artemisApp.examStatus.columnTitle"></span></th>
                 </tr>
             </thead>
             <tbody>
                 @for (exam of exams(); track trackId($index, exam)) {
                     <tr>
-                        <td class="d-md-table-cell">
+                        <td>
                             @if (course().isAtLeastInstructor) {
                                 <span>
                                     <a [routerLink]="[exam.id]">{{ exam.id }}</a>
@@ -54,22 +46,20 @@
                                 {{ exam.id }}
                             }
                         </td>
-                        <td class="d-md-table-cell">
-                            <ng-container>
-                                @if (course().isAtLeastInstructor) {
-                                    <div class="bold">
-                                        <a id="exam-{{ exam.id }}-title" [routerLink]="[exam.id]">{{ exam.title }}</a>
-                                    </div>
-                                } @else {
-                                    <span>
-                                        {{ exam.title }}
-                                    </span>
-                                }
-                                <jhi-exam-mode-badge [testExam]="exam.testExam!" />
-                            </ng-container>
+                        <td>
+                            @if (course().isAtLeastInstructor) {
+                                <div class="font-semibold">
+                                    <a id="exam-{{ exam.id }}-title" [routerLink]="[exam.id]">{{ exam.title }}</a>
+                                </div>
+                            } @else {
+                                <span>
+                                    {{ exam.title }}
+                                </span>
+                            }
+                            <jhi-exam-mode-badge [testExam]="exam.testExam!" />
                         </td>
-                        <td class="d-md-table-cell">
-                            <jhi-exam-status [exam]="exam" [course]="course()" class="d-flex justify-content-center" />
+                        <td>
+                            <jhi-exam-status [exam]="exam" [course]="course()" class="flex justify-center" />
                         </td>
                     </tr>
                 }
@@ -99,4 +89,10 @@
             <span jhiTranslate="artemisApp.examManagement.empty.documentation"></span>
         </a>
     </tumaet-ui-empty-state>
+}
+
+@if (importDialogVisible()) {
+    <tumaet-ui-dialog [(visible)]="importDialogVisible" [header]="'artemisApp.examManagement.importExam' | artemisTranslate" size="medium">
+        <jhi-exam-import (examSelected)="onExamSelected($event)" />
+    </tumaet-ui-dialog>
 }

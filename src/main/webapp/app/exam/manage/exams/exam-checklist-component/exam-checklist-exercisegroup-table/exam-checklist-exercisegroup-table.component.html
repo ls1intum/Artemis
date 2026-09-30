@@ -1,13 +1,13 @@
-<table class="table table-striped table-bordered exercise-group-table">
+<table tumAetUiTable striped>
     <thead>
         <tr>
-            <th style="max-width: 30px">
+            <th class="max-w-8">
                 <span>#</span>
             </th>
-            <th style="max-width: 100px">
+            <th class="max-w-25">
                 <span jhiTranslate="artemisApp.examManagement.checklist.textitems.exerciseStart"></span>
             </th>
-            <th style="max-width: 30px">
+            <th class="max-w-8">
                 <span>#</span>
             </th>
             <th>
@@ -28,9 +28,9 @@
                 <td></td>
                 <td></td>
                 <td>
-                    <div class="d-flex">
-                        <div style="padding-right: 10px" [ngbTooltip]="getIconTooltip(ExerciseType.QUIZ) | artemisTranslate">
-                            <fa-icon [icon]="getIcon(ExerciseType.QUIZ)" placement="right auto" />
+                    <div class="flex">
+                        <div class="pe-2.5" [tumAetUiTooltip]="getIconTooltip(ExerciseType.QUIZ) | artemisTranslate" tumAetUiTooltipPlacement="right">
+                            <fa-icon [icon]="getIcon(ExerciseType.QUIZ)" />
                         </div>
                         <span>Quiz Exam</span>
                     </div>
@@ -41,35 +41,29 @@
         }
         @for (column of exerciseGroupVariantColumns(); track column; let i = $index) {
             <tr>
-                <td style="max-width: 30px">
+                <td class="max-w-8">
                     @if (column.indexExerciseGroup) {
                         <div>{{ column.indexExerciseGroup }}</div>
                     }
                 </td>
-                <td style="max-width: 100px; font-weight: bold">
+                <td class="max-w-25 font-bold">
                     @if (column.exerciseGroupTitle) {
                         <div>
                             {{ column.exerciseGroupTitle }}
                             @if (!column.noExercises && !column.exerciseGroupPointsEqual) {
                                 <fa-icon
-                                    ngbTooltip="Exercises within this group do not have the same number of maximum points!"
+                                    tumAetUiTooltip="Exercises within this group do not have the same number of maximum points!"
                                     [icon]="faExclamationTriangle"
-                                    style="color: rgba(255, 193, 7, 0.6)"
-                                    class="warning"
+                                    class="text-state-warning"
                                 />
                             }
                             @if (column.noExercises) {
-                                <fa-icon
-                                    ngbTooltip="This exercise group does not contain any exercises!"
-                                    [icon]="faExclamationTriangle"
-                                    style="color: rgba(255, 193, 7, 0.6)"
-                                    class="warning"
-                                />
+                                <fa-icon tumAetUiTooltip="This exercise group does not contain any exercises!" [icon]="faExclamationTriangle" class="text-state-warning" />
                             }
                         </div>
                     }
                 </td>
-                <td style="max-width: 30px">
+                <td class="max-w-8">
                     @if (!column.noExercises) {
                         <span>{{ column.indexExercise }}</span>
                     } @else {
@@ -78,9 +72,9 @@
                 </td>
                 <td>
                     @if (column.exerciseTitle) {
-                        <div class="d-flex">
-                            <div style="padding-right: 10px; max-width: min-content" [ngbTooltip]="getIconTooltip(column!.exerciseType) | artemisTranslate">
-                                <fa-icon [icon]="getIcon(column!.exerciseType)" placement="right auto" />
+                        <div class="flex">
+                            <div class="max-w-min pe-2.5" [tumAetUiTooltip]="getIconTooltip(column!.exerciseType) | artemisTranslate" tumAetUiTooltipPlacement="right">
+                                <fa-icon [icon]="getIcon(column!.exerciseType)" />
                             </div>
                             <span>{{ column.exerciseTitle }}</span>
                         </div>
