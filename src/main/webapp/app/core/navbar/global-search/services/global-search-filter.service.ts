@@ -395,10 +395,17 @@ export class GlobalSearchFilterService {
         }
     }
 
-    /** Appends an operator prefix to the input, keeping the search text in front of it. */
+    /**
+     * Puts an operator prefix at the end of the input, keeping the search text in front of it. Only one operator
+     * can be pending, so one that is still being composed is replaced rather than joined by a second: stacking
+     * them turned every earlier operator into search text. Text the user owns stays, which is an accepted literal
+     * or a value that matches nothing.
+     */
     private appendPrefix(prefix: string): void {
+        const ownsTrailingText = this.literalAccepted() || this.deadEnd();
+        const head = ownsTrailingText ? this.searchQuery() : stripOperator(this.searchQuery());
         this.literalFrom.set(undefined);
-        this.searchQuery.set(appendOperator(this.searchQuery(), prefix));
+        this.searchQuery.set(appendOperator(head, prefix));
         this.excludeMode.set(false);
         this.menuActiveIndex.set(0);
         this.sideEffects.requestFocus();
