@@ -1,6 +1,6 @@
 import { expect, Browser, Page } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { admin, instructor, studentOne, studentTwo } from '../../support/users';
+import { admin, instructor, studentOne, studentTwo, UserCredentials } from '../../support/users';
 import { newBrowserPage, prepareRunningTextExam } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -109,5 +109,41 @@ test.describe('Exam suspicious behavior analysis', { tag: '@slow' }, () => {
             await expect(page.locator('table tbody tr').filter({ hasText: studentOne.username })).toHaveCount(1);
             await expect(page.locator('table tbody tr').filter({ hasText: studentTwo.username })).toHaveCount(1);
         }
+    });
+
+    test('Sessions of the same student exam with different browser fingerprints are flagged, consistent sessions are not', async ({
+        page,
+        login,
+        examAPIRequests,
+        exerciseAPIRequests,
+    }) => {
+        await login(admin);
+        exam = (await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course, students: [studentOne, studentTwo] })).exam;
+
+        // The client sends the fingerprint of its browser with every load of the exam, and every load is a session. One student loads the exam from two
+        // browsers, the other one loads it twice from the same browser.
+        const conduction = async (student: UserCredentials, fingerprint: string) => {
+            await login(student);
+            const studentExamId = await examAPIRequests.getOwnStudentExamId(exam);
+            const response = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/student-exams/${studentExamId}/conduction`, {
+                headers: { 'X-Artemis-Client-Fingerprint': fingerprint, 'X-Artemis-Client-Instance-ID': `instance-${fingerprint}` },
+            });
+            expect(response.status()).toBe(200);
+        };
+        await conduction(studentOne, 'fingerprint-of-the-first-browser');
+        await conduction(studentOne, 'fingerprint-of-the-second-browser');
+        await conduction(studentTwo, 'fingerprint-of-the-only-browser');
+        await conduction(studentTwo, 'fingerprint-of-the-only-browser');
+
+        await login(instructor, `/course-management/${course.id}/exams/${exam.id}/suspicious-behavior`);
+        await page.locator('#same-student-exam-different-fingerprints').check();
+        await page.getByRole('button', { name: 'Analyze Sessions' }).click();
+        await expect(page.getByText(/This exam has\s*1\s*cases\./)).toBeVisible();
+        await page.locator('#view-sessions-btn').click();
+        await expect(page.getByText('Different browser fingerprints for the same student exam')).toBeVisible();
+        const rows = page.getByTestId('suspicious-session-row');
+        await expect(rows, 'the two sessions of the first student').toHaveCount(2);
+        await expect(rows.filter({ hasText: studentOne.username })).toHaveCount(2);
+        await expect(rows.filter({ hasText: studentTwo.username })).toHaveCount(0);
     });
 });
