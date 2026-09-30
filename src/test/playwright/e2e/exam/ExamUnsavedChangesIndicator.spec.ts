@@ -22,7 +22,7 @@ const course = { id: SEED_COURSES.examParticipation.id } as any;
  * performs an unrelated interaction that could mask a missing re-render.
  *
  * Covers both consumers of the signal in the conduction view: the navigation sidebar's per-exercise
- * status icon (`getExerciseButtonStatus`, rendered as the `synced` / `synced saved` / `notSynced` class)
+ * status icon (`getExerciseButtonStatus`, rendered as the `synced` / `synced saved` / `notSynced` state)
  * and the save button (`ExerciseSaveButtonComponent`, whose `disabled` state mirrors `isSynced`).
  */
 test.describe('Exam unsaved changes indicator', { tag: '@slow' }, () => {
@@ -48,8 +48,8 @@ test.describe('Exam unsaved changes indicator', { tag: '@slow' }, () => {
         await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 
         const sidebar = page.locator('jhi-exam-navigation-sidebar');
-        const unsavedStatus = sidebar.locator('span.notSynced');
-        const savedStatus = sidebar.locator('span.saved');
+        // The exam has one exercise, so the sidebar has exactly one status indicator; its data-status is one of synced, synced saved and notSynced.
+        const status = sidebar.getByTestId('sidebar-exercise-status');
         const saveButton = page.locator('#save-exam').first();
         const editor = page.locator('#text-editor').first();
         await editor.waitFor({ state: 'visible', timeout: 30000 });
@@ -59,20 +59,19 @@ test.describe('Exam unsaved changes indicator', { tag: '@slow' }, () => {
         // well before the exam's 30s autosave could flip the flag back and hide a missing re-render.
         await editor.click();
         await editor.pressSequentially('Answer to the first exam question', { delay: 20 });
-        await expect(unsavedStatus, 'the sidebar must warn about unsaved changes right after the student types').toHaveCount(1, { timeout: 20000 });
+        await expect(status, 'the sidebar must warn about unsaved changes right after the student types').toHaveAttribute('data-status', 'notSynced', { timeout: 20000 });
         await expect(saveButton, 'the save button must become clickable once there are unsaved changes').toBeEnabled({ timeout: 20000 });
 
         // Saving flips isSynced and submitted back to true, again by in-place mutation.
         await saveButton.click();
-        await expect(savedStatus, 'the sidebar must show the saved state after a successful save').toHaveCount(1, { timeout: 20000 });
-        await expect(unsavedStatus, 'the unsaved warning must disappear after a successful save').toHaveCount(0);
+        await expect(status, 'the sidebar must show the saved state after a successful save').toHaveAttribute('data-status', 'synced saved', { timeout: 20000 });
         await expect(saveButton, 'the save button must disable itself again once the submission is synced').toBeDisabled({ timeout: 20000 });
 
         // The regression proper: editing an already-saved submission must bring the warning back without
         // any unrelated interaction.
         await editor.click();
         await editor.pressSequentially(' and a correction', { delay: 20 });
-        await expect(unsavedStatus, 'editing a saved submission must warn about unsaved changes again').toHaveCount(1, { timeout: 20000 });
+        await expect(status, 'editing a saved submission must warn about unsaved changes again').toHaveAttribute('data-status', 'notSynced', { timeout: 20000 });
         await expect(saveButton, 'the save button must re-enable after the saved submission is edited').toBeEnabled({ timeout: 20000 });
     });
 });

@@ -89,10 +89,10 @@ export class ExamScoresPage {
                     `overallPointsAchieved=${overallPointsAchieved}, overallScoreAchieved=${overallScoreAchieved}, overallGrade=${overallGrade}`,
             );
         }
-        const studentResultRow = this.page.locator('tr', { hasText: studentResult.login });
+        const studentResultRow = this.page.locator(`[data-testid="student-result-row"][data-login="${studentResult.login}"]`);
         await expect(studentResultRow).toBeVisible({ timeout: 15000 });
-        await expect(studentResultRow.locator('td').nth(6).getByText(Math.floor(overallPointsAchieved).toString())).toBeVisible({ timeout: 10000 });
-        await expect(studentResultRow.locator('td').nth(7).getByText(Math.floor(overallScoreAchieved).toString())).toBeVisible({ timeout: 10000 });
-        await expect(studentResultRow.locator('td').nth(8).getByText(overallGrade)).toBeVisible({ timeout: 10000 });
+        await expect(studentResultRow.getByTestId('overall-points').getByText(Math.floor(overallPointsAchieved).toString())).toBeVisible({ timeout: 10000 });
+        await expect(studentResultRow.getByTestId('overall-score').getByText(Math.floor(overallScoreAchieved).toString())).toBeVisible({ timeout: 10000 });
+        await expect(studentResultRow.getByTestId('overall-grade').getByText(overallGrade)).toBeVisible({ timeout: 10000 });
     }
 }

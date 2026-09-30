@@ -609,7 +609,7 @@
                     </thead>
                     <tbody>
                         @for (studentResult of studentResults(); track studentResult.userId; let i = $index) {
-                            <tr>
+                            <tr data-testid="student-result-row" [attr.data-login]="studentResult.login">
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ studentResult.name }}</td>
                                 <td>{{ studentResult.login }}</td>
@@ -629,10 +629,10 @@
                                         <td>-</td>
                                     }
                                 }
-                                <td>{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved) }}</td>
-                                <td>{{ roundAndPerformLocalConversion(studentResult.overallScoreAchieved) }}</td>
+                                <td data-testid="overall-points">{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved) }}</td>
+                                <td data-testid="overall-score">{{ roundAndPerformLocalConversion(studentResult.overallScoreAchieved) }}</td>
                                 @if (gradingScaleExists()) {
-                                    <td>
+                                    <td data-testid="overall-grade">
                                         {{ studentResult.overallGrade !== null ? studentResult.overallGrade : '-' }}
                                     </td>
                                 }

@@ -62,6 +62,8 @@
                                         }
                                     </span>
                                     <span
+                                        data-testid="sidebar-exercise-status"
+                                        [attr.data-status]="getExerciseButtonStatus(i)"
                                         [ngClass]="getExerciseButtonStatus(i)"
                                         [ngbTooltip]="!examTimeLineView() ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercises()[i]) | artemisTranslate) : ''"
                                     >

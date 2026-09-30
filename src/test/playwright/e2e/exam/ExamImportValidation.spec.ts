@@ -49,9 +49,9 @@ test.describe('Exam import validation messages', { tag: '@fast' }, () => {
 
         // Group form controls use their row index because imported groups can have no server ID.
         const groupTitleInput = page.locator('#exerciseGroup-0-title');
-        const groupTitleError = groupTitleInput.locator('..').getByText('Please enter a title for the exercise group.', { exact: true });
+        const groupTitleError = page.getByTestId('exercise-group-0-title-error');
         const textTitleInput = page.locator(`#exercise-${textExercise.id}-title`);
-        const textTitleError = page.locator(`#exercise-${textExercise.id}-title ~ .invalid-feedback`);
+        const textTitleError = page.getByTestId(`exercise-${textExercise.id}-title-error`);
 
         // Wait for the import table to render with the seeded (valid) values -> no messages yet.
         await expect(groupTitleInput).toBeVisible();
@@ -124,9 +124,9 @@ test.describe('Exam import with a clashing programming exercise', { tag: '@slow'
         await login(instructor, `/course-management/${targetCourse.id}/exams/import/${sourceExam.id}`);
 
         const titleInput = page.locator(`#exercise-${programmingExercise.id}-title`);
-        const titleError = page.locator(`#exercise-${programmingExercise.id}-title ~ .invalid-feedback`);
+        const titleError = page.getByTestId(`exercise-${programmingExercise.id}-title-error`);
         const shortNameInput = page.locator(`#programming-exercise-${programmingExercise.id}-shortName`);
-        const shortNameError = page.locator(`#programming-exercise-${programmingExercise.id}-shortName ~ .invalid-feedback`);
+        const shortNameError = page.getByTestId(`programming-exercise-${programmingExercise.id}-shortName-error`);
 
         await expect(titleInput).toBeVisible();
 

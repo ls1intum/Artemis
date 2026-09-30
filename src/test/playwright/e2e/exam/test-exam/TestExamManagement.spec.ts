@@ -4,6 +4,8 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { admin, instructor } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
+import { expectExerciseInGroup } from '../../../support/examGroupAssertions';
+import { ExerciseType } from '../../../support/constants';
 import { expect } from '@playwright/test';
 import { SEED_COURSES } from '../../../support/seedData';
 
@@ -29,7 +31,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
         });
 
-        test('Create exercise group', async ({ page, examExerciseGroups, examExerciseGroupCreation }) => {
+        test('Create exercise group', async ({ examAPIRequests, page, examExerciseGroups, examExerciseGroupCreation }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await examExerciseGroups.shouldShowNumberOfExerciseGroups(1);
             await examExerciseGroups.clickAddExerciseGroup();
@@ -38,10 +40,14 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await examExerciseGroupCreation.isMandatoryBoxShouldBeChecked();
             const group = await examExerciseGroupCreation.clickSave();
             await examExerciseGroups.shouldHaveTitle(group.id!, groupName);
+            const storedNewGroup = (await examAPIRequests.getExerciseGroups(exam)).find((candidate) => candidate.id === group.id)!;
+            expect(storedNewGroup.title).toBe(groupName);
+            expect(storedNewGroup.isMandatory, 'the group is mandatory by default').toBe(true);
+            expect(storedNewGroup.exercises ?? [], 'a new group has no exercises').toHaveLength(0);
             await examExerciseGroups.shouldShowNumberOfExerciseGroups(2);
         });
 
-        test('Adds a text exercise', async ({ page, examExerciseGroups, textExerciseCreation }) => {
+        test('Adds a text exercise', async ({ examAPIRequests, page, examExerciseGroups, textExerciseCreation }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
             const textExerciseTitle = 'text' + uid;
@@ -51,9 +57,10 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             expect(response.status(), await response.text()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, textExerciseTitle);
+            await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: textExerciseTitle, type: ExerciseType.TEXT, maxPoints: 10 });
         });
 
-        test('Adds a quiz exercise', async ({ page, examExerciseGroups, quizExerciseCreation }) => {
+        test('Adds a quiz exercise', async ({ examAPIRequests, page, examExerciseGroups, quizExerciseCreation }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await examExerciseGroups.clickAddQuizExercise(exerciseGroup.id!);
             const quizExerciseTitle = 'quiz' + uid;
@@ -63,9 +70,10 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             expect(response.status(), await response.text()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, quizExerciseTitle);
+            await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: quizExerciseTitle, type: ExerciseType.QUIZ, maxPoints: 10 });
         });
 
-        test('Adds a modeling exercise', async ({ page, examExerciseGroups, modelingExerciseCreation }) => {
+        test('Adds a modeling exercise', async ({ examAPIRequests, page, examExerciseGroups, modelingExerciseCreation }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await examExerciseGroups.clickAddModelingExercise(exerciseGroup.id!);
             const modelingExerciseTitle = 'modeling' + uid;
@@ -75,9 +83,10 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             expect(response.status(), await response.text()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, modelingExerciseTitle);
+            await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: modelingExerciseTitle, type: ExerciseType.MODELING, maxPoints: 10 });
         });
 
-        test('Adds a programming exercise', async ({ page, examExerciseGroups, programmingExerciseCreation }) => {
+        test('Adds a programming exercise', async ({ examAPIRequests, page, examExerciseGroups, programmingExerciseCreation }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await page.waitForLoadState('domcontentloaded');
             await examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
@@ -91,9 +100,10 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             expect(response.status(), await response.text()).toBe(201);
             await examExerciseGroups.visitPageViaUrl(course.id!, exam.id!);
             await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, programmingExerciseTitle);
+            await expectExerciseInGroup(examAPIRequests, exam, exerciseGroup, { title: programmingExerciseTitle, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
         });
 
-        test('Edits an exercise group', async ({ page, examExerciseGroups, examExerciseGroupCreation }) => {
+        test('Edits an exercise group', async ({ examAPIRequests, page, examExerciseGroups, examExerciseGroupCreation }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await examExerciseGroups.shouldHaveTitle(exerciseGroup.id!, exerciseGroup.title!);
             await examExerciseGroups.clickEditGroup(exerciseGroup.id!);
@@ -101,12 +111,19 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await examExerciseGroupCreation.typeTitle(newGroupName);
             await examExerciseGroupCreation.update();
             await examExerciseGroups.shouldHaveTitle(exerciseGroup.id!, newGroupName);
+            const storedGroup = (await examAPIRequests.getExerciseGroups(exam)).find((candidate) => candidate.id === exerciseGroup.id)!;
+            expect(storedGroup.title, 'the renamed group is stored').toBe(newGroupName);
+            expect(storedGroup.isMandatory, 'renaming does not change whether the group is mandatory').toBe(exerciseGroup.isMandatory);
         });
 
-        test('Delete an exercise group', async ({ page, examExerciseGroups }) => {
+        test('Delete an exercise group', async ({ examAPIRequests, page, examExerciseGroups }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await examExerciseGroups.clickDeleteGroup(exerciseGroup.id!, exerciseGroup.title!);
             await examExerciseGroups.shouldNotExist(exerciseGroup.id!);
+            expect(
+                (await examAPIRequests.getExerciseGroups(exam)).map((candidate) => candidate.id),
+                'the server no longer has the group',
+            ).not.toContain(exerciseGroup.id);
         });
     });
 

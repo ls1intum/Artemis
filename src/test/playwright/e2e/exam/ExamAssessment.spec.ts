@@ -26,6 +26,7 @@ test.beforeAll('Get student name', async ({ browser }) => {
     const page = await newBrowserPage(browser);
     await Commands.login(page, admin);
     studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
+    await page.close();
 });
 
 test.describe('Exam assessment', () => {

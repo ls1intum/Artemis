@@ -105,8 +105,8 @@ export class ExamTestRunPage {
         const confirmInput = this.page.locator('#confirm-entity-name');
         await confirmInput.waitFor({ state: 'visible', timeout: 10000 });
         await confirmInput.fill('Test Run');
-        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-runs/*`);
+        const responsePromise = this.page.waitForResponse((response) => response.request().method() === 'DELETE' && /\/test-runs\/\d+$/.test(response.url()));
         await this.page.getByTestId('delete-dialog-confirm-button').click();
-        await responsePromise;
+        return await responsePromise;
     }
 }
