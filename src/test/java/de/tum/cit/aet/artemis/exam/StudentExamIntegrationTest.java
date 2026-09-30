@@ -2947,6 +2947,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGradedStudentExamSummaryAsStudentOfAnotherStudentExamIsForbidden() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 2);
+
+        GradingScale gradingScale = createGradeScale(false, exam2);
+        gradingScaleRepository.save(gradingScale);
+
+        String gradeSummaryUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary";
+
+        // the owner reads the grade summary of the student exam
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        request.get(gradeSummaryUrl, HttpStatus.OK, StudentExamWithGradeDTO.class);
+
+        // another student of the exam must not read it by the id of the student exam, neither without nor with the id of the owner as the target user
+        String otherStudentLogin = examRepository.findByIdWithExamUsersElseThrow(exam2.getId()).getExamUsers().stream().map(examUser -> examUser.getUser().getLogin())
+                .filter(login -> !login.equals(studentExam.getUser().getLogin())).findFirst().orElseThrow();
+        userUtilService.changeUser(otherStudentLogin);
+        request.get(gradeSummaryUrl, HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
+        request.get(gradeSummaryUrl + "?userId=" + studentExam.getUser().getId(), HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOwnUserId() throws Exception {
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 

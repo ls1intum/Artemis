@@ -158,6 +158,7 @@
             outlined
             [pTooltip]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
             tooltipPosition="top"
+            data-testid="reseat-student-button"
             (click)="reseatingDialog.openDialog(toExamUserForReseating(examUser))"
             [disabled]="isTestExam()"
         >
@@ -183,6 +184,7 @@
             type="button"
             pButton
             jhiDeleteButton
+            data-testid="remove-student-button"
             severity="danger"
             outlined
             size="small"
@@ -214,6 +216,9 @@
     <img
         style="max-width: 60px"
         [id]="dto.id"
+        data-testid="student-image"
+        [attr.data-login]="dto.login"
+        [attr.data-has-image]="!!dto.studentImagePath"
         class="img-fluid"
         [src]="dto.studentImagePath ? addPublicFilePrefix(dto.studentImagePath) : missingImage"
         [alt]="dto.name || ''"
