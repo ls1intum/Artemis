@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
@@ -80,8 +81,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
-        course.setPresentationAssessmentsEnabled(true);
-        otherCourse.setPresentationAssessmentsEnabled(true);
+        setPresentationAssessmentsEnabled(course, true);
+        setPresentationAssessmentsEnabled(otherCourse, true);
         courseRepository.saveAll(List.of(course, otherCourse));
 
         presentationAssessment = new PresentationAssessment();
@@ -322,10 +323,20 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getPresentationAssessments_withCourseSettingDisabled_shouldReturnForbidden() throws Exception {
-        course.setPresentationAssessmentsEnabled(false);
+        setPresentationAssessmentsEnabled(course, false);
         courseRepository.save(course);
 
         request.getList(getBaseUrl(course), HttpStatus.FORBIDDEN, PresentationAssessmentDTO.class);
+    }
+
+    private static void setPresentationAssessmentsEnabled(Course course, boolean enabled) {
+        CourseConfiguration courseConfiguration = course.getCourseConfiguration();
+        if (courseConfiguration == null) {
+            courseConfiguration = new CourseConfiguration();
+            courseConfiguration.setCourse(course);
+            course.setCourseConfiguration(courseConfiguration);
+        }
+        courseConfiguration.setPresentationAssessmentsEnabled(enabled);
     }
 
     @Test
@@ -476,6 +487,18 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
         PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.5, List.of(TEST_PREFIX + "student1", "unknown-student"),
                 "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+
+        request.post(getInstancesUrl(course, presentationAssessment) + "/batch", dto, HttpStatus.BAD_REQUEST);
+
+        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_withEmptyStudentList_shouldReturnBadRequest() throws Exception {
+        long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
+        PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, FIXED_DATE.plusDays(14), 15.5, List.of(), "en", PresentationAssessmentMode.IN_PERSON,
+                "Room 1", null, null);
 
         request.post(getInstancesUrl(course, presentationAssessment) + "/batch", dto, HttpStatus.BAD_REQUEST);
 

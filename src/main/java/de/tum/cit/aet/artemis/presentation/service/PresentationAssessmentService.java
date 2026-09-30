@@ -167,6 +167,10 @@ public class PresentationAssessmentService {
         return presentationAssessmentRepository.executeWithWriteLock(assessmentId, course.getId(), assessment -> {
             if (dto.id() == null) {
                 Set<User> students = resolveAssignedCourseStudents(course, dto.studentLogins());
+                if (students.isEmpty()) {
+                    throw new BadRequestAlertException("At least one student must be selected", PresentationAssessmentInstance.ENTITY_NAME,
+                            "individualInstanceHasInvalidStudentCount");
+                }
                 List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto, student)).toList();
                 return presentationAssessmentInstanceRepository.saveAll(instances);
             }

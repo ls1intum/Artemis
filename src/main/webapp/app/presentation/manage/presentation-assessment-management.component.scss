@@ -18,8 +18,11 @@
 }
 
 .presentation-content {
+    display: flex;
     min-width: 0;
+    min-height: 0;
     flex: 1 1 0;
+    flex-direction: column;
     overflow: hidden;
     border: 1px solid var(--p-content-border-color);
     border-radius: var(--p-border-radius-md);
@@ -27,7 +30,11 @@
 }
 
 .presentation-detail {
+    display: flex;
+    height: 100%;
     min-width: 0;
+    min-height: 0;
+    flex-direction: column;
 }
 
 .presentation-detail-header {
