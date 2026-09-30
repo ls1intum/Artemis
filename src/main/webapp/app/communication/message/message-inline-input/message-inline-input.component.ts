@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, effect, inject, input,
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { PostContentValidationPattern } from 'app/communication/metis.util';
+import { PostContentValidationPattern } from 'app/communication/communication.util';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -81,7 +81,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     }
 
     /**
-     * invokes the metis service after setting the title and current date as creation date of the new answer post,
+     * invokes the communication service after setting the title and current date as creation date of the new answer post,
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
@@ -94,7 +94,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             }
             const payload = deepClone(posting);
             payload.content = this.formGroup.get('content')?.value;
-            this.metisService.createPost(payload).subscribe({
+            this.communicationService.createPost(payload).subscribe({
                 next: (post: Post) => {
                     this.isLoading.set(false);
                     this.clearDraft();
@@ -108,7 +108,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     }
 
     /**
-     * invokes the metis service with the updated answer post
+     * invokes the communication service with the updated answer post
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
@@ -120,7 +120,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         const payload = deepClone(posting);
         payload.content = this.formGroup.get('content')?.value;
         this.isModalOpen.emit();
-        this.metisService.updatePost(payload).subscribe({
+        this.communicationService.updatePost(payload).subscribe({
             next: () => {
                 this.isLoading.set(false);
                 this.clearDraft();
