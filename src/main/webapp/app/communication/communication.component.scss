@@ -11,20 +11,20 @@ $delete-delay-duration: 6s;
 
 .post-separation-line {
     height: 1px;
-    background: var(--metis-light-gray);
+    background: var(--communication-light-gray);
 }
 
 .bold-line {
     height: 2px;
-    background: var(--metis-light-gray);
+    background: var(--communication-light-gray);
 }
 
 .icon {
-    color: var(--metis-gray);
+    color: var(--communication-gray);
 }
 
 .resolved {
-    color: var(--metis-green);
+    color: var(--communication-green);
 }
 
 .post-header-author-date {

@@ -244,11 +244,9 @@
                     "fileUpload": "Datei-Upload",
                     "quiz": "Quiz"
                 },
-                "metis": {
-                    "post": "Beitrag",
-                    "answerPost": "Antwort"
-                },
                 "messages": {
+                    "post": "Beitrag",
+                    "answerPost": "Antwort",
                     "conversation": "Konversation",
                     "conversationParticipant": "Unterhaltungsdetails"
                 }
