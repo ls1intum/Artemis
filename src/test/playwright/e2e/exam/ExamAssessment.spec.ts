@@ -235,7 +235,9 @@ test.describe('Exam assessment', () => {
         test('Assess a file upload exercise submission', async ({
             page,
             login,
+            examAPIRequests,
             examManagement,
+            examResultsPage,
             fileUploadExerciseAssessment,
             examParticipation,
             courseAssessment,
@@ -243,6 +245,8 @@ test.describe('Exam assessment', () => {
         }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            const [{ exercises }] = await examAPIRequests.getExerciseGroups(exam);
+            const fileUploadExerciseId = exercises![0].id!;
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await fileUploadExerciseAssessment.addNewFeedback(7, 'Good job');
@@ -250,6 +254,14 @@ test.describe('Exam assessment', () => {
             expect(response.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('70%');
+
+            // The student sees the points and the text of the feedback, and the server holds a completed manual result with the same score.
+            await examResultsPage.checkAdditionalFeedback(fileUploadExerciseId, 7, 'Good job');
+            const summary = await examAPIRequests.getOwnStudentExamSummary(exam);
+            const result = summary.exercises!.find((exercise) => exercise.id === fileUploadExerciseId)!.studentParticipations![0].submissions![0].results![0];
+            expect(result.score).toBe(70);
+            expect(result.completionDate, 'the assessment is completed').toBeTruthy();
+            expect(result.assessmentType).toBe('MANUAL');
         });
 
         test('Instructor makes a second round of assessment', async ({
@@ -755,6 +767,8 @@ async function handleComplaint(
     await studentAssessment.enterComplaint(complaintText);
     await studentAssessment.submitComplaint();
     await examAssessment.checkComplaintMessage('Your complaint has been submitted');
+    // A result can be complained about once: the form was there a moment ago and is gone now.
+    await expect(page.locator('#complain')).toHaveCount(0);
 
     await Commands.login(page, instructor, `/course-management/${course.id}/exams`);
     await examManagement.openAssessmentDashboard(course.id!, exam.id!);

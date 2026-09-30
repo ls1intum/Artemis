@@ -112,6 +112,10 @@ export class ExerciseAPIRequests {
         buildPlanConfiguration?: string;
         // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
         auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
+        /** Whether students may work in the online editor; the server default of the template applies when omitted. */
+        allowOnlineEditor?: boolean;
+        /** Whether students may clone the repository and work in their own IDE; the server default of the template applies when omitted. */
+        allowOfflineIde?: boolean;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -135,6 +139,8 @@ export class ExerciseAPIRequests {
             problemStatement,
             buildPlanConfiguration,
             auxiliaryRepositories,
+            allowOnlineEditor,
+            allowOfflineIde,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -159,6 +165,8 @@ export class ExerciseAPIRequests {
             ...(problemStatement ? { problemStatement } : {}),
             ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
             ...(projectType ? { projectType } : {}),
+            ...(allowOnlineEditor !== undefined ? { allowOnlineEditor } : {}),
+            ...(allowOfflineIde !== undefined ? { allowOfflineIde } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {

@@ -6,6 +6,7 @@ import { SEED_COURSES } from '../../../support/seedData';
 import { ExerciseType } from '../../../support/constants';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expectStoredAnswers } from '../../../support/examAnswerAssertions';
+import { asAdmin } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.testExam.id } as any;
 
@@ -71,6 +72,40 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
         await expect(page.getByText('Test Exam Attempts (2)')).toBeVisible();
         await expect(page.getByText('Attempt 1', { exact: true })).toBeVisible();
         await expect(page.getByText('Attempt 2', { exact: true })).toBeVisible();
+    });
+
+    test('A student registers themselves by starting a test exam, and an attempt lasts the working time', async ({
+        page,
+        browser,
+        login,
+        examAPIRequests,
+        examExerciseGroupCreation,
+        examParticipation,
+    }) => {
+        await login(admin);
+        exam = await examAPIRequests.createExam({
+            course,
+            testExam: true,
+            startDate: dayjs().subtract(1, 'day'),
+            visibleDate: dayjs().subtract(2, 'days'),
+            examMaxPoints: 10,
+            numberOfExercisesInExam: 1,
+            workingTime: 3600,
+        });
+        await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture: 'loremIpsum-short.txt' });
+        const deletionSummary = async () => await asAdmin(browser, async (adminExamRequests) => await adminExamRequests.getDeletionSummary(exam));
+        expect(await deletionSummary(), 'nobody is registered before the first attempt').toMatchObject({ numberRegisteredStudents: 0, numberStartedExams: 0 });
+
+        // Starting the first attempt registers the student: nobody had to do it for them.
+        await examParticipation.startParticipation(studentOne, course, exam);
+        expect(await deletionSummary()).toMatchObject({ numberRegisteredStudents: 1, numberStartedExams: 1, numberSubmittedExams: 0 });
+
+        // The attempt runs for the working time of the exam from the moment it was started, not until the end of the exam a day later.
+        const [attempt] = await examAPIRequests.getOwnTestExamAttempts(exam);
+        expect(attempt.workingTime).toBe(3600);
+        expect(attempt.started).toBe(true);
+        expect(attempt.startedDate).toBeTruthy();
+        await expect(page.getByTestId('displayTime')).toContainText('59min');
     });
 
     test('A test exam that is over can not be started', async ({ page, login, examAPIRequests, examExerciseGroupCreation }) => {

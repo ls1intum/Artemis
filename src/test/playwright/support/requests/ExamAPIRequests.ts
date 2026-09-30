@@ -466,6 +466,34 @@ export class ExamAPIRequests {
     }
 
     /**
+     * Moves the start of a real exam to the given number of seconds from now on the server clock and lets it last the given time from there.
+     * The working time of the exam follows its duration, as it does for every real exam.
+     * @returns the new start of the exam
+     */
+    async rescheduleExam(exam: Exam, startInSeconds: number, durationInSeconds: number): Promise<dayjs.Dayjs> {
+        const { serverNow } = await this.getExamWithServerTime(exam);
+        const start = serverNow.add(startInSeconds, 'seconds');
+        await this.updateExam(exam, {
+            startDate: dayjsToString(start),
+            endDate: dayjsToString(start.add(durationInSeconds, 'seconds')),
+            workingTime: durationInSeconds,
+        });
+        return start;
+    }
+
+    /**
+     * Gets the summary of what deleting the exam would delete: the number of registered students, of exams that were not started, started
+     * and submitted, of builds and of posts.
+     */
+    async getDeletionSummary(exam: Exam): Promise<Record<string, number>> {
+        const response = await this.expectOk(
+            await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/deletion-summary`),
+            `get the deletion summary of exam ${exam.id}`,
+        );
+        return (await response.json()) as Record<string, number>;
+    }
+
+    /**
      * Sets the publication of the results to the given number of seconds from now on the server clock, and opens the student review
      * period (the time in which students may complain) at the same moment for ten minutes.
      * @returns the point in time at which the results are published

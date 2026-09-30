@@ -90,4 +90,36 @@ test.describe('Exam form validation', { tag: '@fast' }, () => {
         expect(dayjs(createdExam.publishResultsDate as any).isAfter(dayjs(createdExam.endDate as any))).toBe(true);
         expect(dayjs(createdExam.examStudentReviewEnd as any).isAfter(dayjs(createdExam.examStudentReviewStart as any))).toBe(true);
     });
+    test('The form of a test exam only accepts a working time that fits into the time the exam is open', async ({ page, login, examCreation }) => {
+        const title = 'exam' + generateUUID();
+        const save = page.locator('#save-exam');
+
+        await login(instructor, `/course-management/${course.id}/exams/new`);
+        await examCreation.setTitle(title);
+        await examCreation.setTestMode();
+        await examCreation.setVisibleDate(dayjs());
+        // The exam is open for two hours.
+        await examCreation.setStartDate(dayjs().add(1, 'hour'));
+        await examCreation.setEndDate(dayjs().add(3, 'hours'));
+        await examCreation.setNumberOfExercises(2);
+        await examCreation.setExamMaxPoints(20);
+
+        // An attempt can not be longer than the exam is open, and it needs some time.
+        for (const invalidMinutes of [121, 0]) {
+            await examCreation.setWorkingTime(invalidMinutes);
+            await expect(save, `a working time of ${invalidMinutes} minutes`).toBeDisabled();
+        }
+        await examCreation.setWorkingTime(120);
+        await expect(save, 'an attempt as long as the exam is open').toBeEnabled();
+        await examCreation.setWorkingTime(45);
+        await expect(save).toBeEnabled();
+
+        // The exam is saved as a test exam with the attempt length that was chosen.
+        const response = await examCreation.submit();
+        expect(response.status(), await response.text()).toBe(201);
+        createdExam = await readResponseJson<Exam>(response);
+        expect(createdExam.testExam).toBe(true);
+        expect(createdExam.workingTime).toBe(45 * 60);
+        expect(createdExam.numberOfCorrectionRoundsInExam, 'a test exam has no correction rounds').toBe(0);
+    });
 });
