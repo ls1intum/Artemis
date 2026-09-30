@@ -7,7 +7,14 @@
 
 <ng-template titleBarActions>
     @if (course()?.isAtLeastInstructor) {
-        <tumaet-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()" [title]="'artemisApp.examManagement.importExam' | artemisTranslate">
+        <tumaet-ui-button
+            data-testid="import-exam-button"
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            (clicked)="openImportModal()"
+            [title]="'artemisApp.examManagement.importExam' | artemisTranslate"
+        >
             <fa-icon [icon]="faFileImport" />
             <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
         </tumaet-ui-button>
