@@ -720,6 +720,22 @@ describe('GlobalSearchFilterService', () => {
             expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
         });
 
+        it('keeps an accepted literal that ended in whitespace after an operator was opened and backed out', () => {
+            // Appending an operator trims the trailing space, so a marker that kept it would stop matching and the
+            // literal's type:candle would be read as a live operator again once the course operator is gone.
+            service.searchQuery.set('nsjkfncs type:candle ');
+            service.onOptionSelected(0);
+            service.tokens.set([{ facet: 'course', value: '10' }]);
+            service.onChipSelected(0);
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle course:');
+
+            service.back();
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.operator()).toBeUndefined();
+            expect(service.searchText()).toBe('nsjkfncs type:candle');
+        });
+
         it('keeps an accepted literal when Escape steps back from the exclude level', () => {
             service.searchQuery.set('nsjkfncs type:candle');
             service.onOptionSelected(0);
