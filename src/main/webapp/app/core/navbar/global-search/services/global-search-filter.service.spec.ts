@@ -457,6 +457,44 @@ describe('GlobalSearchFilterService', () => {
             expect(service.searchQuery()).toBe('linear regression type:');
             expect(service.searchText()).toBe('linear regression');
         });
+
+        it('replaces the pending operator when another chip is clicked, instead of stacking a second one', () => {
+            // Each click used to append, so two chips clicked in turn left "this is course: type: course:" in the
+            // input, and everything in front of the last operator was sent to the server as the search term.
+            service.tokens.set([
+                { facet: 'course', value: '10' },
+                { facet: 'type', value: 'lecture' },
+            ]);
+            service.searchQuery.set('this is');
+
+            service.onChipSelected(0);
+            service.onChipSelected(1);
+            service.onChipSelected(0);
+            service.onChipSelected(1);
+
+            expect(service.searchQuery()).toBe('this is type:');
+            expect(service.searchText()).toBe('this is');
+            expect(service.editingChip()).toBe(1);
+        });
+
+        it('replaces a half-typed value when a chip is clicked', () => {
+            mockCourseStorageService.getCourses.mockReturnValue([{ id: 7, title: 'Databases' }]);
+            service.tokens.set([{ facet: 'type', value: 'lecture' }]);
+            service.searchQuery.set('this is course:dat');
+
+            service.onChipSelected(0);
+
+            expect(service.searchQuery()).toBe('this is type:');
+        });
+
+        it('keeps a value that matches nothing as search text when a chip is clicked', () => {
+            service.tokens.set([{ facet: 'type', value: 'lecture' }]);
+            service.searchQuery.set('ratio course:nothing like this');
+
+            service.onChipSelected(0);
+
+            expect(service.searchQuery()).toBe('ratio course:nothing like this type:');
+        });
     });
 
     describe('guided picker', () => {
