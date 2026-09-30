@@ -482,6 +482,46 @@ export class ExamAPIRequests {
     }
 
     /**
+     * Creates the grading scale of an exam. The steps must be adjacent and cover 0 to 100 percent.
+     * @returns the id of the grading scale
+     */
+    async createGradingScale(
+        exam: Exam,
+        gradingScale: {
+            gradeType: 'GRADE' | 'BONUS';
+            bonusStrategy?: 'GRADES_CONTINUOUS' | 'GRADES_DISCRETE' | 'POINTS';
+            gradeSteps: {
+                lowerBoundPercentage: number;
+                lowerBoundInclusive: boolean;
+                upperBoundPercentage: number;
+                upperBoundInclusive: boolean;
+                gradeName: string;
+                isPassingGrade: boolean;
+            }[];
+        },
+    ): Promise<number> {
+        const response = await this.expectOk(
+            await this.page.request.post(`api/assessment/courses/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data: gradingScale }),
+            `create the grading scale of exam ${exam.id}`,
+        );
+        return (await response.json()).id as number;
+    }
+
+    /**
+     * Lets the exam receive a bonus from the grading scale of another exam.
+     * @param weight -1 improves a grade (the bonus is subtracted), 1 adds to it
+     */
+    async createBonus(exam: Exam, sourceGradingScaleId: number, bonusStrategy: 'GRADES_CONTINUOUS' | 'GRADES_DISCRETE' | 'POINTS', weight: number) {
+        const response = await this.expectOk(
+            await this.page.request.post(`api/assessment/courses/${exam.course!.id}/exams/${exam.id}/bonuses`, {
+                data: { weight, bonusStrategy, sourceGradingScale: { id: sourceGradingScaleId } },
+            }),
+            `create the bonus of exam ${exam.id}`,
+        );
+        return await response.json();
+    }
+
+    /**
      * Gets the summary of what deleting the exam would delete: the number of registered students, of exams that were not started, started
      * and submitted, of builds and of posts.
      */
