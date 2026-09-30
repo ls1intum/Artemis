@@ -881,6 +881,20 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Gets the participations of an exercise as the participation management lists them (at most one hundred), with the login of the student and
+     * the number of submissions of each.
+     */
+    async getExerciseParticipations(exerciseId: number): Promise<{ participationId: number; studentLogin?: string; submissionCount: number }[]> {
+        const response = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=100&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!response.ok()) {
+            throw new Error(`Failed to get the participations of exercise ${exerciseId}: ${response.status()}`);
+        }
+        return await response.json();
+    }
+
+    /**
      * Gets the participation data for a programming exercise with the specified exercise ID.
      * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
      * participation data (with latest result) via the per-participation endpoint.
