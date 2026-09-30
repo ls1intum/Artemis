@@ -53,7 +53,10 @@ test.describe('Exam example solution', { tag: '@slow' }, () => {
         // The publication date arrives.
         const publishedAt = await asAdmin(browser, (adminExamRequests) => adminExamRequests.publishExampleSolutionIn(exam, 8));
         await asAdmin(browser, (adminExamRequests) => adminExamRequests.waitUntilServerClockIsAfter(exam, publishedAt));
+        // The summary resets what is shown when the grades arrive, so the page is only used once they are there.
+        const gradesLoaded = page.waitForResponse((response) => response.url().includes('/grade-summary'));
         await page.reload();
+        expect((await gradesLoaded).status()).toBe(200);
         const toggle = page.locator(`#show-sample-solution-button-${exercise.id}`);
         await expect(toggle).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
         const published = await page.request.get(`api/exercise/exercises/${exercise.id}/example-solution`);

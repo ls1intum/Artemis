@@ -51,7 +51,7 @@ test.describe('Exam import', { tag: '@slow' }, () => {
 
         // The instructor of the target course finds the exam in the import dialog and starts the import.
         await login(instructor, `/course-management/${targetCourse.id}/exams`);
-        await page.getByRole('button', { name: 'Import an exam' }).click();
+        await page.getByTestId('import-exam-button').click();
         const dialog = page.getByRole('dialog');
         await dialog.locator('input[name="searchExcercise"]').fill(sourceExam.title!);
         const row = dialog.locator('tbody tr', { hasText: sourceExam.title! });
