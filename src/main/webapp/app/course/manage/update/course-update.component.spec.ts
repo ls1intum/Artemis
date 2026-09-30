@@ -327,6 +327,64 @@ describe('Course Management Update Component', () => {
             comp.courseForm.get('description')!.updateValueAndValidity();
             expect(comp.courseForm.get('description')!.errors?.maxlength).toBeDefined();
         });
+
+        const counterElement = () => fixture.nativeElement.querySelector('[data-testid="course-description-counter"]') as HTMLElement;
+        const descriptionTextarea = () => fixture.nativeElement.querySelector('#field_description') as HTMLTextAreaElement;
+        const saveButton = () => fixture.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+
+        it('should expose the live description length via the descriptionLength signal', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(1234));
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(1234);
+        });
+
+        it('should render the character counter with the current length and the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(1500));
+            fixture.detectChanges();
+            expect(counterElement().textContent).toContain('1500 / 2000');
+        });
+
+        it('should apply the danger token when over the limit and clear it when back within the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+            expect(counterElement().classList).toContain('text-state-danger');
+            expect(counterElement().classList).not.toContain('text-muted-color');
+
+            comp.courseForm.get('description')!.setValue('a'.repeat(2000));
+            fixture.detectChanges();
+            expect(counterElement().classList).toContain('text-muted-color');
+            expect(counterElement().classList).not.toContain('text-state-danger');
+        });
+
+        it('should show 0 / 2000 without the danger token for an empty description', () => {
+            comp.courseForm.get('description')!.setValue('');
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(0);
+            expect(counterElement().textContent).toContain('0 / 2000');
+            expect(counterElement().classList).not.toContain('text-state-danger');
+        });
+
+        it('should no longer hard-cap the textarea with a maxlength attribute', () => {
+            expect(descriptionTextarea().getAttribute('maxlength')).toBeNull();
+        });
+
+        it('should update the counter through a real textarea input event (soft cap allows over-limit input)', () => {
+            const textarea = descriptionTextarea();
+            textarea.value = 'a'.repeat(2001);
+            textarea.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(2001);
+            expect(counterElement().textContent).toContain('2001 / 2000');
+            expect(counterElement().classList).toContain('text-state-danger');
+        });
+
+        it('should list the description as an issue and keep the save button aria-disabled (never hard disabled) when over the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+            expect(comp.issues().some((issue) => issue.control === 'description')).toBe(true);
+            expect(saveButton().getAttribute('aria-disabled')).toBe('true');
+            expect(saveButton().hasAttribute('disabled')).toBe(false);
+        });
     });
 
     describe('save', () => {

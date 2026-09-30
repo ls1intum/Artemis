@@ -258,6 +258,12 @@ export class CourseUpdateComponent implements OnInit {
         return this.collectIssues();
     });
 
+    /** Live character count of the description control, for the inline counter. Bridged to reactive-form changes via formRevision. */
+    readonly descriptionLength = computed(() => {
+        this.formRevision();
+        return this.courseForm.get('description')?.value?.length ?? 0;
+    });
+
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
     // Currently set to 65535 as this is the limit of TEXT
