@@ -26,6 +26,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
@@ -65,7 +66,9 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * The build groups whose jobs have all finished while their aggregated result is still in progress: groups whose last
      * container's finalization did not go through, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}.
      * A group with a job that is still queued, building or missing is not complete and is left alone, and so is a group
-     * whose jobs finished after the given date, so that a merge under way is not raced.
+     * whose jobs finished after the given date, so that a merge under way is not raced. Only an automatic result counts:
+     * the jobs of a group whose feedback was merged into a tutor's assessment link to that assessment, and a draft
+     * assessment has no completion date either.
      *
      * @param finishedStatuses the statuses in which a job counts as finished
      * @param completedBefore  only groups whose jobs finished before this date
@@ -78,6 +81,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             WHERE b.buildGroupId IS NOT NULL
                 AND b.result IS NOT NULL
                 AND b.result.completionDate IS NULL
+                AND b.result.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND b.buildCompletionDate < :completedBefore
                 AND NOT EXISTS (
                     SELECT o
@@ -90,10 +94,12 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     /**
      * Checks whether the aggregated result a build group's jobs link to is still in progress. Written as a query rather
-     * than derived, so that a job without a result does not count: the join to the result has to be an inner one.
+     * than derived, so that a job without a result does not count: the join to the result has to be an inner one. As in
+     * {@link #findCompletedBuildGroupsWithResultInProgress}, a draft assessment the group's feedback was merged into does
+     * not count.
      *
      * @param buildGroupId the id of the build group
-     * @return true if a job of the group links to a result without a completion date
+     * @return true if a job of the group links to an automatic result without a completion date
      */
     @Query("""
             SELECT COUNT(b) > 0
@@ -101,8 +107,26 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             WHERE b.buildGroupId = :buildGroupId
                 AND b.result IS NOT NULL
                 AND b.result.completionDate IS NULL
+                AND b.result.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
             """)
     boolean existsResultInProgressOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * Links the jobs that link to one result to another result instead. The containers of a multi-container build link
+     * their jobs to the aggregated result; when its feedback is merged into a tutor's assessment, the jobs move over to
+     * that assessment before the aggregate is deleted.
+     *
+     * @param resultId  the id of the result the jobs link to now
+     * @param newResult the result the jobs link to afterwards
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE BuildJob b
+            SET b.result = :newResult
+            WHERE b.result.id = :resultId
+            """)
+    void relinkJobsOfResult(@Param("resultId") long resultId, @Param("newResult") Result newResult);
 
     /**
      * The jobs of a build group, one per container of a multi-container build. The result processing reads the group's

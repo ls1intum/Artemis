@@ -143,6 +143,28 @@ public class BuildLogEntryService {
     }
 
     /**
+     * Hands the logs of a multi-container build over from its aggregated result to the tutor's assessment its feedback was
+     * merged into, before the aggregate is deleted. The assessment ends up with what a single-container build leaves it:
+     * the logs of a failed build replace the ones it had, and after a build that did not fail it has none.
+     *
+     * @param programmingSubmission submission shared by the aggregate and the assessment
+     * @param aggregatedResult      the aggregated result of the build, whose file is removed
+     * @param manualResult          the assessment the build's feedback was merged into
+     * @param buildFailed           whether a container of the build failed to build
+     */
+    public void moveContainerBuildLogs(ProgrammingSubmission programmingSubmission, Result aggregatedResult, Result manualResult, boolean buildFailed) {
+        long exerciseId = exerciseIdOf(programmingSubmission);
+        if (buildFailed) {
+            failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), aggregatedResult.getId())
+                    .ifPresent(buildLogs -> saveBuildLogs(buildLogs, programmingSubmission, manualResult));
+        }
+        else {
+            deleteBuildLogsOfSucceededResult(programmingSubmission, manualResult);
+        }
+        failedBuildLogService.deleteBuildLogs(exerciseId, programmingSubmission.getId(), aggregatedResult.getId());
+    }
+
+    /**
      * Discards the stored logs of a result whose build did not fail.
      * <p>
      * A result that is updated in place rather than replaced keeps its id, so a build that succeeds after an earlier one failed writes nothing and would leave the earlier

@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationResultService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
@@ -142,6 +143,8 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    private final BuildJobRepository buildJobRepository;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
@@ -151,7 +154,7 @@ public class ProgrammingExerciseGradingService {
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
             MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService,
             TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository, TestCasePointsService testCasePointsService,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, FeedbackRepository feedbackRepository) {
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, FeedbackRepository feedbackRepository, BuildJobRepository buildJobRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -176,6 +179,7 @@ public class ProgrammingExerciseGradingService {
         this.feedbackRepository = feedbackRepository;
         this.testCasePointsService = testCasePointsService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+        this.buildJobRepository = buildJobRepository;
     }
 
     /**
@@ -370,19 +374,18 @@ public class ProgrammingExerciseGradingService {
             // submission is shared by every build of the same commit, so a container of an overlapping build could
             // overwrite it before this build finalizes. The caller records the verdict on the container's build job, and
             // finalizeContainerResult derives the submission's flag from the jobs of the group it finalizes.
-            // Drop feedback for a test case the aggregated result already carries from an earlier container. A shared
-            // setup phase (e.g. the main-method check the DejaGnu containers each need) runs in several containers and
-            // reports the same test case in each, but a test name is unique per exercise: without this, the merged
-            // result would hold that test case several times, which the scoring treats as a duplicate and zeroes the
-            // score. The test cases proper are partitioned across containers, so this only ever removes such repeats.
+            // Keep one feedback per test case. A shared setup phase (e.g. the main-method check the DejaGnu containers
+            // each need) runs in several containers and reports the same test case in each, but a test name is unique
+            // per exercise: without this, the merged result would hold that test case several times, which the scoring
+            // treats as a duplicate and zeroes the score. The test cases proper are partitioned across containers, so
+            // this only ever removes such repeats.
             // Only append the feedback here; the score is not recomputed until every container has finished (see
             // finalizeContainerResult), because scoring a partial result would mark the tests of containers that have
             // not finished yet as "not executed". The rows are inserted with a reference to the aggregate, whose own
             // columns do not change on append: merging the aggregate instead would re-read every row the earlier
             // containers stored, once per container, to insert the same new rows through its cascade.
-            Set<Long> seenTestCaseIds = aggregatedResultId == null ? new HashSet<>() : new HashSet<>(testCaseFeedbackRepository.findTestCaseIdsByResultId(aggregatedResultId));
-            List<TestCaseFeedback> newTestCaseFeedbacks = parsed.result().getTestCaseFeedbacks().stream().filter(distinctNewTestCaseFeedback(seenTestCaseIds))
-                    .peek(feedback -> feedback.setResult(aggregatedResult)).toList();
+            List<TestCaseFeedback> newTestCaseFeedbacks = selectNewTestCaseFeedback(parsed.result().getTestCaseFeedbacks(), aggregatedResultId);
+            newTestCaseFeedbacks.forEach(feedback -> feedback.setResult(aggregatedResult));
             testCaseFeedbackRepository.saveAll(newTestCaseFeedbacks);
             // static code analysis feedback carries no test case and is appended as reported
             List<ScaFeedback> newScaFeedbacks = parsed.result().getScaFeedbacks().stream().peek(feedback -> feedback.setResult(aggregatedResult)).toList();
@@ -406,16 +409,40 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * A predicate that keeps a container's test-case feedback only if the aggregated result does not already carry
-     * feedback for the same test case: a test case is kept the first time it is seen across the submission's containers
-     * and dropped afterwards.
+     * Selects the test-case feedback of a container that is appended to the aggregated result, which keeps one feedback
+     * per test case. A test case the aggregated result does not carry yet is appended with the first feedback the
+     * container reported for it. For a test case reported more than once, by this container or by an earlier one, a
+     * failed feedback replaces one that did not fail, so the merged outcome does not depend on the order in which the
+     * containers finish; in every other case the first feedback stays.
      *
-     * @param seenTestCaseIds the ids of the test cases the aggregated result already carries feedback for; extended as
-     *                            the predicate sees further ones
-     * @return a stateful predicate to use once per container while appending its feedback
+     * @param containerFeedbacks the test-case feedback the container reported
+     * @param aggregatedResultId the id of the result the earlier containers merged into, or null for the first container
+     * @return the feedback to append; the stored feedback it replaces is already deleted
      */
-    private static Predicate<TestCaseFeedback> distinctNewTestCaseFeedback(Set<Long> seenTestCaseIds) {
-        return feedback -> seenTestCaseIds.add(feedback.getTestCase().getId());
+    private List<TestCaseFeedback> selectNewTestCaseFeedback(Collection<TestCaseFeedback> containerFeedbacks, @Nullable Long aggregatedResultId) {
+        Map<Long, TestCaseFeedback> reported = new LinkedHashMap<>();
+        for (TestCaseFeedback feedback : containerFeedbacks) {
+            reported.merge(feedback.getTestCase().getId(), feedback, (first, later) -> isFailed(later) && !isFailed(first) ? later : first);
+        }
+        if (aggregatedResultId == null) {
+            return List.copyOf(reported.values());
+        }
+        Set<Long> storedTestCaseIds = testCaseFeedbackRepository.findTestCaseIdsByResultId(aggregatedResultId);
+        Set<Long> replacedTestCaseIds = reported.entrySet().stream().filter(entry -> storedTestCaseIds.contains(entry.getKey()) && isFailed(entry.getValue()))
+                .map(Map.Entry::getKey).collect(Collectors.toCollection(HashSet::new));
+        if (!replacedTestCaseIds.isEmpty()) {
+            // a stored feedback that failed as well stays, as the first of two equal outcomes
+            replacedTestCaseIds.removeAll(testCaseFeedbackRepository.findFailedTestCaseIdsByResultId(aggregatedResultId));
+        }
+        if (!replacedTestCaseIds.isEmpty()) {
+            testCaseFeedbackRepository.deleteByResultIdAndTestCaseIdIn(aggregatedResultId, replacedTestCaseIds);
+        }
+        return reported.entrySet().stream().filter(entry -> !storedTestCaseIds.contains(entry.getKey()) || replacedTestCaseIds.contains(entry.getKey())).map(Map.Entry::getValue)
+                .toList();
+    }
+
+    private static boolean isFailed(TestCaseFeedback feedback) {
+        return Boolean.FALSE.equals(feedback.isPositive());
     }
 
     /**
@@ -553,6 +580,11 @@ public class ProgrammingExerciseGradingService {
         Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         // the scoring below reads the typed feedback of every container, which the eager fetch above does not load
         hydrateTypedFeedback(aggregatedResult);
+        if (aggregatedResult.isManual()) {
+            // The group's jobs already link to the assessment its feedback was merged into: an earlier finalization got as
+            // far as the relink below and failed afterwards. The assessment is not scored again.
+            return aggregatedResult;
+        }
         boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
                 && !(participation instanceof TemplateProgrammingExerciseParticipation);
         // A job status only records how the job executed: a container whose build script crashed still completes as a
@@ -602,17 +634,18 @@ public class ProgrammingExerciseGradingService {
 
         Optional<Result> mergedIntoManualResult = Optional.empty();
         if (isStudentParticipation && aggregatedResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
-            // The same student policies as after a single-container result. Unlike there, the aggregated result already
-            // exists (the containers' build jobs link to it), so it stays; when the submission is under manual
-            // assessment its feedback is additionally merged into that manual result, which is then the one to report.
-            // The stored aggregate of an earlier build is automatic and completed, so once a build merged into the
-            // assessment, that aggregate is the submission's newest result and would hide the assessment from the next
-            // build; on the single-container path a merged automatic result is not stored, so the assessment stays the
-            // latest result there. Selecting the latest manual result keeps the two paths alike: every later build
-            // merges into the assessment as well. Read through the repository, not the submission's lazy result
-            // collection: the submission is detached, so its collection cannot be initialized.
+            // The same student policies as after a single-container result: when the submission is under manual
+            // assessment, the feedback is merged into that manual result, which is then the one to report. The
+            // assessment is looked up as the latest manual result rather than the latest result, because the aggregate
+            // of an overlapping build of the same commit can be newer than the assessment. Read through the repository,
+            // not the submission's lazy result collection: the submission is detached, so its collection cannot be
+            // initialized.
             Result latestManualResult = resultsOfSubmission.stream().filter(Result::isManual).findFirst().orElse(null);
             mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestManualResult);
+        }
+        if (mergedIntoManualResult.isPresent()) {
+            replaceAggregateWithAssessment(aggregatedResult, mergedIntoManualResult.get(), anyContainerFailedToBuild);
+            return mergedIntoManualResult.get();
         }
         // Saved after the policies, as on the single-container path: the lock-repository policy marks the result unrated
         // without saving it, so saving earlier would lose that flag. The instance handed back is the one that was scored,
@@ -622,7 +655,26 @@ public class ProgrammingExerciseGradingService {
         // first, so that they carry ids too.
         insertNewFeedback(aggregatedResult);
         resultRepository.save(aggregatedResult);
-        return mergedIntoManualResult.orElse(aggregatedResult);
+        return aggregatedResult;
+    }
+
+    /**
+     * Deletes the aggregated result of a build whose feedback was merged into a tutor's assessment, as the single-container
+     * path does not store an automatic result it merged. A stored aggregate would be newer than the assessment, and the
+     * readers that pick a submission's latest result by id would show its automatic score instead of the assessed one.
+     * The build's logs and jobs move over to the assessment first. The jobs are how the build overview finds a build's
+     * result, and the relink has to precede the delete, which the jobs' foreign key would otherwise block.
+     *
+     * @param aggregatedResult the aggregated result of the build
+     * @param manualResult     the assessment the build's feedback was merged into
+     * @param buildFailed      whether a container of the build failed to build
+     */
+    private void replaceAggregateWithAssessment(Result aggregatedResult, Result manualResult, boolean buildFailed) {
+        if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission) {
+            buildLogService.moveContainerBuildLogs(submission, aggregatedResult, manualResult, buildFailed);
+        }
+        buildJobRepository.relinkJobsOfResult(aggregatedResult.getId(), manualResult);
+        resultService.deleteResult(aggregatedResult, true);
     }
 
     /**

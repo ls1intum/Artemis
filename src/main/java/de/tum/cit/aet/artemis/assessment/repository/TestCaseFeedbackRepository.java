@@ -56,6 +56,20 @@ public interface TestCaseFeedbackRepository extends ArtemisJpaRepository<TestCas
             """)
     Set<Long> findTestCaseIdsByResultId(@Param("resultId") long resultId);
 
+    /**
+     * The ids of the test cases a result carries a failed feedback for, without loading the rows.
+     *
+     * @param resultId the id of the result
+     * @return the ids of the test cases with a failed feedback row on that result
+     */
+    @Query("""
+            SELECT feedback.testCase.id
+            FROM TestCaseFeedback feedback
+            WHERE feedback.result.id = :resultId
+                AND feedback.positive = FALSE
+            """)
+    Set<Long> findFailedTestCaseIdsByResultId(@Param("resultId") long resultId);
+
     @Query("""
             SELECT feedback
             FROM TestCaseFeedback feedback
@@ -98,4 +112,19 @@ public interface TestCaseFeedbackRepository extends ArtemisJpaRepository<TestCas
             WHERE feedback.result.id = :resultId
             """)
     void deleteByResultId(@Param("resultId") long resultId);
+
+    /**
+     * Deletes the feedback a result carries for the given test cases.
+     *
+     * @param resultId    the id of the result
+     * @param testCaseIds the ids of the test cases whose feedback is deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM TestCaseFeedback feedback
+            WHERE feedback.result.id = :resultId
+                AND feedback.testCase.id IN :testCaseIds
+            """)
+    void deleteByResultIdAndTestCaseIdIn(@Param("resultId") long resultId, @Param("testCaseIds") Collection<Long> testCaseIds);
 }

@@ -190,7 +190,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
      * come out successful: the flag belongs to the attempt, not to the submission forever. The rebuild also meets a
      * tutor's draft manual assessment on the submission, which has no completion date either: the containers must
      * open a fresh automatic result instead of appending their feedback to the draft; the finished feedback is then
-     * merged into the draft, as it is after a single-container build.
+     * merged into the draft and the automatic result is not kept, as after a single-container build.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -227,25 +227,21 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-rebuild", RESULTS_DIRECTORY_REGEX, behaviorResults());
         localCITriggerService.triggerBuild(participation, false);
 
-        ProgrammingSubmission rebuiltSubmission = awaitFinalizedResultAfter(participation.getId(), manualDraft.getId(), 120);
-        Result rebuiltResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(rebuiltSubmission.getLatestResult().getId());
-        assertThat(rebuiltResult.getId()).isNotEqualTo(manualDraft.getId());
-        assertThat(rebuiltResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+        ProgrammingSubmission rebuiltSubmission = awaitBuildMergedInto(participation.getId(), manualDraft.getId(), 2, 120);
         String jobStatuses = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId()))
                 .map(job -> job.getBuildJobId() + ":" + job.getBuildStatus()).toList().toString();
-        // the attempt built (no container failed), but the fixture is only partly successful: like a single-container
-        // result with failing tests, the merged result is complete and scored, not successful
+        // the attempt built (no container failed)
         assertThat(rebuiltSubmission.isBuildFailed()).as("jobs %s", jobStatuses).isFalse();
-        assertThat(rebuiltResult.isSuccessful()).isFalse();
-        assertThat(rebuiltResult.getScore()).isNotNull();
-        assertThat(feedbackTestNames(rebuiltResult)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
 
-        // The draft was not used as the aggregate (the automatic result above is separate), but, as after a
-        // single-container build, the finished automatic feedback was merged into it for the tutor; it stays open.
+        // The draft was not used as the aggregate while the containers merged, but, as after a single-container build,
+        // the finished automatic feedback was merged into it for the tutor and scored there; it stays open, and it stays
+        // the submission's latest result.
         Result draftAfterRebuild = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualDraft.getId());
         assertThat(draftAfterRebuild.getCompletionDate()).isNull();
         assertThat(draftAfterRebuild.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(draftAfterRebuild.getScore()).isNotNull();
         assertThat(feedbackTestNames(draftAfterRebuild)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+        assertThat(rebuiltSubmission.getLatestResult().getId()).isEqualTo(manualDraft.getId());
     }
 
     /**
@@ -301,7 +297,8 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
     /**
      * When a submission is already under manual assessment, a new automatic result merges its feedback into that
      * manual result instead of standing on its own, exactly as after a single-container build. The merged result of a
-     * rebuild therefore lands in the completed manual result, alongside the tutor's assessment.
+     * rebuild therefore lands in the completed manual result, alongside the tutor's assessment, and the manual result
+     * stays the submission's latest result.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -330,7 +327,8 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-manual", RESULTS_DIRECTORY_REGEX, structuralResults());
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-manual", RESULTS_DIRECTORY_REGEX, behaviorResults());
         localCITriggerService.triggerBuild(participation, false);
-        awaitFinalizedResultAfter(participation.getId(), manualResult.getId(), 120);
+        ProgrammingSubmission rebuiltSubmission = awaitBuildMergedInto(participation.getId(), manualResult.getId(), 2, 120);
+        assertThat(rebuiltSubmission.getLatestResult().getId()).isEqualTo(manualResult.getId());
 
         // The containers' feedback was merged into the manual result.
         Result mergedManualResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualResult.getId());
@@ -818,6 +816,23 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
             SecurityContextHolder.getContext().setAuthentication(auth);
             return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).map(ProgrammingSubmission::getLatestResult)
                     .map(latest -> latest.getId() > previousResultId && latest.getCompletionDate() != null).orElse(false);
+        });
+        return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
+    }
+
+    /**
+     * Waits until a build's feedback was merged into the given manual result: its container jobs link to the manual
+     * result, and the build's aggregate, deleted after the merge, no longer hides the manual result as the latest one.
+     */
+    private ProgrammingSubmission awaitBuildMergedInto(long participationId, long manualResultId, int containerCount, int timeoutInSeconds) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        await().dontCatchUncaughtExceptions().atMost(Duration.ofSeconds(timeoutInSeconds)).until(() -> {
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            long linkedJobs = buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == participationId)
+                    .filter(job -> job.getResult() != null && job.getResult().getId() == manualResultId).count();
+            boolean manualResultIsLatest = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId)
+                    .map(ProgrammingSubmission::getLatestResult).map(latest -> latest.getId() == manualResultId).orElse(false);
+            return linkedJobs >= containerCount && manualResultIsLatest;
         });
         return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
     }

@@ -2,11 +2,15 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -14,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -524,22 +529,17 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
     }
 
     /**
-     * The aggregate of a multi-container build stays stored after its feedback was merged into a tutor's assessment
-     * (its jobs link to it), which makes it the submission's newest result. The next build has to find the assessment
-     * anyway and merge into it, as on the single-container path, where a merged automatic result is not stored.
+     * A build whose feedback is merged into a tutor's assessment leaves no automatic result behind, as on the
+     * single-container path: a stored aggregate would be newer than the assessment and would be shown in its place. The
+     * build's job links to the assessment instead, and every later build merges into the assessment as well.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testEveryLaterBuildMergesIntoTheAssessmentAlthoughEarlierAggregatesAreNewer() {
+    void testABuildMergedIntoTheAssessmentLeavesTheAssessmentAsTheLatestResult() {
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         participation.setProgrammingExercise(programmingExercise);
         ProgrammingSubmission submission = submissionOf(participation, "0000000000000000000000000000000000000011");
-        Result assessment = new Result();
-        assessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        assessment.setCompletionDate(ZonedDateTime.now().minusMinutes(10));
-        assessment.setSubmission(submission);
-        assessment.setExerciseId(programmingExercise.getId());
-        assessment = resultRepository.save(assessment);
+        Result assessment = assessmentOf(submission, ZonedDateTime.now().minusMinutes(10));
         String commitHash = submission.getCommitHash();
 
         for (int build = 1; build <= 2; build++) {
@@ -552,7 +552,100 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
             Result reportedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
 
             assertThat(reportedResult.getId()).as("build %d merges into the assessment", build).isEqualTo(assessment.getId());
+            assertThat(resultRepository.findById(aggregatedResult.getId())).as("the aggregate of build %d is deleted", build).isEmpty();
+            assertThat(buildJobRepository.findAllByBuildGroupId("assess-" + build)).extracting(job -> job.getResult().getId()).containsExactly(assessment.getId());
+            assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submission.getId()).orElseThrow().getLatestResult().getId())
+                    .as("the assessment stays the submission's latest result after build %d", build).isEqualTo(assessment.getId());
         }
+    }
+
+    /**
+     * The logs of a failed build whose feedback is merged into a tutor's assessment are shown for the assessment, as the
+     * logs of a failed single-container build are, and nothing is left under the deleted aggregate.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheLogsOfAFailedBuildMoveToTheAssessmentItWasMergedInto() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000013";
+        ProgrammingSubmission submission = submissionOf(participation, commitHash);
+        Result assessment = assessmentOf(submission, ZonedDateTime.now().minusMinutes(10));
+
+        var appended = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "container_a failed"), false, "container_a", null);
+        buildJobRepository.save(new BuildJob(buildJobFor("logs-0", "logs", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, appended.result(), true));
+        programmingExerciseGradingService.finalizeContainerResult(appended.result().getId(), participation, true, true, ZonedDateTime.now());
+
+        ProgrammingSubmission reloaded = programmingSubmissionRepository.findById(submission.getId()).orElseThrow();
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, assessment.getId())).extracting(BuildLogEntry::getLog, BuildLogEntry::getContainerName)
+                .containsExactly(tuple("container_a failed", "container_a"));
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, appended.result().getId())).isEmpty();
+    }
+
+    /**
+     * A draft assessment has no completion date, like an aggregate still in progress. Once a build's feedback was merged
+     * into the draft and its jobs link to it, the sweep over complete groups whose aggregate stayed in progress must
+     * leave the group alone: it would otherwise score the draft as if it were the build's aggregate.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheSweepLeavesAGroupMergedIntoADraftAssessmentAlone() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000014";
+        ProgrammingSubmission submission = submissionOf(participation, commitHash);
+        Result draft = assessmentOf(submission, null);
+
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        saveFinishedJob(buildJobFor("draft-0", "draft", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult, ZonedDateTime.now().minusMinutes(5));
+        Result reportedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
+        assertThat(reportedResult.getId()).isEqualTo(draft.getId());
+
+        assertThat(localCIResultProcessingService.finalizeCompletedBuildGroups()).as("the draft is not an aggregate in progress").isZero();
+        assertThat(resultRepository.findById(draft.getId()).orElseThrow().getCompletionDate()).as("the draft stays open").isNull();
+    }
+
+    /**
+     * A test case that several containers report, as a shared setup phase does, is kept once. When the containers
+     * disagree, the failed report stands whichever container finishes first: the outcome and the score of the merged
+     * result must not depend on the order in which the containers complete.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAFailedReportOfASharedTestCaseStandsInEitherCompletionOrder(boolean failingContainerFirst) {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = failingContainerFirst ? "0000000000000000000000000000000000000015" : "0000000000000000000000000000000000000016";
+        submissionOf(participation, commitHash);
+        String group = "shared-" + failingContainerFirst;
+        String sharedTest = "testClass[SortStrategy]";
+        var passed = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO(sharedTest, List.of())));
+        var failed = new LocalCIJobDTO(List.of(new LocalCITestJobDTO(sharedTest, List.of("the shared check failed"))), List.of());
+
+        BuildResult first = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(failingContainerFirst ? failed : passed), null, null, false, 0);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, first, true, "container_a", null).result();
+        buildJobRepository.save(new BuildJob(buildJobFor(group + "-0", group, participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
+        BuildResult second = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(failingContainerFirst ? passed : failed), null, null, false, 0);
+        programmingExerciseGradingService.appendContainerResult(participation, second, true, "container_b", aggregatedResult.getId());
+        buildJobRepository.save(new BuildJob(buildJobFor(group + "-1", group, participation, commitHash, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResult));
+
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
+
+        assertThat(testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(aggregatedResult.getId()))
+                .filteredOn(feedback -> sharedTest.equals(feedback.getTestCase().getTestName())).extracting(TestCaseFeedback::isPositive).containsExactly(false);
+        assertThat(finalizedResult.getPassedTestCaseCount()).isZero();
+        assertThat(finalizedResult.getScore()).isZero();
+    }
+
+    /** a tutor's semi-automatic assessment of the submission, completed at the given date or a draft if it is null */
+    private Result assessmentOf(ProgrammingSubmission submission, @Nullable ZonedDateTime completionDate) {
+        Result assessment = new Result();
+        assessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        assessment.setCompletionDate(completionDate);
+        assessment.setSubmission(submission);
+        assessment.setExerciseId(programmingExercise.getId());
+        return resultRepository.save(assessment);
     }
 
     /**
