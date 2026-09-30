@@ -58,6 +58,7 @@ export class ExamAPIRequests {
         endDate?: dayjs.Dayjs;
         examMaxPoints?: number;
         numberOfExercisesInExam?: number;
+        randomizeExerciseOrder?: boolean;
         numberOfCorrectionRoundsInExam?: number;
         workingTime?: number;
         examStudentReviewStart?: dayjs.Dayjs;
@@ -78,6 +79,7 @@ export class ExamAPIRequests {
             endDate = dayjsToString(dayjs().add(2, 'day')),
             examMaxPoints = 10,
             numberOfExercisesInExam = 1,
+            randomizeExerciseOrder = false,
             numberOfCorrectionRoundsInExam = 1,
             workingTime: requestedWorkingTime,
             examStudentReviewStart = null,
@@ -102,6 +104,7 @@ export class ExamAPIRequests {
             endDate,
             examMaxPoints,
             numberOfExercisesInExam,
+            randomizeExerciseOrder,
             numberOfCorrectionRoundsInExam,
             workingTime,
             examStudentReviewStart,
