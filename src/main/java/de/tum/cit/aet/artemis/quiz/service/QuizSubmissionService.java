@@ -310,7 +310,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // make sure the participation is not overridden wrongly
         var participation = participationService.findOneByExerciseAndStudentAnyState(quizExercise, student).orElseThrow();
         quizSubmission.setParticipation(participation);
-        // the requests of one student run one after the other, a save and a submit that arrive together must not both insert their answers
+        // The requests of one student run one after the other: a save and a submit that arrive together must not both insert their answers
         quizSubmission = quizSubmissionRepository.replaceAnswersOfUnsubmittedSubmission(quizSubmission);
         quizSubmission.filterForStudentsDuringQuiz();
         log.info("{} Saved quiz submission for user {} in quiz {} after {} ", logText, userLogin, exerciseId, TimeLogUtil.formatDurationFrom(start));
