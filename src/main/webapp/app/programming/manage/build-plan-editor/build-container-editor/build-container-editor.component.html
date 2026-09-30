@@ -106,6 +106,142 @@
         }
     </div>
 
+    <div class="mb-2">
+        <div class="form-check">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'field_container_docker_flags_' + container().name"
+                [ngModel]="overridesDockerFlags()"
+                (ngModelChange)="toggleDockerFlags($event)"
+                [name]="'containerDockerFlags_' + container().name"
+            />
+            <label class="form-check-label" [for]="'field_container_docker_flags_' + container().name">
+                <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlags"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlagsHelp" />
+        </div>
+        @if (overridesDockerFlags()) {
+            <div class="flex flex-wrap items-start gap-3 mt-1">
+                @if (customNetworks(); as networks) {
+                    <div>
+                        <label [for]="'field_container_network_' + container().name">
+                            <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.network"></span>
+                        </label>
+                        <select
+                            class="form-select"
+                            [id]="'field_container_network_' + container().name"
+                            [ngModel]="container().dockerFlags?.network ?? ''"
+                            (ngModelChange)="setNetwork($event)"
+                            [name]="'containerNetwork_' + container().name"
+                        >
+                            <option value="" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.exerciseNetwork"></option>
+                            @for (network of networks; track network) {
+                                @if (network === 'none') {
+                                    <option value="none" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.noneOption"></option>
+                                } @else {
+                                    <option [value]="network">{{ network }}</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                }
+                <div>
+                    <label [for]="'field_container_cpu_count_' + container().name">
+                        <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.cpuCount"></span>
+                    </label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        [id]="'field_container_cpu_count_' + container().name"
+                        [ngModel]="container().dockerFlags?.cpuCount ?? ''"
+                        [placeholder]="exerciseDockerFlags().cpuCount ?? ''"
+                        (ngModelChange)="setCpuCount($event)"
+                        [name]="'containerCpuCount_' + container().name"
+                        [class.is-invalid]="!isCpuCountValid()"
+                    />
+                    @if (!isCpuCountValid()) {
+                        <div class="text-state-danger small" jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.invalid"></div>
+                    }
+                </div>
+                <div>
+                    <label [for]="'field_container_memory_' + container().name">
+                        <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.memory"></span>
+                    </label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        [id]="'field_container_memory_' + container().name"
+                        [ngModel]="container().dockerFlags?.memory ?? ''"
+                        [placeholder]="exerciseDockerFlags().memory ?? ''"
+                        (ngModelChange)="setMemory($event)"
+                        [name]="'containerMemory_' + container().name"
+                        [class.is-invalid]="!isMemoryValid()"
+                    />
+                    @if (!isMemoryValid()) {
+                        <div class="text-state-danger small" jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.invalid"></div>
+                    }
+                </div>
+                <div>
+                    <label [for]="'field_container_memory_swap_' + container().name">
+                        <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.memorySwap"></span>
+                    </label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        [id]="'field_container_memory_swap_' + container().name"
+                        [ngModel]="container().dockerFlags?.memorySwap ?? ''"
+                        [placeholder]="exerciseDockerFlags().memorySwap ?? ''"
+                        (ngModelChange)="setMemorySwap($event)"
+                        [name]="'containerMemorySwap_' + container().name"
+                        [class.is-invalid]="!isMemorySwapValid()"
+                    />
+                    @if (!isMemorySwapValid()) {
+                        <div class="text-state-danger small" jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.invalid"></div>
+                    }
+                </div>
+            </div>
+            <div class="mt-2">
+                <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.envVars"></span>
+                @for (row of envVarRows(); track $index) {
+                    <div class="flex items-center gap-2 mt-1" data-testid="container-env-var-row">
+                        <input
+                            type="text"
+                            class="form-control"
+                            [ngModel]="row[0]"
+                            (ngModelChange)="setEnvVarKey($index, $event)"
+                            [name]="'containerEnvKey_' + container().name + '_' + $index"
+                            [placeholder]="'artemisApp.programmingExercise.buildContainersEditor.envVarKey' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.programmingExercise.buildContainersEditor.envVarKey' | artemisTranslate"
+                        />
+                        <input
+                            type="text"
+                            class="form-control"
+                            [ngModel]="row[1]"
+                            (ngModelChange)="setEnvVarValue($index, $event)"
+                            [name]="'containerEnvValue_' + container().name + '_' + $index"
+                            [placeholder]="'artemisApp.programmingExercise.buildContainersEditor.envVarValue' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.programmingExercise.buildContainersEditor.envVarValue' | artemisTranslate"
+                        />
+                        <tumaet-ui-button
+                            severity="danger"
+                            variant="outlined"
+                            [icon]="faTrash"
+                            data-testid="remove-container-env-var-button"
+                            (clicked)="removeEnvVar($index)"
+                            [tumAetUiTooltip]="'artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar' | artemisTranslate"
+                        />
+                    </div>
+                }
+                <div class="mt-1">
+                    <tumaet-ui-button variant="outlined" [icon]="faPlus" data-testid="add-container-env-var-button" (clicked)="addEnvVar()">
+                        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
+                    </tumaet-ui-button>
+                </div>
+            </div>
+        }
+    </div>
+
     <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
     <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
     <jhi-build-phases-editor [phases]="container().phases" (phasesChange)="setPhases($event)" [isExamMode]="isExamMode()" />

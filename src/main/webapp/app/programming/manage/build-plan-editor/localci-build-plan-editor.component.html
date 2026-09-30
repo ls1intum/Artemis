@@ -54,6 +54,8 @@
             [timeoutPlaceholder]="timeout()"
             [timeoutMinValue]="timeoutMinValue()"
             [timeoutMaxValue]="containerTimeoutMaxValue()"
+            [exerciseDockerFlags]="exerciseDockerFlags()"
+            [customNetworks]="containerNetworks()"
         />
     }
     <tumaet-ui-button id="add_container_button" variant="outlined" [icon]="faPlus" (clicked)="addContainer()">

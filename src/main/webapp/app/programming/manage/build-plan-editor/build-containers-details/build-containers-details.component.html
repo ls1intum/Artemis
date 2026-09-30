@@ -35,6 +35,38 @@
                     <span class="build-container-details-repository" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.exerciseRepositories"></span>
                 }
             </div>
+            @if (container.dockerFlags; as dockerFlags) {
+                <!-- only the flags the container overrides are listed; every other flag is the exercise's -->
+                <div>
+                    <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.dockerFlags"></span>:
+                    @if (dockerFlags.network) {
+                        <span class="badge bg-secondary me-1 build-container-details-docker-flag">
+                            {{ 'artemisApp.programmingExercise.buildContainersEditor.network' | artemisTranslate }}: {{ dockerFlags.network }}
+                        </span>
+                    }
+                    @if (dockerFlags.cpuCount !== undefined) {
+                        <span class="badge bg-secondary me-1 build-container-details-docker-flag">
+                            {{ 'artemisApp.programmingExercise.buildContainersEditor.cpuCount' | artemisTranslate }}: {{ dockerFlags.cpuCount }}
+                        </span>
+                    }
+                    @if (dockerFlags.memory !== undefined) {
+                        <span class="badge bg-secondary me-1 build-container-details-docker-flag">
+                            {{ 'artemisApp.programmingExercise.buildContainersEditor.memory' | artemisTranslate }}: {{ dockerFlags.memory }}
+                        </span>
+                    }
+                    @if (dockerFlags.memorySwap !== undefined) {
+                        <span class="badge bg-secondary me-1 build-container-details-docker-flag">
+                            {{ 'artemisApp.programmingExercise.buildContainersEditor.memorySwap' | artemisTranslate }}: {{ dockerFlags.memorySwap }}
+                        </span>
+                    }
+                    @if (envVarNames(container); as names) {
+                        <!-- the names only: a value may be a credential the details page should not show -->
+                        <span class="badge bg-secondary me-1 build-container-details-docker-flag">
+                            {{ 'artemisApp.programmingExercise.buildContainersEditor.envVars' | artemisTranslate }}: {{ names }}
+                        </span>
+                    }
+                </div>
+            }
         </div>
         <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
         <jhi-build-phases-editor [phases]="container.phases" [readonly]="true" [isExamMode]="isExamMode()" />

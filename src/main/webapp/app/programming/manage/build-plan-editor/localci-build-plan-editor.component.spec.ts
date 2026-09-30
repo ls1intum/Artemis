@@ -46,6 +46,11 @@ class StubProgrammingExerciseBuildConfigurationComponent {
     readonly timeoutMaxValue = signal<number | undefined>(undefined);
     readonly areDockerResourcesValid = signal(true);
     readonly areDockerFlagsWithinSizeLimit = signal(true);
+    readonly cpuCount = signal<number | undefined>(undefined);
+    readonly memory = signal<number | undefined>(undefined);
+    readonly memorySwap = signal<number | undefined>(undefined);
+    readonly isLanguageSupported = signal(false);
+    readonly allowedCustomNetworks = signal<string[] | undefined>(undefined);
 }
 
 describe('LocalCIBuildPlanEditorComponent', () => {
@@ -422,6 +427,50 @@ describe('LocalCIBuildPlanEditorComponent', () => {
             ['tests', 90],
             ['checks', undefined],
         ]);
+    });
+
+    it('should send only the Docker flags a container overrides and block saving on an invalid limit', () => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.timeout.set(120);
+        comp.containers.set([
+            { ...container('tests'), dockerFlags: { network: 'none', env: { MODE: 'strict' }, cpuCount: 0 } },
+            // the override was switched on, but no field was set: the container runs with the flags of the exercise
+            { ...container('checks'), dockerFlags: { env: undefined, memory: undefined } },
+        ]);
+
+        // a CPU count below the minimum of the server blocks saving, like a limit of the exercise would
+        expect(comp.areContainerDockerFlagsValid()).toBe(false);
+        expect(comp.canSubmit()).toBe(false);
+
+        comp.containers.update((containers) => [{ ...containers[0], dockerFlags: { ...containers[0].dockerFlags, cpuCount: 2 } }, containers[1]]);
+        expect(comp.areContainerDockerFlagsValid()).toBe(true);
+        expect(comp.canSubmit()).toBe(true);
+
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
+        comp.submit();
+
+        const sent = updateStub.mock.calls[0][1] as { buildPlan: { containers: BuildContainer[] } };
+        expect(sent.buildPlan.containers.map((sentContainer) => sentContainer.dockerFlags)).toEqual([{ network: 'none', env: { MODE: 'strict' }, cpuCount: 2 }, undefined]);
+    });
+
+    it('should hand the containers the limits of the exercise and the networks of the instance', () => {
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+        fixture.detectChanges();
+        const buildConfiguration = (comp as unknown as { buildConfigurationComponent: () => StubProgrammingExerciseBuildConfigurationComponent }).buildConfigurationComponent();
+
+        // a language that does not support selecting a network offers none to its containers
+        expect(comp.containerNetworks()).toBeUndefined();
+
+        buildConfiguration.cpuCount.set(2);
+        buildConfiguration.memory.set(1024);
+        buildConfiguration.isLanguageSupported.set(true);
+        buildConfiguration.allowedCustomNetworks.set(['none']);
+
+        expect(comp.exerciseDockerFlags()).toEqual({ cpuCount: 2, memory: 1024, memorySwap: undefined });
+        expect(comp.containerNetworks()).toEqual(['none']);
     });
 
     it('should submit the build plan configuration and show a success alert', () => {

@@ -22,8 +22,11 @@ import {
     BUILD_PHASE_NAME_PATTERN,
     BUILD_PHASE_RESERVED_NAMES,
     BuildContainer,
+    BuildContainerDockerFlags,
     DEFAULT_BUILD_CONTAINER_NAME,
+    areBuildContainerDockerFlagsValid,
     effectiveContainers,
+    normalizedBuildContainerDockerFlags,
     parseBuildPlanPhases,
 } from 'app/programming/shared/entities/build-plan-phases.model';
 import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -149,6 +152,23 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
         });
     });
 
+    /** a container's Docker flags are optional; a resource limit it sets has to satisfy the bounds of the server */
+    readonly areContainerDockerFlagsValid = computed(() => this.containers().every((container) => areBuildContainerDockerFlagsValid(container.dockerFlags)));
+
+    // the exercise's resource limits as the build configuration child currently shows them, which a container without a
+    // limit of its own runs with
+    readonly exerciseDockerFlags = computed<BuildContainerDockerFlags>(() => {
+        const buildConfiguration = this.buildConfigurationComponent();
+        return { cpuCount: buildConfiguration?.cpuCount(), memory: buildConfiguration?.memory(), memorySwap: buildConfiguration?.memorySwap() };
+    });
+
+    // the networks a container may select: those allowed on the instance, or undefined while the exercise's language
+    // does not support selecting a network
+    readonly containerNetworks = computed(() => {
+        const buildConfiguration = this.buildConfigurationComponent();
+        return buildConfiguration?.isLanguageSupported() ? (buildConfiguration.allowedCustomNetworks() ?? []) : undefined;
+    });
+
     readonly isBuildPlanConfigurationWithinSizeLimit = computed(() => JSON.stringify({ containers: this.containers() }).length <= BUILD_PLAN_CONFIGURATION_MAX_LENGTH);
 
     // An empty container image is allowed: submit() sends no image for it and the build falls back to the exercise's
@@ -161,6 +181,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             this.arePhaseNamesValid() &&
             this.isTimeoutValid() &&
             this.areContainerTimeoutsValid() &&
+            this.areContainerDockerFlagsValid() &&
             this.areDockerResourcesValid() &&
             this.isBuildPlanConfigurationWithinSizeLimit() &&
             this.areDockerFlagsWithinSizeLimit(),
@@ -326,10 +347,15 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
         this.buildPlanConfigurationService
             .updateBuildPlanConfiguration(exercise.id, {
                 // a blank image is trimmed to undefined, so the container inherits the language default instead of
-                // persisting an unusable empty image (mirrors the plan-level behaviour the reviewed editor had)
+                // persisting an unusable empty image (mirrors the plan-level behaviour the reviewed editor had); flags
+                // without a set field are dropped, so the container runs with the flags of the exercise
                 buildPlan: {
                     containers: this.containers().map((container) =>
-                        cloneWith(container, { dockerImage: container.dockerImage?.trim() || undefined, timeoutSeconds: container.timeoutSeconds || undefined }),
+                        cloneWith(container, {
+                            dockerImage: container.dockerImage?.trim() || undefined,
+                            timeoutSeconds: container.timeoutSeconds || undefined,
+                            dockerFlags: normalizedBuildContainerDockerFlags(container.dockerFlags),
+                        }),
                     ),
                 },
                 timeoutSeconds: this.timeout(),

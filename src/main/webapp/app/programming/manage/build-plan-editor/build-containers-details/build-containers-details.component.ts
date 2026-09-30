@@ -6,7 +6,7 @@ import { BuildContainer } from 'app/programming/shared/entities/build-plan-phase
 
 /**
  * Read-only view of the containers of a build plan, one card per container with its name, Docker image, the
- * repositories checked out into it and its build phases. Shown on the exercise details page, where the build plan
+ * repositories checked out into it, the Docker flags it overrides and its build phases. Shown on the exercise details page, where the build plan
  * cannot be edited; the editable counterpart is {@code BuildContainerEditorComponent}.
  */
 @Component({
@@ -20,4 +20,9 @@ export class BuildContainersDetailsComponent {
     readonly isExamMode = input(false);
     /** the image of the exercise's language default, which a container without an image of its own is built with */
     readonly defaultDockerImage = input<string | undefined>();
+
+    /** the names of the environment variables a container sets on top of the exercise's, or undefined if it sets none */
+    protected envVarNames(container: BuildContainer): string | undefined {
+        return Object.keys(container.dockerFlags?.env ?? {}).join(', ') || undefined;
+    }
 }

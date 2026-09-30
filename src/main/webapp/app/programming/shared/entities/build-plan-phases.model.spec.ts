@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, hasExpectedTestsBeforeDueDate, parseBuildPlanPhases } from './build-plan-phases.model';
+import {
+    BUILD_PHASE_NAME_PATTERN,
+    BUILD_PHASE_RESERVED_NAMES,
+    areBuildContainerDockerFlagsValid,
+    hasExpectedTestsBeforeDueDate,
+    normalizedBuildContainerDockerFlags,
+    parseBuildPlanPhases,
+} from './build-plan-phases.model';
 
 describe('build-plan-phases.model', () => {
     it('parses a valid build plan phases json', () => {
@@ -201,6 +208,42 @@ describe('build-plan-phases.model', () => {
         );
 
         expect(parsed?.containers?.map((container) => container.repositories)).toEqual([undefined, []]);
+    });
+
+    it('keeps the Docker flags a container overrides and reads null or empty flags as no override', () => {
+        const phases = [{ name: 'test', script: './gradlew test' }];
+        const parsed = parseBuildPlanPhases(
+            JSON.stringify({
+                containers: [
+                    { name: 'overriding', dockerFlags: { network: 'none', env: { MODE: 'strict' }, cpuCount: 2, memory: 512, memorySwap: 0 }, phases },
+                    { name: 'explicit_null', dockerFlags: null, phases },
+                    { name: 'empty', dockerFlags: { env: {} }, phases },
+                    { name: 'absent', phases },
+                ],
+            }),
+        );
+
+        expect(parsed?.containers?.map((container) => container.dockerFlags)).toEqual([
+            { network: 'none', env: { MODE: 'strict' }, cpuCount: 2, memory: 512, memorySwap: 0 },
+            undefined,
+            undefined,
+            undefined,
+        ]);
+    });
+
+    it('drops the unset fields of the Docker flags and keeps a swap limit of zero', () => {
+        expect(normalizedBuildContainerDockerFlags({ network: '', env: {}, cpuCount: undefined, memorySwap: 0 })).toEqual({ memorySwap: 0 });
+        expect(normalizedBuildContainerDockerFlags({ network: undefined, env: undefined })).toBeUndefined();
+        expect(normalizedBuildContainerDockerFlags(undefined)).toBeUndefined();
+    });
+
+    it('validates the resource limits of the Docker flags against the bounds of the server', () => {
+        expect(areBuildContainerDockerFlagsValid(undefined)).toBe(true);
+        expect(areBuildContainerDockerFlagsValid({ cpuCount: 1, memory: 6, memorySwap: 0 })).toBe(true);
+        expect(areBuildContainerDockerFlagsValid({ cpuCount: 0 })).toBe(false);
+        expect(areBuildContainerDockerFlagsValid({ cpuCount: 1.5 })).toBe(false);
+        expect(areBuildContainerDockerFlagsValid({ memory: 5 })).toBe(false);
+        expect(areBuildContainerDockerFlagsValid({ memorySwap: -1 })).toBe(false);
     });
 
     it('detects phases that expect tests before the due date', () => {

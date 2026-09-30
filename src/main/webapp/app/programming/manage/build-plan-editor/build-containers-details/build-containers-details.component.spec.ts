@@ -97,4 +97,21 @@ describe('BuildContainersDetailsComponent', () => {
         expect(repositories[1]).toHaveLength(1);
         expect(repositories[1][0].nativeElement.classList.contains('badge')).toBe(false);
     });
+
+    it('should list the Docker flags a container overrides, naming its environment variables without their values', () => {
+        fixture.componentRef.setInput('containers', [
+            { ...containers[0], dockerFlags: { network: 'none', memorySwap: 0, env: { TOKEN: 'secret', MODE: 'strict' } } },
+            containers[1],
+        ]);
+        fixture.detectChanges();
+
+        const flags = getContainerCards().map((card) => card.queryAll(By.css('.build-container-details-docker-flag')).map((flag) => flag.nativeElement.textContent.trim()));
+        expect(flags[0]).toEqual([
+            'artemisApp.programmingExercise.buildContainersEditor.network: none',
+            'artemisApp.programmingExercise.buildContainersEditor.memorySwap: 0',
+            'artemisApp.programmingExercise.buildContainersEditor.envVars: TOKEN, MODE',
+        ]);
+        // a container without an override shows no flags at all
+        expect(flags[1]).toEqual([]);
+    });
 });

@@ -50,6 +50,20 @@ export interface BuildContainerRepository {
 }
 
 /**
+ * The Docker flags a build container sets for its own job. A field the container leaves unset takes the value
+ * configured on the exercise; the environment variables are added to the exercise's, and a variable of the same name
+ * replaces the exercise's value.
+ * Note: Matches BuildContainerDockerFlagsDTO.java
+ */
+export interface BuildContainerDockerFlags {
+    network?: string;
+    env?: { [key: string]: string };
+    cpuCount?: number;
+    memory?: number;
+    memorySwap?: number;
+}
+
+/**
  * A named, independently executable container of a build plan. It runs its own Docker image, checks out only the
  * repositories it lists, and executes its phases inside that image.
  * Note: Matches BuildContainerDTO.java
@@ -61,6 +75,8 @@ export interface BuildContainer {
     phases: BuildPhase[];
     /** the timeout of this container's build job in seconds; undefined means the timeout configured on the exercise */
     timeoutSeconds?: number;
+    /** the Docker flags this container overrides; undefined means the container runs with the flags of the exercise */
+    dockerFlags?: BuildContainerDockerFlags;
 }
 
 /**
@@ -79,6 +95,52 @@ export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_force_run_post
 
 export const BUILD_CONTAINER_NAME_PATTERN = RegExp('^[A-Za-z_][A-Za-z0-9_]*$');
 export const DEFAULT_BUILD_CONTAINER_NAME = 'default';
+
+// the bounds the server applies in ProgrammingExerciseValidationService#validateDockerFlagValues, mirrored here so an
+// invalid value is caught inline instead of only by the save request
+export const MIN_DOCKER_CPU_COUNT = 1;
+export const MIN_DOCKER_MEMORY_MB = 6;
+export const MIN_DOCKER_MEMORY_SWAP_MB = 0;
+
+/** an unset resource limit is valid (the exercise's value applies); a set one has to be a whole number of at least the minimum */
+export function isDockerResourceLimitValid(value: number | undefined, minimum: number): boolean {
+    return value == undefined || (Number.isInteger(value) && value >= minimum);
+}
+
+export function areBuildContainerDockerFlagsValid(dockerFlags: BuildContainerDockerFlags | undefined): boolean {
+    return (
+        isDockerResourceLimitValid(dockerFlags?.cpuCount, MIN_DOCKER_CPU_COUNT) &&
+        isDockerResourceLimitValid(dockerFlags?.memory, MIN_DOCKER_MEMORY_MB) &&
+        isDockerResourceLimitValid(dockerFlags?.memorySwap, MIN_DOCKER_MEMORY_SWAP_MB)
+    );
+}
+
+/**
+ * Returns the Docker flags of a container with only the fields that are set, or undefined if none is: a container
+ * without an override of its own carries no flags, so it runs with the flags of the exercise.
+ */
+export function normalizedBuildContainerDockerFlags(dockerFlags: BuildContainerDockerFlags | null | undefined): BuildContainerDockerFlags | undefined {
+    if (dockerFlags == undefined) {
+        return undefined;
+    }
+    const normalized: BuildContainerDockerFlags = {};
+    if (dockerFlags.network) {
+        normalized.network = dockerFlags.network;
+    }
+    if (dockerFlags.env && Object.keys(dockerFlags.env).length > 0) {
+        normalized.env = dockerFlags.env;
+    }
+    if (dockerFlags.cpuCount != undefined) {
+        normalized.cpuCount = dockerFlags.cpuCount;
+    }
+    if (dockerFlags.memory != undefined) {
+        normalized.memory = dockerFlags.memory;
+    }
+    if (dockerFlags.memorySwap != undefined) {
+        normalized.memorySwap = dockerFlags.memorySwap;
+    }
+    return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
 
 /**
  * Returns the containers of a build plan. A legacy configuration that only carries phases and a Docker image is
@@ -127,6 +189,8 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
                 // the server writes an unscoped container with an explicit null, which must not read as "scoped to nothing"
                 repositories: container.repositories ?? undefined,
                 phases: (container.phases ?? []).map(withPhaseDefaults),
+                // likewise, null or empty flags mean the container overrides nothing
+                dockerFlags: normalizedBuildContainerDockerFlags(container.dockerFlags),
             }),
         ),
     });
