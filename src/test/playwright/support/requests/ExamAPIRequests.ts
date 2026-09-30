@@ -12,7 +12,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
  * A class which encapsulates all API requests related to exams.
  */
 export class ExamAPIRequests {
-    private readonly page: Page;
+    readonly page: Page;
 
     constructor(page: Page) {
         this.page = page;
