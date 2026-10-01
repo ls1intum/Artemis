@@ -621,20 +621,26 @@ public class StudentExamService {
         // A single student exam is a handful of exercises, so asking per exercise is cheap here. The bulk preparation in
         // startExercises asks for a whole cohort at once instead.
         Set<Long> startedExerciseIds = studentExam.isTestExam() ? Set.of()
-                : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student)).map(Exercise::getId).collect(Collectors.toSet());
+                : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student, studentExam.isTestRun())).map(Exercise::getId)
+                        .collect(Collectors.toSet());
         setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.isTestExam(), startedExerciseIds, generatedParticipations, failFast);
     }
 
     /**
      * Whether the student already has a participation for the exercise that reached {@link InitializationState#INITIALIZED}.
+     * <p>
+     * Only participations on the same side of the test run divide count. A test run reads back exactly its own
+     * participations, so an instructor's graded participation must not make the test run skip creating one, and the
+     * other way round: the exercise would then be conducted without a participation to submit to.
      *
      * @param exerciseId the id of the exercise
      * @param student    the student
+     * @param testRun    whether the participation is being set up for a test run
      * @return true if such a participation exists
      */
-    private boolean hasInitializedParticipation(long exerciseId, User student) {
-        return studentParticipationRepository.findByExerciseIdAndStudentId(exerciseId, student.getId()).stream().anyMatch(
-                participation -> participation.getInitializationState() != null && participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
+    private boolean hasInitializedParticipation(long exerciseId, User student, boolean testRun) {
+        return studentParticipationRepository.existsByExerciseIdAndStudentIdAndTestRunAndInitializationStateIn(exerciseId, student.getId(), testRun,
+                InitializationState.statesThatCompleted(InitializationState.INITIALIZED));
     }
 
     /**
@@ -717,7 +723,8 @@ public class StudentExamService {
         var exerciseStartData = studentExamIds == null ? studentExamRepository.findExerciseStartDataByExamId(examId)
                 : studentExamRepository.findExerciseStartDataByExamIdAndStudentExamIds(examId, studentExamIds);
         var exercisesById = loadExercisesForPreparation(exerciseStartData);
-        // Which students are already set up, asked once per exercise rather than once per student and exercise
+        // Which students are already set up, asked once per exercise rather than once per student and exercise. Test runs
+        // are not prepared here, so only the graded participations count.
         var startedStudentIdsByExerciseId = testExam ? Map.<Long, Set<Long>>of() : loadStartedStudentIds(exercisesById.keySet());
         // LinkedHashMap so the student exams are prepared in the order the query returned them
         var rowsByStudentExamId = exerciseStartData.stream()
@@ -801,7 +808,8 @@ public class StudentExamService {
         var startedStates = InitializationState.statesThatCompleted(InitializationState.INITIALIZED);
         Map<Long, Set<Long>> startedStudentIdsByExerciseId = new HashMap<>();
         for (Long exerciseId : exerciseIds) {
-            startedStudentIdsByExerciseId.put(exerciseId, studentParticipationRepository.findStudentIdsWithParticipationInStateByExerciseId(exerciseId, startedStates));
+            startedStudentIdsByExerciseId.put(exerciseId,
+                    studentParticipationRepository.findStudentIdsWithParticipationInStateByExerciseIdAndTestRun(exerciseId, false, startedStates));
         }
         return startedStudentIdsByExerciseId;
     }

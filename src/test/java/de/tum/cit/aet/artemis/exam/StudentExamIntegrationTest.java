@@ -3434,6 +3434,36 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTestRunSetsUpItsOwnParticipationNextToAGradedOne() throws Exception {
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, true);
+        // A graded participation of the instructor, left over from an earlier attempt at the same exercise. The test run
+        // reads back only its own participations, so this one must not make the setup skip creating one: the exercise
+        // would then be conducted without a participation, and nothing the instructor submits could be saved.
+        Exercise exerciseWithGradedParticipation = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
+        StudentParticipation gradedParticipation = new StudentParticipation();
+        gradedParticipation.setParticipant(instructor);
+        gradedParticipation.setExercise(exerciseWithGradedParticipation);
+        gradedParticipation.setTestRun(false);
+        gradedParticipation.setInitializationState(InitializationState.INITIALIZED);
+        gradedParticipation.setInitializationDate(ZonedDateTime.now());
+        studentParticipationRepository.save(gradedParticipation);
+
+        StudentExam testRun = createTestRun(exam);
+
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exerciseWithGradedParticipation.getId(), instructor.getId(), true))
+                .as("the test run sets up its own participation even though a graded one already exists").isPresent();
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var conduction = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+        assertThat(conduction.getExercises()).filteredOn(exercise -> exercise.getId().equals(exerciseWithGradedParticipation.getId())).singleElement()
+                .as("the conduction serves the exercise with a participation to submit to").satisfies(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTestExamTestRunConductionDoesNotCreateAdditionalParticipations() throws Exception {
         Exam testExam = examUtilService.addTestExam(course1);
         testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, true);
