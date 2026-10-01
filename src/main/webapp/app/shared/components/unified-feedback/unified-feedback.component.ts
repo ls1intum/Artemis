@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, effect, inject, input, model, output, untracked, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -97,6 +97,15 @@ export class UnifiedFeedbackComponent {
             }
             this.destroyRef.onDestroy(() => resizeObserver.disconnect());
         });
+
+        // The points choose the default title, and they can change from outside the points field (e.g. a dropped
+        // grading instruction), so a default title follows every points change, not only the field's own handlers.
+        // Those handlers still refresh it themselves: this effect only runs on the next change detection, while
+        // consumers read the title right away when the points change is emitted.
+        effect(() => {
+            this.feedbackCredits();
+            untracked(() => this.refreshDefaultTitle());
+        });
     }
 
     feedbackContent = input<string>('');
@@ -108,6 +117,9 @@ export class UnifiedFeedbackComponent {
     // Plain label shown before the reference chip (e.g. "Attribute"), matching how Apollon's own
     // feedback popup separates the element's type from its highlighted name chip.
     referenceType = input<string | undefined>(undefined);
+    // Whether the reference chip repeats its text as a tooltip, which only helps when a long reference (e.g. a modeling
+    // element name) is cut off. A short one, such as the "Lines 7-11" of programming inline feedback, turns it off.
+    referenceTooltip = input<boolean>(true);
     feedback = input<Feedback | undefined>(undefined);
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
@@ -116,11 +128,11 @@ export class UnifiedFeedbackComponent {
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     /**
-     * Whether the title may be edited while {@link editable} is true. Consumers that derive the title themselves on
-     * save (e.g. the programming inline feedback, which auto-generates "File X at line Y" for non-suggestions) set
-     * this to false so the UI never invites editing a value that would be discarded. Defaults to true.
+     * Whether a referenced feedback is also flagged when its description is missing. Unreferenced feedback always is;
+     * a consumer whose referenced feedback cannot be saved without a description (e.g. programming inline feedback)
+     * turns this on so the assessor sees why saving is blocked.
      */
-    titleEditable = input<boolean>(true);
+    detailRequired = input<boolean>(false);
 
     feedbackTitle = model<string | undefined>(undefined);
     feedbackDetail = model<string | undefined>(undefined);
@@ -243,7 +255,8 @@ export class UnifiedFeedbackComponent {
 
     /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
     isDetailMissing(): boolean {
-        return this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
+        const detailRequired = this.detailRequired() || !this.feedback()?.reference;
+        return this.editable() && detailRequired && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
     }
 
     readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
@@ -296,6 +309,10 @@ export class UnifiedFeedbackComponent {
 
     /** Points are graded in half steps throughout Artemis, so the stepper moves in the same increments. */
     protected readonly CREDITS_STEP = 0.5;
+
+    /** Bounds for a single feedback's points, so a mistyped large number cannot distort the total score. */
+    protected readonly CREDITS_MIN = -100;
+    protected readonly CREDITS_MAX = 100;
 
     /** Matches Apollon's give-feedback title cap, so a title stays a headline well under the 500-character text column. */
     protected readonly TITLE_MAX_LENGTH = 100;
@@ -355,6 +372,48 @@ export class UnifiedFeedbackComponent {
         this.feedbackTitle.set(`${this.nextTitlePrefix()}${value}`);
     }
 
+    /**
+     * Writes the points-based default title if the title is empty, and keeps it following the points until the
+     * assessor types one. An edited feedback thus never keeps an empty title: this runs when the assessor leaves the
+     * title field, and consumers call it when they commit a feedback whose title field was never visited.
+     */
+    applyDefaultTitleIfEmpty(): void {
+        // While the assessor is still in the title field (e.g. cleared it to type a new one), filling it would put
+        // the default in front of what they type; leaving the field fills it instead.
+        const titleInput = this.titleTextarea()?.nativeElement;
+        const isTyping = !!titleInput && titleInput === titleInput.ownerDocument.activeElement;
+        if (!this.isTitleEditable() || this.displayTitle().trim() || isTyping) {
+            return;
+        }
+        this.feedbackTitle.set(`${this.nextTitlePrefix()}${this.defaultTitlePlaceholder()}`);
+    }
+
+    /**
+     * Keeps a default title in line with the points, which choose it. A title counts as default when it is one of the
+     * points-based defaults, not by remembering who wrote it, so this also holds once a new inline feedback is
+     * re-rendered after its first commit, or when an assessment is reopened. An untouched (accepted) suggestion is
+     * never rewritten, so opening one whose own title happens to match a default does not mark it adapted.
+     */
+    private refreshDefaultTitle(): void {
+        if (!this.isTitleEditable() || (this.feedbackTitle() ?? '').startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+            return;
+        }
+        const currentTitle = this.displayTitle().trim();
+        const defaultTitle = this.defaultTitlePlaceholder();
+        if (currentTitle !== defaultTitle && this.isDefaultTitle(currentTitle)) {
+            this.feedbackTitle.set(`${this.nextTitlePrefix()}${defaultTitle}`);
+        }
+    }
+
+    /** The title is only ever written while the assessor can edit it, never for a read-only or displayed-only feedback. */
+    private isTitleEditable(): boolean {
+        return this.editable() && !this.readOnly();
+    }
+
+    private isDefaultTitle(title: string): boolean {
+        return Object.values(this.feedbackTypeTitleKeys).some((key) => this.artemisTranslatePipe.transform(key) === title);
+    }
+
     onTitleTextareaInput(): void {
         this.autogrowTitleTextarea();
     }
@@ -362,13 +421,26 @@ export class UnifiedFeedbackComponent {
     onDetailChange(value: string): void {
         this.feedbackDetail.set(value);
         this.markAdaptedIfSuggestion();
+        // The moment a feedback gets content (a description or points), an empty title is filled with the default,
+        // so a feedback whose title field was never visited is not saved without a heading.
+        this.applyDefaultTitleIfEmpty();
     }
 
-    /** Clearing the field must invalidate the score immediately, without waiting for `change` to fire on blur. */
+    /**
+     * Clearing the field must invalidate the score immediately, without waiting for `change` to fire on blur. A value
+     * beyond the bounds is pulled back to the bound while typing, like Apollon's points input; snapping onto the
+     * half-point grid still waits for `change`, so typing an in-range value is not interrupted.
+     */
     onCreditsInput(rawValue: string): void {
         if (rawValue.trim() === '') {
             this.feedbackCredits.set(undefined);
             this.markAdaptedIfSuggestion();
+            this.refreshDefaultTitle();
+            return;
+        }
+        const parsed = Number(rawValue);
+        if (Number.isFinite(parsed) && (parsed > this.CREDITS_MAX || parsed < this.CREDITS_MIN)) {
+            this.onCreditsChange(parsed);
         }
     }
 
@@ -383,6 +455,8 @@ export class UnifiedFeedbackComponent {
             input.value = normalized === undefined ? '' : String(normalized);
         }
         this.markAdaptedIfSuggestion();
+        this.refreshDefaultTitle();
+        this.applyDefaultTitleIfEmpty();
     }
 
     /**
@@ -419,7 +493,8 @@ export class UnifiedFeedbackComponent {
         if (value === null || value === undefined || !Number.isFinite(value)) {
             return undefined;
         }
-        return Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP;
+        const snapped = Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP;
+        return Math.min(this.CREDITS_MAX, Math.max(this.CREDITS_MIN, snapped));
     }
 
     handleDeleteConfirmed(): void {
@@ -464,18 +539,20 @@ export class UnifiedFeedbackComponent {
 
     private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
+            // An assessor may clear a suggestion's title, leaving only its prefix; show the same default title the
+            // editor offered as placeholder instead of an empty heading.
             if (Feedback.isFeedbackSuggestion(feedback)) {
-                return Feedback.stripSuggestionPrefix(feedback.text);
+                return Feedback.stripSuggestionPrefix(feedback.text).trim() || this.defaultTitlePlaceholder();
             }
             if (Feedback.isNonGradedFeedbackSuggestion(feedback)) {
-                return feedback.text.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length);
+                return feedback.text.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length).trim() || this.defaultTitlePlaceholder();
             }
             if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                 return feedback.text.slice(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
             }
-            // Only use feedback.text as title when detailText exists as separate content;
-            // otherwise text is used as content by buildFeedbackTextForReview and would duplicate here.
-            if (feedback.detailText) {
+            // Without a body of its own, feedback.text is a comment written before titles existed; buildFeedbackTextForReview
+            // shows it as content, so it gets the default title instead of being repeated here.
+            if (Feedback.isTextTitle(feedback)) {
                 return feedback.text;
             }
             return this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]);

@@ -5,7 +5,7 @@
                 @if (referenceType()) {
                     <span class="unified-feedback-reference-label">{{ referenceType() }}</span>
                 }
-                <span class="unified-feedback-reference-text" [tumAetUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
+                <span class="unified-feedback-reference-text" [tumAetUiTooltip]="referenceTooltip() ? inferredReference()! : ''">{{ inferredReference() }}</span>
             </div>
         }
 
@@ -15,7 +15,7 @@
                     <span class="unified-feedback-icon-badge">
                         <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     </span>
-                    @if (editable() && titleEditable()) {
+                    @if (editable()) {
                         <textarea
                             #titleTextarea
                             class="unified-feedback-title-input"
@@ -24,6 +24,7 @@
                             [ngModel]="displayTitle()"
                             (ngModelChange)="onTitleInput($event)"
                             (input)="onTitleTextareaInput()"
+                            (blur)="applyDefaultTitleIfEmpty()"
                             [placeholder]="defaultTitlePlaceholder()"
                             [attr.aria-label]="defaultTitlePlaceholder()"
                             [disabled]="readOnly()"
@@ -39,7 +40,7 @@
                                 type="button"
                                 class="unified-feedback-points-step"
                                 [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
-                                [disabled]="stepCreditsDisabled()"
+                                [disabled]="stepCreditsDisabled() || (feedbackCredits() ?? 0) <= CREDITS_MIN"
                                 (mousedown)="stashRawCredits(creditsInput.value)"
                                 (click)="stepCredits(-CREDITS_STEP)"
                             >
@@ -60,7 +61,7 @@
                                 type="button"
                                 class="unified-feedback-points-step"
                                 [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
-                                [disabled]="stepCreditsDisabled()"
+                                [disabled]="stepCreditsDisabled() || (feedbackCredits() ?? 0) >= CREDITS_MAX"
                                 (mousedown)="stashRawCredits(creditsInput.value)"
                                 (click)="stepCredits(CREDITS_STEP)"
                             >

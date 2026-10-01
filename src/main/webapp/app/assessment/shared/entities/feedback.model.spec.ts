@@ -74,16 +74,30 @@ describe('Feedback', () => {
             expect(buildFeedbackTextForReview(feedback)).toBe('The answer provided does not name the capital of France.');
         });
 
-        it('should keep a plain manual text alongside its grading instruction, since it is not an AI suggestion', () => {
-            const feedback = { text: 'feedback1', gradingInstruction } as Feedback;
+        it('should not repeat the title of a feedback linked to a grading instruction in its body', () => {
+            const feedback = { text: 'Missing capital', gradingInstruction } as Feedback;
 
-            expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>feedback1');
+            expect(buildFeedbackTextForReview(feedback)).toBe('Poor');
+        });
+
+        it('should show the text of a feedback without a body of its own as its body, as it was written before titles existed', () => {
+            const feedback = { text: 'The capital is Paris.' } as Feedback;
+
+            expect(buildFeedbackTextForReview(feedback)).toBe('The capital is Paris.');
         });
 
         it('should drop even a non-suggestion text when addFeedbackText is false', () => {
-            const feedback = { text: 'File Main.java at line 3', gradingInstruction } as Feedback;
+            const feedback = { text: 'File Main.java at line 3' } as Feedback;
 
-            expect(buildFeedbackTextForReview(feedback, false)).toBe('Poor');
+            expect(buildFeedbackTextForReview(feedback, false)).toBe('');
+        });
+    });
+
+    describe('isTextTitle', () => {
+        it('should read the text as a title once the feedback has a description or a grading instruction', () => {
+            expect(Feedback.isTextTitle({ text: 'Title', detailText: 'Description' } as Feedback)).toBe(true);
+            expect(Feedback.isTextTitle({ text: 'Title', gradingInstruction: { feedback: 'Poor' } as GradingInstruction } as Feedback)).toBe(true);
+            expect(Feedback.isTextTitle({ text: 'A comment written before titles existed' } as Feedback)).toBe(false);
         });
     });
 

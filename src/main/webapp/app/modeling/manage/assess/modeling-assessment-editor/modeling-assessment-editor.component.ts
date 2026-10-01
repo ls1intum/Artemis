@@ -632,9 +632,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     validateFeedback() {
         this.calculateTotalScore();
-        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
-        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
-        this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
+        // Every feedback, on the diagram or general, needs points and a description (or a grading instruction's feedback):
+        // its title is only a heading, so an empty description would leave the student without the comment.
+        this.assessmentsAreValid.set(Feedback.haveCreditsAndComments([...this.referencedFeedback, ...this.unreferencedFeedback()]));
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission()!);
     }
 

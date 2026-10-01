@@ -531,10 +531,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (updatedFeedbacks) {
             this.unreferencedFeedback.set(updatedFeedbacks);
         }
-        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
-        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
-        // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
+        // Every feedback, on a text block or general, needs points and a description (or a grading instruction's feedback):
+        // its title is only a heading, so an empty description would leave the student without the comment.
+        this.assessmentsAreValid.set(Feedback.haveCreditsAndComments(this.assessments));
 
         this.totalScore.set(this.computeTotalScore(this.assessments));
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);

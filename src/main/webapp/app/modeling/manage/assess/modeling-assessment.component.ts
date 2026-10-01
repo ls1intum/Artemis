@@ -570,7 +570,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
                     if (alreadyAdapted) {
                         if (assessment.title !== undefined) {
-                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + assessment.title;
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(assessment.title, assessment.score);
                         }
                         if (assessment.feedback !== undefined) {
                             feedback.detailText = assessment.feedback;
@@ -582,9 +582,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         const detailChanged = assessment.feedback !== undefined && lastShownDetail !== undefined && assessment.feedback !== lastShownDetail;
                         if (titleChanged || detailChanged || scoreChanged) {
                             const newTitle = titleChanged ? assessment.title! : this.stripSuggestionPrefix(feedback.text ?? '');
-                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + newTitle;
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(newTitle, assessment.score);
                             if (titleChanged) {
-                                this.shownTitleInApollon.set(assessment.modelElementId, assessment.title);
+                                this.shownTitleInApollon.set(assessment.modelElementId, assessment.title!);
                             }
                             if (detailChanged) {
                                 feedback.detailText = assessment.feedback;
@@ -594,19 +594,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         // else: auto-emit or unchanged content, keep the original accepted prefix
                     }
                 } else {
-                    // title/feedback mirror the host's unified feedback split: a short headline in `text`,
-                    // the longer explanation in `detailText` (see updateApollonAssessments for the reverse map,
-                    // including the legacy fallback for feedback saved before Apollon had a title field) — but
-                    // only once a title actually exists. Without one (the tutor wrote straight into the
-                    // description, or this predates Apollon's title field), the description alone becomes
-                    // `text` so it isn't silently dropped.
-                    if (assessment.title) {
-                        feedback.text = assessment.title;
-                        feedback.detailText = assessment.feedback;
-                    } else {
-                        feedback.text = assessment.feedback;
-                        feedback.detailText = undefined;
-                    }
+                    // title/feedback mirror the host's unified feedback split: a short headline in `text`, the longer
+                    // explanation in `detailText` (see updateApollonAssessments for the reverse map, including the
+                    // legacy fallback for feedback saved before Apollon had a title field). Like every other feedback,
+                    // a missing title becomes the points-based default, which follows the score on each emit because
+                    // it is never written back into Apollon's title field.
+                    feedback.text = this.titleOrDefault(assessment.title ?? '', assessment.score);
+                    feedback.detailText = assessment.feedback;
                 }
                 if (instruction?.id) {
                     feedback.gradingInstruction = instruction;
@@ -617,14 +611,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             } else {
                 feedback = Feedback.forModeling(
                     assessment.score,
-                    assessment.title || assessment.feedback,
+                    this.titleOrDefault(assessment.title ?? '', assessment.score),
                     assessment.modelElementId,
                     this.referenceTypeFor(assessment),
                     assessment.dropInfo as DropInfo,
                 );
-                if (assessment.title) {
-                    feedback.detailText = assessment.feedback;
-                }
+                feedback.detailText = assessment.feedback;
                 this.elementFeedback.set(assessment.modelElementId, feedback);
             }
         }
@@ -700,15 +692,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         try {
             const assessments = feedbacks.map((feedback): Assessment => {
                 const isSuggestion = Feedback.isFeedbackSuggestion(feedback);
-                // A genuine title/detail split only exists once detailText is populated for non-suggestion
-                // feedback. Older modeling feedback (saved before Apollon had a title field) has its whole
-                // comment in `text` alone — same convention unified-feedback's getReferencedFeedbackTitle
-                // uses to avoid treating that legacy comment as a headline. A suggestion's `text` is always
-                // a title (Athena's own, prefixed with its accepted/adapted state) once that prefix is
-                // stripped, so it gets the same treatment unified-feedback already gives it.
-                const hasSeparateTitle = !isSuggestion && !!feedback.detailText;
-                const title = isSuggestion ? this.stripSuggestionPrefix(feedback.text ?? '') : hasSeparateTitle ? feedback.text : undefined;
-                const feedbackContent = isSuggestion ? (feedback.detailText ?? '') : hasSeparateTitle ? (feedback.detailText ?? '') : (feedback.text ?? '');
+                // `text` is a title once the feedback has a body of its own, a description or the feedback of a grading
+                // instruction (Feedback.isTextTitle). Older modeling feedback (saved before Apollon had a title field)
+                // has its whole comment in `text` alone, which stays the description, as in the student view. A
+                // suggestion's `text` is always a title (Athena's own, prefixed with its accepted/adapted state) once
+                // that prefix is stripped.
+                const isTextTitle = isSuggestion || Feedback.isTextTitle(feedback);
+                const title = isSuggestion ? this.stripSuggestionPrefix(feedback.text ?? '') : isTextTitle ? feedback.text : undefined;
+                const feedbackContent = isTextTitle ? (feedback.detailText ?? '') : (feedback.text ?? '');
                 this.shownInApollon.set(feedback.referenceId!, feedbackContent);
                 if (isSuggestion) {
                     this.shownTitleInApollon.set(feedback.referenceId!, title ?? '');
@@ -822,6 +813,18 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
         }
         return text;
+    }
+
+    /**
+     * A feedback never keeps an empty title: a missing one is saved as the points-based default the unified
+     * feedback editor offers ("Positive", "Needs Revision" or "Feedback"), so the student sees the same heading.
+     * A title that already is one of these defaults (e.g. reloaded into Apollon's title field) keeps following the
+     * score, as in the unified feedback editor.
+     */
+    private titleOrDefault(title: string, score: number | undefined): string {
+        const trimmedTitle = title.trim();
+        const isDefault = Feedback.DEFAULT_TITLE_KEYS.some((key) => this.translateService.instant(key) === trimmedTitle);
+        return trimmedTitle && !isDefault ? title : this.translateService.instant(Feedback.getDefaultTitleKey(score));
     }
 
     private calculateDropInfo(feedback: Feedback) {

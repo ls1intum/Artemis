@@ -814,6 +814,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should not allow saving an inline feedback without a description, even next to a valid general feedback', () => {
         const inlineFeedback: Feedback = { type: FeedbackType.MANUAL, text: 'Positive', credits: 1, reference: 'file:src/Main.java_line:3' };
+        // only the validation is under test, not the score of the manual result
+        vi.spyOn(comp as any, 'calculateTotalScore').mockImplementation(() => {});
+        comp.exercise.set({ maxPoints: 10 } as ProgrammingExercise);
         comp.referencedFeedback.set([inlineFeedback]);
         comp.unreferencedFeedback.set([{ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 1 }]);
 
@@ -826,6 +829,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should accept an inline feedback whose grading instruction provides the description', () => {
+        // only the validation is under test, not the score of the manual result
+        vi.spyOn(comp as any, 'calculateTotalScore').mockImplementation(() => {});
+        comp.exercise.set({ maxPoints: 10 } as ProgrammingExercise);
         comp.referencedFeedback.set([
             { type: FeedbackType.MANUAL, text: 'Positive', credits: 1, reference: 'file:src/Main.java_line:3', gradingInstruction: { feedback: 'Correct loop bounds' } as any },
         ]);

@@ -420,7 +420,17 @@ describe('ModelingAssessmentComponent', () => {
 
             expect(created.referenceId).toBe(PACKAGE_ID);
             expect(created.credits).toBe(1);
-            expect(created.text).toBe('Looks right');
+            // Without a title the heading is the points-based default; the comment stays the description
+            expect(created.text).toBe('artemisApp.feedback.type.positive');
+            expect(created.detailText).toBe('Looks right');
+        });
+
+        it('keeps a title the tutor typed in Apollon, and lets a default title follow the score', () => {
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing abstraction' })]);
+            expect(created.text).toBe('Missing abstraction');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: 'artemisApp.feedback.type.positive', score: -1 })]);
+            expect(created.text).toBe('artemisApp.feedback.type.needsRevision');
         });
 
         it('references an element by its UML type, not by the kind Apollon reports', () => {
@@ -477,6 +487,21 @@ describe('ModelingAssessmentComponent', () => {
             expect(suggestion.detailText).toBe('Original detail');
         });
 
+        it('saves a cleared suggestion title as the default title for its score', () => {
+            const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            suggestion.detailText = 'Original detail';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownTitleInApollon'].set(PACKAGE_ID, 'Missing abstraction');
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: '', feedback: 'Original detail', score: 1 })]);
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.positive');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: '', feedback: 'Original detail', score: -1 })]);
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.needsRevision');
+        });
+
         it('leaves an already adapted suggestion titled once and still takes the newest detail', () => {
             const adapted = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
             adapted.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction';
@@ -505,7 +530,8 @@ describe('ModelingAssessmentComponent', () => {
 
             comp.generateFeedbackFromAssessment([assessmentFor({ score: 2, feedback: 'Edited instructor comment' })]);
 
-            expect(manual.text).toBe('Edited instructor comment');
+            expect(manual.text).toBe('artemisApp.feedback.type.positive');
+            expect(manual.detailText).toBe('Edited instructor comment');
         });
 
         it('attaches the grading instruction the tutor dropped on an element, and detaches it once removed', () => {

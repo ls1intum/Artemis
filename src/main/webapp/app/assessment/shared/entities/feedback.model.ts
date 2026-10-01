@@ -200,6 +200,15 @@ export class Feedback implements BaseEntity {
     }
 
     /**
+     * Whether `text` holds the feedback's title rather than its comment. It is a title once the feedback has a body of
+     * its own, a description or the feedback of its grading instruction; feedback written before titles existed kept
+     * its whole comment in `text`, which is then shown as the body under a default title.
+     */
+    public static isTextTitle(that: Feedback): boolean {
+        return Feedback.hasContent(that);
+    }
+
+    /**
      * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
      * feedbacks before they are saved.
      * @param f1 The feedback that is compared to f2
@@ -279,14 +288,6 @@ export class Feedback implements BaseEntity {
         return that.credits != undefined && Feedback.hasContent(that);
     }
 
-    public static haveCredits(that: Feedback[]): boolean {
-        return that.filter(Feedback.hasCredits).length > 0 && that.filter(Feedback.hasCredits).length === that.length;
-    }
-
-    public static hasCredits(that: Feedback): boolean {
-        return that.credits != undefined;
-    }
-
     public static haveCreditsAndComments(that: Feedback[]): boolean {
         return that.filter(Feedback.hasCreditsAndComment).length > 0 && that.filter(Feedback.hasCreditsAndComment).length === that.length;
     }
@@ -353,12 +354,10 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
     const includeText = addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback);
     let feedbackText = '';
     if (feedback.gradingInstruction?.feedback) {
+        // The criterion's own feedback is the body, so the text of a feedback linked to it is its title (see Feedback.isTextTitle)
         feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
-        }
-        if (includeText) {
-            feedbackText = feedbackText + '\n' + feedback.text;
         }
     } else if (feedback.detailText) {
         feedbackText = feedback.detailText;
