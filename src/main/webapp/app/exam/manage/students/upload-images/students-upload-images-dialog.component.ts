@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -32,6 +33,8 @@ export class StudentsUploadImagesDialogComponent {
     notFoundUsers = signal<ExamUsersNotFoundDTO | undefined>(undefined);
     file = signal<File | undefined>(undefined);
 
+    private uploadSubscription: Subscription | undefined;
+
     isParsing = signal(false);
     hasParsed = signal(false);
 
@@ -50,6 +53,8 @@ export class StudentsUploadImagesDialogComponent {
         effect(() => {
             if (!this.visible()) {
                 untracked(() => {
+                    // A response that arrives after closing must not restore the results into the next opening.
+                    this.uploadSubscription?.unsubscribe();
                     this.resetDialog();
                     this.file.set(undefined);
                 });
@@ -94,7 +99,7 @@ export class StudentsUploadImagesDialogComponent {
             const formData: FormData = new FormData();
             formData.append('file', this.file()!);
 
-            this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
+            this.uploadSubscription = this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
                 next: (res: HttpResponse<ExamUsersNotFoundDTO>) => {
                     if (res) {
                         this.notFoundUsers.set(res.body ?? undefined);

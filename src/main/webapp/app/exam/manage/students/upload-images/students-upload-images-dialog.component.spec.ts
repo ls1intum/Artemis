@@ -16,7 +16,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -122,5 +122,25 @@ describe('StudentsUploadImagesDialogComponent', () => {
         expect(component.hasParsed()).toBe(true);
         expect(component.notFoundUsers()).toBeDefined();
         expect(component.notFoundUsers()?.numberOfUsersNotFound).toBe(1);
+    });
+
+    it('should ignore the response of an upload that is still pending when the dialog is closed', () => {
+        const pending = new Subject<HttpResponse<any>>();
+        vi.spyOn(examManagementService, 'saveImages').mockReturnValue(pending);
+        component.visible.set(true);
+        fixture.detectChanges();
+        component.parsePDFFile();
+        expect(component.isParsing()).toBe(true);
+
+        component.clear();
+        fixture.detectChanges();
+        component.open();
+        fixture.detectChanges();
+        pending.next(new HttpResponse({ body: { numberOfUsersNotFound: 1, numberOfImagesSaved: 10, listOfExamUserRegistrationNumbers: [] } }));
+
+        expect(pending.observed).toBe(false);
+        expect(component.hasParsed()).toBe(false);
+        expect(component.isParsing()).toBe(false);
+        expect(component.notFoundUsers()).toBeUndefined();
     });
 });

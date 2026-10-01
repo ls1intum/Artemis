@@ -4,7 +4,7 @@
 @if (studentExam()) {
     <div>
         <div>
-            <h5>Selected Timestamp: {{ displayCurrentTimestamp() }}</h5>
+            <h5 id="exam-timeline-selected-timestamp">Selected Timestamp: {{ displayCurrentTimestamp() }}</h5>
             <!-- The kit has no slider, so this is a native range input: it is a slider for assistive tech, is focusable, and
                  its arrow, Home, End and Page keys fire a change event per step, just like a pointer release does. -->
             <input
@@ -14,6 +14,7 @@
                 step="1"
                 [max]="submissionTimeStamps().length - 1"
                 [value]="timestampIndex()"
+                aria-labelledby="exam-timeline-selected-timestamp"
                 [attr.aria-valuetext]="displayCurrentTimestamp()"
                 (input)="timestampIndex.set(+rangeInput.value)"
                 (change)="onSliderInputChange()"
