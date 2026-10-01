@@ -225,8 +225,7 @@
                     "header": "Gruppe Speichern?",
                     "message": "Du hast den Sessionplan verändert. Bei einer Speicherung werden alle existierended Sessions überschrieben.",
                     "acceptButtonLabel": "Speichern und Überschreiben"
-                },
-                "sessionScheduleInfo": "Der Sitzungsplan ist optional. Lass diese Felder leer, um die Gruppe ohne Plan anzulegen. Sobald du eines ausfüllst, werden Beginn und Ende der ersten Sitzung, das Ende des Tutoriumszeitraums und der Ort alle erforderlich; die Wiederholung ist standardmäßig wöchentlich."
+                }
             },
             "tutorialGroupDetail": {
                 "cardTitles": {

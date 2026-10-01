@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo, faFlag } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiInputDirective, TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
@@ -29,7 +29,6 @@ export class TutorialEditLanguagesInputComponent implements OnDestroy {
     private viewContainerRef = inject(ViewContainerRef);
 
     protected readonly TutorialEditValidationStatus = ValidationStatus;
-    protected readonly faFlag = faFlag;
     protected readonly faCircleInfo = faCircleInfo;
     private overlayRef: OverlayRef | undefined = undefined;
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');

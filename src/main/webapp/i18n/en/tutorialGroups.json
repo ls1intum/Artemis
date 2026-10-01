@@ -225,8 +225,7 @@
                     "header": "Save Group?",
                     "message": "You made changes to the schedule. If you save, this will overwrite all existing sessions.",
                     "acceptButtonLabel": "Save and Overwrite"
-                },
-                "sessionScheduleInfo": "The session schedule is optional. Leave these fields empty to create the group without one. If you fill in any of them, the first session start and end, the tutorial period end and the location all become required; the repetition defaults to every week."
+                }
             },
             "tutorialGroupDetail": {
                 "cardTitles": {

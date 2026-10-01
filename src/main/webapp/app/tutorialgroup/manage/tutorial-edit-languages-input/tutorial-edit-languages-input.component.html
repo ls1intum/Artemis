@@ -2,9 +2,6 @@
     <label for="tutorial-edit-language-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate }} *</label>
     <tumaet-ui-input-group>
         @let languageValidation = languageValidationResult();
-        <tumaet-ui-input-group-addon>
-            <fa-icon [icon]="faFlag" aria-hidden="true" />
-        </tumaet-ui-input-group-addon>
         <input
             id="tutorial-edit-language-input"
             #searchInput

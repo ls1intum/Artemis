@@ -116,6 +116,7 @@ describe('TutorialCreateOrEditComponent', () => {
     }
 
     function setValidScheduleInputs() {
+        component.configureSessionPlan.set(true);
         component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
         component.firstSessionEnd.set(dayjs('2026-04-20T11:45'));
         component.repetitionFrequency.set(2);
@@ -134,6 +135,7 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.campus()).toBe('');
         expect(component.capacity()).toBeUndefined();
         expect(component.additionalInformation()).toBe('');
+        expect(component.configureSessionPlan()).toBe(false);
         expect(component.firstSessionStart()).toBeUndefined();
         expect(component.firstSessionEnd()).toBeUndefined();
         expect(component.repetitionFrequency()).toBe(1);
@@ -160,6 +162,7 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.campus()).toBe('Garching');
         expect(component.capacity()).toBe(15);
         expect(component.additionalInformation()).toBe('Bring laptop');
+        expect(component.configureSessionPlan()).toBe(true);
         expect(component.firstSessionStart()).toEqual(dayjs(schedule.firstSessionStart));
         expect(component.firstSessionEnd()).toEqual(dayjs(schedule.firstSessionEnd));
         expect(component.repetitionFrequency()).toBe(2);
@@ -343,42 +346,27 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.locationValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
-    it('should treat the schedule as set once any of its four fields is filled', async () => {
-        await createComponentWithLanguageValues(of(['English', 'German']));
-
-        expect(component.scheduleIsBeingSet()).toBe(false);
-        // Changing only the repetition keeps its default role - it does not turn the schedule on.
-        component.repetitionFrequency.set(3);
-        expect(component.scheduleIsBeingSet()).toBe(false);
-
-        component.location.set('Room 101');
-        expect(component.scheduleIsBeingSet()).toBe(true);
-
-        component.location.set('');
-        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
-        expect(component.scheduleIsBeingSet()).toBe(true);
-    });
-
-    it('should keep the save button enabled with a valid group and an empty (optional) schedule', async () => {
+    it('should keep the save button enabled with a valid group while the schedule toggle is off', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
         expect(component.saveButtonDisabled()).toBe(true);
 
         setValidGeneralInputs();
-        expect(component.scheduleIsBeingSet()).toBe(false);
+        expect(component.configureSessionPlan()).toBe(false);
         expect(component.saveButtonDisabled()).toBe(false);
     });
 
-    it('should require all four schedule fields once one of them is filled', async () => {
+    it('should require the schedule fields once the schedule toggle is on', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
         setValidGeneralInputs();
 
-        // One field filled, the other three empty -> the schedule is incomplete, so save is blocked and says why.
-        component.location.set('Room 101');
+        // Toggle on but no schedule fields filled -> save is blocked and says which fields are missing.
+        component.configureSessionPlan.set(true);
         expect(component.saveButtonDisabled()).toBe(true);
         expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartRequired');
         expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndRequired');
         expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodRequired');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired');
 
         setValidScheduleInputs();
         expect(component.saveButtonDisabled()).toBe(false);

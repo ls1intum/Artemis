@@ -16,6 +16,7 @@ import {
     TumAetUiInputGroupComponent,
     TumAetUiInputNumberComponent,
     TumAetUiSelectComponent,
+    TumAetUiToggleSwitchComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -59,6 +60,7 @@ export interface UpdateTutorialGroupEvent {
         TumAetUiInputNumberComponent,
         TumAetUiInputGroupComponent,
         TumAetUiInputGroupAddonComponent,
+        TumAetUiToggleSwitchComponent,
         TumAetUiConfirmDialogComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -99,8 +101,9 @@ export class TutorialCreateOrEditComponent {
     additionalInformation = signal('');
     additionalInformationValidationResult = computed<Validation>(() => this.computeAdditionalInformationValidation());
 
-    // The session schedule has no on/off switch: the fields below are always shown and optional. Filling in any one
-    // of them means the whole schedule is being set, which is why the four required schedule fields then apply.
+    // The session schedule is behind a toggle: off by default, and when on the schedule fields below are shown and
+    // all four required.
+    configureSessionPlan = signal(false);
     firstSessionStart = signal<dayjs.Dayjs | undefined>(undefined);
     firstSessionStartInputTouched = signal(false);
     firstSessionStartValidationResult = computed<Validation>(() => this.computeFirstSessionStartValidation());
@@ -114,9 +117,6 @@ export class TutorialCreateOrEditComponent {
     location = signal('');
     locationInputTouched = signal(false);
     locationValidationResult = computed<Validation>(() => this.computeLocationValidation());
-    // True once the user has started filling in the schedule - repetition frequency keeps its default, so it does
-    // not count; touching one of the four fields is what turns the schedule on.
-    scheduleIsBeingSet = computed<boolean>(() => this.computeIfScheduleIsBeingSet());
     scheduleChangeOverwritesSessions = computed<boolean>(() => this.computeIfScheduleChangeOverwritesSessions());
 
     onUpdate = output<UpdateTutorialGroupEvent>();
@@ -159,6 +159,7 @@ export class TutorialCreateOrEditComponent {
                 this.repetitionFrequency.set(schedule.repetitionFrequency);
                 this.tutorialPeriodEnd.set(dayjs(schedule.tutorialPeriodEnd));
                 this.location.set(schedule.location);
+                this.configureSessionPlan.set(true);
             }
         });
         effect(() => {
@@ -207,7 +208,7 @@ export class TutorialCreateOrEditComponent {
     }
 
     private assembleCreateOrUpdateTutorialGroupRequest(): CreateOrUpdateTutorialGroupRequest {
-        const tutorialGroupSchedule: TutorialGroupSchedule | undefined = this.scheduleIsBeingSet()
+        const tutorialGroupSchedule: TutorialGroupSchedule | undefined = this.configureSessionPlan()
             ? {
                   firstSessionStart: this.firstSessionStart()!.format('YYYY-MM-DDTHH:mm:ss'),
                   firstSessionEnd: this.firstSessionEnd()!.format('YYYY-MM-DDTHH:mm:ss'),
@@ -360,14 +361,10 @@ export class TutorialCreateOrEditComponent {
         return { status: ValidationStatus.VALID };
     }
 
-    private computeIfScheduleIsBeingSet(): boolean {
-        return this.firstSessionStart() !== undefined || this.firstSessionEnd() !== undefined || this.tutorialPeriodEnd() !== undefined || this.location().trim() !== '';
-    }
-
     private computeIfScheduleChangeOverwritesSessions(): boolean {
         const schedule = this.schedule();
         if (!schedule) return false;
-        if (this.scheduleIsBeingSet()) {
+        if (this.configureSessionPlan()) {
             const firstSessionStartChanged = this.firstSessionStart()?.format('YYYY-MM-DDTHH:mm:ss') !== schedule.firstSessionStart;
             const firstSessionEndChanged = this.firstSessionEnd()?.format('YYYY-MM-DDTHH:mm:ss') !== schedule.firstSessionEnd;
             const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
@@ -385,7 +382,7 @@ export class TutorialCreateOrEditComponent {
         this.addReason(reasons, this.languageValidationResult());
         this.addReason(reasons, this.campusValidationResult());
         this.addReason(reasons, this.additionalInformationValidationResult());
-        if (this.scheduleIsBeingSet()) {
+        if (this.configureSessionPlan()) {
             this.addReason(reasons, this.firstSessionStartValidationResult());
             this.addReason(reasons, this.firstSessionEndValidationResult());
             this.addReason(reasons, this.tutorialPeriodEndValidationResult());
@@ -421,9 +418,9 @@ export class TutorialCreateOrEditComponent {
             const tutorialPeriodEndChanged = this.tutorialPeriodEnd()?.valueOf() !== dayjs(schedule.tutorialPeriodEnd).valueOf();
             const locationChanged = this.location() !== schedule.location;
             const scheduleChanged =
-                !this.scheduleIsBeingSet() || firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
+                !this.configureSessionPlan() || firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
             return tutorialGroupChanged || scheduleChanged;
         }
-        return tutorialGroupChanged || this.scheduleIsBeingSet();
+        return tutorialGroupChanged || this.configureSessionPlan();
     }
 }
