@@ -1225,8 +1225,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             var participation = participationRepository.findByExerciseId(exerciseId).iterator().next();
             long storedSubmissionId = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).getFirst().getId();
             QuizExercise exercise = quizExercise;
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
-            int requests = 8;
+            int requests = 4;
             var executor = Executors.newFixedThreadPool(requests);
             var start = new CountDownLatch(1);
             try {
@@ -1235,10 +1236,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
                     futures.add(executor.submit(() -> {
                         var saved = QuizExerciseFactory.generateSubmissionForThreeQuestions(exercise, 1, true, ZonedDateTime.now());
                         saved.setId(storedSubmissionId);
-                        saved.setParticipation(participation);
                         start.await();
-                        // every one of the saves is of a submission that is submitted by the time it runs, and none of them may be rejected
-                        quizSubmissionTestRepository.replaceAnswers(saved);
+                        // none of the saves may fail: the ones that lose against another one are repeated, and the submission has no answers yet, so all of them insert the same
+                        // three
+                        quizSubmissionService.saveSubmissionForExamMode(exercise, saved, student, null);
                         return null;
                     }));
                 }

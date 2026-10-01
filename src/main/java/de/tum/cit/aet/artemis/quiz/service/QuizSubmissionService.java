@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.QUIZ_PARTICIPATION;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -82,6 +85,9 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSubmission> {
 
     private static final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
+
+    // A save of an exam that lost against another one needs one more attempt, a third one only if yet another save came in between
+    private static final int MAXIMUM_EXAM_SAVE_ATTEMPTS = 3;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
@@ -423,18 +429,42 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             throw new AccessForbiddenException();
         }
         quizSubmission.setParticipation(participation);
-        QuizSubmission savedQuizSubmission;
-        if (quizSubmission.getId() != null) {
-            // A save and the submit of an exam can reach the server together, just like in the live mode
-            savedQuizSubmission = quizSubmissionRepository.replaceAnswers(quizSubmission);
-        }
-        else {
-            // A new submission has no stored answers to compete with, but it must not hold two answers to a question either
-            quizSubmission.adoptIdsOfStoredAnswers(Map.of());
-            savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
-        }
+        QuizSubmission savedQuizSubmission = saveUpdatingStoredAnswers(quizSubmission);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
+    }
+
+    /**
+     * Save the submission of an exam, writing its answers to the rows of the stored answers to the same questions.
+     * <p>
+     * An exam save needs no lock: it marks the submission as submitted every time and the student can save again, so
+     * there is no stored state that a later request has to respect. Two saves that reach the server together cannot
+     * store two answers to a question either, as the database allows only one. The one that would insert the second
+     * answer, or that loses a deadlock over the rows the other one updates, fails and is repeated, and then updates what
+     * the first one stored.
+     *
+     * @param quizSubmission the submission with the new answers
+     * @return the stored submission
+     */
+    private QuizSubmission saveUpdatingStoredAnswers(QuizSubmission quizSubmission) {
+        for (int attempt = 1;; attempt++) {
+            Map<Long, Long> storedAnswerIdByQuestionId = new HashMap<>();
+            if (quizSubmission.getId() != null) {
+                // several stored answers to one question can only come from before the unique index: the latest one is updated, the others are removed by the save
+                quizSubmissionRepository.findStoredAnswerIdsBySubmissionId(quizSubmission.getId())
+                        .forEach(storedAnswer -> storedAnswerIdByQuestionId.merge(storedAnswer.questionId(), storedAnswer.answerId(), Math::max));
+            }
+            quizSubmission.adoptIdsOfStoredAnswers(storedAnswerIdByQuestionId);
+            try {
+                return quizSubmissionRepository.save(quizSubmission);
+            }
+            catch (DataIntegrityViolationException | ConcurrencyFailureException e) {
+                if (attempt == MAXIMUM_EXAM_SAVE_ATTEMPTS) {
+                    throw e;
+                }
+                log.info("Another save of the quiz submission {} was faster, trying again: {}", quizSubmission.getId(), e.getMessage());
+            }
+        }
     }
 
     private MultipleChoiceSubmittedAnswer createMultipleChoiceSubmittedAnswerFromDTO(MultipleChoiceSubmittedAnswerFromStudentDTO submittedAnswer,
