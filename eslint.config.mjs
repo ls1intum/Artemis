@@ -656,6 +656,12 @@ export default tseslint.config(
         },
     },
     {
+        files: ['src/main/webapp/app/exercise/team/**/*.html'],
+        rules: {
+            '@angular-eslint/template/label-has-associated-control': 'error',
+        },
+    },
+    {
         // These composite widgets manage option focus through aria-activedescendant.
         files: ['packages/tum-aet-ui/src/lib/autocomplete/tumaet-ui-autocomplete.component.html', 'packages/tum-aet-ui/src/lib/select/tumaet-ui-select.component.html'],
         rules: {
@@ -703,6 +709,8 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
             'src/main/webapp/app/core/alert/**/*.html',
+            'src/main/webapp/app/core/about-us/**/*.html',
+            'src/main/webapp/app/core/feature-overview/**/*.html',
             'src/main/webapp/app/core/layouts/footer/**/*.html',
             // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
