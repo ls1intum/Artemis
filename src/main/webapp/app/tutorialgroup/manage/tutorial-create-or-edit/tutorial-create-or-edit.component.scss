@@ -32,6 +32,22 @@
                     flex-direction: column;
                     align-items: start;
                     gap: 0.5rem;
+
+                    // The fields fill their column: the selects, number inputs and date pickers sit directly in it
+                    // now (no input-group wrapper), so stretch them rather than leaving them at content width.
+                    > tumaet-ui-input-group,
+                    > tumaet-ui-select,
+                    > tumaet-ui-input-number,
+                    > tumaet-ui-date-picker,
+                    > jhi-tutorial-edit-languages-input {
+                        width: 100%;
+                    }
+
+                    .field-error {
+                        margin: 0;
+                        font-size: 0.8125rem;
+                        color: var(--danger);
+                    }
                 }
 
                 .spacer {

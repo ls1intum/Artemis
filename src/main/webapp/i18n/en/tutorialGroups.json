@@ -212,7 +212,8 @@
                     "teachingPeriodNotAfterFirstSessionEnd": "The end of the teaching period must be after the first session's end.",
                     "tutorRequired": "Please choose a tutor.",
                     "locationRequired": "Please choose a location.",
-                    "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces."
+                    "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "noChanges": "Make a change before saving."
                 },
                 "networkError": {
                     "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
@@ -224,7 +225,8 @@
                     "header": "Save Group?",
                     "message": "You made changes to the schedule. If you save, this will overwrite all existing sessions.",
                     "acceptButtonLabel": "Save and Overwrite"
-                }
+                },
+                "sessionScheduleInfo": "The session schedule is optional. Leave these fields empty to create the group without one. If you fill in any of them, the first session start and end, the tutorial period end and the location all become required; the repetition defaults to every week."
             },
             "tutorialGroupDetail": {
                 "cardTitles": {

@@ -1,6 +1,3 @@
-<!-- Still PrimeNG here, each for a gap the package has yet to close: the tutor picker needs a filterable
-     select, and the three date fields need a picker that can sit inside an input group beside its own label
-     and error addon. Everything else on this page is TUM AET UI. -->
 <div class="frame">
     <section>
         <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.generalInformation"></h3>
@@ -9,9 +6,6 @@
                 <label for="title-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.title' | artemisTranslate }} *</label>
                 <tumaet-ui-input-group>
                     @let titleValidation = titleValidationResult();
-                    <tumaet-ui-input-group-addon>
-                        <fa-icon [icon]="faLanguage" aria-hidden="true" />
-                    </tumaet-ui-input-group-addon>
                     <input
                         id="title-input"
                         tumAetUiInput
@@ -29,28 +23,18 @@
             </div>
 
             <div class="label-and-input">
-                @let tutorValidation = tutorValidationResult();
                 <label for="tutor-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutor' | artemisTranslate }} *</label>
-                <tumaet-ui-input-group class="field-control right-control">
-                    <tumaet-ui-input-group-addon><fa-icon [icon]="faUser" aria-hidden="true" /></tumaet-ui-input-group-addon>
-                    <p-select
-                        inputId="tutor-input"
-                        optionLabel="nameAndLogin"
-                        optionValue="id"
-                        filterBy="nameAndLogin"
-                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutor' | artemisTranslate"
-                        [options]="tutors()"
-                        [(ngModel)]="selectedTutorId"
-                        [filter]="true"
-                        [invalid]="tutorValidation.status === ValidationStatus.INVALID && tutorInputTouched()"
-                        (onBlur)="tutorInputTouched.set(true)"
-                    />
-                    @if (tutorValidation.status === ValidationStatus.INVALID && tutorInputTouched()) {
-                        <tumaet-ui-input-group-addon [tumAetUiTooltip]="tutorValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                        </tumaet-ui-input-group-addon>
-                    }
-                </tumaet-ui-input-group>
+                <tumaet-ui-select
+                    inputId="tutor-input"
+                    [options]="tutors()"
+                    optionLabel="nameAndLogin"
+                    optionValue="id"
+                    [filter]="true"
+                    filterBy="nameAndLogin"
+                    [required]="true"
+                    [(ngModel)]="selectedTutorId"
+                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutor' | artemisTranslate"
+                />
             </div>
         </div>
 
@@ -63,15 +47,12 @@
 
             <div class="label-and-input">
                 <label for="mode-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate }} *</label>
-                <tumaet-ui-input-group>
-                    <tumaet-ui-input-group-addon><fa-icon [icon]="faCompass" aria-hidden="true" /></tumaet-ui-input-group-addon>
-                    <tumaet-ui-select
-                        inputId="mode-input"
-                        [options]="modes"
-                        [(ngModel)]="selectedMode"
-                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate"
-                    />
-                </tumaet-ui-input-group>
+                <tumaet-ui-select
+                    inputId="mode-input"
+                    [options]="modes"
+                    [(ngModel)]="selectedMode"
+                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate"
+                />
             </div>
         </div>
 
@@ -80,9 +61,6 @@
                 <label for="campus-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus"></label>
                 <tumaet-ui-input-group>
                     @let campusValidation = campusValidationResult();
-                    <tumaet-ui-input-group-addon>
-                        <fa-icon [icon]="faBuilding" aria-hidden="true" />
-                    </tumaet-ui-input-group-addon>
                     <input
                         id="campus-input"
                         tumAetUiInput
@@ -100,18 +78,15 @@
 
             <div class="label-and-input">
                 <label for="capacity-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity"></label>
-                <tumaet-ui-input-group class="w-full">
-                    <tumaet-ui-input-group-addon><fa-icon [icon]="faHashtag" /></tumaet-ui-input-group-addon>
-                    <tumaet-ui-input-number
-                        [fluid]="true"
-                        inputId="capacity-input"
-                        [(ngModel)]="capacity"
-                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
-                        [min]="1"
-                        [max]="5000"
-                        [showButtons]="true"
-                    />
-                </tumaet-ui-input-group>
+                <tumaet-ui-input-number
+                    [fluid]="true"
+                    inputId="capacity-input"
+                    [(ngModel)]="capacity"
+                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
+                    [min]="1"
+                    [max]="5000"
+                    [showButtons]="true"
+                />
             </div>
         </div>
 
@@ -140,127 +115,145 @@
 
     <section>
         <div class="session-plan-section-header">
-            <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.defineSessionPlan"></h3>
-            <tumaet-ui-toggle-switch
-                [(ngModel)]="configureSessionPlan"
-                [ariaLabel]="'artemisApp.pages.createOrEditTutorialGroup.sectionTitle.defineSessionPlan' | artemisTranslate"
+            <h3 id="session-schedule-heading" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.defineSessionPlan"></h3>
+            <!-- The schedule is optional, but all-or-nothing: the tooltip spells that out next to the heading. -->
+            <fa-icon
+                [icon]="faCircleInfo"
+                tabindex="0"
+                role="img"
+                [tumAetUiTooltip]="'artemisApp.pages.createOrEditTutorialGroup.sessionScheduleInfo' | artemisTranslate"
+                [attr.aria-label]="'artemisApp.pages.createOrEditTutorialGroup.sessionScheduleInfo' | artemisTranslate"
             />
         </div>
 
-        @if (configureSessionPlan()) {
-            <div class="label-and-input-row">
-                <div class="label-and-input">
-                    <label for="first-session-start-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate }} *</label>
-                    <tumaet-ui-input-group>
-                        @let firstSessionStartValidation = firstSessionStartValidationResult();
-                        <p-datepicker
-                            inputId="first-session-start-input"
-                            hourFormat="24"
-                            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate"
-                            [(ngModel)]="firstSessionStart"
-                            [showTime]="true"
-                            [invalid]="firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()"
-                            (onBlur)="firstSessionStartInputTouched.set(true)"
-                        />
-                        @if (firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()) {
-                            <tumaet-ui-input-group-addon [tumAetUiTooltip]="firstSessionStartValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                            </tumaet-ui-input-group-addon>
-                        }
-                    </tumaet-ui-input-group>
-                </div>
-
-                <div class="label-and-input">
-                    <label for="first-session-end-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate }} *</label>
-                    <tumaet-ui-input-group>
-                        @let firstSessionEndValidation = firstSessionEndValidationResult();
-                        <p-datepicker
-                            inputId="first-session-end-input"
-                            hourFormat="24"
-                            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate"
-                            [(ngModel)]="firstSessionEnd"
-                            [showTime]="true"
-                            [invalid]="firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()"
-                            (onBlur)="firstSessionEndInputTouched.set(true)"
-                        />
-                        @if (firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()) {
-                            <tumaet-ui-input-group-addon [tumAetUiTooltip]="firstSessionEndValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                            </tumaet-ui-input-group-addon>
-                        }
-                    </tumaet-ui-input-group>
-                </div>
+        @let scheduleActive = scheduleIsBeingSet();
+        <div class="label-and-input-row">
+            <div class="label-and-input">
+                @let firstSessionStartValidation = firstSessionStartValidationResult();
+                <label for="first-session-start-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate }}</label>
+                <tumaet-ui-date-picker
+                    inputId="first-session-start-input"
+                    [hideLabelName]="true"
+                    [hideValidationMessage]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [ariaRequired]="scheduleActive"
+                    [value]="firstSessionStart()"
+                    (valueChange)="firstSessionStart.set($event)"
+                    (touch)="firstSessionStartInputTouched.set(true)"
+                    [invalid]="scheduleActive && firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()"
+                />
+                @if (scheduleActive && firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()) {
+                    <span class="field-error" role="alert" data-testid="first-session-start-error">{{ firstSessionStartValidation.message | artemisTranslate }}</span>
+                }
             </div>
 
-            <div class="label-and-input-row">
-                <div class="label-and-input">
-                    <label for="repetition-frequency-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency' | artemisTranslate }} *</label>
-                    <tumaet-ui-input-group class="w-full">
-                        <tumaet-ui-input-number
-                            [fluid]="true"
-                            inputId="repetition-frequency-input"
-                            [(ngModel)]="repetitionFrequency"
-                            [prefix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencyPrefix' | artemisTranslate"
-                            [suffix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencySuffix' | artemisTranslate"
-                            [min]="1"
-                            [max]="48"
-                            [showButtons]="true"
-                        />
-                    </tumaet-ui-input-group>
-                </div>
+            <div class="label-and-input">
+                @let firstSessionEndValidation = firstSessionEndValidationResult();
+                <label for="first-session-end-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate }}</label>
+                <tumaet-ui-date-picker
+                    inputId="first-session-end-input"
+                    [hideLabelName]="true"
+                    [hideValidationMessage]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [ariaRequired]="scheduleActive"
+                    [value]="firstSessionEnd()"
+                    (valueChange)="firstSessionEnd.set($event)"
+                    (touch)="firstSessionEndInputTouched.set(true)"
+                    [invalid]="scheduleActive && firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()"
+                />
+                @if (scheduleActive && firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()) {
+                    <span class="field-error" role="alert" data-testid="first-session-end-error">{{ firstSessionEndValidation.message | artemisTranslate }}</span>
+                }
+            </div>
+        </div>
 
-                <div class="label-and-input">
-                    <label for="tutorial-period-end-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate }} *</label>
-                    <tumaet-ui-input-group>
-                        @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
-                        <p-datepicker
-                            inputId="tutorial-period-end-input"
-                            hourFormat="24"
-                            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate"
-                            [(ngModel)]="tutorialPeriodEnd"
-                            [showButtonBar]="true"
-                            [invalid]="tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()"
-                            (onBlur)="tutorialPeriodEndInputTouched.set(true)"
-                        />
-                        @if (tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()) {
-                            <tumaet-ui-input-group-addon [tumAetUiTooltip]="tutorialPeriodEndValidation.message | artemisTranslate" tumAetUiTooltipPlacement="left">
-                                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                            </tumaet-ui-input-group-addon>
-                        }
-                    </tumaet-ui-input-group>
-                </div>
+        <div class="label-and-input-row">
+            <div class="label-and-input">
+                <label for="repetition-frequency-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency' | artemisTranslate }}</label>
+                <tumaet-ui-input-number
+                    [fluid]="true"
+                    inputId="repetition-frequency-input"
+                    [(ngModel)]="repetitionFrequency"
+                    [prefix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencyPrefix' | artemisTranslate"
+                    [suffix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencySuffix' | artemisTranslate"
+                    [min]="1"
+                    [max]="48"
+                    [showButtons]="true"
+                />
             </div>
 
-            <div class="label-and-input-row">
-                <div class="label-and-input">
-                    <label for="location-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate }} *</label>
-                    <tumaet-ui-input-group>
-                        @let locationValidation = locationValidationResult();
-                        <input
-                            id="location-input"
-                            type="text"
-                            tumAetUiInput
-                            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate"
-                            [(ngModel)]="location"
-                            [tumAetUiInputInvalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
-                            (blur)="locationInputTouched.set(true)"
-                        />
-                        @if (locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
-                            <tumaet-ui-input-group-addon [tumAetUiTooltip]="locationValidation.message | artemisTranslate" tumAetUiTooltipPlacement="left">
-                                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                            </tumaet-ui-input-group-addon>
-                        }
-                    </tumaet-ui-input-group>
-                </div>
-                <div class="spacer"></div>
+            <div class="label-and-input">
+                @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
+                <label for="tutorial-period-end-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate }}</label>
+                <tumaet-ui-date-picker
+                    inputId="tutorial-period-end-input"
+                    [dateOnly]="true"
+                    [hideLabelName]="true"
+                    [hideValidationMessage]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [ariaRequired]="scheduleActive"
+                    [value]="tutorialPeriodEnd()"
+                    (valueChange)="tutorialPeriodEnd.set($event)"
+                    (touch)="tutorialPeriodEndInputTouched.set(true)"
+                    [invalid]="scheduleActive && tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()"
+                />
+                @if (scheduleActive && tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()) {
+                    <span class="field-error" role="alert" data-testid="tutorial-period-end-error">{{ tutorialPeriodEndValidation.message | artemisTranslate }}</span>
+                }
             </div>
-        }
+        </div>
+
+        <div class="label-and-input-row">
+            <div class="label-and-input">
+                <label for="location-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate }}</label>
+                <tumaet-ui-input-group>
+                    @let locationValidation = locationValidationResult();
+                    <input
+                        id="location-input"
+                        type="text"
+                        tumAetUiInput
+                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate"
+                        [(ngModel)]="location"
+                        [tumAetUiInputInvalid]="scheduleActive && locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
+                        (blur)="locationInputTouched.set(true)"
+                    />
+                    @if (scheduleActive && locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
+                        <tumaet-ui-input-group-addon [tumAetUiTooltip]="locationValidation.message | artemisTranslate" tumAetUiTooltipPlacement="left">
+                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
+                        </tumaet-ui-input-group-addon>
+                    }
+                </tumaet-ui-input-group>
+            </div>
+            <div class="spacer"></div>
+        </div>
     </section>
 
     <div class="controls-footer">
         <span jhiTranslate="global.form.requiredLabel"></span>
         <a [routerLink]="['..']" tumAetUiButton severity="secondary" size="small" data-testid="cancel-button" jhiTranslate="entity.action.cancel"></a>
-        <button type="button" tumAetUiButton size="small" data-testid="save-button" (click)="save()" [disabled]="saveButtonDisabled()" jhiTranslate="entity.action.save"></button>
+        @let saveDisabled = saveButtonDisabled();
+        <!-- aria-disabled rather than disabled, so the button stays focusable and its tooltip can list what is missing. -->
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+            data-testid="save-button"
+            [tumAetUiTooltip]="saveDisabledReasonTexts()"
+            [tumAetUiTooltipDescribesHost]="false"
+            [attr.aria-disabled]="saveDisabled ? 'true' : null"
+            [attr.aria-describedby]="saveDisabled ? 'save-disabled-reasons' : null"
+            (click)="save()"
+            jhiTranslate="entity.action.save"
+        ></button>
     </div>
+    @if (saveDisabled) {
+        <!-- The tooltip only describes its host while open, so the permanent list is what aria-describedby points at. -->
+        <ul id="save-disabled-reasons" class="sr-only">
+            @for (reason of saveDisabledReasons(); track reason) {
+                <li>{{ reason | artemisTranslate }}</li>
+            }
+        </ul>
+    }
 </div>
 <tumaet-ui-confirm-dialog />

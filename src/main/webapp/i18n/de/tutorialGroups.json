@@ -212,7 +212,8 @@
                     "teachingPeriodNotAfterFirstSessionEnd": "Das Ende der Tutoriumsperiode muss nach dem Ende der ersten Session liegen.",
                     "tutorRequired": "Bitte wähle ein Tutor.",
                     "locationRequired": "Bitte wähle einen Ort.",
-                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen."
+                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "noChanges": "Ändere etwas, bevor du speicherst."
                 },
                 "networkError": {
                     "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
@@ -224,7 +225,8 @@
                     "header": "Gruppe Speichern?",
                     "message": "Du hast den Sessionplan verändert. Bei einer Speicherung werden alle existierended Sessions überschrieben.",
                     "acceptButtonLabel": "Speichern und Überschreiben"
-                }
+                },
+                "sessionScheduleInfo": "Der Sitzungsplan ist optional. Lass diese Felder leer, um die Gruppe ohne Plan anzulegen. Sobald du eines ausfüllst, werden Beginn und Ende der ersten Sitzung, das Ende des Tutoriumszeitraums und der Ort alle erforderlich; die Wiederholung ist standardmäßig wöchentlich."
             },
             "tutorialGroupDetail": {
                 "cardTitles": {
