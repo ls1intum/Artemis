@@ -319,12 +319,27 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     BuildJobStatisticsDTO findBuildJobStatisticsByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Updates the status of a build job that has not finished yet. A job that has already finished is left alone: the
+     * callers decide on a job they read earlier, e.g. the check for missing jobs, and the job's result can be processed
+     * in between. Setting such a job back would make its build group look incomplete and retry a build that has a result.
+     *
+     * @param buildJobId the build job id
+     * @param newStatus  the new build status
+     */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE BuildJob b
             SET b.buildStatus = :newStatus
             WHERE b.buildJobId = :buildJobId
+                AND b.buildStatus NOT IN (
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.FAILED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.ERROR,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.CANCELLED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.TIMEOUT
+                )
             """)
     void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
 

@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -76,6 +77,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
     @Autowired
     private LocalCIResultProcessingService localCIResultProcessingService;
+
+    @Autowired
+    private ResultService resultService;
 
     @Override
     protected String getTestPrefix() {
@@ -560,6 +564,50 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(buildJobRepository.findByBuildJobId("late-1")).map(BuildJob::getBuildStatus).as("a queued job starts building").contains(BuildStatus.BUILDING);
         assertThat(buildJobRepository.findAllByBuildGroupId("late")).filteredOn(job -> LocalCIResultProcessingService.FINISHED_BUILD_STATUSES.contains(job.getBuildStatus()))
                 .hasSize(1);
+    }
+
+    /**
+     * The check for missing jobs reads the pending jobs and marks those it cannot find in the queue as missing. A job
+     * whose result is processed in between has finished by then and must stay finished: marked as missing, it would be
+     * retried although it has a result, and its build group would never count as complete. A job that is still pending
+     * takes the transition.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAJobThatFinishedMeanwhileIsNotMarkedAsMissing() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String commitHash = "abcdefabcdefabcdefabcdefabcdefabcdefabce";
+        buildJobRepository.save(new BuildJob(buildJobFor("stale-0", "stale", participation, commitHash, "container_a"), BuildStatus.TIMEOUT, null));
+        buildJobRepository.save(new BuildJob(buildJobFor("stale-1", "stale", participation, commitHash, "container_b"), BuildStatus.BUILDING, null));
+
+        buildJobRepository.updateBuildJobStatus("stale-0", BuildStatus.MISSING);
+        buildJobRepository.updateBuildJobStatus("stale-1", BuildStatus.MISSING);
+
+        assertThat(buildJobRepository.findByBuildJobId("stale-0")).map(BuildJob::getBuildStatus).as("a finished job stays finished").contains(BuildStatus.TIMEOUT);
+        assertThat(buildJobRepository.findByBuildJobId("stale-1")).map(BuildJob::getBuildStatus).as("a pending job is marked as missing").contains(BuildStatus.MISSING);
+    }
+
+    /**
+     * The containers of a multi-container build link their jobs to one result. The result's build logs are available
+     * when one of those jobs has a log file, whichever of them is looked at last.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheLogsOfAMergedResultAreAvailableWhenOneOfItsJobsHasALogFile() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000019";
+        submissionOf(participation, commitHash);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        String group = "avail-" + participation.getId();
+        for (int container = 0; container < 3; container++) {
+            buildJobRepository
+                    .save(new BuildJob(buildJobFor(group + "-" + container, group, participation, commitHash, "container_" + container), BuildStatus.SUCCESSFUL, aggregatedResult));
+        }
+        // only the second container wrote a log file
+        buildLogEntryService.saveBuildLogsToFile(List.of(new BuildLogDTO(ZonedDateTime.now(), "log of the second container")), group + "-1", programmingExercise);
+
+        assertThat(resultService.getLogsAvailabilityForResults(participation.getId())).containsEntry(aggregatedResult.getId(), group + "-1");
     }
 
     /**
