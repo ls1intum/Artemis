@@ -24,6 +24,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { DialogModule } from 'primeng/dialog';
@@ -40,6 +42,7 @@ import { RouterLink } from '@angular/router';
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
     private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
+    private readonly examManagementService = inject(ExamManagementService);
 
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
 
@@ -61,6 +64,8 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     private availableRooms: Signal<RoomForDistributionDTO[]> = this.studentsRoomDistributionService.availableRooms;
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = this.studentsRoomDistributionService.capacityData;
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
+    /** The number of students registered for the exam. The exam of the route does not carry it, so it is loaded whenever the dialog opens. */
+    readonly registeredStudents: WritableSignal<number> = signal(0);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
     seatInfo: Signal<CapacityDisplayDTO> = computed(() => this.computeSeatInfo());
     canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
@@ -77,7 +82,7 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     }
 
     private computeSeatInfo(): CapacityDisplayDTO {
-        const totalStudents: number = this.exam().numberOfExamUsers ?? this.exam().examUsers?.length ?? 0;
+        const totalStudents: number = this.registeredStudents();
         let usableCapacity: number = this.allowNarrowLayouts() ? this.selectedRoomsCapacity().combinedMaximumCapacity : this.selectedRoomsCapacity().combinedDefaultCapacity;
         if (usableCapacity > totalStudents) {
             usableCapacity = totalStudents;
@@ -93,6 +98,14 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
 
     openDialog(): void {
         this.dialogVisible.set(true);
+
+        // A page of one student is enough: without a search term or filter, the total is the number of registered students.
+        this.examManagementService
+            .findExamStudentsPaged(this.courseId(), this.exam().id!, { page: 0, pageSize: 1, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'login', searchTerm: '' })
+            .subscribe({
+                next: (result) => this.registeredStudents.set(result.totalElements),
+                error: () => this.registeredStudents.set(0),
+            });
 
         this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id).subscribe({
             next: (usedRooms: RoomForDistributionDTO[]) => {

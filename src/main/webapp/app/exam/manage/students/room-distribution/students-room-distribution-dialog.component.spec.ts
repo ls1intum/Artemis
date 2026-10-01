@@ -13,14 +13,14 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
@@ -32,6 +32,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
     let service: StudentsRoomDistributionService;
+    let examManagementService: ExamManagementService;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
@@ -60,6 +61,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
+                MockProvider(ExamManagementService, { findExamStudentsPaged: vi.fn().mockReturnValue(of({ content: [], totalElements: 1000 })) }),
             ],
         }).compileComponents();
 
@@ -68,6 +70,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
         service = TestBed.inject(StudentsRoomDistributionService);
+        examManagementService = TestBed.inject(ExamManagementService);
 
         component.openDialog();
     });
@@ -231,18 +234,21 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.allowNarrowLayouts()).toBe(false);
     });
 
-    it('should never show percentage >= 100 in the not enough capacity warning message', () => {
-        const examWithUsers: Exam = {
-            course,
-            id: 2,
-            title: 'Exam Title',
-            examUsers: [] as ExamUser[],
-        };
-        for (let i = 0; i < 1000; i++) {
-            examWithUsers.examUsers!.push({} as ExamUser);
-        }
+    it('should load the number of registered students without search term or filter whenever the dialog opens', () => {
+        expect(examManagementService.findExamStudentsPaged).toHaveBeenCalledOnce();
+        expect(examManagementService.findExamStudentsPaged).toHaveBeenCalledWith(course.id, exam.id, expect.objectContaining({ page: 0, pageSize: 1, searchTerm: '' }));
+        expect(component.registeredStudents()).toBe(1000);
+        expect(component.seatInfo().totalStudents).toBe(1000);
+    });
 
-        fixture.componentRef.setInput('exam', examWithUsers);
+    it('should report no registered students if loading them fails', () => {
+        vi.mocked(examManagementService.findExamStudentsPaged).mockReturnValue(throwError(() => new Error('failed')));
+        component.openDialog();
+        expect(component.registeredStudents()).toBe(0);
+    });
+
+    it('should never show percentage >= 100 in the not enough capacity warning message', () => {
+        expect(component.registeredStudents()).toBe(1000);
         (service as unknown as MockStudentsRoomDistributionService).capacityData.set({
             combinedDefaultCapacity: 999,
             combinedMaximumCapacity: 999,
