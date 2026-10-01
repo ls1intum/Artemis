@@ -452,22 +452,25 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findFirstByExerciseIdAndStudentIdOrderByIdDesc(long exerciseId, long studentId);
 
     /**
-     * The attempts already in use by the student's participations for an exercise.
+     * The attempts in use by the student's participations for an exercise on one side of the test run divide.
      * <p>
      * The table is unique on (student_id, exercise_id, initialization_state, attempt), so a second participation for the
-     * same student and exercise - a test run next to a graded attempt - needs an attempt that is still free.
+     * same student and exercise - a test run next to a graded attempt - needs an attempt that the other side does not
+     * use. A participation without the flag counts as graded.
      *
      * @param exerciseId the id of the exercise
      * @param studentId  the id of the student
-     * @return the attempts in use, empty when the student has no participation for the exercise
+     * @param testRun    whether to read the attempts of the test run participations or of the graded ones
+     * @return the attempts in use on that side, empty when the student has no such participation for the exercise
      */
     @Query("""
             SELECT participation.attempt
             FROM StudentParticipation participation
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.id = :studentId
+                AND COALESCE(participation.testRun, FALSE) = :testRun
             """)
-    Set<Integer> findAttemptsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    Set<Integer> findAttemptsByExerciseIdAndStudentIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId, @Param("testRun") boolean testRun);
 
     /**
      * The student's graded or practice participation in an exercise, as far as saving a submission needs it.

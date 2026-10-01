@@ -189,7 +189,7 @@ public class ParticipationService {
         if (exercise.isTestExamExercise()) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), participant.getId());
             participations.forEach(studentParticipation -> studentParticipation.setInitializationState(InitializationState.FINISHED));
-            participation = createNewParticipation(exercise, participant);
+            participation = createNewParticipation(exercise, participant, false);
             // A test exam counts its attempts itself, which already keeps every one of them insertable next to the others.
             participation.setAttempt(participations.size());
             participations.add(participation);
@@ -225,7 +225,7 @@ public class ParticipationService {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, testRun);
+            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
         }
         // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
         else {
@@ -250,10 +250,6 @@ public class ParticipationService {
         if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
             participation.setInitializationDate(ZonedDateTime.now());
         }
-        // A programming participation was already flagged inside startProgrammingExercise, where the exact point matters
-        // for the names derived from this flag. For every other exercise type nothing reads it before here, and for a
-        // participation the lookup returned it already holds the side it was looked up on, so this is a no-op for both.
-        participation.setTestRun(testRun);
         // Starting an exercise whose participation already exists and is fully set up is the normal case in an exam: the
         // participations are generated up front, and the client posts to this endpoint on every (re)entry. Saving then
         // writes back the values just read, and because the entity is detached (there is no transaction spanning the load
@@ -296,7 +292,7 @@ public class ParticipationService {
      */
     private StartedParticipation createParticipationOrFetchConcurrentlyCreatedOne(Exercise exercise, Participant participant, boolean testRun) {
         try {
-            return new StartedParticipation(createNewParticipation(exercise, participant), true);
+            return new StartedParticipation(createNewParticipation(exercise, participant, testRun), true);
         }
         catch (DataIntegrityViolationException concurrentStart) {
             // Only a lost race explains this: re-read, and if nothing is there the violation was something else and has
@@ -321,9 +317,11 @@ public class ParticipationService {
      *
      * @param exercise    the exercise for which a participation should be created
      * @param participant the participant for the participation
+     * @param testRun     whether the participation belongs to a test run. It is stored with the first insert, so that a setup which fails
+     *                        halfway leaves a row that the lookup of the same side finds again on retry
      * @return a StudentParticipation for the exercise and participant with an optional specified initializationDate
      */
-    private StudentParticipation createNewParticipation(Exercise exercise, Participant participant) {
+    private StudentParticipation createNewParticipation(Exercise exercise, Participant participant, boolean testRun) {
         StudentParticipation participation;
         // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
@@ -335,7 +333,8 @@ public class ParticipationService {
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
-        participation.setAttempt(firstFreeAttempt(exercise, participant));
+        participation.setTestRun(testRun);
+        participation.setAttempt(firstFreeAttempt(exercise, participant, testRun));
 
         participation = studentParticipationRepository.saveAndFlush(participation);
 
@@ -352,10 +351,9 @@ public class ParticipationService {
      *
      * @param exercise      the programming exercise that the currently active user (student) wants to start
      * @param participation inactive participation
-     * @param testRun       whether the participation belongs to a test run, which the build plan name has to reflect
      * @return started participation
      */
-    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean testRun) {
+    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // The template participation and the branch are only needed to resolve the source repository, and copyRepository
         // skips both entirely once the participation has its own repository. Loading them lazily keeps the common path
         // free of queries it never reads: exam participations are prepared up front, so every student who (re)starts an
@@ -364,12 +362,6 @@ public class ParticipationService {
         Supplier<String> branch = memoize(() -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()));
         // Step 1a) create the student repository (based on the template repository).
         participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, participation);
-        // Between the two steps on purpose. Both names are derived from this flag, but only the repository slug also
-        // carries the attempt, which already separates a test run from a graded participation of the same student and
-        // exercise. The build plan key has nothing but the name, so the flag has to be set before it is copied or the
-        // two participations would share one plan - and deleting either would take the other's with it. Setting it
-        // before the repository is copied instead would rename every test run repository.
-        participation.setTestRun(testRun);
         return startProgrammingParticipation(participation);
     }
 
@@ -688,7 +680,10 @@ public class ParticipationService {
                         + programmingExercise.getId() + " is missing");
             }
             final var projectKey = programmingExercise.getProjectKey();
-            final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+            // An exam test run is flagged from its first insert, but its repository never carried the practice prefix. Its slug is told apart from the
+            // graded one by the attempt instead, which copyRepositoryWithoutHistory appends. The build plan name has no attempt, so it keeps the prefix.
+            final var repoName = programmingExercise.isExamExercise() ? participation.getParticipantIdentifier()
+                    : participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
             VersionControlService vcs = versionControlService.orElseThrow();
@@ -853,17 +848,23 @@ public class ParticipationService {
      * share an attempt. The lowest free one is taken rather than one above the highest: a programming repository carries
      * the attempt in its slug only above 0, so every participation that can keep 0 keeps the name it has today, and only
      * the second participation of the same student and exercise - which could not be created at all before - moves up.
+     * <p>
+     * Only the attempts of the other side are looked at. A participation of the requested side that already exists is found
+     * by the lookup before this is called, so two overlapping starts of one side compute the same attempt here and the
+     * second insert still violates the unique constraint, which hands it the row the first one created. Avoiding the
+     * attempts of the same side as well would let the second start take the next free attempt and insert a duplicate.
      *
      * @param exercise    the exercise the participation belongs to
      * @param participant the participant it belongs to
+     * @param testRun     whether the new participation belongs to a test run
      * @return the attempt to set on the new participation
      */
-    private int firstFreeAttempt(Exercise exercise, Participant participant) {
+    private int firstFreeAttempt(Exercise exercise, Participant participant, boolean testRun) {
         if (!(participant instanceof User user)) {
             // A team exercise has the one participation per team, and the constraint it is unique on names the team.
             return 0;
         }
-        Set<Integer> attemptsInUse = studentParticipationRepository.findAttemptsByExerciseIdAndStudentId(exercise.getId(), user.getId());
+        Set<Integer> attemptsInUse = studentParticipationRepository.findAttemptsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), !testRun);
         int attempt = 0;
         while (attemptsInUse.contains(attempt)) {
             attempt++;
