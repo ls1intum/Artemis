@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
@@ -153,12 +153,12 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
                 HttpStatus.CREATED);
         var post = this.postInConversation(chat.getId(), "student1");
         // then
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student1", "student2");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, chat.getId(), "student1", "student2");
         // The broadcast wraps the entity in a cycle-free PostBroadcastDTO (see PostingService.broadcastForPost);
         // match by post id since record equality between PostResponseDTO and Post entity wouldn't hold.
         verify(websocketMessagingService, timeout(10000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO broadcast && post.id().equals(broadcast.post().id())));
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.NEW_MESSAGE);
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.CREATE, CommunicationCrudAction.NEW_MESSAGE);
 
     }
 
@@ -246,7 +246,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
      * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
      * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
      * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
-     * nothing else - in particular neither the retired {@code /topic/metis/} mirror nor an unrelated destination, both
+     * nothing else - in particular neither the retired legacy mirror topic nor an unrelated destination, both
      * of which a bare {@code anyString()} would have accepted.
      *
      * @return a Mockito matcher for a canonical post broadcast destination
