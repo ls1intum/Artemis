@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
@@ -695,6 +696,96 @@ class LocalCIResultProcessingServiceTest {
         verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, participation);
         verify(programmingTriggerService, never()).triggerTemplateBuildAndNotifyUser(anyLong(), any(), any(), any());
         verify(aggregationLocks).unlock("group-1");
+    }
+
+    /** a finished job of the group as the build overview reads it, with nothing linked that the DTO would have to load */
+    private static BuildJob finishedJobOfGroup(String buildJobId) {
+        var job = new BuildJob();
+        job.setBuildJobId(buildJobId);
+        job.setCourseId(1L);
+        job.setParticipationId(PARTICIPATION_ID);
+        job.setExerciseId(EXERCISE_ID);
+        job.setBuildStatus(BuildStatus.SUCCESSFUL);
+        return job;
+    }
+
+    @Test
+    void theLastContainerSendsEveryJobOfItsGroupAgainOnceTheResultIsFinalized() {
+        // Each container's job was announced as finished with the aggregated result still in progress. Once the last
+        // container finalized it, every job of the group is sent again as a changed job, so an open build overview
+        // shows the final result without counting the jobs a second time.
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(), List.of(7L));
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+        BuildJob jobOfGroup = new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult);
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(jobOfGroup));
+        Result finalizedResult = new Result();
+        finalizedResult.setId(7L);
+        finalizedResult.setCompletionDate(ZonedDateTime.now());
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(false), any())).thenReturn(finalizedResult);
+        when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenReturn(List.of(finishedJobOfGroup("job-a"), finishedJobOfGroup("job-b")));
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<FinishedBuildJobDTO> sent = ArgumentCaptor.captor();
+        verify(localCIQueueWebsocketService, times(2)).sendChangedFinishedBuildJobOverWebsocket(sent.capture());
+        assertThat(sent.getAllValues()).extracting(FinishedBuildJobDTO::id).containsExactly("job-a", "job-b");
+    }
+
+    @Test
+    void aContainerThatDoesNotCompleteItsGroupSendsNoChangedJobs() {
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_a"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+        // one of the two containers has finished, so the group is not complete
+        when(buildJobRepository.findAllByBuildGroupId("group-1"))
+                .thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult)));
+
+        resultProcessingService.processResultAsync();
+
+        verify(localCIQueueWebsocketService, never()).sendChangedFinishedBuildJobOverWebsocket(any());
+    }
+
+    @Test
+    void theSweepSendsTheJobsOfTheGroupItFinalizedAgain() {
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
+        withACompleteGroupInProgress(containerJob("group-1", 2, "container_b"), completionDate);
+        withParticipation();
+        Result finalizedResult = new Result();
+        finalizedResult.setCompletionDate(completionDate);
+        when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
+        when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenReturn(List.of(finishedJobOfGroup("job-a"), finishedJobOfGroup("job-b")));
+
+        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+
+        verify(localCIQueueWebsocketService, times(2)).sendChangedFinishedBuildJobOverWebsocket(any());
+    }
+
+    @Test
+    void aFailedBroadcastAfterTheFinalizationDoesNotFailTheSweep() {
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
+        withACompleteGroupInProgress(containerJob("group-1", 2, "container_b"), completionDate);
+        withParticipation();
+        Result finalizedResult = new Result();
+        finalizedResult.setCompletionDate(completionDate);
+        when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
+        when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenThrow(new IllegalStateException("the websocket broker is gone"));
+
+        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+
+        verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, participation);
     }
 
     @Test

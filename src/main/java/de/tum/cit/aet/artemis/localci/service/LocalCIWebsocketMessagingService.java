@@ -5,10 +5,12 @@ import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_BU
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_BUILD_AGENTS;
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_BUILD_JOB;
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_FINISHED_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_FINISHED_JOB_UPDATES;
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_QUEUED_JOBS;
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_RUNNING_JOBS;
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_BUILD_JOB;
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_FINISHED_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_FINISHED_JOB_UPDATES;
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_QUEUED_JOBS;
 import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_RUNNING_JOBS;
 
@@ -136,6 +138,22 @@ public class LocalCIWebsocketMessagingService {
 
         var courseChannel = COURSE_FINISHED_JOBS.at(finishedBuildJob.courseId());
         log.debug("Sending finished build job update on topic {}", courseChannel);
+        websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
+    }
+
+    /**
+     * Sends a finished build job whose data changed after it was announced as finished, so that clients replace the job they already list instead of counting a further one.
+     * Sends to both the admin topic and the course-specific topic.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    public void sendFinishedBuildJobChange(FinishedBuildJobDTO finishedBuildJob) {
+        var adminChannel = ADMIN_FINISHED_JOB_UPDATES.at();
+        log.debug("Sending changed finished build job on topic {}", adminChannel);
+        websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
+
+        var courseChannel = COURSE_FINISHED_JOB_UPDATES.at(finishedBuildJob.courseId());
+        log.debug("Sending changed finished build job on topic {}", courseChannel);
         websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
     }
 

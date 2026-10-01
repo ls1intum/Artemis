@@ -258,6 +258,21 @@ public class LocalCIQueueWebsocketService {
     }
 
     /**
+     * Sends a finished build job over websocket whose data changed after it was announced as finished.
+     * Clients replace the job they already list; it is not a further finished job.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    void sendChangedFinishedBuildJobOverWebsocket(FinishedBuildJobDTO finishedBuildJob) {
+        if (finishedBuildJob == null) {
+            return;
+        }
+        localCIWebsocketMessagingService.sendFinishedBuildJobChange(finishedBuildJob);
+        // Also send to the individual build job topic for the build job detail page
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
+    }
+
+    /**
      * Sends build agent information over websocket. This method is called when a new build agent is added or removed.
      *
      * @param agentName the name of the build agent

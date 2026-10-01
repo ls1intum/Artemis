@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
@@ -554,6 +555,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
             assertThat(reportedResult.getId()).as("build %d merges into the assessment", build).isEqualTo(assessment.getId());
             assertThat(resultRepository.findById(aggregatedResult.getId())).as("the aggregate of build %d is deleted", build).isEmpty();
             assertThat(buildJobRepository.findAllByBuildGroupId("assess-" + build)).extracting(job -> job.getResult().getId()).containsExactly(assessment.getId());
+            // what the build overview is sent after the finalization: the job with the assessment, not with the deleted aggregate
+            assertThat(buildJobRepository.findWithDataByBuildGroupId("assess-" + build)).extracting(job -> FinishedBuildJobDTO.of(job).submissionResult().id())
+                    .containsExactly(assessment.getId());
             assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submission.getId()).orElseThrow().getLatestResult().getId())
                     .as("the assessment stays the submission's latest result after build %d", build).isEqualTo(assessment.getId());
         }

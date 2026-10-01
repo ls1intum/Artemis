@@ -640,7 +640,31 @@ public class LocalCIResultProcessingService {
         // Whether a container failed to build is read from this group's jobs rather than from the submission, which every
         // build of the same commit shares: an overlapping build must neither hide this group's failure nor inherit it.
         boolean anyContainerFailedToBuild = jobs.stream().anyMatch(BuildJob::isBuildFailed);
-        return programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild, completionDate);
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild,
+                completionDate);
+        broadcastFinalizedBuildGroup(jobs.getFirst().getBuildGroupId());
+        return finalizedResult;
+    }
+
+    /**
+     * Sends the jobs of a finalized build group to the build overview again. Each job was announced as finished when its
+     * container was processed, with the aggregated result as it stood then: in progress and without a score. The
+     * finalization completed that result or, when the build was merged into a tutor's assessment, deleted it and linked
+     * the jobs to the assessment, so the jobs are read again and sent as changed jobs, which the clients replace instead
+     * of counting them as further finished jobs. The result processing does not depend on the broadcast, so a failure is
+     * only logged.
+     *
+     * @param buildGroupId the id of the finalized build group
+     */
+    private void broadcastFinalizedBuildGroup(String buildGroupId) {
+        localCIQueueWebsocketService.ifPresent(service -> {
+            try {
+                buildJobRepository.findWithDataByBuildGroupId(buildGroupId).forEach(buildJob -> service.sendChangedFinishedBuildJobOverWebsocket(FinishedBuildJobDTO.of(buildJob)));
+            }
+            catch (Exception e) {
+                log.warn("Could not send the finished build jobs of build group {} over WebSocket after its result was finalized", buildGroupId, e);
+            }
+        });
     }
 
     /**

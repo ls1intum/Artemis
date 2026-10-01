@@ -138,6 +138,15 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJob> findAllByBuildGroupId(String buildGroupId);
 
     /**
+     * The jobs of a build group together with the result they link to and its submission, participation and exercise, as the build overview shows them.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the group's jobs with all related data
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.submission", "result.submission.participation", "result.submission.participation.exercise" })
+    List<BuildJob> findWithDataByBuildGroupId(String buildGroupId);
+
+    /**
      * Retrieves all build job ids that were submitted before the given date.
      *
      * @param date the date before which build jobs should be deleted

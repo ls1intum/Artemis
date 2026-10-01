@@ -254,6 +254,11 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                     this.handleFinishedBuildJobUpdate(finishedBuildJob);
                 }),
             );
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<FinishedBuildJob>(`/topic/courses/${courseId}/finished-job-updates`).subscribe((finishedBuildJob: FinishedBuildJob) => {
+                    this.handleFinishedBuildJobChange(finishedBuildJob);
+                }),
+            );
         } else {
             // Admin mode: subscribe to global admin channels for all courses
             this.websocketSubscriptions.push(
@@ -269,6 +274,11 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<FinishedBuildJob>(`/topic/admin/finished-jobs`).subscribe((finishedBuildJob: FinishedBuildJob) => {
                     this.handleFinishedBuildJobUpdate(finishedBuildJob);
+                }),
+            );
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<FinishedBuildJob>(`/topic/admin/finished-job-updates`).subscribe((finishedBuildJob: FinishedBuildJob) => {
+                    this.handleFinishedBuildJobChange(finishedBuildJob);
                 }),
             );
             // Subscribe to build agents updates for capacity information (admin view only)
@@ -313,6 +323,22 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         }
 
         this.finishedBuildJobs.set(updatedJobs);
+    }
+
+    /**
+     * Handles a finished build job whose data changed after it was announced as finished: the containers of a
+     * multi-container build finish one by one, and their shared result is only complete once the last of them did.
+     * The job is one the statistics already count, so it only replaces the job that is listed; a job that is not on
+     * the page shown is left to the next load.
+     *
+     * @param finishedBuildJob the changed finished build job received via WebSocket
+     */
+    private handleFinishedBuildJobChange(finishedBuildJob: FinishedBuildJob) {
+        if (!this.finishedBuildJobs().some((job) => job.id === finishedBuildJob.id)) {
+            return;
+        }
+        const jobWithDuration = this.calculateFinishedBuildJobDuration(finishedBuildJob);
+        this.finishedBuildJobs.update((jobs) => jobs.map((job) => (job.id === finishedBuildJob.id ? jobWithDuration : job)));
     }
 
     /**
