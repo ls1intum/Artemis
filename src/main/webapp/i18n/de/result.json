@@ -47,7 +47,7 @@
                 "programmingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
                 "short": "{{ relativeScore }}%",
                 "automaticAIFeedbackSuccessful": "Feedback",
-                "automaticAIFeedbackFailed": "Feedback",
+                "automaticAIFeedbackFailed": "AI-Feedbackanfrage fehlgeschlagen!",
                 "automaticAIFeedbackInProgress": "Feedbackanfrage",
                 "automaticAIFeedbackTimedOut": "Feedbackanfrage ist ohne Ergebnis abgelaufen",
                 "automaticAIFeedbackSuccessfulTooltip": "AI-Feedbackanfrage war erfolgreich. Beachte, dass die Ergebnisse Fehler beinhalten können. Verwende sie nur zur Orientierung.",

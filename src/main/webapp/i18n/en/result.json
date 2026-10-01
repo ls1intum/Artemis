@@ -47,7 +47,7 @@
                 "programmingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
                 "short": "{{ relativeScore }}%",
                 "automaticAIFeedbackSuccessful": "Feedback",
-                "automaticAIFeedbackFailed": "Feedback",
+                "automaticAIFeedbackFailed": "AI feedback request failed!",
                 "automaticAIFeedbackInProgress": "AI Feedback request is being processed",
                 "automaticAIFeedbackTimedOut": "Feedback timed out.",
                 "automaticAIFeedbackSuccessfulTooltip": "AI-based feedback can include mistakes. Consider checking important information.",
