@@ -101,7 +101,7 @@
                             <jhi-exam-checklist-exercisegroup-table [quizExamMaxPoints]="exam().quizExamMaxPoints ?? 0" [exerciseGroups]="exam().exerciseGroups || []" />
                         </td>
                         <td>
-                            <a tumAetUiButton [routerLink]="getExamRoutesByIdentifier()('exercise-groups')" id="exercises-button-groups-table">
+                            <a tumAetUiButton class="whitespace-nowrap" [routerLink]="getExamRoutesByIdentifier()('exercise-groups')" id="exercises-button-groups-table">
                                 <fa-icon [icon]="faListAlt" />
                                 <span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
                             </a>
@@ -125,7 +125,7 @@
                             </ul>
                         </td>
                         <td>
-                            <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier()('test-runs')">
+                            <a tumAetUiButton class="whitespace-nowrap" severity="info" [routerLink]="getExamRoutesByIdentifier()('test-runs')">
                                 <fa-icon [icon]="faUser" />
                                 <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
                             </a>
@@ -157,7 +157,13 @@
                                 </ul>
                             </td>
                             <td>
-                                <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier()('students')" data-testid="students-button-at-least-one-student">
+                                <a
+                                    tumAetUiButton
+                                    class="whitespace-nowrap"
+                                    severity="info"
+                                    [routerLink]="getExamRoutesByIdentifier()('students')"
+                                    data-testid="students-button-at-least-one-student"
+                                >
                                     <fa-icon [icon]="faUser" />
                                     <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
@@ -181,7 +187,13 @@
                                 </ul>
                             </td>
                             <td>
-                                <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier()('students')" data-testid="students-button-all-exams-generated">
+                                <a
+                                    tumAetUiButton
+                                    class="whitespace-nowrap"
+                                    severity="info"
+                                    [routerLink]="getExamRoutesByIdentifier()('students')"
+                                    data-testid="students-button-all-exams-generated"
+                                >
                                     <fa-icon [icon]="faUser" />
                                     <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
@@ -208,7 +220,13 @@
                                 </ul>
                             </td>
                             <td>
-                                <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier()('students')" data-testid="students-button-all-exercises-prepared">
+                                <a
+                                    tumAetUiButton
+                                    class="whitespace-nowrap"
+                                    severity="info"
+                                    [routerLink]="getExamRoutesByIdentifier()('students')"
+                                    data-testid="students-button-all-exercises-prepared"
+                                >
                                     <fa-icon [icon]="faUser" />
                                     <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
@@ -249,7 +267,7 @@
                             }
                         </td>
                         <td>
-                            <a tumAetUiButton severity="warn" id="editButton_table" [routerLink]="getExamRoutesByIdentifier()('edit')">
+                            <a tumAetUiButton class="whitespace-nowrap" severity="warn" id="editButton_table" [routerLink]="getExamRoutesByIdentifier()('edit')">
                                 <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
                             </a>
                         </td>
@@ -345,7 +363,7 @@
                             }
                         </td>
                         <td>
-                            <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier()('students')">
+                            <a tumAetUiButton class="whitespace-nowrap" severity="info" [routerLink]="getExamRoutesByIdentifier()('students')">
                                 <fa-icon [icon]="faUser" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.examManagement.students"></span>
                             </a>
@@ -413,7 +431,7 @@
                                 <br />
                             </td>
                             <td>
-                                <a tumAetUiButton severity="info" [routerLink]="['suspicious-behavior']">
+                                <a tumAetUiButton class="whitespace-nowrap" severity="info" [routerLink]="['suspicious-behavior']">
                                     <fa-icon [icon]="faChartBar" />
                                     <span jhiTranslate="artemisApp.examManagement.suspiciousBehavior.title"></span>
                                 </a>
@@ -459,7 +477,7 @@
                                 <br />
                             </td>
                             <td>
-                                <a tumAetUiButton [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')">
+                                <a tumAetUiButton class="whitespace-nowrap" [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')">
                                     <fa-icon [icon]="faThList" />
                                     <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                                 </a>
@@ -598,7 +616,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a tumAetUiButton severity="warn" data-testid="editButton_publish" [routerLink]="getExamRoutesByIdentifier()('edit')">
+                                <a tumAetUiButton class="whitespace-nowrap" severity="warn" data-testid="editButton_publish" [routerLink]="getExamRoutesByIdentifier()('edit')">
                                     <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
                                 </a>
                             </td>
@@ -636,7 +654,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a tumAetUiButton severity="warn" data-testid="editButton_review" [routerLink]="getExamRoutesByIdentifier()('edit')">
+                                <a tumAetUiButton class="whitespace-nowrap" severity="warn" data-testid="editButton_review" [routerLink]="getExamRoutesByIdentifier()('edit')">
                                     <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
                                 </a>
                             </td>
@@ -668,7 +686,12 @@
                                 <br />
                             </td>
                             <td>
-                                <a tumAetUiButton [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')" id="tutor-exam-dashboard-button_table_complaints">
+                                <a
+                                    tumAetUiButton
+                                    class="whitespace-nowrap"
+                                    [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')"
+                                    id="tutor-exam-dashboard-button_table_complaints"
+                                >
                                     <fa-icon [icon]="faThList" />
                                     <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                                 </a>
@@ -683,7 +706,7 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.exportResults"></span>
                             </td>
                             <td>
-                                <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier()('scores')" id="scores-button_publish_result">
+                                <a tumAetUiButton class="whitespace-nowrap" severity="info" [routerLink]="getExamRoutesByIdentifier()('scores')" id="scores-button_publish_result">
                                     <fa-icon [icon]="faEye" />
                                     <span jhiTranslate="entity.action.scores"></span>
                                 </a>
