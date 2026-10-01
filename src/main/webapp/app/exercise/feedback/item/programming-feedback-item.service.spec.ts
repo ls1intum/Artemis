@@ -118,7 +118,8 @@ describe('ProgrammingFeedbackItemService', () => {
         expect(service.create([feedback], true)).toEqual([expected]);
     });
 
-    it('should include the grading instruction text for an accepted AI feedback suggestion matched to a criterion', () => {
+    it('should show only the detail text of an accepted AI feedback suggestion matched to a criterion', () => {
+        // Athena's detail tends to restate the criterion's feedback text, so showing both would repeat it.
         const gradingInstruction = {
             feedback: 'gradingInstruction.feedback',
         } as Partial<GradingInstruction>;
@@ -134,7 +135,20 @@ describe('ProgrammingFeedbackItemService', () => {
         const item = service.create([feedback], false)[0];
 
         expect(item.title).toBe('City identification is incorrect');
-        expect(item.text).toBe('gradingInstruction.feedback\nThe answer provided does not name the capital of France.');
+        expect(item.text).toBe('The answer provided does not name the capital of France.');
+    });
+
+    it("should show only the description of a tutor's feedback that already contains the criterion's text", () => {
+        const gradingInstruction = { feedback: 'Bubble Sort is implemented correctly.' } as Partial<GradingInstruction>;
+        const feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: 'Sorting',
+            detailText: 'Bubble Sort is implemented correctly. Nice handling of empty lists.',
+            gradingInstruction,
+        } as Feedback;
+
+        expect(service.create([feedback], false)[0].text).toBe('Bubble Sort is implemented correctly. Nice handling of empty lists.');
     });
 
     it('should fall back to the detail text alone for a feedback suggestion without a matched grading instruction', () => {

@@ -897,6 +897,32 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('Loop never ends');
     });
 
+    it('should not repeat the grading instruction text as a label once the description contains it', async () => {
+        // Dropping a criterion on a tutor's own feedback copies its text into the description.
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);
+        component.feedbackDetail.set('Fixed rubric text, and also check the edge cases.');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.gradingInstructionText()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')).toBeNull();
+    });
+
+    it('should keep the grading instruction label when the description is an AI suggestion that does not contain it', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', {
+            credits: 1,
+            text: 'FeedbackSuggestion:accepted:Visibility',
+            gradingInstruction: { feedback: 'Consider adding visibility modifiers (+, -).', credits: 1 },
+        } as any);
+        component.feedbackDetail.set('Consider adding visibility modifiers to your attributes, e.g. + for public.');
+        fixture.detectChanges();
+
+        expect(component.gradingInstructionText()).toBe('Consider adding visibility modifiers (+, -).');
+    });
+
     it('should show the grading instruction label and lock the points input when a grading instruction is attached', async () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);

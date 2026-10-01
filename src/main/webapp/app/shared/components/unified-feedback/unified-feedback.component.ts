@@ -270,7 +270,10 @@ export class UnifiedFeedbackComponent {
      * keyed on the `feedback` input would never see its dependency change and would keep returning a stale value.
      */
     gradingInstructionText(): string | undefined {
-        return this.feedback()?.gradingInstruction?.feedback;
+        const instructionText = this.feedback()?.gradingInstruction?.feedback;
+        // Once the criterion's text is in the description, as after dropping it on a tutor's own feedback, the label would repeat it.
+        // It stays shown while the description lacks the text, which is exactly when the student reads the two separately.
+        return instructionText && !(this.feedbackDetail() ?? '').includes(instructionText) ? instructionText : undefined;
     }
 
     /**

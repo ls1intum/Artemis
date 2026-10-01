@@ -76,6 +76,62 @@ describe('Structured Grading Criteria Service', () => {
         });
     });
 
+    describe('dropping a grading instruction', () => {
+        const dropEventWith = (instruction: Partial<GradingInstruction>): Event =>
+            ({ preventDefault: () => {}, dataTransfer: { getData: () => JSON.stringify(instruction) } }) as unknown as DragEvent;
+
+        const correct = { id: 1, credits: 2, feedback: 'Bubble Sort is implemented correctly.' };
+        const partial = { id: 2, credits: 1, feedback: 'Bubble Sort works in general.' };
+
+        it("should write the criterion's text into the empty description of a tutor's own feedback", () => {
+            const feedback = new Feedback();
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEventWith(correct));
+
+            expect(feedback.gradingInstruction?.id).toBe(1);
+            expect(feedback.credits).toBe(2);
+            expect(feedback.detailText).toBe('Bubble Sort is implemented correctly.');
+        });
+
+        it('should replace the text a previously dropped criterion wrote', () => {
+            const feedback = new Feedback();
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEventWith(correct));
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEventWith(partial));
+
+            expect(feedback.detailText).toBe('Bubble Sort works in general.');
+        });
+
+        it('should keep a description the tutor wrote', () => {
+            const feedback = new Feedback();
+            feedback.detailText = 'Check the empty list.';
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEventWith(correct));
+
+            expect(feedback.detailText).toBe('Check the empty list.');
+        });
+
+        it("should keep the description of an AI suggestion, which the student reads instead of the criterion's text", () => {
+            const feedback = new Feedback();
+            feedback.text = 'FeedbackSuggestion:accepted:Sorting';
+            feedback.detailText = 'Your bubble sort swaps adjacent dates correctly.';
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEventWith(correct));
+
+            expect(feedback.gradingInstruction?.id).toBe(1);
+            expect(feedback.detailText).toBe('Your bubble sort swaps adjacent dates correctly.');
+        });
+
+        it('should not fill the empty description of an AI suggestion either', () => {
+            const feedback = new Feedback();
+            feedback.text = 'FeedbackSuggestion:accepted:Sorting';
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEventWith(correct));
+
+            expect(feedback.detailText).toBeUndefined();
+        });
+    });
+
     afterEach(() => {
         httpMock.verify();
     });

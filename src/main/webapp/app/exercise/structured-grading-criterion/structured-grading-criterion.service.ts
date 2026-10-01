@@ -30,8 +30,16 @@ export class StructuredGradingCriterionService {
         try {
             const data = (event as DragEvent).dataTransfer!.getData('text/plain');
             const instruction = parseJson<GradingInstruction>(data);
+            const previousInstructionText = feedback.gradingInstruction?.feedback;
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
+            // A tutor's own feedback takes the criterion's text as its description, where the tutor can edit it, so it is not shown
+            // twice. An AI suggestion keeps its own description: the student only reads that (see getFeedbackBodyText). The text
+            // replaces an empty description or the one a previously dropped criterion wrote, never what the tutor wrote.
+            const isAIFeedback = Feedback.isFeedbackSuggestion(feedback) || Feedback.isNonGradedFeedbackSuggestion(feedback);
+            if (!isAIFeedback && instruction.feedback && (!feedback.detailText || feedback.detailText === previousInstructionText)) {
+                feedback.detailText = instruction.feedback;
+            }
         } catch (err) {
             // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
             if (!(err instanceof SyntaxError)) {

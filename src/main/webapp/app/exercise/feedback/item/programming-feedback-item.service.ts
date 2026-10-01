@@ -6,6 +6,7 @@ import {
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+    getFeedbackBodyText,
 } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
@@ -111,11 +112,9 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         // An assessor may clear a suggestion's title; show the default the unified feedback editor offered as placeholder.
         const titleWithoutIdentifier = Feedback.stripSuggestionPrefix(feedback.text ?? '').trim() || this.translateService.instant(Feedback.getDefaultTitleKey(feedback.credits));
         const codeReference = this.getCodeReference(feedback);
-        // Athena may have matched the suggestion to a structured grading instruction; its own feedback text is the
-        // criterion's canned wording and must be shown alongside Athena's free-text detail, exactly like a manually
-        // linked grading instruction (see createGradingInstructionFeedbackItem).
-        const gradingInstructionText = feedback.gradingInstruction?.feedback;
-        const text = gradingInstructionText ? gradingInstructionText + (feedback.detailText ? `\n${feedback.detailText}` : '') : feedback.detailText;
+        // Athena may have matched the suggestion to a structured grading instruction; its detail tends to restate that
+        // criterion's feedback text, so only the detail is shown (see getFeedbackBodyText).
+        const text = getFeedbackBodyText(feedback);
         return {
             type: 'Reviewer', // Treat it like normal feedback from the TA
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
@@ -176,13 +175,11 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * @param showTestDetails
      */
     private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
-        const gradingInstruction = feedback.gradingInstruction!;
-
         return {
             type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
-            text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
+            text: getFeedbackBodyText(feedback),
             positive: feedback.positive,
             credits: feedback.credits,
             feedbackReference: feedback,

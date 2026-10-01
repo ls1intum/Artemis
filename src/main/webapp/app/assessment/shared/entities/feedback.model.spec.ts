@@ -7,6 +7,7 @@ import {
     Feedback,
     FeedbackSuggestionType,
     buildFeedbackTextForReview,
+    getFeedbackBodyText,
 } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
@@ -55,14 +56,15 @@ describe('Feedback', () => {
     describe('buildFeedbackTextForReview', () => {
         const gradingInstruction = { feedback: 'Poor' } as GradingInstruction;
 
-        it('should drop an accepted AI suggestion title even with a matched grading instruction, keeping the criterion and detail text', () => {
+        it('should drop an accepted AI suggestion title and its matched criterion text, keeping only the detail text', () => {
+            // Athena's detail tends to restate the criterion's feedback text, so showing both would repeat it.
             const feedback = {
                 text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Incorrect city`,
                 detailText: 'The answer provided does not name the capital of France.',
                 gradingInstruction,
             } as Feedback;
 
-            expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>The answer provided does not name the capital of France.');
+            expect(buildFeedbackTextForReview(feedback)).toBe('The answer provided does not name the capital of France.');
         });
 
         it('should drop an adapted AI suggestion title without a grading instruction, keeping only the detail text', () => {
@@ -90,6 +92,43 @@ describe('Feedback', () => {
             const feedback = { text: 'File Main.java at line 3' } as Feedback;
 
             expect(buildFeedbackTextForReview(feedback, false)).toBe('');
+        });
+    });
+
+    describe('getFeedbackBodyText', () => {
+        const gradingInstruction = { feedback: 'Consider adding visibility modifiers (+, -).' } as GradingInstruction;
+
+        it('should show only the description of an AI suggestion linked to a criterion', () => {
+            const feedback = {
+                text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Visibility`,
+                detailText: 'Consider adding visibility modifiers to your attributes, e.g. + for public.',
+                gradingInstruction,
+            } as Feedback;
+
+            expect(getFeedbackBodyText(feedback)).toBe('Consider adding visibility modifiers to your attributes, e.g. + for public.');
+        });
+
+        it("should fall back to the criterion's text for an AI suggestion without a description", () => {
+            const feedback = { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Visibility`, gradingInstruction } as Feedback;
+
+            expect(getFeedbackBodyText(feedback)).toBe('Consider adding visibility modifiers (+, -).');
+        });
+
+        it("should show only the description of a tutor's feedback that already contains the criterion's text", () => {
+            const feedback = { text: 'Visibility', detailText: 'Consider adding visibility modifiers (+, -). Make the fields private.', gradingInstruction } as Feedback;
+
+            expect(getFeedbackBodyText(feedback)).toBe('Consider adding visibility modifiers (+, -). Make the fields private.');
+        });
+
+        it("should still show the criterion's text and the description of an older tutor's feedback that does not contain it", () => {
+            const feedback = { text: 'Visibility', detailText: 'Make the fields private.', gradingInstruction } as Feedback;
+
+            expect(getFeedbackBodyText(feedback)).toBe('Consider adding visibility modifiers (+, -).\nMake the fields private.');
+        });
+
+        it('should show the description of a feedback without a criterion', () => {
+            expect(getFeedbackBodyText({ detailText: 'Make the fields private.' } as Feedback)).toBe('Make the fields private.');
+            expect(getFeedbackBodyText({ text: 'Visibility' } as Feedback)).toBeUndefined();
         });
     });
 

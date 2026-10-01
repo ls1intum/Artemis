@@ -332,9 +332,44 @@ export class Feedback implements BaseEntity {
 }
 
 /**
+ * Whether the description of a feedback already contains the feedback text of its grading instruction, as it does once a
+ * tutor drops a criterion on their own feedback. The criterion's text then must not be shown a second time.
+ *
+ * @param feedback the feedback to check
+ * @returns true if the description contains the criterion's feedback text
+ */
+const isGradingInstructionTextInDetail = (feedback: Feedback): boolean => {
+    const instructionText = feedback.gradingInstruction?.feedback;
+    return !!instructionText && !!feedback.detailText?.includes(instructionText);
+};
+
+/**
+ * The body a student reads for a feedback that may be linked to a grading instruction:
+ * - An AI suggestion shows only its own description. Athena tends to restate the criterion's feedback text in it, so
+ *   showing both would repeat the same sentence; the criterion's text is only the fallback for an empty description.
+ * - A tutor's own feedback gets the criterion's text copied into its description when the criterion is dropped on it,
+ *   so the description alone is shown. Feedback assessed before that, whose description does not contain the criterion's
+ *   text, still shows both.
+ *
+ * @param feedback the feedback to read
+ * @returns the body of the feedback, or undefined if it has none
+ */
+export const getFeedbackBodyText = (feedback: Feedback): string | undefined => {
+    const instructionText = feedback.gradingInstruction?.feedback;
+    if (!instructionText || !feedback.detailText) {
+        return feedback.detailText || instructionText;
+    }
+    const isAIFeedback = Feedback.isFeedbackSuggestion(feedback) || Feedback.isNonGradedFeedbackSuggestion(feedback);
+    if (isAIFeedback || isGradingInstructionTextInDetail(feedback)) {
+        return feedback.detailText;
+    }
+    return instructionText + '\n' + feedback.detailText;
+};
+
+/**
  * Helper method to build the feedback text for the review. When the feedback has a link with grading instruction
- * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
- * it returns the detailed text and/or text properties of the feedback depending on the submission element.
+ * its body is chosen by {@link getFeedbackBodyText}. Otherwise, it returns the detailed text and/or text properties
+ * of the feedback depending on the submission element.
  *
  * An AI feedback suggestion's `text` is never included: it always holds just the suggestion's short title (tagged
  * with the internal `FeedbackSuggestion:...` marker), which is redundant with the suggestion's own `detailText`.
@@ -352,16 +387,9 @@ export class Feedback implements BaseEntity {
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
     const includeText = addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback);
-    let feedbackText = '';
-    if (feedback.gradingInstruction?.feedback) {
-        // The criterion's own feedback is the body, so the text of a feedback linked to it is its title (see Feedback.isTextTitle)
-        feedbackText = feedback.gradingInstruction.feedback;
-        if (feedback.detailText) {
-            feedbackText = feedbackText + '\n' + feedback.detailText;
-        }
-    } else if (feedback.detailText) {
-        feedbackText = feedback.detailText;
-    } else if (includeText) {
+    // The text of a feedback linked to a criterion is its title, not its body (see Feedback.isTextTitle)
+    let feedbackText = getFeedbackBodyText(feedback) ?? '';
+    if (!feedbackText && includeText) {
         feedbackText = feedback.text!;
     }
 
