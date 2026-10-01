@@ -148,4 +148,22 @@ describe('FeedbackNodeComponent', () => {
 
         expect(fixture.nativeElement.querySelectorAll('.feedback-item__code-reference-line--referenced')).toHaveLength(3);
     });
+
+    describe('credits', () => {
+        const itemWithCredits = (hideCredits?: boolean): FeedbackItem => ({ name: 'Feedback', type: 'Reviewer', credits: 2.5, hideCredits, feedbackReference: {} }) as FeedbackItem;
+
+        it('should show the credits of a feedback item', () => {
+            fixture.componentRef.setInput('feedbackItemNode', itemWithCredits());
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('.feedback-item__credits')?.textContent).toContain('2.5P');
+        });
+
+        it('should not show hidden credits of a feedback item', () => {
+            fixture.componentRef.setInput('feedbackItemNode', itemWithCredits(true));
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('.feedback-item__credits')).toBeNull();
+        });
+    });
 });

@@ -10,6 +10,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { isPreliminaryProgrammingAIFeedback } from 'app/exercise/result/result.utils';
 import { InformationBox, InformationBoxComponent, InformationBoxLayout } from 'app/shared-ui/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
@@ -185,7 +186,8 @@ export class ExerciseHeadersInformationComponent {
 
     /** The latest result, used by all result-derived boxes when no previous result is selected in the history dropdown. */
     private readonly latestResult = computed<Result | undefined>(() => {
-        const results = this.sortedHistoryResults();
+        // Preliminary AI feedback on a programming submission is not graded, so the points come from the test results.
+        const results = this.sortedHistoryResults().filter((result) => !isPreliminaryProgrammingAIFeedback(result, this.exercise().type));
         // Practice results are unrated, so in practice mode use the latest result regardless of the rated flag.
         return this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
     });

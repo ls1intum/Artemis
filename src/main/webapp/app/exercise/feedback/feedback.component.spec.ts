@@ -314,6 +314,21 @@ describe('FeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).not.toBeNull();
     });
 
+    it('should not chart the points of AI feedback on a programming exercise', () => {
+        // The AI feedback is not graded, so its points are not shown anywhere in the panel.
+        const { feedbacks } = generateFeedbacksAndExpectedItems();
+        fixture.componentRef.setInput('showScoreChart', true);
+        comp.result().assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        comp.result().feedbacks = feedbacks;
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        expect(comp.exerciseType()).toBe(ExerciseType.PROGRAMMING);
+        expect(comp.scoreChartVisible()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).toBeNull();
+    });
+
     it('marks a preliminary result as preliminary when the participation carries no exercise', () => {
         // the list endpoints do not ship `participation.exercise`, so the tag has to read the exercise the popup resolved
         exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;

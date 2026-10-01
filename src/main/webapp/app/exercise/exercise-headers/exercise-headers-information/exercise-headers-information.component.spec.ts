@@ -299,6 +299,39 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(component.achievedPoints()).toBe(8);
     });
 
+    describe('AI feedback in achievedPoints', () => {
+        const testResult = { id: 1, score: 80, rated: true, assessmentType: AssessmentType.AUTOMATIC } as Result;
+        const aiFeedback = { id: 2, score: 0, rated: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+
+        it('should take the points of a programming exercise from the latest test result, not from newer AI feedback', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [testResult, aiFeedback] }] } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(component.relevantResult()).toEqual(testResult);
+            expect(component.achievedPoints()).toBe(8);
+        });
+
+        it('should show no points for a programming exercise whose only result is AI feedback', () => {
+            // Feedback requested before the first build finished: there is no test result yet, and the AI feedback has none to show.
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [{ ...aiFeedback, score: 80 }] }] } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(component.relevantResult()).toBeUndefined();
+            expect(component.achievedPoints()).toBe(0);
+        });
+
+        it('should still take the points of a text exercise from its latest AI feedback', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [testResult, aiFeedback] }] } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(component.relevantResult()).toEqual(aiFeedback);
+            expect(component.achievedPoints()).toBe(0);
+        });
+    });
+
     describe('selected history result', () => {
         const latestResult = { id: 2, score: 80, rated: true } as Result;
         const previousResult = { id: 1, score: 30, rated: true } as Result;

@@ -135,7 +135,8 @@
                 "goalReached": "Ziel erreicht! Ausgezeichnete Arbeit.",
                 "niceProgress": "Guter Fortschritt! Du kommst näher.",
                 "scoreDrop": "Ups, deine Punktzahl ist gesunken. Versuche einen anderen Ansatz!",
-                "stuck": "Steckst du fest? Versuche einen neuen Ansatz."
+                "stuck": "Steckst du fest? Versuche einen neuen Ansatz.",
+                "aiFeedbackReceived": "KI-Feedback zu deinem Code ist da."
             }
         }
     }

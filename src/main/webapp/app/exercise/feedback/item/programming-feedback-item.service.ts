@@ -164,6 +164,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
+            hideCredits: true,
             feedbackReference: feedback,
             codeReference,
         };

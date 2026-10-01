@@ -263,6 +263,30 @@ describe('ProgrammingFeedbackItemService', () => {
         });
     });
 
+    it('should keep the credits of a non-graded feedback for grouping but hide them', () => {
+        // The AI feedback is not graded, so its points are not shown; they still decide whether it is listed as correct or wrong.
+        const feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Extract a helper method`,
+            detailText: 'The loop body is repeated.',
+            credits: 2.5,
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.credits).toBe(2.5);
+        expect(item.hideCredits).toBe(true);
+    });
+
+    it('should show the credits of a test feedback', () => {
+        const feedback = { id: 1, type: FeedbackType.AUTOMATIC, text: 'testBubbleSort()', positive: true, credits: 0.77 } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.hideCredits).toBeFalsy();
+    });
+
     it('should not recover ranged code references from regular feedback suggestion titles', () => {
         const feedback = {
             id: 1,

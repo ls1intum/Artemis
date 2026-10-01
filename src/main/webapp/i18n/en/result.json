@@ -135,7 +135,8 @@
                 "goalReached": "Goal reached! Excellent work.",
                 "niceProgress": "Nice progress! You're getting closer.",
                 "scoreDrop": "Oops, your score dropped. Try a different path!",
-                "stuck": "Stuck? Try a new approach."
+                "stuck": "Stuck? Try a new approach.",
+                "aiFeedbackReceived": "AI feedback on your code is ready."
             }
         }
     }
