@@ -45,13 +45,11 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
     /**
-     * The ids of the results the jobs of a build group have merged into, oldest first. The containers of one build are
-     * scheduled as separate jobs that share a build group (see {@code BuildJobQueueItem#buildGroupId}) and all merge into
-     * one result, so the first id is the group's aggregated result.
+     * Finds the ids of the results the jobs of a build group link to; the first is the group's aggregated result.
      *
      * @param buildGroupId the id of the build group
      * @param pageable     limits the query, typically to the first linked result
-     * @return the ids of the results linked to the group's jobs, oldest first
+     * @return the ids of the results linked to the group's jobs, ordered by job id
      */
     @Query("""
             SELECT b.result.id
@@ -63,15 +61,10 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<Long> findResultIdsOfBuildGroup(@Param("buildGroupId") String buildGroupId, Pageable pageable);
 
     /**
-     * The build groups that no container will complete any more while their aggregated result is still in progress, see
-     * {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}. These are the groups whose jobs have all
-     * finished, where the last container's finalization did not go through, and the groups whose remaining jobs are
-     * missing and not retried any more. A missing job is retried while it has retries left, was submitted within the
-     * retry window and no later job exists for its participation, see {@link #findMissingJobsToRetryInTimeRange} and
-     * {@code LocalCIMissingJobService#retryMissingJobs}. A group with such a job, or with a job that is still queued or
-     * building, is left alone, and so is a group with no linked job that finished before the given date, so that a merge
-     * under way is not raced. Only an automatic result counts: the jobs of a group whose feedback was merged into a
-     * tutor's assessment link to that assessment, and a draft assessment has no completion date either.
+     * Finds the build groups whose aggregated result is still in progress and that no job will complete any more: each of
+     * their jobs has finished, or is missing and not retried any more because it ran out of retries or
+     * {@link #findMissingJobsToRetryInTimeRange} no longer finds it. Only automatic results count: once merged into a
+     * tutor's assessment, the jobs link to it, and a draft has no completion date either.
      *
      * @param finishedStatuses        the statuses in which a job counts as finished
      * @param submittedSince          only groups submitted at or after this date
@@ -109,10 +102,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             @Param("missingJobsRetriedSince") ZonedDateTime missingJobsRetriedSince, Pageable pageable);
 
     /**
-     * Checks whether the aggregated result a build group's jobs link to is still in progress. Written as a query rather
-     * than derived, so that a job without a result does not count: the join to the result has to be an inner one. As in
-     * {@link #findCompletedBuildGroupsWithResultInProgress}, a draft assessment the group's feedback was merged into does
-     * not count.
+     * Checks whether a job of the build group links to an automatic result that is still in progress, see
+     * {@link #findCompletedBuildGroupsWithResultInProgress}.
      *
      * @param buildGroupId the id of the build group
      * @return true if a job of the group links to an automatic result without a completion date
@@ -128,9 +119,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsResultInProgressOfBuildGroup(@Param("buildGroupId") String buildGroupId);
 
     /**
-     * Links the jobs that link to one result to another result instead. The containers of a multi-container build link
-     * their jobs to the aggregated result; when its feedback is merged into a tutor's assessment, the jobs move over to
-     * that assessment before the aggregate is deleted.
+     * Links the build jobs that link to one result to another result instead.
      *
      * @param resultId  the id of the result the jobs link to now
      * @param newResult the result the jobs link to afterwards
@@ -146,8 +135,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     /**
      * Checks whether a job of the participation that builds the given commit was submitted after the given date. A null
-     * commit matches the jobs that were triggered without one, such as the solution build after a push to an auxiliary
-     * repository.
+     * commit matches the jobs triggered without one, such as a solution build after a push to an auxiliary repository.
      *
      * @param participationId the id of the participation
      * @param commitHash      the commit the job builds, or null
@@ -157,8 +145,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(long participationId, @Nullable String commitHash, ZonedDateTime submittedAfter);
 
     /**
-     * The jobs of a build group, one per container of a multi-container build. The result processing reads the group's
-     * completion, its outcome and its dates off this list, rather than asking the database one question at a time.
+     * Finds the jobs of a build group, one per container of a multi-container build.
      *
      * @param buildGroupId the id of the build group
      * @return the group's jobs
@@ -357,9 +344,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     BuildJobStatisticsDTO findBuildJobStatisticsByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Updates the status of a build job that has not finished yet. A job that has already finished is left alone: the
-     * callers decide on a job they read earlier, e.g. the check for missing jobs, and the job's result can be processed
-     * in between. Setting such a job back would make its build group look incomplete and retry a build that has a result.
+     * Updates the status of a build job that has not finished yet. A finished job is left alone: callers act on a job they
+     * read earlier, and reopening one whose result was processed since would make its build group look incomplete.
      *
      * @param buildJobId the build job id
      * @param newStatus  the new build status
@@ -385,9 +371,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * build overview.
      * This is used to update missing jobs that do not have a build start date yet.
      * <p>
-     * A job that has already finished is left alone: the processing-map event that reports a job as building is delivered
-     * asynchronously and can arrive after the job's result has been processed, and reopening the finished job would make
-     * its build group look incomplete forever.
+     * A finished job is left alone, as in {@link #updateBuildJobStatus}: the processing-map event that marks a job as
+     * building is asynchronous and can arrive after the job's result was processed.
      *
      * @param buildJobId     the build job id
      * @param newStatus      the new build status

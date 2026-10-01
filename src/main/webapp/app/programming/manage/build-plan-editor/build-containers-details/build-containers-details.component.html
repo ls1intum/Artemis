@@ -7,7 +7,6 @@
             </div>
             <div>
                 <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>:
-                <!-- an empty image means the container is built with the exercise's language default, so that image is shown by name -->
                 @if (container.dockerImage || defaultDockerImage(); as image) {
                     <code class="build-container-details-image">{{ image }}</code>
                 } @else {
@@ -23,7 +22,6 @@
             <div>
                 <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.repositories"></span>:
                 @if (container.repositories) {
-                    <!-- a container that scopes its repositories checks out only the ones listed here -->
                     @for (repository of container.repositories; track repository.type) {
                         <span class="badge bg-secondary me-1 build-container-details-repository">
                             {{ 'artemisApp.programmingExercise.buildContainersEditor.repositoryTypes.' + repository.type | artemisTranslate }}
@@ -36,7 +34,6 @@
                 }
             </div>
             @if (container.dockerFlags; as dockerFlags) {
-                <!-- only the flags the container overrides are listed; every other flag is the exercise's -->
                 <div>
                     <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.dockerFlags"></span>:
                     @if (dockerFlags.network) {

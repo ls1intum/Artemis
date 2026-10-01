@@ -269,17 +269,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
 
-        // A build plan can define several containers; each one runs as its own build job so it is isolated from its
-        // siblings and can be distributed across build agents. A plan with at most one container yields a single job,
-        // which behaves exactly as before (containerName stays null, the whole submission is built on its own).
         List<ContainerBuild> containerBuilds = resolveContainerBuilds(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
 
-        // The jobs of a multi-container build carry their build group membership: the group under which the result
-        // processing merges their results, the number of jobs it waits for, and the container each job builds. The build's
-        // own id serves as the group id: it is unique to this trigger call, so a retry or a re-push of the same commit opens
-        // a new group instead of joining a build that is still merging. The count is fixed here as well, so a build plan
-        // edited while the containers are still running cannot change what a running build waits for. A single-container
-        // build carries no membership; it is merged and finalized by its one job alone.
         boolean multiContainerBuild = containerBuilds.size() > 1;
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
@@ -288,33 +279,28 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         long buildJobDataNanos = System.nanoTime() - stageStart;
         stageStart = System.nanoTime();
 
-        // Every job of the build is saved before any of them is published. The sweep in LocalCIResultProcessingService
-        // treats a group as complete once every job it finds in the database has finished, so a job that was published
-        // before a sibling's row existed could finish, and the group be finalized without that sibling, if this method
-        // fails or the node dies between the two. A row saved but never published stays QUEUED, which the missing-job
-        // check turns into a retry of the whole build; a group can therefore not lose a container silently either way.
+        // Save every job before publishing any: finalizeCompletedBuildGroups treats a group as complete once all of its
+        // jobs in the database have finished, so a sibling whose row did not exist yet would be left out. A job saved but
+        // never published stays QUEUED, which the missing-job check retries.
         List<BuildJobQueueItem> queueItems = new ArrayList<>(containerBuilds.size());
         for (int containerIndex = 0; containerIndex < containerBuilds.size(); containerIndex++) {
             ContainerBuild containerBuild = containerBuilds.get(containerIndex);
             BuildConfig buildConfig = containerBuild.buildConfig();
             String containerName = containerBuild.containerName();
+            // The group id is this trigger's build id, so a retry or a re-push of the same commit opens a new group instead
+            // of joining one that is still merging.
             BuildJobQueueItem.BuildGroupMembership buildGroup = multiContainerBuild ? new BuildJobQueueItem.BuildGroupMembership(buildJobId, containerBuilds.size(), containerName)
                     : null;
 
-            // Provision only the repositories this container lists into it. This is what isolates untrusted student code
-            // from the instructor's test files: a container that does not list the test repository never receives it.
             RepositoryInfo scopedRepositoryInfo = scopeRepositoryInfo(repositoryInfo, containerBuild.container());
 
-            // Each container needs its own build job id; a single-container plan keeps the historical id unchanged.
             String jobId = multiContainerBuild ? buildJobId + "-" + containerIndex : buildJobId;
 
             // The credential the agent that claims this job will clone with. Scoped to this job's repositories and valid
             // only while the job is in the processing list, so it replaces the installation-wide build agent password
-            // rather than adding to it. Every container job is claimed independently, so each carries its own token.
+            // rather than adding to it.
             String cloneToken = buildJobCloneTokenService.generateCloneToken();
 
-            // The containers of one commit are grouped at merge time via participation and commit hash (the submission does
-            // not exist yet when the build is triggered), so the job carries no submission reference.
             BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(jobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
                     programmingExercise.getId(), retryCount, priority, null, scopedRepositoryInfo, jobTimingInfo, buildConfig, null, buildGroup, cloneToken);
 
@@ -344,11 +330,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
     }
 
-    /**
-     * A build job to schedule for one container of a build plan: its identity (name, or null for a single-container
-     * plan), the {@link BuildConfig} that will be executed for it, and the container itself (or null for the exercise
-     * default), which selects the repositories that are provisioned into it.
-     */
     private record ContainerBuild(@Nullable String containerName, BuildConfig buildConfig, @Nullable BuildContainerDTO container) {
     }
 
@@ -418,14 +399,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     /**
-     * Restricts the repositories that are provisioned into a container to the ones it lists. A container with no explicit
-     * repository selection (its list is null, which is the exercise default and the single-container case) receives every
-     * repository, exactly as before. The participation's own repository is always provided, because a container cannot
-     * build the code it does not have; the test, solution, and auxiliary repositories are only provided when the container
-     * lists them. This is the mechanism that keeps untrusted student code from receiving the instructor's test files.
+     * Restricts the repositories provisioned into a container to the ones it lists, so a container that does not list
+     * the test repository never receives the instructor's tests. The participation's own repository is always provided.
      *
      * @param full      the full repository information of the participation
-     * @param container the container to scope for, or null for the exercise default (no scoping)
+     * @param container the container to scope for; null, or a container without a repository list, receives every repository
      * @return the repository information restricted to what the container lists
      */
     private RepositoryInfo scopeRepositoryInfo(RepositoryInfo full, @Nullable BuildContainerDTO container) {
@@ -442,19 +420,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 auxiliaryRepositoryUris, auxiliaryRepositoryCheckoutDirectories);
     }
 
-    /**
-     * Resolves the containers of the build plan into the build jobs that should be scheduled for the participation.
-     * A plan with several containers yields one {@link ContainerBuild} per container (identified by its name), each with
-     * its own build script and Docker image. A plan with at most one container yields a single build job whose container
-     * name is null, so it keeps behaving as a plain single-container build.
-     *
-     * @param participation        the participation to build
-     * @param commitHashToBuild    the commit hash that triggered the build (may be null)
-     * @param assignmentCommitHash the resolved commit hash of the assignment repository
-     * @param testCommitHash       the resolved commit hash of the test repository
-     * @param buildConfig          the build config of the exercise
-     * @return the list of container builds to schedule, never empty
-     */
     private List<ContainerBuild> resolveContainerBuilds(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash,
             String testCommitHash, ProgrammingExerciseBuildConfig buildConfig) throws LocalCIException {
         BuildPlanPhasesDTO buildPlanPhasesDTO;
@@ -467,14 +432,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         final List<BuildContainerDTO> containers = buildPlanPhasesDTO.effectiveContainers();
 
-        // At most one container behaves as before: a single job that builds the whole submission, with a null container name.
         if (containers.size() <= 1) {
             final BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
             BuildConfig config = buildConfigForContainer(participation, container, buildPlanPhasesDTO, commitHashToBuild, assignmentCommitHash, testCommitHash, buildConfig);
             return List.of(new ContainerBuild(null, config, container));
         }
 
-        // Several containers are each scheduled as an independent build job, identified by the container name.
         List<ContainerBuild> containerBuilds = new ArrayList<>(containers.size());
         for (BuildContainerDTO container : containers) {
             BuildConfig config = buildConfigForContainer(participation, container, buildPlanPhasesDTO, commitHashToBuild, assignmentCommitHash, testCommitHash, buildConfig);
@@ -483,19 +446,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         return containerBuilds;
     }
 
-    /**
-     * Builds the {@link BuildConfig} for a single container. A null container falls back to the default phases and image
-     * of the exercise, which is the case for a build plan without any explicitly configured container.
-     *
-     * @param participation        the participation to build
-     * @param container            the container to build the config for, or null for the exercise default
-     * @param buildPlanPhasesDTO   the parsed build plan configuration (used for the plan-level default image)
-     * @param commitHashToBuild    the commit hash that triggered the build (may be null)
-     * @param assignmentCommitHash the resolved commit hash of the assignment repository
-     * @param testCommitHash       the resolved commit hash of the test repository
-     * @param buildConfig          the build config of the exercise
-     * @return the build config to execute for the container
-     */
     private BuildConfig buildConfigForContainer(ProgrammingExerciseParticipation participation, @Nullable BuildContainerDTO container, BuildPlanPhasesDTO buildPlanPhasesDTO,
             String commitHashToBuild, String assignmentCommitHash, String testCommitHash, ProgrammingExerciseBuildConfig buildConfig) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
@@ -505,6 +455,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
 
+        // a null container (a build plan without any phase) falls back to the default phases and image of the exercise
         final List<BuildPhaseDTO> phases = container == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig) : container.phases();
         final String configuredDockerImage = container == null ? buildPlanPhasesDTO.dockerImage() : container.dockerImage();
         final String dockerImage = configuredDockerImage == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise) : configuredDockerImage;

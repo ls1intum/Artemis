@@ -14,10 +14,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * container is what keeps trusted and untrusted code apart: a container that does not list the test repository never
  * receives the instructor's test files.
  * <p>
- * A repository is identified by its type alone, so {@link RepositoryType#AUXILIARY} selects every auxiliary
- * repository of the exercise at once. Selecting a single auxiliary repository would need a name here, which is left
- * to future work; the type is wrapped in a record rather than listed bare so such a name can be added without
- * changing the shape of a stored build plan.
+ * {@link RepositoryType#AUXILIARY} selects every auxiliary repository of the exercise. The type is wrapped in a record
+ * so that a field, such as an auxiliary repository's name, can be added without changing the stored build plan format.
  *
  * @param type the type of the repository
  */

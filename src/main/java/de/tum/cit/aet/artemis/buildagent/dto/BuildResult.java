@@ -61,8 +61,7 @@ public record BuildResult(String assignmentRepoBranchName, String assignmentRepo
     }
 
     /**
-     * A copy of this build result that carries the given build logs instead of its own. Used where the agent reported
-     * the logs next to the result rather than inside it.
+     * Returns a copy of this build result that carries the given build logs instead of its own.
      *
      * @param buildLogs the build logs the copy should carry
      * @return a copy of this result with the given build logs

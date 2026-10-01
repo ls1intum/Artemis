@@ -29,8 +29,7 @@ public class BuildJob extends DomainObject {
     @Column(name = "build_job_id")
     private String buildJobId;
 
-    // The build group of a container job of a multi-container build: shared by every container job of the same build and
-    // what their results are merged under. Null for a job that builds a submission on its own.
+    // Shared by the container jobs of one multi-container build; null for a job that builds a submission on its own.
     @Column(name = "build_group_id")
     private String buildGroupId;
 
@@ -46,8 +45,7 @@ public class BuildJob extends DomainObject {
     @Column(name = "participation_id")
     private Long participationId;
 
-    // The containers of a multi-container build all link their jobs to the one result they merged into, so several jobs
-    // can point at the same result. The schema's index on result_id is not unique either.
+    // Many-to-one: the container jobs of a multi-container build all link to the one result they merged into.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private Result result;
@@ -92,12 +90,9 @@ public class BuildJob extends DomainObject {
     private String dockerImage;
 
     /**
-     * Whether the build this job ran failed to build, as the result processing judged it from what the job reported: no
-     * test results although tests were expected, or a non-zero exit code of a compile-only script. The job status only
-     * records how the job executed, so a container whose build script crashed still completes as a SUCCESSFUL job. This
-     * is where a multi-container build keeps each container's build outcome; the submission's build-failed flag is
-     * derived from the jobs of a group when the group finalizes, so that an overlapping attempt of the same commit
-     * cannot overwrite it in between.
+     * Whether the build this job ran failed (e.g. no test results although tests were expected, or a compile-only script
+     * exited non-zero); the status only records how the job executed. Kept per job because overlapping builds of one
+     * commit share the submission, whose build-failed flag a build group derives from its jobs when it finalizes.
      */
     @Column(name = "build_failed")
     private boolean buildFailed;
@@ -109,12 +104,6 @@ public class BuildJob extends DomainObject {
         this(queueItem, buildStatus, result, false);
     }
 
-    /**
-     * @param queueItem   the queue item the job was executed from
-     * @param buildStatus how the job executed
-     * @param result      the result the job's feedback went into, or null if it produced none
-     * @param buildFailed whether the build itself failed, see {@link #isBuildFailed()}
-     */
     public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, boolean buildFailed) {
         this.buildFailed = buildFailed;
         this.buildJobId = queueItem.id();

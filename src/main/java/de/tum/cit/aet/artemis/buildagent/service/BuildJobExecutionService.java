@@ -190,7 +190,6 @@ public class BuildJobExecutionService {
                     && buildJob.repositoryInfo().triggeredByPushTo() != RepositoryType.AUXILIARY;
             assignmentRepositoryPath = cloneRepository(assignmentRepositoryUri, useSpecificAssignmentCommit ? assignmentCommitHash : null, useSpecificAssignmentCommit,
                     buildJob.id());
-            // A container scoped to exclude the test repository has no test URI, so there is nothing to clone.
             testRepositoryPath = testRepositoryUri != null ? cloneRepository(testRepositoryUri, null, false, buildJob.id()) : null;
 
             if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {

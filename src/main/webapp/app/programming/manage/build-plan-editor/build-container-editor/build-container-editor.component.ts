@@ -33,10 +33,7 @@ function envVarsOf(rows: [string, string][]): EnvVars | undefined {
     return Object.keys(env).length > 0 ? env : undefined;
 }
 
-/**
- * Edits a single build container: its name, the Docker image it runs, the repositories checked out into it, the Docker
- * flags it overrides, and its build phases.
- */
+/** Edits a single build container of a build plan: its name, image, timeout, repositories, Docker flags and phases. */
 @Component({
     selector: 'jhi-build-container-editor',
     templateUrl: './build-container-editor.component.html',
@@ -52,8 +49,7 @@ export class BuildContainerEditorComponent {
     /** the names of the other containers of the build plan, used to detect duplicates */
     readonly otherContainerNames = input<string[]>([]);
     readonly canRemove = input(false);
-    // the language default image, shown as a placeholder while the field is empty instead of being written into it: an
-    // empty image means the container follows the exercise's language default at build time (see buildConfigForContainer)
+    // the language default image, shown while the image field is empty
     readonly dockerImagePlaceholder = input<string>('');
     // the exercise timeout, shown as the placeholder of the container timeout: an empty field means the container uses it
     readonly timeoutPlaceholder = input<number | undefined>(undefined);
@@ -66,7 +62,6 @@ export class BuildContainerEditorComponent {
     // support selecting a network, which hides the field
     readonly customNetworks = input<string[] | undefined>(undefined);
 
-    /** emitted when the instructor asks to remove this container from the build plan */
     readonly remove = output<void>();
 
     /** the repository types an instructor can check out into a container, in the order they are offered */
@@ -99,14 +94,8 @@ export class BuildContainerEditorComponent {
         return this.isNameUnique() ? undefined : 'artemisApp.programmingExercise.buildContainersEditor.containerNameDuplicate';
     });
 
-    /**
-     * A container that scopes no repositories checks out the repositories configured on the exercise, which is what a
-     * build plan without containers does. Selecting repositories opts a container into the stricter scoping. A plan
-     * that comes straight from the server, such as a template, carries an explicit null for an unscoped container.
-     */
     readonly scopesRepositories = computed(() => this.container().repositories != undefined);
 
-    /** a container without flags of its own runs with the Docker flags configured on the exercise */
     readonly overridesDockerFlags = computed(() => this.container().dockerFlags != undefined);
 
     readonly isCpuCountValid = computed(() => isDockerResourceLimitValid(this.container().dockerFlags?.cpuCount, MIN_DOCKER_CPU_COUNT));
@@ -114,9 +103,8 @@ export class BuildContainerEditorComponent {
     readonly isMemorySwapValid = computed(() => isDockerResourceLimitValid(this.container().dockerFlags?.memorySwap, MIN_DOCKER_MEMORY_SWAP_MB));
 
     /**
-     * The environment variables as the rows the instructor edits. The container stores them as a map, which can hold
-     * neither a row whose key is still empty nor the order of the rows, so the rows are kept here and only rebuilt from
-     * the container when its variables are not the ones the rows stand for, i.e. when they changed from outside.
+     * The environment variables as editable rows. The container's map can hold neither a row without a key nor the
+     * order of the rows, so the rows are only rebuilt from the container when its variables changed from outside.
      */
     protected readonly envVarRows = linkedSignal<EnvVars | undefined, [string, string][]>({
         source: () => this.container().dockerFlags?.env,
@@ -136,7 +124,6 @@ export class BuildContainerEditorComponent {
         this.container.update((container) => cloneWith(container, { dockerImage }));
     }
 
-    /** an emptied field removes the override, so the container follows the exercise timeout again */
     setTimeoutSeconds(value: number | string | null): void {
         const timeoutSeconds = value === null || value === '' ? undefined : Number(value);
         this.container.update((container) => cloneWith(container, { timeoutSeconds }));
@@ -163,23 +150,17 @@ export class BuildContainerEditorComponent {
         });
     }
 
-    /**
-     * Switches between checking out the repositories configured on the exercise and scoping the repositories explicitly.
-     */
+    /** Switches between checking out the repositories configured on the exercise and scoping them explicitly. */
     toggleRepositoryScoping(scoped: boolean): void {
         this.container.update((container) => cloneWith(container, { repositories: scoped ? [] : undefined }));
     }
 
-    /**
-     * Switches between running with the Docker flags of the exercise and overriding them for this container. Switching
-     * the override off discards the container's flags.
-     */
+    /** Switches between running with the Docker flags of the exercise and overriding them for this container. */
     toggleDockerFlags(overridden: boolean): void {
         this.envVarRows.set([]);
         this.container.update((container) => cloneWith(container, { dockerFlags: overridden ? {} : undefined }));
     }
 
-    /** the empty option removes the override, so the container joins the network of the exercise again */
     setNetwork(network: string): void {
         this.updateDockerFlags({ network: network || undefined });
     }
@@ -217,7 +198,6 @@ export class BuildContainerEditorComponent {
         this.updateDockerFlags({ env: envVarsOf(rows) });
     }
 
-    /** an emptied field removes the override, so the container follows the exercise's limit again */
     private resourceLimitOf(value: number | string | null): number | undefined {
         return value === null || value === '' ? undefined : Number(value);
     }

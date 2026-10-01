@@ -4,11 +4,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 import { BuildContainer } from 'app/programming/shared/entities/build-plan-phases.model';
 
-/**
- * Read-only view of the containers of a build plan, one card per container with its name, Docker image, the
- * repositories checked out into it, the Docker flags it overrides and its build phases. Shown on the exercise details page, where the build plan
- * cannot be edited; the editable counterpart is {@code BuildContainerEditorComponent}.
- */
+/** Read-only view of the containers of a build plan on the exercise details page; BuildContainerEditorComponent edits them. */
 @Component({
     selector: 'jhi-build-containers-details',
     templateUrl: './build-containers-details.component.html',

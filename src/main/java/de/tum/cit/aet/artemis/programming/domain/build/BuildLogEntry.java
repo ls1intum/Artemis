@@ -34,12 +34,10 @@ public class BuildLogEntry extends DomainObject {
     @Column(name = "log")
     private String log;
 
-    // The name of the build container that produced this log line, or null for a submission built by a single container.
-    // The logs of a failed build are stored in files (see FailedBuildLogService), which carry the name per line; it is
-    // not a column, since nothing writes this table any more.
+    // The build container that produced this line, null for a single-container build. Not persisted: only the files of
+    // FailedBuildLogService carry it, since nothing writes this table any more.
     @Transient
     private String containerName;
-
 
     @ManyToOne
     @JsonIgnore
@@ -65,7 +63,6 @@ public class BuildLogEntry extends DomainObject {
     public ZonedDateTime getTime() {
         return time;
     }
-
 
     public void setTime(ZonedDateTime time) {
         this.time = time;

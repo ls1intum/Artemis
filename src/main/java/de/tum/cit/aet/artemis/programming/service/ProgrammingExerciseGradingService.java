@@ -213,8 +213,6 @@ public class ProgrammingExerciseGradingService {
 
         try {
             ProgrammingExercise exercise = participation.getProgrammingExercise();
-            // A single-container build reports every test case of the exercise, so a solution build may deactivate the
-            // ones missing from its result.
             ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, true);
             var buildResult = parsed.buildResult();
             Result newResult = parsed.result();
@@ -269,10 +267,8 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Parses a raw build result and resolves what both result paths need from it: the feedback it reports, the submission
-     * it belongs to, and whether the build failed. What follows differs between the two: a single-container build turns
-     * the result into the submission's result, while one container of a multi-container build appends its feedback to the
-     * result shared by its siblings.
+     * Converts a raw build result, registers a solution build's test cases, and resolves the build's submission and
+     * whether the build failed.
      *
      * @param participation             the participation that was built
      * @param requestBody               the raw build result
@@ -288,17 +284,14 @@ public class ProgrammingExerciseGradingService {
         checkCorrectBranchElseThrow(participation, buildResult);
         checkHasCommitHashElseThrow(buildResult);
 
-        // When the result is from a solution participation, extract the feedback items (= test cases) and store them in
-        // our database. This finds out which test cases were executed, as some of them might not have been.
         if (participation instanceof SolutionProgrammingExerciseParticipation) {
             feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, participation.getProgrammingExercise(), deactivateAbsentTestCases);
         }
 
         Result result = ciResultService.createResultFromBuildResult(buildResult, participation);
 
-        // The submission may already have been created by the push flow, otherwise a fallback is created. A matched
-        // submission comes back as a detached skeleton (see BuildResultSubmissionDTO#toDetachedSubmission), which is
-        // enough to read from; a caller that mutates and saves it has to load the real entity itself.
+        // A matched submission is a detached skeleton (see BuildResultSubmissionDTO#toDetachedSubmission). Never save
+        // it: its results cascade with orphan removal, so merging it would delete the results it does not carry.
         var submission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
 
         // Determine if the build failed based on whether tests were expected.
@@ -315,24 +308,12 @@ public class ProgrammingExerciseGradingService {
         return new ParsedBuildResult(buildResult, result, submission, buildFailed);
     }
 
-    /**
-     * What both result paths read out of a raw build result before they diverge.
-     *
-     * @param buildResult the converted build result
-     * @param result      the result carrying the feedback this build reported, not saved yet
-     * @param submission  the submission the build belongs to, detached unless it was created as a fallback
-     * @param buildFailed whether the build failed, judged by the reported test count and the script's exit code
-     */
     private record ParsedBuildResult(BuildResultNotification buildResult, Result result, ProgrammingSubmission submission, boolean buildFailed) {
     }
 
     /**
-     * Appends the build result of one container of a multi-container build plan to the aggregated result shared by all
-     * containers of the same build. Instead of creating a standalone result per container, every container's feedback is
-     * collected into a single in-progress result (its completion date stays null until every container has finished, see
-     * {@link #finalizeContainerResult}); the score is only computed then, over the feedback of all containers. Which
-     * containers belong together is the caller's knowledge: it passes the id of the result the earlier containers of the
-     * same build merged into, or null for the first container, which then starts the build's result.
+     * Appends the build result of one container of a multi-container build to the build's aggregated result, which stays
+     * in progress until {@link #finalizeContainerResult} scores it.
      *
      * @param participation      the participation that was built
      * @param requestBody        the raw build result of the container
@@ -340,55 +321,29 @@ public class ProgrammingExerciseGradingService {
      * @param containerName      the name of the container that produced this result, used to label its build logs
      * @param aggregatedResultId the id of the result the earlier containers of the same build merged into, or null if this
      *                               is the first container of the build to report
-     * @return the aggregated result with this container's feedback appended and whether this container failed to build,
-     *         or null if the result could not be created
+     * @return the aggregated result and whether this container failed to build, or null if the result could not be created
      */
     public AppendedContainerResult appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected,
             @Nullable String containerName, @Nullable Long aggregatedResultId) {
         try {
             ProgrammingExercise exercise = participation.getProgrammingExercise();
-            // This container reports only its own test cases; not deactivating the absent ones keeps a solution build
-            // from deactivating the test cases of its sibling containers, which each report their own share.
             ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, false);
             var buildResult = parsed.buildResult();
-            // Whether this container failed to build; applied to the submission once the attempt's result is resolved below.
-            // A build agent reports the exit code of the build script for every job that ran to its end. A result without
-            // one is the result the agent constructs for a job that timed out, was cancelled or threw, so the container
-            // did not build either. The shared verdict cannot tell: it reads a missing exit code as unknown, for the CI
-            // systems that never report one, and a container without tests is judged by its exit code alone.
+            // A result without an exit code is the one the agent builds for a job that timed out, was cancelled or
+            // threw. The shared verdict treats a missing code as unknown, since other CI systems never report one.
             final boolean containerFailed = parsed.buildFailed() || buildResult.buildScriptExitCode() == null;
 
-            // The submission is shared by all containers of the same commit and is never saved as an entity here: its
-            // result collection cascades with orphan removal, and merging a detached copy of it would delete a result a
-            // tutor inserted in the meantime. The skeleton parseBuildResult hands back carries the id, which is all the
-            // result's foreign key, the build logs and the targeted flag update below need; a submission created as a
-            // fallback is already saved.
             ProgrammingSubmission submission = parsed.submission();
 
             Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise, aggregatedResultId);
-            // Preserve the build logs of a failed container, labeled by its name and stored next to the logs of the other
-            // containers in the file of the build's aggregated result, so a crashed container's logs survive alongside its
-            // siblings' (as for a single-container build, logs are only kept when the build failed). Every build group has an
-            // aggregate of its own, so the logs of an earlier or an overlapping build of the same commit stay under their own
-            // result and never mix with this build's.
+            // as on the single-container path, only the logs of a failed build are kept
             if (containerFailed && buildResult.hasLogs()) {
                 var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
                 buildLogService.appendContainerBuildLogs(buildLogs, submission, aggregatedResult, containerName);
             }
-            // Whether this container built is handed back rather than written to the submission here. The flag on the
-            // submission is shared by every build of the same commit, so a container of an overlapping build could
-            // overwrite it before this build finalizes. The caller records the verdict on the container's build job, and
-            // finalizeContainerResult derives the submission's flag from the jobs of the group it finalizes.
-            // Keep one feedback per test case. A shared setup phase (e.g. the main-method check the DejaGnu containers
-            // each need) runs in several containers and reports the same test case in each, but a test name is unique
-            // per exercise: without this, the merged result would hold that test case several times, which the scoring
-            // treats as a duplicate and zeroes the score. The test cases proper are partitioned across containers, so
-            // this only ever removes such repeats.
-            // Only append the feedback here; the score is not recomputed until every container has finished (see
-            // finalizeContainerResult), because scoring a partial result would mark the tests of containers that have
-            // not finished yet as "not executed". The rows are inserted with a reference to the aggregate, whose own
-            // columns do not change on append: merging the aggregate instead would re-read every row the earlier
-            // containers stored, once per container, to insert the same new rows through its cascade.
+            // Scored only in finalizeContainerResult: scoring a partial result would mark the tests of unfinished
+            // containers as not executed. The rows are inserted directly; saving the aggregate would re-read every
+            // earlier row through its cascade.
             List<TestCaseFeedback> newTestCaseFeedbacks = selectNewTestCaseFeedback(parsed.result().getTestCaseFeedbacks(), aggregatedResultId);
             newTestCaseFeedbacks.forEach(feedback -> feedback.setResult(aggregatedResult));
             testCaseFeedbackRepository.saveAll(newTestCaseFeedbacks);
@@ -404,21 +359,18 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * What appending one container's result produced: the aggregated result its feedback went into, and whether the
-     * container failed to build, which the caller records on the container's build job.
+     * The aggregated result a container's feedback was appended to, and whether the container failed to build.
      *
      * @param result          the aggregated result of the build
-     * @param containerFailed whether this container failed to build, judged as on the single-container path
+     * @param containerFailed whether this container failed to build
      */
     public record AppendedContainerResult(Result result, boolean containerFailed) {
     }
 
     /**
-     * Selects the test-case feedback of a container that is appended to the aggregated result, which keeps one feedback
-     * per test case. A test case the aggregated result does not carry yet is appended with the first feedback the
-     * container reported for it. For a test case reported more than once, by this container or by an earlier one, a
-     * failed feedback replaces one that did not fail, so the merged outcome does not depend on the order in which the
-     * containers finish; in every other case the first feedback stays.
+     * Selects the container's test-case feedback to append, keeping one feedback per test case: a setup phase shared by
+     * several containers reports the same test case in each, and the scoring zeroes a result with duplicate test cases. A
+     * failed feedback replaces one that did not fail, so the outcome does not depend on the order the containers finish in.
      *
      * @param containerFeedbacks the test-case feedback the container reported
      * @param aggregatedResultId the id of the result the earlier containers merged into, or null for the first container
@@ -450,25 +402,11 @@ public class ProgrammingExerciseGradingService {
         return Boolean.FALSE.equals(feedback.isPositive());
     }
 
-    /**
-     * Replaces the typed automatic feedback of a result by swapping its collections. The results processed here are
-     * detached (no path runs inside a transaction), so the swap is what saving the result later merges.
-     *
-     * @param result            the result whose typed feedback is replaced
-     * @param testCaseFeedbacks the test-case feedback rows to keep
-     * @param scaFeedbacks      the static code analysis feedback rows to keep
-     */
     private void replaceTypedFeedback(Result result, Collection<TestCaseFeedback> testCaseFeedbacks, Collection<ScaFeedback> scaFeedbacks) {
         result.setTestCaseFeedbacks(testCaseFeedbacks);
         result.setScaFeedbacks(scaFeedbacks);
     }
 
-    /**
-     * Inserts the typed feedback rows of a result that are not stored yet, so that they carry ids afterwards. The detached
-     * result takes the stored rows back through a swap of its collections.
-     *
-     * @param result the result whose typed feedback rows are inserted
-     */
     private void insertTypedFeedback(Result result) {
         List<TestCaseFeedback> storedTestCaseFeedbacks = testCaseFeedbackRepository.saveAll(result.getTestCaseFeedbacks());
         List<ScaFeedback> storedScaFeedbacks = scaFeedbackRepository.saveAll(result.getScaFeedbacks());
@@ -477,13 +415,8 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Inserts only the feedback rows of a result that are not stored yet, keeping the instances: persisting a new row
-     * assigns its id in place, whereas merging (what saving a stored result does for its rows) hands back copies whose
-     * lazy references, the message above all, are proxies that cannot be read once the session that merged them has
-     * closed, and leaves the original rows without ids. A result whose stored rows are loaded whole and whose new rows
-     * are inserted this way can be reported to the client as it is, without reloading it after the save. Covers the
-     * typed rows and the legacy rows the scoring still writes (the submission penalty, the duplicate-test warning),
-     * because the client identifies feedback by id.
+     * Inserts the feedback rows of a result that have no id yet, in place: the client identifies feedback by id, and saving
+     * the result would merge the rows into copies whose lazy test cases and messages cannot be read without a session.
      *
      * @param result the result whose new feedback rows are inserted
      */
@@ -494,20 +427,13 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * The two steps a scored automatic result of a STUDENT participation triggers, shared by the single-container path and
-     * the multi-container finalize: locking the repository under a lock-repository submission policy, and merging the new
-     * automatic feedback into the latest manual result when the submission is already under manual assessment.
-     * <p>
-     * The submission policy is read from the exercise instance, which {@code calculateScoreForResult} has already
-     * resolved; loading it again meant a second fetch of the whole exercise and its course for every result. Neither
-     * step applies to a practice-mode participation.
+     * Locks the repository under a lock-repository policy and merges the feedback into {@code latestOtherResult} if it is
+     * manual. Must run after {@code calculateScoreForResult}, which sets the submission policy on the exercise instance.
      *
      * @param participation         the student participation the result belongs to
      * @param processedResult       the scored automatic result
      * @param programmingSubmission the submission the result belongs to
-     * @param latestOtherResult     the result the feedback merges into when it is manual: the submission's latest result apart
-     *                                  from the new one on the single-container path, its latest manual result on the
-     *                                  multi-container path, or null if there is none
+     * @param latestOtherResult     the result to merge the feedback into if it is manual, or null
      * @return the manual result the feedback was merged into, or empty if the automatic result stands on its own
      */
     private Optional<Result> applyStudentResultPolicies(ProgrammingExerciseParticipation participation, Result processedResult, ProgrammingSubmission programmingSubmission,
@@ -527,32 +453,15 @@ public class ProgrammingExerciseGradingService {
             // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
             // submission itself did not change.
             updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-            // Saved, but the instance handed back is the one that was merged into, not save's return value: outside a
-            // transaction (the single-container path) save merges a detached result and returns a copy whose test cases
-            // are uninitialized proxies, which the broadcast that follows cannot read without a session. The original
-            // keeps the initialized test cases its rows were inserted with, and it already carries every id.
+            // Return this instance instead of save's merged copy, whose test cases are proxies the broadcast cannot read without a session.
             resultRepository.save(updatedLatestSemiAutomaticResult);
             return Optional.of(updatedLatestSemiAutomaticResult);
         }
         return Optional.empty();
     }
 
-    /**
-     * Returns the result the containers of one build aggregate their feedback into: the result the earlier containers
-     * merged into when the caller identified one, otherwise a new in-progress result, which marks the start of a build
-     * attempt. An attempt never joins the open result of an earlier attempt of the same submission, and never a tutor's
-     * draft assessment on it, because the result is identified by the caller through the build's jobs rather than found
-     * among the submission's results.
-     *
-     * @param submission         the submission shared by all containers of the build
-     * @param exercise           the programming exercise
-     * @param aggregatedResultId the id of the result the earlier containers merged into, or null for the first container
-     * @return the aggregated result to append feedback to
-     */
     private Result getOrCreateAggregatedResult(ProgrammingSubmission submission, ProgrammingExercise exercise, @Nullable Long aggregatedResultId) {
         if (aggregatedResultId != null) {
-            // Loaded without its feedback: the append inserts its rows with a reference to the aggregate and never reads
-            // the rows the earlier containers stored (their test-case ids come from a projection).
             return resultRepository.findByIdElseThrow(aggregatedResultId);
         }
         Result result = new Result();
@@ -568,22 +477,19 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Finalizes the aggregated result of a multi-container build once every container has finished. It recomputes the
-     * score over the feedback of all containers, marks the result successful only if every container ran and built and
-     * every relevant test case passed, and sets the completion date so the result is shown as complete.
+     * Finalizes the aggregated result of a multi-container build once every container has finished: scores the merged
+     * feedback and sets the success flag and the completion date.
      *
      * @param resultId                  the id of the aggregated result to finalize
      * @param participation             the participation that was built
      * @param allJobsSucceeded          whether every container's build job finished with a successful job status and merged its result
-     * @param anyContainerFailedToBuild whether a container of the build failed to build, derived by the caller from the
-     *                                      verdicts recorded on the group's build jobs
+     * @param anyContainerFailedToBuild whether a container of the build failed to build, as recorded on the group's build jobs
      * @param completionDate            the completion date to set on the finalized result
-     * @return the finalized result
+     * @return the finalized result, or the tutor's assessment its feedback was merged into
      */
     public Result finalizeContainerResult(long resultId, ProgrammingExerciseParticipation participation, boolean allJobsSucceeded, boolean anyContainerFailedToBuild,
             ZonedDateTime completionDate) {
         Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
-        // the scoring below reads the typed feedback of every container, which the eager fetch above does not load
         hydrateTypedFeedback(aggregatedResult);
         if (aggregatedResult.isManual()) {
             // The group's jobs already link to the assessment its feedback was merged into: an earlier finalization got as
@@ -592,13 +498,8 @@ public class ProgrammingExerciseGradingService {
         }
         boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
                 && !(participation instanceof TemplateProgrammingExerciseParticipation);
-        // A job status only records how the job executed: a container whose build script crashed still completes as a
-        // SUCCESSFUL job. The build outcome itself is what the containers reported, recorded on their jobs and derived
-        // for this group by the caller, so the result is successful only when both agree. It is written to the
-        // submission only now, with a targeted update as on the single-container path: written per container, a
-        // container of an overlapping build of the same commit could overwrite it before this build finalizes. Two such
-        // builds can finalize in either order, so the flag follows the newest of their aggregates: an older build that
-        // finalizes last leaves what the newer build wrote.
+        // Every build of the commit shares the submission's build-failed flag, so the flag follows the newest aggregate:
+        // an older build that finalizes last must not overwrite what a newer one wrote.
         List<Result> resultsOfSubmission = aggregatedResult.getSubmission() == null ? List.of()
                 : resultRepository.findAllBySubmissionIdOrderByIdDesc(aggregatedResult.getSubmission().getId());
         if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission && isNewestAutomaticResult(resultsOfSubmission, resultId)) {
@@ -606,16 +507,8 @@ public class ProgrammingExerciseGradingService {
             submission.setBuildFailed(anyContainerFailedToBuild);
         }
         deleteAbandonedAggregates(resultsOfSubmission, resultId, participation.getId());
-        // A solution build generates the exercise's test cases, but each container of a multi-container build reported
-        // only its own share and could not deactivate a test removed from the solution (its absence there is a sibling's
-        // test, not a removal). Now that every container's feedback is merged, a test case no container reported is
-        // genuinely gone: reconcile the deactivations once, over the union. This must run before the score is calculated,
-        // which adds a "Test was not executed." placeholder for every registered test case and would otherwise both keep
-        // the stale test case active and count it against the students that are graded next. A container that failed to
-        // build reported none of its tests, so their absence says nothing about the solution: the reconciliation is
-        // skipped for such a build, and the registry keeps the state of the last clean solution build. The same holds
-        // for a container whose job did not succeed: one whose result could not be merged, timed out or was cancelled
-        // contributed no feedback either, and only the first of these is also reflected in the build-failed flag.
+        // Each container reported only its share of the test cases and deactivated none, so deactivation is reconciled
+        // here over their union. This must precede the scoring, which adds a placeholder for every registered test case.
         if (participation instanceof SolutionProgrammingExerciseParticipation) {
             if (anyContainerFailedToBuild || !allJobsSucceeded) {
                 log.info("Skipping the test case reconciliation of exercise {}: a container of the solution build failed, so its test cases are absent without being removed",
@@ -628,11 +521,6 @@ public class ProgrammingExerciseGradingService {
             }
         }
         calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
-        // The containers contribute only their feedback rows to the aggregated result, so it carries no success flag of
-        // its own. The flag is derived from the scoring above, which counts the test cases relevant to this participation
-        // and those among them that passed (a test case no container reported counts as not passed): the merged result is
-        // successful when every relevant test case passed and every container ran and built. A build that executed no
-        // test case leaves both counts at zero and is not successful.
         Integer testCaseCount = aggregatedResult.getTestCaseCount();
         boolean everyRelevantTestCasePassed = testCaseCount != null && testCaseCount > 0 && testCaseCount.equals(aggregatedResult.getPassedTestCaseCount());
         aggregatedResult.setSuccessful(everyRelevantTestCasePassed && allJobsSucceeded && !anyContainerFailedToBuild);
@@ -640,12 +528,7 @@ public class ProgrammingExerciseGradingService {
 
         Optional<Result> mergedIntoManualResult = Optional.empty();
         if (isStudentParticipation && aggregatedResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
-            // The same student policies as after a single-container result: when the submission is under manual
-            // assessment, the feedback is merged into that manual result, which is then the one to report. The
-            // assessment is looked up as the latest manual result rather than the latest result, because the aggregate
-            // of an overlapping build of the same commit can be newer than the assessment. Read through the repository,
-            // not the submission's lazy result collection: the submission is detached, so its collection cannot be
-            // initialized.
+            // The latest manual result: the aggregate of an overlapping build of the same commit can be newer than the assessment.
             Result latestManualResult = resultsOfSubmission.stream().filter(Result::isManual).findFirst().orElse(null);
             mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestManualResult);
         }
@@ -653,23 +536,16 @@ public class ProgrammingExerciseGradingService {
             replaceAggregateWithAssessment(aggregatedResult, mergedIntoManualResult.get(), anyContainerFailedToBuild);
             return mergedIntoManualResult.get();
         }
-        // Saved after the policies, as on the single-container path: the lock-repository policy marks the result unrated
-        // without saving it, so saving earlier would lose that flag. The instance handed back is the one that was scored,
-        // not save's return value: the result is reported to the client right after this, and that report reads every
-        // row's test case and message, which the rows loaded above carry whole and the copies a merge hands back would
-        // only hold as proxies without a session. The rows the scoring added, typed and legacy, are inserted in place
-        // first, so that they carry ids too.
+        // Saved after the policies: the lock-repository policy marks the result unrated without saving it. The scored
+        // instance is returned instead of save's merged copy, see insertNewFeedback.
         insertNewFeedback(aggregatedResult);
         resultRepository.save(aggregatedResult);
         return aggregatedResult;
     }
 
     /**
-     * Deletes the aggregated result of a build whose feedback was merged into a tutor's assessment, as the single-container
-     * path does not store an automatic result it merged. A stored aggregate would be newer than the assessment, and the
-     * readers that pick a submission's latest result by id would show its automatic score instead of the assessed one.
-     * The build's logs and jobs move over to the assessment first. The jobs are how the build overview finds a build's
-     * result, and the relink has to precede the delete, whose foreign key action clears the jobs' links.
+     * Deletes the aggregate of a build merged into a tutor's assessment, which it would otherwise hide as the newest
+     * result. The build's logs and jobs move to the assessment first, since the delete clears the jobs' links.
      *
      * @param aggregatedResult the aggregated result of the build
      * @param manualResult     the assessment the build's feedback was merged into
@@ -684,12 +560,9 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Deletes the aggregated result of a multi-container build that lost a container and was replaced by a later build
-     * of the same commit, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}. Nothing would complete
-     * the result, and finalizing it would show the student the partial outcome of a build whose replacement delivers the
-     * whole one. The build's logs are deleted with it, and its jobs lose their link through the foreign key's
-     * {@code ON DELETE SET NULL}. Only an automatic result that is still in progress is deleted, so a completed result or
-     * a tutor's assessment the jobs were linked to in the meantime is never touched.
+     * Deletes the in-progress aggregated result of a multi-container build that lost a container and was replaced by a
+     * later build of the same commit, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}. The
+     * build's jobs lose their link through the foreign key.
      *
      * @param resultId the id of the aggregated result of the replaced build
      */
@@ -705,16 +578,9 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Deletes the aggregated results an earlier build of the submission left behind: automatic results that are older
-     * than the one being finalized, still in progress, and linked by no build job. The first container of a build
-     * creates the aggregate and then links its job to it; a build that was interrupted between the two steps, or whose
-     * job could not be saved, leaves an aggregate that no sibling and no sweep can find, since both search through the
-     * job links. Nothing would ever complete it, and once a later build was merged into a tutor's assessment and its
-     * own aggregate deleted, the leftover would be the submission's newest result and hide the assessment. The
-     * aggregate of an overlapping build that is still running is linked by its jobs and is kept. So is every leftover
-     * while a job of the participation is queued or building: between the two steps, the aggregate of a running build
-     * looks abandoned as well, and the job that creates it stays pending until the link is saved with its final status.
-     * The finalization does not depend on the cleanup, so a failure is only logged.
+     * Deletes older in-progress aggregates of the submission that no build job links to, while no job of the participation
+     * is pending. A build interrupted between creating its aggregate and linking its job leaves one that nothing completes
+     * and that would hide a later assessment; a running build's job stays pending until its link is saved.
      *
      * @param resultsOfSubmission the submission's results
      * @param resultId            the id of the aggregated result being finalized
@@ -744,10 +610,8 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Whether the aggregated result being finalized is the newest automatic result of its submission among those that
-     * have completed or are completing now. An automatic result that is newer but still in progress is either an
-     * overlapping build that has not finalized yet, whose own finalization writes the submission's state afterwards, or
-     * the leftover of an interrupted merge that nothing refers to; neither takes precedence.
+     * Whether the result being finalized is the submission's newest automatic result, ignoring newer ones still in
+     * progress: an overlapping build writes the submission's state when it finalizes, and an abandoned aggregate never does.
      *
      * @param resultsOfSubmissionNewestFirst the submission's results, newest first
      * @param resultId                       the id of the aggregated result being finalized
@@ -856,7 +720,6 @@ public class ProgrammingExerciseGradingService {
         if (isStudentParticipation) {
             var mergedIntoManualResult = applyStudentResultPolicies(participation, processedResult, programmingSubmission, programmingSubmission.getLatestResult());
             if (mergedIntoManualResult.isPresent()) {
-                // The new automatic feedback was merged into the latest manual result, which replaces the new result.
                 return mergedIntoManualResult.get();
             }
         }
@@ -1114,11 +977,8 @@ public class ProgrammingExerciseGradingService {
         if (result.getId() == null) {
             return;
         }
-        // The rows are fetched together with their test cases AND their messages. The test cases because lazily loaded
-        // rows reach them through proxies, which the equality the score calculation compares test cases with never
-        // satisfies. The messages because the finalized result is reported to the client as it is, and synthesizing
-        // the feedback for that report reads every message: a proxy would then fail with no session to load it in, the
-        // report would never be sent, and the template rebuild that follows a solution build would never be triggered.
+        // Load the test cases, whose proxies would fail the equality the scoring compares them with, and the messages,
+        // which the client report of the finalized result reads outside a session.
         if (!Hibernate.isInitialized(result.getTestCaseFeedbacks())) {
             result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(result.getId())));
         }

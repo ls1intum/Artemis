@@ -60,11 +60,8 @@ public class FailedBuildLogService {
 
     private static final char SEPARATOR = '\t';
 
-    /**
-     * Encloses the name of the container a line came from, in front of the line. A line of a single-container build carries
-     * no container and starts with its timestamp as before; a build log never contains this control character, so a line
-     * of an older file is never mistaken for a labeled one.
-     */
+    // Encloses the container name in front of a line of a multi-container build. Build logs never contain this control
+    // character, so an unlabeled line of an older file is never mistaken for a labeled one.
     private static final char CONTAINER_MARKER = '\u001F';
 
     private static final String LOG_SUFFIX = ".log";
@@ -144,10 +141,9 @@ public class FailedBuildLogService {
     }
 
     /**
-     * Adds the build logs of one container of a multi-container build to the file of the build's aggregated result. The lines
-     * the same container stored before are replaced, so a container that is retried after its agent was lost does not show
-     * its logs twice; the lines of its siblings are kept. The caller serializes the containers of one build, so the file is
-     * read and written by one of them at a time.
+     * Adds the build logs of one container to the file of a multi-container build's aggregated result, replacing the lines
+     * the container stored before (it may be retried after its agent was lost). Callers must serialize the containers of
+     * one build.
      *
      * @param exerciseId    the programming exercise the result belongs to
      * @param submissionId  the programming submission the result belongs to

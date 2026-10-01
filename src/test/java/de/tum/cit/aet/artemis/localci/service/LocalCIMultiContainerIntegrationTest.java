@@ -79,18 +79,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 
-/**
- * End-to-end tests for multi-container build plans that run the full path a submission takes: a push to the assignment
- * repository triggers one build job per configured container, the in-process build agent executes each job against the
- * mocked Docker client, and the result processing on the core merges the per-container results into a single finalized
- * result for the submission.
- * <p>
- * This covers the glue that the service-level merge tests in {@link LocalCIResultServiceIntegrationTest} bypass:
- * scheduling, agent execution, the result queue, and the locked, transactional aggregation in
- * {@code LocalCIResultProcessingService#processContainerResult}. The failure-mode tests verify the feedback guarantee
- * that motivates the multi-container design: the results a container has already delivered survive a sibling
- * container's crash, out-of-memory kill, or timeout.
- */
+/** End-to-end multi-container builds: one job per container, run by the in-process agent, merged into one result. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
 @Isolated
@@ -147,10 +136,8 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
     @BeforeEach
     void initRepositories() throws Exception {
-        // Every test here needs a live build agent, and the classes that share this context leave it in different states:
-        // some stop its queue listener to simulate missing jobs (a plain init() afterwards is a no-op while the service
-        // still counts as initialized), one closes its services, which leaves the build executor null. Start from a known
-        // state: empty queues, open services, an unpaused agent with a live listener.
+        // Classes sharing this context stop the agent's listener (init() is a no-op until resetInitializedState()) or close
+        // its services: start from empty queues and a live, unpaused agent.
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
@@ -185,13 +172,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         }
     }
 
-    /**
-     * A failed build attempt marks the submission as failed. A later attempt of the SAME commit that succeeds must
-     * come out successful: the flag belongs to the attempt, not to the submission forever. The rebuild also meets a
-     * tutor's draft manual assessment on the submission, which has no completion date either: the containers must
-     * open a fresh automatic result instead of appending their feedback to the draft; the finished feedback is then
-     * merged into the draft and the automatic result is not kept, as after a single-container build.
-     */
+    /** A successful rebuild after a failed build clears the build-failed flag; its feedback is merged into the tutor's draft at finalize. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRebuildOfSameCommitAfterFailedAttemptIsSuccessfulAndSparesManualDraft() throws Exception {
@@ -220,8 +201,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         manualDraft.setExerciseId(programmingExercise.getId());
         manualDraft = resultRepository.save(manualDraft);
 
-        // Second attempt of the same commit: the student container now succeeds. Both containers get fresh result
-        // streams, since a mocked archive stream can only be read once and the first attempt consumed the instructor's.
+        // Second attempt: the student container now succeeds; both containers need fresh result streams.
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-rebuild", RESULTS_DIRECTORY_REGEX, structuralResults());
         mockScriptExitCode("mc-student-rebuild", "mc-student-rebuild-exec", 0L);
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-rebuild", RESULTS_DIRECTORY_REGEX, behaviorResults());
@@ -230,12 +210,9 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         ProgrammingSubmission rebuiltSubmission = awaitBuildMergedInto(participation.getId(), manualDraft.getId(), 2, 120);
         String jobStatuses = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId()))
                 .map(job -> job.getBuildJobId() + ":" + job.getBuildStatus()).toList().toString();
-        // the attempt built (no container failed)
         assertThat(rebuiltSubmission.isBuildFailed()).as("jobs %s", jobStatuses).isFalse();
 
-        // The draft was not used as the aggregate while the containers merged, but, as after a single-container build,
-        // the finished automatic feedback was merged into it for the tutor and scored there; it stays open, and it stays
-        // the submission's latest result.
+        // merged into the draft, which stays open and the latest result
         Result draftAfterRebuild = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualDraft.getId());
         assertThat(draftAfterRebuild.getCompletionDate()).isNull();
         assertThat(draftAfterRebuild.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
@@ -244,12 +221,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(rebuiltSubmission.getLatestResult().getId()).isEqualTo(manualDraft.getId());
     }
 
-    /**
-     * The student policies of a single-container result apply to the merged result of a multi-container build as well.
-     * The lock-repository policy's result-time step is a fallback for submissions that exceed the limit without the
-     * VCS having blocked them: such a result is stored as not rated. That situation is reproduced by activating a
-     * limit-one policy after two submissions already exist and rebuilding — the merged result must then be unrated.
-     */
+    /** A rebuild over the limit of a lock-repository policy activated after two builds stores its merged result unrated. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLockRepositoryPolicyMarksTheMergedResultOfAnOverLimitSubmissionUnrated() throws Exception {
@@ -273,13 +245,11 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
                 Optional.empty());
         ProgrammingSubmission secondSubmission = awaitFinalizedResultAfter(participation.getId(), firstSubmission.getLatestResult().getId(), 120);
 
-        // Now a lock-repository policy allowing a single submission becomes active.
         LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
         lockRepositoryPolicy.setSubmissionLimit(1);
         lockRepositoryPolicy.setActive(true);
         programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
 
-        // A rebuild of the over-limit submission: the merged result is stored, but not rated.
         stubLockTestResults();
         localCITriggerService.triggerBuild(participation, false);
         ProgrammingSubmission rebuiltSubmission = awaitFinalizedResultAfter(participation.getId(), secondSubmission.getLatestResult().getId(), 120);
@@ -294,12 +264,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-lock", RESULTS_DIRECTORY_REGEX, behaviorResults());
     }
 
-    /**
-     * When a submission is already under manual assessment, a new automatic result merges its feedback into that
-     * manual result instead of standing on its own, exactly as after a single-container build. The merged result of a
-     * rebuild therefore lands in the completed manual result, alongside the tutor's assessment, and the manual result
-     * stays the submission's latest result.
-     */
+    /** A rebuild of a manually assessed submission merges its feedback into the assessment, which stays the latest result. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMergedResultFeedbackIsMergedIntoTheLatestManualResult() throws Exception {
@@ -330,16 +295,11 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         ProgrammingSubmission rebuiltSubmission = awaitBuildMergedInto(participation.getId(), manualResult.getId(), 2, 120);
         assertThat(rebuiltSubmission.getLatestResult().getId()).isEqualTo(manualResult.getId());
 
-        // The containers' feedback was merged into the manual result.
         Result mergedManualResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualResult.getId());
         assertThat(mergedManualResult.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(feedbackTestNames(mergedManualResult)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
     }
 
-    /**
-     * A push to the test repository builds the solution and, once that result is complete, the template. With several
-     * containers the solution reports one queue item per container; the template must still be rebuilt exactly once.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTestsPushRebuildsTemplateOnceAfterMultiContainerSolutionBuild() throws Exception {
@@ -361,7 +321,6 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         localVCServletService.processNewPush(testsCommitHash, testsRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities(), Optional.empty(),
                 Optional.empty(), Optional.empty());
 
-        // The solution build (two containers) finishes and triggers the template build, whose two containers finish too.
         awaitFinalizedResult(solutionParticipation.getId(), 120);
         awaitFinishedBuildJobs(templateParticipation.getId(), 2, 120);
         awaitFinalizedResult(templateParticipation.getId(), 120);
@@ -371,13 +330,6 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(templateJobs).hasSize(2);
     }
 
-    /**
-     * The solution participation is the one that generates the exercise's test cases, so its multi-container build
-     * exercises two hazards a student build never meets: each container reconciles the test-case registry against a
-     * PARTIAL result (it must not deactivate its siblings' test cases), and a test case reported by several containers
-     * (here {@code testConstructors[Policy]}, returned by both) must reach the merged result exactly once, because a
-     * duplicate test case zeroes the score.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSolutionBuildGeneratesAllTestCasesAcrossContainersWithoutDuplicates() throws Exception {
@@ -400,12 +352,10 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
         ProgrammingSubmission submission = awaitFinalizedResult(solutionParticipation.getId(), 120);
 
-        // Neither container deactivated the other's test cases: the registry is the union of both.
         Set<String> expectedNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
         assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
                 .containsExactlyInAnyOrderElementsOf(expectedNames);
 
-        // The shared test case reached the merged result once, so the result was scored instead of zeroed as a duplicate.
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
         assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(expectedNames);
         assertThat(testCaseFeedbacksOf(result)).filteredOn(feedback -> "testConstructors[Policy]".equals(feedback.getTestCase().getTestName())).hasSize(1);
@@ -416,13 +366,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.isBuildFailed()).isFalse();
     }
 
-    /**
-     * A solution build generates the exercise's test cases. On a single container, a test removed from the solution is
-     * deactivated because that one result covers every test case; a multi-container build must reach the same outcome,
-     * but only once every container's feedback is merged: no single container may deactivate a test absent from it,
-     * because that absence is a sibling container's test, not a removal. This builds the solution twice; the second
-     * build omits one test from both containers, and that test, and only that test, becomes inactive.
-     */
+    /** A test removed from the solution, so reported by no container, is deactivated when the merged result is finalized. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSolutionBuildDeactivatesATestRemovedFromEveryContainer() throws Exception {
@@ -451,8 +395,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         localCITriggerService.triggerBuild(solutionParticipation, false);
         awaitFinalizedResultAfter(solutionParticipation.getId(), firstSubmission.getLatestResult().getId(), 120);
 
-        // Only the removed test is deactivated; every other test case stays active. No single container deactivated it
-        // (each still passed false); the reconciliation at finalize did, once, against the union of both containers.
+        // only the removed test is deactivated
         Set<String> remainingActive = new HashSet<>(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
         remainingActive.remove("testConstructors[Policy]");
         assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
@@ -461,12 +404,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
                 .contains("testConstructors[Policy]");
     }
 
-    /**
-     * A container that failed to build reported none of its tests, so their absence from the merged feedback says nothing
-     * about the solution. The reconciliation at finalize is skipped for such a build: the registry keeps every test case
-     * of the last clean solution build instead of dropping a whole container's share from grading until the next clean
-     * build.
-     */
+    /** A solution build with a crashed container skips the reconciliation, so no test case is deactivated. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSolutionBuildWithACrashedContainerKeepsItsTestCasesActive() throws Exception {
@@ -494,8 +432,6 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         localCITriggerService.triggerBuild(solutionParticipation, false);
         ProgrammingSubmission secondSubmission = awaitFinalizedResultAfter(solutionParticipation.getId(), firstSubmission.getLatestResult().getId(), 120);
 
-        // The build is failed, but no test case was deactivated: the behaviour tests are absent because their container
-        // crashed, not because they were removed from the solution.
         assertThat(secondSubmission.isBuildFailed()).isTrue();
         assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
                 .containsExactlyInAnyOrderElementsOf(allTestNames);
@@ -519,21 +455,16 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
         ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 120);
 
-        // The student is told about the build once, when the merged result is complete. A container that finishes first
-        // leaves the shared result in progress, and reporting that would show a finished build carrying part of the
-        // feedback and no score, corrected once per remaining container.
+        // the student is notified once, with the completed result
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(argThat(reported -> reported.getCompletionDate() == null), any());
         verify(programmingMessagingService, timeout(2000).times(1)).notifyUserAboutNewResult(argThat(reported -> reported.getCompletionDate() != null), any());
-        // Reporting the result synthesizes the merged feedback for the client, which reads the messages of rows that were
-        // loaded inside the merge transaction; a report that reaches the student proves they were loaded whole.
+        // the report reads every feedback row's message, so reaching the student shows they were loaded whole
         verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessageToUser(eq(student1Login), eq(NEW_RESULTS.at()), any());
 
-        // The containers of one commit share a single submission and a single result.
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId())).hasSize(1);
         assertThat(submission.isBuildFailed()).isFalse();
         assertThat(submission.getResults()).hasSize(1);
 
-        // The finalized result carries the feedback of both containers.
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
         Set<String> expectedNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
         assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(expectedNames);
@@ -541,7 +472,6 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isNotNull();
 
-        // One build job per container, both linked to the shared result.
         assertThat(buildJobRepository.countByResultId(result.getId())).isEqualTo(2);
         var jobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId())).toList();
         assertThat(jobs).hasSize(2);
@@ -606,10 +536,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
             mockContainerLifecycle(studentImage, "mc-student-timeout");
             dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-timeout", RESULTS_DIRECTORY_REGEX, structuralResults());
 
-            // The instructor-configured timeout applies to each container job individually: only the student container's
-            // commands hang past the timeout, so only the student job runs into it. The delay must sit inside the timed
-            // part of the job — the time spent pulling and inspecting the image is deliberately excluded from the build
-            // timeout — and the timeout must leave the instructor job enough room for its real git clones in this harness.
+            // only the student container's commands hang past 20 s; the instructor job needs that long for its real git clones
             buildConfig.setTimeoutSeconds(20);
             programmingExerciseBuildConfigRepository.save(buildConfig);
             mockHangingExec("mc-student-timeout", "mc-student-timeout-exec", scheduler);
@@ -619,14 +546,12 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
             ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 180);
 
-            // The instructor container's feedback reaches the student although the sibling job timed out.
             Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
             assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(STRUCTURAL_TEST_NAMES);
             assertThat(result.getCompletionDate()).isNotNull();
             assertThat(result.isSuccessful()).isFalse();
             assertThat(submission.isBuildFailed()).isTrue();
 
-            // The timed-out job is recorded as such; the sibling job is untouched by the timeout.
             assertThat(buildJobRepository.countByResultId(result.getId())).isEqualTo(2);
             var jobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId())).toList();
             assertThat(jobs).hasSize(2);
@@ -639,17 +564,11 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         }
     }
 
-    /**
-     * The shared assertions of the crash and out-of-memory scenarios: the aggregated result still finalizes, the
-     * instructor container's feedback is preserved, the submission is marked as failed, and the failed container's
-     * build logs are labeled with its name.
-     */
     private void assertResultPreservedAfterStudentContainerFailure(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission submission, String instructorImage,
             String studentImage) {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
         assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(STRUCTURAL_TEST_NAMES);
         assertThat(result.getCompletionDate()).isNotNull();
-        // A result of a submission with a failed container must not present itself as successful.
         assertThat(result.isSuccessful()).isFalse();
         assertThat(submission.isBuildFailed()).isTrue();
 
@@ -804,11 +723,6 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
     }
 
-    /**
-     * The names of the test cases a container actually delivered feedback for. Finalizing the result adds a
-     * "Test was not executed." placeholder for every registered test case without feedback, so those placeholders are
-     * excluded here — they mark the absence of a container's results, not their delivery.
-     */
     /** Waits until the participation's latest result is finalized and newer than the given result, e.g. after a rebuild. */
     private ProgrammingSubmission awaitFinalizedResultAfter(long participationId, long previousResultId, int timeoutInSeconds) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -820,10 +734,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
     }
 
-    /**
-     * Waits until a build's feedback was merged into the given manual result: its container jobs link to the manual
-     * result, and the build's aggregate, deleted after the merge, no longer hides the manual result as the latest one.
-     */
+    /** Waits until the build's jobs link to the given manual result and it is the latest result again. */
     private ProgrammingSubmission awaitBuildMergedInto(long participationId, long manualResultId, int containerCount, int timeoutInSeconds) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         await().dontCatchUncaughtExceptions().atMost(Duration.ofSeconds(timeoutInSeconds)).until(() -> {

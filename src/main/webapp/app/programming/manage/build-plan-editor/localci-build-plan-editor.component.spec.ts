@@ -132,7 +132,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.ngOnInit();
 
-        // a legacy build plan is normalized into a single container, so the editor only deals with containers
         expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'some-image', phases }]);
         expect(comp.timeout()).toBe(90);
         expect(findStub).toHaveBeenCalledWith(7);
@@ -318,7 +317,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.ngOnInit();
 
-        // the instructor authored a container before the template came back, so seeding must not discard that work
         const authoredContainers = [{ ...container('tests'), phases: [{ ...phases[0], name: 'authored' }] }];
         comp.containers.set(authoredContainers);
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
@@ -368,7 +366,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
             dockerImage: 'language-default-image',
         });
 
-        // the saved plan is not replaced by the template's phases
         expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'some-image', phases }]);
         expect(comp.defaultDockerImage()).toBe('language-default-image');
         expect(comp.canDeactivate()).toBe(true);
@@ -410,7 +407,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         buildConfiguration.timeoutMaxValue.set(240);
         comp.containers.set([{ ...container('tests'), timeoutSeconds: 5 }, container('checks')]);
 
-        // a container timeout below the instance minimum blocks saving, like an exercise timeout would
         expect(comp.areContainerTimeoutsValid()).toBe(false);
         expect(comp.canSubmit()).toBe(false);
 
@@ -421,7 +417,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
         comp.submit();
 
-        // the bounded container carries its timeout; the other one carries none and follows the exercise timeout
         const sent = updateStub.mock.calls[0][1] as { buildPlan: { containers: { name: string; timeoutSeconds?: number }[] } };
         expect(sent.buildPlan.containers.map((sentContainer) => [sentContainer.name, sentContainer.timeoutSeconds])).toEqual([
             ['tests', 90],
@@ -438,7 +433,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
             { ...container('checks'), dockerFlags: { env: undefined, memory: undefined } },
         ]);
 
-        // a CPU count below the minimum of the server blocks saving, like a limit of the exercise would
         expect(comp.areContainerDockerFlagsValid()).toBe(false);
         expect(comp.canSubmit()).toBe(false);
 
@@ -824,8 +818,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
     });
 
     it('should keep an inheriting container editable and save it without pinning an image', () => {
-        // a legacy exercise relying on the language default normalizes into one container with no image; it must stay
-        // savable and the save must not write an image, otherwise the exercise stops following default image bumps
         const inheritingConfiguration = JSON.stringify({ phases });
         activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration: inheritingConfiguration, timeoutSeconds: 120 } } as unknown as ProgrammingExercise });
         vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
@@ -857,14 +849,12 @@ describe('LocalCIBuildPlanEditorComponent', () => {
     });
 
     it('should allow the same phase name in different containers', () => {
-        // containers execute independently, so a phase name only has to be unique within its container
         comp.containers.set([container('student_tests'), container('instructor_tests')]);
 
         expect(comp.canSubmit()).toBe(true);
     });
 
     it('should cap a container timeout at the exercise timeout', () => {
-        // a container timeout tightens the exercise timeout; one above it would extend the exercise's budget instead
         comp.timeout.set(60);
         comp.containers.set([{ ...container('student_tests'), timeoutSeconds: 90 }]);
 
@@ -886,9 +876,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.addContainer();
         expect(comp.containers()).toHaveLength(2);
-        // a new container reuses the image of the first one, as exercises usually build every container from one image
         expect(comp.containers()[1].dockerImage).toBe('some-image');
-        // it checks out the repositories configured on the exercise until they are scoped explicitly
         expect(comp.containers()[1].repositories).toBeUndefined();
 
         comp.removeContainer(0);

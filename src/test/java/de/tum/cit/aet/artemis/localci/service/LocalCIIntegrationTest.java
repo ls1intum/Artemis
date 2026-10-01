@@ -405,11 +405,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         sharedQueueProcessingService.init();
     }
 
-    /**
-     * A multi-container build has one job per container, and a missing job is retried by re-triggering the whole build.
-     * When every container of a build went missing, the build is retried once for its build group, not once per
-     * container: one new build is scheduled and every missing sibling's retry count is raised.
-     */
+    /** Missing sibling container jobs are retried as one build, and each sibling's retry count is raised. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMissingSiblingContainerJobsAreRetriedAsOneBuild() {
@@ -445,12 +441,11 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         localCIMissingJobService.retryMissingJobs();
 
-        // Both missing siblings count as retried once ...
         await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertThat(buildJobRepository.findByBuildJobId(firstContainerJobId).orElseThrow().getRetryCount()).isEqualTo(1);
             assertThat(buildJobRepository.findByBuildJobId(buildGroupId + "-1").orElseThrow().getRetryCount()).isEqualTo(1);
         });
-        // ... but the build itself was re-triggered once: exactly one job exists for the participation outside the missing group.
+        // the build was re-triggered once: one job outside the missing group
         List<BuildJob> retriedJobs = buildJobRepository.findAll().stream()
                 .filter(job -> studentParticipation.getId().equals(job.getParticipationId()) && !buildGroupId.equals(job.getBuildGroupId())).toList();
         assertThat(retriedJobs).hasSize(1);

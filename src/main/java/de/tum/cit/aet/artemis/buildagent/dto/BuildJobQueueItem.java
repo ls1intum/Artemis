@@ -16,12 +16,6 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 // NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Hazelcast (or potentially Redis)
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
-// A submission's build plan can consist of several containers that are each scheduled as their own build job. Such a job
-// carries its build group membership (buildGroup): the group shared by the containers of one build, under which the
-// result processing merges their results into one result; the number of jobs the trigger scheduled for the group, which
-// is what the merge waits for before it finalizes the result; and the name of the container the job builds. For a build
-// plan without containers it is null, i.e. the job builds the whole submission on its own, as it did before
-// multi-container support.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNull BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount,
@@ -30,10 +24,6 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
         implements BuildJobDTO, Serializable, Comparable<BuildJobQueueItem> {
 
     @Serial
-    // bumped from 1L: adding the build group membership changes the serialized form, so old Hazelcast/Redis items must be
-    // cleared on upgrade (breaking change, communicate in the release notes). Bumped once more from 3L when the membership
-    // replaced the three loose fields of the unreleased first form, so that an item of that form fails to deserialize
-    // instead of arriving without a build group.
     private static final long serialVersionUID = 4L;
 
     /**
@@ -122,13 +112,12 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
     }
 
     /**
-     * The membership of a build job in a build group. The containers of a multi-container build are scheduled as one job
-     * each, and their jobs share a group under which the result processing merges their results into one result.
+     * The membership of a container job in the build group its results are merged under; a job of a build with at most
+     * one container has none.
      *
      * @param buildGroupId           the id of the build group, shared by every job of the same build
-     * @param expectedContainerCount the number of jobs the trigger scheduled for the group, which the merge waits for
-     *                                   before it finalizes the result; fixed at trigger time, so a build plan edited while
-     *                                   the containers are still running cannot change what a running build waits for
+     * @param expectedContainerCount the number of jobs in the group, fixed at trigger time so an edit of the build plan
+     *                                   cannot change it for a running build
      * @param containerName          the name of the container this job builds
      */
     public record BuildGroupMembership(@NonNull String buildGroupId, int expectedContainerCount, @NonNull String containerName) implements Serializable {

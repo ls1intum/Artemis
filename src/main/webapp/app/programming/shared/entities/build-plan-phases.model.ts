@@ -40,9 +40,8 @@ export const BUILD_CONTAINER_REPOSITORY_TYPE = {
 export type BuildContainerRepositoryType = keyof typeof BUILD_CONTAINER_REPOSITORY_TYPE;
 
 /**
- * A repository that is checked out into a build container. Where a repository is checked out stays configured per
- * exercise; a container only selects which of the exercise's repositories are provisioned into it. A repository is
- * identified by its type alone, so AUXILIARY selects every auxiliary repository of the exercise at once.
+ * A repository of the exercise that a build container checks out, at the path configured on the exercise. It is
+ * identified by its type alone, so AUXILIARY selects every auxiliary repository of the exercise.
  * Note: Matches BuildContainerRepositoryDTO.java
  */
 export interface BuildContainerRepository {
@@ -50,9 +49,8 @@ export interface BuildContainerRepository {
 }
 
 /**
- * The Docker flags a build container sets for its own job. A field the container leaves unset takes the value
- * configured on the exercise; the environment variables are added to the exercise's, and a variable of the same name
- * replaces the exercise's value.
+ * The Docker flags a build container overrides for its own job. An unset field keeps the exercise's value; environment
+ * variables are merged into the exercise's, replacing one of the same name.
  * Note: Matches BuildContainerDockerFlagsDTO.java
  */
 export interface BuildContainerDockerFlags {
@@ -64,13 +62,14 @@ export interface BuildContainerDockerFlags {
 }
 
 /**
- * A named, independently executable container of a build plan. It runs its own Docker image, checks out only the
- * repositories it lists, and executes its phases inside that image.
+ * A named container of a build plan that runs as its own build job, with its own Docker image, repositories and phases.
  * Note: Matches BuildContainerDTO.java
  */
 export interface BuildContainer {
     name: string;
+    /** undefined means the exercise's language default image at build time, so the container follows updates of it */
     dockerImage?: string;
+    /** undefined means the repositories configured on the exercise; an empty list checks out only the assignment repository */
     repositories?: BuildContainerRepository[];
     phases: BuildPhase[];
     /** the timeout of this container's build job in seconds; undefined means the timeout configured on the exercise */
@@ -115,10 +114,7 @@ export function areBuildContainerDockerFlagsValid(dockerFlags: BuildContainerDoc
     );
 }
 
-/**
- * Returns the Docker flags of a container with only the fields that are set, or undefined if none is: a container
- * without an override of its own carries no flags, so it runs with the flags of the exercise.
- */
+/** Returns the Docker flags with only the fields that are set, or undefined if none is set. */
 export function normalizedBuildContainerDockerFlags(dockerFlags: BuildContainerDockerFlags | null | undefined): BuildContainerDockerFlags | undefined {
     if (dockerFlags == undefined) {
         return undefined;
@@ -142,11 +138,7 @@ export function normalizedBuildContainerDockerFlags(dockerFlags: BuildContainerD
     return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
-/**
- * Returns the containers of a build plan. A legacy configuration that only carries phases and a Docker image is
- * normalized into a single container, so that callers do not have to distinguish between the two formats. The
- * normalized container scopes no repositories, i.e. it checks out the repositories configured on the exercise.
- */
+/** Returns the containers of a build plan, normalizing a legacy plan into a single unscoped container. */
 export function effectiveContainers(buildPlan: BuildPlanPhases | undefined): BuildContainer[] {
     if (buildPlan?.containers?.length) {
         return buildPlan.containers;
@@ -157,10 +149,7 @@ export function effectiveContainers(buildPlan: BuildPlanPhases | undefined): Bui
     return [{ name: DEFAULT_BUILD_CONTAINER_NAME, dockerImage: buildPlan.dockerImage, phases: buildPlan.phases }];
 }
 
-/**
- * Returns the phases of every container of a build plan. Callers that ask a question about the build plan as a whole,
- * such as whether it contains a phase that runs after the due date, do not need to know which container a phase runs in.
- */
+/** Returns the phases of every container of a build plan, for questions about the plan as a whole. */
 export function allPhases(buildPlan: BuildPlanPhases | undefined): BuildPhase[] {
     return effectiveContainers(buildPlan).flatMap((container) => container.phases ?? []);
 }
@@ -189,7 +178,6 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
                 // the server writes an unscoped container with an explicit null, which must not read as "scoped to nothing"
                 repositories: container.repositories ?? undefined,
                 phases: (container.phases ?? []).map(withPhaseDefaults),
-                // likewise, null or empty flags mean the container overrides nothing
                 dockerFlags: normalizedBuildContainerDockerFlags(container.dockerFlags),
             }),
         ),
@@ -210,7 +198,6 @@ function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
         return false;
     }
     const v = value as { phases?: unknown; dockerImage?: unknown; containers?: unknown };
-    // a configuration that carries neither phases nor containers is not a build plan the editor can work with
     if (v.phases === undefined && v.containers === undefined) {
         return false;
     }

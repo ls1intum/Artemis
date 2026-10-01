@@ -25,8 +25,7 @@ public class LocalCIWebsocketTopics implements WebsocketTopicProvider {
     public static final WebsocketTopic ADMIN_FINISHED_JOBS = WebsocketTopic.of("/topic/admin/finished-jobs", WebsocketTopicAccess.administrator());
 
     /**
-     * Finished jobs whose data changed after they were announced on {@link #ADMIN_FINISHED_JOBS}: the containers of a multi-container build finish one by one, and their
-     * shared result is only complete once the last of them did. A job sent here is one the clients already know, not a further finished job.
+     * Finished jobs from {@link #ADMIN_FINISHED_JOBS} sent again after their data changed, e.g. a finalized multi-container build; clients replace them.
      */
     public static final WebsocketTopic ADMIN_FINISHED_JOB_UPDATES = WebsocketTopic.of("/topic/admin/finished-job-updates", WebsocketTopicAccess.administrator());
 
@@ -48,9 +47,7 @@ public class LocalCIWebsocketTopics implements WebsocketTopicProvider {
     public static final WebsocketTopic COURSE_FINISHED_JOBS = WebsocketTopic.of("/topic/courses/{courseId}/finished-jobs",
             WebsocketTopicAccess.atLeastInstructorInCourse("courseId"));
 
-    /**
-     * The course counterpart of {@link #ADMIN_FINISHED_JOB_UPDATES}.
-     */
+    /** The course counterpart of {@link #ADMIN_FINISHED_JOB_UPDATES}. */
     public static final WebsocketTopic COURSE_FINISHED_JOB_UPDATES = WebsocketTopic.of("/topic/courses/{courseId}/finished-job-updates",
             WebsocketTopicAccess.atLeastInstructorInCourse("courseId"));
 

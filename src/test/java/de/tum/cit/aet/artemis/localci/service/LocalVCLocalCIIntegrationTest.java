@@ -555,7 +555,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testMultipleContainersScheduleOneBuildJobEach() throws Exception {
-            // A build plan with two containers, each with its own Docker image and build phase.
             BuildPhaseDTO phaseA = new BuildPhaseDTO("phase_a", "echo container-a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"));
             BuildPhaseDTO phaseB = new BuildPhaseDTO("phase_b", "echo container-b", BuildPhaseCondition.ALWAYS, false, List.of("results/b/*.xml"));
             // container_a bounds its own job more tightly than the exercise timeout, container_b uses the exercise timeout
@@ -581,11 +580,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
             BuildJobQueueItem jobA = jobs.stream().filter(job -> "container_a".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
             BuildJobQueueItem jobB = jobs.stream().filter(job -> "container_b".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
-            // each container keeps its own image and its own build script
             assertThat(jobA.buildConfig().dockerImage()).isEqualTo("image-a:1");
             assertThat(jobB.buildConfig().dockerImage()).isEqualTo("image-b:2");
             assertThat(jobA.buildConfig().buildScript()).isNotEqualTo(jobB.buildConfig().buildScript());
-            // a container's own timeout bounds its job; a container without one gets the exercise timeout
             assertThat(jobA.buildConfig().timeoutSeconds()).isEqualTo(90);
             assertThat(jobB.buildConfig().timeoutSeconds()).isEqualTo(200);
         }
@@ -593,8 +590,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testSingleContainerBuildPlanSchedulesOneJobWithoutContainerName() {
-            // The default build plan has at most one container, so it is scheduled as a single build job that builds the
-            // whole submission on its own (its container name stays null).
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
             localCITriggerService.triggerBuild(studentParticipation, false);
 
@@ -608,8 +603,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testContainerRepositoriesAreScopedPerContainer() throws Exception {
-            // The instructor container lists the test repository; the student container is scoped to exclude it, which is
-            // what keeps untrusted student code from receiving the instructor's test files.
+            // only the instructor container lists the test repository, so student code never receives the tests
             BuildPhaseDTO phase = new BuildPhaseDTO("phase", "echo build", BuildPhaseCondition.ALWAYS, false, List.of("results/*.xml"));
             BuildContainerDTO instructorContainer = new BuildContainerDTO("instructor_tests", "image-a:1", List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)),
                     List.of(phase));
@@ -630,7 +624,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             // both containers build the student's own submission, so both keep the assignment repository
             assertThat(instructorJob.repositoryInfo().assignmentRepositoryUri()).isNotNull();
             assertThat(studentJob.repositoryInfo().assignmentRepositoryUri()).isNotNull();
-            // only the instructor container receives the test repository
             assertThat(instructorJob.repositoryInfo().testRepositoryUri()).isNotNull();
             assertThat(studentJob.repositoryInfo().testRepositoryUri()).isNull();
         }

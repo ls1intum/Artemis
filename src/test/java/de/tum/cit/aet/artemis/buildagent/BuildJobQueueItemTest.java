@@ -20,11 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
-/**
- * Verifies that {@link BuildJobQueueItem}, which is shared across core and build agent nodes, round-trips both the Java
- * serialization used by Hazelcast and the JSON serialization, in particular the container identity fields added for
- * multi-container build plans.
- */
+/** {@link BuildJobQueueItem} round-trips Java (Hazelcast) and JSON serialization, including its build group membership. */
 class BuildJobQueueItemTest {
 
     private static BuildJobQueueItem jobWithMembership(BuildJobQueueItem.BuildGroupMembership buildGroup) {
@@ -50,7 +46,7 @@ class BuildJobQueueItemTest {
         }
 
         // record equals() compares the String[] arrays in RepositoryInfo by reference, so a plain isEqualTo would fail
-        // after any round-trip; a recursive comparison checks the whole object (including the new identity fields) by value
+        // after any round-trip; a recursive comparison checks the whole object by value
         assertThat(deserialized).usingRecursiveComparison().isEqualTo(original);
         assertThat(deserialized.buildGroup()).isNotNull();
         assertThat(deserialized.buildGroup().buildGroupId()).isEqualTo("4217000");
@@ -73,7 +69,7 @@ class BuildJobQueueItemTest {
 
     @Test
     void testNullContainerIdentityStillRoundTrips() throws Exception {
-        // a build plan without containers builds the whole submission, so the job carries no build group membership
+        // a job of a build with at most one container carries no build group membership
         var mapper = JsonObjectMapper.get();
         var original = jobWithMembership(null);
 

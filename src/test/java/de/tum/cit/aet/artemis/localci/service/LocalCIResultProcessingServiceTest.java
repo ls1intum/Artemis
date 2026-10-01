@@ -178,9 +178,6 @@ class LocalCIResultProcessingServiceTest {
                 null, null);
     }
 
-    /**
-     * The same job as a container of a multi-container build: it carries the membership of its build group.
-     */
     private static BuildJobQueueItem containerJob(String buildGroupId, int expectedContainerCount, String containerName) {
         return containerJob(RepositoryType.USER, RepositoryType.USER, buildGroupId, expectedContainerCount, containerName);
     }
@@ -571,10 +568,7 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void aContainerWhoseFinalizationFailsKeepsItsJobLinkedToTheAggregate() {
-        // Append, link and finalize are committed one by one. Once the job links to the aggregate, the container's
-        // feedback is merged and its siblings find the aggregate through that link. A finalization that fails afterwards
-        // must not record the job as failed without the link: that would drop the feedback from the merged result and,
-        // for the first container of the group, send the next sibling to a second aggregate.
+        // reading the group's jobs fails, so the finalization fails after the job was linked
         withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_a"), List.of(), null));
         withParticipation();
         withSavedBuildJob();
@@ -602,9 +596,7 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void aContainerWhoseJobCannotBeSavedAfterItsMergeIsRecordedAsFailed() {
-        // saveFinishedBuildJob swallows the failure and returns null. Nothing rolls the merged rows back, so the container
-        // path must treat the missing link as a failed merge and record the job as failed without a link: that keeps the
-        // group's completion count advancing, instead of finalizing with a count one short and leaving the group open.
+        // the link's save fails, the recovery's save succeeds
         withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_a"), List.of(), null));
         withParticipation();
         lenient().when(buildJobRepository.findByBuildJobId(anyString())).thenReturn(Optional.empty());
@@ -632,9 +624,6 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void theLastContainerReportsTheAssessmentItsFeedbackWasMergedIntoEvenWithoutACompletionDate() {
-        // Finalize merges the feedback into a tutor's open assessment when there is one, and hands that assessment back. A
-        // draft assessment carries no completion date, and the single-container path reports it all the same; the report
-        // must not be suppressed because the guard mistakes the missing date for a group that is still in progress.
         withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));
         withParticipation();
         withSavedBuildJob();
@@ -671,9 +660,6 @@ class LocalCIResultProcessingServiceTest {
                 any(Pageable.class))).thenReturn(List.of("group-1"));
     }
 
-    /**
-     * A build group of two finished container jobs, found by the sweep, whose aggregated result 7 is still in progress.
-     */
     private void withACompleteGroupInProgress(BuildJobQueueItem anyJobOfTheGroup, ZonedDateTime completionDate) {
         withBuildGroupFoundByTheSweep();
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
@@ -690,10 +676,6 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void theSweepFinalizesACompleteGroupWhoseAggregateStayedInProgressAndReportsTheResult() {
-        // The last container finalizes its group, but if the process died between linking its job and finalizing, the
-        // group is complete by count while its result has no completion date, and no job is missing that a retry could
-        // pick up. The sweep finalizes it as the last container would have: scored with the jobs' completion date and
-        // reported to the student.
         ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
         withACompleteGroupInProgress(containerJob("group-1", 2, "container_b"), completionDate);
         withParticipation();
@@ -721,9 +703,6 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void theLastContainerSendsEveryJobOfItsGroupAgainOnceTheResultIsFinalized() {
-        // Each container's job was announced as finished with the aggregated result still in progress. Once the last
-        // container finalized it, every job of the group is sent again as a changed job, so an open build overview
-        // shows the final result without counting the jobs a second time.
         withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));
         withParticipation();
         withSavedBuildJob();
@@ -800,8 +779,6 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void theSweepRebuildsTheTemplateAfterASolutionBuildOfATestsPush() {
-        // On the direct path the container that completes the merged solution result triggers the template build. A group
-        // the sweep finalizes has to do the same, otherwise the template stays on the old tests.
         ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
         withACompleteGroupInProgress(containerJob(RepositoryType.SOLUTION, RepositoryType.TESTS, "group-1", 2, "container_b"), completionDate);
         var solutionParticipation = new SolutionProgrammingExerciseParticipation();
@@ -821,9 +798,7 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void theSweepRebuildsTheTemplateAgainstTheTestCommitAfterASolutionBuildOfAnAuxiliaryPush() {
-        // An auxiliary push triggers the solution build without a commit, so its jobs carry none. The template build is
-        // triggered with the test commit of the submission the push created, as on the direct path, which reads it from
-        // the build config; without it the template's submission would have no commit to match its result by.
+        // an auxiliary push leaves the jobs without a commit; the test commit comes from the result's TEST submission
         ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
         withACompleteGroupInProgress(containerJob(RepositoryType.SOLUTION, RepositoryType.AUXILIARY, "group-1", 2, "container_b"), completionDate);
         buildJobRepository.findAllByBuildGroupId("group-1").forEach(job -> job.setCommitHash(null));
@@ -846,10 +821,7 @@ class LocalCIResultProcessingServiceTest {
 
     // --- a build group that lost a container ---------------------------------------------------------------------------
 
-    /**
-     * A build group found by the sweep that lost a container: one job finished and links to aggregate 7, which is still
-     * in progress, the other went missing and is not retried any more.
-     */
+    /** a group found by the sweep that lost a container: one job links to aggregate 7, still in progress, the other is missing and retried no more */
     private List<BuildJob> withAGroupThatLostAContainer(ZonedDateTime completionDate) {
         withBuildGroupFoundByTheSweep();
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
@@ -867,8 +839,6 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void theSweepDeletesTheResultOfAGroupThatLostAContainerAndWasReplacedByALaterBuildOfTheSameCommit() {
-        // The retry of a missing job triggers the whole build again as a new group. Finalizing the old group would show
-        // the student the partial outcome of a build whose replacement is still running, so its result is deleted.
         List<BuildJob> jobs = withAGroupThatLostAContainer(ZonedDateTime.now().minusMinutes(5));
         when(buildJobRepository.existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(eq(PARTICIPATION_ID), eq("commit"), any(ZonedDateTime.class))).thenReturn(true);
         when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenReturn(List.of(finishedJobOfGroup("job-a"), finishedJobOfGroup("job-b")));
@@ -888,9 +858,6 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void theSweepFinalizesAGroupThatLostAContainerAndWasNotReplacedWithTheLostContainerCountedAsFailedToBuild() {
-        // Nothing delivers this build's result any more: the student pushed another commit, which stops the retry. The
-        // group is finalized with the feedback of the container that reported. The lost container never reported, so it
-        // did not build: without that the result would claim a build that succeeded with tests that were not executed.
         ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
         List<BuildJob> jobs = withAGroupThatLostAContainer(completionDate);
         withParticipation();
@@ -919,9 +886,7 @@ class LocalCIResultProcessingServiceTest {
         verify(programmingExerciseGradingService).discardContainerResult(7L);
     }
 
-    /**
-     * The result of container_b of a build group of two arrives late: its job is stored with the given status.
-     */
+    /** the result of container_b of a group of two arrives while its job is stored with the given status */
     private void withALateResultOfAJobThatIs(BuildStatus storedStatus) {
         withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_b"), List.of(), null));
         withParticipation();
@@ -945,8 +910,7 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void aContainerResultThatArrivesAfterItsReplacedGroupWasClosedIsNotMerged() {
-        // The job was declared missing, its build was retried, and the sweep deleted the old group's result and cancelled
-        // the job. Merging the late result would start a second result with this container's feedback alone.
+        // the sweep cancelled the job when it deleted the result of its replaced group
         withALateResultOfAJobThatIs(BuildStatus.CANCELLED);
 
         resultProcessingService.processResultAsync();
@@ -956,8 +920,7 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void aContainerResultThatArrivesAfterItsGroupWasFinalizedWithoutItIsNotMerged() {
-        // The sweep gave up on the job and finalized the group with the container counted as failed to build. The result
-        // was scored and reported; appending to it now would change a result the student has already seen.
+        // the sweep closed the job as ERROR when it finalized the group without it
         withALateResultOfAJobThatIs(BuildStatus.ERROR);
 
         resultProcessingService.processResultAsync();
@@ -967,7 +930,7 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void aMissingJobThatReportsWhileItsGroupIsStillOpenIsMerged() {
-        // Declared missing, but its result arrives before the group was closed: the job was late, not lost.
+        // the job was declared missing, but the sweep has not closed its group yet
         withALateResultOfAJobThatIs(BuildStatus.MISSING);
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(7L));
         Result aggregatedResult = new Result();
@@ -988,9 +951,7 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void aMissingJobOfAnOpenGroupWithoutAResultStartsTheResultEvenIfItsBuildWasRetried() {
-        // No sibling has reported yet, so the late container starts the group's result. Whether the missing job's build
-        // was retried in the meantime does not matter while the group is open: dropping the result here would leave the
-        // siblings to finalize a result without this container's feedback.
+        // no sibling has reported yet, so the late container starts the result without checking whether its build was retried
         withALateResultOfAJobThatIs(BuildStatus.MISSING);
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
         Result aggregatedResult = new Result();
@@ -1008,8 +969,7 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void theSweepLeavesAGroupAloneThatItsLastContainerFinalizedMeanwhile() {
-        // The query runs before the lock is taken; a container that finalizes the group in between must not be followed
-        // by a second finalization, which would score and report the result twice.
+        // the last container finalized the group between the sweep's query and its lock
         withBuildGroupFoundByTheSweep();
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
         when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(false);
@@ -1023,8 +983,6 @@ class LocalCIResultProcessingServiceTest {
 
     @Test
     void aContainerThatFailedToBuildIsRecordedOnItsJobAndTheGroupFinalizesWithThatOutcome() {
-        // The build outcome of a container is kept on its job and read back per group when the group finalizes, never
-        // through the submission, which every build of the same commit shares.
         withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));
         withParticipation();
         withSavedBuildJob();

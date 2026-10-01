@@ -114,10 +114,8 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Stores the build logs of one failed container of a multi-container build in the file of the build's aggregated
-     * result, labeled with the container's name, next to the logs its sibling containers stored there. A container that
-     * reports again, because it was retried after its agent was lost, replaces its own earlier lines. The containers of a
-     * build group append one at a time under the group's lock, so no two of them write the file at once.
+     * Stores the build logs of one failed container of a multi-container build, labeled with its name, in the file of the
+     * build's aggregated result, see {@link FailedBuildLogService#appendBuildLogs}.
      *
      * @param buildLogs             build logs of the container
      * @param programmingSubmission submission shared by all containers of the build
@@ -128,7 +126,6 @@ public class BuildLogEntryService {
     public List<BuildLogEntry> appendContainerBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result aggregatedResult, String containerName) {
         List<BuildLogEntry> stored;
         try {
-            // the aggregate completes only once every container has finished, so its submission's date is the retention time
             ZonedDateTime retentionTime = programmingSubmission.getSubmissionDate() != null ? programmingSubmission.getSubmissionDate() : ZonedDateTime.now();
             stored = failedBuildLogService.appendBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), aggregatedResult.getId(), retentionTime,
                     containerName, buildLogs);
@@ -143,9 +140,8 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Hands the logs of a multi-container build over from its aggregated result to the tutor's assessment its feedback was
-     * merged into, before the aggregate is deleted. The assessment ends up with what a single-container build leaves it:
-     * the logs of a failed build replace the ones it had, and after a build that did not fail it has none.
+     * Moves the logs of a multi-container build from its aggregated result to the tutor's assessment its feedback was
+     * merged into, before the aggregate is deleted.
      *
      * @param programmingSubmission submission shared by the aggregate and the assessment
      * @param aggregatedResult      the aggregated result of the build, whose file is removed

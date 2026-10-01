@@ -156,10 +156,8 @@ interface ProgrammingBuildContainersDetail extends DetailBase {
     data: {
         containers: BuildContainer[];
         isExamMode?: boolean;
-        // Signal-backed for the same reason as the diff report below: the language default is fetched
-        // asynchronously and arrives after the sections have rendered. Passing its value instead would mean
-        // rebuilding the sections to show it, and the list tracks sections by identity, so that re-creates
-        // every section and re-runs every deferred block on the page.
+        // a signal like the diff report's fields above: the language default arrives after the sections rendered, and
+        // rebuilding the sections for it would re-create each one and re-run its deferred blocks
         defaultDockerImage: Signal<string | undefined>;
     };
 }

@@ -75,7 +75,6 @@ describe('BuildContainersDetailsComponent', () => {
         fixture.detectChanges();
 
         const images = getContainerCards().map((card) => card.query(By.css('.build-container-details-image')).nativeElement.textContent.trim());
-        // a container's own image wins; the other container is built with the default and shows it by name
         expect(images).toEqual(['image-a:1', 'language-default:1']);
     });
 
@@ -111,7 +110,6 @@ describe('BuildContainersDetailsComponent', () => {
             'artemisApp.programmingExercise.buildContainersEditor.memorySwap: 0',
             'artemisApp.programmingExercise.buildContainersEditor.envVars: TOKEN, MODE',
         ]);
-        // a container without an override shows no flags at all
         expect(flags[1]).toEqual([]);
     });
 });

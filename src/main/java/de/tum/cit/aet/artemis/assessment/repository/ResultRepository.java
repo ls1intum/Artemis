@@ -492,8 +492,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsBySubmissionId(long submissionId);
 
     /**
-     * All results of a submission, newest first. A repository query rather than the submission's lazy result collection,
-     * so callers outside a transaction (holding a detached submission) can use it as well.
+     * All results of a submission, newest first.
      *
      * @param submissionId the id of the submission
      * @return the submission's results, newest first

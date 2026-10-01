@@ -229,8 +229,6 @@ class RedissonDistributedDataMigrator {
      */
     private List<MigrationStep> migrationSteps() {
         return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)),
-                // The build structures are absent from this list on purpose, see V1_TO_V2_STRUCTURES; the discard of the
-                // version 1 remainder at the end of the byte move is what flushes them.
                 new MigrationStep(1, 2, () -> migrateWireCompatibleStructures(1, 2, V1_TO_V2_STRUCTURES)));
     }
 

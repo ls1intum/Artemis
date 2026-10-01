@@ -358,9 +358,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Resolves the Docker image of the exercise's language default, so that the build containers section can name
-     * the image a container without one of its own is built with. The section reads the signal this writes, so a
-     * late answer updates that one binding rather than rebuilding the already rendered sections.
+     * Resolves the Docker image of the exercise's language default for the build containers section.
      *
      * @param exercise the exercise whose language default is looked up
      */
@@ -555,8 +553,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
         const buildContainers = effectiveContainers(parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration));
-        // the images themselves are shown per container in the build containers detail below; this only decides whether
-        // the legacy build script is still worth showing next to the structured plan
+        // only decides whether the legacy build script is shown; the images are listed per container below
         const hasDockerImage = buildContainers.some((container) => !!container.dockerImage);
         const diffReportDetail = this.getDiffReportDetail();
         return {
@@ -666,7 +663,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
                     },
-                // the containers of the build plan, each with its phases; a plan without containers is shown as one container
                 this.localCIEnabled() &&
                     !!buildContainers.length && {
                         type: DetailType.ProgrammingBuildContainers,

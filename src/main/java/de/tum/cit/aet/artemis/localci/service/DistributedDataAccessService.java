@@ -424,10 +424,8 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * Returns the distributed map used only to serialize the aggregation of a submission's multi-container result across
-     * nodes. Only its per-key {@link DistributedMap#lock(Object)} / {@link DistributedMap#unlock(Object)} are used; the
-     * stored values are irrelevant. The key identifies the build group whose containers must
-     * not aggregate their results concurrently. The map is initialized lazily the first time this method is called.
+     * Returns the distributed map whose per-key locks serialize the result aggregation of a build group across nodes; its
+     * values are never used.
      *
      * @return the distributed map backing the result-aggregation locks
      */

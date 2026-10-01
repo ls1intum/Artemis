@@ -48,11 +48,8 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     readonly result = signal<Result | undefined>(undefined);
 
     /**
-     * The build output grouped by the container that produced it. A build plan can run several containers, and only the
-     * containers that failed contribute logs, so the output of one submission can come from more than one of them. The
-     * entries are ordered by time, which interleaves the containers, so they are gathered per container instead: each
-     * group keeps its entries in time order, and the groups follow the order in which the containers first reported.
-     * A submission built by a single container yields one unnamed group, which renders as the output did before.
+     * The build output grouped by the container that produced it, in the order the containers first reported; each
+     * group keeps its entries in time order. A submission built by a single container yields one unnamed group.
      */
     readonly buildLogGroups = computed(() => {
         const entriesByContainer = new Map<string | undefined, BuildLogEntry[]>();

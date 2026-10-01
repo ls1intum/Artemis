@@ -168,7 +168,6 @@ describe('CodeEditorBuildOutputComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
 
-        // One group per container, in the order the containers first reported, each keeping its lines in time order.
         expect(comp.buildLogGroups().map((group) => group.containerName)).toEqual(['instructor_tests', 'student_tests']);
         expect(comp.buildLogGroups().map((group) => group.entries.map((entry) => entry.log))).toEqual([['instructor line one', 'instructor line two'], ['student line one']]);
 

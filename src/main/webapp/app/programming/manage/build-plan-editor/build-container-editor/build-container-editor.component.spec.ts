@@ -164,7 +164,6 @@ describe('BuildContainerEditorComponent', () => {
 
             component.addEnvVar();
             fixture.detectChanges();
-            // the new row is shown, but a variable without a name is not part of the container's flags
             expect(getEnvVarRows()).toHaveLength(2);
             expect(component.container().dockerFlags?.env).toEqual({ MODE: 'strict' });
 

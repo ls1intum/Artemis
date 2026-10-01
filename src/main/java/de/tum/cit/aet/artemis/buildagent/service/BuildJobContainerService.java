@@ -557,7 +557,7 @@ public class BuildJobContainerService {
      * @param buildJobContainerId                    The identifier for the Docker container being prepared.
      * @param buildJobId                             The identifier for the build job, used for logging purposes.
      * @param assignmentRepositoryPath               The filesystem path to the assignment repository.
-     * @param testRepositoryPath                     The filesystem path to the test repository.
+     * @param testRepositoryPath                     The filesystem path to the test repository, or null if the container does not list it.
      * @param solutionRepositoryPath                 The optional filesystem path to the solution repository; can be null if not applicable.
      * @param auxiliaryRepositoriesPaths             An array of paths for auxiliary repositories to be included in the build process.
      * @param auxiliaryRepositoryCheckoutDirectories An array of directory names within the container where each auxiliary repository should be checked out.
@@ -588,8 +588,7 @@ public class BuildJobContainerService {
         // Make sure the working directory and all subdirectories are accessible
         executeDockerCommand(buildJobContainerId, null, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR);
 
-        // Copy the test repository to the container and move it to the test checkout path (may be the working directory).
-        // A container scoped to exclude the test repository has no test path, so nothing is copied into it.
+        // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
         if (testRepositoryPath != null) {
             addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath,
                     LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR + "/" + testCheckoutPath, buildJobId);

@@ -336,10 +336,7 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     /**
      * Same as {@link #extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification, ProgrammingExercise)}, but the
-     * caller decides whether test cases absent from this result are deactivated. A multi-container build reports one
-     * result per container, each covering only that container's test cases, so a single container must NOT deactivate the
-     * test cases of its siblings — it passes {@code false}. The single-container path, whose result covers the whole
-     * exercise, passes {@code true} so a test truly removed from the solution is deactivated.
+     * caller decides whether test cases absent from this result are deactivated.
      *
      * @param buildResult               the build result to extract test cases from
      * @param exercise                  the programming exercise the test cases belong to
@@ -351,11 +348,6 @@ public class ProgrammingExerciseFeedbackCreationService {
         }
     }
 
-    /**
-     * Notifies the clients that the exercise's test cases changed, so that open editors reload them.
-     *
-     * @param exercise the exercise whose test cases changed
-     */
     private void broadcastTestCases(ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
         Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
@@ -377,9 +369,7 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     /**
      * Same as {@link #generateTestCasesFromBuildResult(BuildResultNotification, ProgrammingExercise)}, but the caller
-     * decides whether existing active test cases that are absent from this result are deactivated. A single container of a
-     * multi-container build sees only its own test cases, so it must not deactivate its siblings' — see
-     * {@link #extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification, ProgrammingExercise, boolean)}.
+     * decides whether test cases absent from this result are deactivated.
      *
      * @param buildResult               the build result to extract test cases from
      * @param exercise                  the programming exercise the test cases belong to
@@ -392,11 +382,8 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     /**
-     * Reconciles the exercise's test cases against the ones a build reported: registers the new ones, reactivates any
-     * that reappear, and, when {@code deactivateAbsentTestCases} is set, deactivates the active ones that are absent.
-     * Extracted from {@link #generateTestCasesFromBuildResult} so the multi-container finalize can reconcile against the
-     * merged feedback of every container at once (see {@link #deactivateSolutionTestCasesAbsentFromMergedResult}) rather
-     * than per container, where a test removed from the solution would be indistinguishable from a sibling's test.
+     * Registers the reported test cases that are new, reactivates the ones that reappear and, if requested, deactivates
+     * the active ones that are absent.
      *
      * @param testCasesFromFeedbacks    the test cases the build reported, identified by name
      * @param exercise                  the programming exercise the test cases belong to
@@ -437,12 +424,8 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     /**
-     * Deactivates the exercise's active test cases that are absent from the merged feedback of a multi-container solution
-     * build, and broadcasts the change. Each container of the build reports only its own share of the solution's test
-     * cases and passes {@code false} for deactivation, so a test removed from the solution is absent from every container
-     * but must not be deactivated by any of them (its absence there is indistinguishable from a sibling's test). Only
-     * once the containers' feedback is merged is a test case that no container reported known to be genuinely removed, so
-     * the deactivation is reconciled here, once, against the union of every container's test case names.
+     * Deactivates the exercise's active test cases that no container of a multi-container solution build reported, and
+     * broadcasts the change.
      *
      * @param presentTestCaseNames the names of the test cases the merged build result reported
      * @param exercise             the solution's programming exercise
@@ -460,9 +443,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         // We compare the new generated test cases from feedback with the existing test cases from the database
         return existingTestCases.stream().filter(existing -> {
             Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
-            // Either the test case was active and is not part of the feedback anymore. A single container of a
-            // multi-container build only ever sees its own test cases, so deactivation is suppressed for it (the absent
-            // ones belong to sibling containers, not to a test removed from the solution).
+            // Either the test case was active and is not part of the feedback anymore
             boolean existingTestCaseRemoved = deactivateAbsentTestCases && matchingTestCase.isEmpty() && existing.isActive();
             // OR was not active before and is now part of the feedback again.
             boolean inactiveTestReactivated = matchingTestCase.isPresent() && !existing.isActive();

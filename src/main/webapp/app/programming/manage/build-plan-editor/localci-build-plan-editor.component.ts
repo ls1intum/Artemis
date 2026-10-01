@@ -34,8 +34,8 @@ import { BuildContainerEditorComponent } from 'app/programming/manage/build-plan
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/build-plan-editor/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 
 /**
- * Dedicated build plan editor page for LocalCI. It edits the structured build plan configuration (build phases, Docker
- * image, Docker flags, and timeout) of a programming exercise on its own page, and shows the live template and solution
+ * Dedicated build plan editor page for LocalCI. It edits the structured build plan configuration (build containers,
+ * Docker flags, and timeout) of a programming exercise on its own page, and shows the live template and solution
  * build status so that an instructor can immediately see whether the new build plan works.
  */
 @Component({
@@ -72,7 +72,6 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     readonly isSaving = signal(false);
 
     readonly containers = signal<BuildContainer[]>([]);
-    // the language default image, recorded so the container editor can offer it instead of pinning it into a field
     readonly defaultDockerImage = signal<string>('');
     readonly timeout = signal<number>(0);
 
@@ -155,15 +154,12 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     /** a container's Docker flags are optional; a resource limit it sets has to satisfy the bounds of the server */
     readonly areContainerDockerFlagsValid = computed(() => this.containers().every((container) => areBuildContainerDockerFlagsValid(container.dockerFlags)));
 
-    // the exercise's resource limits as the build configuration child currently shows them, which a container without a
-    // limit of its own runs with
+    // the exercise's resource limits as the build configuration child currently shows them
     readonly exerciseDockerFlags = computed<BuildContainerDockerFlags>(() => {
         const buildConfiguration = this.buildConfigurationComponent();
         return { cpuCount: buildConfiguration?.cpuCount(), memory: buildConfiguration?.memory(), memorySwap: buildConfiguration?.memorySwap() };
     });
 
-    // the networks a container may select: those allowed on the instance, or undefined while the exercise's language
-    // does not support selecting a network
     readonly containerNetworks = computed(() => {
         const buildConfiguration = this.buildConfigurationComponent();
         return buildConfiguration?.isLanguageSupported() ? (buildConfiguration.allowedCustomNetworks() ?? []) : undefined;
@@ -171,8 +167,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
 
     readonly isBuildPlanConfigurationWithinSizeLimit = computed(() => JSON.stringify({ containers: this.containers() }).length <= BUILD_PLAN_CONFIGURATION_MAX_LENGTH);
 
-    // An empty container image is allowed: submit() sends no image for it and the build falls back to the exercise's
-    // language default per container, so the container keeps following default image bumps instead of pinning one.
+    // an empty container image is allowed: the build then uses the exercise's language default
     readonly canSubmit = computed(
         () =>
             this.containers().length > 0 &&
@@ -187,12 +182,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             this.areDockerFlagsWithinSizeLimit(),
     );
 
-    /**
-     * Appends a container that checks out the repositories configured on the exercise, i.e. one that does not scope its
-     * repositories, so that adding a container does not silently change what an existing build plan checks out.
-     */
+    /** Appends an empty container that does not scope its repositories. */
     addContainer(): void {
-        // the new container reuses the first container's image; when that one inherits the language default, so does this one
+        // exercises usually build every container from one image, so a new container starts with the first one's
         this.containers.update((containers) => [...containers, { name: '', dockerImage: containers[0]?.dockerImage, phases: [] }]);
     }
 
@@ -223,13 +215,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     }
 
     /**
-     * Requests the language default plan of the exercise. Its Docker image is the placeholder every container without an
-     * image of its own shows, so it is fetched for a saved plan as well. Its phases seed the editor only when the exercise
-     * has no build plan configuration yet (a null configuration builds on the language default at build time), so it
-     * opens with the real default plan instead of an empty list; the seeded plan becomes one default container. Does
-     * nothing when the exercise has no programming language. The response is only applied while it still fits the editor
-     * state that asked for it, so neither a slow response for a previously opened exercise nor one overtaken by the
-     * instructor's own edits can overwrite what is on screen.
+     * Requests the language default plan. Its image is the placeholder of every container without an image of its
+     * own; its phases seed one default container while the editor is still empty, as a null configuration builds with
+     * them. A response for a previously opened exercise is ignored.
      */
     private seedDefaultsFromTemplate(exercise: ProgrammingExercise): void {
         const programmingLanguage = exercise.programmingLanguage;
@@ -253,10 +241,8 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
                     if (template.dockerImage) {
                         this.defaultDockerImage.set(template.dockerImage);
                     }
-                    // only an editor that is still empty is seeded: a saved plan keeps its containers, and the instructor may
-                    // have authored one while the request was in flight
+                    // checked on arrival: the instructor may have added a container while the request was in flight
                     if (template.phases?.length && this.containers().length === 0) {
-                        // the image stays unset so the seeded container inherits; the template's image is only the placeholder
                         const seeded = [{ name: DEFAULT_BUILD_CONTAINER_NAME, phases: template.phases }];
                         this.containers.set(seeded);
                         // the seeded containers are not a user edit, so they are folded into the baseline; every other field
@@ -270,9 +256,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     }
 
     /**
-     * Initializes the editable build plan state (containers and timeout) from the exercise's build config. A build plan
-     * that carries a flat list of phases is normalized into a single container, so that the editor only deals with
-     * containers.
+     * Initializes the editable build plan state (containers and timeout) from the exercise's build config.
      */
     private initEditingState(exercise: ProgrammingExercise): void {
         const buildConfig = exercise.buildConfig;
@@ -346,9 +330,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
         const submittedExerciseId = exercise.id;
         this.buildPlanConfigurationService
             .updateBuildPlanConfiguration(exercise.id, {
-                // a blank image is trimmed to undefined, so the container inherits the language default instead of
-                // persisting an unusable empty image (mirrors the plan-level behaviour the reviewed editor had); flags
-                // without a set field are dropped, so the container runs with the flags of the exercise
+                // blank images and unset flags are dropped, so the language default image and the exercise's flags apply
                 buildPlan: {
                     containers: this.containers().map((container) =>
                         cloneWith(container, {

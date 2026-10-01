@@ -98,15 +98,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .withMessage("The request body is not of type LocalCIBuildResult");
     }
 
-    /**
-     * The containers of a multi-container build all contribute to a single result of one submission: each container
-     * appends its feedback to the same in-progress result, and the result is only finalized once every container has
-     * finished, counted via the build jobs linked to the result.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testContainerResultsAggregateIntoOneResultAndFinalizeWhenComplete() throws Exception {
-        // Configure the exercise with two containers so the expected container count resolves to two.
         BuildContainerDTO containerA = new BuildContainerDTO("container_a", "image-a:1",
                 List.of(new BuildPhaseDTO("phase_a", "echo a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"))));
         BuildContainerDTO containerB = new BuildContainerDTO("container_b", "image-b:2",
@@ -127,39 +121,30 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         submission.setParticipation(participation);
         submission = programmingSubmissionRepository.save(submission);
 
-        // First container finishes: its feedback is appended to a new, still in-progress result (no completion date yet).
         BuildResult resultA = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
         Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, false, "container_a", null).result();
         assertThat(aggregatedResult).isNotNull();
         assertThat(aggregatedResult.getCompletionDate()).as("the result stays in progress until every container finished").isNull();
         buildJobRepository.save(new BuildJob(buildJobFor("merge-0", "merge", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
-        // Second container finishes: it appends to the same result rather than creating a second one.
         BuildResult resultB = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
         Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, false, "container_b", aggregatedResult.getId()).result();
         assertThat(aggregatedResultAgain.getId()).as("all containers of one submission share a single result").isEqualTo(aggregatedResult.getId());
         buildJobRepository.save(new BuildJob(buildJobFor("merge-1", "merge", participation, commitHash, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResultAgain));
 
-        // Both containers have finished, counted over the build jobs of the build group, and both link to the shared result.
         assertThat(buildJobRepository.findAllByBuildGroupId("merge")).hasSize(2).allSatisfy(job -> {
             assertThat(job.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
             assertThat(job.getResult()).isNotNull();
         });
         assertThat(buildJobRepository.countByResultId(aggregatedResultAgain.getId())).isEqualTo(2);
 
-        // Finalizing marks the aggregated result complete. Neither container reported a test case, so no relevant test
-        // case passed: the result is not successful, although every container ran.
+        // no container reported a test case, so the result is not successful
         Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain.getId(), participation, true, false, ZonedDateTime.now());
         assertThat(finalizedResult.getCompletionDate()).isNotNull();
         assertThat(finalizedResult.isSuccessful()).isFalse();
     }
 
-    /**
-     * The lock-repository policy's result-time step only flips the rated flag on the result object; it is the save in
-     * {@code finalizeContainerResult} that persists it. This suite calls finalize OUTSIDE a transaction on purpose: if the
-     * save ran before the policies, the flag would only reach the database through the caller's dirty checking, and a
-     * caller like this one would silently lose it.
-     */
+    /** Finalize itself persists the lock-repository policy's unrated flag; this test calls it outside a transaction. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFinalizePersistsTheUnratedFlagOfTheLockRepositoryPolicyWithoutATransaction() {
@@ -183,7 +168,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         earlierResult.setExerciseId(programmingExercise.getId());
         resultRepository.save(earlierResult);
 
-        // The submission being built now, with its single container appended and linked.
         String commitHash = "0000000000000000000000000000000000000002";
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setCommitHash(commitHash);
@@ -197,17 +181,12 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
 
-        // Persisted, not merely set on the returned object.
         Result persistedResult = resultRepository.findById(finalizedResult.getId()).orElseThrow();
         assertThat(persistedResult.getCompletionDate()).isNotNull();
         assertThat(persistedResult.isRated()).isFalse();
     }
 
-    /**
-     * When the student-tests container crashes, the instructor-tests container's result must survive: its feedback stays
-     * on the shared result, the crashed container's build logs are kept and labeled with its name, and the aggregated
-     * result is finalized as failed rather than being lost.
-     */
+    /** A crashed sibling keeps the instructor container's feedback, labels its own logs and fails the finalized result. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testInstructorResultsPreservedWhenStudentContainerCrashes() throws Exception {
@@ -235,7 +214,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         testCaseRepository.save(new ProgrammingExerciseTestCase().testName("instructorTest").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
                 .bonusMultiplier(1D).bonusPoints(0D));
 
-        // the instructor container finishes with a passing test
         var instructorJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("instructorTest", List.of())));
         BuildResult instructorResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(instructorJob), null, null, false, 0);
         Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, instructorResult, true, "instructor_tests", null).result();
@@ -249,12 +227,10 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .result();
         buildJobRepository.save(new BuildJob(buildJobFor("crash-1", "crash", participation, commitHash, "student_tests"), BuildStatus.FAILED, aggregatedResultAgain, true));
 
-        // the instructor container's feedback survives the student container's crash
         assertThat(aggregatedResultAgain.getId()).isEqualTo(aggregatedResult.getId());
         assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(aggregatedResultAgain.getId())))
                 .as("the instructor feedback is not lost when a sibling container crashes").isNotEmpty();
 
-        // the crashed container's build logs are preserved and labeled with its container name
         ProgrammingSubmission reloadedSubmission = programmingSubmissionRepository.findById(submission.getId()).orElseThrow();
         List<BuildLogEntry> buildLogs = buildLogEntryService.getLatestBuildLogs(reloadedSubmission);
         assertThat(buildLogs).anySatisfy(logEntry -> {
@@ -262,7 +238,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
             assertThat(logEntry.getLog()).contains("out of memory");
         });
 
-        // finalizing once both containers finished marks the result complete but not successful
         List<BuildJob> crashJobs = buildJobRepository.findAllByBuildGroupId("crash");
         boolean allContainersSucceeded = crashJobs.stream().allMatch(job -> job.getBuildStatus() == BuildStatus.SUCCESSFUL);
         assertThat(allContainersSucceeded).isFalse();
@@ -275,10 +250,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(programmingSubmissionRepository.findById(submission.getId()).orElseThrow().isBuildFailed()).as("written to the submission when the group finalizes").isTrue();
     }
 
-    /**
-     * The merged result is successful only when every relevant test case passed. Every container ran and built here, but
-     * the only test failed, so the finalized result must not be successful.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFinalizedResultIsNotSuccessfulWhenATestFailedAlthoughEveryContainerRan() {
@@ -297,7 +268,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         testCaseRepository.save(new ProgrammingExerciseTestCase().testName("failingTest").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
                 .bonusMultiplier(1D).bonusPoints(0D));
 
-        // the container ran to completion and built, but its only test failed
         var job = new LocalCIJobDTO(List.of(new LocalCITestJobDTO("failingTest", List.of("expected 2 but was 3"))), List.of());
         BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(job), null, null, false, 0);
         Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null).result();
@@ -310,11 +280,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(finalizedResult.isSuccessful()).as("a failing test makes the merged result unsuccessful").isFalse();
     }
 
-    /**
-     * The merged result is successful when every container ran and built and every relevant test case passed. The test
-     * cases are partitioned across the containers here, each reporting only its own share as passed, so it is the union
-     * of the containers' feedback that covers every test case: the finalized result must be successful.
-     */
+    /** The test cases are split across two containers, so only their merged feedback covers every test case. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFinalizedResultIsSuccessfulWhenEveryContainerRanAndEveryTestPassed() {
@@ -330,8 +296,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         submission.setParticipation(participation);
         programmingSubmissionRepository.save(submission);
 
-        // the exercise's registered test cases are partitioned across the two containers, and each container ran and
-        // built and reports its share as passed
         List<String> testNames = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true).stream().map(ProgrammingExerciseTestCase::getTestName).sorted()
                 .toList();
         assertThat(testNames).hasSizeGreaterThan(1);
@@ -357,12 +321,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(finalizedResult.isSuccessful()).as("every container ran and every test case passed").isTrue();
     }
 
-    /**
-     * The containers of one build attempt merge under their build group, which the result processing identifies through
-     * the group's build jobs. A second attempt of the same commit (a retry, or a re-push while the first attempt is still
-     * merging) is a new group: its first container starts a result of its own instead of joining the earlier attempt's
-     * still-open aggregate, so the two attempts never mix their feedback or their completion counts.
-     */
+    /** A retry or re-push of the same commit is a new build group with an aggregate of its own. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEachBuildAttemptAggregatesIntoItsOwnResult() {
@@ -392,17 +351,12 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(buildJobRepository.findResultIdsOfBuildGroup("attempt1", PageRequest.of(0, 1))).containsExactly(firstAggregate.getId());
         assertThat(buildJobRepository.findResultIdsOfBuildGroup("attempt2", PageRequest.of(0, 1))).containsExactly(secondAggregate.getId());
 
-        // Finalizing the second attempt leaves the first attempt's aggregate untouched and still in progress.
         Result finalizedSecond = programmingExerciseGradingService.finalizeContainerResult(secondAggregate.getId(), participation, true, false, ZonedDateTime.now());
         assertThat(finalizedSecond.getCompletionDate()).isNotNull();
         assertThat(resultRepository.findById(firstAggregate.getId()).orElseThrow().getCompletionDate()).isNull();
     }
 
-    /**
-     * The sweep finalizes a build group whose jobs have all finished while its aggregated result stayed in progress, which
-     * is what a crash between the last container's link and its finalization leaves behind. A group that still has a
-     * container queued is not complete and is left alone, and a second run finds nothing left to do.
-     */
+    /** The sweep finalizes a complete group whose aggregate stayed in progress and skips one with a queued container. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSweepFinalizesACompleteGroupWhoseAggregatedResultStayedInProgress() {
@@ -441,10 +395,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(sweep()).as("nothing left to finalize").isZero();
     }
 
-    /**
-     * The scoring adds legacy feedback rows to the finalized result, here the submission penalty. The result is reported
-     * to the client as it is, so those rows must carry ids like the typed rows do: the client identifies feedback by id.
-     */
+    /** The penalty feedback the scoring adds carries ids, by which the client identifies feedback. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFinalizedResultCarriesTheIdsOfTheFeedbackTheScoringAdded() {
@@ -477,11 +428,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(finalizedResult.getFeedbacks()).as("reported with the ids the client identifies feedback by").allMatch(feedback -> feedback.getId() != null);
     }
 
-    /**
-     * An attempt whose merge was interrupted between the aggregate's insert and its job's link leaves an automatic result
-     * in progress on the submission that nothing refers to. It is the submission's newest result, but it must not hide
-     * the tutor's assessment from the finalize of the next attempt, whose feedback belongs into that assessment.
-     */
+    /** An interrupted merge's unlinked leftover is deleted, so the assessment stays the latest result. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAnInProgressLeftoverDoesNotHideTheAssessmentTheFinalizedFeedbackIsMergedInto() {
@@ -511,18 +458,12 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         Result reportedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
 
         assertThat(reportedResult.getId()).as("the feedback was merged into the assessment, which is the result to report").isEqualTo(assessment.getId());
-        // The leftover is deleted along the way. It was newer than the assessment, and with this build's own aggregate gone
-        // after the merge it would otherwise stay the submission's latest result and be shown in place of the assessment.
         assertThat(resultRepository.findById(leftover.getId())).as("the abandoned aggregate is deleted").isEmpty();
         assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submission.getId()).orElseThrow().getLatestResult().getId())
                 .as("the assessment is the submission's latest result").isEqualTo(assessment.getId());
     }
 
-    /**
-     * Only an aggregate that no build job links to is abandoned, and it is only deleted while no job of the participation
-     * is pending. The aggregate of an overlapping build that has not finalized yet is in progress as well, but its jobs
-     * link to it, so the finalization of a newer build leaves it alone and the older build can still finalize.
-     */
+    /** Finalizing a newer build deletes only unlinked leftovers; the linked aggregate of a build in progress is kept. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheAggregateOfAnOverlappingBuildInProgressIsKept() {
@@ -546,12 +487,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(programmingExerciseGradingService.finalizeContainerResult(running.getId(), participation, true, false, ZonedDateTime.now()).getCompletionDate()).isNotNull();
     }
 
-    /**
-     * The first container of a build creates the build's aggregate before it links its job to it. In between, the
-     * aggregate is in progress and linked by no job, like an abandoned one, but the container's job is still pending. A
-     * newer build of the same submission that finalizes in that moment keeps the aggregate, and the older build finalizes
-     * with its container's feedback once the job is linked.
-     */
+    /** A newer build's finalization keeps the aggregate of an older build whose job is still pending and not linked to it yet. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheAggregateOfAJobThatIsNotLinkedYetIsKept() {
@@ -565,7 +501,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
         Result olderAggregate = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null).result();
         BuildJob pendingJob = buildJobRepository.save(new BuildJob(buildJobFor("pending-0", "pending", participation, commitHash, "container_a"), BuildStatus.BUILDING, null));
-        // a newer build of the same submission finalizes in the meantime
         Result newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("overlap-0", "overlap", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, newer));
 
@@ -573,7 +508,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         assertThat(resultRepository.findById(olderAggregate.getId())).as("the aggregate of a pending job is kept").isPresent();
 
-        // the older build's container saves its link, and the build finalizes with the container's feedback
         pendingJob.setBuildStatus(BuildStatus.SUCCESSFUL);
         pendingJob.setResult(olderAggregate);
         buildJobRepository.save(pendingJob);
@@ -583,12 +517,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(finalizedResult.getPassedTestCaseCount()).as("the feedback of the container whose job was pending is kept").isEqualTo(1);
     }
 
-    /**
-     * The processing-map event that reports a job as building is delivered asynchronously and can arrive after the job's
-     * result has been processed: an agent's event thread that a long build blocks delays it by the length of that build.
-     * Reopening the finished job would make its build group look incomplete, so neither the merge of the last container
-     * nor the sweep would ever finalize the aggregated result. A job that is still pending must take the transition.
-     */
+    /** A late BUILDING event leaves a finished job finished and still starts a queued one. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testALateBuildingEventDoesNotReopenAFinishedContainerJob() {
@@ -607,12 +536,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .hasSize(1);
     }
 
-    /**
-     * The check for missing jobs reads the pending jobs and marks those it cannot find in the queue as missing. A job
-     * whose result is processed in between has finished by then and must stay finished: marked as missing, it would be
-     * retried although it has a result, and its build group would never count as complete. A job that is still pending
-     * takes the transition.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAJobThatFinishedMeanwhileIsNotMarkedAsMissing() {
@@ -628,10 +551,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(buildJobRepository.findByBuildJobId("stale-1")).map(BuildJob::getBuildStatus).as("a pending job is marked as missing").contains(BuildStatus.MISSING);
     }
 
-    /**
-     * The containers of a multi-container build link their jobs to one result. The result's build logs are available
-     * when one of those jobs has a log file, whichever of them is looked at last.
-     */
+    /** A merged result's logs are available when any one of its jobs has a log file. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheLogsOfAMergedResultAreAvailableWhenOneOfItsJobsHasALogFile() {
@@ -651,11 +571,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(resultService.getLogsAvailabilityForResults(participation.getId())).containsEntry(aggregatedResult.getId(), group + "-1");
     }
 
-    /**
-     * A build whose feedback is merged into a tutor's assessment leaves no automatic result behind, as on the
-     * single-container path: a stored aggregate would be newer than the assessment and would be shown in its place. The
-     * build's job links to the assessment instead, and every later build merges into the assessment as well.
-     */
+    /** Each build merged into an assessment deletes its aggregate and relinks its jobs to the assessment. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testABuildMergedIntoTheAssessmentLeavesTheAssessmentAsTheLatestResult() {
@@ -685,10 +601,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         }
     }
 
-    /**
-     * The logs of a failed build whose feedback is merged into a tutor's assessment are shown for the assessment, as the
-     * logs of a failed single-container build are, and nothing is left under the deleted aggregate.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheLogsOfAFailedBuildMoveToTheAssessmentItWasMergedInto() {
@@ -708,11 +620,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(buildLogEntryService.getBuildLogs(reloaded, appended.result().getId())).isEmpty();
     }
 
-    /**
-     * A draft assessment has no completion date, like an aggregate still in progress. Once a build's feedback was merged
-     * into the draft and its jobs link to it, the sweep over complete groups whose aggregate stayed in progress must
-     * leave the group alone: it would otherwise score the draft as if it were the build's aggregate.
-     */
+    /** A draft has no completion date either; the sweep must not finalize a group merged into it. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheSweepLeavesAGroupMergedIntoADraftAssessmentAlone() {
@@ -736,12 +644,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         return localCIResultProcessingService.finalizeCompletedBuildGroups(3, ZonedDateTime.now().minusHours(1));
     }
 
-    /**
-     * A build group of two containers that lost one: the first container reported the given result and its job links to
-     * the group's aggregated result, the job of the second went missing.
-     *
-     * @return the aggregated result of the group, still in progress
-     */
+    /** a group of two whose first job reported the given result and links to the returned aggregate, while the second job went missing */
     private Result groupThatLostAContainer(String buildGroupId, ProgrammingExerciseStudentParticipation participation, @Nullable String commitHashOfJobs,
             BuildResult reportedResult, ZonedDateTime submissionDate, int retryCountOfMissingJob) {
         var appended = programmingExerciseGradingService.appendContainerResult(participation, reportedResult, true, "container_a", null);
@@ -754,7 +657,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
     private void saveGroupJob(String id, String buildGroupId, ProgrammingExerciseParticipation participation, @Nullable String commitHash, BuildStatus buildStatus,
             @Nullable Result result, boolean buildFailed, ZonedDateTime submissionDate, int retryCount) {
         BuildJob job = new BuildJob(buildJobFor(id, buildGroupId, participation, commitHash, "container"), buildStatus, result, buildFailed);
-        // the jobs of one build are submitted together
         job.setBuildSubmissionDate(submissionDate);
         job.setRetryCount(retryCount);
         // a job that reported did so minutes ago, which is longer than the grace period of the sweep
@@ -768,10 +670,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         return new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
     }
 
-    /**
-     * A container job that went missing is retried by the missing-job service, which triggers the whole build again. As
-     * long as that retry is still to come, the group is left alone: its result is neither finalized nor deleted.
-     */
+    /** The sweep neither finalizes nor deletes the result of a group whose missing job is still to be retried. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheSweepLeavesAGroupAloneWhoseMissingJobIsStillRetried() {
@@ -786,11 +685,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(resultRepository.findById(aggregatedResult.getId()).orElseThrow().getCompletionDate()).as("the result waits for the retry").isNull();
     }
 
-    /**
-     * Once the missing job is not retried any more, because it ran out of retries or left the retry window, nothing will
-     * complete the group. It is finalized with the feedback of the container that reported, and the lost container
-     * counts as failed to build, as a container whose job timed out does.
-     */
+    /** A group whose missing job ran out of retries or left the retry window is finalized, and the lost container counts as failed to build. */
     @ParameterizedTest
     @CsvSource({ "3, 10", "0, 90" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -813,10 +708,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(sweep()).as("nothing left to close").isZero();
     }
 
-    /**
-     * A later job of the same participation stops the retry of a missing job. When that job builds another commit, the
-     * student pushed again, nothing replaces the old build, and its group is finalized like one that ran out of retries.
-     */
+    /** A later job of another commit stops the retry of a missing job without replacing its build, so the sweep finalizes the group. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheSweepFinalizesAGroupThatLostAContainerWhenAnotherCommitWasPushed() {
@@ -829,17 +721,13 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         // the build of the next push, still queued
         saveGroupJob("next-0", "next", participation, "0000000000000000000000000000000000000023", BuildStatus.QUEUED, null, false, submissionDate.plusMinutes(1), 0);
 
-        // run as the missing-job service schedules it, with the retry policy that service retries by
+        // the scheduled method, with the missing-job service's own retry policy
         localCIMissingJobService.finalizeCompletedBuildGroups();
 
         assertThat(resultRepository.findById(aggregatedResult.getId()).orElseThrow().getCompletionDate()).isNotNull();
     }
 
-    /**
-     * The retry of a missing job triggers the commit again as a new build group, which replaces the old one. Finalizing
-     * the old group would show the student the partial outcome of a build whose replacement is still running, so its
-     * aggregated result is deleted with its logs, and its jobs lose their link.
-     */
+    /** A group whose lost job was retried as a new group of the same commit is replaced: the sweep deletes its result and logs and unlinks its jobs. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheSweepDeletesTheResultOfAGroupThatLostAContainerAndWasRetried() {
@@ -866,10 +754,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submission.getId()).orElseThrow().getResults()).isEmpty();
     }
 
-    /**
-     * A build that was triggered without a commit, as the solution build after a push to an auxiliary repository is, is
-     * replaced by its retry as well: the retry carries no commit either.
-     */
+    /** A build triggered without a commit, as after an auxiliary push, is replaced by its retry, which carries no commit either. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testABuildWithoutACommitIsReplacedByItsRetry() {
@@ -886,11 +771,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(resultRepository.findById(aggregatedResult.getId())).isEmpty();
     }
 
-    /**
-     * The result of the lost container can still arrive after the sweep deleted the result of its replaced group. It must
-     * not start a new result: that result would hold this container's feedback alone and be newer than the retry's. The
-     * job keeps the status the sweep closed it with.
-     */
+    /** A late result of a lost container whose replaced group the sweep deleted starts no new result, and its job stays cancelled. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testALateResultOfAReplacedGroupDoesNotStartANewResult() {
@@ -916,11 +797,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .as("no result is started for the replaced build").isEmpty();
     }
 
-    /**
-     * A job can be declared missing while its result still waits to be processed, and its build is then retried. As long
-     * as the sweep has not closed the job's group, the result is merged: dropping it would leave the siblings to finalize
-     * a result without this container's feedback.
-     */
+    /** A late result of a missing job is merged while the sweep has not closed its group, even though its build was retried. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testALateResultOfAMissingJobWhoseGroupIsStillOpenIsMerged() {
@@ -942,11 +819,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(resultRepository.findById(aggregatedResultId).orElseThrow().getCompletionDate()).as("the result waits for the second container").isNull();
     }
 
-    /**
-     * A test case that several containers report, as a shared setup phase does, is kept once. When the containers
-     * disagree, the failed report stands whichever container finishes first: the outcome and the score of the merged
-     * result must not depend on the order in which the containers complete.
-     */
+    /** A test case two containers report is kept once, and a failed report wins in either completion order. */
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -985,11 +858,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         return resultRepository.save(assessment);
     }
 
-    /**
-     * Two builds of the same commit that overlap can finalize in either order. The submission's build-failed flag
-     * follows the newest of their aggregates, so an older build that finalizes last does not overwrite what the newer
-     * build wrote.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAnOlderBuildFinalizingLastDoesNotOverwriteTheNewerBuildsOutcome() {
@@ -998,7 +866,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         String commitHash = "0000000000000000000000000000000000000012";
         long submissionId = submissionOf(participation, commitHash).getId();
 
-        // the older build: its container failed to build; the newer build of the same commit: its container built fine
         var older = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "older build failed"), false, "container_a", null);
         buildJobRepository.save(new BuildJob(buildJobFor("order-a-0", "order-a", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, older.result(), true));
         var newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null);
@@ -1033,13 +900,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         buildJobRepository.save(buildJob);
     }
 
-    /**
-     * A solution build reconciles the exercise's test cases over the merged feedback: a test case no container reported
-     * is deactivated as removed from the solution. A container whose result could not be merged reported nothing, and
-     * its job is recorded as failed without the submission's build-failed flag being touched, so the reconciliation has
-     * to be skipped on the job status as well. Otherwise the failed container's test cases would be deactivated as if
-     * the solution had lost them, and every student graded afterwards would lose those tests.
-     */
+    /** A container job that failed without failing the build still skips the solution's test-case reconciliation. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSolutionTestCasesAreKeptWhenAContainerJobFailedWithoutFailingTheBuild() {
@@ -1057,8 +918,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         testCaseRepository.save(new ProgrammingExerciseTestCase().testName("studentTest").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
                 .bonusMultiplier(1D).bonusPoints(0D));
 
-        // the instructor container reports its test; the student container's result could not be merged, so its job is
-        // recorded as failed without a result link, which leaves the build-failed flag untouched
+        // the student container's merge failed: its job is ERROR and unlinked
         var instructorJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("instructorTest", List.of())));
         BuildResult instructorResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(instructorJob), null, null, false, 0);
         Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(solutionParticipation, instructorResult, true, "instructor_tests", null).result();
@@ -1075,11 +935,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .as("no test case is deactivated, the unreported one of the failed container included").containsExactlyInAnyOrderElementsOf(activeBefore).contains("studentTest");
     }
 
-    /**
-     * The build-failed flag of a submission is derived from the jobs of the group being finalized, not from whichever
-     * container of whichever build wrote it last: a re-triggered build of the same commit that overlaps with an earlier
-     * one must neither hide the earlier build's failure nor inherit it.
-     */
+    /** Two overlapping builds of one commit neither hide nor inherit each other's build failure. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheBuildFailedFlagFollowsTheGroupBeingFinalizedWhenTwoBuildsOverlap() {
@@ -1121,11 +977,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .isFalse();
     }
 
-    /**
-     * Every build keeps its logs under its own aggregated result: a container that failed in an earlier build of the same
-     * submission and succeeds now does not show its old logs next to the logs of a sibling that fails now, and the
-     * earlier build's logs stay available for its result.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEveryBuildKeepsItsLogsUnderItsOwnResult() {
@@ -1149,11 +1000,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(buildLogEntryService.getBuildLogs(reloaded, earlier.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("container_a failed earlier");
     }
 
-    /**
-     * Two builds of the same commit that overlap share the submission but not their logs: each build's logs are
-     * attributed to its aggregated result, so neither build erases the other's logs when it starts, and the logs shown
-     * for a result are that build's alone.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTheLogsOfAnOverlappingBuildAreNeitherErasedNorShown() {
@@ -1165,7 +1011,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         // the first build: container_a fails and the build is still merging when the second build starts
         var first = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "first build failed"), false, "container_a", null);
-        // the second build merges its first container while the first build is in progress
         var second = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null);
         assertThat(buildLogEntryService.getBuildLogs(reloaded, first.result().getId())).as("a build in progress keeps its logs").extracting(BuildLogEntry::getLog)
                 .containsExactly("first build failed");
@@ -1175,11 +1020,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(buildLogEntryService.getBuildLogs(reloaded, second.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("second build failed");
     }
 
-    /**
-     * A container without tests is judged by the exit code of its build script. A job that times out never reports one:
-     * the agent constructs its result without an exit code. Such a container did not build, so its logs are kept for
-     * the student and the submission is marked as build-failed, next to the feedback of the sibling that succeeded.
-     */
+    /** A compile-only container that timed out has no exit code, so it counts as failed to build and keeps its logs. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testACompileOnlyContainerThatTimedOutCountsAsFailedToBuildAndKeepsItsLogs() {
@@ -1228,7 +1069,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         RepositoryInfo repositoryInfo = new RepositoryInfo("slug", RepositoryType.USER, RepositoryType.USER, null, null, null, null, null);
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), null, null, null, 0);
         BuildConfig jobBuildConfig = new BuildConfig(null, "image", commitHash, commitHash, commitHash, null, null, null, false, false, null, 0, null, null, null, null);
-        // the expected count is only read by the result processing, which these tests bypass by driving the grading service directly
+        // the expected count is only read by the result processing, which most of these tests bypass by driving the grading service directly
         var buildGroup = new BuildJobQueueItem.BuildGroupMembership(buildGroupId, 2, containerName);
         return new BuildJobQueueItem(id, "plan", buildAgent, participation.getId(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId(),
                 programmingExercise.getId(), 0, 1, null, repositoryInfo, jobTimingInfo, jobBuildConfig, null, buildGroup, null);

@@ -326,10 +326,8 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Handles a finished build job whose data changed after it was announced as finished: the containers of a
-     * multi-container build finish one by one, and their shared result is only complete once the last of them did.
-     * The job is one the statistics already count, so it only replaces the job that is listed; a job that is not on
-     * the page shown is left to the next load.
+     * Replaces a listed finished build job whose data changed after it was announced, e.g. once the last container of a
+     * multi-container build finished. The statistics already counted the job, so they stay unchanged.
      *
      * @param finishedBuildJob the changed finished build job received via WebSocket
      */

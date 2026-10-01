@@ -15,9 +15,10 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
  * {@code buildagent.dto.BuildLogDTO} here — that record is the Hazelcast build-agent contract, not the REST wire
  * shape, and coupling the two would let an unrelated change ripple into this endpoint.
  *
- * @param id   the build log entry id
- * @param time when the log line was produced
- * @param log  the log line content
+ * @param id            the build log entry id
+ * @param time          when the log line was produced
+ * @param log           the log line content
+ * @param containerName the build container that produced the line, null for a single-container build
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildLogEntryDTO(Long id, ZonedDateTime time, String log, String containerName) implements Serializable {
@@ -32,8 +33,6 @@ public record BuildLogEntryDTO(Long id, ZonedDateTime time, String log, String c
         if (buildLogEntry == null) {
             return null;
         }
-        // The container name is set for the logs of a multi-container build only; the client groups the build output by
-        // it. It is null, and left out of the JSON, for a submission built by a single container.
         return new BuildLogEntryDTO(buildLogEntry.getId(), buildLogEntry.getTime(), buildLogEntry.getLog(), buildLogEntry.getContainerName());
     }
 }

@@ -259,7 +259,6 @@ public class LocalCIQueueWebsocketService {
 
     /**
      * Sends a finished build job over websocket whose data changed after it was announced as finished.
-     * Clients replace the job they already list; it is not a further finished job.
      *
      * @param finishedBuildJob the finished build job DTO to send
      */
@@ -268,7 +267,6 @@ public class LocalCIQueueWebsocketService {
             return;
         }
         localCIWebsocketMessagingService.sendFinishedBuildJobChange(finishedBuildJob);
-        // Also send to the individual build job topic for the build job detail page
         localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
     }
 

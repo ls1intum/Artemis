@@ -4,10 +4,8 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <!-- Add the build group of a build job. The containers of a multi-container build are scheduled as separate build jobs
-         that share a build group id, under which the result processing merges their results into one result. It is null
-         for a job that builds a submission on its own (the common case). The index serves the merge, which counts and
-         looks up the jobs of a group. -->
+    <!-- Build group shared by the container jobs of one multi-container build, under which their results are merged;
+         null for a single-container job. -->
     <changeSet id="20260903140000-01-add-build-group-id-to-build-job" author="greinwald">
         <addColumn tableName="build_job">
             <column name="build_group_id" type="varchar(255)"/>

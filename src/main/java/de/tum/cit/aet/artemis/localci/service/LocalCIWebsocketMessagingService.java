@@ -142,8 +142,7 @@ public class LocalCIWebsocketMessagingService {
     }
 
     /**
-     * Sends a finished build job whose data changed after it was announced as finished, so that clients replace the job they already list instead of counting a further one.
-     * Sends to both the admin topic and the course-specific topic.
+     * Sends a finished build job whose data changed after it was announced as finished to both the admin and the course topic.
      *
      * @param finishedBuildJob the finished build job DTO to send
      */

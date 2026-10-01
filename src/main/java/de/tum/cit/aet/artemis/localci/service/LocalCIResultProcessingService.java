@@ -71,29 +71,16 @@ public class LocalCIResultProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
-    /**
-     * The statuses a build job ends in. A container of a multi-container build counts as reported once its job is in one
-     * of them, whether or not its result could be merged, so the group it belongs to can always complete.
-     */
     static final Set<BuildStatus> FINISHED_BUILD_STATUSES = Set.of(BuildStatus.SUCCESSFUL, BuildStatus.FAILED, BuildStatus.ERROR, BuildStatus.CANCELLED, BuildStatus.TIMEOUT);
 
     private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
 
-    /**
-     * How long after its last job finished a build group is left alone by {@link #finalizeCompletedBuildGroups}: long
-     * enough for the container that finished last to have run its own finalization, so the sweep never races it.
-     */
+    /** How long the sweep leaves a group whose last job just finished to that container's own finalization. */
     private static final Duration COMPLETED_GROUP_GRACE_PERIOD = Duration.ofMinutes(2);
 
-    /**
-     * How many build groups one run of {@link #finalizeCompletedBuildGroups} closes at most.
-     */
     private static final int COMPLETED_GROUPS_PER_SWEEP = 50;
 
-    /**
-     * How far back {@link #finalizeCompletedBuildGroups} looks for build groups. A group is closed within minutes, or
-     * within the retry window of the missing-job retry once it lost a container, so older groups are not searched again.
-     */
+    /** How far back the sweep looks: a group is closed within minutes, or within the missing-job retry window once it lost a container. */
     private static final Duration SWEEP_LOOKBACK = Duration.ofDays(1);
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
@@ -259,15 +246,9 @@ public class LocalCIResultProcessingService {
             return;
         }
         Result result = null;
-        // Whether the result below is one to report: every single-container result is, a container's result only once
-        // its group has completed (see processContainerResult).
+        // Whether the result is the one to report: a single-container result always is, a container's once it completed its group.
         boolean completedResult = buildJob.buildGroup() == null;
-        // Whether a missing result is an error to report. It is not for a container whose job had already finished, e.g.
-        // because its build group was closed without it (see processContainerResult): nothing is merged or recorded.
         boolean resultExpected = true;
-        // A container of a multi-container build persists its own build job inside the locked aggregation below, because
-        // that is what counts the finished containers, and hands it back here; every other path saves it in the finally
-        // block. The status is resolved once for both, since it only depends on the job and the exception.
         BuildJob savedBuildJob = null;
         BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
 
@@ -285,7 +266,6 @@ public class LocalCIResultProcessingService {
 
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
                 if (buildJob.buildGroup() != null) {
-                    // One container of a multi-container build: merge its feedback into the result shared by its build group.
                     ContainerOutcome outcome = processContainerResult(participation, buildJob, buildResult, buildLogs, buildStatus, testsExpected);
                     if (outcome != null) {
                         result = outcome.result();
@@ -328,14 +308,9 @@ public class LocalCIResultProcessingService {
                     programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
                             new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
                 }
-                // A container of a multi-container build returns the result shared by the whole submission, which stays in
-                // progress until the last container finishes. Reporting it earlier tells the client the build is done and
-                // hands it a result carrying part of the feedback and no score, once per container: the client clears the
-                // pending submission on any result of that submission, and the same call reports the score to an external
-                // LMS over LTI and feeds Iris. A single-container build's result is reported as it always was; a container's
-                // result only once the finalizing container completed it. Completion is the outcome's word, not the
-                // result's completion date: the finalized feedback may have been merged into a tutor's draft assessment,
-                // which carries no completion date and is reported all the same, as on the single-container path.
+                // A container's partial result must not be reported: the client clears the pending submission on any result, and
+                // the same call sends the score over LTI and to Iris. Completion comes from the outcome, since a draft assessment
+                // the feedback was merged into has no completion date.
                 else if (completedResult) {
                     programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                 }
@@ -352,21 +327,12 @@ public class LocalCIResultProcessingService {
         }
 
         // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository.
-        // A multi-container solution build reports one queue item per container; the template is rebuilt once, when the
-        // container that completed the merged result comes through, not once per container.
+        // A multi-container build triggers it once, from the container that completed its group.
         if (isSolutionBuildOfTestOrAuxPush(buildJob) && completedResult) {
             triggerTemplateBuild(buildJob.exerciseId(), buildJob.id(), buildJob.buildConfig().testCommitHash(), buildJob.repositoryInfo().triggeredByPushTo());
         }
     }
 
-    /**
-     * Triggers the build of the template repository after a solution build of a test or auxiliary push has finished.
-     *
-     * @param exerciseId        the id of the exercise
-     * @param buildJobId        the id of the solution build job, for the log
-     * @param testCommitHash    the commit hash of the test repository the solution was built against
-     * @param triggeredByPushTo the repository whose push triggered the solution build
-     */
     private void triggerTemplateBuild(long exerciseId, String buildJobId, String testCommitHash, RepositoryType triggeredByPushTo) {
         log.info("Triggering build of template repository for solution build with id {}", buildJobId);
         try {
@@ -386,25 +352,11 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * Closes the build groups that no container will complete any more while their aggregated result stayed in progress.
-     * <p>
-     * The container that finishes last finalizes its group, but append, link and finalize are committed one by one: if the
-     * process dies between the link and the finalization, or the finalization fails twice, the group is complete by
-     * count while its result never gets a completion date. No job of such a group is missing, so the missing-job retry
-     * does not fire. The sweep waits out the grace period that keeps it from racing the last container's own
-     * finalization and finalizes the group under its lock, exactly as the last container would have: the result is
-     * scored, reported to the client, and a solution build's template is rebuilt.
-     * <p>
-     * A group can also lose a container: its job went missing and is not retried any more, because it ran out of
-     * retries, left the retry window, or a later job exists for its participation. The retry of a missing job triggers
-     * the whole build again as a new group, so nothing would complete the old one. If a later build of the same commit
-     * exists, which the retry is, that build replaces the group: the group's aggregated result is deleted, so that the
-     * student is not shown the partial outcome of a build whose replacement is still running. Otherwise nothing replaces
-     * the group, e.g. after the last retry or when the student pushed a new commit, and it is finalized with the feedback
-     * of the containers that reported; the lost container counts as failed to build. If every retry loses all of its
-     * containers, no result remains, as for a single-container build after its last retry.
-     * <p>
-     * Groups with a job that is still queued or building, or missing and still to be retried, are left alone.
+     * Closes the build groups whose aggregated result stayed in progress although no container will complete it. Append,
+     * link and finalize commit separately, so a crash or a twice-failed finalization can leave a complete group open that
+     * the missing-job retry never fires for. A group that lost a container stays open as well, since a retry builds again
+     * as a new group. Its result is deleted if a later build of the same commit replaces the group, so the student does
+     * not see a partial outcome, and finalized otherwise.
      *
      * @param maxMissingJobRetries    the number of retries after which a missing job is not retried again
      * @param missingJobsRetriedSince the start of the retry window: a missing job submitted before it is not retried
@@ -428,13 +380,6 @@ public class LocalCIResultProcessingService {
         return finalizedGroups;
     }
 
-    /**
-     * Closes one build group under its lock, unless a container finalized it in the meantime: a group that lost a
-     * container and was replaced loses its aggregated result, every other group is finalized.
-     *
-     * @param buildGroupId the id of the build group
-     * @return true if the group's aggregated result was finalized by this call
-     */
     private boolean finalizeCompletedBuildGroup(String buildGroupId) {
         DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
         aggregationLocks.lock(buildGroupId);
@@ -447,8 +392,7 @@ public class LocalCIResultProcessingService {
             if (jobs.isEmpty()) {
                 return false;
             }
-            // every job of a group belongs to the same participation and was triggered by the same push, so any one of
-            // them says what the group is a build of
+            // All jobs of a group share the participation and the push, so any one of them describes the build.
             BuildJob buildJob = jobs.getFirst();
             // A job that is still missing is one the query found to be retried no more, so its container is lost.
             List<BuildJob> lostJobs = jobs.stream().filter(job -> job.getBuildStatus() == BuildStatus.MISSING).toList();
@@ -469,8 +413,8 @@ public class LocalCIResultProcessingService {
                 participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
             }
             closeLostJobs(lostJobs, BuildStatus.ERROR);
-            // Every job of the group has finished or is lost (that is what the query selected), so the finished jobs are
-            // all the group still waits for. The result completes when its last job did.
+            // A job row does not store the expected count; every job of the group has finished or was closed as lost
+            // above, so their number is that count.
             long finishedJobs = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count();
             ZonedDateTime completionDate = jobs.stream().map(BuildJob::getBuildCompletionDate).filter(Objects::nonNull).max(Comparator.naturalOrder())
                     .orElseGet(ZonedDateTime::now);
@@ -491,15 +435,7 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    /**
-     * Whether a later build of the same commit exists for the participation of the given job. The retry of a missing job
-     * is such a build: it triggers the commit of the missing job again. The commits are compared null-safely, because a
-     * build that was triggered without a commit, such as a solution build after a push to an auxiliary repository,
-     * carries none, and neither does its retry.
-     *
-     * @param buildJob a job of the build
-     * @return true if a job of the same participation and commit was submitted after the given one
-     */
+    /** Whether a later build of the job's commit, such as the retry of a missing job, exists for its participation. */
     private boolean isReplacedByLaterBuildOfSameCommit(BuildJob buildJob) {
         if (buildJob.getParticipationId() == null || buildJob.getBuildSubmissionDate() == null) {
             return false;
@@ -509,12 +445,8 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * Marks the lost jobs of a build group that the sweep closes as finished, so that a result one of them still reports
-     * is not merged (see processContainerResult). A lost container never reported, so it did not build either, like a
-     * container whose job timed out.
-     *
-     * @param lostJobs the missing jobs of the group
-     * @param status   the status they finish with
+     * Marks the lost jobs as finished, so that a result one of them still reports is not merged, and as failed to build,
+     * since they never reported.
      */
     private void closeLostJobs(List<BuildJob> lostJobs, BuildStatus status) {
         if (lostJobs.isEmpty()) {
@@ -528,14 +460,8 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * The commit of the test repository that a solution build of a tests or auxiliary push was built against. The build
-     * config that names it is gone once the job has left the queue, but the build's result belongs to the submission the
-     * push created for that commit. The job itself only carries the commit for a tests push (see LocalCITriggerService);
-     * an auxiliary push is triggered without one.
-     *
-     * @param finalizedResult the finalized result of the solution build
-     * @param buildJob        a job of the solution build
-     * @return the test commit of the result's submission, or the job's commit if the result has no such submission
+     * The test commit a solution build was built against, read from its result because the build config that names it is
+     * gone once the job has left the queue.
      */
     private static String testCommitHashOf(Result finalizedResult, BuildJob buildJob) {
         if (finalizedResult.getSubmission() instanceof ProgrammingSubmission submission && submission.getType() == SubmissionType.TEST && submission.getCommitHash() != null) {
@@ -545,83 +471,56 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * Processes the result of one container of a multi-container build. The container's feedback is appended to the
-     * submission's aggregated result, this container's build job is linked to that result, and the result is finalized
-     * once every container has finished. The containers of one build form a build group and are serialized by a
-     * distributed lock on it, so they aggregate into the same result and count completion without racing, even when they
-     * are processed by several result-processing threads across several core nodes in parallel.
+     * Merges one container's result into its build group's aggregated result and finalizes that once the group is complete.
      *
-     * @param participation the participation that was built
-     * @param buildJob      the finished build job of the container
-     * @param buildResult   the build result of the container
-     * @param buildStatus   the status the container's build job finished with
-     * @param testsExpected whether tests were expected for this container
-     * @return the aggregated result together with the build job saved for this container, or null if the container's
-     *         result could not be processed
+     * @param participation  the participation that was built
+     * @param buildJob       the finished build job of the container
+     * @param buildResult    the build result of the container
+     * @param agentBuildLogs the build logs the agent reported on the result queue item
+     * @param buildStatus    the status the container's build job finished with
+     * @param testsExpected  whether tests were expected for this container
+     * @return the aggregated result together with the build job saved for this container
      */
     private ContainerOutcome processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult,
             List<BuildLogDTO> agentBuildLogs, BuildStatus buildStatus, boolean testsExpected) {
-        // A container whose build script failed still completes as a normal job, and on that path the agent reports the
-        // build logs only on the result queue item, not inside the build result. Carry them over so a crashed
-        // container's logs are preserved for the student alongside its siblings' results.
+        // A container whose build script failed completes normally, but the agent then reports its logs only on the queue
+        // item; carry them over into the build result so they are kept with the merged result.
         final boolean logsOnlyOnQueueItem = !buildResult.hasLogs() && agentBuildLogs != null && !agentBuildLogs.isEmpty();
         final BuildResult effectiveBuildResult = logsOnlyOnQueueItem ? buildResult.withBuildLogs(agentBuildLogs) : buildResult;
-        // The containers of one build form a build group: the jobs the trigger stamped with the same build group id (see
-        // BuildJobQueueItem#buildGroupId). The group is what the containers' results are merged under, so it is what the
-        // lock is taken on. It is a distributed lock (backed by the same cluster as the queues), so it also holds across
-        // the several core nodes that process results in parallel, not only across the threads of one node. Without it,
-        // two nodes could each create a separate aggregated result for the same group and neither would ever reach the
-        // expected container count.
-        // The caller only routes jobs with a membership here; the check makes a future edit of that routing fail loudly
-        // instead of locking on a null key.
         final BuildJobQueueItem.BuildGroupMembership buildGroup = buildJob.buildGroup();
         if (buildGroup == null) {
             throw new IllegalStateException("a container job must carry its build group");
         }
         final String buildGroupId = buildGroup.buildGroupId();
-        // The count this build waits for was fixed by the trigger when the build started and is read from the job, not
-        // from the build plan, which may have been edited since.
         final int expectedContainerCount = buildGroup.expectedContainerCount();
+        // Serializes the group's containers across nodes: without it, two nodes could each create an aggregated result for
+        // the group, and neither would ever reach the expected container count.
         DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
         aggregationLocks.lock(buildGroupId);
         try {
-            // Append, link and finalize are three steps under the lock, each committed on its own, as every other write
-            // of the result processing is: Artemis avoids surrounding transactions. The lock is what keeps the steps of
-            // different containers apart; what makes an interrupted sequence harmless is that every step is keyed by the
-            // build group: a sibling only finds the aggregate through a job that links to it, so a container whose append
-            // was saved but whose job was never linked leaves behind an in-progress result that nothing refers to, and
-            // the recovery below still records the job as finished, so the group cannot stay open. A container whose job
-            // was linked but whose finalization failed keeps the link, see below.
+            // Append, link and finalize each commit on their own, as Artemis keeps transactions out of services.
             ContainerOutcome outcome = null;
             Result appendedResult = null;
-            // Set once this container's job links to the aggregate. From then on the container's feedback is part of the
-            // merged result and the siblings find the aggregate through the link, so a later failure must not undo it.
             BuildJob linkedContainerJob = null;
             try {
-                // A job that has already finished keeps its outcome: the sweep closed its group without it, or the same
-                // result was delivered twice. Merging it would change a result that was already reported or deleted.
+                // A job that has already finished, because the sweep closed it as lost or its result arrived twice, is not
+                // merged: that would change a result that was already reported or deleted.
                 Optional<BuildJob> finishedJob = buildJobRepository.findByBuildJobId(buildJob.id()).filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus()));
                 if (finishedJob.isPresent()) {
                     log.info("The result of container {} of build job {} of build group {} arrived after the job had finished and is not merged", buildGroup.containerName(),
                             buildJob.id(), buildGroupId);
                     return new ContainerOutcome(null, finishedJob.get(), false, true);
                 }
-                // The aggregate is found through the siblings that already merged into it, never through the submission's
-                // results: a retry or a re-push of the same commit is a new group with an aggregate of its own, and a
-                // tutor's draft assessment on the submission can never be mistaken for it.
+                // The aggregate is found through the group's job links: a retry or re-push of the same commit opens a new
+                // group, and a tutor's draft assessment on the submission must not be taken for it.
                 Long aggregatedResultId = findAggregatedResultId(buildGroupId);
                 AppendedContainerResult appended = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected,
                         buildGroup.containerName(), aggregatedResultId);
                 if (appended != null) {
                     appendedResult = appended.result();
-                    // Link this container's build job to the shared result; the link is how the siblings that finish after
-                    // this one find the aggregate. The job also records whether this container built, from which the
-                    // finalization derives the build outcome of the group.
                     linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult, appended.containerFailed());
                     if (linkedContainerJob == null) {
-                        // saveFinishedBuildJob logs its failure and returns null. Nothing rolls the merged rows back, but
-                        // without the link the siblings cannot find the aggregate and the group's count is one short, so
-                        // the container is treated as one whose merge failed: the recovery below records its job.
+                        // Without the link the group's count stays one short, so the recovery below records the job instead.
                         throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
                     }
                     Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
@@ -635,12 +534,9 @@ public class LocalCIResultProcessingService {
                 return outcome;
             }
             if (linkedContainerJob != null) {
-                // The append and the link went through; only the finalization failed. The link stays: recording the job
-                // as failed without it, as the recovery below does, would drop this container's feedback from the merged
-                // result and, for the first container of the group, send the next sibling to a second aggregate. The
-                // finalization is attempted once more. If it fails again, the group is complete by count while its
-                // aggregate stays in progress, a state the missing-job retry does not cover because no job of the group
-                // is missing; it is logged as such.
+                // Only the finalization failed. Keep the link: the recovery below would mark a merged container as failed and,
+                // for the group's first container, make the next sibling open a second aggregate. finalizeCompletedBuildGroups
+                // covers a second failure.
                 Result finalizedResult = null;
                 try {
                     finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
@@ -651,9 +547,8 @@ public class LocalCIResultProcessingService {
                 }
                 return new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob, finalizedResult != null);
             }
-            // This container's result could not be merged. Its job is still recorded as finished, only without a result
-            // link, so the group's completion count keeps advancing: if this was the last container, the aggregate its
-            // siblings built is finalized now, as failed, instead of staying open forever.
+            // The merge failed: record the job as finished anyway, without a link, so the group's count still advances and, if
+            // this was the last container, the siblings' aggregate is finalized now, as failed.
             BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
             Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
             return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null);
@@ -663,60 +558,27 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    /**
-     * The id of the result the containers of a build group have merged into so far, found through the group's build jobs
-     * that already link to it.
-     *
-     * @param buildGroupId the id of the build group
-     * @return the id of the group's aggregated result, or null if no container of the group has merged one yet
-     */
     private Long findAggregatedResultId(String buildGroupId) {
         return buildJobRepository.findResultIdsOfBuildGroup(buildGroupId, PageRequest.of(0, 1)).stream().findFirst().orElse(null);
     }
 
-    /**
-     * Finalizes the aggregated result of a build group once every job of the group has finished, whether it merged its
-     * result or not. Completion is counted over the group's build jobs by status, so a container whose merge failed
-     * still counts and cannot leave the group open; it does make the build unsuccessful, as does any job that did not
-     * finish successfully.
-     *
-     * @param buildGroupId           the id of the build group
-     * @param expectedContainerCount the number of jobs the trigger scheduled for the group
-     * @param participation          the participation that was built
-     * @param completionDate         the completion date to set on the finalized result
-     * @return the finalized result, or null if the group is not complete yet or none of its containers merged a result
-     */
     private Result finalizeIfGroupComplete(String buildGroupId, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate) {
         return finalizeIfGroupComplete(buildJobRepository.findAllByBuildGroupId(buildGroupId), expectedContainerCount, participation, completionDate);
     }
 
-    /**
-     * Finalizes a group whose jobs are given, see {@link #finalizeIfGroupComplete(String, int, ProgrammingExerciseParticipation, ZonedDateTime)}.
-     *
-     * @param jobs                   the jobs of the group
-     * @param expectedContainerCount the number of jobs the group waits for
-     * @param participation          the participation that was built
-     * @param completionDate         the completion date to set on the finalized result
-     * @return the finalized result, or null if the group is not complete or has no aggregated result
-     */
+    /** Finalizes the aggregated result of a build group once every job of the group has finished. */
     private Result finalizeIfGroupComplete(List<BuildJob> jobs, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate) {
         long finishedContainers = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count();
         if (finishedContainers < expectedContainerCount) {
             return null;
         }
-        // The aggregate is the result the group's jobs link to; a job without a link is one whose merge failed.
         Long aggregatedResultId = jobs.stream().map(BuildJob::getResult).filter(Objects::nonNull).map(Result::getId).findFirst().orElse(null);
         if (aggregatedResultId == null) {
             return null;
         }
-        // This service only knows how the jobs executed; whether the build itself succeeded is the grading service's call
-        // (see finalizeContainerResult). A finished job without a result link is one whose merge failed. Both merge paths
-        // record such a job as ERROR, which the status check already catches; the null check covers the one remaining
-        // writer, the fallback save in processResult after even the recovery path failed, which keeps the status
-        // the agent reported: SUCCESSFUL for a job that ran fine and could not be merged.
+        // A job without a result link did not merge. The fallback save in processResult keeps the agent's status, so such a
+        // job can be SUCCESSFUL, which the status check alone would miss.
         boolean allJobsSucceeded = jobs.stream().allMatch(job -> job.getBuildStatus() == BuildStatus.SUCCESSFUL && job.getResult() != null);
-        // Whether a container failed to build is read from this group's jobs rather than from the submission, which every
-        // build of the same commit shares: an overlapping build must neither hide this group's failure nor inherit it.
         boolean anyContainerFailedToBuild = jobs.stream().anyMatch(BuildJob::isBuildFailed);
         Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild,
                 completionDate);
@@ -725,14 +587,8 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * Sends the jobs of a closed build group to the build overview again. Each job was announced as finished when its
-     * container was processed, with the aggregated result as it stood then: in progress and without a score. Closing the
-     * group completed that result, deleted it and linked the jobs to the tutor's assessment the build was merged into,
-     * or deleted it because the build was replaced. The jobs are therefore read again and sent as changed jobs, which the
-     * clients replace instead of counting them as further finished jobs. The result processing does not depend on the
-     * broadcast, so a failure is only logged.
-     *
-     * @param buildGroupId the id of the closed build group
+     * Sends the jobs of a closed build group to the build overview again, as each was announced while the aggregated
+     * result was still in progress.
      */
     private void broadcastFinalizedBuildGroup(String buildGroupId) {
         localCIQueueWebsocketService.ifPresent(service -> {
@@ -745,18 +601,7 @@ public class LocalCIResultProcessingService {
         });
     }
 
-    /**
-     * What processing one container of a multi-container build produced: the shared result its feedback was appended to,
-     * and the build job saved for the container. The job is carried out of the locked section because the caller
-     * needs it to write the log file, and re-reading it there would be a second query for a row just written.
-     *
-     * @param result         the aggregated result of the submission, finalized once every container has finished, or the
-     *                           tutor's assessment the finalized feedback was merged into
-     * @param savedBuildJob  the persisted build job of this container, linked to that result
-     * @param completed      whether this container completed the group, so that the result is the one to report
-     * @param arrivedTooLate whether the container's job had already finished, so that its result was not merged and the
-     *                           missing result is no error
-     */
+    /** What processing one container produced; {@code arrivedTooLate} marks a result skipped because its job had already finished. */
     private record ContainerOutcome(Result result, BuildJob savedBuildJob, boolean completed, boolean arrivedTooLate) {
 
         ContainerOutcome(Result result, BuildJob savedBuildJob, boolean completed) {
@@ -764,14 +609,6 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    /**
-     * Maps the outcome of a build job to its status, preserving the cancellation and timeout handling of the single
-     * result path.
-     *
-     * @param buildJob       the finished build job
-     * @param buildException the exception that occurred during the build, if any
-     * @return the build status
-     */
     private BuildStatus determineBuildStatus(BuildJobQueueItem buildJob, Throwable buildException) {
         if (buildException == null) {
             return BuildStatus.SUCCESSFUL;
@@ -798,15 +635,6 @@ public class LocalCIResultProcessingService {
         return saveFinishedBuildJob(queueItem, buildStatus, result, false);
     }
 
-    /**
-     * Saves a finished container job, recording whether the container's build failed to build.
-     *
-     * @param queueItem   the build job object from the queue
-     * @param buildStatus the status of the build job
-     * @param result      the aggregated result the container's feedback went into
-     * @param buildFailed whether the container failed to build, see {@link BuildJob#isBuildFailed()}
-     * @return the saved build job
-     */
     private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, boolean buildFailed) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result, buildFailed);

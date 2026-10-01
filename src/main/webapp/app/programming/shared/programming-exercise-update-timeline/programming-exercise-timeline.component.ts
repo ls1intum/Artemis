@@ -347,7 +347,6 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
             return undefined;
         }
 
-        // an after due date phase is relevant regardless of the container it runs in
         return allPhases(parsedBuildPlan).some((phase) => phase.condition === 'AFTER_DUE_DATE');
     }
 }

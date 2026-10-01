@@ -437,7 +437,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         const data = (containersDetail as { data: { containers: BuildContainer[]; defaultDockerImage: Signal<string | undefined> } }).data;
         expect(data.containers.map((container) => container.name)).toEqual(['instructor_tests', 'student_tests']);
         expect(data.containers.map((container) => container.phases.map((phase) => phase.name))).toEqual([['test'], ['check']]);
-        // the container without an image is built with the language default, which the section names
         expect(data.defaultDockerImage()).toBe('language-default:1');
     });
 
@@ -465,8 +464,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         expect(getTemplateStub).toHaveBeenCalledOnce();
         expect(comp.defaultDockerImage()).toBe('language-default:1');
-        // the same detail object now reports the image: the list tracks sections by identity, so rebuilding them
-        // to deliver one string would re-create every section and re-run every deferred block on the page
         expect(comp.exerciseDetailSections()).toBe(renderedSections);
         expect(containersDetail.data.defaultDockerImage()).toBe('language-default:1');
     });
