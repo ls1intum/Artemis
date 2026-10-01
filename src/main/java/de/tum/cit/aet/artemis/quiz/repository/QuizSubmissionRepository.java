@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.quiz.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.exception.QuizSubmissionException;
 
 /**
@@ -32,7 +35,7 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
 
     /**
      * Take a write lock on the submission row, so that the requests which replace its answers run one after the other.
-     * The lock is held until the surrounding transaction ends, see {@link #replaceAnswersOfUnsubmittedSubmission}.
+     * The lock is held until the surrounding transaction ends, see {@link #replaceAnswers}.
      *
      * @param submissionId the id of the submission to lock
      * @return the locked submission, if it exists
@@ -46,12 +49,31 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
     Optional<QuizSubmission> findByIdWithWriteLock(@Param("submissionId") long submissionId);
 
     /**
-     * Replace the answers of the submission that is saved or submitted in live mode, one request after the other per
+     * Save the answers of a submission that is saved or submitted by the student, one request after the other per
      * submission. A client saves the answers while the student works and submits them at the end, and the two requests
-     * can reach the server at the same time. Each of them replaces the answers, and two replacements that run together
-     * both insert theirs: the submission ends up with two answers to a question, and which of them is scored depends on
-     * the order the database returns them in. Whoever takes the lock last wins, and a save that waited for the submit is
-     * rejected, as the quiz is submitted by then.
+     * can reach the server at the same time. Without the lock, each of them replaces the answers and both insert
+     * theirs: the submission ends up with two answers to a question, and which of them is scored depends on the order
+     * the database returns them in. Whoever takes the lock last wins.
+     * <p>
+     * The stored answers are updated, not replaced: an answer to a question the submission already has an answer for
+     * is written to that row, see {@link QuizSubmission#adoptIdsOfStoredAnswers}. The state is read after the lock is
+     * taken, so a request that waited for another one sees what it stored.
+     * <p>
+     * This is for the exam mode, which marks every save as submitted and lets the student save again, so the stored
+     * state does not stop a save. The live mode uses {@link #replaceAnswersOfUnsubmittedSubmission}.
+     *
+     * @param submission the submission with the new answers, carrying the id of the stored submission
+     * @return the stored submission
+     */
+    @Transactional // ok: the lock and the replacement of the answers are only correct as one unit
+    default QuizSubmission replaceAnswers(QuizSubmission submission) {
+        var stored = getValueElseThrow(findByIdWithWriteLock(submission.getId()), submission.getId());
+        return replaceAnswersOfLockedSubmission(stored, submission);
+    }
+
+    /**
+     * Like {@link #replaceAnswers}, for the live mode: a save that waited for the submit is rejected, as the quiz is
+     * submitted by then and cannot be changed any more.
      *
      * @param submission the submission with the new answers, carrying the id of the stored submission
      * @return the stored submission
@@ -64,6 +86,18 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
         if (stored.isSubmitted()) {
             throw new QuizSubmissionException("You have already submitted the quiz");
         }
+        return replaceAnswersOfLockedSubmission(stored, submission);
+    }
+
+    private QuizSubmission replaceAnswersOfLockedSubmission(QuizSubmission stored, QuizSubmission submission) {
+        Map<Long, Long> storedAnswerIdByQuestionId = new HashMap<>();
+        for (SubmittedAnswer storedAnswer : stored.getSubmittedAnswers()) {
+            // several stored answers to one question can only come from before the unique index: the latest one is updated, the others are removed by the save
+            if (storedAnswer.getQuizQuestion() != null) {
+                storedAnswerIdByQuestionId.merge(storedAnswer.getQuizQuestion().getId(), storedAnswer.getId(), Math::max);
+            }
+        }
+        submission.adoptIdsOfStoredAnswers(storedAnswerIdByQuestionId);
         return save(submission);
     }
 

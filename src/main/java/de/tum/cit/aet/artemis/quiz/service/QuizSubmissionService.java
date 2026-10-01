@@ -423,7 +423,16 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             throw new AccessForbiddenException();
         }
         quizSubmission.setParticipation(participation);
-        var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
+        QuizSubmission savedQuizSubmission;
+        if (quizSubmission.getId() != null) {
+            // A save and the submit of an exam can reach the server together, just like in the live mode
+            savedQuizSubmission = quizSubmissionRepository.replaceAnswers(quizSubmission);
+        }
+        else {
+            // A new submission has no stored answers to compete with, but it must not hold two answers to a question either
+            quizSubmission.adoptIdsOfStoredAnswers(Map.of());
+            savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
+        }
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
     }
