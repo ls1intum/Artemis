@@ -225,7 +225,7 @@ public class ParticipationService {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, testRun);
         }
         // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
         else {
@@ -250,10 +250,9 @@ public class ParticipationService {
         if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
             participation.setInitializationDate(ZonedDateTime.now());
         }
-        // Deliberately after the programming setup above. The same column also marks a course exercise as practice mode,
-        // and the repository and build plan names are derived from it (see Participation#addPracticePrefixIfTestRun), so
-        // flagging the participation earlier would rename every test run repository. A participation that the lookup
-        // returned already carries the flag of the side it was looked up on, which makes this a no-op for it.
+        // A programming participation was already flagged inside startProgrammingExercise, where the exact point matters
+        // for the names derived from this flag. For every other exercise type nothing reads it before here, and for a
+        // participation the lookup returned it already holds the side it was looked up on, so this is a no-op for both.
         participation.setTestRun(testRun);
         // Starting an exercise whose participation already exists and is fully set up is the normal case in an exam: the
         // participations are generated up front, and the client posts to this endpoint on every (re)entry. Saving then
@@ -353,9 +352,10 @@ public class ParticipationService {
      *
      * @param exercise      the programming exercise that the currently active user (student) wants to start
      * @param participation inactive participation
+     * @param testRun       whether the participation belongs to a test run, which the build plan name has to reflect
      * @return started participation
      */
-    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean testRun) {
         // The template participation and the branch are only needed to resolve the source repository, and copyRepository
         // skips both entirely once the participation has its own repository. Loading them lazily keeps the common path
         // free of queries it never reads: exam participations are prepared up front, so every student who (re)starts an
@@ -364,7 +364,12 @@ public class ParticipationService {
         Supplier<String> branch = memoize(() -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()));
         // Step 1a) create the student repository (based on the template repository).
         participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, participation);
-
+        // Between the two steps on purpose. Both names are derived from this flag, but only the repository slug also
+        // carries the attempt, which already separates a test run from a graded participation of the same student and
+        // exercise. The build plan key has nothing but the name, so the flag has to be set before it is copied or the
+        // two participations would share one plan - and deleting either would take the other's with it. Setting it
+        // before the repository is copied instead would rename every test run repository.
+        participation.setTestRun(testRun);
         return startProgrammingParticipation(participation);
     }
 

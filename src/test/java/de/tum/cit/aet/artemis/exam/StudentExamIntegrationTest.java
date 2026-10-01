@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -433,9 +434,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         jenkinsRequestMockProvider.reset();
 
         // the empty commit is not necessary for this test
-        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
-        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
-        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
+        // A test run names its build plan after the practice-prefixed participant, so that it cannot collide with the
+        // plan of a graded participation of the same instructor and exercise.
+        String testRunPlanParticipant = "practice-" + instructor.getParticipantIdentifier();
+        mockConnectorRequestsForStartParticipation(programmingExercise, testRunPlanParticipant, Set.of(instructor), true);
+        mockConnectorRequestsForStartParticipation(programmingExercise, testRunPlanParticipant, Set.of(instructor), true);
+        mockConnectorRequestsForStartParticipation(programmingExercise, testRunPlanParticipant, Set.of(instructor), true);
 
         // create multiple test runs for the same user (i.e. instructor1), login again because "createTestRun" invokes a server method with changes the authorization
         createTestRun(exam2);
@@ -449,6 +453,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         jenkinsRequestMockProvider.reset();
         mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
+        // The test run participations name their build plan after the practice-prefixed participant, so deleting them
+        // deletes that plan rather than the one of the instructor's graded participation.
+        jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(),
+                programmingExercise.getProjectKey() + "-PRACTICE" + instructor.getParticipantIdentifier().toUpperCase(Locale.ROOT), false);
 
         request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
 
