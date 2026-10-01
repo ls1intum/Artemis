@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { PostService } from 'app/communication/service/post.service';
 import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
@@ -10,8 +10,8 @@ import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-po
 import { PostComponent } from 'app/communication/post/post.component';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/metis-sample-data';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { communicationPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/communication-sample-data';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
@@ -24,8 +24,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { DialogService } from 'primeng/dynamicdialog';
 
 interface PostGroup {
@@ -36,8 +36,8 @@ interface PostGroup {
 describe('PostingFooterComponent', () => {
     let component: PostingFooterComponent;
     let fixture: ComponentFixture<PostingFooterComponent>;
-    let metisService: MetisService;
-    let metisServiceUserAuthorityStub: ReturnType<typeof vi.spyOn>;
+    let communicationService: CommunicationService;
+    let communicationServiceUserAuthorityStub: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,10 +46,10 @@ describe('PostingFooterComponent', () => {
                 provideHttpClientTesting(),
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: DialogService, useValue: { open: vi.fn() } },
             ],
             imports: [
@@ -66,8 +66,8 @@ describe('PostingFooterComponent', () => {
         });
         fixture = TestBed.createComponent(PostingFooterComponent);
         component = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
-        metisServiceUserAuthorityStub = vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
+        communicationService = TestBed.inject(CommunicationService);
+        communicationServiceUserAuthorityStub = vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse');
     });
 
     afterEach(() => {
@@ -77,7 +77,7 @@ describe('PostingFooterComponent', () => {
     it('should be initialized correctly for users that are at least tutors in course', () => {
         post.answers = unsortedAnswerArray;
         fixture.componentRef.setInput('posting', post);
-        metisServiceUserAuthorityStub.mockReturnValue(true);
+        communicationServiceUserAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).toBe(true);
         expect(component.createdAnswerPost().resolvesPost).toBe(true);
@@ -163,14 +163,14 @@ describe('PostingFooterComponent', () => {
     it('should be initialized correctly for users that are not at least tutors in course', () => {
         post.answers = unsortedAnswerArray;
         fixture.componentRef.setInput('posting', post);
-        metisServiceUserAuthorityStub.mockReturnValue(false);
+        communicationServiceUserAuthorityStub.mockReturnValue(false);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).toBe(false);
         expect(component.createdAnswerPost().resolvesPost).toBe(false);
     });
 
     it('should open create answer post modal', () => {
-        fixture.componentRef.setInput('posting', metisPostExerciseUser1);
+        fixture.componentRef.setInput('posting', communicationPostExerciseUser1);
         component.ngOnInit();
         fixture.detectChanges();
 
@@ -181,7 +181,7 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should close create answer post modal', () => {
-        fixture.componentRef.setInput('posting', metisPostExerciseUser1);
+        fixture.componentRef.setInput('posting', communicationPostExerciseUser1);
         component.ngOnInit();
         fixture.detectChanges();
 

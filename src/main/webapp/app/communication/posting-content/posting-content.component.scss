@@ -1,16 +1,16 @@
-@import '../metis.component';
+@import '../communication.component';
 
 .toggle-content {
     font-size: smaller;
-    color: var(--metis-light-gray);
+    color: var(--communication-light-gray);
 }
 
 .announcement-post {
-    background-color: var(--metis-light-blue);
+    background-color: var(--communication-light-blue);
     border-radius: 7px;
 }
 
 .edited-text {
-    color: var(--metis-gray);
+    color: var(--communication-gray);
     font-size: smaller;
 }

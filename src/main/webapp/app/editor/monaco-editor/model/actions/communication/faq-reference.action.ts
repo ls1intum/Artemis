@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { ValueItem } from 'app/editor/markdown-editor/value-item.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
@@ -18,8 +18,8 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
     disposableCompletionProvider?: Disposable;
     faqSubscription?: Subscription;
 
-    constructor(private readonly metisService: MetisService) {
-        super(FaqReferenceAction.ID, 'artemisApp.metis.editor.faq');
+    constructor(private readonly communicationService: CommunicationService) {
+        super(FaqReferenceAction.ID, 'artemisApp.communication.editor.faq');
     }
 
     /**
@@ -30,8 +30,8 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
     override register(editor: TextEditor, translateService: TranslateService): void {
         super.register(editor, translateService);
         this.faqSubscription?.unsubscribe();
-        // Rebuild completion values when FAQs arrive from MetisService (which now emits after REST load)
-        this.faqSubscription = this.metisService.getFaqs().subscribe((faqs) => {
+        // Rebuild completion values when FAQs arrive from CommunicationService (which now emits after REST load)
+        this.faqSubscription = this.communicationService.getFaqs().subscribe((faqs) => {
             this.setValues(
                 faqs.map((faq) => ({
                     id: faq.id!.toString(),
@@ -48,7 +48,7 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
                 new TextEditorCompletionItem(
                     `/faq ${item.value}`,
                     item.type,
-                    `[${item.type}]${item.value}(${this.metisService.getLinkForFaq()}?faqId=${item.id})[/${item.type}]`,
+                    `[${item.type}]${item.value}(${this.communicationService.getLinkForFaq()}?faqId=${item.id})[/${item.type}]`,
                     TextEditorCompletionItemKind.Default,
                     range,
                 ),

@@ -76,15 +76,18 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
             this.isTestExam = this.exam.testExam!;
         });
-        if (this.hasExamStarted()) {
-            this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
-                next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
-                    this.allExamUsersAttendanceCheck.set(res.body!);
-                    this.isLoading.set(false);
-                },
-                error: (error: HttpErrorResponse) => this.onError(error.message),
-            });
+        if (!this.hasExamStarted()) {
+            // Nothing can be verified before the start, and the page has to say so instead of loading forever.
+            this.isLoading.set(false);
+            return;
         }
+        this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
+            next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
+                this.allExamUsersAttendanceCheck.set(res.body!);
+                this.isLoading.set(false);
+            },
+            error: (error: HttpErrorResponse) => this.onError(error.message),
+        });
     }
 
     ngOnDestroy() {

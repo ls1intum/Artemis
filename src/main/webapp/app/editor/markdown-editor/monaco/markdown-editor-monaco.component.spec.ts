@@ -21,8 +21,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
@@ -45,8 +45,8 @@ describe('MarkdownEditorMonacoComponent', () => {
             providers: [
                 MockProvider(FileUploaderService),
                 MockProvider(AlertService),
-                MockProvider(MetisConversationService),
-                MockProvider(MetisService),
+                MockProvider(CourseConversationsService),
+                MockProvider(CommunicationService),
                 MockProvider(ProfileService),
                 provideHttpClient(),
                 provideHttpClientTesting(),

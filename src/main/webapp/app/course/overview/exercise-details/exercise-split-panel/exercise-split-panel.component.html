@@ -139,7 +139,7 @@
     }
 
     @if (showDiscussion()) {
-        <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
+        <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment">
             @defer (on idle) {
                 <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
             }
