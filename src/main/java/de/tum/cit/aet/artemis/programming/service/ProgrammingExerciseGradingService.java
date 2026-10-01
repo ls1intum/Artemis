@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -604,7 +605,7 @@ public class ProgrammingExerciseGradingService {
             programmingSubmissionRepository.updateBuildFailed(submission.getId(), anyContainerFailedToBuild);
             submission.setBuildFailed(anyContainerFailedToBuild);
         }
-        deleteAbandonedAggregates(resultsOfSubmission, resultId);
+        deleteAbandonedAggregates(resultsOfSubmission, resultId, participation.getId());
         // A solution build generates the exercise's test cases, but each container of a multi-container build reported
         // only its own share and could not deactivate a test removed from the solution (its absence there is a sibling's
         // test, not a removal). Now that every container's feedback is merged, a test case no container reported is
@@ -668,7 +669,7 @@ public class ProgrammingExerciseGradingService {
      * path does not store an automatic result it merged. A stored aggregate would be newer than the assessment, and the
      * readers that pick a submission's latest result by id would show its automatic score instead of the assessed one.
      * The build's logs and jobs move over to the assessment first. The jobs are how the build overview finds a build's
-     * result, and the relink has to precede the delete, which the jobs' foreign key would otherwise block.
+     * result, and the relink has to precede the delete, whose foreign key action clears the jobs' links.
      *
      * @param aggregatedResult the aggregated result of the build
      * @param manualResult     the assessment the build's feedback was merged into
@@ -683,26 +684,52 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
+     * Deletes the aggregated result of a multi-container build that lost a container and was replaced by a later build
+     * of the same commit, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}. Nothing would complete
+     * the result, and finalizing it would show the student the partial outcome of a build whose replacement delivers the
+     * whole one. The build's logs are deleted with it, and its jobs lose their link through the foreign key's
+     * {@code ON DELETE SET NULL}. Only an automatic result that is still in progress is deleted, so a completed result or
+     * a tutor's assessment the jobs were linked to in the meantime is never touched.
+     *
+     * @param resultId the id of the aggregated result of the replaced build
+     */
+    public void discardContainerResult(long resultId) {
+        Result aggregatedResult = resultRepository.findById(resultId).orElse(null);
+        if (aggregatedResult == null || aggregatedResult.getAssessmentType() != AssessmentType.AUTOMATIC || aggregatedResult.getCompletionDate() != null) {
+            return;
+        }
+        if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission) {
+            buildLogService.deleteBuildLogsOfSucceededResult(submission, aggregatedResult);
+        }
+        resultService.deleteResult(aggregatedResult, true);
+    }
+
+    /**
      * Deletes the aggregated results an earlier build of the submission left behind: automatic results that are older
      * than the one being finalized, still in progress, and linked by no build job. The first container of a build
      * creates the aggregate and then links its job to it; a build that was interrupted between the two steps, or whose
      * job could not be saved, leaves an aggregate that no sibling and no sweep can find, since both search through the
      * job links. Nothing would ever complete it, and once a later build was merged into a tutor's assessment and its
      * own aggregate deleted, the leftover would be the submission's newest result and hide the assessment. The
-     * aggregate of an overlapping build that is still running is linked by its jobs and is kept. The finalization does
-     * not depend on the cleanup, so a failure is only logged.
+     * aggregate of an overlapping build that is still running is linked by its jobs and is kept. So is every leftover
+     * while a job of the participation is queued or building: between the two steps, the aggregate of a running build
+     * looks abandoned as well, and the job that creates it stays pending until the link is saved with its final status.
+     * The finalization does not depend on the cleanup, so a failure is only logged.
      *
      * @param resultsOfSubmission the submission's results
      * @param resultId            the id of the aggregated result being finalized
+     * @param participationId     the id of the participation that was built
      */
-    private void deleteAbandonedAggregates(List<Result> resultsOfSubmission, long resultId) {
+    private void deleteAbandonedAggregates(List<Result> resultsOfSubmission, long resultId, long participationId) {
         for (Result result : resultsOfSubmission) {
             boolean olderAggregateInProgress = result.getAssessmentType() == AssessmentType.AUTOMATIC && result.getCompletionDate() == null && result.getId() < resultId;
             if (!olderAggregateInProgress) {
                 continue;
             }
             try {
-                if (buildJobRepository.existsByResultId(result.getId())) {
+                // checked before the link: a job that is no longer pending has saved its link already
+                if (buildJobRepository.existsByParticipationIdAndBuildStatusIn(participationId, List.of(BuildStatus.QUEUED, BuildStatus.BUILDING))
+                        || buildJobRepository.existsByResultId(result.getId())) {
                     continue;
                 }
                 if (result.getSubmission() instanceof ProgrammingSubmission submission) {

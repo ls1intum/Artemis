@@ -661,11 +661,21 @@ class LocalCIResultProcessingServiceTest {
 
     // --- the sweep over complete groups whose aggregate stayed in progress -------------------------------------------
 
+    /** runs the sweep with the retry policy of the missing-job service: three retries within the last hour */
+    private int sweep() {
+        return resultProcessingService.finalizeCompletedBuildGroups(3, ZonedDateTime.now().minusHours(1));
+    }
+
+    private void withBuildGroupFoundByTheSweep() {
+        when(buildJobRepository.findCompletedBuildGroupsWithResultInProgress(any(), any(ZonedDateTime.class), any(ZonedDateTime.class), eq(3), any(ZonedDateTime.class),
+                any(Pageable.class))).thenReturn(List.of("group-1"));
+    }
+
     /**
      * A build group of two finished container jobs, found by the sweep, whose aggregated result 7 is still in progress.
      */
     private void withACompleteGroupInProgress(BuildJobQueueItem anyJobOfTheGroup, ZonedDateTime completionDate) {
-        when(buildJobRepository.findCompletedBuildGroupsWithResultInProgress(any(), any(ZonedDateTime.class), any(Pageable.class))).thenReturn(List.of("group-1"));
+        withBuildGroupFoundByTheSweep();
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
         when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(true);
         // two finished jobs, both linked to aggregate 7, the second the last to finish
@@ -691,7 +701,7 @@ class LocalCIResultProcessingServiceTest {
         finalizedResult.setCompletionDate(completionDate);
         when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
 
-        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+        assertThat(sweep()).isEqualTo(1);
 
         verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, participation);
         verify(programmingTriggerService, never()).triggerTemplateBuildAndNotifyUser(anyLong(), any(), any(), any());
@@ -768,7 +778,7 @@ class LocalCIResultProcessingServiceTest {
         when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
         when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenReturn(List.of(finishedJobOfGroup("job-a"), finishedJobOfGroup("job-b")));
 
-        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+        assertThat(sweep()).isEqualTo(1);
 
         verify(localCIQueueWebsocketService, times(2)).sendChangedFinishedBuildJobOverWebsocket(any());
     }
@@ -783,7 +793,7 @@ class LocalCIResultProcessingServiceTest {
         when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
         when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenThrow(new IllegalStateException("the websocket broker is gone"));
 
-        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+        assertThat(sweep()).isEqualTo(1);
 
         verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, participation);
     }
@@ -802,7 +812,7 @@ class LocalCIResultProcessingServiceTest {
         finalizedResult.setCompletionDate(completionDate);
         when(programmingExerciseGradingService.finalizeContainerResult(7L, solutionParticipation, true, false, completionDate)).thenReturn(finalizedResult);
 
-        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+        assertThat(sweep()).isEqualTo(1);
 
         // the job carries the tests commit as the commit it built, which is what the template is built against
         verify(programmingTriggerService, timeout(2000)).triggerTemplateBuildAndNotifyUser(EXERCISE_ID, "commit", SubmissionType.TEST, RepositoryType.TESTS);
@@ -829,20 +839,182 @@ class LocalCIResultProcessingServiceTest {
         finalizedResult.setSubmission(testSubmission);
         when(programmingExerciseGradingService.finalizeContainerResult(7L, solutionParticipation, true, false, completionDate)).thenReturn(finalizedResult);
 
-        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+        assertThat(sweep()).isEqualTo(1);
 
         verify(programmingTriggerService, timeout(2000)).triggerTemplateBuildAndNotifyUser(EXERCISE_ID, "test-commit", SubmissionType.TEST, RepositoryType.AUXILIARY);
+    }
+
+    // --- a build group that lost a container ---------------------------------------------------------------------------
+
+    /**
+     * A build group found by the sweep that lost a container: one job finished and links to aggregate 7, which is still
+     * in progress, the other went missing and is not retried any more.
+     */
+    private List<BuildJob> withAGroupThatLostAContainer(ZonedDateTime completionDate) {
+        withBuildGroupFoundByTheSweep();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(true);
+        Result aggregate = new Result();
+        aggregate.setId(7L);
+        BuildJob finishedJob = new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.SUCCESSFUL, aggregate);
+        finishedJob.setBuildCompletionDate(completionDate);
+        BuildJob missingJob = new BuildJob(containerJob("group-1", 2, "container_b"), BuildStatus.MISSING, null);
+        missingJob.setBuildCompletionDate(null);
+        List<BuildJob> jobs = List.of(finishedJob, missingJob);
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(jobs);
+        return jobs;
+    }
+
+    @Test
+    void theSweepDeletesTheResultOfAGroupThatLostAContainerAndWasReplacedByALaterBuildOfTheSameCommit() {
+        // The retry of a missing job triggers the whole build again as a new group. Finalizing the old group would show
+        // the student the partial outcome of a build whose replacement is still running, so its result is deleted.
+        List<BuildJob> jobs = withAGroupThatLostAContainer(ZonedDateTime.now().minusMinutes(5));
+        when(buildJobRepository.existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(eq(PARTICIPATION_ID), eq("commit"), any(ZonedDateTime.class))).thenReturn(true);
+        when(buildJobRepository.findWithDataByBuildGroupId("group-1")).thenReturn(List.of(finishedJobOfGroup("job-a"), finishedJobOfGroup("job-b")));
+
+        assertThat(sweep()).isZero();
+
+        // the lost job is closed, so a result it still reports is not merged
+        assertThat(jobs.get(1).getBuildStatus()).isEqualTo(BuildStatus.CANCELLED);
+        verify(buildJobRepository).saveAll(any());
+        verify(programmingExerciseGradingService).discardContainerResult(7L);
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
+        // the jobs no longer link to a result, which an open build overview has to learn
+        verify(localCIQueueWebsocketService, times(2)).sendChangedFinishedBuildJobOverWebsocket(any());
+        verify(aggregationLocks).unlock("group-1");
+    }
+
+    @Test
+    void theSweepFinalizesAGroupThatLostAContainerAndWasNotReplacedWithTheLostContainerCountedAsFailedToBuild() {
+        // Nothing delivers this build's result any more: the student pushed another commit, which stops the retry. The
+        // group is finalized with the feedback of the container that reported. The lost container never reported, so it
+        // did not build: without that the result would claim a build that succeeded with tests that were not executed.
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
+        List<BuildJob> jobs = withAGroupThatLostAContainer(completionDate);
+        withParticipation();
+        when(buildJobRepository.existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(eq(PARTICIPATION_ID), eq("commit"), any(ZonedDateTime.class))).thenReturn(false);
+        Result finalizedResult = new Result();
+        finalizedResult.setCompletionDate(completionDate);
+        when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, false, true, completionDate)).thenReturn(finalizedResult);
+
+        assertThat(sweep()).isEqualTo(1);
+
+        assertThat(jobs.get(1).getBuildStatus()).isEqualTo(BuildStatus.ERROR);
+        assertThat(jobs.get(1).isBuildFailed()).isTrue();
+        verify(programmingExerciseGradingService, never()).discardContainerResult(anyLong());
+        verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, participation);
+    }
+
+    @Test
+    void aBuildThatWasTriggeredWithoutACommitIsReplacedByALaterBuildWithoutACommit() {
+        // A solution build after a push to an auxiliary repository is triggered without a commit, and so is its retry.
+        List<BuildJob> jobs = withAGroupThatLostAContainer(ZonedDateTime.now().minusMinutes(5));
+        jobs.forEach(job -> job.setCommitHash(null));
+        when(buildJobRepository.existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(eq(PARTICIPATION_ID), isNull(), any(ZonedDateTime.class))).thenReturn(true);
+
+        assertThat(sweep()).isZero();
+
+        verify(programmingExerciseGradingService).discardContainerResult(7L);
+    }
+
+    /**
+     * The result of container_b of a build group of two arrives late: its job is stored with the given status.
+     */
+    private void withALateResultOfAJobThatIs(BuildStatus storedStatus) {
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_b"), List.of(), null));
+        withParticipation();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        BuildJob storedJob = new BuildJob(containerJob("group-1", 2, "container_b"), storedStatus, null);
+        storedJob.setId(55L);
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(storedJob));
+        lenient().when(buildJobRepository.save(any(BuildJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    private void verifyTheLateResultWasNotMerged() {
+        verify(programmingExerciseGradingService, never()).appendContainerResult(any(), any(), anyBoolean(), any(), any());
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        // the job keeps the outcome the sweep gave it
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
+        // the student is told neither of a result nor of an error: the group's result was dealt with without this container
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
+        verify(aggregationLocks).unlock("group-1");
+    }
+
+    @Test
+    void aContainerResultThatArrivesAfterItsReplacedGroupWasClosedIsNotMerged() {
+        // The job was declared missing, its build was retried, and the sweep deleted the old group's result and cancelled
+        // the job. Merging the late result would start a second result with this container's feedback alone.
+        withALateResultOfAJobThatIs(BuildStatus.CANCELLED);
+
+        resultProcessingService.processResultAsync();
+
+        verifyTheLateResultWasNotMerged();
+    }
+
+    @Test
+    void aContainerResultThatArrivesAfterItsGroupWasFinalizedWithoutItIsNotMerged() {
+        // The sweep gave up on the job and finalized the group with the container counted as failed to build. The result
+        // was scored and reported; appending to it now would change a result the student has already seen.
+        withALateResultOfAJobThatIs(BuildStatus.ERROR);
+
+        resultProcessingService.processResultAsync();
+
+        verifyTheLateResultWasNotMerged();
+    }
+
+    @Test
+    void aMissingJobThatReportsWhileItsGroupIsStillOpenIsMerged() {
+        // Declared missing, but its result arrives before the group was closed: the job was late, not lost.
+        withALateResultOfAJobThatIs(BuildStatus.MISSING);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(7L));
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), eq(7L)))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+        // the sibling has not reported yet, so the group of two is not complete
+        when(buildJobRepository.findAllByBuildGroupId("group-1"))
+                .thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResult)));
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository).save(saved.capture());
+        assertThat(saved.getValue().getResult()).isSameAs(aggregatedResult);
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
+    }
+
+    @Test
+    void aMissingJobOfAnOpenGroupWithoutAResultStartsTheResultEvenIfItsBuildWasRetried() {
+        // No sibling has reported yet, so the late container starts the group's result. Whether the missing job's build
+        // was retried in the meantime does not matter while the group is open: dropping the result here would leave the
+        // siblings to finalize a result without this container's feedback.
+        withALateResultOfAJobThatIs(BuildStatus.MISSING);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull()))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+        when(buildJobRepository.findAllByBuildGroupId("group-1"))
+                .thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResult)));
+
+        resultProcessingService.processResultAsync();
+
+        verify(programmingExerciseGradingService).appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull());
+        verify(buildJobRepository, never()).existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(anyLong(), any(), any());
     }
 
     @Test
     void theSweepLeavesAGroupAloneThatItsLastContainerFinalizedMeanwhile() {
         // The query runs before the lock is taken; a container that finalizes the group in between must not be followed
         // by a second finalization, which would score and report the result twice.
-        when(buildJobRepository.findCompletedBuildGroupsWithResultInProgress(any(), any(ZonedDateTime.class), any(Pageable.class))).thenReturn(List.of("group-1"));
+        withBuildGroupFoundByTheSweep();
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
         when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(false);
 
-        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isZero();
+        assertThat(sweep()).isZero();
 
         verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());

@@ -63,17 +63,23 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<Long> findResultIdsOfBuildGroup(@Param("buildGroupId") String buildGroupId, Pageable pageable);
 
     /**
-     * The build groups whose jobs have all finished while their aggregated result is still in progress: groups whose last
-     * container's finalization did not go through, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}.
-     * A group with a job that is still queued, building or missing is not complete and is left alone, and so is a group
-     * whose jobs finished after the given date, so that a merge under way is not raced. Only an automatic result counts:
-     * the jobs of a group whose feedback was merged into a tutor's assessment link to that assessment, and a draft
-     * assessment has no completion date either.
+     * The build groups that no container will complete any more while their aggregated result is still in progress, see
+     * {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}. These are the groups whose jobs have all
+     * finished, where the last container's finalization did not go through, and the groups whose remaining jobs are
+     * missing and not retried any more. A missing job is retried while it has retries left, was submitted within the
+     * retry window and no later job exists for its participation, see {@link #findMissingJobsToRetryInTimeRange} and
+     * {@code LocalCIMissingJobService#retryMissingJobs}. A group with such a job, or with a job that is still queued or
+     * building, is left alone, and so is a group with no linked job that finished before the given date, so that a merge
+     * under way is not raced. Only an automatic result counts: the jobs of a group whose feedback was merged into a
+     * tutor's assessment link to that assessment, and a draft assessment has no completion date either.
      *
-     * @param finishedStatuses the statuses in which a job counts as finished
-     * @param completedBefore  only groups whose jobs finished before this date
-     * @param pageable         limits the number of groups
-     * @return the ids of the complete build groups whose aggregated result has no completion date
+     * @param finishedStatuses        the statuses in which a job counts as finished
+     * @param submittedSince          only groups submitted at or after this date
+     * @param completedBefore         only groups with a linked job that finished before this date
+     * @param maxMissingJobRetries    the number of retries after which a missing job is not retried again
+     * @param missingJobsRetriedSince the start of the retry window: a missing job submitted before it is not retried
+     * @param pageable                limits the number of groups
+     * @return the ids of the build groups whose aggregated result has no completion date and that no job will complete
      */
     @Query("""
             SELECT DISTINCT b.buildGroupId
@@ -82,15 +88,25 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 AND b.result IS NOT NULL
                 AND b.result.completionDate IS NULL
                 AND b.result.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                AND b.buildSubmissionDate >= :submittedSince
                 AND b.buildCompletionDate < :completedBefore
                 AND NOT EXISTS (
                     SELECT o
                     FROM BuildJob o
                     WHERE o.buildGroupId = b.buildGroupId
-                        AND o.buildStatus NOT IN :finishedStatuses)
+                        AND o.buildStatus NOT IN :finishedStatuses
+                        AND (o.buildStatus <> de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.MISSING
+                            OR (o.retryCount < :maxMissingJobRetries
+                                AND o.buildSubmissionDate >= :missingJobsRetriedSince
+                                AND NOT EXISTS (
+                                    SELECT later
+                                    FROM BuildJob later
+                                    WHERE later.participationId = o.participationId
+                                        AND later.buildSubmissionDate > o.buildSubmissionDate))))
             """)
     List<String> findCompletedBuildGroupsWithResultInProgress(@Param("finishedStatuses") Collection<BuildStatus> finishedStatuses,
-            @Param("completedBefore") ZonedDateTime completedBefore, Pageable pageable);
+            @Param("submittedSince") ZonedDateTime submittedSince, @Param("completedBefore") ZonedDateTime completedBefore, @Param("maxMissingJobRetries") int maxMissingJobRetries,
+            @Param("missingJobsRetriedSince") ZonedDateTime missingJobsRetriedSince, Pageable pageable);
 
     /**
      * Checks whether the aggregated result a build group's jobs link to is still in progress. Written as a query rather
@@ -129,6 +145,18 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     void relinkJobsOfResult(@Param("resultId") long resultId, @Param("newResult") Result newResult);
 
     /**
+     * Checks whether a job of the participation that builds the given commit was submitted after the given date. A null
+     * commit matches the jobs that were triggered without one, such as the solution build after a push to an auxiliary
+     * repository.
+     *
+     * @param participationId the id of the participation
+     * @param commitHash      the commit the job builds, or null
+     * @param submittedAfter  only jobs submitted after this date
+     * @return true if such a job exists
+     */
+    boolean existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(long participationId, @Nullable String commitHash, ZonedDateTime submittedAfter);
+
+    /**
      * The jobs of a build group, one per container of a multi-container build. The result processing reads the group's
      * completion, its outcome and its dates off this list, rather than asking the database one question at a time.
      *
@@ -144,6 +172,15 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * @return true if at least one build job links to the result
      */
     boolean existsByResultId(long resultId);
+
+    /**
+     * Checks whether a build job of the participation is in one of the given statuses.
+     *
+     * @param participationId the id of the participation
+     * @param buildStatuses   the statuses to look for
+     * @return true if at least one build job of the participation is in one of the statuses
+     */
+    boolean existsByParticipationIdAndBuildStatusIn(long participationId, Collection<BuildStatus> buildStatuses);
 
     /**
      * The jobs of a build group together with the result they link to and its submission, participation and exercise, as the build overview shows them.

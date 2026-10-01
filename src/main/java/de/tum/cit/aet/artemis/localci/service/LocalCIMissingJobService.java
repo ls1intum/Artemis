@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +34,11 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 public class LocalCIMissingJobService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIMissingJobService.class);
+
+    /**
+     * How long after its submission a missing build job is retried. A job that is older is given up on.
+     */
+    private static final Duration MISSING_JOB_RETRY_WINDOW = Duration.ofHours(1);
 
     private final BuildJobRepository buildJobRepository;
 
@@ -117,7 +123,8 @@ public class LocalCIMissingJobService {
 
         // A multi-container build has one job per container, and retrying re-triggers the whole build, so a build whose
         // containers all went missing is retried once for its build group, not once per container. The siblings' retry
-        // counts are raised along with it, so the retry limit applies to the build as a whole.
+        // counts are raised along with it, so the retry limit applies to the build as a whole. The retry is a new build
+        // group; the group it replaces is closed by finalizeCompletedBuildGroups.
         Set<String> retriedBuildGroups = new HashSet<>();
         for (BuildJob buildJob : missingJobs) {
             if (buildJob.getRetryCount() >= maxMissingJobRetries) {
@@ -146,14 +153,16 @@ public class LocalCIMissingJobService {
     }
 
     /**
-     * Periodically finalizes the multi-container builds whose containers have all finished while their merged result
-     * stayed in progress. The missing-job retry above cannot cover them: none of their jobs is missing. See
-     * {@link LocalCIResultProcessingService#finalizeCompletedBuildGroups()}.
+     * Periodically closes the multi-container builds that no container will complete any more while their merged result
+     * stayed in progress: builds whose containers have all finished, which the missing-job retry above cannot cover
+     * because none of their jobs is missing, and builds with a missing job that the retry above no longer picks up. What
+     * that retry still picks up is passed along, so that both agree on when a missing job is given up on. See
+     * {@link LocalCIResultProcessingService#finalizeCompletedBuildGroups(int, ZonedDateTime)}.
      */
     @Scheduled(fixedRateString = "${artemis.continuous-integration.retry-missing-jobs-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.retry-missing-jobs-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
     public void finalizeCompletedBuildGroups() {
         log.debug("Checking for complete build groups whose aggregated result stayed in progress");
-        int finalizedGroups = localCIResultProcessingService.finalizeCompletedBuildGroups();
+        int finalizedGroups = localCIResultProcessingService.finalizeCompletedBuildGroups(maxMissingJobRetries, ZonedDateTime.now().minus(MISSING_JOB_RETRY_WINDOW));
         if (finalizedGroups > 0) {
             log.info("Finalized {} complete build groups whose aggregated result had stayed in progress", finalizedGroups);
         }
@@ -176,7 +185,6 @@ public class LocalCIMissingJobService {
     private Slice<BuildJob> getMissingJobsToRetrySliceOfLastHour(int maxResults) {
         Pageable pageable = PageRequest.of(0, maxResults);
         ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime oneHourAgo = now.minusHours(1);
-        return buildJobRepository.findMissingJobsToRetryInTimeRange(oneHourAgo, now, pageable);
+        return buildJobRepository.findMissingJobsToRetryInTimeRange(now.minus(MISSING_JOB_RETRY_WINDOW), now, pageable);
     }
 }
