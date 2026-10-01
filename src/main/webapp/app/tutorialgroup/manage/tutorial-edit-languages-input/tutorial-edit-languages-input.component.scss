@@ -2,25 +2,6 @@
     flex: 1;
 }
 
-.label-and-input {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    gap: 0.5rem;
-
-    // Fill the column like the sibling fields - align-items: start would otherwise leave the input at content width.
-    tumaet-ui-input-group {
-        width: 100%;
-    }
-}
-
-.field-error {
-    margin: 0;
-    font-size: 0.8125rem;
-    color: var(--danger);
-}
-
 .suggestion-panel {
     display: flex;
     flex-direction: column;

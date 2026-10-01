@@ -25,33 +25,13 @@
                 display: flex;
                 gap: 3rem;
 
-                .label-and-input {
-                    flex: 1;
-                    min-width: 0;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: start;
-                    gap: 0.5rem;
-
-                    // The fields fill their column: the selects, number inputs and date pickers sit directly in it
-                    // now (no input-group wrapper), so stretch them rather than leaving them at content width.
-                    > tumaet-ui-input-group,
-                    > tumaet-ui-select,
-                    > tumaet-ui-input-number,
-                    > tumaet-ui-date-picker,
-                    > jhi-tutorial-edit-languages-input {
-                        width: 100%;
-                    }
-
-                    .field-error {
-                        margin: 0;
-                        font-size: 0.8125rem;
-                        color: var(--danger);
-                    }
-                }
-
+                // Each field - a form field or the language input - takes half the row; the form field lays out its
+                // own label, control and error, so it only needs to flex here.
+                .label-and-input,
+                jhi-tutorial-edit-languages-input,
                 .spacer {
                     flex: 1;
+                    min-width: 0;
                 }
             }
         }

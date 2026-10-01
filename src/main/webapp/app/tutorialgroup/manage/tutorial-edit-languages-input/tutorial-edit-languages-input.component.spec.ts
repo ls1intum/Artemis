@@ -54,14 +54,15 @@ describe('TutorialEditLanguagesInputComponent', () => {
     });
 
     it('should keep the error hidden until the field is touched, then show it', () => {
-        const errorAddon = () => fixture.nativeElement.querySelector('[data-testid="language-error"]');
-        expect(errorAddon()).toBeNull();
+        const errorRegion = () => fixture.nativeElement.querySelector('.tumaet-ui-form-field-error') as HTMLElement | null;
+        assertNonNullable(errorRegion());
+        expect(errorRegion()!.hidden).toBe(true);
 
         component.onBlur();
         fixture.detectChanges();
 
         expect(component.languageInputTouched()).toBe(true);
-        expect(errorAddon()).not.toBeNull();
+        expect(errorRegion()!.hidden).toBe(false);
     });
 
     it('should become valid as soon as a language is entered', () => {
