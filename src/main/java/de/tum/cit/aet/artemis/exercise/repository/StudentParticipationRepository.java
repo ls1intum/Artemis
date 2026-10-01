@@ -452,6 +452,24 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findFirstByExerciseIdAndStudentIdOrderByIdDesc(long exerciseId, long studentId);
 
     /**
+     * The attempts already in use by the student's participations for an exercise.
+     * <p>
+     * The table is unique on (student_id, exercise_id, initialization_state, attempt), so a second participation for the
+     * same student and exercise - a test run next to a graded attempt - needs an attempt that is still free.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the attempts in use, empty when the student has no participation for the exercise
+     */
+    @Query("""
+            SELECT participation.attempt
+            FROM StudentParticipation participation
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.id = :studentId
+            """)
+    Set<Integer> findAttemptsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
      * The student's graded or practice participation in an exercise, as far as saving a submission needs it.
      *
      * @param exerciseId the id of the exercise

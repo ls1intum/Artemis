@@ -586,10 +586,9 @@ public class StudentExamService {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + testRunId + "does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        // The participations are created as test run participations right away. Flagging them afterwards would relabel
+        // whatever the setup returned, and that is the graded participation whenever the instructor already has one.
         setUpExerciseParticipationsAndSubmissions(testRun, generatedParticipations, false);
-        // use the flag test run for all participations of the created test run
-        generatedParticipations.forEach(studentParticipation -> studentParticipation.setTestRun(true));
-        studentParticipationRepository.saveAll(generatedParticipations);
     }
 
     /**
@@ -623,7 +622,8 @@ public class StudentExamService {
         Set<Long> startedExerciseIds = studentExam.isTestExam() ? Set.of()
                 : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student, studentExam.isTestRun())).map(Exercise::getId)
                         .collect(Collectors.toSet());
-        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.isTestExam(), startedExerciseIds, generatedParticipations, failFast);
+        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.isTestExam(), studentExam.isTestRun(), startedExerciseIds,
+                generatedParticipations, failFast);
     }
 
     /**
@@ -653,12 +653,13 @@ public class StudentExamService {
      * @param student                 the student to create the participations for
      * @param exercises               the exercises of that student exam
      * @param testExam                whether the student exam belongs to a test exam, in which case a new participation is always created
+     * @param testRun                 whether the student exam is a test run, whose participations are kept apart from the graded ones
      * @param startedExerciseIds      the ids of those exercises the student already has a fully initialized participation for
      * @param generatedParticipations List of generated participations to track how many participations have been generated
      * @param failFast                whether to rethrow the first failure instead of continuing with the next exercise
      */
-    private void setUpExerciseParticipationsAndSubmissions(long studentExamId, User student, List<Exercise> exercises, boolean testExam, Set<Long> startedExerciseIds,
-            List<StudentParticipation> generatedParticipations, boolean failFast) {
+    private void setUpExerciseParticipationsAndSubmissions(long studentExamId, User student, List<Exercise> exercises, boolean testExam, boolean testRun,
+            Set<Long> startedExerciseIds, List<StudentParticipation> generatedParticipations, boolean failFast) {
         for (Exercise exercise : exercises) {
             // Stands in only if no caller context reached this thread; a real user's identity is kept.
             SecurityUtils.setAuthorizationObject();
@@ -671,7 +672,7 @@ public class StudentExamService {
                         programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload
-                    StudentParticipation participation = participationService.startExercise(exercise, student, true);
+                    StudentParticipation participation = participationService.startExercise(exercise, student, true, testRun);
 
                     generatedParticipations.add(participation);
 
@@ -751,8 +752,8 @@ public class StudentExamService {
                 var startedExerciseIds = exercises.stream().filter(exercise -> startedStudentIdsByExerciseId.getOrDefault(exercise.getId(), Set.of()).contains(student.getId()))
                         .map(Exercise::getId).collect(Collectors.toSet());
                 return CompletableFuture
-                        .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, startedExerciseIds, generatedParticipations, true),
-                                threadPool)
+                        .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, false, startedExerciseIds, generatedParticipations,
+                                true), threadPool)
                         .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {

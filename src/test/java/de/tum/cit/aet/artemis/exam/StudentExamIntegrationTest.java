@@ -3454,12 +3454,50 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exerciseWithGradedParticipation.getId(), instructor.getId(), true))
                 .as("the test run sets up its own participation even though a graded one already exists").isPresent();
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exerciseWithGradedParticipation.getId(), instructor.getId(), false))
+                .as("the graded participation is kept as it was rather than relabelled as a test run")
+                .hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(gradedParticipation.getId()));
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         var conduction = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
         assertThat(conduction.getExercises()).filteredOn(exercise -> exercise.getId().equals(exerciseWithGradedParticipation.getId())).singleElement()
                 .as("the conduction serves the exercise with a participation to submit to").satisfies(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testPreparingExerciseStartSetsUpAGradedParticipationNextToATestRunOne() throws Exception {
+        // The other setup order: the test run exists first, and the graded participation is prepared afterwards. It must
+        // be insertable next to the test run's row rather than collide with it on the unique attempt, and it must not
+        // consume the test run's participation either.
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, true);
+        Exercise sharedExercise = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
+        createTestRun(exam);
+        var testRunParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(sharedExercise.getId(), instructor.getId(), true)
+                .orElseThrow();
+        int testRunSubmissionCount = testRunParticipation.getSubmissions().size();
+
+        // the same instructor is also a registered participant of the exam, with a student exam of their own
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setUser(instructor);
+        studentExam.setExercises(List.of(sharedExercise));
+        studentExam.setWorkingTime(exam.getWorkingTime());
+        studentExam.setSubmitted(false);
+        studentExamRepository.save(studentExam);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, exam.getCourse());
+
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(sharedExercise.getId(), instructor.getId(), false))
+                .as("the graded participation is set up next to the test run one").isPresent();
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(sharedExercise.getId(), instructor.getId(), true))
+                .as("the test run participation and its submissions are left untouched")
+                .hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(testRunParticipation.getId()))
+                .hasValueSatisfying(participation -> assertThat(participation.getSubmissions()).hasSize(testRunSubmissionCount));
     }
 
     @Test

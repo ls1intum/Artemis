@@ -311,7 +311,8 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * with students times exercises even though the distinct data does not.
      *
      * Test runs are left out: they set up their own participations when they are created, flagged as test run, and the
-     * preparation here would add graded ones alongside them that the test run never reads back.
+     * preparation here would add graded ones alongside them that the test run never reads back. The flag is nullable and
+     * only ever set on a test run, so a null has to count as a regular student exam rather than drop it.
      *
      * @param examId the id of the exam
      * @return one row per exercise of every student exam of the exam, test runs excluded
@@ -322,7 +323,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 JOIN studentExam.user student
                 JOIN studentExam.exercises exercise
             WHERE studentExam.exam.id = :examId
-                AND studentExam.testRun = FALSE
+                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
             ORDER BY studentExam.id, exercise.id
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamId(@Param("examId") long examId);
@@ -343,7 +344,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 JOIN studentExam.exercises exercise
             WHERE studentExam.exam.id = :examId
                 AND studentExam.id IN :studentExamIds
-                AND studentExam.testRun = FALSE
+                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
             ORDER BY studentExam.id, exercise.id
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
