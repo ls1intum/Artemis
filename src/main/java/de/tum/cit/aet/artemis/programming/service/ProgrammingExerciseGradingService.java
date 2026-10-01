@@ -351,7 +351,11 @@ public class ProgrammingExerciseGradingService {
             ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, false);
             var buildResult = parsed.buildResult();
             // Whether this container failed to build; applied to the submission once the attempt's result is resolved below.
-            final boolean containerFailed = parsed.buildFailed();
+            // A build agent reports the exit code of the build script for every job that ran to its end. A result without
+            // one is the result the agent constructs for a job that timed out, was cancelled or threw, so the container
+            // did not build either. The shared verdict cannot tell: it reads a missing exit code as unknown, for the CI
+            // systems that never report one, and a container without tests is judged by its exit code alone.
+            final boolean containerFailed = parsed.buildFailed() || buildResult.buildScriptExitCode() == null;
 
             // The submission is shared by all containers of the same commit and is never saved as an entity here: its
             // result collection cascades with orphan removal, and merging a detached copy of it would delete a result a
@@ -600,6 +604,7 @@ public class ProgrammingExerciseGradingService {
             programmingSubmissionRepository.updateBuildFailed(submission.getId(), anyContainerFailedToBuild);
             submission.setBuildFailed(anyContainerFailedToBuild);
         }
+        deleteAbandonedAggregates(resultsOfSubmission, resultId);
         // A solution build generates the exercise's test cases, but each container of a multi-container build reported
         // only its own share and could not deactivate a test removed from the solution (its absence there is a sibling's
         // test, not a removal). Now that every container's feedback is merged, a test case no container reported is
@@ -675,6 +680,40 @@ public class ProgrammingExerciseGradingService {
         }
         buildJobRepository.relinkJobsOfResult(aggregatedResult.getId(), manualResult);
         resultService.deleteResult(aggregatedResult, true);
+    }
+
+    /**
+     * Deletes the aggregated results an earlier build of the submission left behind: automatic results that are older
+     * than the one being finalized, still in progress, and linked by no build job. The first container of a build
+     * creates the aggregate and then links its job to it; a build that was interrupted between the two steps, or whose
+     * job could not be saved, leaves an aggregate that no sibling and no sweep can find, since both search through the
+     * job links. Nothing would ever complete it, and once a later build was merged into a tutor's assessment and its
+     * own aggregate deleted, the leftover would be the submission's newest result and hide the assessment. The
+     * aggregate of an overlapping build that is still running is linked by its jobs and is kept. The finalization does
+     * not depend on the cleanup, so a failure is only logged.
+     *
+     * @param resultsOfSubmission the submission's results
+     * @param resultId            the id of the aggregated result being finalized
+     */
+    private void deleteAbandonedAggregates(List<Result> resultsOfSubmission, long resultId) {
+        for (Result result : resultsOfSubmission) {
+            boolean olderAggregateInProgress = result.getAssessmentType() == AssessmentType.AUTOMATIC && result.getCompletionDate() == null && result.getId() < resultId;
+            if (!olderAggregateInProgress) {
+                continue;
+            }
+            try {
+                if (buildJobRepository.existsByResultId(result.getId())) {
+                    continue;
+                }
+                if (result.getSubmission() instanceof ProgrammingSubmission submission) {
+                    buildLogService.deleteBuildLogsOfSucceededResult(submission, result);
+                }
+                resultService.deleteResult(result, true);
+            }
+            catch (RuntimeException e) {
+                log.warn("Could not delete the abandoned aggregated result {}", result.getId(), e);
+            }
+        }
     }
 
     /**

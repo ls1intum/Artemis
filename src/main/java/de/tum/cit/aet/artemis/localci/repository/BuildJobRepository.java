@@ -138,6 +138,14 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJob> findAllByBuildGroupId(String buildGroupId);
 
     /**
+     * Checks whether a build job links to the given result.
+     *
+     * @param resultId the id of the result
+     * @return true if at least one build job links to the result
+     */
+    boolean existsByResultId(long resultId);
+
+    /**
      * The jobs of a build group together with the result they link to and its submission, participation and exercise, as the build overview shows them.
      *
      * @param buildGroupId the id of the build group

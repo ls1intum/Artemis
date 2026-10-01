@@ -492,7 +492,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         leftover.setCompletionDate(null);
         leftover.setSubmission(submission);
         leftover.setExerciseId(programmingExercise.getId());
-        resultRepository.save(leftover);
+        leftover = resultRepository.save(leftover);
 
         String commitHash = submission.getCommitHash();
         var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
@@ -503,6 +503,39 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         Result reportedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
 
         assertThat(reportedResult.getId()).as("the feedback was merged into the assessment, which is the result to report").isEqualTo(assessment.getId());
+        // The leftover is deleted along the way. It was newer than the assessment, and with this build's own aggregate gone
+        // after the merge it would otherwise stay the submission's latest result and be shown in place of the assessment.
+        assertThat(resultRepository.findById(leftover.getId())).as("the abandoned aggregate is deleted").isEmpty();
+        assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submission.getId()).orElseThrow().getLatestResult().getId())
+                .as("the assessment is the submission's latest result").isEqualTo(assessment.getId());
+    }
+
+    /**
+     * Only an aggregate that no build job links to is abandoned. The aggregate of an overlapping build that is still
+     * running is in progress as well, but its jobs link to it, so the finalization of a newer build leaves it alone and
+     * the older build can still finalize.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheAggregateOfAnOverlappingBuildInProgressIsKept() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000017";
+        submissionOf(participation, commitHash);
+
+        // the older build merged its first container and waits for its sibling; an even older build was interrupted
+        // before its job was linked
+        Result abandoned = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        Result running = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        buildJobRepository.save(new BuildJob(buildJobFor("running-0", "running", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, running));
+        Result newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        buildJobRepository.save(new BuildJob(buildJobFor("newer-0", "newer", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, newer));
+
+        programmingExerciseGradingService.finalizeContainerResult(newer.getId(), participation, true, false, ZonedDateTime.now());
+
+        assertThat(resultRepository.findById(abandoned.getId())).as("no job links to the abandoned aggregate").isEmpty();
+        assertThat(resultRepository.findById(running.getId())).as("the running build keeps its aggregate").isPresent();
+        assertThat(programmingExerciseGradingService.finalizeContainerResult(running.getId(), participation, true, false, ZonedDateTime.now()).getCompletionDate()).isNotNull();
     }
 
     /**
@@ -840,6 +873,44 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         assertThat(buildLogEntryService.getBuildLogs(reloaded, first.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("first build failed");
         assertThat(buildLogEntryService.getBuildLogs(reloaded, second.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("second build failed");
+    }
+
+    /**
+     * A container without tests is judged by the exit code of its build script. A job that times out never reports one:
+     * the agent constructs its result without an exit code. Such a container did not build, so its logs are kept for
+     * the student and the submission is marked as build-failed, next to the feedback of the sibling that succeeded.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testACompileOnlyContainerThatTimedOutCountsAsFailedToBuildAndKeepsItsLogs() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000018";
+        ProgrammingSubmission submission = submissionOf(participation, commitHash);
+
+        var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
+        BuildResult testsResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
+        var tests = programmingExerciseGradingService.appendContainerResult(participation, testsResult, true, "tests", null);
+        buildJobRepository
+                .save(new BuildJob(buildJobFor("timeout-0", "timeout", participation, commitHash, "tests"), BuildStatus.SUCCESSFUL, tests.result(), tests.containerFailed()));
+        // the result the build agent reports for a job that timed out: the logs so far, no exit code
+        BuildResult timedOutResult = new BuildResult(null, commitHash, commitHash, List.of(new BuildLogDTO(ZonedDateTime.now(), "compiling ...")), false);
+        var compile = programmingExerciseGradingService.appendContainerResult(participation, timedOutResult, false, "compile", tests.result().getId());
+        buildJobRepository
+                .save(new BuildJob(buildJobFor("timeout-1", "timeout", participation, commitHash, "compile"), BuildStatus.TIMEOUT, compile.result(), compile.containerFailed()));
+
+        assertThat(tests.containerFailed()).isFalse();
+        assertThat(compile.containerFailed()).as("a job without an exit code did not build").isTrue();
+
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(tests.result().getId(), participation, false, anyContainerFailedToBuild("timeout"),
+                ZonedDateTime.now());
+
+        ProgrammingSubmission reloaded = programmingSubmissionRepository.findById(submission.getId()).orElseThrow();
+        assertThat(reloaded.isBuildFailed()).isTrue();
+        assertThat(finalizedResult.isSuccessful()).isFalse();
+        assertThat(finalizedResult.getPassedTestCaseCount()).as("the sibling's feedback is kept").isEqualTo(1);
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, tests.result().getId())).extracting(BuildLogEntry::getLog, BuildLogEntry::getContainerName)
+                .containsExactly(tuple("compiling ...", "compile"));
     }
 
     /** a container result that failed to build with one log line, as a crashed container reports */
