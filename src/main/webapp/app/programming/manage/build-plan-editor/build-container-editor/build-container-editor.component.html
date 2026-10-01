@@ -1,49 +1,49 @@
 <div class="border rounded p-3 mb-3">
     <div class="flex items-end gap-3 mb-2">
         <div class="grow">
-            <label [for]="'field_container_name_' + container().name">
+            <label [for]="'field_container_name_' + containerIndex()">
                 <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.containerName"></span>
             </label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.containerNameHelp" />
             <input
                 type="text"
                 class="form-control"
-                [id]="'field_container_name_' + container().name"
+                [id]="'field_container_name_' + containerIndex()"
                 [ngModel]="container().name"
                 (ngModelChange)="setName($event)"
-                [name]="'containerName_' + container().name"
+                [name]="'containerName_' + containerIndex()"
             />
         </div>
         <div class="grow">
-            <label [for]="'field_container_image_' + container().name">
+            <label [for]="'field_container_image_' + containerIndex()">
                 <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
             </label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
             <input
                 type="text"
                 class="form-control"
-                [id]="'field_container_image_' + container().name"
+                [id]="'field_container_image_' + containerIndex()"
                 [ngModel]="container().dockerImage ?? ''"
                 [placeholder]="dockerImagePlaceholder()"
                 (ngModelChange)="setDockerImage($event)"
-                [name]="'containerImage_' + container().name"
+                [name]="'containerImage_' + containerIndex()"
             />
         </div>
         <div>
-            <label [for]="'field_container_timeout_' + container().name">
+            <label [for]="'field_container_timeout_' + containerIndex()">
                 <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.timeout"></span>
             </label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.timeoutHelp" />
             <input
                 type="number"
                 class="form-control"
-                [id]="'field_container_timeout_' + container().name"
+                [id]="'field_container_timeout_' + containerIndex()"
                 [ngModel]="container().timeoutSeconds ?? ''"
                 [placeholder]="timeoutPlaceholder() ?? ''"
                 [min]="timeoutMinValue() ?? 1"
                 [max]="timeoutMaxValue() ?? null"
                 (ngModelChange)="setTimeoutSeconds($event)"
-                [name]="'containerTimeout_' + container().name"
+                [name]="'containerTimeout_' + containerIndex()"
                 [class.is-invalid]="!isTimeoutValid()"
             />
             @if (!isTimeoutValid()) {
@@ -75,12 +75,12 @@
             <input
                 class="form-check-input"
                 type="checkbox"
-                [id]="'field_container_scoped_' + container().name"
+                [id]="'field_container_scoped_' + containerIndex()"
                 [ngModel]="scopesRepositories()"
                 (ngModelChange)="toggleRepositoryScoping($event)"
-                [name]="'containerScoped_' + container().name"
+                [name]="'containerScoped_' + containerIndex()"
             />
-            <label class="form-check-label" [for]="'field_container_scoped_' + container().name">
+            <label class="form-check-label" [for]="'field_container_scoped_' + containerIndex()">
                 <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.scopeRepositories"></span>
             </label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.scopeRepositoriesHelp" />
@@ -92,12 +92,12 @@
                         <input
                             class="form-check-input"
                             type="checkbox"
-                            [id]="'field_container_repo_' + container().name + '_' + repositoryType"
+                            [id]="'field_container_repo_' + containerIndex() + '_' + repositoryType"
                             [ngModel]="isRepositorySelected(repositoryType)"
                             (ngModelChange)="toggleRepository(repositoryType, $event)"
-                            [name]="'containerRepo_' + container().name + '_' + repositoryType"
+                            [name]="'containerRepo_' + containerIndex() + '_' + repositoryType"
                         />
-                        <label class="form-check-label" [for]="'field_container_repo_' + container().name + '_' + repositoryType">
+                        <label class="form-check-label" [for]="'field_container_repo_' + containerIndex() + '_' + repositoryType">
                             {{ 'artemisApp.programmingExercise.buildContainersEditor.repositoryTypes.' + repositoryType | artemisTranslate }}
                         </label>
                     </div>
@@ -111,12 +111,12 @@
             <input
                 class="form-check-input"
                 type="checkbox"
-                [id]="'field_container_docker_flags_' + container().name"
+                [id]="'field_container_docker_flags_' + containerIndex()"
                 [ngModel]="overridesDockerFlags()"
                 (ngModelChange)="toggleDockerFlags($event)"
-                [name]="'containerDockerFlags_' + container().name"
+                [name]="'containerDockerFlags_' + containerIndex()"
             />
-            <label class="form-check-label" [for]="'field_container_docker_flags_' + container().name">
+            <label class="form-check-label" [for]="'field_container_docker_flags_' + containerIndex()">
                 <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlags"></span>
             </label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlagsHelp" />
@@ -125,15 +125,15 @@
             <div class="flex flex-wrap items-start gap-3 mt-1">
                 @if (customNetworks(); as networks) {
                     <div>
-                        <label [for]="'field_container_network_' + container().name">
+                        <label [for]="'field_container_network_' + containerIndex()">
                             <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.network"></span>
                         </label>
                         <select
                             class="form-select"
-                            [id]="'field_container_network_' + container().name"
+                            [id]="'field_container_network_' + containerIndex()"
                             [ngModel]="container().dockerFlags?.network ?? ''"
                             (ngModelChange)="setNetwork($event)"
-                            [name]="'containerNetwork_' + container().name"
+                            [name]="'containerNetwork_' + containerIndex()"
                         >
                             <option value="" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.exerciseNetwork"></option>
                             @for (network of networks; track network) {
@@ -147,17 +147,17 @@
                     </div>
                 }
                 <div>
-                    <label [for]="'field_container_cpu_count_' + container().name">
+                    <label [for]="'field_container_cpu_count_' + containerIndex()">
                         <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.cpuCount"></span>
                     </label>
                     <input
                         type="number"
                         class="form-control"
-                        [id]="'field_container_cpu_count_' + container().name"
+                        [id]="'field_container_cpu_count_' + containerIndex()"
                         [ngModel]="container().dockerFlags?.cpuCount ?? ''"
                         [placeholder]="exerciseDockerFlags().cpuCount ?? ''"
                         (ngModelChange)="setCpuCount($event)"
-                        [name]="'containerCpuCount_' + container().name"
+                        [name]="'containerCpuCount_' + containerIndex()"
                         [class.is-invalid]="!isCpuCountValid()"
                     />
                     @if (!isCpuCountValid()) {
@@ -165,17 +165,17 @@
                     }
                 </div>
                 <div>
-                    <label [for]="'field_container_memory_' + container().name">
+                    <label [for]="'field_container_memory_' + containerIndex()">
                         <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.memory"></span>
                     </label>
                     <input
                         type="number"
                         class="form-control"
-                        [id]="'field_container_memory_' + container().name"
+                        [id]="'field_container_memory_' + containerIndex()"
                         [ngModel]="container().dockerFlags?.memory ?? ''"
                         [placeholder]="exerciseDockerFlags().memory ?? ''"
                         (ngModelChange)="setMemory($event)"
-                        [name]="'containerMemory_' + container().name"
+                        [name]="'containerMemory_' + containerIndex()"
                         [class.is-invalid]="!isMemoryValid()"
                     />
                     @if (!isMemoryValid()) {
@@ -183,17 +183,17 @@
                     }
                 </div>
                 <div>
-                    <label [for]="'field_container_memory_swap_' + container().name">
+                    <label [for]="'field_container_memory_swap_' + containerIndex()">
                         <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.memorySwap"></span>
                     </label>
                     <input
                         type="number"
                         class="form-control"
-                        [id]="'field_container_memory_swap_' + container().name"
+                        [id]="'field_container_memory_swap_' + containerIndex()"
                         [ngModel]="container().dockerFlags?.memorySwap ?? ''"
                         [placeholder]="exerciseDockerFlags().memorySwap ?? ''"
                         (ngModelChange)="setMemorySwap($event)"
-                        [name]="'containerMemorySwap_' + container().name"
+                        [name]="'containerMemorySwap_' + containerIndex()"
                         [class.is-invalid]="!isMemorySwapValid()"
                     />
                     @if (!isMemorySwapValid()) {
@@ -210,7 +210,7 @@
                             class="form-control"
                             [ngModel]="row[0]"
                             (ngModelChange)="setEnvVarKey($index, $event)"
-                            [name]="'containerEnvKey_' + container().name + '_' + $index"
+                            [name]="'containerEnvKey_' + containerIndex() + '_' + $index"
                             [placeholder]="'artemisApp.programmingExercise.buildContainersEditor.envVarKey' | artemisTranslate"
                             [attr.aria-label]="'artemisApp.programmingExercise.buildContainersEditor.envVarKey' | artemisTranslate"
                         />
@@ -219,7 +219,7 @@
                             class="form-control"
                             [ngModel]="row[1]"
                             (ngModelChange)="setEnvVarValue($index, $event)"
-                            [name]="'containerEnvValue_' + container().name + '_' + $index"
+                            [name]="'containerEnvValue_' + containerIndex() + '_' + $index"
                             [placeholder]="'artemisApp.programmingExercise.buildContainersEditor.envVarValue' | artemisTranslate"
                             [attr.aria-label]="'artemisApp.programmingExercise.buildContainersEditor.envVarValue' | artemisTranslate"
                         />

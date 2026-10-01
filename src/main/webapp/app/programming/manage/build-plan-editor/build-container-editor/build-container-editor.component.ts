@@ -45,6 +45,8 @@ export class BuildContainerEditorComponent {
     protected readonly faPlus = faPlus;
 
     readonly container = model.required<BuildContainer>();
+    /** the position of the container in the build plan, which keeps the ids of its fields unique while its name is edited */
+    readonly containerIndex = input.required<number>();
     readonly isExamMode = input(false);
     /** the names of the other containers of the build plan, used to detect duplicates */
     readonly otherContainerNames = input<string[]>([]);

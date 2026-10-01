@@ -45,6 +45,7 @@
     @for (container of containers(); track $index) {
         <jhi-build-container-editor
             [container]="container"
+            [containerIndex]="$index"
             (containerChange)="updateContainer($index, $event)"
             (remove)="removeContainer($index)"
             [canRemove]="containers().length > 1"

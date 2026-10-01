@@ -46,6 +46,7 @@ describe('BuildContainerEditorComponent', () => {
         fixture = TestBed.createComponent(BuildContainerEditorComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('container', { ...container, phases: [...container.phases] });
+        fixture.componentRef.setInput('containerIndex', 0);
     });
 
     const getRemoveButton = () => fixture.debugElement.query(By.css('[data-testid="remove-container-button"]'));
@@ -69,6 +70,22 @@ describe('BuildContainerEditorComponent', () => {
         expect(getRemoveButton()).toBeNull();
     });
 
+    it('should derive the ids of its fields from its position, so that they stay unique and stable while the name is edited', () => {
+        // a container added in the editor starts without a name, so ids built from the name would collide between containers
+        fixture.componentRef.setInput('container', { ...container, name: '' });
+        fixture.componentRef.setInput('containerIndex', 1);
+        fixture.detectChanges();
+        const getNameField = () => fixture.debugElement.query(By.css('#field_container_name_1'));
+
+        expect(getNameField()).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('label[for="field_container_name_1"]'))).not.toBeNull();
+
+        component.setName('instructor_tests');
+        fixture.detectChanges();
+
+        expect(getNameField()).not.toBeNull();
+    });
+
     it('should flag a duplicate container name regardless of case', () => {
         fixture.componentRef.setInput('otherContainerNames', ['Student_Tests']);
         fixture.detectChanges();
@@ -85,7 +102,7 @@ describe('BuildContainerEditorComponent', () => {
             fixture.detectChanges();
 
             expect(component.overridesDockerFlags()).toBe(false);
-            expect(getField('field_container_cpu_count_student_tests')).toBeNull();
+            expect(getField('field_container_cpu_count_0')).toBeNull();
         });
 
         it('should show the flags once the container overrides them and discard them when the override is switched off', () => {
@@ -94,13 +111,13 @@ describe('BuildContainerEditorComponent', () => {
             component.toggleDockerFlags(true);
             fixture.detectChanges();
             expect(component.container().dockerFlags).toEqual({});
-            expect(getField('field_container_cpu_count_student_tests')).not.toBeNull();
+            expect(getField('field_container_cpu_count_0')).not.toBeNull();
 
             component.setCpuCount(2);
             component.toggleDockerFlags(false);
             fixture.detectChanges();
             expect(component.container().dockerFlags).toBeUndefined();
-            expect(getField('field_container_cpu_count_student_tests')).toBeNull();
+            expect(getField('field_container_cpu_count_0')).toBeNull();
         });
 
         it('should show the flags of a container that arrives with an override', () => {
@@ -114,12 +131,12 @@ describe('BuildContainerEditorComponent', () => {
         it('should offer the network only where the language supports selecting one', () => {
             fixture.componentRef.setInput('container', { ...container, dockerFlags: {} });
             fixture.detectChanges();
-            expect(getField('field_container_network_student_tests')).toBeNull();
+            expect(getField('field_container_network_0')).toBeNull();
 
             fixture.componentRef.setInput('customNetworks', ['none', 'custom']);
             fixture.detectChanges();
             // the empty option stands for the network of the exercise
-            expect(getField('field_container_network_student_tests').queryAll(By.css('option'))).toHaveLength(3);
+            expect(getField('field_container_network_0').queryAll(By.css('option'))).toHaveLength(3);
 
             component.setNetwork('none');
             expect(component.container().dockerFlags?.network).toBe('none');
@@ -148,7 +165,7 @@ describe('BuildContainerEditorComponent', () => {
             expect(component.isCpuCountValid()).toBe(false);
             expect(component.isMemoryValid()).toBe(false);
             expect(component.isMemorySwapValid()).toBe(false);
-            expect(getField('field_container_cpu_count_student_tests').nativeElement.classList.contains('is-invalid')).toBe(true);
+            expect(getField('field_container_cpu_count_0').nativeElement.classList.contains('is-invalid')).toBe(true);
 
             component.setCpuCount(1);
             component.setMemory(6);
