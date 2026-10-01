@@ -2,7 +2,6 @@ import { Component, HostListener, effect, inject, input, model, output, signal }
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { TextBlockAssessmentCardComponent } from '../textblock-assessment-card/text-block-assessment-card.component';
 import { ManualTextblockSelectionComponent } from '../manual-textblock-selection/manual-textblock-selection.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -27,7 +26,6 @@ export class TextAssessmentAreaComponent {
     textBlockRefs = model.required<TextBlockRef[]>();
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
-    criteria = input<GradingCriterion[]>();
     allowManualBlockSelection = input<boolean>(true);
 
     // outputs
