@@ -22,6 +22,8 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
+import de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics;
 
 /**
  * Regression tests for the {@code taskExecutor} deadlock behind Hyperion code generation jobs that never finished.
@@ -36,9 +38,9 @@ class HyperionWebsocketServiceTest {
 
     private static final String LOGIN = "instructor1";
 
-    private static final String TOPIC_SUFFIX = "code-generation/jobs/job-1";
+    private static final WebsocketUserDestination DESTINATION = HyperionWebsocketTopics.CODE_GENERATION_JOB.at("job-1");
 
-    private static final String TOPIC = "/topic/hyperion/" + TOPIC_SUFFIX;
+    private static final String TOPIC = DESTINATION.value();
 
     private static final String PAYLOAD = "progress event";
 
@@ -84,18 +86,18 @@ class HyperionWebsocketServiceTest {
 
     @Test
     void shouldReturnBeforeTheMessageIsDelivered() {
-        when(websocketMessagingService.sendMessageToUser(LOGIN, TOPIC, PAYLOAD)).thenReturn(pendingSend);
+        when(websocketMessagingService.sendMessageToUser(LOGIN, DESTINATION, PAYLOAD)).thenReturn(pendingSend);
 
         sendWithinTimeout();
 
-        verify(websocketMessagingService).sendMessageToUser(LOGIN, TOPIC, PAYLOAD);
+        verify(websocketMessagingService).sendMessageToUser(LOGIN, DESTINATION, PAYLOAD);
         assertThat(pendingSend).isNotDone();
         assertThat(ownLogEvents()).isEmpty();
     }
 
     @Test
     void shouldLogADeliveryFailureThatHappensAfterTheHandOff() {
-        when(websocketMessagingService.sendMessageToUser(LOGIN, TOPIC, PAYLOAD)).thenReturn(pendingSend);
+        when(websocketMessagingService.sendMessageToUser(LOGIN, DESTINATION, PAYLOAD)).thenReturn(pendingSend);
         sendWithinTimeout();
         assertThat(ownLogEvents()).isEmpty();
 
@@ -110,9 +112,9 @@ class HyperionWebsocketServiceTest {
 
     @Test
     void shouldNotThrowWhenTheSendFailsRightAway() {
-        when(websocketMessagingService.sendMessageToUser(LOGIN, TOPIC, PAYLOAD)).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("broker unavailable")));
+        when(websocketMessagingService.sendMessageToUser(LOGIN, DESTINATION, PAYLOAD)).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("broker unavailable")));
 
-        assertThatCode(() -> hyperionWebsocketService.send(LOGIN, TOPIC_SUFFIX, PAYLOAD)).doesNotThrowAnyException();
+        assertThatCode(() -> hyperionWebsocketService.send(LOGIN, DESTINATION, PAYLOAD)).doesNotThrowAnyException();
 
         assertThat(ownLogEvents()).singleElement().satisfies(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.ERROR);
@@ -122,9 +124,9 @@ class HyperionWebsocketServiceTest {
 
     @Test
     void shouldLogASuccessfulDeliveryAtDebugLevel() {
-        when(websocketMessagingService.sendMessageToUser(LOGIN, TOPIC, PAYLOAD)).thenReturn(CompletableFuture.completedFuture(null));
+        when(websocketMessagingService.sendMessageToUser(LOGIN, DESTINATION, PAYLOAD)).thenReturn(CompletableFuture.completedFuture(null));
 
-        hyperionWebsocketService.send(LOGIN, TOPIC_SUFFIX, PAYLOAD);
+        hyperionWebsocketService.send(LOGIN, DESTINATION, PAYLOAD);
 
         assertThat(ownLogEvents()).singleElement().satisfies(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.DEBUG);
@@ -137,7 +139,7 @@ class HyperionWebsocketServiceTest {
      * instead of hanging the whole suite.
      */
     private void sendWithinTimeout() {
-        var call = CompletableFuture.runAsync(() -> hyperionWebsocketService.send(LOGIN, TOPIC_SUFFIX, PAYLOAD), callerThread);
+        var call = CompletableFuture.runAsync(() -> hyperionWebsocketService.send(LOGIN, DESTINATION, PAYLOAD), callerThread);
         assertThatCode(() -> call.get(5, TimeUnit.SECONDS)).doesNotThrowAnyException();
     }
 

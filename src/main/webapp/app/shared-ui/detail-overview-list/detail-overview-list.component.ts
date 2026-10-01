@@ -10,12 +10,12 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { NgStyle, NgTemplateOutlet } from '@angular/common';
+import { NgOptimizedImage, NgTemplateOutlet } from '@angular/common';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
-import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -54,6 +54,7 @@ export enum DetailType {
     styleUrls: ['./detail-overview-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        NgOptimizedImage,
         DetailOverviewNavigationBarComponent,
         HelpIconComponent,
         ProgrammingExerciseInstructionComponent,
@@ -63,7 +64,6 @@ export enum DetailType {
         ModelingEditorComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         BuildPhasesEditorComponent,
-        NgStyle,
         ExerciseDetailDirective,
         NoDataComponent,
         ArtemisTranslatePipe,
@@ -71,13 +71,13 @@ export enum DetailType {
     ],
 })
 export class DetailOverviewListComponent {
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly alertService = inject(AlertService);
+
     protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
-
-    private readonly modelingExerciseService = inject(ModelingExerciseService);
-    private readonly alertService = inject(AlertService);
 
     sections = input.required<DetailOverviewSection[]>();
 

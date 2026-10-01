@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20260907100622_changelog.xml">
+
+    <!--
+        Drop attachment.exercise_id and attachment.lecture_id. An attachment reaches its owner through the attachment
+        video unit alone, and this release stopped mapping both of these columns.
+
+        exercise_id comes from the generated schema this project started from and has never had a writer: no released
+        version has an endpoint that creates an attachment for an exercise, and no code path sets one. The mapping was
+        there in name only. Exercise.attachments was a lazy inverse collection whose three touch points all *emptied*
+        it (both import services and Exercise.disconnectRelatedEntities), two repositories declared a fetch of it that
+        nothing selected, and the single reader was a ternary in GroupNotificationService that could only ever take its
+        lecture branch. Nor was a row reachable: every attachment file route in FileResource is keyed by a lecture or by
+        an attachment video unit and FilePathType has no case for an exercise, so no URI resolved such a file and no
+        page listed one. Dropping this column removes a reference that pointed nowhere.
+
+        lecture_id was real until this release. 20260905235721_changelog.xml gave every attachment that carried one an
+        attachment video unit, so the lecture of an attachment is now the lecture of that unit and the column says
+        nothing the rows do not already say. Nothing maps it and nothing reads it: the constraint was ON DELETE
+        RESTRICT, which is what made deleting a lecture depend on every attachment naming it being cleared first, and
+        AttachmentRepository.findAllInLecture reaches the lecture through the unit instead.
+
+        What the column did carry until now is where a file is. The files of those attachments stayed under
+        uploads/attachments/lecture/{lectureId} because a changelog cannot move a file, and since this release stores
+        only a filename in jhi_link, neither the value nor this column can be asked any more which of the two
+        attachment directories holds one. That question is answered by FileSystemLocation#ofAttachment, which derives
+        the lecture id from the unit and, when the unit directory does not hold the file, falls back to the lecture
+        directory. It is marked transitional and is retired by MigrationEntry20260907_175735, entry 1 of
+        MigrationRegistry, which moves the files.
+
+        It is safe to drop the column here and not one release later, because a deployment that carries database
+        migrations is not rolling in this project: the previous version is stopped before Liquibase runs, so no node
+        whose lecture import still writes lecture_id is serving while these changesets execute. The predecessor runs
+        first in the very same execution and leaves nothing behind for the column to describe, so
+
+            SELECT COUNT(*) FROM attachment WHERE lecture_id IS NOT NULL AND attachment_unit_id IS NULL
+
+        is zero by the time this file is reached. That query is worth running by hand first on a database that was ever
+        served by two versions at once, since a row it returns loses the only pointer to its file here.
+
+        Both columns carry an explicit index created by the initial schema under the foreign key's own generated name,
+        so each constraint is dropped first and its index after it. Both databases keep such an index once the
+        constraint is gone, and both would drop it along with the column anyway, so the index drops are here to be
+        explicit rather than because the column drop needs them, and each is guarded so that a database which never had
+        the index under that name skips it instead of failing.
+
+        This file already ran on every database that follows develop, and only its comments and the rollback of the
+        last changeset are edited here. Neither is part of a changeset checksum, which Liquibase computes from the
+        forward changes and any modifySql alone, so no recorded checksum changes and no validCheckSum is needed. The
+        rollback has to be edited all the same: it is read from this file at the moment a rollback runs, not from the
+        database, so leaving the old statement in place would leave a rollback that silently recovers nothing while
+        claiming to.
+
+        Both columns come back empty on rollback. exercise_id never held a value. lecture_id held one, and it is not
+        recoverable here: the only row-level evidence of which attachments the migration touched was that their link
+        still named the lecture attachment directory, and 20260906221008_changelog.xml reduced every link to a bare
+        filename before this file is reached. That is stated where it matters, in the comment of that changelog: the
+        rollback of 20260905235721_changelog.xml already recovers nothing for the same reason and leaves the units it
+        created in place with their attachments attached. Nothing on this release reads the column, so restoring it
+        empty leaves a working system, and rolling forward is the only path this release is deployed on.
+    -->
+    <changeSet id="20260907100622-1-drop-attachment-exercise-foreign-key" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyTableName="attachment" foreignKeyName="FK840kdpn5r9l2wyhq83gl6sx2g"/>
+        </preConditions>
+        <comment>Drop the foreign key from attachment.exercise_id to exercise.</comment>
+        <dropForeignKeyConstraint baseTableName="attachment" constraintName="FK840kdpn5r9l2wyhq83gl6sx2g"/>
+        <rollback>
+            <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="attachment" constraintName="FK840kdpn5r9l2wyhq83gl6sx2g" deferrable="false"
+                                     initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise"
+                                     validate="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260907100622-2-drop-attachment-exercise-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="attachment" indexName="FK840kdpn5r9l2wyhq83gl6sx2g"/>
+        </preConditions>
+        <comment>Drop the index on attachment.exercise_id that the foreign key was using.</comment>
+        <dropIndex tableName="attachment" indexName="FK840kdpn5r9l2wyhq83gl6sx2g"/>
+        <rollback>
+            <createIndex indexName="FK840kdpn5r9l2wyhq83gl6sx2g" tableName="attachment">
+                <column name="exercise_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260907100622-3-drop-attachment-lecture-foreign-key" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyTableName="attachment" foreignKeyName="FKa6apwe76xlljxtm3nimrlvppf"/>
+        </preConditions>
+        <comment>
+            Drop the foreign key from attachment.lecture_id to lecture. It was ON DELETE RESTRICT, which is what made
+            deleting a lecture depend on every attachment naming it being cleared first.
+        </comment>
+        <dropForeignKeyConstraint baseTableName="attachment" constraintName="FKa6apwe76xlljxtm3nimrlvppf"/>
+        <rollback>
+            <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="attachment" constraintName="FKa6apwe76xlljxtm3nimrlvppf" deferrable="false"
+                                     initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture"
+                                     validate="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260907100622-4-drop-attachment-lecture-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="attachment" indexName="FKa6apwe76xlljxtm3nimrlvppf"/>
+        </preConditions>
+        <comment>Drop the index on attachment.lecture_id that the foreign key was using.</comment>
+        <dropIndex tableName="attachment" indexName="FKa6apwe76xlljxtm3nimrlvppf"/>
+        <rollback>
+            <createIndex indexName="FKa6apwe76xlljxtm3nimrlvppf" tableName="attachment">
+                <column name="lecture_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260907100622-5-drop-vacated-attachment-columns" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <columnExists tableName="attachment" columnName="exercise_id"/>
+                <columnExists tableName="attachment" columnName="lecture_id"/>
+            </or>
+        </preConditions>
+        <comment>
+            Drop both columns now that nothing maps them and no constraint or index names them. Dropping a column
+            commits on its own on MySQL, so the precondition is what makes this changeset safe to run again after a
+            start that was killed between the statements and the databasechangelog row.
+        </comment>
+        <dropColumn tableName="attachment">
+            <column name="exercise_id"/>
+            <column name="lecture_id"/>
+        </dropColumn>
+        <rollback>
+            <!-- Both come back empty. See the note at the top of this file for why the lecture ids are not recoverable here. -->
+            <addColumn tableName="attachment">
+                <column name="exercise_id" type="bigint"/>
+                <column name="lecture_id" type="bigint"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -6,9 +6,11 @@ children + one required status check**.
 ## Entry point — `ci.yml`
 
 `ci.yml` is the single CI entry point. It registers every trigger that should run the main
-CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, published
+CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, published Artemis
 releases, merge-queue runs, and a manual `workflow_dispatch`) so that the answer to "what
-runs on event X?" is in exactly one file.
+runs on event X?" is in exactly one file. Scoped package releases (`@tumaet/*`)
+do not run Artemis builds or Android tests. TUM AET UI uses `release-tum-aet-ui.yml`: a manual run on a
+branch validates; a run on an `@tumaet/ui-angular@<version>` tag validates and stages for npm approval.
 
 ```text
 ci.yml                                                            (single entry workflow)
@@ -26,6 +28,7 @@ ci.yml                                                            (single entry 
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
+├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
 ├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
 │
 │   ADVISORY — runs for signal, never blocks merge:
@@ -276,7 +279,15 @@ Three things about it are worth knowing before changing it:
    dispatch inputs, so keep that trigger input-free.
 
 The job is `continue-on-error` and never appears in another job's `needs:`, so a Sonar outage, an
-expired `SONAR_TOKEN`, or a missing project cannot turn `develop` red.
+expired `SONAR_TOKEN`, or a missing project cannot fail the run.
+
+That covers the workflow, and only the workflow. SonarQube Cloud's GitHub App posts a second check
+of its own, `SonarCloud Code Analysis`, carrying the quality gate verdict. Nothing in this
+repository produces that check and `continue-on-error` cannot reach it, so a failed gate shows as a
+red X on the `develop` commit while the job beside it is green. It still gates nothing — branch
+protection requires only `All required CI Passed` — but it is the reason `develop` can look red with
+every workflow passing. Which conditions that verdict applies is the quality gate the project is
+assigned in SonarQube Cloud, configured there rather than here.
 
 ## Adding a new CI check
 

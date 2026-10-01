@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,8 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
@@ -80,7 +77,10 @@ public class PyrisWebhookService {
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
-        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        // An attachment that links to a document hosted elsewhere has nothing here to ingest. Resolving the link would read whichever unrelated file shares its last segment
+        // and hand that to Pyris as this unit's content.
+        Path path = attachmentVideoUnit.getAttachment().fileLocation().orElseThrow(() -> new IrisInternalPyrisErrorException(
+                "Attachment video unit " + attachmentVideoUnit.getId() + " links to a document this application does not store, so it cannot be ingested")).path();
         try {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.getEncoder().encodeToString(fileBytes);

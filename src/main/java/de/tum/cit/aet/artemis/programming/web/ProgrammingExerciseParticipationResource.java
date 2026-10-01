@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -51,6 +52,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -86,7 +89,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.PROGRAMMING_REPOSITORY_HISTORY)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseParticipationResource {
@@ -163,6 +166,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with latest result and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipationDTO> getParticipationWithLatestResultForStudentParticipation(@PathVariable long participationId) {
@@ -180,7 +184,8 @@ public class ProgrammingExerciseParticipationResource {
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submission == null ? List.of()
                 : List.of(ProgrammingSubmissionWithResultsDTO.of(submission, mapResults(results)));
         ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
-        return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
+        var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
+        return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
 
     private static List<ResultDTO> mapResults(Collection<Result> results) {
@@ -195,6 +200,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     // TODO: this is currently only used in the commit history view. Ideally we add an option to fetch this data additionally as part of the commit history endpoint below and
     // avoid sending so much data. Then, we can remove this endpoint in the future as well
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-all-results")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipationDTO> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
@@ -217,7 +223,8 @@ public class ProgrammingExerciseParticipationResource {
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submissions.stream()
                 .map(submission -> ProgrammingSubmissionWithResultsDTO.of(submission, hideResults ? List.of() : mapResults(submission.getResults()))).toList();
         ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
-        return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
+        var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
+        return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
 
     /**
@@ -255,6 +262,9 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUriElseThrow(repoUri);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        if (!canSeeParticipantInformation(participation)) {
+            throw new AccessForbiddenException();
+        }
         // check if the exercise is released. This also checks if the user can see an exam exercise
         if (!participation.getProgrammingExercise().isReleased()) {
             throw new AccessForbiddenException("exercise", participation.getProgrammingExercise().getId());
@@ -274,6 +284,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed
      *         to access the participation.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -291,7 +302,11 @@ public class ProgrammingExerciseParticipationResource {
         // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
         result.ifPresent(value -> resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, List.of(value)));
 
-        return result.map(value -> ResponseEntity.ok(ProgrammingParticipationLatestResultDTO.of(value))).orElseGet(() -> ResponseEntity.ok(null));
+        boolean hideParticipant = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !canSeeParticipantInformation(studentParticipation);
+        return result.map(value -> {
+            var response = ProgrammingParticipationLatestResultDTO.of(value);
+            return ResponseEntity.ok(hideParticipant ? response.withoutParticipantInformation() : response);
+        }).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
@@ -300,6 +315,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId of the participation to check.
      * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/has-result")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
@@ -316,6 +332,8 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given
      *         id and forbidden (403) if the user is not allowed to access the participation.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("programming-exercise-participations/{participationId}/latest-pending-submission")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -361,6 +379,8 @@ public class ProgrammingExerciseParticipationResource {
      * @return a list with one {@link PendingProgrammingSubmissionDTO} per student participation of the exercise; the
      *         {@code submission} is populated if a pending submission exists and {@code null} otherwise.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<PendingProgrammingSubmissionDTO>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
@@ -379,6 +399,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_ONLINE_EDITOR)
     @PutMapping("programming-exercise-participations/{participationId}/reset-repository")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> resetRepository(@PathVariable Long participationId, @RequestParam(required = false) Long gradedParticipationId)
@@ -460,7 +481,7 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * GET /programming-exercise/{exerciseId}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
+     * GET /programming-exercises/{exerciseId}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
      * SOLUTION, TESTS or AUXILIARY.
      * Here we check is at least a teaching assistant for the exercise.
      *
@@ -469,7 +490,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param repositoryId   the id of the repository
      * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the repository
      */
-    @GetMapping({ "programming-exercises/{exerciseId}/commit-history/{repositoryType}", "programming-exercise/{exerciseId}/commit-history/{repositoryType}" })
+    @GetMapping("programming-exercises/{exerciseId}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType,
             @RequestParam Optional<Long> repositoryId) {
@@ -512,18 +533,12 @@ public class ProgrammingExerciseParticipationResource {
      * GET /programming-exercise-participations/{participationId}/files-content : Get the content of the files of a programming exercise participation.
      *
      * @param participationId the id of the participation for which to retrieve the files content
-     * @param commitIdQuery   the id of the commit for which to retrieve the files content (provided as a query parameter; preferred)
-     * @param commitIdPath    the id of the commit for which to retrieve the files content (provided as a legacy path variable; deprecated)
+     * @param commitId        the id of the commit for which to retrieve the files content
      * @return The files of repository along with their content
      */
-    @GetMapping({ "programming-exercise-participations/{participationId}/files-content", "programming-exercise-participations/{participationId}/files-content/{commitId}" })
+    @GetMapping("programming-exercise-participations/{participationId}/files-content")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId,
-            @RequestParam(name = "commitId", required = false) String commitIdQuery, @PathVariable(name = "commitId", required = false) String commitIdPath) {
-        String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
-        if (commitId == null) {
-            throw new BadRequestAlertException("A commitId must be provided", ENTITY_NAME, "commitIdMissing");
-        }
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId, @RequestParam(name = "commitId") String commitId) {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
@@ -537,27 +552,20 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * GET /programming-exercise/{exerciseId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise
+     * GET /programming-exercises/{exerciseId}/files-content-commit-details : Get the content of the files of a programming exercise
      * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
      * getParticipationRepositoryFiles but also students and tutors that have access to the participation.
      *
      * @param exerciseId      the id of the exercise for which to retrieve the files content
      * @param participationId the id of the participation for which to retrieve the files content
-     * @param commitIdQuery   the id of the commit for which to retrieve the files content (provided as a query parameter; preferred)
-     * @param commitIdPath    the id of the commit for which to retrieve the files content (provided as a legacy path variable; deprecated)
+     * @param commitId        the id of the commit for which to retrieve the files content
      * @param repositoryType  the type of the repository for which to retrieve the files content
      * @return The files of the repository along with their content
      */
-    @GetMapping({ "programming-exercises/{exerciseId}/files-content-commit-details", "programming-exercises/{exerciseId}/files-content-commit-details/{commitId}",
-            "programming-exercise/{exerciseId}/files-content-commit-details/{commitId}" })
+    @GetMapping("programming-exercises/{exerciseId}/files-content-commit-details")
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId,
-            @RequestParam(name = "commitId", required = false) String commitIdQuery, @PathVariable(name = "commitId", required = false) String commitIdPath,
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @RequestParam(name = "commitId") String commitId,
             @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) {
-        String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
-        if (commitId == null && (participationId != null || repositoryType != null)) {
-            throw new BadRequestAlertException("A commitId must be provided", ENTITY_NAME, "commitIdMissing");
-        }
         try {
             if (participationId != null) {
                 Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -593,6 +601,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param filePaths       the repository-relative file paths to retrieve
      * @return the requested text files that exist at the commit
      */
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("programming-exercises/{exerciseId}/files-content-commit-details/selected")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getSelectedParticipationRepositoryFilesAtCommit(@PathVariable long exerciseId, @RequestParam String commitId,
@@ -640,7 +649,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation, or 400 (Bad request) if localVC is not enabled.
      * @throws BadRequestAlertException if the repository type is invalid
      */
-    @GetMapping({ "programming-exercises/{exerciseId}/vcs-access-log/{repositoryType}", "programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}" })
+    @GetMapping("programming-exercises/{exerciseId}/vcs-access-log/{repositoryType}")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) {
         if (vcsAccessLogRepository.isEmpty()) {
@@ -658,6 +667,10 @@ public class ProgrammingExerciseParticipationResource {
         List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participation.getId());
         var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
+    }
+
+    private boolean canSeeParticipantInformation(ProgrammingExerciseStudentParticipation participation) {
+        return authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastInstructorForExercise(participation.getExercise());
     }
 
     /**

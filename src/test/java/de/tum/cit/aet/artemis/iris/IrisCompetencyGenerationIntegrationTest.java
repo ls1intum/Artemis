@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -75,7 +76,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         irisCompetencyGenerationService.handleStatusUpdate(job, new PyrisCompetencyStatusUpdateDTO(PyrisRunState.FINISHED, null, recommendations, null));
 
         ArgumentCaptor<IrisCompetencyGenerationStatusDTO> argumentCaptor = ArgumentCaptor.forClass(IrisCompetencyGenerationStatusDTO.class);
-        verify(websocketMessagingService, timeout(200).times(2)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), eq("/topic/iris/competencies/" + course.getId()),
+        verify(websocketMessagingService, timeout(200).times(2)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), userTopic("/topic/iris/competencies/" + course.getId()),
                 argumentCaptor.capture());
 
         List<IrisCompetencyGenerationStatusDTO> allValues = argumentCaptor.getAllValues();

@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 // ExecutionMode.SAME_THREAD ensures that all tests within this class are executed sequentially in the same thread, rather than in parallel or in a different thread.
@@ -529,8 +530,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class,
-                        HttpStatus.CREATED);
+                ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                        CreateProgrammingExerciseDTO.of(exercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
                 log.info("Successfully created exercise on attempt {}/{}", attempt, maxAttempts);
                 return createdExercise;
             }

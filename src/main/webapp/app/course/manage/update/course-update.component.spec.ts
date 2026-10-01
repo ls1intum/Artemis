@@ -31,7 +31,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -43,7 +43,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -364,7 +364,8 @@ describe('Course Management Update Component', () => {
             // CourseAthenaConfigResource - so the saved course does not carry them either.
             delete entity.athenaGradingFeedbackEnabled;
             delete entity.athenaFormativeFeedbackEnabled;
-            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 42 } })));
+            const navigateStub = vi.spyOn(TestBed.inject(Router), 'navigate');
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
@@ -391,6 +392,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
+            expect(navigateStub).toHaveBeenCalledExactlyOnceWith(['course-management', '42']);
             expect(comp.isSaving()).toBe(false);
         });
 
@@ -805,6 +807,25 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('isDateOrderInvalid', () => {
+        it('should be false when both dates are empty, even though isValidDate is false', () => {
+            comp.course = new Course();
+            comp.course.startDate = undefined;
+            comp.course.endDate = undefined;
+
+            expect(comp.isDateOrderInvalid).toBe(false);
+            expect(comp.isValidDate).toBe(false);
+        });
+
+        it('should be true when the start date is after the end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+
+            expect(comp.isDateOrderInvalid).toBe(true);
+        });
+    });
+
     describe('isValidEnrollmentPeriod', () => {
         it('should handle valid dates', () => {
             comp.course = new Course();
@@ -1049,15 +1070,15 @@ describe('Course Management Update Component', () => {
             expect(comp.isValidDate).toBe(true);
         });
 
-        it('should update isValidDate to true when endDate is cleared via form control', () => {
+        it('should update isValidDate to false when endDate is cleared via form control', () => {
             comp.course.startDate = dayjs().subtract(5, 'day');
             comp.course.endDate = dayjs().add(5, 'day');
             expect(comp.isValidDate).toBe(true);
 
-            // Clearing endDate: atLeastOneDateNotExisting() returns true, so isValidDate = true
+            // Clearing endDate: both dates are mandatory, so atLeastOneDateNotExisting() makes isValidDate false
             comp.courseForm.controls['endDate'].setValue(undefined);
             expect(comp.course.endDate).toBeUndefined();
-            expect(comp.isValidDate).toBe(true);
+            expect(comp.isValidDate).toBe(false);
         });
 
         it('should invalidate enrollment period when endDate is moved before enrollmentEndDate via form control', () => {
@@ -1303,8 +1324,8 @@ describe('Course Management Update Component', () => {
             expect(comp.imageToCrop()).toBe(comp.courseImageUploadFile);
             fixture.detectChanges();
             const dialog = fixture.debugElement
-                .queryAll(By.directive(TumUiDialogComponent))
-                .map((debugElement) => debugElement.componentInstance as TumUiDialogComponent)
+                .queryAll(By.directive(TumAetUiDialogComponent))
+                .map((debugElement) => debugElement.componentInstance as TumAetUiDialogComponent)
                 .find((dialogComponent) => dialogComponent.header() === 'artemisApp.course.courseIcon')!;
             expect(dialog.size()).toBe('small');
 
@@ -1426,6 +1447,410 @@ describe('Course Management Update Component', () => {
             await comp.changeCommunicationEnabled();
 
             expect(disableMessagingSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('required start date, end date and semester', () => {
+        // The ActivatedRoute mock configured in the outer beforeEach always delivers the shared `course`
+        // object to ngOnInit (which resets comp.course to a blank Course before applying it), so these
+        // tests clear the relevant fields on that shared object rather than reassigning comp.course.
+        it('marks the form invalid when a date or the semester is missing', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            expect(comp.courseForm.controls['startDate'].valid).toBe(false);
+            expect(comp.courseForm.controls['endDate'].valid).toBe(false);
+            expect(comp.courseForm.controls['semester'].valid).toBe(false);
+            expect(comp.courseForm.invalid).toBe(true);
+        });
+
+        it('fills empty dates from the selected semester', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2025-10-01');
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-03-31');
+        });
+
+        it('replaces dates that are still the previous semester range', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+            comp.courseForm.controls['semester'].setValue('SS26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2026-04-01');
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps dates the user edited by hand', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+            const handPicked = dayjs('2025-11-05');
+            comp.courseForm.controls['startDate'].setValue(handPicked);
+            comp.courseForm.controls['semester'].setValue('SS26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2025-11-05');
+            // the untouched end date still follows the semester
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps a legacy semester selectable', () => {
+            course.semester = 'WS16/17';
+            comp.ngOnInit();
+
+            expect(comp.semesters()).toContain('WS16/17');
+        });
+
+        it('treats a missing date as an invalid configuration', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            expect(comp.isValidDate).toBe(false);
+        });
+    });
+
+    describe('form issues and submission', () => {
+        const scrollIntoView = Element.prototype.scrollIntoView;
+
+        beforeEach(() => {
+            // A course that can be saved as it is; each test breaks the part it is about.
+            course.startDate = dayjs('2026-10-01T00:00:00');
+            course.endDate = dayjs('2027-03-31T23:59:00');
+            course.semester = 'WS26/27';
+            course.timeZone = validTimeZone;
+            course.onlineCourse = false;
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            // jsdom does not lay out the page, so it has no scrollIntoView.
+            Element.prototype.scrollIntoView = vi.fn();
+        });
+
+        afterEach(() => {
+            Element.prototype.scrollIntoView = scrollIntoView;
+        });
+
+        it('reports nothing for a course that can be saved', () => {
+            comp.ngOnInit();
+
+            expect(comp.issues()).toEqual([]);
+        });
+
+        it('lists the fields that keep the course from being saved in page order', () => {
+            course.title = undefined;
+            course.semester = undefined;
+            course.endDate = undefined;
+            comp.ngOnInit();
+
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_title', 'semester', 'field_endDate_input']);
+        });
+
+        it('reports a start date after the end date at the start date', () => {
+            course.startDate = dayjs('2027-04-01T00:00:00');
+            comp.ngOnInit();
+
+            expect(comp.issues()).toEqual([{ control: 'startDate', labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' }]);
+        });
+
+        it('follows the form as it changes', () => {
+            comp.ngOnInit();
+            expect(comp.issues()).toEqual([]);
+
+            comp.courseForm.get('title')!.setValue('');
+
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_title']);
+        });
+
+        it('reveals every problem and focuses the first one instead of saving', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+            const saveSpy = vi.spyOn(comp, 'save');
+
+            comp.onSubmit();
+            fixture.detectChanges();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(comp.submitAttempted()).toBe(true);
+            expect(comp.courseForm.get('title')!.touched).toBe(true);
+            expect(document.activeElement?.id).toBe('field_title');
+            expect(fixture.nativeElement.querySelector('#field_title').closest('tumaet-ui-form-field').textContent).toContain('artemisApp.course.form.title.required');
+        });
+
+        it('commits a title that is still being typed before checking what is missing', () => {
+            // Pressing Enter submits while the field still has the focus; the title only commits its value on blur.
+            course.title = undefined;
+            fixture.detectChanges();
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+            const titleInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_title');
+            titleInput.focus();
+            titleInput.value = 'Software Engineering';
+            titleInput.dispatchEvent(new Event('input'));
+            expect(comp.courseForm.get('title')!.value).toBeFalsy();
+
+            comp.onSubmit();
+
+            expect(comp.courseForm.get('title')!.value).toBe('Software Engineering');
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('leaves text the date picker cannot parse to the picker instead of calling the date missing', () => {
+            comp.ngOnInit();
+            const startDate = comp.courseForm.get('startDate')!;
+            startDate.markAsTouched();
+            startDate.setErrors({ required: true, invalidDate: true });
+
+            expect(comp.showError('startDate')).toBe(true);
+            expect(comp.showDateMissing('startDate')).toBe(false);
+
+            startDate.setErrors({ required: true });
+
+            expect(comp.showDateMissing('startDate')).toBe(true);
+        });
+
+        it('saves when nothing keeps the course from being saved', () => {
+            comp.ngOnInit();
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('does not save twice while a save is running', () => {
+            comp.ngOnInit();
+            comp.isSaving.set(true);
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('keeps the save button focusable but marked as blocked, and names the fields in the footer', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+
+            const saveButton: HTMLButtonElement = fixture.nativeElement.querySelector('#save-entity');
+            expect(saveButton.disabled).toBe(false);
+            expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+            expect(saveButton.getAttribute('aria-describedby')).toBe('course-form-status');
+            expect(fixture.nativeElement.querySelector('[data-testid="course-form-issues"]').textContent).toContain('artemisApp.course.title');
+        });
+
+        it('shows the required legend instead of issues when the course can be saved', () => {
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="course-form-issues"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#save-entity').getAttribute('aria-disabled')).toBe('false');
+            expect(fixture.nativeElement.querySelector('#course-form-status').textContent).toContain('artemisApp.course.form.requiredLegend');
+        });
+
+        it('focuses the field of an issue selected in the footer and reveals its message', () => {
+            fixture.detectChanges();
+            const description = comp.courseForm.get('description')!;
+            expect(description.touched).toBe(false);
+
+            comp.focusIssue({ control: 'description', labelKey: 'artemisApp.course.description', targetId: 'field_description' });
+
+            expect(document.activeElement?.id).toBe('field_description');
+            expect(description.touched).toBe(true);
+        });
+
+        it('focuses the footer instead of doing nothing when the field of an issue is not shown', () => {
+            fixture.detectChanges();
+
+            comp.focusIssue({ labelKey: 'artemisApp.course.form.invalidForm', targetId: 'field_that_is_not_rendered' });
+
+            expect(document.activeElement?.id).toBe('course-form-footer');
+        });
+
+        it('keeps the focus on the save button when pressing it does not save', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+            comp.courseForm.get('title')!.setValue('');
+            const saveButton: HTMLButtonElement = fixture.nativeElement.querySelector('#save-entity');
+            saveButton.focus();
+            vi.spyOn(comp, 'focusIssue').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(document.activeElement).toBe(saveButton);
+        });
+
+        it('does not keep an enrollment date that could not be parsed once enrollment is switched off', () => {
+            // An unparseable entry leaves the course date empty but the control invalid; hiding the picker must not
+            // leave that error behind, or the hidden field would keep blocking the save.
+            course.enrollmentEnabled = true;
+            course.enrollmentStartDate = undefined;
+            course.enrollmentEndDate = undefined;
+            course.unenrollmentEnabled = false;
+            comp.ngOnInit();
+            comp.courseForm.get('enrollmentStartDate')!.setErrors({ invalidDate: true });
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_enrollmentStartDate_input']);
+
+            comp.changeEnrollmentEnabled();
+
+            expect(comp.course.enrollmentEnabled).toBe(false);
+            expect(comp.courseForm.get('enrollmentStartDate')!.valid).toBe(true);
+            expect(comp.issues()).toEqual([]);
+        });
+    });
+
+    describe('time zone of an existing course', () => {
+        beforeEach(() => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            // Stored as Europe/London, which the browser list of this test does not contain.
+            course.timeZone = 'Europe/London';
+        });
+
+        it('keeps a stored time zone valid while it is unchanged, but checks a new one', () => {
+            comp.ngOnInit();
+            const timeZone = comp.courseForm.get('timeZone')!;
+            expect(timeZone.valid).toBe(true);
+
+            timeZone.setValue('Mars/Olympus_Mons');
+            expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+
+            timeZone.setValue('Europe/London');
+            expect(timeZone.valid).toBe(true);
+        });
+
+        it('requires the time zone once the course has one, because the server keeps it', () => {
+            fixture.detectChanges();
+            const timeZone = comp.courseForm.get('timeZone')!;
+
+            timeZone.setValue('');
+
+            expect(timeZone.hasError('timeZoneRequired')).toBe(true);
+            expect(comp.issues().map((issue) => issue.targetId)).toContain('timeZone');
+            expect(fixture.nativeElement.querySelector('#timeZone').getAttribute('aria-required')).toBe('true');
+        });
+
+        it('sends no time zone rather than an empty one', () => {
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            comp.course = course;
+            comp.courseForm = new FormGroup({ id: new FormControl(course.id), timeZone: new FormControl('') });
+
+            comp.save();
+
+            expect(updateStub.mock.calls[0][1].timeZone).toBeUndefined();
+        });
+    });
+
+    describe('test course retention settings', () => {
+        beforeEach(() => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+        });
+
+        it('hides grade relevance and data-retention hold for a test course, whose data is never deleted automatically', () => {
+            course.testCourse = true;
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#field_gradeRelevant')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#field_dataRetentionHold')).toBeNull();
+        });
+
+        it('shows them again, with their values, once the course is no longer a test course', () => {
+            course.testCourse = true;
+            course.courseConfiguration = { gradeRelevant: false, dataRetentionHold: true };
+            fixture.detectChanges();
+
+            comp.courseForm.get('testCourse')!.setValue(false);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#field_gradeRelevant')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#field_dataRetentionHold')).not.toBeNull();
+            expect(comp.courseForm.get('gradeRelevant')!.value).toBe(false);
+            expect(comp.courseForm.get('dataRetentionHold')!.value).toBe(true);
+        });
+    });
+
+    describe('organization assignment', () => {
+        const orgWithId = (id: number): Organization => {
+            const organization = new Organization();
+            organization.id = id;
+            return organization;
+        };
+
+        beforeEach(() => {
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+        });
+
+        it('starts switched off and without the organization controls when the course has no organizations', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            fixture.detectChanges();
+
+            expect(comp.organizationsEnabled()).toBe(false);
+            expect(fixture.nativeElement.querySelector('#field_organizationsEnabled')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#addOrganizationButton')).toBeNull();
+
+            comp.setOrganizationsEnabled(true);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#addOrganizationButton')).not.toBeNull();
+        });
+
+        it('starts switched on when the course already has organizations', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            fixture.detectChanges();
+
+            expect(comp.organizationsEnabled()).toBe(true);
+        });
+
+        it('saves the course without organizations while the assignment is switched off', async () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            comp.setOrganizationsEnabled(false);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            comp.save();
+            await Promise.resolve();
+
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).toHaveBeenCalledTimes(2);
+            expect(removeStub).toHaveBeenCalledWith(1, course.id);
+            expect(removeStub).toHaveBeenCalledWith(2, course.id);
+        });
+
+        it('keeps the selection when the assignment is switched off and on again', async () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            comp.ngOnInit();
+            comp.setOrganizationsEnabled(false);
+            comp.setOrganizationsEnabled(true);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization');
+
+            comp.save();
+            await Promise.resolve();
+
+            expect(comp.courseOrganizations()).toEqual([orgWithId(1)]);
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).not.toHaveBeenCalled();
+        });
+
+        it('switches the assignment on when an organization is selected', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            comp.ngOnInit();
+
+            comp.onOrgSelected(orgWithId(3));
+
+            expect(comp.organizationsEnabled()).toBe(true);
         });
     });
 });
@@ -1550,10 +1975,77 @@ describe('Course Management Update Component Create', () => {
 
     it('should get code of conduct template if a new course is created', () => {
         fixture.detectChanges();
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct'));
         const codeOfConduct = 'Code of Conduct';
         req.flush(codeOfConduct);
         expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
+    });
+
+    it('renders its own title bar and names the required fields of an empty course', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        expect(fixture.nativeElement.querySelector('#course-create-title-bar #jhi-course-heading-create')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#course-create-body #course-form-footer')).not.toBeNull();
+        expect(component.issues().map((issue) => issue.targetId)).toEqual(['field_title', 'field_shortName', 'semester', 'field_startDate_input', 'field_endDate_input']);
+    });
+
+    it('offers and accepts the time zones of the server, including ones the browser lacks', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+        const timeZone = component.courseForm.get('timeZone')!;
+        // The browser list of this test only knows Europe/Berlin.
+        timeZone.setValue('UTC');
+        expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+
+        httpMock.expectOne('api/course/time-zones').flush(['Europe/Berlin', 'Europe/Kiev', 'Europe/Kyiv', 'UTC']);
+
+        expect(timeZone.valid).toBe(true);
+        component.onTimeZoneSearch({ query: 'kyi' });
+        expect(component.filteredTimeZones()).toEqual(['Europe/Kyiv']);
+        timeZone.setValue('europe/berlin');
+        expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+    });
+
+    it('refreshes the suggestions of a search made before the server list arrived', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+        component.onTimeZoneSearch({ query: 'kyi' });
+        expect(component.filteredTimeZones()).toEqual([]);
+
+        httpMock.expectOne('api/course/time-zones').flush(['Europe/Berlin', 'Europe/Kyiv']);
+
+        expect(component.filteredTimeZones()).toEqual(['Europe/Kyiv']);
+    });
+
+    it('keeps the browser time zones when the server list cannot be loaded', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        httpMock.expectOne('api/course/time-zones').flush('Server error', { status: 500, statusText: 'Internal Server Error' });
+
+        const timeZone = component.courseForm.get('timeZone')!;
+        timeZone.setValue(validTimeZone);
+        expect(timeZone.valid).toBe(true);
+    });
+
+    it('lets a new course leave the time zone empty', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        component.courseForm.get('timeZone')!.setValue('');
+
+        expect(component.courseForm.get('timeZone')!.valid).toBe(true);
+        expect(fixture.nativeElement.querySelector('#timeZone').getAttribute('aria-required')).toBeNull();
+    });
+
+    it('does not show errors before the user touched a field or tried to save', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        expect(component.showError('title')).toBe(false);
+        expect(component.showDateMissing('startDate')).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="date-picker-validation-message"]')).toBeNull();
     });
 });
 
@@ -1579,7 +2071,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         return course;
     }
 
-    async function setupWithCourse(course: Course): Promise<void> {
+    async function setupWithCourse(course: Course, activeModuleFeatures: string[] = [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM]): Promise<void> {
         const route = { data: of({ course }) } as any as ActivatedRoute;
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
@@ -1607,7 +2099,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         profileService = TestBed.inject(ProfileService);
         organizationService = TestBed.inject(OrganizationManagementService);
 
-        const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        const profileInfo = { activeProfiles: [], activeModuleFeatures } as unknown as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
         vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
 
@@ -1656,6 +2148,9 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         course.maxTeamComplaints = 3;
         course.onlineCourse = false;
         course.enrollmentEnabled = false;
+        course.startDate = dayjs().subtract(1, 'day');
+        course.endDate = dayjs().add(30, 'day');
+        course.semester = 'WS25/26';
         await setupWithCourse(course);
 
         expect(comp.courseForm.get(['autoOrchestratorEnabled'])?.value).toBe(true);
@@ -1726,12 +2221,32 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         expect(dto.maxDailyOrchestrationOverride).toBeUndefined();
     });
 
-    it('should load the global orchestration defaults to back the override placeholders when Atlas is active', async () => {
+    it('should load the global orchestration defaults to back the override placeholders when auto orchestration is available', async () => {
         vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults').mockResolvedValue({ debounceWindowSeconds: 1800, maxDailyOrchestrations: 10 });
         await setupWithCourse(buildCourse(false));
         await Promise.resolve();
 
         expect(comp.debounceWindowSecondsDefault()).toBe(1800);
         expect(comp.maxDailyOrchestrationDefault()).toBe(10);
+    });
+
+    it('should not ask for the orchestration defaults when Atlas is active but AtlasLLM is not', async () => {
+        // CompetencyOrchestrationResource is not registered without AtlasLLM, so the request would fail on every
+        // course-edit load and be swallowed by the best-effort catch, leaving no trace of why the page is slow.
+        const getDefaultsSpy = vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults');
+        await setupWithCourse(buildCourse(false), [MODULE_FEATURE_ATLAS]);
+        await Promise.resolve();
+
+        expect(getDefaultsSpy).not.toHaveBeenCalled();
+        expect(comp.debounceWindowSecondsDefault()).toBeUndefined();
+    });
+
+    it('should hide the auto orchestration settings when Atlas is active but AtlasLLM is not', async () => {
+        await setupWithCourse(buildCourse(false), [MODULE_FEATURE_ATLAS]);
+        await Promise.resolve();
+
+        // Administrators must not be offered settings for a pipeline this instance cannot run.
+        expect(comp.atlasLLMEnabled()).toBe(false);
+        expect(fixture.nativeElement.querySelector('#field_autoOrchestratorEnabled')).toBeNull();
     });
 });

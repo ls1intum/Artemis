@@ -134,13 +134,13 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
                     if (errorKey === 'invalidKey') {
                         // The Server sends back all the exercise groups and exercises and removed the shortName / title for all conflicting programming exercises
                         this.exam.update((exam) => cloneWith(exam!, { exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
-                        // The updateMapsAfterRejectedImport Method is called to update the displayed exercises in the child component
-                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey();
+                        // Pass the returned groups explicitly: the child's exam input updates on the next change detection pass.
+                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey(this.exam()!.exerciseGroups);
                         const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
                     } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
                         this.exam.update((exam) => cloneWith(exam!, { exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
-                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
+                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle(this.exam()!.exerciseGroups);
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
                     } else {
                         onError(this.alertService, httpErrorResponse);

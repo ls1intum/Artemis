@@ -31,6 +31,27 @@ public class ExamDateApi extends AbstractExamApi {
     }
 
     /**
+     * Whether the student's working period is over, for a caller that holds only the exam's id.
+     *
+     * @param examId               the exam the exercise belongs to
+     * @param studentParticipation the participation to check
+     * @return true if the working period is over
+     */
+    public boolean isIndividualExerciseWorkingPeriodOver(long examId, StudentParticipation studentParticipation) {
+        return examDateService.isIndividualExerciseWorkingPeriodOver(examId, studentParticipation);
+    }
+
+    /**
+     * Whether the exam is over including its grace period, for a caller that holds only the exam's id.
+     *
+     * @param examId the exam to check
+     * @return true if the exam is over
+     */
+    public boolean isExamWithGracePeriodOver(long examId) {
+        return examDateService.isExamWithGracePeriodOver(examId);
+    }
+
+    /**
      * Whether the student's working period for an exam exercise is over, for a caller holding a projection.
      *
      * @param exam            the exam the exercise belongs to

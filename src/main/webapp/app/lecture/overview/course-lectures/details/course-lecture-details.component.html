@@ -59,6 +59,7 @@
                         </div>
                         @if (hasPdfLectureUnit()) {
                             <button
+                                type="button"
                                 id="downloadButton"
                                 class="col-auto btn btn-primary btn-sm rounded-pill"
                                 (click)="downloadMergedFiles()"
@@ -81,6 +82,7 @@
                                         [initiallyExpanded]="lectureUnit.id === targetUnitId()"
                                         [targetTimestamp]="lectureUnit.id === targetUnitId() ? targetVideoTimestamp() : undefined"
                                         [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
+                                        [targetCombinedView]="lectureUnit.id === targetUnitId() && targetCombinedView()"
                                         [irisSettings]="irisSettings()"
                                         [contextsProvider]="contextsProvider"
                                         (onCompletion)="completeLectureUnit($event)"
@@ -102,6 +104,7 @@
                                         (onCompletion)="completeLectureUnit($event)"
                                     />
                                 }
+                                @default {}
                             }
                         </div>
                     </div>
@@ -119,7 +122,7 @@
             }
 
             @if (showDiscussion()) {
-                <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
+                <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment">
                     <jhi-discussion-section [lecture]="lecture" [embedded]="true" />
                 </ng-template>
             }

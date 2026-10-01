@@ -56,6 +56,7 @@ describe('AdminContainerComponent', () => {
         allowedCustomDockerNetworks: [],
         operatorAdminName: '',
         operatorName: '',
+        universityName: 'Artemis Test University',
         repositoryAuthenticationMechanisms: [],
         sentry: new SentryConfig(),
         sshCloneURLTemplate: '',

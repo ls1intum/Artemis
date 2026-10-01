@@ -1,8 +1,12 @@
-import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiPopoverComponent, TumUiPopoverTriggerDirective } from '@tumaet/ui-angular';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
-import { AccountService } from 'app/core/auth/account.service';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+} from '@tumaet/ui-angular';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 
@@ -31,21 +35,20 @@ type TrayStatus = 'running' | 'success' | 'attention';
     templateUrl: './variant-generation-tray.component.html',
     styleUrl: './variant-generation-tray.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     imports: [
         FaIconComponent,
-        TumUiPopoverComponent,
-        TumUiPopoverTriggerDirective,
-        TumUiButtonComponent,
-        TumUiConfirmDialogComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiButtonComponent,
+        TumAetUiConfirmDialogComponent,
         ArtemisTranslatePipe,
         ExerciseVariantAiModalWizardComponent,
     ],
 })
 export class VariantGenerationTrayComponent {
     protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
-    private readonly accountService = inject(AccountService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
 
@@ -56,7 +59,7 @@ export class VariantGenerationTrayComponent {
     readonly monitorJobId = signal<string | undefined>(undefined);
     readonly monitorVisible = signal(false);
 
-    private readonly trayPopover = viewChild<TumUiPopoverComponent>('trayPopover');
+    private readonly trayPopover = viewChild<TumAetUiPopoverComponent>('trayPopover');
 
     /**
      * Icon-only status of the tray button: spinner while any job runs, warning once all finished but at least
@@ -79,33 +82,6 @@ export class VariantGenerationTrayComponent {
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly isTerminalVariantPhase = isTerminalVariantPhase;
     protected readonly runningPhases = RUNNING_PHASE_ORDER;
-
-    /** Login of the user whose jobs are currently loaded — guards against redundant re-syncs. */
-    private loadedForLogin?: string;
-
-    constructor() {
-        // The navbar — and with it this tray — is instantiated BEFORE login, so a one-shot load in ngOnInit
-        // ran unauthenticated, failed silently, and left the tray hidden even while jobs were running or had
-        // failed in the background. Sync the job list whenever the authenticated user changes instead; the
-        // per-job websocket topics keep the list live afterwards.
-        effect(() => {
-            const login = this.accountService.userIdentity()?.login;
-            untracked(() => {
-                if (login === this.loadedForLogin) {
-                    return;
-                }
-                this.loadedForLogin = login;
-                // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, so fetching as
-                // a student produced nothing but a 403 in the console. Mirror the server's rule here — a user who
-                // cannot generate variants has no jobs to show, and the tray stays hidden either way.
-                if (login && this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
-                    this.variantGenerationService.loadJobs().subscribe({ error: () => {} });
-                } else {
-                    this.variantGenerationService.clearJobs();
-                }
-            });
-        });
-    }
 
     /** "What is being adapted" chips per card — same helper the generation modal uses. */
     adaptationChips(request: VariantGenerationRequest | undefined): string[] {

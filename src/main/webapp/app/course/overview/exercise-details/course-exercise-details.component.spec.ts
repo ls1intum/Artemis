@@ -71,8 +71,8 @@ import { ScienceService } from 'app/foundation/science/science.service';
 
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -197,7 +197,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
                 MockProvider(DialogService),
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
             ],
         });
         await TestBed.compileComponents();
@@ -459,6 +459,63 @@ describe('CourseExerciseDetailsComponent', () => {
         participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
     });
 
+    it('should keep earlier practice submissions when a new practice attempt is emitted', () => {
+        const practiceParticipation = { id: 7, testRun: true, submissions: [{ id: 1 }, { id: 2 }] } as StudentParticipation;
+        comp.studentParticipations = [practiceParticipation];
+
+        // A freshly submitted practice attempt is emitted carrying only the latest submission.
+        comp.onNewParticipation({ id: 7, testRun: true, submissions: [{ id: 3 }] } as StudentParticipation);
+
+        expect(comp.studentParticipations[0].submissions?.map((submission) => submission.id)).toEqual([1, 2, 3]);
+        expect(comp.participationMode()).toBe('practice');
+    });
+
+    describe('quizSubmitDisabledForMode', () => {
+        const quizComponentMode = signal<string | undefined>(undefined);
+        const quizSubmitDisabled = signal(true);
+
+        beforeEach(() => {
+            quizComponentMode.set(undefined);
+            quizSubmitDisabled.set(true);
+            // The split panel is the routed child; stand in for the two signals the header binding reads.
+            vi.spyOn(comp as unknown as { splitPanel: () => unknown }, 'splitPanel').mockReturnValue({ quizComponentMode, quizSubmitDisabled });
+        });
+
+        it('should pass the quiz submit-disabled state through in graded mode', () => {
+            quizComponentMode.set('live');
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(true);
+        });
+
+        it.each([undefined, 'live'])('should ignore the stale submit-disabled state in practice mode while the quiz component mode is %s', (mode) => {
+            comp.participationMode.set('practice');
+            quizComponentMode.set(mode);
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(false);
+        });
+
+        it('should use the quiz submit-disabled state once the quiz component has switched to practice', () => {
+            comp.participationMode.set('practice');
+            quizComponentMode.set('practice');
+
+            expect(comp.quizSubmitDisabledForMode()).toBe(true);
+
+            quizSubmitDisabled.set(false);
+            expect(comp.quizSubmitDisabledForMode()).toBe(false);
+        });
+    });
+
+    it('should replace, not duplicate, a re-emitted submission of an existing participation', () => {
+        const participation = { id: 8, testRun: false, submissions: [{ id: 1 }, { id: 2 }] } as StudentParticipation;
+        comp.studentParticipations = [participation];
+
+        comp.onNewParticipation({ id: 8, testRun: false, submissions: [{ id: 2, submitted: true } as Submission] } as StudentParticipation);
+
+        const submissions = comp.studentParticipations[0].submissions!;
+        expect(submissions.map((submission) => submission.id)).toEqual([1, 2]);
+        expect(submissions[1].submitted).toBe(true);
+    });
+
     it.each<[string[]]>([[[]], [[MODULE_FEATURE_IRIS]]])('should load iris settings only if module feature iris is active', async (activeModuleFeatures: string[]) => {
         vi.useFakeTimers();
         // Setup
@@ -578,7 +635,7 @@ describe('CourseExerciseDetailsComponent', () => {
         // communication tab has to be selected before its content exists.
         const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent));
         const labels = panels.componentInstance.rightPanels().map((panel: PanelDirective) => panel.label());
-        panels.componentInstance.setActiveRight(labels.indexOf('artemisApp.metis.communication.label'));
+        panels.componentInstance.setActiveRight(labels.indexOf('artemisApp.communication.label'));
         fixture.detectChanges();
         await vi.advanceTimersByTimeAsync(500);
 

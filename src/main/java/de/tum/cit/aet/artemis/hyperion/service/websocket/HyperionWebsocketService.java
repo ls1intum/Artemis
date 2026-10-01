@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
 @Lazy
@@ -15,8 +16,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 public class HyperionWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionWebsocketService.class);
-
-    private static final String TOPIC_PREFIX = "/topic/hyperion/";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -38,17 +37,16 @@ public class HyperionWebsocketService {
      * so an event that overtakes a neighbour costs at most a stale label.
      *
      * @param userLogin   the receiver's login
-     * @param topicSuffix suffix appended to "/topic/hyperion/"
+     * @param destination a destination of one of the {@link de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics}
      * @param payload     the payload to send
      */
-    public void send(String userLogin, String topicSuffix, Object payload) {
-        String topic = TOPIC_PREFIX + topicSuffix;
-        websocketMessagingService.sendMessageToUser(userLogin, topic, payload).whenComplete((ignored, throwable) -> {
+    public void send(String userLogin, WebsocketUserDestination destination, Object payload) {
+        websocketMessagingService.sendMessageToUser(userLogin, destination, payload).whenComplete((ignored, throwable) -> {
             if (throwable != null) {
-                log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, throwable);
+                log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, destination, payload, throwable);
             }
             else {
-                log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
+                log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, destination, payload);
             }
         });
     }

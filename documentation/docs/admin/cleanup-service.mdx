@@ -31,15 +31,10 @@ Every cleanup operation is **irreversible**. Deleted data cannot be recovered fr
 For the age-based operations, always use the count/preview shown on the page to review how much data would be affected before you confirm, and make sure a course archive exists for any course whose student data you are about to reset.
 :::
 
----
-
 ## Data Deletion by Operation Type
 
-### 1. Orphaned Data
+### Orphaned Data
 
-- Long Feedback Text with feedback that has no results
-- Text Block with feedback that has no results
-- Feedback records without results
 - Student and team scores where either a student or a team is specified
 - Long Feedback Text where both participation and submission are missing
 - Text Block where the referenced feedback has no associated participation or submission
@@ -47,11 +42,11 @@ For the age-based operations, always use the count/preview shown on the page to 
 - All Ratings where the related result has no associated participation or submission
 - Results without associated participation or submission
 
-### 2. Plagiarism Results with an Undecided Outcome
+### Plagiarism Results with an Undecided Outcome
 
 - All plagiarism comparisons related to courses within the specified dates and marked as undecided.
 
-### 3. Rated and Non-rated Results
+### Rated and Non-rated Results
 
 - Both types follow the same logic, except for the rating status of results (rated vs. non-rated).
 - For each type, only the latest valid result within a participation is retained, while all others are deleted.
@@ -59,14 +54,18 @@ For the age-based operations, always use the count/preview shown on the page to 
 
 Artemis also records the date of the last cleanup operation, as seen in the last column of the table shown in the image.
 
----
-
 ## Data-Privacy Retention (age-based cleanup and automation)
 
 The operations above are driven by explicit "from"/"to" dates. Artemis additionally provides **age-based** data-privacy operations that act on data a configurable period **after the owning course ends**, plus optional automation that runs them on a schedule.
 These implement the storage-limitation and erasure principles of the GDPR (Art. 5(1)(e) and Art. 17): personal student data is removed once it is no longer needed, while the reusable course material is preserved.
 
 All of these operations are **admin-only**, expose a **count/preview** before execution, and are **off by default** for automation. Their cutoffs and schedules are configured centrally (see [Configuration reference](#configuration-reference)).
+
+### Reading the page
+
+Because these operations have no "from"/"to" pickers, the page states their scope in a grey line under each operation name, resolved against the cutoffs this instance is configured with. For example, "Courses that ended before Mar 4, 2021 (5 years retention)" for the plagiarism-case cleanup, or "Courses whose instructors were warned before Feb 2, 2026 (30 days grace period)" for the reset. The dates are the ones the operation would apply if it ran now, so they move with the configuration and with the current date; there is no need to reconstruct them from the YAML.
+
+The confirmation dialog then lists the affected entity types with their counts (courses, users, feedback, and so on) before anything is executed, and its button is named after what the operation does: **Warn** for the two warning phases (archive and email for courses, email for users), **Reset** for the old-course reset, and **Delete** everywhere else.
 
 ### Age-based operations
 

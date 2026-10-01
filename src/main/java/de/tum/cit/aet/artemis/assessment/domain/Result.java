@@ -44,6 +44,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -92,6 +93,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     @ManyToOne
     @JsonIgnoreProperties({ "results" })
     @JoinColumn(nullable = false)
+    @Parent
     private Submission submission;
 
     // Stored as a Set: feedback ordering is not semantically meaningful — every consumer that cares about

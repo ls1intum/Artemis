@@ -126,6 +126,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     readonly unsavedChanges = signal(false);
 
     readonly showingResult = signal(false);
+    readonly viewingExistingPracticeResult = signal(false);
     readonly userScore = signal<number>(0);
 
     readonly mode = signal<string>('');
@@ -166,6 +167,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     readonly submitTitleKey = this._submitTitleKey.asReadonly();
     private readonly _shouldTreatAsSubmittedForUi = signal(false);
     readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
+    private readonly _practiceAttemptFinished = signal(false);
+    readonly practiceAttemptFinished = this._practiceAttemptFinished.asReadonly();
 
     private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
@@ -192,6 +195,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     private participationSubscription?: Subscription;
     private quizExerciseSubscription?: Subscription;
     private quizBatchSubscription?: Subscription;
+    /** The pending practice load (an existing result or a fresh attempt), cancelled whenever practice mode is re-initialized. */
+    private practiceLoadSubscription?: Subscription;
 
     /**
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
@@ -285,6 +290,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         this.participationSubscription?.unsubscribe();
         this.quizExerciseSubscription?.unsubscribe();
         this.quizBatchSubscription?.unsubscribe();
+        this.practiceLoadSubscription?.unsubscribe();
         this.websocketSubscription?.unsubscribe();
         this.routeAndDataSubscription?.unsubscribe();
     }
@@ -337,10 +343,16 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads quizExercise and starts practice mode, or loads an existing practice result if participationId is provided
      */
     initPracticeMode(participationId?: number, submissionId?: number) {
+        // The header offers "Start Practice Mode" as soon as an existing result is opened, before it has loaded. Cancel
+        // any load still pending so a late response cannot overwrite the attempt that replaced it.
+        this.practiceLoadSubscription?.unsubscribe();
         if (participationId) {
+            this.viewingExistingPracticeResult.set(true);
+            this.syncSubmitState();
             this.loadExistingPracticeResult(participationId, submissionId);
         } else {
-            this.quizExerciseService.findForStudent(this.quizId).subscribe({
+            this.viewingExistingPracticeResult.set(false);
+            this.practiceLoadSubscription = this.quizExerciseService.findForStudent(this.quizId).subscribe({
                 next: (res: HttpResponse<QuizExercise>) => {
                     if (res.body && hasDueDatePassed(res.body)) {
                         this.startQuizPreviewOrPractice(res.body);
@@ -357,7 +369,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads an existing practice participation result
      */
     private loadExistingPracticeResult(participationId: number, submissionId?: number) {
-        this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
+        this.practiceLoadSubscription = this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
             next: (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
@@ -1068,6 +1080,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * @param result
      */
     onSubmitPracticeOrPreviewSuccess(result: Result) {
+        this.runningTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.runningTimeouts = [];
         this.isSubmitting.set(false);
         this.syncSubmitState();
         this.submission.set(result.submission as QuizSubmission);
@@ -1079,6 +1093,10 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         }
         this.applySubmission();
         this.showResult(result);
+        // Re-sync after the (submitted) submission and result are applied, so the surrounding exercise header
+        // immediately reflects the finished attempt (submit button -> "Start Practice Mode") without waiting for
+        // the next UI interval tick.
+        this.syncSubmitState();
 
         if (this.mode() === 'practice' && participation) {
             // Surface the practice participation (with its result) to the surrounding exercise page so the status badge
@@ -1096,7 +1114,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * @param error
      */
     onSubmitError(error: HttpErrorResponse) {
-        const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
+        const errorMessage = 'Submitting the quiz was not possible. ' + (error.headers?.get('X-artemisApp-message') || error.message);
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
@@ -1208,6 +1226,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      *
      * This is the case if either:
      * <ul>
+     *   <li>in practice mode, a result is being shown or an existing practice result is opened — the attempt is over, or</li>
      *   <li>the submission has already been marked as submitted by the server, or</li>
      *   <li>the quiz working time has expired and the submission shows evidence of user interaction
      *       (e.g. at least one answer was given, or the submission has already been saved or created)</li>
@@ -1218,7 +1237,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      */
     private computeShouldTreatAsSubmittedForUi(hasAnyAnswer: boolean): boolean {
         const hasSavedOrAnswered = hasAnyAnswer || !!this.submission()?.submissionDate || !!this.submission()?.id;
-        return this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
+        const practiceAttemptOver = this.mode() === 'practice' && (this.viewingExistingPracticeResult() || this.showingResult());
+        return practiceAttemptOver || !!this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
     }
 
     /**
@@ -1231,6 +1251,10 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         const hasAnyAnswer = this.hasAnyAnswer();
         const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
         this._shouldTreatAsSubmittedForUi.set(submittedForUi);
+        // The practice attempt is also over once it expired: an attempt without a single answer never counts as
+        // submitted, yet Submit is disabled from then on. A submission in flight keeps it open — restarting under one
+        // would let its response land on the fresh attempt.
+        this._practiceAttemptFinished.set(this.mode() === 'practice' && !this.isSubmitting() && (submittedForUi || this.remainingTimeSeconds() < 0));
         const disabled = submittedForUi || this.isSubmitting() || this.waitingForQuizStart() || this.remainingTimeSeconds() < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');

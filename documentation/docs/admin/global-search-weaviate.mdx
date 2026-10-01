@@ -35,8 +35,6 @@ For full configuration details of each option, see [Choose and connect an embedd
 
 </Callout>
 
----
-
 ## Provision Weaviate
 
 ### Docker Compose (recommended)
@@ -104,21 +102,15 @@ AUTHORIZATION_ADMINLIST_USERS=admin@your-domain.com
 
 For a full walkthrough of the env-file variables and how to configure the matching `api-key` in Artemis, see the [Authentication](../developer/weaviate-setup#authentication) section of the developer Weaviate setup guide.
 
----
-
 ### Ansible (production, TLS + backups)
 
 For production deployments managed with Ansible, the Artemis Ansible collection ships a dedicated Weaviate role that handles TLS termination, API-key configuration, and backup scheduling:
 
 [ls1intum/artemis-ansible-collection — roles/weaviate](https://github.com/ls1intum/artemis-ansible-collection/tree/main/roles/weaviate)
 
----
-
 ### Kubernetes / managed cloud
 
 No Helm chart ships with Artemis today. Bring your own Weaviate deployment (any standard Kubernetes installation or a managed Weaviate Cloud instance) and point Artemis at it via `artemis.weaviate.http-host`, `http-port`, `grpc-port`, and `api-key`. The same authentication requirements apply.
-
----
 
 ## Choose and connect an embedder
 
@@ -154,8 +146,6 @@ artemis:
 
 **OpenAI-compatible base-URL (Ollama, vLLM, etc.):** When using a self-hosted OpenAI-compatible endpoint, set `open-ai-base-url` to the host **without** a `/v1` suffix — for example `http://your-ollama-host:11434`. Weaviate's `text2vec-openai` module appends `/v1` automatically; supplying it yourself produces a broken `/v1/v1` path. (This `open-ai-base-url` is the Artemis→Weaviate setting and is independent of how Pyris or other services configure their own embedding endpoints.)
 
----
-
 <Callout variant={CalloutVariant.info}>
 
   **TUM-internal deployment — not applicable to external deployments**
@@ -174,8 +164,6 @@ artemis:
   Do not use these hostnames or model identifiers in any other deployment. External institutions should choose their own OpenAI-compatible endpoint.
 
 </Callout>
-
----
 
 ### Option 2 — Local CPU embeddings (offline / air-gapped)
 
@@ -197,8 +185,6 @@ artemis:
 
 </Callout>
 
----
-
 ### Option 3 — Keyword-only (no embedder)
 
 Use this when semantic similarity is not a priority or you want the simplest possible setup.
@@ -214,8 +200,6 @@ artemis:
 
 No embedder is provisioned. All search uses Weaviate's built-in BM25 index. Artemis does not currently provide a full reindex operation, so switching an existing production collection to a semantic embedder requires separate migration tooling.
 
----
-
 ### Embedder summary
 
 | Tier | Vectorizer module | Compose file | Hardware requirement | API cost | Data leaves your server? |
@@ -226,8 +210,6 @@ No embedder is provisioned. All search uses Weaviate's built-in BM25 index. Arte
 | Keyword-only | `none` | `weaviate.yml` | None | None | No |
 
 GPU is **not** assumed. The keyword-only and local-CPU tiers are fully self-contained and suitable for privacy-sensitive or offline deployments.
-
----
 
 ## Enable and verify Artemis global search
 
@@ -284,8 +266,6 @@ A `200 OK` with body `{}` means Weaviate is ready and the API key is accepted. A
   If you are running Weaviate behind a reverse proxy (e.g., nginx via the Ansible role), ensure the proxy passes the `Authorization` header through unchanged. Some default proxy configs strip or rewrite bearer tokens.
 
 </Callout>
-
----
 
 ## Run Weaviate alongside Pyris
 
@@ -344,8 +324,6 @@ Artemis uses Weaviate's gRPC interface (default port **50051**) for efficient qu
 | gRPC port 50051 | Must be reachable from Artemis; secure with TLS or firewall |
 | Embedding dimensions | May differ between Artemis and Pyris collections — no conflict |
 | Pyris setup | See [Iris / EduTelligence admin docs](https://ls1intum.github.io/edutelligence/iris/) |
-
----
 
 ## Operate (backups, upgrades, recovery, troubleshooting)
 

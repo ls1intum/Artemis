@@ -40,10 +40,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     ],
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
-    exerciseType = ExerciseType.MODELING;
-
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private examParticipationService = inject(ExamParticipationService);
+
+    exerciseType = ExerciseType.MODELING;
 
     modelingEditor = viewChild.required(ModelingEditorComponent);
 

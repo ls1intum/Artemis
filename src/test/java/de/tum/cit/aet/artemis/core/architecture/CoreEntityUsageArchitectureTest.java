@@ -26,9 +26,8 @@ class CoreEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
         return 0;
     }
 
-    // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 1;
+        return 0;
     }
 }

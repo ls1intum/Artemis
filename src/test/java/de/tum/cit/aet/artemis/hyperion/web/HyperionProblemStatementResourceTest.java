@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -33,6 +33,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
@@ -70,7 +71,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void setupTestData() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         course.setTitle("Hyperion Test Course");
         course = courseRepository.save(course);
         persistedCourseId = course.getId();
@@ -199,7 +200,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         });
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exerciseId + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exerciseId + "/synchronization"), captor.capture());
 
         ExerciseReviewThreadUpdateDTO syncPayload = captor.getValue();
         assertThat(syncPayload.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
@@ -607,7 +608,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForChecklistAnalysisCourseMismatch() throws Exception {
         // Create a second course with its own exercise
-        Course otherCourse = new Course();
+        Course otherCourse = CourseFactory.generateMinimalCourse();
         otherCourse.setTitle("Other Course");
         otherCourse = courseRepository.save(otherCourse);
 
@@ -707,7 +708,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForChecklistSectionAnalysisCourseMismatch() throws Exception {
-        Course otherCourse = new Course();
+        Course otherCourse = CourseFactory.generateMinimalCourse();
         otherCourse.setTitle("Other Course Section");
         otherCourse = courseRepository.save(otherCourse);
 

@@ -1,12 +1,13 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
@@ -101,6 +103,46 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
     /**
+     * Builds the creation request body describing an exercise and the build configuration it should be created with.
+     * The exercise does not carry that configuration - it is a row of its own that names the exercise - so both are
+     * mapped here.
+     *
+     * @param exercise    the exercise to create
+     * @param buildConfig the build configuration it should be created with
+     * @return the request body
+     */
+    public static CreateProgrammingExerciseDTO of(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
+        // Every collection below is lazy: a detached exercise carries an uninitialized handle the request must not read.
+        Set<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria())
+                ? exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet())
+                : null;
+        Set<CompetencyLinkDTO> competencyLinks = Hibernate.isInitialized(exercise.getCompetencyLinks())
+                ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
+                : null;
+        List<AuxiliaryRepositoryDTO> auxiliaryRepositories = Hibernate.isInitialized(exercise.getAuxiliaryRepositories())
+                ? exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList()
+                : null;
+        var submissionPolicyEntity = exercise.getSubmissionPolicy();
+        var submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity) : null;
+        var plagiarismDetectionConfigEntity = exercise.getPlagiarismDetectionConfig();
+        var plagiarismDetectionConfig = plagiarismDetectionConfigEntity != null && Hibernate.isInitialized(plagiarismDetectionConfigEntity)
+                ? PlagiarismDetectionConfigDTO.of(plagiarismDetectionConfigEntity)
+                : null;
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return new CreateProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getPackageName(),
+                exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getCategories(), exercise.getDifficulty(), exercise.getMode(),
+                TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
+                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
+                exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(),
+                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
+                exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
+                exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig),
+                gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
+                exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
+                exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()));
+    }
+
+    /**
      * Builds the transient {@link ProgrammingExercise} the creation pipeline works on, reproducing the binding the
      * entity request body produced before this DTO existed. Competency links are deliberately not bound here; the
      * creation resource applies them through the competency link service, which resolves managed competencies.
@@ -120,7 +162,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         }
         if (auxiliaryRepositories != null) {
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
-            exercise.setAuxiliaryRepositories(new ArrayList<>());
+            exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
             repositories.forEach(exercise::addAuxiliaryRepository);
         }
         return exercise;

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Token;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public class PlagiarismSubmissionElement extends DomainObject {
 
     @ManyToOne
+    @Parent
     private PlagiarismSubmission plagiarismSubmission;
 
     @Column(name = "file_column")

@@ -31,7 +31,7 @@
                         <td>{{ course.shortName }}</td>
                         <td>{{ course.semester }}</td>
                         <td>
-                            <button pButton severity="primary" size="small" (click)="selectCourse(course)" jhiTranslate="entity.action.select"></button>
+                            <button type="button" pButton severity="primary" size="small" (click)="selectCourse(course)" jhiTranslate="entity.action.select"></button>
                         </td>
                     </tr>
                 </ng-template>
@@ -149,10 +149,17 @@
 
     <ng-template #footer>
         @if (currentStep() === 'selectCourse') {
-            <button pButton severity="secondary" (click)="close()" jhiTranslate="entity.action.cancel"></button>
+            <button type="button" pButton severity="secondary" (click)="close()" jhiTranslate="entity.action.cancel"></button>
         } @else {
-            <button pButton severity="secondary" (click)="backToCourseSelection()" jhiTranslate="entity.action.back"></button>
-            <button pButton [disabled]="!canImport() || isImporting()" [loading]="isImporting()" (click)="executeImport()" jhiTranslate="entity.action.import"></button>
+            <button type="button" pButton severity="secondary" (click)="backToCourseSelection()" jhiTranslate="entity.action.back"></button>
+            <button
+                type="button"
+                pButton
+                [disabled]="!canImport() || isImporting()"
+                [loading]="isImporting()"
+                (click)="executeImport()"
+                jhiTranslate="entity.action.import"
+            ></button>
         }
     </ng-template>
 </p-dialog>

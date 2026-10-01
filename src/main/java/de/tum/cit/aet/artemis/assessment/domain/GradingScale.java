@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
@@ -62,10 +63,12 @@ public class GradingScale extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "course_id")
+    @Parent(enforcedBy = "CHECK_GRADING_SCALE_COURSE_OR_EXAM")
     private Course course;
 
     @OneToOne
     @JoinColumn(name = "exam_id")
+    @Parent(enforcedBy = "CHECK_GRADING_SCALE_COURSE_OR_EXAM")
     private Exam exam;
 
     @Nullable

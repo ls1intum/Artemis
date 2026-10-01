@@ -17,12 +17,13 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',
     templateUrl: './exam-students-attendance-check.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, CourseTitleBarTitleDirective],
+    imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent, SortDirective, SortByDirective, CourseTitleBarTitleDirective],
 })
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -75,15 +76,18 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
             this.isTestExam = this.exam.testExam!;
         });
-        if (this.hasExamStarted()) {
-            this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
-                next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
-                    this.allExamUsersAttendanceCheck.set(res.body!);
-                    this.isLoading.set(false);
-                },
-                error: (error: HttpErrorResponse) => this.onError(error.message),
-            });
+        if (!this.hasExamStarted()) {
+            // Nothing can be verified before the start, and the page has to say so instead of loading forever.
+            this.isLoading.set(false);
+            return;
         }
+        this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
+            next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
+                this.allExamUsersAttendanceCheck.set(res.body!);
+                this.isLoading.set(false);
+            },
+            error: (error: HttpErrorResponse) => this.onError(error.message),
+        });
     }
 
     ngOnDestroy() {

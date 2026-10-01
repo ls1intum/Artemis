@@ -75,8 +75,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
 
-        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setCourse(course);
+        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise(course);
         programmingExercise.setGradingCriteria(Set.of(new GradingCriterion()));
         // Athena grading feedback is only offered for manually assessed programming exercises; automatically
         // assessed ones rely on unit-test feedback.

@@ -39,13 +39,14 @@ import { RouterLink } from '@angular/router';
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule, RouterLink],
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
+    private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
+
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
 
     // Icons
     protected readonly faBan = faBan;
     protected readonly faThLarge = faThLarge;
 
-    private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
 

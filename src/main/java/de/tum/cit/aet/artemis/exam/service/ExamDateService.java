@@ -100,6 +100,22 @@ public class ExamDateService {
     }
 
     /**
+     * Whether the student's working period is over, for a caller that holds only the exam's id.
+     * <p>
+     * The git request path authorizes a push against a projection of the exercise, so it never loads the exam. Reading
+     * the exam here, once and only for an exam exercise that actually reaches the write check, is cheaper than
+     * carrying it through the whole authorization path - and keeps this date logic reading the entity it was written
+     * against.
+     *
+     * @param examId               the exam the exercise belongs to
+     * @param studentParticipation the participation to check
+     * @return true if the working period is over
+     */
+    public boolean isIndividualExerciseWorkingPeriodOver(long examId, StudentParticipation studentParticipation) {
+        return isIndividualExerciseWorkingPeriodOver(examRepository.findByIdElseThrow(examId), studentParticipation);
+    }
+
+    /**
      * Scalar form of {@link #isIndividualExerciseWorkingPeriodOver(Exam, StudentParticipation)} for callers holding a
      * projection of the participation rather than the entity.
      *
@@ -192,6 +208,7 @@ public class ExamDateService {
      * @param originalExamDuration the exam duration in seconds before the change
      * @param workingTimeChange    the change to the exam duration in seconds (may be negative)
      * @return the working time in seconds the student exam will have after the change
+     * @throws ArithmeticException if the time adjustment or resulting working time exceeds the supported integer range
      */
     public static int projectWorkingTimeAfterDurationChange(int currentWorkingTime, int originalExamDuration, int workingTimeChange) {
         if (workingTimeChange == 0) {
@@ -205,7 +222,7 @@ public class ExamDateService {
         double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
         int newNormalWorkingTime = originalExamDuration + workingTimeChange;
         int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-        return Math.max(newNormalWorkingTime + timeAdjustment, 0);
+        return Math.max(Math.addExact(newNormalWorkingTime, timeAdjustment), 0);
     }
 
     /**

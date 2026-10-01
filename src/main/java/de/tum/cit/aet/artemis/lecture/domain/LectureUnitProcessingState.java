@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * Tracks the processing state of a lecture unit through the automated content processing pipeline.
@@ -37,6 +38,7 @@ public class LectureUnitProcessingState extends DomainObject {
     @OneToOne
     @JoinColumn(name = "lecture_unit_id", unique = true, nullable = false)
     @JsonIgnoreProperties(value = "processingState", allowSetters = true)
+    @Parent
     private LectureUnit lectureUnit;
 
     /**

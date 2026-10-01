@@ -37,6 +37,7 @@
             "errors": {
                 "preconditionsNotMet": "The pre conditions to request AI Feedback are not met."
             },
+            "participationId": "Participation ID",
             "repository": "Repository",
             "buildPlanId": "Build Plan Id",
             "initializationState": "Status",

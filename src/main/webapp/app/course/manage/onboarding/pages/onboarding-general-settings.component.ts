@@ -5,13 +5,13 @@ import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selec
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { getSemesters } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { KeyValuePipe, NgStyle } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
@@ -35,7 +35,6 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
         ColorSelectorComponent,
         FormDateTimePickerComponent,
         TranslateDirective,
-        NgStyle,
         KeyValuePipe,
         ArtemisTranslatePipe,
         FaIconComponent,
@@ -46,11 +45,12 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
-    protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
+
+    protected readonly IrisLogoSize = IrisLogoSize;
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
     readonly course = input.required<Course>();
@@ -78,7 +78,10 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    readonly semesters = getSemesters();
+    readonly semesters = computed(() => getSemesters(this.course().semester));
+    readonly semesterMissing = computed(() => !this.course().semester?.trim());
+
+    private previousSemester?: string;
 
     readonly languageOptions: { key: string; value: string }[] = [
         { key: Language.ENGLISH, value: 'English' },
@@ -90,6 +93,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly colorSelector = viewChild(ColorSelectorComponent);
 
     ngOnInit(): void {
+        this.previousSemester = this.course().semester;
         const courseId = this.course()?.id;
         if (!courseId) {
             return;
@@ -141,6 +145,13 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     updateField<K extends keyof Course>(field: K, value: Course[K]) {
         const current = Course.from(this.course());
         current[field] = value;
+        if (field === 'semester') {
+            const semester = value as string | undefined;
+            const { startDate, endDate } = applySemesterToDates(semester, this.previousSemester, current.startDate, current.endDate);
+            current.startDate = startDate;
+            current.endDate = endDate;
+            this.previousSemester = semester;
+        }
         this.courseUpdated.emit(current);
     }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +115,10 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
     private void seedOneRowForEveryReference() {
         long userId = target.getId();
         long courseId = course.getId();
-        Timestamp now = Timestamp.from(Instant.now());
+        // One reading, so the two timestamps cannot come from different instants.
+        Instant seededAt = Instant.now();
+        Timestamp now = Timestamp.from(seededAt);
+        Timestamp inSixMonths = Timestamp.from(seededAt.plus(180, ChronoUnit.DAYS));
 
         long exerciseId = insert("exercise", values("discriminator", "T", "title", "Exercise", "course_id", courseId));
         long participationId = insert("participation", values("discriminator", "SP", "exercise_id", exerciseId, "student_id", bystander.getId()));
@@ -130,7 +134,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         long lectureId = insert("lecture", values("course_id", courseId, "title", "Lecture"));
         long lectureUnitId = insert("lecture_unit", values("discriminator", "T", "lecture_id", lectureId, "lecture_unit_order", 0));
         long competencyId = insert("competency", values("discriminator", "C", "title", "Competency", "course_id", courseId, "mastery_threshold", 50));
-        long quizQuestionId = insert("quiz_question", values("discriminator", "SA", "title", "Question"));
+        long quizQuestionId = insert("quiz_question", values("discriminator", "SA", "title", "Question", "exercise_id", exerciseId));
         long organizationId = insert("organization", values("email_pattern", ".*", "name", TEST_PREFIX + "org", "short_name", TEST_PREFIX));
         long ideId = insert("ide", values("name", "IDE", "deep_link", "ide://open"));
         long courseNotificationId = insert("course_notification", values("course_id", courseId, "type", 1, "creation_date", now, "deletion_date", now));
@@ -164,7 +168,9 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
 
         // COURSE MEMBERSHIP, COMMUNICATION and the course request
         seed(UserDeletionReferencePolicy.COURSE_ROLE, userId, values("course_id", courseId, "course_role", "STUDENT"));
-        seed(UserDeletionReferencePolicy.COURSE_REQUEST, userId, values("title", "Requested course", "short_name", TEST_PREFIX + "req", "reason", "because", "created_date", now));
+        // The course request carries a semester and both dates because all three are mandatory on the table.
+        seed(UserDeletionReferencePolicy.COURSE_REQUEST, userId, values("title", "Requested course", "short_name", TEST_PREFIX + "req", "reason", "because", "created_date", now,
+                "semester", "WS24/25", "start_date", now, "end_date", inSixMonths));
         seed(UserDeletionReferencePolicy.CONVERSATION_MEMBERSHIP, userId, values("conversation_id", conversationId));
         seed(UserDeletionReferencePolicy.CONVERSATION_CREATOR, userId,
                 values("discriminator", "C", "course_id", courseId, "creation_date", now, "name", "own", "is_course_wide", true));
@@ -173,6 +179,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.ANSWER_POST_VERIFIER, userId, values("post_id", postId, "author_id", bystander.getId(), "creation_date", now));
         seed(UserDeletionReferencePolicy.REACTION_AUTHOR, userId, values("post_id", postId, "emoji_id", "smiley", "creation_date", now));
         seed(UserDeletionReferencePolicy.IRIS_SESSION, userId, values("discriminator", "CHAT", "creation_date", now));
+        seed(UserDeletionReferencePolicy.IRIS_PROACTIVE_EPISODE, userId, values("exercise_id", exerciseId, "episode_id", "episode-for-deletion", "last_triggered_at", now));
 
         // EXERCISES, ASSESSMENT and the rest of the course
         seed(UserDeletionReferencePolicy.PARTICIPATION, userId, values("discriminator", "SP", "exercise_id", exerciseId));
@@ -181,7 +188,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.ASSESSMENT_NOTE_CREATOR, userId, values("result_id", resultId));
         seed(UserDeletionReferencePolicy.COMPLAINT_STUDENT, userId, values("result_id", resultId, "complaint_type", "COMPLAINT", "exercise_id", exerciseId));
         seed(UserDeletionReferencePolicy.COMPLAINT_REVIEWER, userId, values("complaint_id", complaintId));
-        seed(UserDeletionReferencePolicy.TUTOR_PARTICIPATION, userId, values());
+        seed(UserDeletionReferencePolicy.TUTOR_PARTICIPATION, userId, values("assessed_exercise_id", exerciseId));
         seed(UserDeletionReferencePolicy.SUBMISSION_VERSION_AUTHOR, userId, values("submission_id", submissionId));
         seed(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR, userId,
                 values("exercise_id", exerciseId, "exercise_snapshot", new Json("{}"), "created_by", "test", "created_date", now));
@@ -201,10 +208,18 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.LTI_LAUNCH, userId, values("iss", "https://platform", "sub", "subject", "deployment_id", "deployment", "resource_link_id", "link"));
         seed(UserDeletionReferencePolicy.COMPETENCY_PROGRESS, userId, values("competency_id", competencyId));
         seed(UserDeletionReferencePolicy.LECTURE_PROGRESS, userId, values("lecture_unit_id", lectureUnitId));
+        seed(UserDeletionReferencePolicy.LEARNING_PATH, userId, values("course_id", courseId, "progress", 0));
+        seed(UserDeletionReferencePolicy.LEARNER_PROFILE, userId, values("feedback_detail", 2, "feedback_formality", 2, "has_setup_feedback_preferences", false));
+        // The per-course part of the profile points at it, so seeding one proves the deletion takes that down first.
+        Long learnerProfileId = jdbcTemplate.queryForObject("SELECT id FROM learner_profile WHERE user_id = ?", Long.class, userId);
+        insertInto("course_learner_profile",
+                values("learner_profile_id", learnerProfileId, "course_id", courseId, "aim_for_grade_or_bonus", 3, "time_investment", 3, "repetition_intensity", 3));
         seed(UserDeletionReferencePolicy.QUIZ_QUESTION_PROGRESS, userId, values("quiz_question_id", quizQuestionId, "course_id", courseId, "due_date", now));
         seed(UserDeletionReferencePolicy.QUIZ_TRAINING_LEADERBOARD, userId,
                 values("course_id", courseId, "league", 1, "score", 0, "answered_correctly", 0, "answered_wrong", 0, "due_date", now, "streak", 0, "show_in_leaderboard", true));
         seed(UserDeletionReferencePolicy.LLM_USAGE_ACTOR, userId, values());
+        seed(UserDeletionReferencePolicy.VCS_ACCESS_LOG, userId, values("participation_id", participationId, "name", "Deleted Account", "email", "deleted@localhost",
+                "repository_action_type", 0, "authentication_mechanism", 0, "timestamp", now));
     }
 
     /**

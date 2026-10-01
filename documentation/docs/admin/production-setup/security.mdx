@@ -230,7 +230,7 @@ artemis:
                 - "10.0.0.1"
 ```
 
-A connection from a listed address must begin with a valid PROXY protocol header and is refused otherwise. A connection from any other address is handled as ordinary SSH and keeps its socket peer, so direct connections are unaffected. The list is keyed on the source address rather than on whether a header is present, because believing a header from any sender would let anyone who can reach the port claim an arbitrary client address.
+A connection from a listed address must begin with a valid PROXY protocol header and is refused otherwise. A connection from any other address is handled as ordinary SSH and keeps its socket peer, so direct connections are unaffected. If such a connection starts with a PROXY protocol header anyway, Artemis removes the header without reading the address in it. The list is keyed on the source address rather than on whether a header is present, because believing a header from any sender would let anyone who can reach the port claim an arbitrary client address.
 
 <Callout variant={CalloutVariant.warning}>
     **Name the proxy exactly, and keep the list as narrow as you can.** A PROXY protocol header carries no signature and
@@ -248,10 +248,37 @@ A connection from a listed address must begin with a valid PROXY protocol header
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-    These two settings must change together. `proxy_protocol on` without the matching `trusted-sources` breaks every
-    SSH connection through that proxy, and `trusted-sources` without `proxy_protocol on` refuses them. The Docker
+    These two settings must change together. With `proxy_protocol on` but without the matching `trusted-sources`,
+    SSH connections still succeed, but every connection through that proxy is attributed to the proxy: all users
+    behind it share one rate limit bucket, and a build agent that clones through it fails the address check above.
+    The server logs `Discarded a PROXY protocol header from <address>` at most every ten minutes. With
+    `trusted-sources` but without `proxy_protocol on`, every SSH connection through that proxy is refused. The Docker
     Compose setups in this repository already ship both.
 </Callout>
+
+When nginx runs as a container of the Docker Compose setup, Docker assigns its address when it creates the network, so
+the address can change. The environment files in this repository therefore list the Docker bridge ranges, which is
+acceptable for a test stack but not for a production deployment. Instead, give the network a fixed subnet and nginx a
+fixed address in an override file:
+
+```yaml
+services:
+    nginx:
+        networks:
+            artemis:
+                ipv4_address: 172.30.0.10
+networks:
+    artemis:
+        driver: bridge
+        name: artemis
+        ipam:
+            config:
+                - subnet: 172.30.0.0/24
+```
+
+Pass the file to `docker compose` with an additional `-f` and list only that address in
+`ARTEMIS_VERSIONCONTROL_SSHPROXYPROTOCOL_TRUSTEDSOURCES="172.30.0.10"`. Choose a subnet that no other network on the host
+uses. Docker applies a subnet only when it creates a network, so run `docker compose down` once before starting again.
 
 #### Moving build agents to SSH
 
@@ -300,7 +327,7 @@ When a user attempts to log in with LDAP authentication enabled:
 3. If authentication succeeds, Artemis creates or updates the local user record with information from LDAP
 4. The user is granted access to Artemis
 
-### Configuration
+### Configuring LDAP
 
 To enable LDAP authentication, set the module-feature flag and configure the LDAP connection settings in your `application-artemis.yml`:
 
@@ -357,7 +384,7 @@ When passkeys are activated and passkey enforcement is enabled for administrator
 This approach minimizes the attack surface for the critical operation of registering new passkeys by limiting this privilege to a very small number of Super Admin users.
 This ensures that even if an administrator account is compromised, the attacker cannot bypass passkey enforcement by registering their own passkey without Super Admin approval.
 
-### Configuration
+### Configuring Passkey Enforcement
 
 To enable passkeys and enforce them for administrator features, add the following to your configuration:
 
@@ -375,7 +402,7 @@ artemis:
 - `artemis.user-management.passkey.require-for-administrator-features`: When enabled, administrators must be signed in with an approved passkey before any endpoint grants them administrator access (default: `false`)
 
 <Callout variant={CalloutVariant.warning}>
-    When enabling `require-for-administrator-features`, the internal system admin `artemis.user-management.internal-admin` will automatically be granted the role `Super Admin`.
+    When enabling `require-for-administrator-features`, the internal system admin `artemis.user-management.internal-admin` will automatically be granted the role **Super Admin**.
     Passkeys of a super admin are automatically approved on registration or when logging in with an unapproved passkey for the first time.
 </Callout>
 
@@ -442,6 +469,20 @@ stream {
 }
 ```
 
+## Websocket Connections
+
+Artemis only accepts a websocket connection that a browser opens from a page of Artemis itself. Browsers name that page
+in the `Origin` header of the connection request, and Artemis accepts it if the page has the same origin as the request
+(scheme, host and port), or the origin of `server.url`. Clients that are not browsers, such as the iOS and Android apps
+and the VS Code extension, send no `Origin` header and are not affected.
+
+This requires no configuration when browsers reach Artemis under `server.url`. Other host names work when the reverse
+proxy forwards the `Host` and `X-Forwarded-Proto` headers, as the nginx configuration of Artemis does
+(`proxy_set_header Host $host;` and `proxy_set_header X-Forwarded-Proto $scheme;`), and runs on a private or local
+address, whose forwarded headers Artemis uses. Otherwise, add these origins to `jhipster.cors.allowed-origins` or
+`jhipster.cors.allowed-origin-patterns`. This allows them to call the REST API as well. The server logs every refused
+connection request with its origin.
+
 ## Rate Limiting
 
 Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets) and [Hazelcast](https://hazelcast.com) (distributed state).
@@ -457,7 +498,7 @@ It helps protect authentication and account management endpoints from brute-forc
 - Automatically excludes build agents from rate limiting
 
 
-### Configuration
+### Configuring the Rate Limit
 
 ```yaml
 artemis:

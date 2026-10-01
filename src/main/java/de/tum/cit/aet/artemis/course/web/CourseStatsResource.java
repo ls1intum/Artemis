@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -34,10 +34,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * REST controller for managing Course.
  */
 @Profile(PROFILE_CORE)
-@FeatureUsage("analytics/course-statistics")
+@FeatureUsage(UserFeature.COURSE_STATISTICS)
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/course/")
 @Lazy
 public class CourseStatsResource {
 
@@ -71,6 +70,7 @@ public class CourseStatsResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
     @EnforceAtLeastTutor
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
@@ -114,9 +114,6 @@ public class CourseStatsResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
-        if (course.getStartDate() == null) {
-            throw new IllegalArgumentException("Course does not contain start date");
-        }
         var endDate = courseStatsService.determineEndDateForActiveStudents(course);
         var returnedSpanSize = courseStatsService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
         var activeStudents = courseStatsService.getActiveStudents(exerciseIds, 0, Math.toIntExact(returnedSpanSize), endDate);
@@ -129,6 +126,7 @@ public class CourseStatsResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the body, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.COURSE_MANAGEMENT_OVERVIEW)
     @GetMapping("courses/{courseId}/management-detail")
     @EnforceAtLeastTutor
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {

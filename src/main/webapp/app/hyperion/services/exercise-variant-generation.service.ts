@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Observable, Subscription, map, tap } from 'rxjs';
 import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-variant-api';
 import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
@@ -6,6 +6,9 @@ import { VariantJob } from 'app/openapi/model/variant-job';
 import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
 import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AccountService } from 'app/core/auth/account.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 /**
  * Client service for AI exercise-variant generation. Two responsibilities:
@@ -14,12 +17,20 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
  *    client-side copy of the user's job list, kept live by the per-job websocket topics and re-synced from
  *    REST on demand (events are fire-and-forget; the server-side job record is authoritative).
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseVariantGenerationService {
     private readonly api = inject(HyperionExerciseVariantApi);
     private readonly websocketService = inject(ExerciseVariantWebsocketService);
+    private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
 
     private readonly jobSubscriptions = new Map<string, Subscription>();
+
+    /** The load triggered by a change of login or access; cancelled on the next change so that a late response cannot restore stale jobs. */
+    private accessLoad?: Subscription;
+
+    /** Login of the user whose jobs are currently loaded (undefined while none are), used to avoid redundant re-syncs. */
+    private loadedForLogin?: string;
 
     /** All jobs of the current user (running + retained-finished), authoritative copy of GET /variant-jobs. */
     readonly jobs = signal<VariantJob[]>([]);
@@ -29,6 +40,31 @@ export class ExerciseVariantGenerationService {
 
     /** Tray button hidden when the user has no variant jobs at all. */
     readonly hasJobs = computed(() => this.jobs().length > 0);
+
+    constructor() {
+        effect(() => {
+            const login = this.accountService.userIdentity()?.login;
+            untracked(() => {
+                // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, and asking without that access
+                // only produces a 403 alert. A user who cannot generate variants has no jobs to show, and the tray stays hidden
+                // either way. Without Hyperion the endpoint is not registered at all, so there is nothing to fetch either.
+                const mayLoadJobs = !!login && this.accountService.hasEditorAccess() && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+                // Keyed on the access as well as the login, so that a user who gains editor access later in the same session
+                // gets the jobs without a reload
+                const loadFor = mayLoadJobs ? login : undefined;
+                if (loadFor === this.loadedForLogin) {
+                    return;
+                }
+                this.loadedForLogin = loadFor;
+                this.accessLoad?.unsubscribe();
+                if (mayLoadJobs) {
+                    this.accessLoad = this.loadJobs().subscribe({ error: () => {} });
+                } else {
+                    this.clearJobs();
+                }
+            });
+        });
+    }
 
     /**
      * Starts a variant-generation job and attaches to its websocket topic.

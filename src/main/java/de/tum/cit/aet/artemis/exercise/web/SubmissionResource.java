@@ -32,12 +32,14 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -55,7 +57,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizer
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("submission/submissions")
+@FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
 @RestController
 @RequestMapping("api/exercise/")
 public class SubmissionResource {
@@ -110,6 +112,7 @@ public class SubmissionResource {
      * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
     @DeleteMapping("submissions/{submissionId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long submissionId) {
@@ -147,7 +150,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/test-run-submissions")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<SubmissionResponseDTO>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isExamExercise()) {
@@ -173,7 +176,7 @@ public class SubmissionResource {
                 latestSubmission.getResults().stream().filter(Objects::nonNull)
                         .forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
             }
-            return ResponseEntity.ok().body(List.of(latestSubmission));
+            return ResponseEntity.ok().body(List.of(SubmissionResponseDTO.of(latestSubmission)));
         }
         else {
             return ResponseEntity.ok(List.of());
@@ -230,9 +233,10 @@ public class SubmissionResource {
      * @param search     the pageable search containing the page size and query string
      * @return The desired page, sorted and matching the given query
      */
+    @FeatureUsage(UserFeature.TUTOR_TRAINING)
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<SubmissionResponseDTO>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get all Submissions for import : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -269,6 +273,7 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body a list of {@link SubmissionVersionDTO} for the given submission
      */
 
+    @FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
     @GetMapping("submissions/{submissionId}/versions")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<SubmissionVersionDTO>> getSubmissionVersions(@PathVariable long submissionId) {

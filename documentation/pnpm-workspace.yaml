@@ -17,7 +17,7 @@ preferFrozenLockfile: true
 enablePrePostScripts: true
 autoInstallPeers: true
 
-# Dependency overrides. pnpm 11 reads overrides from this file in preference to
+# Dependency overrides. pnpm reads overrides from this file in preference to
 # `pnpm.overrides` in package.json. Pinned versions address CVE advisories on
 # transitive deps (serialize-javascript GHSA-qj8w-gfj5-8c6v, uuid
 # GHSA-w5hq-g745-h8pq) and align other shared transitives across the docs and
@@ -34,14 +34,14 @@ overrides:
   '@swc/html': '1.16.2'
   # Kept on the 1.x line (docs' express 4 stack requires ^1).
   body-parser: '1.20.8'
-  brace-expansion: '5.0.9'
+  brace-expansion: '5.0.12'
   # Must stay >= 4.28.7, which fixed CVE-2026-73088 and CVE-2026-73089. Reached through @babel/core's
   # helper-compilation-targets, whose range allows this. Build-time tooling only, never served.
-  browserslist: '4.28.9'
+  browserslist: '4.29.0'
   # Reached through cssnano's postcss-colormin and postcss-minify-gradients, whose ranges allow
   # this. Must stay >= 2.9.4, which fixed GHSA-2wm5-q62r-hmrv (quadratic time rejecting oversized
   # malformed colour strings). Build-time CSS minification only, never served.
-  colord: '2.9.7'
+  colord: '2.10.0'
   # Kept on the 3.x line (consumers require ^3); 4.x is an API break.
   # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
@@ -70,7 +70,7 @@ overrides:
   svgo: '3.3.5'
   undici: '7.29.1'
   uuid: '14.0.2'
-  webpack: '5.110.3'
+  webpack: '5.111.1'
   # Kept on the 5.x line (docs' webpack tooling requires ^5; 6.x is an API break).
   webpack-dev-server: '5.2.6'
   websocket-driver: '0.7.5'

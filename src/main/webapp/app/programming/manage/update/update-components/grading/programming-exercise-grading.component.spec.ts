@@ -56,7 +56,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: BuildPhasesTemplateService, useValue: { buildPlan: vi.fn(), resetToDefault: vi.fn(), fetchTemplate: vi.fn() } },
+                { provide: BuildPhasesTemplateService, useValue: { getTemplate: vi.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

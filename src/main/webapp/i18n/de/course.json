@@ -352,13 +352,23 @@
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
                     "maxlength": "Der Kurzname darf höchstens 24 Zeichen lang sein.",
-                    "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
+                    "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten.",
+                    "required": "Gib einen Kurznamen ein.",
+                    "hint": "Zwischen 3 und 24 Buchstaben oder Ziffern, beginnend mit einem Buchstaben. Er erscheint in URLs und Gruppennamen und kann später nicht mehr geändert werden.",
+                    "hintReadOnly": "Der Kurzname kann nach dem Erstellen des Kurses nicht mehr geändert werden."
                 },
                 "startDate": {
-                    "invalid": "Muss vor dem Enddatum des Kurses liegen"
+                    "invalid": "Muss vor dem Enddatum des Kurses liegen",
+                    "required": "Gib ein Startdatum ein."
                 },
                 "endDate": {
-                    "invalid": "Muss nach dem Startdatum des Kurses liegen"
+                    "invalid": "Muss nach dem Startdatum des Kurses liegen",
+                    "required": "Gib ein Enddatum ein."
+                },
+                "semester": {
+                    "required": "Wähle ein Semester aus.",
+                    "hint": "Die Auswahl eines Semesters übernimmt dessen Start- und Enddatum, sofern du sie nicht selbst festgelegt hast.",
+                    "placeholder": "Semester auswählen"
                 },
                 "enrollmentStartDate": {
                     "invalid": "Kann nicht nach dem Startdatum des Kurses liegen und muss vor dem Einschreibungsende liegen"
@@ -369,16 +379,34 @@
                 "unenrollmentEndDate": {
                     "invalid": "Muss nach dem Enddatum zur Einschreibung liegen und kann nicht nach dem Enddatum des Kurses liegen"
                 },
-                "invalidForm": "Bitte alle verpflichtenden Felder ausfüllen."
+                "invalidForm": "Bitte alle verpflichtenden Felder ausfüllen.",
+                "title": {
+                    "required": "Gib einen Titel ein.",
+                    "maxlength": "Der Titel darf höchstens {{ max }} Zeichen lang sein."
+                },
+                "invalidNumber": "Gib eine gültige Zahl ein.",
+                "accuracyOfScoresRange": "Gib eine Zahl von 1 bis 5 ein.",
+                "noDefaultProgrammingLanguage": "Keine Vorgabe",
+                "changeIcon": "Kursicon ändern",
+                "organizations": {
+                    "toggle": "Den Kurs Organisationen zuordnen",
+                    "description": "Nur Mitglieder der ausgewählten Organisationen können sich selbst in diesen Kurs einschreiben. Ohne Organisationen können sich alle Nutzer:innen einschreiben.",
+                    "empty": "Noch keine Organisation ausgewählt. Solange keine ausgewählt ist, können sich alle Nutzer:innen einschreiben.",
+                    "add": "Organisation hinzufügen"
+                },
+                "issues": {
+                    "one": "1 Feld benötigt deine Aufmerksamkeit:",
+                    "other": "{{ count }} Felder benötigen deine Aufmerksamkeit:"
+                },
+                "requiredLegend": "Mit * markierte Felder sind Pflichtfelder.",
+                "timeZone": {
+                    "required": "Ein Kurs behält seine Zeitzone, sobald eine festgelegt ist. Wähle eine Zeitzone aus."
+                }
             },
             "courseDashboard": "Kurs-Dashboard",
             "instructorDashboard": "Dashboard für Lehrende",
             "courseGroup": {
-                "outOf": "von",
-                "usersPerPage": "{{number}} Nutzer:innen pro Seite",
-                "showAllUsers": "Alle Nutzer:innen anzeigen",
-                "searchForUsers": "Nutzer:in zu dieser Gruppe hinzufügen durch Suchen nach Login oder Namen",
-                "searchNoResults": "Kein:e Nutzer:innen gefunden",
+                "searchForUsers": "Nutzer:innen nach Login, Namen, E-Mail oder Matrikelnummer suchen",
                 "login": "Login",
                 "registrationNumber": "Matrikelnummer",
                 "name": "Name",
@@ -386,7 +414,9 @@
                 "removeFromGroup": {
                     "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 },
-                "profilePicture": "Profilbild"
+                "addUsers": "Nutzer:innen hinzufügen",
+                "profilePicture": "Profilbild",
+                "notFoundUsers": "Die folgenden Nutzer:innen konnten nicht registriert werden, da sie nicht gefunden wurden: {{ logins }}"
             },
             "averageScore": "Durchschnittliche Punktzahl",
             "assessmentProgress": "Bewertungen",
@@ -440,6 +470,9 @@
                     "saving": "Speichern..."
                 },
                 "validation": {
+                    "startDateRequired": "Bitte lege ein Startdatum für den Kurs fest.",
+                    "endDateRequired": "Bitte lege ein Enddatum für den Kurs fest.",
+                    "semesterRequired": "Bitte wähle ein Semester für den Kurs aus.",
                     "startDateBeforeEndDate": "Das Startdatum muss vor dem Enddatum liegen.",
                     "enrollmentStartDateBeforeEndDate": "Das Einschreibungsstartdatum muss vor dem Einschreibungsenddatum liegen.",
                     "enrollmentRequiresCourseDates": "Einschreibungsdaten erfordern ein Start- und Enddatum des Kurses. Bitte im Schritt Allgemein festlegen.",

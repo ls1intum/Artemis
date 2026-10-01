@@ -14,7 +14,7 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -99,7 +99,7 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         CompetencySelectionPrimengComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
@@ -922,7 +922,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (!upcomingStarts.length) {
             return;
         }
-        const nextStart = upcomingStarts.reduce((earliest, start) => (start.isBefore(earliest) ? start : earliest));
+        const nextStart = upcomingStarts.reduce((earliest, start) => (start.isBefore(earliest) ? start : earliest), upcomingStarts[0]);
         // setTimeout truncates its delay to a signed 32-bit int, so anything past ~24.8 days would fire at once and
         // declare the quiz started weeks early. Sleep in chunks and re-arm until the start time is actually reached.
         const delay = Math.min(nextStart.diff(now) + 1, MAX_TIMEOUT_DELAY);

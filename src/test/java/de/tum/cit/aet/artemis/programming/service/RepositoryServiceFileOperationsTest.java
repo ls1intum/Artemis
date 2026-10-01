@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -51,7 +52,9 @@ class RepositoryServiceFileOperationsTest {
         Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call().close();
         GitService gitService = new GitService();
         ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
-        repositoryService = new RepositoryService(gitService, Optional.empty());
+        BareGitRepositoryService bareGitRepositoryService = new BareGitRepositoryService();
+        ReflectionTestUtils.setField(bareGitRepositoryService, "localVCBasePath", baseDir);
+        repositoryService = new RepositoryService(gitService, bareGitRepositoryService, Optional.empty());
 
         repository = new Repository(workingTree.resolve(".git").toString(), new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise"));
         ReflectionTestUtils.setField(repository, "localPath", workingTree);

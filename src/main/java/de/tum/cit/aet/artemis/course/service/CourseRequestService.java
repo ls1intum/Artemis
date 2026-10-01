@@ -203,12 +203,9 @@ public class CourseRequestService {
         Course validationCourse = new Course();
         validationCourse.setShortName(updateDTO.shortName());
         CourseValidator.validateShortName(validationCourse);
-        // Validate date range if both dates are provided
-        if (updateDTO.startDate() != null && updateDTO.endDate() != null) {
-            validationCourse.setStartDate(updateDTO.startDate());
-            validationCourse.setEndDate(updateDTO.endDate());
-            CourseValidator.validateStartAndEndDate(validationCourse);
-        }
+        validationCourse.setStartDate(updateDTO.startDate());
+        validationCourse.setEndDate(updateDTO.endDate());
+        CourseValidator.validateStartAndEndDate(validationCourse);
 
         courseRequest.setTitle(updateDTO.title());
         courseRequest.setShortName(updateDTO.shortName());
@@ -332,6 +329,7 @@ public class CourseRequestService {
 
         CourseValidator.validateShortName(course);
         CourseValidator.validateStartAndEndDate(course);
+        CourseValidator.validateSemester(course);
         CourseValidator.validateEnrollmentStartAndEndDate(course);
         CourseValidator.validateUnenrollmentEndDate(course);
         CourseValidator.validateEnrollmentConfirmationMessage(course);
@@ -364,7 +362,7 @@ public class CourseRequestService {
         var emailData = new ContactEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(),
                 request.isTestCourse(), request.getReason(), requesterName, requesterEmail);
 
-        MailRecipientDTO recipient = new MailRecipientDTO(contactEmail, requesterLangKey, "course-request-contact", null, null, null, null);
+        MailRecipientDTO recipient = MailRecipientDTO.forUnnamed(contactEmail, requesterLangKey, "course-request-contact");
         mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", List.of(request.getTitle()), "mail/courseRequestContactEmail",
                 Map.of("courseRequest", emailData));
     }

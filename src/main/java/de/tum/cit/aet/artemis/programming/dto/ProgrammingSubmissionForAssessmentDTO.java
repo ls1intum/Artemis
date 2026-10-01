@@ -44,6 +44,16 @@ public record ProgrammingSubmissionForAssessmentDTO(Long id, String submissionEx
     public static final String SUBMISSION_EXERCISE_TYPE = "programming";
 
     /**
+     * Removes participant information and repository metadata while retaining assessment data.
+     *
+     * @return an anonymous submission response
+     */
+    public ProgrammingSubmissionForAssessmentDTO withoutParticipantInformation() {
+        return new ProgrammingSubmissionForAssessmentDTO(id, submissionExerciseType, type, submitted, submissionDate, commitHash, buildFailed,
+                participation == null ? null : participation.withoutParticipantInformation(), results);
+    }
+
+    /**
      * Converts a submission together with every result that is already loaded on it. Used where the endpoint does not
      * pick a specific correction round.
      *

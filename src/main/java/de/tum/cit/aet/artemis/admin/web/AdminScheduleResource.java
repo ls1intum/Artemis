@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for getting the audit events. Currently limited to the primary node with scheduling enabled.
@@ -29,10 +29,10 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("monitoring/scheduled-jobs")
+@FeatureUsage(UserFeature.MONITORING)
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminScheduleResource {
 
     private final ScheduleService scheduleService;

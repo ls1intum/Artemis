@@ -36,6 +36,10 @@ public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull 
         NO_CHAT_CLIENT,
         /** The LLM call itself threw — surfaced as 502. */
         LLM_ERROR,
+        /** The shared tool-call budget was exhausted; terminal, not automatically retried. */
+        TOOL_CALL_LIMIT_EXCEEDED,
+        /** Missing or unverified terminal completion; retained for instructor review without automatic replay. */
+        INCOMPLETE_ORCHESTRATION,
         /**
          * A non-LLM step in the orchestrator failed (content extraction, repository lookup,
          * template rendering, tool-index assembly) — surfaced as 500.

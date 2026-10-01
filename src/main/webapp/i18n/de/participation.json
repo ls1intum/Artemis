@@ -37,6 +37,7 @@
             "errors": {
                 "preconditionsNotMet": "Die Voraussetzungen für die Anforderung von KI-Feedback sind nicht erfüllt."
             },
+            "participationId": "Teilnahme-ID",
             "repository": "Repository",
             "buildPlanId": "Build-Plan-Link",
             "initializationState": "Status",

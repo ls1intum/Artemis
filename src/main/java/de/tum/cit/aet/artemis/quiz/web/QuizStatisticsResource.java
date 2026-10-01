@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.quiz.config.QuizLegacyRestPaths;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.QuizPointStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticResponseDTO;
@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizStatisticsService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("evaluation/evaluation")
+@FeatureUsage(UserFeature.QUIZ_EVALUATION)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizStatisticsResource {
@@ -69,13 +69,11 @@ public class QuizStatisticsResource {
 
     /**
      * Gets the point-bucket histogram of a quiz.
-     * The legacy recalculation path maps here because on-demand statistics have no persisted aggregate to recalculate.
      *
      * @param quizExerciseId the id of the quiz exercise
      * @return the quiz exercise with point statistics
      */
-    @SuppressWarnings("deprecation")
-    @GetMapping({ "quiz-exercises/{quizExerciseId}/statistics/points", QuizLegacyRestPaths.RECALCULATE_STATISTICS })
+    @GetMapping("quiz-exercises/{quizExerciseId}/statistics/points")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizPointStatisticsDTO> getQuizPointStatistic(@PathVariable long quizExerciseId) {
         QuizExercise quizExercise = getQuizExerciseForStatistics(quizExerciseId);

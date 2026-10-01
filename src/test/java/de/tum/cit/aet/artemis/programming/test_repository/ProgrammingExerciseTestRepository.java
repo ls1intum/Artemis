@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -39,7 +38,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH p.tasks t
                 LEFT JOIN FETCH t.testCases
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
-                LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
@@ -93,8 +91,8 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationByIdIn(Set<Long> exerciseIds);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
-    Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students" })
+    Optional<ProgrammingExercise> findWithAllParticipationsById(long exerciseId);
 
     @Query("""
             SELECT DISTINCT pe
@@ -104,19 +102,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
             WHERE pe.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findWithEagerTemplateAndSolutionParticipationsById(@Param("exerciseId") long exerciseId);
-
-    /**
-     * Fetch the programming exercise with the build config, or throw an EntityNotFoundException if it cannot be found.
-     *
-     * @param programmingExercise The programming exercise to fetch the build config for.
-     * @return The programming exercise with the build config.
-     */
-    default ProgrammingExercise getProgrammingExerciseWithBuildConfigElseThrow(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
-            return getValueElseThrow(findWithBuildConfigById(programmingExercise.getId()), programmingExercise.getId());
-        }
-        return programmingExercise;
-    }
 
     List<ProgrammingExercise> findAllByCourseId(long courseId);
 

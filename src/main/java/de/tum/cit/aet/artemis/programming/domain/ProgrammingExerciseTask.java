@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A ProgrammingExerciseTask
@@ -36,6 +37,8 @@ public class ProgrammingExerciseTask extends DomainObject {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
+    @Parent
     private ProgrammingExercise exercise;
 
     public String getTaskName() {

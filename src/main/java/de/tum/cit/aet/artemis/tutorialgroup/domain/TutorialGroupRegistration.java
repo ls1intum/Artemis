@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "tutorial_group_registration")
@@ -22,15 +23,17 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 public class TutorialGroupRegistration extends DomainObject {
 
     @ManyToOne
-    @JoinColumn(name = "student_id")
+    @JoinColumn(name = "student_id", nullable = false)
     @NonNull
     @JsonIgnoreProperties("tutorialGroupRegistrations")
+    @Parent
     private User student;
 
     @ManyToOne
-    @JoinColumn(name = "tutorial_group_id")
+    @JoinColumn(name = "tutorial_group_id", nullable = false)
     @NonNull
     @JsonIgnoreProperties("registrations")
+    @Parent
     private TutorialGroup tutorialGroup;
 
     @Enumerated(EnumType.STRING)

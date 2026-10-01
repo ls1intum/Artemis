@@ -71,16 +71,116 @@ public class AuthorizationCheckService {
     // so that endpoints that only load authorities do not pay the cost of fetching all
     // course memberships (which would be a heavy JOIN for users in many courses).
     private boolean hasCourseRole(User user, Course course, CourseRole role) {
+        return hasCourseRole(user, course.getId(), role);
+    }
+
+    /**
+     * The exact-role counterpart of {@link #hasCourseRoleAtLeast(User, long, CourseRole)}, likewise needing nothing
+     * from the course but its id. It must keep the fallback: a user whose course roles were not loaded has to be
+     * answered from the database, not treated as holding no role.
+     *
+     * @param user     the user whose role is being checked
+     * @param courseId the course to check the role in
+     * @param role     the exact role to look for
+     * @return true if the user holds that role in the course
+     */
+    private boolean hasCourseRole(User user, long courseId, CourseRole role) {
         if (user.isCourseRolesLoaded()) {
-            EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
+            EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(courseId);
             return roles != null && roles.contains(role);
         }
-        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), courseId, role);
     }
 
     private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole minimum) {
+        return hasCourseRoleAtLeast(user, course.getId(), minimum);
+    }
+
+    /**
+     * Whether the user is at least an editor in the course, identified by id.
+     * <p>
+     * The {@code Course} overloads read nothing but the id from the entity, so a caller holding a projection can use
+     * these and leave the course unloaded. See {@link #hasCourseRoleAtLeast(User, long, CourseRole)}.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is at least an editor in the course
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRoleAtLeast(user, courseId, CourseRole.EDITOR) || hasAdminAccess(user);
+    }
+
+    /**
+     * Whether the user is at least a teaching assistant in the course, identified by id.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is at least a teaching assistant in the course
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRoleAtLeast(user, courseId, CourseRole.TEACHING_ASSISTANT) || hasAdminAccess(user);
+    }
+
+    /**
+     * Whether the user is at least a student in the course, identified by id.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is at least a student in the course
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRoleAtLeast(user, courseId, CourseRole.STUDENT) || hasAdminAccess(user);
+    }
+
+    /**
+     * Whether the user holds exactly the teaching assistant role in the course, identified by id.
+     * <p>
+     * Unlike the {@code isAtLeast} checks this one is exact, because the caller uses it to distinguish a tutor from an
+     * editor rather than to grant access.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is a teaching assistant in the course
+     */
+    @CheckReturnValue
+    public boolean isTeachingAssistantInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRole(user, courseId, CourseRole.TEACHING_ASSISTANT);
+    }
+
+    /**
+     * Whether the user is a student in the course and nothing more, identified by id.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is only a student in the course
+     */
+    @CheckReturnValue
+    public boolean isOnlyStudentInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRole(user, courseId, CourseRole.STUDENT) && !isAtLeastTeachingAssistantInCourse(courseId, user);
+    }
+
+    /**
+     * The course role check needs nothing from the course but its id: it answers from the user's course roles, and
+     * falls back to a membership query keyed by the same id. Callers that already know the id can therefore skip
+     * loading the course entity, which is what the git request path does - it used to fetch all of it, twice for an
+     * exam exercise, to supply this one value.
+     *
+     * @param user     the user whose role is being checked
+     * @param courseId the course to check the role in
+     * @param minimum  the lowest role that satisfies the check
+     * @return true if the user holds at least that role in the course
+     */
+    private boolean hasCourseRoleAtLeast(User user, long courseId, CourseRole minimum) {
         if (user.isCourseRolesLoaded()) {
-            EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
+            EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(courseId);
             if (roles == null) {
                 return false;
             }
@@ -91,7 +191,7 @@ public class AuthorizationCheckService {
             }
             return false;
         }
-        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRoleIn(user.getId(), course.getId(), CourseRole.valuesAtLeast(minimum));
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRoleIn(user.getId(), courseId, CourseRole.valuesAtLeast(minimum));
     }
 
     /**

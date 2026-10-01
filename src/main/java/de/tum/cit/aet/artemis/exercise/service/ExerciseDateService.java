@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -109,6 +110,30 @@ public class ExerciseDateService {
             final ZonedDateTime now = ZonedDateTime.now();
             return getDueDate(participation).map(now::isAfter).orElse(false);
         }
+    }
+
+    /**
+     * Checks if submissions are no longer possible, for a caller holding a projection of the exercise.
+     * <p>
+     * The same decision as {@link #isAfterDueDate(ParticipationInterface, Exercise)}, for the git request path, which
+     * authorizes against {@link GitRepositoryAccessDTO} rather than the exercise entity. An exam exercise still reads
+     * its exam, because the working-period rules are written against it - but only here, and only once.
+     *
+     * @param participation in a course or exam exercise
+     * @param exercise      the projected exercise
+     * @return true if the due date has passed and submissions are no longer possible
+     */
+    public boolean isAfterDueDate(ParticipationInterface participation, GitRepositoryAccessDTO exercise) {
+        if (exercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            long examId = exercise.examId();
+            if (participation instanceof StudentParticipation studentParticipation) {
+                return api.isIndividualExerciseWorkingPeriodOver(examId, studentParticipation);
+            }
+            return api.isExamWithGracePeriodOver(examId);
+        }
+        ZonedDateTime dueDate = participation.getIndividualDueDate() != null ? participation.getIndividualDueDate() : exercise.dueDate();
+        return dueDate != null && ZonedDateTime.now().isAfter(dueDate);
     }
 
     /**

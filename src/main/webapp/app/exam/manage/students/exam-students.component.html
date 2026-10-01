@@ -56,6 +56,7 @@
     />
     @if (hasRegisteredUsers()) {
         <button
+            type="button"
             #individualExamsStatusButton
             pButton
             (click)="individualExamsStatusPopover.toggle($event)"
@@ -150,12 +151,14 @@
 <ng-template #rowActionsRef let-examUser>
     <div class="d-flex gap-1 justify-content-end">
         <button
+            type="button"
             pButton
             size="small"
             severity="secondary"
             outlined
             [pTooltip]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
             tooltipPosition="top"
+            data-testid="reseat-student-button"
             (click)="reseatingDialog.openDialog(toExamUserForReseating(examUser))"
             [disabled]="isTestExam()"
         >
@@ -178,8 +181,10 @@
             </a>
         </div>
         <button
+            type="button"
             pButton
             jhiDeleteButton
+            data-testid="remove-student-button"
             severity="danger"
             outlined
             size="small"
@@ -208,7 +213,18 @@
 
 <ng-template #imageTemplate let-cell>
     @let dto = cell.data;
-    <img style="max-width: 60px" [id]="dto.id" class="img-fluid" [src]="dto.studentImagePath ? addPublicFilePrefix(dto.studentImagePath) : missingImage" [alt]="dto.name || ''" />
+    <img
+        style="max-width: 60px"
+        [id]="dto.id"
+        data-testid="student-image"
+        [attr.data-login]="dto.login"
+        [attr.data-has-image]="!!dto.studentImagePath"
+        class="img-fluid"
+        [src]="dto.studentImagePath ? addPublicFilePrefix(dto.studentImagePath) : missingImage"
+        [alt]="dto.name || ''"
+        loading="lazy"
+        decoding="async"
+    />
 </ng-template>
 
 <ng-template #studentDetailsTemplate let-cell>

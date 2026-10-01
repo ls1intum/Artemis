@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -590,8 +591,10 @@ public class SubmissionService {
                 feedback.setDetailText(feedbackText);
                 feedback.setPositive(false);
                 feedback.setType(FeedbackType.AUTOMATIC);
-                feedback = feedbackRepository.save(feedback);
+                // The feedback names its result before it is written: result_id is not nullable, so saving it detached and
+                // attaching it afterwards fails the insert instead of updating the row.
                 feedback.setResult(result);
+                feedback = feedbackRepository.save(feedback);
                 result.setFeedbacks(List.of(feedback));
                 resultRepository.save(result);
             }
@@ -792,6 +795,25 @@ public class SubmissionService {
     }
 
     /**
+     * Like {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}, but for an endpoint that opens one specific submission. Such a
+     * submission may already hold a result for a round beyond the exercise's number of correction rounds: the response to a complaint
+     * is stored as an additional manual result with the next round. Opening that existing result is valid and creates nothing.
+     *
+     * @param exercise        the exercise the submission belongs to
+     * @param submissionId    the id of the submission that is opened
+     * @param correctionRound the requested correction round
+     * @throws BadRequestAlertException if the round is negative, or neither below the exercise's number of correction rounds nor the round of an
+     *                                      existing result of the submission
+     */
+    public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, long submissionId, int correctionRound) {
+        boolean isRoundOfTheExercise = correctionRound >= 0 && correctionRound < exercise.getNumberOfCorrectionRounds();
+        if (isRoundOfTheExercise || (correctionRound >= 0 && resultRepository.existsManualResultBySubmissionIdAndCorrectionRound(submissionId, correctionRound))) {
+            return;
+        }
+        checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
+    }
+
+    /**
      * Checks that manual assessment of the given exam exercise is already possible, i.e. that the exam is over for every
      * student and, for programming exercises, that the tests have run once more on the final submissions.
      * <p>
@@ -932,7 +954,7 @@ public class SubmissionService {
                 submission.setResults(submission.getNonAthenaResults());
                 Complaint complaintOfSubmission = complaintMap.get(complainedResult.getId());
                 prepareComplaintAndSubmission(complaintOfSubmission, submission);
-                submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
+                submissionWithComplaintDTOs.add(SubmissionWithComplaintDTO.of(submission, complaintOfSubmission));
             });
         }
 
@@ -964,13 +986,14 @@ public class SubmissionService {
      * @param exerciseId Id of the exercise the submissions belongs to
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
-    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
+    public SearchResultPageDTO<SubmissionResponseDTO> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.STUDENT_PARTICIPATION);
         String searchTerm = search.getSearchTerm();
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndResultsByExerciseId(exerciseId, searchTerm, pageable);
 
-        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
-        final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, pageable, latestSubmissions.size());
+        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .map(SubmissionResponseDTO::ofWithParticipationSubmissions).toList();
+        final Page<SubmissionResponseDTO> submissionPage = new PageImpl<>(latestSubmissions, pageable, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
 }

@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Entity
 @Table(name = "apollon_diagram")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Stores a course id as a plain column with no foreign key.")
 public class ApollonDiagram extends DomainObject {
 
     @Column(name = "title")

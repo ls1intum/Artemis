@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Observable } from 'rxjs';
@@ -6,13 +6,13 @@ import { map } from 'rxjs/operators';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingService } from 'app/communication/service/posting.service';
-import { DisplayPriority, PostContextFilter } from 'app/communication/metis.util';
+import { DisplayPriority, PostContextFilter } from 'app/communication/communication.util';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PostService extends PostingService<Post> {
     private http = inject(HttpClient);
 

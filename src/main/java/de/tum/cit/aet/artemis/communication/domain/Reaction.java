@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A Reaction on a Posting.
@@ -47,10 +48,12 @@ public class Reaction extends DomainObject {
 
     @ManyToOne
     @JsonIncludeProperties({ "id" })
+    @Parent(enforcedBy = "CHECK_REACTION_POST_OR_ANSWER")
     private Post post;
 
     @ManyToOne
     @JsonIncludeProperties({ "id" })
+    @Parent(enforcedBy = "CHECK_REACTION_POST_OR_ANSWER")
     private AnswerPost answerPost;
 
     public User getUser() {

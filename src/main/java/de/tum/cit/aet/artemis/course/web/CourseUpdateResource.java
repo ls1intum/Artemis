@@ -2,12 +2,13 @@ package de.tum.cit.aet.artemis.course.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,10 +37,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
@@ -54,10 +59,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/course-management")
+@FeatureUsage(UserFeature.COURSE_SETTINGS)
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/course/")
 public class CourseUpdateResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseUpdateResource.class);
@@ -120,8 +124,8 @@ public class CourseUpdateResource {
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") CourseUpdateDTO courseUpdateDTO,
-            @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
+    public ResponseEntity<CourseManagementDTO> updateCourse(@PathVariable Long courseId, @RequestPart("course") @Valid CourseUpdateDTO courseUpdateDTO,
+            @RequestPart(required = false) MultipartFile file) {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
         User user = userRepository.getUserWithAuthorities();
 
@@ -151,6 +155,10 @@ public class CourseUpdateResource {
         }
 
         var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() != null && !existingCourse.getTimeZone().equals(courseUpdateDTO.timeZone()));
+        // Only a new or changed time zone is checked, so a course stored with one the server no longer knows stays editable.
+        if (!Objects.equals(existingCourse.getTimeZone(), courseUpdateDTO.timeZone())) {
+            CourseValidator.validateTimeZone(courseUpdateDTO.timeZone());
+        }
 
         if (!Objects.equals(existingCourse.getShortName(), courseUpdateDTO.shortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
@@ -189,20 +197,21 @@ public class CourseUpdateResource {
         CourseValidator.validateAccuracyOfScores(existingCourse);
         CourseValidator.validatePointBounds(existingCourse);
         CourseValidator.validateStartAndEndDate(existingCourse);
+        CourseValidator.validateSemester(existingCourse);
         CourseValidator.validateEnrollmentStartAndEndDate(existingCourse);
         CourseValidator.validateUnenrollmentEndDate(existingCourse);
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            existingCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
+            existingCourse.setCourseIcon(savePath.getFileName().toString());
             if (existingCourseIcon != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(existingCourseIcon), FilePathType.COURSE_ICON), 0);
+                fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
             }
         }
         else if (courseUpdateDTO.courseIcon() == null && existingCourseIcon != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(existingCourseIcon), FilePathType.COURSE_ICON), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
         }
 
         boolean wasOnlineCourse = existingCourse.getOnlineCourseConfiguration() != null;
@@ -232,7 +241,7 @@ public class CourseUpdateResource {
         // if learning paths got enabled, generate learning paths for students
         if (!oldLearningPathsEnabled && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
-            Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
+            Set<User> students = userRepository.getStudentsWithAuthorities(courseWithCompetencies);
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfiles(courseWithCompetencies, students));
             learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
         }
@@ -244,6 +253,19 @@ public class CourseUpdateResource {
         // The Athena configuration is lazy and not part of the update, so attach it for the response to report the stored
         // flags; otherwise the client would cache a course that claims Athena is off.
         courseAthenaConfigRepository.attachTo(result);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(CourseManagementDTO.of(result));
+    }
+
+    /**
+     * GET /time-zones : The time zones a course may use, which the course form offers and validates against. Browsers
+     * know different lists, some without names such as {@code UTC} or {@code Europe/Kyiv}, so the server, which
+     * interprets the course's time zone, provides its own.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the sorted time zone names
+     */
+    @GetMapping("time-zones")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<String>> getSupportedTimeZones() {
+        return ResponseEntity.ok(DateUtil.SUPPORTED_TIME_ZONES);
     }
 }

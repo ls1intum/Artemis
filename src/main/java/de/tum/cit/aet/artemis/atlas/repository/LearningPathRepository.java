@@ -61,8 +61,8 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             JOIN FETCH lp.user
             WHERE (lp.course.id = :courseId)
                 AND (
-                    lp.user.login LIKE %:searchTerm%
-                    OR CONCAT(lp.user.firstName, ' ', lp.user.lastName) LIKE %:searchTerm%
+                    LOWER(lp.user.login) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(CONCAT(lp.user.firstName, ' ', lp.user.lastName)) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
                 )
             """)
     Page<LearningPath> findWithEagerUserByLoginOrNameInCourse(@Param("searchTerm") String searchTerm, @Param("courseId") long courseId, Pageable pageable);
@@ -75,17 +75,6 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
                 AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = learningPath.user AND ucr.course.id = learningPath.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT l
-            FROM LearningPath l
-            LEFT JOIN FETCH l.user u
-            LEFT JOIN FETCH u.learnerProfile lp
-            LEFT JOIN FETCH lp.courseLearnerProfiles clp
-            WHERE l.id = :learningPathId
-                AND clp.course.id = l.course.id
-            """)
-    Optional<LearningPath> findWithEagerUserAndLearnerProfileById(@Param("learningPathId") long learningPathId);
 
     @Query("""
             SELECT lp

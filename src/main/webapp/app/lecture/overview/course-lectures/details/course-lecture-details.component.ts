@@ -83,6 +83,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly destroyRef = inject(DestroyRef);
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
+    private readonly courseStorageService = inject(CourseStorageService);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -94,7 +95,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
 
     lectureId?: number;
-    private readonly courseStorageService = inject(CourseStorageService);
 
     readonly courseId = signal<number | undefined>(undefined);
 
@@ -148,6 +148,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
+    /**
+     * Whether the deep link asks for the combined view rather than the unit on the page. Set by the Iris point-out
+     * markers, which point at a position Iris named in that view; a lecture citation leaves it off and stays inline.
+     */
+    readonly targetCombinedView = signal<boolean>(false);
 
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
@@ -204,10 +209,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
                 const pageNum = Number(params['page']);
                 this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
+                this.targetCombinedView.set(params['combined'] === 'true');
             } else {
                 this.targetUnitId.set(undefined);
                 this.targetVideoTimestamp.set(undefined);
                 this.targetPdfPage.set(undefined);
+                this.targetCombinedView.set(false);
             }
 
             if (this.lectureUnits().length > 0) {
@@ -315,6 +322,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);
+            this.targetCombinedView.set(false);
             return;
         }
 

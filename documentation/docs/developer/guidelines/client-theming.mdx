@@ -8,7 +8,7 @@ import Callout from '../../../src/components/Callout/Callout';
 import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 Artemis supports light and dark themes. The active scheme is exposed as
-`data-theme="light"` or `data-theme="dark"` on the document element so application styles, TUM UI,
+`data-theme="light"` or `data-theme="dark"` on the document element so application styles, TUM AET UI,
 and embedded content share one framework-neutral signal.
 
 <Callout variant={CalloutVariant.danger}>
@@ -28,7 +28,7 @@ The theming boundary has four layers:
    custom properties.
 2. `src/main/webapp/tailwind.css` exposes selected roles as semantic Tailwind utilities.
 3. The same file maps Artemis foundations and color roles to the public `--tumaet-ui-*` contract.
-   TUM UI components consume only that package-owned contract.
+   TUM AET UI components consume only that package-owned contract.
 4. Bootstrap and PrimeNG receive compatible values while they remain in the application. They are
    migration consumers, not the source of Artemis design decisions.
 
@@ -41,14 +41,14 @@ changes.
 
 Use the first suitable option:
 
-1. **TUM UI component input or variant.** Use `severity`, `variant`, `size`, and other supported
+1. **TUM AET UI component input or variant.** Use `severity`, `variant`, `size`, and other supported
    contracts instead of overriding component internals.
 2. **Semantic Tailwind utility.** Use one when Artemis owns the mapping, such as
    `text-state-danger`. PrimeUI surface scales are not Artemis design tokens.
 3. **Artemis semantic CSS property.** Use an existing role in component SCSS or an irreducible
    dynamic style when a utility cannot express the requirement.
 4. **New semantic role.** Add one only when the concept recurs and no existing role has the correct
-   meaning. Define both light and dark values and expose it to TUM UI only when it is a supported
+   meaning. Define both light and dark values and expose it to TUM AET UI only when it is a supported
    package customization axis.
 
 <Callout variant={CalloutVariant.warning}>
@@ -73,10 +73,10 @@ Use the `state-*` Tailwind utilities for state-colored plain markup:
 <small class="text-state-danger" id="title-error"> {{ 'entity.validation.required' | artemisTranslate }} </small>
 ```
 
-Use TUM UI for a component-shaped status:
+Use TUM AET UI for a component-shaped status:
 
 ```html
-<tum-ui-message severity="error"> {{ 'entity.validation.required' | artemisTranslate }} </tum-ui-message>
+<tumaet-ui-message severity="error"> {{ 'entity.validation.required' | artemisTranslate }} </tumaet-ui-message>
 ```
 
 Color must never be the only signal. Pair a state color with text, an icon, or another programmatic
@@ -86,7 +86,7 @@ cue as required by
 ## Adding or changing a theme role
 
 Before adding a property, search the existing semantic roles and the
-[TUM UI theme contract](/developer/guidelines/tum-ui-kit#theme-contract). If a new role is necessary:
+[TUM AET UI theme contract](/developer/guidelines/tum-aet-ui-kit#theme-contract). If a new role is necessary:
 
 1. Name it after purpose rather than hue or a single screen.
 2. Add values to
@@ -100,7 +100,7 @@ Before adding a property, search the existing semantic roles and the
    interaction states.
 
 Avoid theme-specific component selectors in `theme-default.scss` or `theme-dark.scss`. They are a
-last resort for legacy global integrations. A new application or TUM UI component should consume
+last resort for legacy global integrations. A new application or TUM AET UI component should consume
 semantic properties instead.
 
 ## Reading and changing the active theme
@@ -130,6 +130,6 @@ Do not subscribe manually to theme changes or mirror the current theme into a mu
 
 ## Migration coexistence
 
-Bootstrap is still global, and PrimeNG remains in screens whose TUM UI capability is incomplete.
+Bootstrap is still global, and PrimeNG remains in screens whose TUM AET UI capability is incomplete.
 Their cascade and source-scanning constraints are documented in
 [Client Development: Styling](/developer/guidelines/client-development#styling).

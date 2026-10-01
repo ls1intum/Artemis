@@ -7,7 +7,7 @@ import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { TumUiButtonComponent, TumUiInputDirective, TumUiListComponent, TumUiListItemDirective, TumUiRadioButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getOS } from 'app/foundation/util/os-detector.util';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
@@ -27,11 +27,11 @@ import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/s
         FormDateTimePickerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiInputDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiRadioButtonComponent,
+        TumAetUiButtonComponent,
+        TumAetUiInputDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiRadioButtonComponent,
     ],
 })
 export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
