@@ -1,7 +1,7 @@
 <div class="label-and-input">
+    @let languageValidation = languageValidationResult();
     <label for="tutorial-edit-language-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate }} *</label>
     <tumaet-ui-input-group>
-        @let languageValidation = languageValidationResult();
         <input
             id="tutorial-edit-language-input"
             #searchInput
@@ -13,12 +13,10 @@
             (focus)="openPanel()"
             (keydown)="onKeyDown($event)"
         />
-        @if (languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()) {
-            <tumaet-ui-input-group-addon [tumAetUiTooltip]="languageValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-            </tumaet-ui-input-group-addon>
-        }
     </tumaet-ui-input-group>
+    @if (languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()) {
+        <span class="field-error" role="alert" data-testid="language-error">{{ languageValidation.message | artemisTranslate }}</span>
+    }
 </div>
 
 <ng-template #panelTemplate>

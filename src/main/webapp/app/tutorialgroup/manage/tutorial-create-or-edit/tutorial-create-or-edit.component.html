@@ -3,9 +3,9 @@
         <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.generalInformation"></h3>
         <div class="label-and-input-row">
             <div class="label-and-input">
+                @let titleValidation = titleValidationResult();
                 <label for="title-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.title' | artemisTranslate }} *</label>
                 <tumaet-ui-input-group>
-                    @let titleValidation = titleValidationResult();
                     <input
                         id="title-input"
                         tumAetUiInput
@@ -14,12 +14,10 @@
                         [tumAetUiInputInvalid]="titleValidation.status === ValidationStatus.INVALID && titleInputTouched()"
                         (blur)="titleInputTouched.set(true)"
                     />
-                    @if (titleValidation.status === ValidationStatus.INVALID && titleInputTouched()) {
-                        <tumaet-ui-input-group-addon [tumAetUiTooltip]="titleValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                        </tumaet-ui-input-group-addon>
-                    }
                 </tumaet-ui-input-group>
+                @if (titleValidation.status === ValidationStatus.INVALID && titleInputTouched()) {
+                    <span class="field-error" role="alert" data-testid="title-error">{{ titleValidation.message | artemisTranslate }}</span>
+                }
             </div>
 
             <div class="label-and-input">
@@ -58,9 +56,9 @@
 
         <div class="label-and-input-row">
             <div class="label-and-input">
+                @let campusValidation = campusValidationResult();
                 <label for="campus-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus"></label>
                 <tumaet-ui-input-group>
-                    @let campusValidation = campusValidationResult();
                     <input
                         id="campus-input"
                         tumAetUiInput
@@ -68,12 +66,10 @@
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus' | artemisTranslate"
                         [tumAetUiInputInvalid]="campusValidation.status === ValidationStatus.INVALID"
                     />
-                    @if (campusValidation.status === ValidationStatus.INVALID) {
-                        <tumaet-ui-input-group-addon [tumAetUiTooltip]="campusValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                        </tumaet-ui-input-group-addon>
-                    }
                 </tumaet-ui-input-group>
+                @if (campusValidation.status === ValidationStatus.INVALID) {
+                    <span class="field-error" role="alert" data-testid="campus-error">{{ campusValidation.message | artemisTranslate }}</span>
+                }
             </div>
 
             <div class="label-and-input">
@@ -92,22 +88,21 @@
 
         <div class="label-and-input-row">
             <div class="label-and-input">
+                @let additionalInformationValidation = additionalInformationValidationResult();
                 <label for="additional-information-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation"></label>
                 <tumaet-ui-input-group>
-                    @let additionalInformationValidation = additionalInformationValidationResult();
                     <input
                         id="additional-information-input"
                         type="text"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation' | artemisTranslate"
                         tumAetUiInput
                         [(ngModel)]="additionalInformation"
+                        [tumAetUiInputInvalid]="additionalInformationValidation.status === ValidationStatus.INVALID"
                     />
-                    @if (additionalInformationValidation.status === ValidationStatus.INVALID) {
-                        <tumaet-ui-input-group-addon [tumAetUiTooltip]="additionalInformationValidation.message | artemisTranslate" tumAetUiTooltipPlacement="left">
-                            <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                        </tumaet-ui-input-group-addon>
-                    }
                 </tumaet-ui-input-group>
+                @if (additionalInformationValidation.status === ValidationStatus.INVALID) {
+                    <span class="field-error" role="alert" data-testid="additional-information-error">{{ additionalInformationValidation.message | artemisTranslate }}</span>
+                }
             </div>
             <div class="spacer"></div>
         </div>
@@ -201,9 +196,9 @@
 
             <div class="label-and-input-row">
                 <div class="label-and-input">
+                    @let locationValidation = locationValidationResult();
                     <label for="location-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate }} *</label>
                     <tumaet-ui-input-group>
-                        @let locationValidation = locationValidationResult();
                         <input
                             id="location-input"
                             type="text"
@@ -213,12 +208,10 @@
                             [tumAetUiInputInvalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
                             (blur)="locationInputTouched.set(true)"
                         />
-                        @if (locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
-                            <tumaet-ui-input-group-addon [tumAetUiTooltip]="locationValidation.message | artemisTranslate" tumAetUiTooltipPlacement="left">
-                                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                            </tumaet-ui-input-group-addon>
-                        }
                     </tumaet-ui-input-group>
+                    @if (locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
+                        <span class="field-error" role="alert" data-testid="location-error">{{ locationValidation.message | artemisTranslate }}</span>
+                    }
                 </div>
                 <div class="spacer"></div>
             </div>

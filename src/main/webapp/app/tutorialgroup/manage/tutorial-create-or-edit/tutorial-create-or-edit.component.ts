@@ -1,8 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
@@ -12,7 +10,6 @@ import {
     TumAetUiConfirmationService,
     TumAetUiDatePickerComponent,
     TumAetUiInputDirective,
-    TumAetUiInputGroupAddonComponent,
     TumAetUiInputGroupComponent,
     TumAetUiInputNumberComponent,
     TumAetUiSelectComponent,
@@ -55,11 +52,9 @@ export interface UpdateTutorialGroupEvent {
         TumAetUiInputDirective,
         TumAetUiSelectComponent,
         TumAetUiTooltipDirective,
-        FaIconComponent,
         TutorialEditLanguagesInputComponent,
         TumAetUiInputNumberComponent,
         TumAetUiInputGroupComponent,
-        TumAetUiInputGroupAddonComponent,
         TumAetUiToggleSwitchComponent,
         TumAetUiConfirmDialogComponent,
         TranslateDirective,
@@ -78,7 +73,6 @@ export class TutorialCreateOrEditComponent {
 
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly ValidationStatus = ValidationStatus;
-    protected readonly faCircleInfo = faCircleInfo;
 
     courseId = input.required<number>();
     tutors = input.required<TutorialGroupTutor[]>();
