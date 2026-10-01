@@ -4,13 +4,13 @@
             <div *titleBarTitle class="flex items-center">
                 @if (exam && !exam.id) {
                     @if (!isImport()) {
-                        <h5 class="m-0" jhiTranslate="artemisApp.examManagement.createExam"></h5>
+                        <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.createExam"></h5>
                     } @else {
-                        <h5 class="m-0" jhiTranslate="artemisApp.examManagement.importExam"></h5>
+                        <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.importExam"></h5>
                     }
                     <jhi-documentation-button [type]="documentationType" />
                 } @else {
-                    <h5 class="m-0" jhiTranslate="artemisApp.examManagement.editExam"></h5>
+                    <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.editExam"></h5>
                 }
             </div>
             <!-- Section exam configuration -->

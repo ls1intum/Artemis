@@ -13,16 +13,16 @@
                 <thead>
                     <tr>
                         <th tumAetUiSortableColumn="ID" class="w-[8.333%]"><span>#</span></th>
-                        <th tumAetUiSortableColumn="TITLE" class="w-1/3">
+                        <th tumAetUiSortableColumn="TITLE" class="w-1/4">
                             <span jhiTranslate="artemisApp.exercise.import.table.title"></span>
                         </th>
-                        <th tumAetUiSortableColumn="COURSE_TITLE" class="w-1/3">
+                        <th tumAetUiSortableColumn="COURSE_TITLE" class="w-1/4">
                             <span jhiTranslate="artemisApp.exercise.import.table.course"></span>
                         </th>
                         <th tumAetUiSortableColumn="EXAM_MODE" class="w-1/6">
                             <span jhiTranslate="artemisApp.examManagement.testExam.examMode"></span>
                         </th>
-                        <th class="w-[8.333%]"></th>
+                        <th class="w-1/4"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,12 +36,19 @@
                             </td>
                             <td>
                                 @if (!subsequentExerciseGroupSelection()) {
-                                    <button tumAetUiButton type="button" (click)="selectImport(exam)" jhiTranslate="artemisApp.exercise.import.table.doImport"></button>
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        class="whitespace-nowrap"
+                                        (click)="selectImport(exam)"
+                                        jhiTranslate="artemisApp.exercise.import.table.doImport"
+                                    ></button>
                                 }
                                 @if (subsequentExerciseGroupSelection()) {
                                     <button
                                         tumAetUiButton
                                         type="button"
+                                        class="whitespace-nowrap"
                                         (click)="openExerciseSelection(exam)"
                                         jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroup"
                                     ></button>
@@ -69,10 +76,10 @@
             <div class="flex flex-col gap-4">
                 <div>
                     @if (!isImportingExercises()) {
-                        <p class="m-0" jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation"></p>
+                        <p class="my-0!" jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation"></p>
                     }
                     @if (isImportingExercises()) {
-                        <p class="m-0" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
+                        <p class="my-0!" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
                     }
                 </div>
                 <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="targetCourseId()" />

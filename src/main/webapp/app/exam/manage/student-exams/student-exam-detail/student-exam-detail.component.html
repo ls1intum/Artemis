@@ -1,5 +1,5 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0">
+    <h5 class="mb-0!">
         @if (isTestExam()) {
             <span jhiTranslate="artemisApp.studentExamDetail.studentTestExam"></span>
         } @else if (isTestRun()) {
@@ -13,7 +13,7 @@
     <div>
         <div class="mb-4">
             <h5><span jhiTranslate="artemisApp.studentExamDetail.student"></span></h5>
-            <ol class="m-0 ms-6 list-none p-0">
+            <ol class="my-0! ms-6! list-none p-0">
                 <li>
                     <strong jhiTranslate="artemisApp.studentExamDetail.name"></strong>
                     {{ student()!.name }}
@@ -52,7 +52,7 @@
                             {{ individualEndDate() | artemisDate: 'time' : true }}
                         </p>
                     }
-                    <button tumAetUiButton id="save" type="submit" class="mt-2" [disabled]="!form.valid || isWorkingTimeFormDisabled()">
+                    <button tumAetUiButton id="save" type="submit" class="mt-2!" [disabled]="!form.valid || isWorkingTimeFormDisabled()">
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save"></span>
                     </button>
@@ -69,7 +69,7 @@
         <div class="mb-4">
             <h5><span jhiTranslate="artemisApp.studentExams.participationStatus"></span></h5>
             <div class="me-2 ms-6">
-                <ol class="m-0 list-none p-0">
+                <ol class="my-0! list-none p-0">
                     <li>
                         <strong>{{ 'artemisApp.studentExams.started' | artemisTranslate }}:</strong>
                         {{ (studentExam()!.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
@@ -159,7 +159,7 @@
                         <span jhiTranslate="artemisApp.exam.summary"></span>
                     </a>
                     <div [tumAetUiTooltip]="studentExam()?.submitted ? '' : ('artemisApp.examTimeline.disabledTooltip' | artemisTranslate)">
-                        <button tumAetUiButton type="button" class="mb-auto ms-12" [routerLink]="'./exam-timeline'" [disabled]="!studentExam()!.submitted">
+                        <button tumAetUiButton type="button" class="mb-auto! ms-12!" [routerLink]="'./exam-timeline'" [disabled]="!studentExam()!.submitted">
                             <span jhiTranslate="artemisApp.examTimeline.breadcrumb"></span>
                         </button>
                     </div>

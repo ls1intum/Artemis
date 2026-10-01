@@ -15,18 +15,18 @@
                 />
             </div>
             @if (announcement(); as announcement) {
-                <h3 class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.examManagement.announcementCreate.preview"></h3>
+                <h3 class="my-0! text-lg font-semibold" jhiTranslate="artemisApp.examManagement.announcementCreate.preview"></h3>
                 <jhi-exam-live-event [event]="announcement" />
             }
         }
         @if (status() === 'submitting') {
-            <h2 class="m-0 text-2xl font-semibold">
+            <h2 class="my-0! text-2xl font-semibold">
                 <fa-icon [icon]="faSpinner" animation="spin" />
                 <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending"></span>
             </h2>
         }
         @if (status() === 'submitted') {
-            <h2 class="m-0 text-2xl font-semibold">
+            <h2 class="my-0! text-2xl font-semibold">
                 <fa-icon [icon]="faCheckCircle" class="text-state-success" />
                 <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent"></span>
             </h2>

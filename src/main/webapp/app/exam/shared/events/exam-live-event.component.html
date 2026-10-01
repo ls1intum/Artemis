@@ -72,13 +72,13 @@
     </div>
     <div class="flex gap-2">
         @if (showAcknowledge()) {
-            <button type="button" tumAetUiButton class="mt-2 w-full" data-testid="live-event-action-button" (click)="acknowledgeEvent()">
+            <button type="button" tumAetUiButton class="mt-2! w-full" data-testid="live-event-action-button" (click)="acknowledgeEvent()">
                 <fa-icon [icon]="faCheck" />
                 <span jhiTranslate="artemisApp.exam.events.acknowledge"></span>
             </button>
         }
         @if (event().eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
-            <button type="button" tumAetUiButton class="mt-2 w-full" data-testid="live-event-action-button" (click)="navigateToExercise()">
+            <button type="button" tumAetUiButton class="mt-2! w-full" data-testid="live-event-action-button" (click)="navigateToExercise()">
                 <span jhiTranslate="artemisApp.exam.events.navigateToExercise"></span>
             </button>
         }

@@ -1,7 +1,7 @@
 <!-- The heading stays outside the result guard below: without it the exam title bar would show the exam name and
      nothing else while the scores load, and permanently for an exam that has no results yet. -->
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0">
+    <h5 class="mb-0!">
         <span jhiTranslate="entity.action.scores"></span>
     </h5>
 </div>
@@ -48,7 +48,7 @@
                 </a>
             </div>
             <div class="mt-6 mb-4">
-                <h4 class="mb-0">
+                <h4 class="mb-0!">
                     <span jhiTranslate="artemisApp.examScores.examStatisticsTitle"></span>
                 </h4>
             </div>
@@ -372,9 +372,9 @@
                 </div>
                 <!-- Histogram -->
                 @if (hasBonus()) {
-                    <h4 class="mt-6 mb-0 text-center" jhiTranslate="artemisApp.examScores.gradesBeforeBonus"></h4>
+                    <h4 class="mt-6! mb-0! text-center" jhiTranslate="artemisApp.examScores.gradesBeforeBonus"></h4>
                 } @else {
-                    <h5 class="mt-4 mb-2 text-center text-base font-semibold" jhiTranslate="artemisApp.examScores.scoreDistributionTitle"></h5>
+                    <h5 class="mt-4! mb-2! text-center text-base font-semibold" jhiTranslate="artemisApp.examScores.scoreDistributionTitle"></h5>
                 }
                 <div class="flex justify-center">
                     <!-- The accessible name mirrors the heading above, so the two distributions on this page
@@ -391,7 +391,7 @@
                 </div>
                 <!-- Histogram with bonus -->
                 @if (hasBonus()) {
-                    <h4 class="mt-12 mb-0 text-center" jhiTranslate="artemisApp.examScores.gradesAfterBonus"></h4>
+                    <h4 class="mt-12! mb-0! text-center" jhiTranslate="artemisApp.examScores.gradesAfterBonus"></h4>
                 }
                 @if (hasBonus()) {
                     <div class="flex justify-center">
@@ -410,7 +410,7 @@
             <!-- Exercise Statistics -->
             @if (aggregatedExerciseGroupResults()) {
                 <div>
-                    <h4 class="mt-12 mb-4">
+                    <h4 class="mt-12! mb-4!">
                         <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle"></span>
                     </h4>
                     @if (course()) {
@@ -514,7 +514,7 @@
                 </div>
             }
             <!-- Student Result Table -->
-            <h4 class="mt-12 mb-4">
+            <h4 class="mt-12! mb-4!">
                 <span jhiTranslate="artemisApp.examScores.studentResultsTitle"></span>
             </h4>
             <div class="overflow-x-auto">

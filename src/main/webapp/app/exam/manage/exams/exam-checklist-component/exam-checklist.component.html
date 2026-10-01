@@ -47,7 +47,7 @@
                         <td>
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.exerciseGroups"></span>
                             <hr />
-                            <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                            <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                 <li class="rounded border border-(--border-color) px-4 py-2">
                                     <span>
                                         <jhi-checklist-check
@@ -115,7 +115,7 @@
                         <td>
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.testRun"></span>
                             <hr />
-                            <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                            <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                 @if (examChecklist()) {
                                     <li class="rounded border border-(--border-color) px-4 py-2">
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.testruns"></span>
@@ -140,7 +140,7 @@
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.register"></span>
                                 <hr />
-                                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                                <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                     <li class="rounded border border-(--border-color) px-4 py-2">
                                         <span>
                                             <jhi-checklist-check
@@ -171,7 +171,7 @@
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.generateStudentExams"></span>
                                 <hr />
-                                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                                <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                     <li class="rounded border border-(--border-color) px-4 py-2">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="allExamsGenerated()" data-testid="check-all-exams-generated" />
@@ -195,7 +195,7 @@
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart"></span>
                                 <hr />
-                                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                                <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                     @if (examChecklist()) {
                                         <li class="rounded border border-(--border-color) px-4 py-2">
                                             <jhi-checklist-check
@@ -226,7 +226,7 @@
                                 <hr />
                                 <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }} :</span>
                                 <!-- Additional hints for test exams, as several steps are automated compared to the normal exam and therefore do not need to be performed by the user -->
-                                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                                <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                     <li class="rounded border border-(--border-color) px-4 py-2">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="true" />
@@ -473,7 +473,7 @@
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.publishResults"></span>
                                 <hr />
-                                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                                <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                     <li class="rounded border border-(--border-color) px-4 py-2">
                                         <div>
                                             <div>
@@ -540,7 +540,7 @@
                                                                         tumAetUiButton
                                                                         type="button"
                                                                         id="evaluateQuizExercisesButton"
-                                                                        class="mt-1"
+                                                                        class="mt-1!"
                                                                         (click)="evaluateQuizExercises()"
                                                                         [disabled]="
                                                                             !isExamOver() ||
@@ -573,7 +573,7 @@
                                                                     <button
                                                                         tumAetUiButton
                                                                         type="button"
-                                                                        class="mt-1"
+                                                                        class="mt-1!"
                                                                         id="assessUnsubmittedExamModelingAndTextParticipationsButton"
                                                                         (click)="assessUnsubmittedExamModelingAndTextParticipations()"
                                                                         [disabled]="
@@ -611,7 +611,7 @@
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.examReview"></span>
                                 <hr />
-                                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                                <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                     @if (disabledExercises().length > 0) {
                                         <li class="rounded border border-(--border-color) px-4 py-2">
                                             <span>

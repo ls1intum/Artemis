@@ -1,5 +1,5 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0" data-testid="exercise-groups-title">
+    <h5 class="mb-0!" data-testid="exercise-groups-title">
         <span><span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span> ({{ exerciseGroupCount() }})</span>
     </h5>
 </div>
@@ -111,7 +111,7 @@
     } @empty {
         <div class="text-center py-5 text-muted-color">
             <fa-icon [icon]="faLayerGroup" size="2x" class="mb-3" aria-hidden="true" />
-            <p class="mb-2" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
+            <p class="mb-2!" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
             @if (course()?.isAtLeastEditor) {
                 <tumaet-ui-button size="small" id="create-first-group" (clicked)="openCreateGroupModal()">
                     <fa-icon [icon]="faPlus" />

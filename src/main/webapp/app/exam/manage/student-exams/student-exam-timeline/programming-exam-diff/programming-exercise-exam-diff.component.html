@@ -17,7 +17,7 @@
 />
 <tumaet-ui-dialog [(visible)]="diffModalVisible" size="full" dismissableMask>
     <ng-template #header>
-        <h3 class="m-0" jhiTranslate="artemisApp.programmingExercise.diffReport.titleForSubmissions"></h3>
+        <h3 class="my-0!" jhiTranslate="artemisApp.programmingExercise.diffReport.titleForSubmissions"></h3>
     </ng-template>
     @if (diffModalInformation()) {
         <jhi-git-diff-report [repositoryDiffInformation]="diffModalInformation()!" [diffForTemplateAndSolution]="false" />

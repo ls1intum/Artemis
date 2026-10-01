@@ -1,19 +1,21 @@
 <tumaet-ui-dialog [(visible)]="dialogVisible" [header]="'artemisApp.exam.examUsers.rooms.dialogTitle' | artemisTranslate" size="large">
     <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate class="flex flex-col gap-4" (keydown.enter)="$event.preventDefault()">
-        <p class="m-0" jhiTranslate="artemisApp.exam.examUsers.rooms.introText"></p>
+        <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.rooms.introText"></p>
         <div class="flex flex-col items-end gap-2">
             <div class="flex items-center gap-2">
                 <label for="reserveFactor" class="m-0 text-sm" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor"></label>
                 <jhi-help-icon text="artemisApp.exam.examUsers.rooms.reserveFactorTooltip" />
-                <tumaet-ui-input-number
-                    class="w-20"
-                    inputId="reserveFactor"
-                    name="reserveFactor"
-                    [min]="0"
-                    [max]="100"
-                    [ngModel]="reservePercentage()"
-                    (ngModelChange)="setReservePercentage($event)"
-                />
+                <div class="w-28">
+                    <tumaet-ui-input-number
+                        fluid
+                        inputId="reserveFactor"
+                        name="reserveFactor"
+                        [min]="0"
+                        [max]="100"
+                        [ngModel]="reservePercentage()"
+                        (ngModelChange)="setReservePercentage($event)"
+                    />
+                </div>
             </div>
             <div class="flex items-center gap-2">
                 <label for="allowNarrowLayoutsToggle" class="m-0 text-sm" jhiTranslate="artemisApp.exam.examUsers.rooms.allowNarrowLayouts"></label>
@@ -103,7 +105,7 @@
     </form>
     <ng-template #footer>
         <div class="flex w-full items-center justify-between gap-4">
-            <p class="m-0">
+            <p class="my-0!">
                 <span jhiTranslate="artemisApp.exam.examUsers.rooms.cantFindRoom"></span>
                 <a
                     id="examRoomManagementLink"

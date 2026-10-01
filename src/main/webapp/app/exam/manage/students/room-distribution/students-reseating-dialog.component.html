@@ -1,8 +1,8 @@
 <tumaet-ui-dialog [(visible)]="dialogVisible" [header]="'artemisApp.exam.examUsers.rooms.reseating.dialogTitle' | artemisTranslate" size="medium">
     <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate class="flex flex-col gap-4" (keydown.enter)="$event.preventDefault()">
-        <p class="m-0" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.introText"></p>
+        <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.introText"></p>
         <p
-            class="m-0 font-bold"
+            class="my-0! font-bold"
             jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectedStudent"
             [translateValues]="{
                 studentLogin: examUser()?.user?.login ?? '',

@@ -274,6 +274,7 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'visibleRegistrationNumber',
                 headerKey: 'artemisApp.examManagement.examStudents.table.matriculationNumber',
                 sort: true,
+                wrapHeader: true,
                 width: '6rem',
                 templateRef: this.plainTemplate(),
             },
@@ -296,11 +297,19 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'workingTime',
                 headerKey: this.isTestExam() ? 'artemisApp.studentExams.usedWorkingTime' : 'artemisApp.studentExams.workingTime',
                 sort: true,
+                wrapHeader: true,
                 width: '4rem',
                 templateRef: this.workingTimeTemplate(),
             },
-            { field: 'progress', headerKey: 'artemisApp.examManagement.examStudents.table.progress', sort: true, width: '8rem', templateRef: this.progressTemplate() },
-            { field: 'numberOfExamSessions', headerKey: 'artemisApp.examManagement.examStudents.table.sessions', sort: true, width: '4rem', templateRef: this.plainTemplate() },
+            { field: 'progress', headerKey: 'artemisApp.examManagement.examStudents.table.progress', sort: true, width: '7rem', templateRef: this.progressTemplate() },
+            {
+                field: 'numberOfExamSessions',
+                headerKey: 'artemisApp.examManagement.examStudents.table.sessions',
+                sort: true,
+                width: '4rem',
+                hideBelow: '2xl',
+                templateRef: this.plainTemplate(),
+            },
         );
 
         return cols;

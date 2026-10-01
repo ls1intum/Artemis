@@ -1,5 +1,5 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0">
+    <h5 class="mb-0!">
         {{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}
     </h5>
     <jhi-documentation-button [type]="documentationType" />
@@ -50,7 +50,7 @@
         ></p>
     }
     @if (suspiciousSessions().length !== 0) {
-        <button tumAetUiButton type="button" (click)="goToSuspiciousSessions()" class="mb-12">
+        <button tumAetUiButton type="button" (click)="goToSuspiciousSessions()" class="mb-12!">
             <span id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view"></span>
         </button>
     }

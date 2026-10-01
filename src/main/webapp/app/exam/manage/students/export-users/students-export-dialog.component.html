@@ -1,6 +1,6 @@
 <tumaet-ui-dialog [(visible)]="dialogVisible" [header]="'artemisApp.exam.examUsers.export.dialogTitle' | artemisTranslate" size="small">
     <form id="studentsExportDialogForm" name="studentsExportForm" role="form" novalidate class="flex flex-col gap-4" (keydown.enter)="$event.preventDefault()">
-        <p class="m-0" jhiTranslate="artemisApp.exam.examUsers.export.introText"></p>
+        <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.export.introText"></p>
         @if (lastExportAttemptFailed()) {
             <tumaet-ui-message severity="warn">
                 <span jhiTranslate="artemisApp.exam.examUsers.export.exportFailed"></span>
