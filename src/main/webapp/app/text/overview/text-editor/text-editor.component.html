@@ -86,20 +86,8 @@
                                     }
                                     <hr />
                                     <jhi-text-result [result]="result()" [course]="course()" />
-                                    <hr />
                                 </div>
-                                @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                                    <div id="additional-feedback" class="col-xl-8">
-                                        @for (feedback of unreferencedFeedback; track feedback.id) {
-                                            <jhi-unified-feedback
-                                                [feedback]="feedback"
-                                                [feedbackContent]="buildFeedbackTextForReview(feedback)"
-                                                [points]="feedback.credits || 0"
-                                                [scoreAccuracy]="course()?.accuracyOfScores"
-                                            />
-                                        }
-                                    </div>
-                                }
+                                <jhi-general-feedback class="col-xl-8" [feedbacks]="unreferencedFeedback" [course]="course()" />
                                 @if (isOwnerOfParticipation()) {
                                     <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
                                 }

@@ -35,10 +35,10 @@ export class ExamResultsPage {
         await expect(textExercise.locator('span', { hasText: submissionText })).toBeVisible();
     }
 
-    /** Every exercise type renders its `#additional-feedback` list through the same `jhi-unified-feedback` card. */
+    /** Every exercise type renders its general feedback in the same `jhi-general-feedback` section of `jhi-unified-feedback` cards. */
     async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
         const exercise = getExercise(this.page, exerciseId);
-        const feedbackElement = exercise.locator(`#additional-feedback`);
+        const feedbackElement = exercise.getByTestId('general-feedback');
         await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
         await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
     }

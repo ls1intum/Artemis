@@ -708,7 +708,8 @@ describe('ModelingSubmissionComponent', () => {
 
         feedback.gradingInstruction = gradingInstruction;
         textToBeDisplayed = comp.buildFeedbackTextForReview(feedback);
-        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.text);
+        // linked to a grading instruction, the text is the title, so the body is the instruction's feedback alone
+        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback);
     });
 
     it('should deactivate return true when there are unsaved changes', () => {

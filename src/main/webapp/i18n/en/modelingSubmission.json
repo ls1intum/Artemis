@@ -25,8 +25,7 @@
             "assessment": {
                 "title": "Your assessment",
                 "noAssessment": "There is no assessment available yet.",
-                "onDiagram": "Feedback on your diagram",
-                "general": "General feedback"
+                "onDiagram": "Feedback on your diagram"
             }
         }
     }

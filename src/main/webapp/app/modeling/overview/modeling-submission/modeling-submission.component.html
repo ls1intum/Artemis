@@ -120,25 +120,7 @@
                                                                     }
                                                                 </ul>
                                                             }
-                                                            @if (unreferencedFeedback?.length) {
-                                                                <h4 class="feedback-group__title">
-                                                                    <span jhiTranslate="artemisApp.modelingSubmission.assessment.general"></span>
-                                                                    <span class="feedback-group__count">{{ unreferencedFeedback?.length }}</span>
-                                                                </h4>
-                                                                <ul class="feedback-list" id="additional-feedback">
-                                                                    @for (feedback of unreferencedFeedback; track feedback.id) {
-                                                                        <li class="feedback-row">
-                                                                            <jhi-unified-feedback
-                                                                                [feedback]="feedback"
-                                                                                [points]="feedback.credits || 0"
-                                                                                [feedbackContent]="buildFeedbackTextForReview(feedback)"
-                                                                                [showReference]="false"
-                                                                                [scoreAccuracy]="course()?.accuracyOfScores"
-                                                                            />
-                                                                        </li>
-                                                                    }
-                                                                </ul>
-                                                            }
+                                                            <jhi-general-feedback [feedbacks]="unreferencedFeedback" [course]="course()" />
                                                         }
                                                         @if (result()) {
                                                             <jhi-rating

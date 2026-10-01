@@ -128,10 +128,6 @@ jhi-modeling-assessment {
     color: var(--apollon-secondary, var(--bs-secondary-color));
     font-size: 0.8125rem;
     font-weight: 600;
-
-    &:not(:first-child) {
-        margin-top: 0.875rem;
-    }
 }
 
 .feedback-group__count {

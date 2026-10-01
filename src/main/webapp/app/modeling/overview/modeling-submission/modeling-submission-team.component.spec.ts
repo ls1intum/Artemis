@@ -14,7 +14,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -153,7 +153,7 @@ describe('ModelingSubmissionComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
-                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(GeneralFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),
             ],
@@ -460,7 +460,8 @@ describe('ModelingSubmissionComponent', () => {
 
         feedback.gradingInstruction = gradingInstruction;
         textToBeDisplayed = comp.buildFeedbackTextForReview(feedback);
-        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.text);
+        // linked to a grading instruction, the text is the title, so the body is the instruction's feedback alone
+        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback);
     });
 
     it('should deactivate return true when there are unsaved changes', () => {

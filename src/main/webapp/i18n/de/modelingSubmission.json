@@ -25,8 +25,7 @@
             "assessment": {
                 "title": "Deine Bewertung",
                 "noAssessment": "Es liegt noch keine Bewertung vor.",
-                "onDiagram": "Feedback zu deinem Diagramm",
-                "general": "Allgemeines Feedback"
+                "onDiagram": "Feedback zu deinem Diagramm"
             }
         }
     }

@@ -6,6 +6,7 @@
             "assessmentNote": "Internal Note",
             "testRunAssessment": "Test Run Assessment",
             "additionalFeedback": "Additional feedback",
+            "generalFeedback": "General feedback",
             "feedback": "Feedback",
             "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
             "feedbackCommentPlaceholder": "You can enter feedback here...",

@@ -64,20 +64,7 @@
                     <br />
                     <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
                     <div class="row">
-                        @if (unreferencedFeedback(); as feedback) {
-                            @if (feedback.length) {
-                                <div id="additional-feedback" class="col-xl-8">
-                                    @for (f of feedback; track f.id) {
-                                        <jhi-unified-feedback
-                                            [feedback]="f"
-                                            [feedbackContent]="buildFeedbackTextForReview(f)"
-                                            [points]="f.credits || 0"
-                                            [scoreAccuracy]="course()?.accuracyOfScores"
-                                        />
-                                    }
-                                </div>
-                            }
-                        }
+                        <jhi-general-feedback class="col-xl-8" [feedbacks]="unreferencedFeedback()" [course]="course()" />
                     </div>
                     <div class="row">
                         @if (isOwnerOfParticipation() && result() && participation()) {
