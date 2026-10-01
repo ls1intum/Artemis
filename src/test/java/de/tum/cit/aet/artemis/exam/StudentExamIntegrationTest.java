@@ -3520,14 +3520,21 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
                 .collect(Collectors.toSet());
         assertThat(participationIdsBeforeConduction).hasSize(testRun.getExercises().size());
+        // The conduction reads only the participations of the test run side, so the ones the test run created have to be stored on that side
+        assertThat(testRun.getExercises()).allSatisfy(
+                exercise -> assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), instructor.getId(), true))
+                        .as("the test run participation of exercise %s", exercise.getId()).isPresent());
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
+        var conduction = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
 
         Set<Long> participationIdsAfterConduction = testRun.getExercises().stream()
                 .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
                 .collect(Collectors.toSet());
         assertThat(participationIdsAfterConduction).isEqualTo(participationIdsBeforeConduction);
+        assertThat(conduction.getExercises()).as("every exercise is conducted with a participation to submit to")
+                .allSatisfy(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
 
     @Test

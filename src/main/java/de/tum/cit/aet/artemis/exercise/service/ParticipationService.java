@@ -189,7 +189,8 @@ public class ParticipationService {
         if (exercise.isTestExamExercise()) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), participant.getId());
             participations.forEach(studentParticipation -> studentParticipation.setInitializationState(InitializationState.FINISHED));
-            participation = createNewParticipation(exercise, participant, false);
+            // An instructor test run of a test exam takes this branch as well, and its participations have to be stored as test run ones from the first insert.
+            participation = createNewParticipation(exercise, participant, testRun);
             // A test exam counts its attempts itself, which already keeps every one of them insertable next to the others.
             participation.setAttempt(participations.size());
             participations.add(participation);
@@ -291,14 +292,23 @@ public class ParticipationService {
      *         it is
      */
     private StartedParticipation createParticipationOrFetchConcurrentlyCreatedOne(Exercise exercise, Participant participant, boolean testRun) {
-        try {
-            return new StartedParticipation(createNewParticipation(exercise, participant, testRun), true);
-        }
-        catch (DataIntegrityViolationException concurrentStart) {
-            // Only a lost race explains this: re-read, and if nothing is there the violation was something else and has
-            // to reach the caller rather than be reported as a participation that could not be found.
-            StudentParticipation concurrentlyCreated = findOneByExerciseAndParticipantAndTestRun(exercise, participant, testRun).orElseThrow(() -> concurrentStart);
-            return new StartedParticipation(concurrentlyCreated, false);
+        for (int attempt = 1;; attempt++) {
+            try {
+                return new StartedParticipation(createNewParticipation(exercise, participant, testRun), true);
+            }
+            catch (DataIntegrityViolationException concurrentStart) {
+                // A lost race explains this: re-read what the other request created.
+                Optional<StudentParticipation> concurrentlyCreated = findOneByExerciseAndParticipantAndTestRun(exercise, participant, testRun);
+                if (concurrentlyCreated.isPresent()) {
+                    return new StartedParticipation(concurrentlyCreated.get(), false);
+                }
+                // Nothing of this side is there, so the attempt was taken, by a start of the other side that inserted between the moment this one read the attempts
+                // and its own insert. The attempt is picked once more, and the row of the other side is in the way of the same pick now. A violation that has another
+                // cause occurs again, and then has to reach the caller rather than be reported as a participation that could not be found.
+                if (attempt == 2) {
+                    throw concurrentStart;
+                }
+            }
         }
     }
 

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.AdditionalAnswers;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -53,6 +56,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -288,6 +292,47 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
                 .as("and the graded participation is still the only one of its side")
                 .hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(gradedParticipation.getId()));
         assertThat(created.getAttempt()).as("it does not collide with the attempt of the graded participation").isNotEqualTo(gradedParticipation.getAttempt());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExercise_startOfTheOtherSideThatInsertedFirstIsNotAFailure() {
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        Exercise exercise = course.getExercises().iterator().next();
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        // A graded start has inserted its participation, but has not got further than that
+        StudentParticipation gradedStart = new StudentParticipation();
+        gradedStart.setParticipant(instructor);
+        gradedStart.setExercise(exercise);
+        gradedStart.setTestRun(false);
+        gradedStart.setAttempt(0);
+        gradedStart.setInitializationState(InitializationState.UNINITIALIZED);
+        long gradedStartId = studentParticipationRepository.saveAndFlush(gradedStart).getId();
+
+        // The test run start read the attempts of the other side before that insert, so it still picks the attempt that the graded start took
+        var attemptLookups = new AtomicInteger();
+        Object repository = ReflectionTestUtils.getField(participationService, "studentParticipationRepository");
+        var delegate = AdditionalAnswers.delegatesTo(repository);
+        var repositoryThatReadBeforeTheInsert = mock(StudentParticipationRepository.class, invocation -> {
+            if (invocation.getMethod().getName().equals("findAttemptsByExerciseIdAndStudentIdAndTestRun") && attemptLookups.getAndIncrement() == 0) {
+                return Set.of();
+            }
+            return delegate.answer(invocation);
+        });
+        ReflectionTestUtils.setField(participationService, "studentParticipationRepository", repositoryThatReadBeforeTheInsert);
+        try {
+            // Its insert collides with the row of the graded start, which is not a participation of its own side. It has to pick the attempt again instead of failing.
+            ReflectionTestUtils.invokeMethod(participationService, "createParticipationOrFetchConcurrentlyCreatedOne", exercise, instructor, true);
+        }
+        finally {
+            ReflectionTestUtils.setField(participationService, "studentParticipationRepository", repository);
+        }
+
+        assertThat(attemptLookups).as("the attempt was picked a second time").hasValue(2);
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), instructor.getId(), true))
+                .as("the test run start has a participation of its own side").hasValueSatisfying(participation -> assertThat(participation.getAttempt()).isNotZero());
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), instructor.getId(), false))
+                .as("and the graded start keeps its own").hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(gradedStartId));
     }
 
     private void setUpProgrammingExerciseMocks() {
