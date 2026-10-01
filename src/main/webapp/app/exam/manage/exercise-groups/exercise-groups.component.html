@@ -54,7 +54,7 @@
                         </button>
                     </div>
                     <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
-                    <span class="font-semibold group-title">{{ exerciseGroup.title }} ({{ exerciseGroup.exercises?.length ?? 0 }})</span>
+                    <span class="font-semibold group-title" data-testid="exercise-group-title">{{ exerciseGroup.title }} ({{ exerciseGroup.exercises?.length ?? 0 }})</span>
                     <span
                         class="rounded px-2 py-1 text-sm opt-badge"
                         [jhiTranslate]="exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional'"

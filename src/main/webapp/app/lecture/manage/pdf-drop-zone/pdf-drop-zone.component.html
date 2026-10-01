@@ -1,24 +1,30 @@
 <div
-    class="pdf-drop-zone"
-    [ngClass]="{ 'drag-over': isDragOver(), disabled: disabled() }"
+    class="pdf-drop-zone flex flex-wrap items-center gap-3.5 rounded-lg px-6 py-3.5"
+    [class.pdf-drop-zone-drag-over]="isDragOver()"
+    [class.pdf-drop-zone-disabled]="disabled()"
+    data-testid="pdf-drop-zone"
     (dragover)="onDragOver($event)"
     (dragleave)="onDragLeave($event)"
     (drop)="onDrop($event)"
-    (click)="onClick()"
-    (keydown.enter)="onClick()"
-    (keydown.space)="onClick()"
-    [tabindex]="disabled() ? -1 : 0"
-    role="button"
-    [attr.aria-label]="'artemisApp.lecture.pdfUpload.dropZoneTitle' | artemisTranslate"
-    [attr.aria-disabled]="disabled()"
 >
-    <input #fileInput type="file" accept=".pdf,application/pdf" multiple class="file-input" (change)="onFileInputChange($event)" />
-    <div class="drop-zone-content">
-        <fa-icon [icon]="faCloudUploadAlt" class="upload-icon" />
-        <div class="drop-zone-text">
-            <span class="drop-zone-title" jhiTranslate="artemisApp.lecture.pdfUpload.dropZoneTitle"></span>
-            <span class="drop-zone-hint" jhiTranslate="artemisApp.lecture.pdfUpload.dropZoneHint"></span>
-        </div>
-        <fa-icon [icon]="faFilePdf" class="pdf-icon" />
+    <input #fileInput type="file" accept=".pdf,application/pdf" multiple class="hidden" tabindex="-1" aria-hidden="true" (change)="onFileInputChange($event)" />
+    <fa-icon [icon]="faCloudUploadAlt" class="pdf-drop-zone-icon text-2xl" />
+    <div class="flex min-w-0 grow flex-col gap-0.5">
+        <span class="font-medium" [jhiTranslate]="heading()"></span>
+        <span [id]="hintId" class="pdf-drop-zone-hint text-sm" jhiTranslate="artemisApp.lecture.pdfUpload.dropZoneHint"></span>
     </div>
+    <button
+        tumAetUiButton
+        type="button"
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        data-testid="pdf-drop-zone-select"
+        [attr.aria-describedby]="hintId"
+        [disabled]="disabled()"
+        (click)="onClick()"
+    >
+        <fa-icon [icon]="faFilePdf" />
+        <span jhiTranslate="artemisApp.lecture.pdfUpload.selectFiles"></span>
+    </button>
 </div>

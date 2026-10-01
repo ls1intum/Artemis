@@ -23,9 +23,9 @@ export class ExamResultsPage {
             const achievablePoints = Math.floor(exerciseResult.maxScore).toString();
             const achievedPercentage = exerciseResult.achievedScore.toString();
 
-            await expect(exerciseRow.locator('td').nth(1).getByText(achievedPoints)).toBeVisible({ timeout: 10000 });
-            await expect(exerciseRow.locator('td').nth(2).getByText(achievablePoints)).toBeVisible({ timeout: 10000 });
-            await expect(exerciseRow.locator('td').nth(3).getByText(`${achievedPercentage} %`)).toBeVisible({ timeout: 10000 });
+            await expect(exerciseRow.getByTestId('exercise-achieved-points').getByText(achievedPoints)).toBeVisible({ timeout: 10000 });
+            await expect(exerciseRow.getByTestId('exercise-max-points').getByText(achievablePoints)).toBeVisible({ timeout: 10000 });
+            await expect(exerciseRow.getByTestId('exercise-achieved-percentage').getByText(`${achievedPercentage} %`)).toBeVisible({ timeout: 10000 });
         }
     }
 

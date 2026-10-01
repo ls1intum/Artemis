@@ -90,6 +90,24 @@ export const TimeOnlyInvalid: Story = {
     },
 };
 
+export const InlineTime: Story = {
+    args: {
+        ariaLabel: 'Session start',
+        labelName: 'Session start',
+        timeOnly: true,
+        inline: true,
+    },
+    play: async ({ canvas, userEvent }) => {
+        // No field to open: the steppers are the control, shown in place.
+        await expect(canvas.queryByRole('combobox')).toBeNull();
+        const hour = canvas.getByRole('textbox', { name: 'Hour' });
+        await expect(hour).toHaveValue('08');
+
+        await userEvent.click(canvas.getByRole('button', { name: 'Increment hour' }));
+        await expect(hour).toHaveValue('09');
+    },
+};
+
 export const Invalid: Story = {
     args: {
         invalid: true,

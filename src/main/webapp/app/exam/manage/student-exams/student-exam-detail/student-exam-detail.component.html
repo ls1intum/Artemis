@@ -160,7 +160,7 @@
             <h5><span jhiTranslate="artemisApp.studentExams.summary"></span></h5>
             <div class="d-flex flex-row">
                 @if (course()?.isAtLeastInstructor) {
-                    <a class="btn btn-primary summery ms-4" [routerLink]="'./summary'">
+                    <a class="btn btn-primary summery ms-4" data-testid="student-exam-summary-link" [routerLink]="'./summary'">
                         <span jhiTranslate="artemisApp.exam.summary"></span>
                     </a>
                     <div ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam()?.submitted!">
@@ -203,14 +203,14 @@
                         </thead>
                         <tbody>
                             @for (session of studentExam()!.examSessions; track session) {
-                                <tr>
+                                <tr data-testid="exam-session-row">
                                     <td>{{ session.id }}</td>
-                                    <td>{{ session.sessionToken }}</td>
-                                    <td>{{ session.userAgent }}</td>
+                                    <td data-testid="exam-session-token">{{ session.sessionToken }}</td>
+                                    <td data-testid="exam-session-user-agent">{{ session.userAgent }}</td>
                                     <td>{{ session.browserFingerprintHash }}</td>
                                     <td>{{ session.instanceId }}</td>
-                                    <td>{{ session.ipAddress }}</td>
-                                    <td>{{ session.createdDate | artemisDate }}</td>
+                                    <td data-testid="exam-session-ip-address">{{ session.ipAddress }}</td>
+                                    <td data-testid="exam-session-created-date">{{ session.createdDate | artemisDate }}</td>
                                 </tr>
                             }
                         </tbody>

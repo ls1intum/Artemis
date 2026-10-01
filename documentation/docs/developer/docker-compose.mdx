@@ -353,7 +353,7 @@ services:
       - "22:22"
     environment:
       - spring.profiles.active=${PROFILES}
-      - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-db:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-db:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
     networks:
       - artemis-net
     labels:
