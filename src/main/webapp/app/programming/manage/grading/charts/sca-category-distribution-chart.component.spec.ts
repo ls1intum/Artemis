@@ -162,13 +162,13 @@ describe('SCA category distribution chart', () => {
             programmingExercerise.course = { id: 7 };
             programmingExercerise.id = 10;
             fixture.componentRef.setInput('exercise', programmingExercerise);
-            const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'scores'];
-            // a click that carries no penalty segment navigates to the scores page instead of filtering
+            const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'participations'];
+            // a click that carries no penalty segment navigates to the results view instead of filtering
             event = { seriesIndex: 0, index: 0 };
 
             component.onSelect(event);
 
-            expect(routingStub).toHaveBeenCalledWith(expectedUrl);
+            expect(routingStub).toHaveBeenCalledWith(expectedUrl, { queryParams: { view: 'results' } });
         });
 
         it('should emit the correct test case id', () => {

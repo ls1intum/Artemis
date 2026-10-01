@@ -73,7 +73,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
      * @param event identifies the clicked bar
      */
     selectChartBar(event: TumAetUiChartSelectEvent): void {
-        const route = [`/course-management/${this.courseId()}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
-        this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: event.index } });
+        const route = [`/course-management/${this.courseId()}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`];
+        this.navigationService.routeInNewTab(route, { queryParams: { view: 'results', scoreRangeFilter: event.index } });
     }
 }

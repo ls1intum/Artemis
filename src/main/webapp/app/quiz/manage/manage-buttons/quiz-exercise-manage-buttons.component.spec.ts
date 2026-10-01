@@ -176,7 +176,6 @@ describe('QuizExercise Management Buttons Component', () => {
     it('should have icons defined', () => {
         expect(comp.faEye).toBeDefined();
         expect(comp.faSignal).toBeDefined();
-        expect(comp.faTable).toBeDefined();
         expect(comp.faFileExport).toBeDefined();
         expect(comp.faWrench).toBeDefined();
         expect(comp.faTrash).toBeDefined();

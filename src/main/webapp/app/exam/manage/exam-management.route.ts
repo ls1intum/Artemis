@@ -4,6 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { scoresRedirect } from 'app/exercise/participation/participation.route';
 
 import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/services/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
@@ -860,12 +861,7 @@ export const examManagementRoutes: Routes = [
             ...exerciseTypes.map((exerciseType) => {
                 return {
                     path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/scores',
-                    loadComponent: () => import('app/exercise/exercise-scores/exercise-scores.component').then((m) => m.ExerciseScoresComponent),
-                    data: {
-                        authorities: IS_AT_LEAST_TUTOR,
-                        pageTitle: 'artemisApp.instructorDashboard.exerciseDashboard',
-                    },
-                    canActivate: [UserRouteAccessService],
+                    redirectTo: scoresRedirect(':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations'),
                 };
             }),
             ...exerciseTypes.map((exerciseType) => {

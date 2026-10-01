@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -123,7 +123,7 @@ export class ExerciseActionsComponent {
     });
 
     /**
-     * Regular actions in original display order: Teams → Participations → Scores → type-specific → Create Variant
+     * Regular actions in original display order: Teams → Participations → type-specific → Create Variant
      * with AI → Edit → Delete.
      */
     readonly mainActions = computed<ActionItem[]>(() => {
@@ -149,14 +149,6 @@ export class ExerciseActionsComponent {
             severity: 'primary',
             kind: 'link',
             link: ['/course-management', cid, seg, ex.id!, 'participations'],
-        });
-        items.push({
-            id: 'scores',
-            labelKey: 'entity.action.scores',
-            icon: faTable,
-            severity: 'info',
-            kind: 'link',
-            link: ['/course-management', cid, seg, ex.id!, 'scores'],
         });
         if (ex.type === ExerciseType.QUIZ) {
             const q = ex as QuizExercise;

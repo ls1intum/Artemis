@@ -31,14 +31,14 @@ have extra conditions that are explained in their section.
 | [Archive a course](#archive-a-course)                                                   | Instructor                       | Course settings page                                      | ZIP with every exercise and student submission        |
 | [Archive an exam](#archive-an-exam)                                                     | Instructor                       | Exam checklist                                            | ZIP with every exam exercise and student submission   |
 | [Export programming exercise material](#export-programming-exercise-material)            | Instructor                       | Exercise detail page                                      | ZIP that can be imported into another course          |
-| [Export student repositories in bulk](#export-student-repositories-in-bulk)               | Tutor (anonymized), Instructor   | Scores page, or the course exercises overview             | ZIP with one entry per participation                  |
+| [Export student repositories in bulk](#export-student-repositories-in-bulk)               | Tutor (anonymized), Instructor   | Participations page, or the course exercises overview     | ZIP with one entry per participation                  |
 | [Download a template, solution or test repository](#download-a-template-solution-or-test-repository) | Tutor                | Exercise detail page                                      | ZIP including the Git history                         |
 | [Download an auxiliary repository](#download-an-auxiliary-repository)                     | Tutor                            | Exercise detail page                                      | ZIP including the Git history                         |
-| [Download a single student repository](#download-a-single-student-repository)             | Owner of the participation, otherwise Tutor | Scores page, assessment view, exercise page    | ZIP of the code without the Git history               |
+| [Download a single student repository](#download-a-single-student-repository)             | Owner of the participation, otherwise Tutor | Participations page, assessment view, exercise page | ZIP of the code without the Git history               |
 | [Download the example solution](#download-the-example-solution)                           | Student after publication, otherwise Tutor | Exercise page                                  | ZIP of the code without the Git history               |
-| [Export exercise submissions](#export-exercise-submissions)                               | Instructor                       | Scores page                                               | ZIP of text, modeling or uploaded files               |
-| [Export exercise results](#export-exercise-results)                                       | Instructor                       | Scores page                                               | CSV                                                   |
-| [Export participant names](#export-participant-names)                                     | Instructor                       | Scores page                                               | CSV of the participants                               |
+| [Export exercise submissions](#export-exercise-submissions)                               | Instructor                       | Participations page                                       | ZIP of text, modeling or uploaded files               |
+| [Export exercise results](#export-exercise-results)                                       | Instructor                       | Participations page                                       | CSV                                                   |
+| [Export participant names](#export-participant-names)                                     | Instructor                       | Participations page                                       | CSV of the participants                               |
 | [Export course scores](#export-course-scores)                                             | Instructor                       | Course management, Scores page                            | Excel or CSV                                          |
 | [Export exam scores](#export-exam-scores)                                                 | Instructor                       | Exam scores page                                          | Excel or CSV                                          |
 | [Export the exam student list](#export-the-exam-student-list)                             | Instructor                       | Exam students page                                        | CSV                                                   |
@@ -121,7 +121,7 @@ the exercise import reads, so it is the way to move an exercise to another cours
 
 Exports the repositories of many participations at once, for graded and practice participations alike.
 
-Open the **Scores** page of the exercise, click **Export**, and choose **Download Repos**. The same action is
+Open the **Participations** page of the exercise, click **Export**, and choose **Download Repos**. The same action is
 available on the course exercises overview, where it exports the selected programming exercises together.
 
 The **Export Repositories** dialog takes either a comma-separated list of logins or team short names, or
@@ -166,7 +166,7 @@ if the exercise defines any.
 directory, so it contains the submitted code but no history.
 
 Students see this button on their own exercise page and can only download their own participation. Tutors and
-instructors can download any participation from the scores page, the participations page, or the assessment view.
+instructors can download any participation from the participations page or the assessment view.
 
 ### Download the example solution
 
@@ -177,10 +177,10 @@ configured to release the tests together with the solution.
 
 ## Submissions, results and scores
 
-The exercise **Scores** page collects the per-exercise exports behind one **Export** button. Which entries the
+The exercise **Participations** page collects the per-exercise exports behind one **Export** button. Which entries the
 resulting **Export Options** list offers depends on the exercise type and on your role.
 
-<Image src={scoresExportOptions} alt="Export Options list on the exercise scores page" size={ImageSize.large} caption="The export options of a text exercise" />
+<Image src={scoresExportOptions} alt="Export Options list on the exercise participations page" size={ImageSize.large} caption="The export options of a text exercise" />
 
 ### Export exercise submissions
 

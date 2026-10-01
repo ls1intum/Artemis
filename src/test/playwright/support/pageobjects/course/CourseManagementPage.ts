@@ -289,8 +289,8 @@ export class CourseManagementPage {
 
     async openSubmissionsForExerciseAndCourse(courseID: number, exerciseID: number) {
         await this.openExercisesOfCourse(courseID);
-        await this.page.click(`[href="/course-management/${courseID}/modeling-exercises/${exerciseID}/scores"]`);
-        await this.page.waitForURL('**/scores');
+        await this.page.click(`[href="/course-management/${courseID}/modeling-exercises/${exerciseID}/participations"]`);
+        await this.page.waitForURL('**/participations');
     }
 
     async checkIfStudentSubmissionExists(studentName: string) {

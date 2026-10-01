@@ -50,7 +50,7 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
         await login(tutor);
         for (const view of [
             { route: 'participations', endpoint: 'page', component: 'jhi-participation' },
-            { route: 'scores', endpoint: 'scores', component: 'jhi-exercise-scores' },
+            { route: 'participations?view=results', endpoint: 'page', component: 'jhi-participation' },
         ]) {
             const [response] = await Promise.all([
                 page.waitForResponse(
@@ -164,18 +164,18 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             await expect(modal.locator('jhi-result').first()).toContainText(`${percentage}%`, { timeout: 15000 });
         });
 
-        test('Instructor sees the assessed result in the exercise scores table', async ({ login, page }) => {
+        test('Instructor sees the assessed result in the results view', async ({ login, page }) => {
             test.slow();
-            // The instructor scores table renders one jhi-result per participation. Wait for the assessment due date
+            // The results view renders one jhi-result per participation. Wait for the assessment due date
             // so the score is released, then verify the graded percentage renders for the (only) participant.
             const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {
                 await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
             }
             const percentage = (tutorFeedbackPoints + tutorTextFeedbackPoints) * 10;
-            await login(instructor, `/course-management/${course.id}/text-exercises/${exercise.id}/scores`);
+            await login(instructor, `/course-management/${course.id}/text-exercises/${exercise.id}/participations?view=results`);
             // Only studentOne participated, so the single data row's jhi-result must show the graded score.
-            await expect(page.locator('jhi-exercise-scores jhi-result').first()).toContainText(`${percentage}%`, { timeout: 20000 });
+            await expect(page.locator('jhi-participation jhi-result').first()).toContainText(`${percentage}%`, { timeout: 20000 });
         });
 
         test('Instructor sees the assessed result in the participation submissions view', async ({ login, page }) => {
@@ -185,9 +185,9 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
                 await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
             }
             const percentage = (tutorFeedbackPoints + tutorTextFeedbackPoints) * 10;
-            // Reach the per-participation submissions view via the scores table's submissions-count link, then verify
-            // the result renders through jhi-result there.
-            await login(instructor, `/course-management/${course.id}/text-exercises/${exercise.id}/scores`);
+            // Reach the per-participation submissions view via the participation table's submissions-count link, then
+            // verify the result renders through jhi-result there.
+            await login(instructor, `/course-management/${course.id}/text-exercises/${exercise.id}/participations`);
             await page.locator('a[href*="/participations/"][href*="/submissions"]').first().click();
             await page.waitForURL('**/participations/*/submissions');
             await expect(page.locator('jhi-participation-submission jhi-result').first()).toContainText(`${percentage}%`, { timeout: 20000 });

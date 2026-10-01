@@ -366,14 +366,6 @@ export const courseManagementRoutes: Routes = [
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/exercise/exercise-scores/exercise-scores.route').then((m) => m.routes),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
-                    {
-                        path: '',
                         loadChildren: () => import('app/exercise/participation/participation.route').then((m) => m.routes),
                         // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
                         data: {

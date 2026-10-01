@@ -118,7 +118,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
      */
     cancelAssessment(result: Result, participation: Participation) {
         // Take the submission from the participation, not from the result. The scores overview builds its rows from
-        // ParticipationScoreDTO (ExerciseScoresComponent#toParticipation), and those results carry no back reference to
+        // ParticipationManagementDTO (ParticipationComponent#toParticipation), and those results carry no back reference to
         // their submission, so `result.submission?.id` was always undefined here and the guard below silently swallowed
         // every click: no request ever left the client and the lock was never released (#13396).
         const submissionId = participation.submissions?.[0]?.id;

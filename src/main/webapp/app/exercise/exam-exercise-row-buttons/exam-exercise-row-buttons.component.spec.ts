@@ -151,12 +151,12 @@ describe('ExamExerciseRowButtonsComponent', () => {
             return component.mainActions().map((action) => action.id);
         };
 
-        it('offers participations, scores and delete only to instructors', () => {
+        it('offers participations and delete only to instructors', () => {
             const asInstructor = idsFor(textExercise, { instructor: true, editor: true });
-            expect(asInstructor).toEqual(expect.arrayContaining(['participations', 'scores', 'delete']));
+            expect(asInstructor).toEqual(expect.arrayContaining(['participations', 'delete']));
 
             const asEditor = idsFor(textExercise, { instructor: false, editor: true });
-            expect(asEditor).not.toEqual(expect.arrayContaining(['participations', 'scores', 'delete']));
+            expect(asEditor).not.toEqual(expect.arrayContaining(['participations', 'delete']));
         });
 
         it('adds grading and edit-in-editor only for programming exercises with editor rights', () => {

@@ -5,6 +5,15 @@
                 "title": "Teilnahmen",
                 "createLabel": "Teilnahme erstellen"
             },
+            "view": {
+                "participation": "Teilnahme",
+                "results": "Ergebnisse",
+                "all": "Alle Spalten"
+            },
+            "filterGroup": {
+                "submissions": "Abgaben",
+                "results": "Ergebnisse"
+            },
             "created": "Teilnahme erstellt mit ID {{ param }}",
             "updated": "Teilnahme von {{ param }} aktualisiert",
             "deleted": "Teilnahme von {{ param }} gelöscht",

@@ -236,7 +236,7 @@ describe('Participation Service', () => {
 
         it('should GET paginated participations and convert date fields', () => {
             const isoDate = '2024-06-01T10:00:00Z';
-            const serverDto = { participationId: 1, initializationDate: isoDate, individualDueDate: isoDate };
+            const serverDto = { participationId: 1, initializationDate: isoDate, individualDueDate: isoDate, completionDate: isoDate };
 
             let result: any;
             service.searchParticipations(42, baseSearch).subscribe((r) => (result = r));
@@ -248,6 +248,7 @@ describe('Participation Service', () => {
             expect(result.totalElements).toBe(1);
             expect(dayjs.isDayjs(result.content[0].initializationDate)).toBe(true);
             expect(dayjs.isDayjs(result.content[0].individualDueDate)).toBe(true);
+            expect(dayjs.isDayjs(result.content[0].completionDate)).toBe(true);
         });
 
         it('should include filterProp in params when provided', () => {
@@ -258,54 +259,23 @@ describe('Participation Service', () => {
             req.flush([], { headers: { 'X-Total-Count': '0' } });
         });
 
-        it('should not include filterProp in params when absent', () => {
+        it('should not include filterProp or scoreRange params when absent', () => {
             service.searchParticipations(1, baseSearch).subscribe();
 
             const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
             expect(req.request.params.has('filterProp')).toBe(false);
+            expect(req.request.params.has('scoreRangeLower')).toBe(false);
+            expect(req.request.params.has('scoreRangeUpper')).toBe(false);
             req.flush([], { headers: { 'X-Total-Count': '0' } });
         });
-    });
 
-    describe('searchParticipationScores', () => {
-        const baseSearch = {
-            page: 0,
-            pageSize: 50,
-            sortingOrder: SortingOrder.ASCENDING,
-            sortedColumn: 'score',
-            searchTerm: '',
-        };
+        it('should include scoreRange params when provided', () => {
+            service.searchParticipations(1, { ...baseSearch, filterProp: 'Successful', scoreRangeLower: 60, scoreRangeUpper: 80 }).subscribe();
 
-        it('should GET paginated scores and read X-Total-Count header', () => {
-            const serverDto = { participationId: 1, score: 80, participantName: 'Alice', participantIdentifier: 'alice', successful: false, testRun: false };
-
-            let result: any;
-            service.searchParticipationScores(7, baseSearch).subscribe((r) => (result = r));
-
-            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/7/participations/scores');
-            expect(req.request.method).toBe('GET');
-            req.flush([serverDto], { headers: { 'X-Total-Count': '5' } });
-
-            expect(result.totalElements).toBe(5);
-            expect(result.content[0].score).toBe(80);
-        });
-
-        it('should include filterProp and scoreRange params when provided', () => {
-            service.searchParticipationScores(1, { ...baseSearch, filterProp: 'Successful', scoreRangeLower: 60, scoreRangeUpper: 80 }).subscribe();
-
-            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/scores');
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
             expect(req.request.params.get('filterProp')).toBe('Successful');
             expect(req.request.params.get('scoreRangeLower')).toBe('60');
             expect(req.request.params.get('scoreRangeUpper')).toBe('80');
-            req.flush([], { headers: { 'X-Total-Count': '0' } });
-        });
-
-        it('should not include scoreRange params when undefined', () => {
-            service.searchParticipationScores(1, baseSearch).subscribe();
-
-            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/scores');
-            expect(req.request.params.has('scoreRangeLower')).toBe(false);
-            expect(req.request.params.has('scoreRangeUpper')).toBe(false);
             req.flush([], { headers: { 'X-Total-Count': '0' } });
         });
     });

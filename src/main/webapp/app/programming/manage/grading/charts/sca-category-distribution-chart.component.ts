@@ -167,7 +167,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
 
     /**
      * Handles the click on a specific category in a specific line of the chart
-     * If the user clicks a category within the penalty bar, the user is delegated to the scores page of the exercise
+     * If the user clicks a category within the penalty bar, the user is delegated to the results view of the participation page
      * If the user clicks a category within one of the other two bars, the corresponding table is filtered in order to show this category
      * @param event the event delegated by ngx-charts after the user clicked a part of the chart
      */
@@ -175,7 +175,9 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
         const meta = event.meta as ChartSeriesEntry | undefined;
         if (!meta?.['isPenalty']) {
             const exercise = this.exercise();
-            this.navigationUtilsService.routeInNewTab(['course-management', exercise.course!.id, 'programming-exercises', exercise.id, 'scores']);
+            this.navigationUtilsService.routeInNewTab(['course-management', exercise.course!.id, 'programming-exercises', exercise.id, 'participations'], {
+                queryParams: { view: 'results' },
+            });
         } else {
             this.tableFiltered = true;
             this.scaCategoryFilter.emit(meta['id'] as number);

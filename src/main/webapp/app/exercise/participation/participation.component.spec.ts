@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -28,6 +28,16 @@ import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { DialogService } from 'primeng/dynamicdialog';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ResultService } from 'app/exercise/result/result.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { Range } from 'app/foundation/util/utils';
+import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -35,6 +45,10 @@ describe('ParticipationComponent', () => {
     let participationService: ParticipationService;
     let exerciseService: ExerciseService;
     let alertService: AlertService;
+    let resultService: ResultService;
+    let profileService: ProfileService;
+    let router: Router;
+    let queryParams: Params;
 
     const course: Course = { id: 10, presentationScore: 1 };
 
@@ -55,9 +69,20 @@ describe('ParticipationComponent', () => {
         participantIdentifier: 'alice',
     };
 
-    const route = { params: of({ exerciseId: '1' } as Params) } as ActivatedRoute;
+    const route = {
+        params: of({ courseId: '10', exerciseId: '1' } as Params),
+        snapshot: {
+            get queryParamMap() {
+                return convertToParamMap(queryParams);
+            },
+        },
+    } as unknown as ActivatedRoute;
+
+    const filters = () => component.filterGroups().flatMap((group) => group.items);
+    const headerKeys = () => component.columns().map((column) => column.headerKey);
 
     beforeEach(() => {
+        queryParams = {};
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -71,6 +96,8 @@ describe('ParticipationComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: ResultService, useClass: MockResultService },
+                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -82,6 +109,10 @@ describe('ParticipationComponent', () => {
                 participationService = TestBed.inject(ParticipationService);
                 exerciseService = TestBed.inject(ExerciseService);
                 alertService = TestBed.inject(AlertService);
+                resultService = TestBed.inject(ResultService);
+                profileService = TestBed.inject(ProfileService);
+                router = TestBed.inject(Router);
+                vi.spyOn(router, 'navigate').mockResolvedValue(true);
                 component.exercise.set(exercise);
             });
     });
@@ -98,6 +129,65 @@ describe('ParticipationComponent', () => {
 
             expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(1);
             expect(component.exercise()).toEqual(exercise);
+            expect(component.course()?.id).toBe(10);
+            expect(component.view()).toBe('participation');
+        });
+
+        it('should open the view and score range named in the query parameters', () => {
+            queryParams = { view: 'results', scoreRangeFilter: '3' };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+            component.ngOnInit();
+
+            expect(component.view()).toBe('results');
+            expect(component.rangeFilter()).toEqual(new Range(30, 40));
+        });
+
+        it('should ignore an unknown view', () => {
+            queryParams = { view: 'scores' };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+            component.ngOnInit();
+
+            expect(component.view()).toBe('participation');
+        });
+    });
+
+    describe('Views', () => {
+        it('should show the participation state columns only in the participation and all views', () => {
+            component.exercise.set({ ...exercise, isAtLeastInstructor: true, dueDate: dayjs() });
+
+            expect(headerKeys()).toEqual(
+                expect.arrayContaining(['artemisApp.participation.initializationState', 'artemisApp.participation.individualDueDate', 'artemisApp.exercise.submissionCount']),
+            );
+            expect(headerKeys()).not.toContain('artemisApp.exercise.lastResult');
+
+            component.view.set('results');
+            expect(headerKeys()).toEqual(expect.arrayContaining(['artemisApp.exercise.completionDate', 'artemisApp.exercise.lastResult', 'artemisApp.exercise.duration']));
+            expect(headerKeys()).not.toContain('artemisApp.participation.initializationState');
+            expect(headerKeys()).not.toContain('artemisApp.participation.individualDueDate');
+
+            component.view.set('all');
+            expect(headerKeys()).toEqual(expect.arrayContaining(['artemisApp.participation.initializationState', 'artemisApp.exercise.lastResult']));
+        });
+
+        it('should show the assessment columns only when the exercise is assessed manually', () => {
+            component.view.set('results');
+            component.exercise.set({ ...exercise, assessmentType: AssessmentType.AUTOMATIC });
+            expect(headerKeys()).not.toContain('artemisApp.exercise.type');
+            expect(component.columns().some((column) => column.headerTooltip === 'artemisApp.assessment.assessmentNote')).toBe(false);
+
+            component.newManualResultAllowed.set(true);
+            component.exercise.set({ ...exercise, assessmentType: AssessmentType.SEMI_AUTOMATIC });
+            expect(headerKeys()).toContain('artemisApp.exercise.type');
+            expect(component.columns().some((column) => column.headerTooltip === 'artemisApp.assessment.assessmentNote')).toBe(true);
+        });
+
+        it('should record the selected view in the URL', () => {
+            component.setView('results');
+
+            expect(component.view()).toBe('results');
+            expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { view: 'results' }, queryParamsHandling: 'merge', replaceUrl: true }));
         });
     });
 
@@ -198,21 +288,75 @@ describe('ParticipationComponent', () => {
         });
     });
 
-    describe('Relevant filters', () => {
-        it('should not include FAILED and NO_PRACTICE filters for non-programming exercises', () => {
+    describe('Filters', () => {
+        it('should not include the build filters for non-programming exercises', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
 
-            expect(component.relevantFilters()).not.toContain(FilterProp.FAILED);
-            expect(component.relevantFilters()).not.toContain(FilterProp.NO_PRACTICE);
-            expect(component.relevantFilters()).toContain(FilterProp.ALL);
-            expect(component.relevantFilters()).toContain(FilterProp.NO_SUBMISSIONS);
+            expect(filters()).not.toContain(FilterProp.FAILED);
+            expect(filters()).not.toContain(FilterProp.BUILD_FAILED);
+            expect(filters()).not.toContain(FilterProp.NO_PRACTICE);
+            expect(filters()).toContain(FilterProp.NO_SUBMISSIONS);
         });
 
-        it('should include FAILED and NO_PRACTICE filters for programming exercises', () => {
+        it('should include the build filters for programming exercises', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
 
-            expect(component.relevantFilters()).toContain(FilterProp.FAILED);
-            expect(component.relevantFilters()).toContain(FilterProp.NO_PRACTICE);
+            expect(filters()).toContain(FilterProp.FAILED);
+            expect(filters()).toContain(FilterProp.BUILD_FAILED);
+            expect(filters()).toContain(FilterProp.NO_PRACTICE);
+        });
+
+        it.each([
+            [FilterProp.SUCCESSFUL, { type: ExerciseType.PROGRAMMING } as Exercise, false, true],
+            [FilterProp.UNSUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
+            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
+            [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
+        ])('should offer the result filter %s only where it applies', (filter: FilterProp, ex: Partial<Exercise>, newManualResultsAllowed: boolean, expected: boolean) => {
+            component.exercise.set(ex as Exercise);
+            component.newManualResultAllowed.set(newManualResultsAllowed);
+
+            expect(filters().includes(filter)).toBe(expected);
+        });
+
+        it('should pass the score range to the search', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.rangeFilter.set(new Range(60, 70));
+
+            component.onLazyLoad({ first: 0, rows: 50 });
+
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ scoreRangeLower: 60, scoreRangeUpper: 70 }));
+        });
+
+        it('should reset filter options, drop the range from the URL and reload', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            component.rangeFilter.set(new Range(0, 10));
+            component.activeFilter.set(FilterProp.SUCCESSFUL);
+            searchSpy.mockClear();
+
+            component.resetFilterOptions();
+
+            expect(component.rangeFilter()).toBeUndefined();
+            expect(component.activeFilter()).toBe(FilterProp.ALL);
+            expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { scoreRangeFilter: undefined } }));
+            expect(searchSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should refresh the current page', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchSpy.mockClear();
+
+            component.refresh();
+
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(component.participations()).toEqual([sampleDto]);
         });
     });
 
@@ -225,23 +369,6 @@ describe('ParticipationComponent', () => {
             component.exercise.set({ ...exercise, exerciseGroup: { id: 5, exam: { id: 2 } } });
 
             expect(component.getParticipationLink(42)).toEqual(['42']);
-        });
-
-        it('should compute scoresRoute for non-exam exercise', () => {
-            component.exercise.set({ ...exercise, type: ExerciseType.TEXT, id: 1, course: { id: 10 } });
-
-            expect(component.scoresRoute()).toEqual(['/course-management', 10, 'text-exercises', 1, 'scores']);
-        });
-
-        it('should compute scoresRoute for exam exercise', () => {
-            component.exercise.set({
-                ...exercise,
-                type: ExerciseType.TEXT,
-                id: 1,
-                exerciseGroup: { id: 5, exam: { id: 2, course: { id: 10 } } },
-            });
-
-            expect(component.scoresRoute()).toEqual(['/course-management', 10, 'exams', 2, 'exercise-groups', 5, 'text-exercises', 1, 'scores']);
         });
     });
 
@@ -620,6 +747,125 @@ describe('ParticipationComponent', () => {
             component.removePresentation(sampleDto);
 
             expect(updateStub).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Exports', () => {
+        it.each([false, true])('should offer exports only to instructors (instructor: %s)', async (isAtLeastInstructor) => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...exercise, isAtLeastInstructor } })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+            view.detectChanges();
+            const container = document.createElement('div');
+            view.rootNodes.forEach((node) => container.append(node));
+
+            expect(!!container.querySelector('button[jhi-exercise-action-button]')).toBe(isAtLeastInstructor);
+            view.destroy();
+        });
+
+        it('should export names correctly for individual students', () => {
+            const exportDto: ParticipationNameExportDTO = { participantName: 'participantName', participantIdentifier: 'login1' };
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([exportDto]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
+
+            component.exportNames();
+
+            expect(resultServiceStub).toHaveBeenCalledExactlyOnceWith(['participantName'], 'results-names.csv');
+        });
+
+        it('should export names with team students format', () => {
+            const exportDto: ParticipationNameExportDTO = { participantName: 'Team A', participantIdentifier: 'team-a', teamStudentNames: ['Alice', 'Bob'] };
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([exportDto]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
+
+            component.exportNames();
+
+            const rows: string[] = resultServiceStub.mock.calls[0][0];
+            expect(rows[0]).toBe('Team Name,Team Short Name,Students');
+            expect(rows[1]).toContain('Team A');
+            expect(rows[1]).toContain('Alice');
+        });
+
+        it('should not export when participant list is empty', () => {
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
+
+            component.exportNames();
+
+            expect(resultServiceStub).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('getBuildPlanUrl', () => {
+        const programmingExercise = { ...exercise, type: ExerciseType.PROGRAMMING, projectKey: 'key' } as ProgrammingExercise;
+
+        it('should construct build plan URL from template', () => {
+            component.exercise.set(programmingExercise);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'https://example.com/job/{projectKey}/job/{buildPlanId}' } as ProfileInfo);
+
+            expect(component.getBuildPlanUrl({ ...sampleDto, buildPlanId: '1' })).toBe('https://example.com/job/key/job/1');
+        });
+
+        it('should return undefined when no template available', () => {
+            component.exercise.set(programmingExercise);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({} as ProfileInfo);
+
+            expect(component.getBuildPlanUrl({ ...sampleDto, buildPlanId: '1' })).toBeUndefined();
+        });
+    });
+
+    describe('Results', () => {
+        it('should return undefined when dto has no resultId', () => {
+            expect(component.toResult(sampleDto)).toBeUndefined();
+        });
+
+        it('should build a Result from dto fields', () => {
+            const result = component.toResult({ ...sampleDto, resultId: 42, score: 75, successful: true, assessmentType: AssessmentType.AUTOMATIC });
+
+            expect(result).toMatchObject({ id: 42, score: 75, successful: true, assessmentType: AssessmentType.AUTOMATIC });
+        });
+
+        it('should add one result per correction round besides the newest one', () => {
+            const participation = component.toParticipation({
+                ...sampleDto,
+                submissionId: 20,
+                resultId: 31,
+                correctionRoundResults: [
+                    { resultId: 30, correctionRound: 0, assessmentType: AssessmentType.MANUAL },
+                    { resultId: 31, correctionRound: 1, assessmentType: AssessmentType.MANUAL },
+                ],
+            });
+
+            const results = participation.submissions![0].results!;
+            expect(results.map((result) => result.id)).toEqual([31, 30]);
+            expect(results[0].correctionRound).toBe(1);
+        });
+
+        it('should build a programming participation with a programming submission', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+
+            const participation = component.toParticipation({ ...sampleDto, participationId: 10, submissionId: 20, resultId: 30, buildFailed: true });
+
+            expect(participation.id).toBe(10);
+            expect(participation.type).toBe(ParticipationType.PROGRAMMING);
+            expect(participation.submissions![0].id).toBe(20);
+            expect(participation.submissions![0].results![0].id).toBe(30);
+            expect((participation.submissions![0] as any).submissionExerciseType).toBe('programming');
+            expect((participation.submissions![0] as any).buildFailed).toBe(true);
+        });
+
+        it('should build a plain submission without programming fields for a non-programming exercise', () => {
+            const participation = component.toParticipation({ ...sampleDto, submissionId: 20, resultId: 30, buildFailed: true });
+
+            expect(participation.type).toBe(ParticipationType.STUDENT);
+            expect(participation.submissions![0].submissionExerciseType).toBeUndefined();
+            expect('buildFailed' in participation.submissions![0]).toBe(false);
+        });
+
+        it('should build a participation without submissions when there is none', () => {
+            expect(component.toParticipation(sampleDto).submissions).toHaveLength(0);
         });
     });
 });

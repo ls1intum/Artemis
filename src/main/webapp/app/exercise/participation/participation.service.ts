@@ -3,9 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
-import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -116,6 +115,12 @@ export class ParticipationService {
         if (search.filterProp) {
             params['filterProp'] = search.filterProp;
         }
+        if (search.scoreRangeLower !== undefined) {
+            params['scoreRangeLower'] = search.scoreRangeLower;
+        }
+        if (search.scoreRangeUpper !== undefined) {
+            params['scoreRangeUpper'] = search.scoreRangeUpper;
+        }
         return this.http
             .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page`, {
                 params,
@@ -127,39 +132,6 @@ export class ParticipationService {
                     content.forEach((dto) => {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
-                    });
-                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
-                }),
-            );
-    }
-
-    searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
-        const params: Record<string, string | number> = {
-            page: search.page,
-            pageSize: search.pageSize,
-            sortingOrder: search.sortingOrder,
-            sortedColumn: search.sortedColumn,
-            searchTerm: search.searchTerm,
-        };
-        if (search.filterProp) {
-            params['filterProp'] = search.filterProp;
-        }
-        if (search.scoreRangeLower !== undefined) {
-            params['scoreRangeLower'] = search.scoreRangeLower;
-        }
-        if (search.scoreRangeUpper !== undefined) {
-            params['scoreRangeUpper'] = search.scoreRangeUpper;
-        }
-        return this.http
-            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/participations/scores`, {
-                params,
-                observe: 'response',
-            })
-            .pipe(
-                map((res: HttpResponse<ParticipationScoreDTO[]>) => {
-                    const content = res.body ?? [];
-                    content.forEach((dto) => {
-                        dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
                     });
                     return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };

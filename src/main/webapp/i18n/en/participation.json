@@ -5,6 +5,15 @@
                 "title": "Participation",
                 "createLabel": "Create new participation"
             },
+            "view": {
+                "participation": "Participation",
+                "results": "Results",
+                "all": "All columns"
+            },
+            "filterGroup": {
+                "submissions": "Submissions",
+                "results": "Results"
+            },
             "created": "Created new participation with identifier {{ param }}",
             "updated": "Updated participation with identifier {{ param }}",
             "deleted": "Deleted participation with identifier {{ param }}",

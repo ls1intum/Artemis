@@ -4,7 +4,7 @@ import { Observable, Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faBook, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,7 +36,6 @@ export class TextExerciseRowButtonsComponent {
     faBook = faBook;
     faWrench = faWrench;
     faUsers = faUsers;
-    faTable = faTable;
     farListAlt = faListAlt;
 
     deleteExercise() {

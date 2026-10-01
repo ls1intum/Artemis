@@ -59,8 +59,8 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
         component.selectChartBar(event);
 
         expect(routeInNewTabStub).toHaveBeenCalledOnce();
-        expect(routeInNewTabStub).toHaveBeenCalledWith([`/course-management/2/file-upload-exercises/1/scores`], {
-            queryParams: { scoreRangeFilter: expectedLabels.indexOf(label) },
+        expect(routeInNewTabStub).toHaveBeenCalledWith([`/course-management/2/file-upload-exercises/1/participations`], {
+            queryParams: { view: 'results', scoreRangeFilter: expectedLabels.indexOf(label) },
         });
     });
 });
