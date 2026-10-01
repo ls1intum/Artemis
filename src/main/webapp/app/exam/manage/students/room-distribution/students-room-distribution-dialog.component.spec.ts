@@ -13,7 +13,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
@@ -241,10 +241,35 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.seatInfo().totalStudents).toBe(1000);
     });
 
-    it('should report no registered students if loading them fails', () => {
+    it('should not pass the capacity check while the number of registered students is unknown', () => {
         vi.mocked(examManagementService.findExamStudentsPaged).mockReturnValue(throwError(() => new Error('failed')));
         component.openDialog();
-        expect(component.registeredStudents()).toBe(0);
+        component.selectedRooms.set([rooms[0]]);
+        (service as unknown as MockStudentsRoomDistributionService).capacityData.set({ combinedDefaultCapacity: 50, combinedMaximumCapacity: 50 });
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.registeredStudents()).toBeUndefined();
+        expect(component.registeredStudentsKnown()).toBe(false);
+        expect(component.canSeatAllStudents()).toBe(false);
+        expect(document.body.querySelector('[data-testid="registered-students-unknown"]')).toBeTruthy();
+        expect((document.body.querySelector('#finish-button') as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('should treat the number as unknown while the request is pending and keep only the latest response', () => {
+        const first = new Subject<{ content: never[]; totalElements: number }>();
+        const second = new Subject<{ content: never[]; totalElements: number }>();
+        vi.mocked(examManagementService.findExamStudentsPaged).mockReturnValueOnce(first).mockReturnValueOnce(second);
+
+        component.openDialog();
+        expect(component.registeredStudents()).toBeUndefined();
+        component.openDialog();
+        first.next({ content: [], totalElements: 5 });
+        expect(component.registeredStudents()).toBeUndefined();
+        expect(first.observed).toBe(false);
+
+        second.next({ content: [], totalElements: 7 });
+        expect(component.registeredStudents()).toBe(7);
+        expect(component.registeredStudentsKnown()).toBe(true);
     });
 
     it('should never show percentage >= 100 in the not enough capacity warning message', () => {

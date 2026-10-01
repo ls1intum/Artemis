@@ -17,7 +17,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { Observable, Subscription, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -64,11 +64,16 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     private availableRooms: Signal<RoomForDistributionDTO[]> = this.studentsRoomDistributionService.availableRooms;
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = this.studentsRoomDistributionService.capacityData;
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
-    /** The number of students registered for the exam. The exam of the route does not carry it, so it is loaded whenever the dialog opens. */
-    readonly registeredStudents: WritableSignal<number> = signal(0);
+    /**
+     * The number of students registered for the exam. The exam of the route does not carry it, so it is loaded whenever the dialog opens.
+     * It is undefined while the request is pending and if it failed, so that no capacity check passes against an unknown number.
+     */
+    readonly registeredStudents: WritableSignal<number | undefined> = signal(undefined);
+    readonly registeredStudentsKnown: Signal<boolean> = computed(() => this.registeredStudents() !== undefined);
+    private registeredStudentsSubscription: Subscription | undefined;
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
     seatInfo: Signal<CapacityDisplayDTO> = computed(() => this.computeSeatInfo());
-    canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
+    canSeatAllStudents: Signal<boolean> = computed(() => this.registeredStudentsKnown() && this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
 
     constructor() {
         effect(() => {
@@ -82,7 +87,7 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     }
 
     private computeSeatInfo(): CapacityDisplayDTO {
-        const totalStudents: number = this.registeredStudents();
+        const totalStudents: number = this.registeredStudents() ?? 0;
         let usableCapacity: number = this.allowNarrowLayouts() ? this.selectedRoomsCapacity().combinedMaximumCapacity : this.selectedRoomsCapacity().combinedDefaultCapacity;
         if (usableCapacity > totalStudents) {
             usableCapacity = totalStudents;
@@ -100,11 +105,14 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
         this.dialogVisible.set(true);
 
         // A page of one student is enough: without a search term or filter, the total is the number of registered students.
-        this.examManagementService
+        // An opening that follows quickly on another one replaces the pending request, so an older response cannot overwrite the newer count.
+        this.registeredStudentsSubscription?.unsubscribe();
+        this.registeredStudents.set(undefined);
+        this.registeredStudentsSubscription = this.examManagementService
             .findExamStudentsPaged(this.courseId(), this.exam().id!, { page: 0, pageSize: 1, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'login', searchTerm: '' })
             .subscribe({
                 next: (result) => this.registeredStudents.set(result.totalElements),
-                error: () => this.registeredStudents.set(0),
+                error: () => this.registeredStudents.set(undefined),
             });
 
         this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id).subscribe({

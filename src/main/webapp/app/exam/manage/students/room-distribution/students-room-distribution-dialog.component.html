@@ -81,7 +81,11 @@
                 </table>
             </div>
             @let capacities = seatInfo();
-            @if (canSeatAllStudents()) {
+            @if (!registeredStudentsKnown()) {
+                <div class="alert alert-warning" data-testid="registered-students-unknown">
+                    <p jhiTranslate="artemisApp.exam.examUsers.rooms.registeredStudentsUnknown"></p>
+                </div>
+            } @else if (canSeatAllStudents()) {
                 <div class="alert alert-success">
                     <p jhiTranslate="artemisApp.exam.examUsers.rooms.enoughSeatsForStudents" [translateValues]="{ totalStudents: capacities.totalStudents }"></p>
                 </div>
