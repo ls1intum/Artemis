@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
@@ -687,7 +689,14 @@ class LocalCIResultProcessingServiceTest {
 
         verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, participation);
         verify(programmingTriggerService, never()).triggerTemplateBuildAndNotifyUser(anyLong(), any(), any(), any());
-        verify(aggregationLocks).unlock("group-1");
+        // the finalization, which deletes abandoned aggregates, runs under the participation's lock inside the group's
+        String participationLock = LocalCIResultProcessingService.participationLockKey(PARTICIPATION_ID);
+        InOrder order = inOrder(aggregationLocks, programmingExerciseGradingService);
+        order.verify(aggregationLocks).lock("group-1");
+        order.verify(aggregationLocks).lock(participationLock);
+        order.verify(programmingExerciseGradingService).finalizeContainerResult(7L, participation, true, false, completionDate);
+        order.verify(aggregationLocks).unlock(participationLock);
+        order.verify(aggregationLocks).unlock("group-1");
     }
 
     /** a finished job of the group as the build overview reads it, with nothing linked that the DTO would have to load */
@@ -947,6 +956,8 @@ class LocalCIResultProcessingServiceTest {
         verify(buildJobRepository).save(saved.capture());
         assertThat(saved.getValue().getResult()).isSameAs(aggregatedResult);
         verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
+        // appending to an aggregate that a linked job already refers to needs no participation lock
+        verify(aggregationLocks, never()).lock(LocalCIResultProcessingService.participationLockKey(PARTICIPATION_ID));
     }
 
     @Test
@@ -963,7 +974,14 @@ class LocalCIResultProcessingServiceTest {
 
         resultProcessingService.processResultAsync();
 
-        verify(programmingExerciseGradingService).appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull());
+        // the container creates the aggregate and links its job under the participation's lock, which the cleanup of
+        // abandoned aggregates in another group's finalization takes as well
+        String participationLock = LocalCIResultProcessingService.participationLockKey(PARTICIPATION_ID);
+        InOrder order = inOrder(aggregationLocks, programmingExerciseGradingService, buildJobRepository);
+        order.verify(aggregationLocks).lock(participationLock);
+        order.verify(programmingExerciseGradingService).appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull());
+        order.verify(buildJobRepository).save(any(BuildJob.class));
+        order.verify(aggregationLocks).unlock(participationLock);
         verify(buildJobRepository, never()).existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(anyLong(), any(), any());
     }
 

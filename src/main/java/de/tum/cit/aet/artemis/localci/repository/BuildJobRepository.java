@@ -161,15 +161,6 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsByResultId(long resultId);
 
     /**
-     * Checks whether a build job of the participation is in one of the given statuses.
-     *
-     * @param participationId the id of the participation
-     * @param buildStatuses   the statuses to look for
-     * @return true if at least one build job of the participation is in one of the statuses
-     */
-    boolean existsByParticipationIdAndBuildStatusIn(long participationId, Collection<BuildStatus> buildStatuses);
-
-    /**
      * The jobs of a build group together with the result they link to and its submission, participation and exercise, as the build overview shows them.
      *
      * @param buildGroupId the id of the build group

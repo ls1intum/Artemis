@@ -5,8 +5,13 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.jspecify.annotations.Nullable;
@@ -16,6 +21,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -36,6 +43,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
@@ -487,34 +495,66 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(programmingExerciseGradingService.finalizeContainerResult(running.getId(), participation, true, false, ZonedDateTime.now()).getCompletionDate()).isNotNull();
     }
 
-    /** A newer build's finalization keeps the aggregate of an older build whose job is still pending and not linked to it yet. */
+    /**
+     * A container that creates its group's aggregate holds the participation's lock until its job links to it, so a newer
+     * build's finalization waits instead of deleting the unlinked aggregate as abandoned. The container's job was declared
+     * missing while its result waited to be processed.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testTheAggregateOfAJobThatIsNotLinkedYetIsKept() {
+    void testTheFinalizationOfANewerBuildWaitsForAContainerThatLinksItsAggregate() throws Exception {
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         participation.setProgrammingExercise(programmingExercise);
         String commitHash = "0000000000000000000000000000000000000099";
         submissionOf(participation, commitHash);
-
-        // the older build's first container merged its feedback into a new aggregate, but its job is still building
-        var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
-        BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
-        Result olderAggregate = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null).result();
-        BuildJob pendingJob = buildJobRepository.save(new BuildJob(buildJobFor("pending-0", "pending", participation, commitHash, "container_a"), BuildStatus.BUILDING, null));
+        ZonedDateTime submissionDate = ZonedDateTime.now().minusMinutes(10);
+        // the older build's container has created the aggregate, and its job is not linked to it yet
+        Result aggregateInTheMaking = programmingExerciseGradingService.appendContainerResult(participation, passedResult(commitHash), true, "container_a", null).result();
+        saveGroupJob("linking-0", "linking", participation, commitHash, BuildStatus.MISSING, null, false, submissionDate, 1);
+        // a newer build of the same commit is complete, and the sweep finalizes it
         Result newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
-        buildJobRepository.save(new BuildJob(buildJobFor("overlap-0", "overlap", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, newer));
+        saveGroupJob("complete-0", "complete", participation, commitHash, BuildStatus.SUCCESSFUL, newer, false, submissionDate, 0);
+        saveGroupJob("complete-1", "complete", participation, commitHash, BuildStatus.SUCCESSFUL, newer, false, submissionDate, 0);
 
-        programmingExerciseGradingService.finalizeContainerResult(newer.getId(), participation, true, false, ZonedDateTime.now());
+        DistributedMap<String, Boolean> locks = distributedDataAccessService.getResultAggregationLockMap();
+        String participationLock = LocalCIResultProcessingService.participationLockKey(participation.getId());
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        CountDownLatch locked = new CountDownLatch(1);
+        CountDownLatch linkAllowed = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> linking = executor.submit(() -> {
+                locks.lock(participationLock);
+                try {
+                    locked.countDown();
+                    linkAllowed.await();
+                    BuildJob job = buildJobRepository.findByBuildJobId("linking-0").orElseThrow();
+                    job.setBuildStatus(BuildStatus.SUCCESSFUL);
+                    job.setResult(aggregateInTheMaking);
+                    buildJobRepository.save(job);
+                }
+                finally {
+                    locks.unlock(participationLock);
+                }
+                return null;
+            });
+            assertThat(locked.await(30, TimeUnit.SECONDS)).isTrue();
+            Future<Integer> sweeping = executor.submit(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                return sweep();
+            });
 
-        assertThat(resultRepository.findById(olderAggregate.getId())).as("the aggregate of a pending job is kept").isPresent();
+            await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).until(() -> !sweeping.isDone());
+            linkAllowed.countDown();
 
-        pendingJob.setBuildStatus(BuildStatus.SUCCESSFUL);
-        pendingJob.setResult(olderAggregate);
-        buildJobRepository.save(pendingJob);
-        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(olderAggregate.getId(), participation, true, false, ZonedDateTime.now());
-
-        assertThat(finalizedResult.getCompletionDate()).isNotNull();
-        assertThat(finalizedResult.getPassedTestCaseCount()).as("the feedback of the container whose job was pending is kept").isEqualTo(1);
+            assertThat(sweeping.get(30, TimeUnit.SECONDS)).as("the newer build is finalized once the container linked its job").isEqualTo(1);
+            linking.get(30, TimeUnit.SECONDS);
+        }
+        finally {
+            linkAllowed.countDown();
+            executor.shutdownNow();
+        }
+        assertThat(resultRepository.findById(aggregateInTheMaking.getId())).as("the aggregate in the making is kept").isPresent();
     }
 
     /** A late BUILDING event leaves a finished job finished and still starts a queued one. */

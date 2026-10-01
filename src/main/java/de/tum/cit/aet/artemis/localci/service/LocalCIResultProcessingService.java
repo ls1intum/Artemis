@@ -514,15 +514,31 @@ public class LocalCIResultProcessingService {
                 // The aggregate is found through the group's job links: a retry or re-push of the same commit opens a new
                 // group, and a tutor's draft assessment on the submission must not be taken for it.
                 Long aggregatedResultId = findAggregatedResultId(buildGroupId);
-                AppendedContainerResult appended = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected,
-                        buildGroup.containerName(), aggregatedResultId);
-                if (appended != null) {
-                    appendedResult = appended.result();
-                    linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult, appended.containerFailed());
-                    if (linkedContainerJob == null) {
-                        // Without the link the group's count stays one short, so the recovery below records the job instead.
-                        throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
+                // The container that creates the aggregate holds the participation's lock until its job links to it, so
+                // that the cleanup in a finalization never takes the unlinked aggregate for an abandoned one.
+                String creationLock = aggregatedResultId == null ? participationLockKey(participation.getId()) : null;
+                if (creationLock != null) {
+                    aggregationLocks.lock(creationLock);
+                }
+                AppendedContainerResult appended;
+                try {
+                    appended = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, buildGroup.containerName(),
+                            aggregatedResultId);
+                    if (appended != null) {
+                        appendedResult = appended.result();
+                        linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult, appended.containerFailed());
+                        if (linkedContainerJob == null) {
+                            // Without the link the group's count stays one short, so the recovery below records the job instead.
+                            throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
+                        }
                     }
+                }
+                finally {
+                    if (creationLock != null) {
+                        aggregationLocks.unlock(creationLock);
+                    }
+                }
+                if (appended != null) {
                     Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
                     outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob, finalizedResult != null);
                 }
@@ -580,10 +596,32 @@ public class LocalCIResultProcessingService {
         // job can be SUCCESSFUL, which the status check alone would miss.
         boolean allJobsSucceeded = jobs.stream().allMatch(job -> job.getBuildStatus() == BuildStatus.SUCCESSFUL && job.getResult() != null);
         boolean anyContainerFailedToBuild = jobs.stream().anyMatch(BuildJob::isBuildFailed);
-        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild,
-                completionDate);
+        // the finalization deletes the abandoned aggregates of the submission, which needs the participation's lock
+        DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
+        String participationLock = participationLockKey(participation.getId());
+        Result finalizedResult;
+        aggregationLocks.lock(participationLock);
+        try {
+            finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild,
+                    completionDate);
+        }
+        finally {
+            aggregationLocks.unlock(participationLock);
+        }
         broadcastFinalizedBuildGroup(jobs.getFirst().getBuildGroupId());
         return finalizedResult;
+    }
+
+    /**
+     * The key of the lock that serializes the creation of a build group's aggregate, up to the link of its job, with the
+     * cleanup of abandoned aggregates in a finalization. It covers every submission of the participation, since a build
+     * result is matched to its submission only while it is merged. It is always taken after the lock of a build group.
+     *
+     * @param participationId the id of the participation
+     * @return the key in the aggregation lock map
+     */
+    static String participationLockKey(long participationId) {
+        return "participation-" + participationId;
     }
 
     /**

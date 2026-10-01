@@ -66,7 +66,6 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -506,7 +505,7 @@ public class ProgrammingExerciseGradingService {
             programmingSubmissionRepository.updateBuildFailed(submission.getId(), anyContainerFailedToBuild);
             submission.setBuildFailed(anyContainerFailedToBuild);
         }
-        deleteAbandonedAggregates(resultsOfSubmission, resultId, participation.getId());
+        deleteAbandonedAggregates(resultsOfSubmission, resultId);
         // Each container reported only its share of the test cases and deactivated none, so deactivation is reconciled
         // here over their union. This must precede the scoring, which adds a placeholder for every registered test case.
         if (participation instanceof SolutionProgrammingExerciseParticipation) {
@@ -578,24 +577,22 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Deletes older in-progress aggregates of the submission that no build job links to, while no job of the participation
-     * is pending. A build interrupted between creating its aggregate and linking its job leaves one that nothing completes
-     * and that would hide a later assessment; a running build's job stays pending until its link is saved.
+     * Deletes older in-progress aggregates of the submission that no build job links to. A build interrupted between
+     * creating its aggregate and linking its job leaves one that nothing completes and that would hide a later assessment.
+     * The caller holds the participation's lock, under which a running build creates its aggregate and links its job, so
+     * an aggregate in the making is never taken for an abandoned one (see LocalCIResultProcessingService).
      *
      * @param resultsOfSubmission the submission's results
      * @param resultId            the id of the aggregated result being finalized
-     * @param participationId     the id of the participation that was built
      */
-    private void deleteAbandonedAggregates(List<Result> resultsOfSubmission, long resultId, long participationId) {
+    private void deleteAbandonedAggregates(List<Result> resultsOfSubmission, long resultId) {
         for (Result result : resultsOfSubmission) {
             boolean olderAggregateInProgress = result.getAssessmentType() == AssessmentType.AUTOMATIC && result.getCompletionDate() == null && result.getId() < resultId;
             if (!olderAggregateInProgress) {
                 continue;
             }
             try {
-                // checked before the link: a job that is no longer pending has saved its link already
-                if (buildJobRepository.existsByParticipationIdAndBuildStatusIn(participationId, List.of(BuildStatus.QUEUED, BuildStatus.BUILDING))
-                        || buildJobRepository.existsByResultId(result.getId())) {
+                if (buildJobRepository.existsByResultId(result.getId())) {
                     continue;
                 }
                 if (result.getSubmission() instanceof ProgrammingSubmission submission) {
