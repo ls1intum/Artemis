@@ -226,7 +226,6 @@
     </section>
 
     <div class="controls-footer">
-        <span jhiTranslate="global.form.requiredLabel"></span>
         <a [routerLink]="['..']" tumAetUiButton severity="secondary" size="small" data-testid="cancel-button" jhiTranslate="entity.action.cancel"></a>
         @let saveDisabled = saveButtonDisabled();
         <!-- aria-disabled rather than disabled, so the button stays focusable and its tooltip can list what is missing. -->

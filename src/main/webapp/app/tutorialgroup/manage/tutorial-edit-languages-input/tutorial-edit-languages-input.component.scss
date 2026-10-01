@@ -8,6 +8,11 @@
     flex-direction: column;
     align-items: start;
     gap: 0.5rem;
+
+    // Fill the column like the sibling fields - align-items: start would otherwise leave the input at content width.
+    tumaet-ui-input-group {
+        width: 100%;
+    }
 }
 
 .danger {
