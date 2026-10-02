@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { BehaviorSubject, EMPTY, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -75,6 +75,7 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureService: LectureService;
     /** The route's query params, pushable so tests can exercise the deep-link parsing. */
     let queryParams: BehaviorSubject<Record<string, string>>;
+    let routeParams: BehaviorSubject<Record<string, string>>;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -83,6 +84,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     beforeEach(async () => {
         queryParams = new BehaviorSubject<Record<string, string>>({});
+        routeParams = new BehaviorSubject<Record<string, string>>({ lectureId: '1' });
         const releaseDate = dayjs('18-03-2020 13:30', 'DD-MM-YYYY HH:mm');
         const endDate = dayjs('18-03-2020 15:30', 'DD-MM-YYYY HH:mm');
 
@@ -179,7 +181,8 @@ describe('CourseLectureDetailsComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: of({ lectureId: '1' }),
+                        params: routeParams,
+                        snapshot: { params: { lectureId: '1' } },
                         queryParams,
                         parent: {
                             parent: {
@@ -570,6 +573,67 @@ describe('CourseLectureDetailsComponent', () => {
                 courseLecturesDetailsComponent.targetUnitId.set(999);
             };
 
+            it('reports a missing unit added to the query after an empty lecture has loaded', () => {
+                const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+                lecture.lectureUnits = [];
+                fixture.detectChanges();
+
+                expect(courseLecturesDetailsComponent.lecture()?.id).toBe(lecture.id);
+                expect(courseLecturesDetailsComponent.lectureUnits()).toEqual([]);
+                expect(errorSpy).not.toHaveBeenCalled();
+
+                queryParams.next({ unit: '999', page: '3', timestamp: '42', combined: 'true' });
+
+                expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.lectureUnit.deepLink.unitGone');
+                expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
+                expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+                expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+                expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(false);
+            });
+
+            it('preserves a cross-lecture target when query parameters arrive before route parameters', () => {
+                const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+                fixture.detectChanges();
+                const response = new Subject<HttpResponse<Lecture>>();
+                const findSpy = vi.spyOn(lectureService, 'findWithDetails').mockReturnValueOnce(response);
+                findSpy.mockClear();
+                const requestedLecture = new Lecture();
+                requestedLecture.id = 2;
+                requestedLecture.course = course;
+                const targetUnit = new AttachmentVideoUnit();
+                targetUnit.id = 100;
+                targetUnit.videoSource = 'https://example.com/video.mp4';
+                targetUnit.attachment = new Attachment();
+                targetUnit.attachment.link = '/path/to/slides.pdf';
+                targetUnit.lecture = requestedLecture;
+                requestedLecture.lectureUnits = [targetUnit];
+
+                // Angular updates the snapshot, then emits queryParams before params on a reused route.
+                TestBed.inject(ActivatedRoute).snapshot.params['lectureId'] = '2';
+                queryParams.next({ unit: '100', page: '3', timestamp: '42', combined: 'true' });
+
+                expect(errorSpy).not.toHaveBeenCalled();
+                expect(courseLecturesDetailsComponent.targetUnitId()).toBe(100);
+                expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
+                expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(42);
+                expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(true);
+
+                routeParams.next({ lectureId: '2' });
+                expect(findSpy).toHaveBeenCalledExactlyOnceWith(2);
+                expect(courseLecturesDetailsComponent.targetUnitId()).toBe(100);
+                expect(errorSpy).not.toHaveBeenCalled();
+
+                response.next(new HttpResponse({ body: requestedLecture }));
+                response.complete();
+
+                expect(courseLecturesDetailsComponent.lecture()?.id).toBe(2);
+                expect(courseLecturesDetailsComponent.targetUnitId()).toBe(100);
+                expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
+                expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(42);
+                expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(true);
+                expect(errorSpy).not.toHaveBeenCalled();
+            });
+
             it('reports a deep link whose unit no longer exists', () => {
                 const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
                 courseLecturesDetailsComponent['lectureId'] = lecture.id!;
@@ -598,6 +662,7 @@ describe('CourseLectureDetailsComponent', () => {
             it('keeps the target pending while the loaded units still belong to the previous lecture and reports once the requested lecture has loaded', () => {
                 const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
                 courseLecturesDetailsComponent['lectureId'] = lecture.id! + 1;
+                TestBed.inject(ActivatedRoute).snapshot.params['lectureId'] = String(lecture.id! + 1);
                 courseLecturesDetailsComponent.lecture.set(lecture);
                 targetMissingUnit();
                 courseLecturesDetailsComponent.targetPdfPage.set(3);
@@ -818,6 +883,7 @@ describe('CourseLectureDetailsComponent', () => {
         });
 
         it('should clear all targets when the target unit is not in the list', () => {
+            courseLecturesDetailsComponent.lecture.set(lecture);
             courseLecturesDetailsComponent.lectureUnits.set([lectureUnit3]);
             courseLecturesDetailsComponent.targetUnitId.set(9999);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(12);

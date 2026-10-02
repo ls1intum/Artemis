@@ -220,7 +220,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.targetCombinedView.set(false);
             }
 
-            if (this.lectureUnits().length > 0) {
+            if (this.isRequestedLectureLoaded()) {
                 this.ensureValidDeepLinkTargets();
             }
         });
@@ -314,6 +314,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** The router updates its snapshot before emitting query parameters and then lecture parameters. */
+    private isRequestedLectureLoaded(): boolean {
+        return this.lecture()?.id === Number(this.activatedRoute.snapshot.params['lectureId']);
+    }
+
     private ensureValidDeepLinkTargets(): void {
         const targetUnitId = this.targetUnitId();
         if (!targetUnitId) {
@@ -325,7 +330,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             // While switching from one lecture to another the previous lecture's units are still in the signal, so every target looks missing for a moment. Keep the target
             // pending until the requested lecture has loaded — clearing it here would leave the deep link with nothing to jump to once the right units arrive, and the unit
             // that is genuinely gone could never be reported.
-            if (this.lecture()?.id !== this.lectureId) {
+            if (!this.isRequestedLectureLoaded()) {
                 return;
             }
             // Asking for a unit that is gone is worth saying out loud, since landing on the lecture with nothing highlighted otherwise looks like the link simply did

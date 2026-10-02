@@ -96,19 +96,20 @@ public class IrisCitationService {
         if (text == null || text.isBlank()) {
             return text;
         }
-        var ingestedVersions = materialVersionService.getSnapshot(jobId);
         // Built manually instead of via Matcher#replaceAll, because keywords and summaries are LLM-generated and may contain "$" or "\", which would be interpreted as
         // group references in a replacement string.
         var matcher = STAMPABLE_CITATION_PATTERN.matcher(text);
+        if (!matcher.find()) {
+            return text;
+        }
+        var ingestedVersions = materialVersionService.getSnapshot(jobId);
         var stamped = new StringBuilder();
         int lastEnd = 0;
-        while (matcher.find()) {
+        do {
             stamped.append(text, lastEnd, matcher.start()).append(stampSingleCitation(matcher, ingestedVersions));
             lastEnd = matcher.end();
         }
-        if (lastEnd == 0) {
-            return text;
-        }
+        while (matcher.find());
         return stamped.append(text, lastEnd, text.length()).toString();
     }
 

@@ -263,6 +263,7 @@ class IrisCitationServiceTest {
         var stamped = citationService.stampCitationVersions("A [cite:L:42::30:60:Locks:First.] and B [cite:L:7:2:::Threads:Second.]", "job");
 
         assertThat(stamped).isEqualTo("A [cite:L:42::30:60:Locks:First.:vt2] and B [cite:L:7:2:::Threads:Second.:va8]");
+        verify(materialVersionService).getSnapshot("job");
     }
 
     /**
@@ -283,6 +284,9 @@ class IrisCitationServiceTest {
     void stampCitationVersions_returnsTextUnchangedWhenNothingToStamp() {
         assertThat(citationService.stampCitationVersions("No citations here.", "job")).isEqualTo("No citations here.");
         assertThat(citationService.stampCitationVersions(null, "job")).isNull();
+        assertThat(citationService.stampCitationVersions("   ", "job")).isEqualTo("   ");
+        assertThat(citationService.stampCitationVersions("Invalid [cite:L:abc] reference.", "job")).isEqualTo("Invalid [cite:L:abc] reference.");
+        verifyNoInteractions(materialVersionService);
         verifyNoInteractions(lectureUnitRepositoryApi);
     }
 
