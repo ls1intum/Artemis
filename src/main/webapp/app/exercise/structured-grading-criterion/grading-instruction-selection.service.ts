@@ -1,5 +1,6 @@
 import { Service, Signal, computed, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 
 /**
  * Contract fulfilled by the feedback list of an assessment editor.
@@ -34,6 +35,7 @@ const NO_APPLIED_COUNTS: ReadonlyMap<number, number> = new Map<number, number>()
 @Service()
 export class GradingInstructionSelectionService {
     private readonly host = signal<GradingInstructionSelectionHost | undefined>(undefined);
+    private readonly criteria = signal<readonly GradingCriterion[]>([]);
 
     /** True while an editable feedback list is mounted. */
     readonly isSelectable = computed(() => this.host() !== undefined);
@@ -54,6 +56,23 @@ export class GradingInstructionSelectionService {
         if (this.host() === host) {
             this.host.set(undefined);
         }
+    }
+
+    /**
+     * Called by the grading instructions panel with the criteria of the open assessment. They are kept while the panel is
+     * collapsed, since an instruction does not carry its criterion's title and the feedback cards still name it.
+     */
+    setCriteria(criteria: readonly GradingCriterion[]): void {
+        this.criteria.set(criteria);
+    }
+
+    /** The title of the criterion the instruction belongs to, if the grading instructions panel listed it. */
+    criterionTitleOf(instruction: GradingInstruction): string | undefined {
+        if (instruction.id === undefined) {
+            return undefined;
+        }
+        const criterion = this.criteria().find((candidate) => candidate.structuredGradingInstructions?.some((listed) => listed.id === instruction.id));
+        return criterion?.title?.trim() || undefined;
     }
 
     isApplied(instruction: GradingInstruction): boolean {

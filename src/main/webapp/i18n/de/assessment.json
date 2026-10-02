@@ -2,14 +2,16 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
-            "feedbackAndNotes": "Feedback und Notizen",
+            "feedbackAndNotes": "Allgemeines Feedback und Notizen",
             "assessmentNote": "Interne Notiz",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
             "generalFeedback": "Allgemeines Feedback",
             "feedback": "Feedback",
-            "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden, die seine Punkte festlegt. Studierende sehen den Feedbacktext der Anweisung zusammen mit deiner Beschreibung.",
-            "feedbackHintAiSuggestion": "Dieser AI-Vorschlag ist mit einer Bewertungsanweisung verbunden, die seine Punkte festlegt. Studierende sehen nur die Beschreibung des Vorschlags, nicht den Feedbacktext der Anweisung.",
+            "linkedCriterion": "Verknüpft mit",
+            "linkedCriterionFallback": "Bewertungskriterium",
+            "linkedCriterionSuffix": "Kriterium",
+            "removeCriterionLink": "Verknüpfung mit dem Bewertungskriterium entfernen",
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
@@ -46,8 +48,11 @@
                 "control": "Strg"
             },
             "detail": {
-                "feedback": "Feedback",
                 "assessmentNote": "Private Notizen für Tutor:innen",
+                "notesTab": "Notizen",
+                "notesTabHasNote": "Die private Notiz enthält Text",
+                "addGeneralFeedback": "Allgemeines Feedback hinzufügen",
+                "generalFeedbackAddHint": "Füge über die Schaltfläche + oben allgemeines Feedback hinzu oder ziehe eine Bewertungsanweisung hierher.",
                 "assessmentNoteInfo": "Nur Tutor:innen können diese Notizen sehen. Sie werden Studierenden niemals angezeigt.",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",

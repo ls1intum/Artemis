@@ -52,8 +52,8 @@ export class StructuredGradingCriterionService {
     /**
      * Links a feedback to a grading instruction, whether it was dropped on the feedback or the feedback was created for it.
      * The feedback takes the instruction's credits, and a tutor's own feedback takes the criterion's text as its description,
-     * where the tutor can edit it, so it is not shown twice. An AI suggestion keeps its own description: the student only reads
-     * that (see getFeedbackBodyText). The text replaces an empty description or the one a previously linked criterion wrote,
+     * where the tutor can see and edit what the student reads (see getFeedbackBodyText). An AI suggestion keeps its own
+     * description, which already says what it found. The text replaces an empty description or the one a previously linked criterion wrote,
      * never what the tutor wrote. The criterion's title names the feedback if its title is empty or one of the points-based
      * defaults, so the title a tutor wrote and an AI suggestion's own title stay.
      * @param feedback the feedback to link

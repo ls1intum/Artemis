@@ -144,17 +144,17 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(confirmIcon).toBeTruthy();
     });
 
-    it('should show link icon when feedback is associated with grading instruction', () => {
+    it('should name the linked criterion when feedback is associated with grading instruction', () => {
         component.feedback().gradingInstruction = new GradingInstruction();
         fixture.changeDetectorRef.detectChanges();
-        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('[data-testid="linked-criterion"]');
         expect(linkIcon).toBeTruthy();
     });
 
-    it('should not show link icon when feedback is not associated with grading instruction', () => {
+    it('should not name a criterion when feedback is not associated with grading instruction', () => {
         component.feedback().gradingInstruction = undefined;
         fixture.changeDetectorRef.detectChanges();
-        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('[data-testid="linked-criterion"]');
         expect(linkIcon).toBeFalsy();
     });
 

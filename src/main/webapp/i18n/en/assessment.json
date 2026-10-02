@@ -2,14 +2,16 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Assessment",
-            "feedbackAndNotes": "Feedback & notes",
+            "feedbackAndNotes": "General Feedback & Notes",
             "assessmentNote": "Internal Note",
             "testRunAssessment": "Test Run Assessment",
             "additionalFeedback": "Additional feedback",
-            "generalFeedback": "General feedback",
+            "generalFeedback": "General Feedback",
             "feedback": "Feedback",
-            "feedbackHint": "This feedback is linked to an assessment instruction, which sets its points. The student sees the instruction's feedback text together with your description.",
-            "feedbackHintAiSuggestion": "This AI suggestion is linked to an assessment instruction, which sets its points. The student sees only the suggestion's description, not the instruction's feedback text.",
+            "linkedCriterion": "Linked to",
+            "linkedCriterionFallback": "Assessment Criterion",
+            "linkedCriterionSuffix": "Criterion",
+            "removeCriterionLink": "Remove the link to the assessment criterion",
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
@@ -46,8 +48,11 @@
                 "control": "Ctrl"
             },
             "detail": {
-                "feedback": "Feedback",
                 "assessmentNote": "Private tutor notes",
+                "notesTab": "Notes",
+                "notesTabHasNote": "The private tutor note has text",
+                "addGeneralFeedback": "Add general feedback",
+                "generalFeedbackAddHint": "Use the + button above to add general feedback, or drag an assessment instruction and drop it here.",
                 "assessmentNoteInfo": "Only tutors can see these notes. They are never shared with the student.",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",

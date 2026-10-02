@@ -1,0 +1,39 @@
+<div class="assessment-details-header">
+    <tumaet-ui-tabs class="assessment-details-header__tabs" [value]="activeTab()" (valueChange)="selectTab($event)">
+        <!-- The panel header draws the line below the tabs, so the tab list's own line would double it. -->
+        <tumaet-ui-tab-list style="border-bottom: 0" [attr.aria-label]="'artemisApp.assessment.feedbackAndNotes' | artemisTranslate">
+            <tumaet-ui-tab value="feedback" data-testid="assessment-details-tab-feedback">
+                <fa-icon [icon]="faCommentDots" aria-hidden="true" />
+                <span>{{ 'artemisApp.assessment.generalFeedback' | artemisTranslate }}</span>
+                @if (feedbackCount() > 0) {
+                    <span class="assessment-details-header__count">{{ feedbackCount() }}</span>
+                }
+            </tumaet-ui-tab>
+            <tumaet-ui-tab value="notes" data-testid="assessment-details-tab-notes">
+                <fa-icon [icon]="faLock" aria-hidden="true" />
+                <span>{{ 'artemisApp.assessment.detail.notesTab' | artemisTranslate }}</span>
+                @if (hasNote()) {
+                    <span class="assessment-details-header__marker" [attr.aria-label]="'artemisApp.assessment.detail.notesTabHasNote' | artemisTranslate"></span>
+                }
+            </tumaet-ui-tab>
+        </tumaet-ui-tab-list>
+    </tumaet-ui-tabs>
+    <!-- Only general feedback is added: the private tutor note is a single text box, open in its tab. -->
+    @if (activeTab() === 'feedback') {
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            class="assessment-details-header__add"
+            data-testid="assessment-details-add"
+            [disabled]="disabled()"
+            [attr.aria-label]="'artemisApp.assessment.detail.addGeneralFeedback' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.assessment.detail.addGeneralFeedback' | artemisTranslate"
+            (click)="addGeneralFeedback.emit()"
+        >
+            <fa-icon [icon]="faPlus" />
+        </button>
+    }
+</div>

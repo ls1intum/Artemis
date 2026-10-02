@@ -2,7 +2,7 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { DraggedGradingInstruction } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal, viewChildren } from '@angular/core';
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -67,6 +67,11 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     );
 
     readonly selectable = computed(() => !this.readonly() && this.selectionService.isSelectable());
+
+    constructor() {
+        // A feedback card names the criterion of its instruction, which only this panel knows
+        effect(() => this.selectionService.setCriteria(this.criteria() ?? []));
+    }
 
     readonly appliedCountPerCriterion = computed(() => {
         const applied = this.selectionService.appliedInstructionIds();

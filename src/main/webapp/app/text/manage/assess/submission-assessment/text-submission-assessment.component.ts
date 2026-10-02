@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -13,6 +13,7 @@ import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/s
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import {
@@ -30,17 +31,20 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Subscription } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
-import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
+import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
+import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
+import { AssessmentDetailsHeaderComponent, AssessmentDetailsTab } from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
+import { AssessmentScore } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
@@ -48,16 +52,21 @@ import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessm
 import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
 
+const NO_SCORE: AssessmentScore = { awarded: 0, deducted: 0, total: 0 };
+
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
     styleUrls: ['./text-submission-assessment.component.scss'],
     imports: [
         AssessmentLayoutComponent,
-        ResizeableContainerComponent,
-        ScoreDisplayComponent,
+        AssessmentWorkspaceComponent,
+        AssessmentNoteComponent,
+        AssessmentDetailsHeaderComponent,
+        ComplaintsForTutorComponent,
         TextAssessmentAreaComponent,
-        FaIconComponent,
+        AssessmentSubmissionPanelComponent,
+        TumAetUiTagComponent,
         TranslateDirective,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
@@ -76,6 +85,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private athenaService = inject(AthenaService);
     private translateService = inject(TranslateService);
+    private stringCountService = inject(StringCountService);
 
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
@@ -87,7 +97,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     readonly result = signal<Result | undefined>(undefined);
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     readonly complaint = signal<Complaint | undefined>(undefined);
-    readonly totalScore = signal<number>(0);
+    /** Awarded, deducted and final points, scored as saving the assessment would; shown in the header of the submission panel. */
+    readonly scoreSummary = signal<AssessmentScore>(NO_SCORE);
+    // Shown in the header of the submission panel
+    readonly wordCount = signal(0);
+    readonly characterCount = signal(0);
     readonly isTestRun = signal(false);
     isLoading = signal(true);
     readonly loadingFeedbackSuggestions = signal(false);
@@ -107,6 +121,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     // page explains the wait instead of claiming that it was not found.
     readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     readonly highlightDifferences = signal(false);
+    /** The open tab of the general feedback and notes panel. */
+    readonly detailsTab = signal<AssessmentDetailsTab>('feedback');
+
+    private readonly unreferencedFeedbackList = viewChild(UnreferencedFeedbackComponent);
 
     /*
      * Non-reset properties:
@@ -138,10 +156,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.assessments;
     }
 
-    readonly getTotalMaxPoints = getTotalMaxPoints;
+    /** Scores the assessment like the feedback & notes summary does, so the header and that summary never disagree. */
+    private computeScoreSummary(): AssessmentScore {
+        const maxPoints = getTotalMaxPoints(this.exercise);
+        // The exercise may not be loaded yet; capping against 0 points would wrongly show a score of 0 until it is.
+        const cap = maxPoints > 0 ? maxPoints : Number.POSITIVE_INFINITY;
+        return this.structuredGradingCriterionService.computeAssessmentScore(this.assessments, cap);
+    }
 
-    // Icons
-    farListAlt = faListAlt;
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     constructor() {
         super();
@@ -162,7 +185,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
         this.complaint.set(undefined);
-        this.totalScore.set(0);
+        this.scoreSummary.set(NO_SCORE);
+        this.wordCount.set(0);
+        this.characterCount.set(0);
 
         this.isLoading.set(true);
         this.loadingFeedbackSuggestions.set(false);
@@ -232,6 +257,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.participation = studentParticipation;
         this.submission = this.participation?.submissions?.last();
+        this.wordCount.set(this.stringCountService.countWords(this.submission?.text));
+        this.characterCount.set(this.stringCountService.countCharacters(this.submission?.text));
         this.exercise = this.participation?.exercise;
         this.course.set(getCourseFromExercise(this.exercise));
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
@@ -251,7 +278,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.updateUrlIfNeeded();
 
         this.checkPermissions(this.result());
-        this.totalScore.set(this.computeTotalScore(this.assessments));
+        this.scoreSummary.set(this.computeScoreSummary());
         this.isLoading.set(false);
 
         if (this.isFeedbackSuggestionsEnabled) {
@@ -476,6 +503,31 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
     }
 
+    /** Adds a general feedback from the plus button of the general feedback tab. */
+    addGeneralFeedback(): void {
+        this.unreferencedFeedbackList()?.addUnreferencedFeedback();
+    }
+
+    /**
+     * Whether the private tutor note has text, marked on its tab. A plain method, not a computed: the note is edited in place
+     * on the result, which a computed would not notice.
+     */
+    hasTutorNote(): boolean {
+        return !!this.result()?.assessmentNote?.note;
+    }
+
+    /**
+     * Keeps the internal note on the result, which save and submit send along. The note sits in the workspace's
+     * "Feedback & notes" panel, so the page shows it itself instead of the assessment layout.
+     * @param assessmentNote the edited note
+     */
+    onAssessmentNoteChange(assessmentNote: AssessmentNote): void {
+        const result = this.result();
+        if (result) {
+            result.assessmentNote = assessmentNote;
+        }
+    }
+
     /**
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
@@ -535,7 +587,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         // its title is only a heading, so an empty description would leave the student without the comment.
         this.assessmentsAreValid.set(Feedback.haveCreditsAndComments(this.assessments));
 
-        this.totalScore.set(this.computeTotalScore(this.assessments));
+        this.scoreSummary.set(this.computeScoreSummary());
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
 

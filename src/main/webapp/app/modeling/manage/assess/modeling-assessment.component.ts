@@ -51,14 +51,11 @@ import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/mod
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 
-export interface DropInfo {
-    instruction: GradingInstruction;
-    tooltipMessage: string;
-    removeMessage: string;
-    feedbackHint: string;
-}
+/** What an assessment's `dropInfo` holds in Apollon: the linked grading instruction and the title of its criterion. */
+type ApollonDropInfo = GradingInstruction & { criterionTitle?: string };
 
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
@@ -76,6 +73,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly fullscreenPresentation = inject(FullscreenPresentationService);
     private readonly contentObserver = inject(ContentObserver);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly gradingInstructionSelectionService = inject(GradingInstructionSelectionService);
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
     private readonly fullscreenSupported = document.fullscreenEnabled;
@@ -553,8 +551,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
         for (const assessment of assessments) {
-            const dropInfo = assessment.dropInfo as GradingInstruction | undefined;
-            const instruction = dropInfo?.id ? dropInfo : undefined;
+            const instruction = this.gradingInstructionOf(assessment);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
                 const scoreChanged = feedback.credits !== assessment.score;
@@ -616,7 +613,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     this.titleOrDefault(assessment.title ?? '', assessment.score),
                     assessment.modelElementId,
                     this.referenceTypeFor(assessment),
-                    assessment.dropInfo as DropInfo,
+                    instruction ? { instruction } : undefined,
                 );
                 feedback.detailText = assessment.feedback;
                 this.elementFeedback.set(assessment.modelElementId, feedback);
@@ -829,11 +826,28 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return trimmedTitle && !isDefault ? title : this.translateService.instant(Feedback.getDefaultTitleKey(score));
     }
 
-    private calculateDropInfo(feedback: Feedback) {
-        if (feedback.gradingInstruction) {
-            return feedback.gradingInstruction;
+    /**
+     * The grading instruction linked to the element, handed to Apollon with the title of its criterion, which an instruction
+     * does not carry itself but Apollon's linked criterion chip names. See {@link gradingInstructionOf} for the way back.
+     */
+    private calculateDropInfo(feedback: Feedback): ApollonDropInfo | undefined {
+        const instruction = feedback.gradingInstruction;
+        if (!instruction) {
+            return undefined;
         }
+        return cloneWith(instruction, { criterionTitle: this.gradingInstructionSelectionService.criterionTitleOf(instruction) });
+    }
 
-        return undefined;
+    /**
+     * The grading instruction Apollon linked to the element, without the criterion title it carries for display (see
+     * {@link calculateDropInfo}), so the title is never saved with the feedback.
+     */
+    private gradingInstructionOf(assessment: Assessment): GradingInstruction | undefined {
+        const dropInfo = assessment.dropInfo as ApollonDropInfo | undefined;
+        if (!dropInfo?.id) {
+            return undefined;
+        }
+        const { criterionTitle: _criterionTitle, ...instruction } = dropInfo;
+        return instruction;
     }
 }

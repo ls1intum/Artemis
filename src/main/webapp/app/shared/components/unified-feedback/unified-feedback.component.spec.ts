@@ -11,7 +11,8 @@ import {
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { By } from '@angular/platform-browser';
-import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
@@ -438,21 +439,22 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackTitle.set(feedback.text);
         fixture.detectChanges();
 
-        // Remove the criterion the way the link icon does when the tutor confirms it.
-        const linkIcon = fixture.debugElement.query(By.directive(GradingInstructionLinkIconComponent)).componentInstance as GradingInstructionLinkIconComponent;
-        linkIcon.removeLink();
+        component.removeGradingInstructionLink();
 
         expect(feedback.gradingInstruction).toBeUndefined();
         expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
     });
 
     it("should leave a tutor's own feedback title unchanged when its grading instruction is removed", () => {
+        const feedback = { credits: 2, text: 'Missing null check', gradingInstruction: { id: 3, feedback: 'Fixed rubric text', credits: 2 } } as any;
         fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', feedback);
         component.feedbackTitle.set('Missing null check');
         fixture.detectChanges();
 
-        component.onGradingInstructionRemoved();
+        component.removeGradingInstructionLink();
 
+        expect(feedback.gradingInstruction).toBeUndefined();
         expect(component.feedbackTitle()).toBe('Missing null check');
     });
 
@@ -927,62 +929,78 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('Loop never ends');
     });
 
-    it('should not repeat the grading instruction text as a label once the description contains it', async () => {
-        // Dropping a criterion on a tutor's own feedback copies its text into the description.
-        fixture.componentRef.setInput('editable', true);
-        fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);
-        component.feedbackDetail.set('Fixed rubric text, and also check the edge cases.');
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
+    describe('linked criterion chip', () => {
+        const linkedFeedback = () => ({ credits: 2, text: 'Visibility', gradingInstruction: { id: 7, instructionDescription: 'Uses modifiers', feedback: 'Fixed rubric text', credits: 2 } }) as any;
+        const chip = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="linked-criterion"]');
 
-        expect(component.gradingInstructionText()).toBeUndefined();
-        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')).toBeNull();
+        beforeEach(() => {
+            const criterion = { title: 'Encapsulation', structuredGradingInstructions: [{ id: 7 }] } as GradingCriterion;
+            TestBed.inject(GradingInstructionSelectionService).setCriteria([criterion]);
+        });
+
+        it('should name the criterion of the linked instruction instead of showing its text', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(component.linkedCriterionTitle()).toBe('Encapsulation');
+            expect(chip()?.textContent).toContain('Encapsulation');
+            expect(chip()?.querySelector('.unified-feedback-criterion-suffix')?.textContent).toContain('artemisApp.assessment.linkedCriterionSuffix');
+            expect(fixture.nativeElement.textContent).not.toContain('Fixed rubric text');
+        });
+
+        it('should fall back to a generic name when the criterion is unknown', () => {
+            TestBed.inject(GradingInstructionSelectionService).setCriteria([]);
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(component.linkedCriterionTitle()).toBe('artemisApp.assessment.linkedCriterionFallback');
+            // The fallback already reads "Assessment Criterion", so it is not followed by the suffix again
+            expect(chip()?.querySelector('.unified-feedback-criterion-suffix')).toBeNull();
+        });
+
+        it('should not show the chip to a student', () => {
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(component.linkedCriterionTitle()).toBeUndefined();
+            expect(chip()).toBeNull();
+        });
+
+        it('should show the chip on a read-only feedback of an assessor when asked to', () => {
+            fixture.componentRef.setInput('showLinkedCriterion', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(chip()?.textContent).toContain('Encapsulation');
+            expect(chip()?.querySelector('jhi-confirm-icon')).toBeNull();
+        });
+
+        it('should offer to remove the link only while the feedback can be edited', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+            expect(chip()?.querySelector('jhi-confirm-icon')).not.toBeNull();
+
+            fixture.componentRef.setInput('readOnly', true);
+            fixture.detectChanges();
+            expect(chip()?.querySelector('jhi-confirm-icon')).toBeNull();
+        });
+
+        it('should hide the chip once the link is removed', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            component.removeGradingInstructionLink();
+            fixture.detectChanges();
+
+            expect(chip()).toBeNull();
+        });
     });
 
-    it('should keep the grading instruction label when the description is an AI suggestion that does not contain it', () => {
-        fixture.componentRef.setInput('editable', true);
-        fixture.componentRef.setInput('feedback', {
-            credits: 1,
-            text: 'FeedbackSuggestion:accepted:Visibility',
-            gradingInstruction: { feedback: 'Consider adding visibility modifiers (+, -).', credits: 1 },
-        } as any);
-        component.feedbackDetail.set('Consider adding visibility modifiers to your attributes, e.g. + for public.');
-        fixture.detectChanges();
-
-        expect(component.gradingInstructionText()).toBe('Consider adding visibility modifiers (+, -).');
-    });
-
-    it("should tell the tutor that the student reads the criterion's text with the description of a tutor's feedback", () => {
-        fixture.componentRef.setInput('feedback', { credits: 1, text: 'Visibility', gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 } } as any);
-
-        expect(component.rubricHint()).toBe('artemisApp.assessment.feedbackHint');
-    });
-
-    it('should tell the tutor that the student reads only the description of an AI suggestion', () => {
-        fixture.componentRef.setInput('feedback', {
-            credits: 1,
-            text: 'FeedbackSuggestion:accepted:Visibility',
-            gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 },
-        } as any);
-        component.feedbackDetail.set('Consider adding visibility modifiers to your attributes.');
-
-        expect(component.rubricHint()).toBe('artemisApp.assessment.feedbackHintAiSuggestion');
-    });
-
-    it("should tell the tutor that the student reads the criterion's text once the description of an AI suggestion is empty", () => {
-        // Without a description of its own, the AI suggestion shows the criterion's text instead (see getFeedbackBodyText).
-        fixture.componentRef.setInput('feedback', {
-            credits: 1,
-            text: 'FeedbackSuggestion:adapted:Visibility',
-            gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 },
-        } as any);
-        component.feedbackDetail.set('');
-
-        expect(component.rubricHint()).toBe('artemisApp.assessment.feedbackHint');
-    });
-
-    it('should show the grading instruction label and lock the points input when a grading instruction is attached', async () => {
+    it('should show the linked criterion and lock the points input when a grading instruction is attached', async () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);
         component.feedbackCredits.set(2);
@@ -990,17 +1008,17 @@ describe('UnifiedFeedbackComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const label = fixture.nativeElement.querySelector('.unified-feedback-rubric-label');
+        const chip = fixture.nativeElement.querySelector('[data-testid="linked-criterion"]');
         const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
         const steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
 
-        expect(label?.textContent).toContain('Fixed rubric text');
+        expect(chip).not.toBeNull();
         expect(pointsInput.disabled).toBe(true);
         expect(steps[0].disabled).toBe(true);
         expect(steps[1].disabled).toBe(true);
     });
 
-    it('should disable the steppers and show the rubric label after a grading instruction is assigned in place post-render (regression test for the stale-computed rubric-state bug)', () => {
+    it('should disable the steppers and show the linked criterion after a grading instruction is assigned in place post-render (regression test for the stale-computed rubric-state bug)', () => {
         fixture.componentRef.setInput('editable', true);
         const feedback = { credits: 0 } as Feedback;
         fixture.componentRef.setInput('feedback', feedback);
@@ -1010,7 +1028,7 @@ describe('UnifiedFeedbackComponent', () => {
         let steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
         expect(steps[0].disabled).toBe(false);
         expect(steps[1].disabled).toBe(false);
-        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="linked-criterion"]')).toBeNull();
 
         // Mirrors StructuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent and
         // UnreferencedFeedbackDetailComponent.updateFeedbackOnDrop: the grading instruction is assigned onto the
@@ -1023,7 +1041,7 @@ describe('UnifiedFeedbackComponent', () => {
         steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
         expect(steps[0].disabled).toBe(true);
         expect(steps[1].disabled).toBe(true);
-        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')?.textContent).toContain('Fixed rubric text');
+        expect(fixture.nativeElement.querySelector('[data-testid="linked-criterion"]')).not.toBeNull();
     });
 
     it('should not render a footer when the feedback is not a suggestion', () => {

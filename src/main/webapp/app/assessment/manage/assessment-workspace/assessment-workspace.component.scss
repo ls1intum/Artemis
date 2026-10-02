@@ -50,6 +50,12 @@
     }
 }
 
+// A page's own details header (e.g. tabs) brings its own spacing and still fits the header's 2.5rem
+.assessment-workspace__section-header--custom {
+    padding-block: 0;
+    padding-inline: 0.25rem 0.5rem;
+}
+
 .assessment-workspace__section-content {
     min-width: 0;
     min-height: 0;

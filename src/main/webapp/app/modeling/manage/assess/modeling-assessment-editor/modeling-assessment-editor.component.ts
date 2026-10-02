@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
@@ -8,7 +8,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -20,7 +20,8 @@ import { Feedback, FeedbackHighlightColor, FeedbackSuggestionType, FeedbackType 
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
-import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { AssessmentScore, StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
 import { Submission, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -50,6 +51,7 @@ import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } 
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
+import { AssessmentDetailsHeaderComponent, AssessmentDetailsTab } from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
@@ -65,6 +67,8 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-an
         AssessmentWorkspaceComponent,
         AssessmentInstructionsComponent,
         AssessmentNoteComponent,
+        AssessmentDetailsHeaderComponent,
+        AssessmentSubmissionPanelComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
@@ -92,7 +96,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private athenaService = inject(AthenaService);
 
-    readonly totalScore = signal(0);
+    /** Awarded, deducted and final points, scored as saving the assessment would; shown in the header of the submission panel. */
+    readonly scoreSummary = signal<AssessmentScore>({ awarded: 0, deducted: 0, total: 0 });
     readonly submission = signal<ModelingSubmission | undefined>(undefined);
     readonly model = signal<UMLModel | undefined>(undefined);
     readonly modelingExercise = signal<ModelingExercise | undefined>(undefined);
@@ -145,6 +150,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     highlightDifferences = false;
     isApollonModelLoaded = false;
+    /** The open tab of the general feedback and notes panel. */
+    readonly detailsTab = signal<AssessmentDetailsTab>('feedback');
+
+    private readonly unreferencedFeedbackList = viewChild(UnreferencedFeedbackComponent);
 
     private cancelConfirmationText!: string;
 
@@ -169,6 +178,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (result) {
             result.assessmentNote = assessmentNote;
         }
+    }
+
+    /** Adds a general feedback from the plus button of the general feedback tab. */
+    addGeneralFeedback(): void {
+        this.unreferencedFeedbackList()?.addUnreferencedFeedback();
+    }
+
+    /**
+     * Whether the private tutor note has text, marked on its tab. A plain method, not a computed: the note is edited in place
+     * on the result, which a computed would not notice.
+     */
+    hasTutorNote(): boolean {
+        return !!this.result()?.assessmentNote?.note;
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
@@ -688,8 +710,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     calculateTotalScore() {
         const maxPoints = getTotalMaxPoints(this.modelingExercise());
-        const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
-        this.totalScore.set(getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints));
+        // The exercise may not be loaded yet; capping against 0 points would wrongly show a score of 0 until it is.
+        const cap = maxPoints > 0 ? maxPoints : Number.POSITIVE_INFINITY;
+        this.scoreSummary.set(this.structuredGradingCriterionService.computeAssessmentScore(this.feedback, cap));
     }
 
     useStudentSubmissionAsExampleSubmission(): void {

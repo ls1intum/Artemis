@@ -1,0 +1,25 @@
+<section class="assessment-submission-panel">
+    <header class="assessment-submission-panel__header">
+        <fa-icon [icon]="faSubmission" aria-hidden="true" />
+        <h2 jhiTranslate="artemisApp.result.submission"></h2>
+        <div class="assessment-submission-panel__meta">
+            <ng-content select="[submissionPanelMeta]" />
+            @let points = score();
+            <tumaet-ui-tag severity="success" data-testid="assessment-awarded-points">
+                <span class="assessment-submission-panel__tag-label">{{ 'artemisApp.assessment.detail.baseAward' | artemisTranslate }}</span>
+                {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: points.awarded } }}
+            </tumaet-ui-tag>
+            <tumaet-ui-tag severity="danger" data-testid="assessment-deducted-points">
+                <span class="assessment-submission-panel__tag-label">{{ 'artemisApp.assessment.detail.deductions' | artemisTranslate }}</span>
+                {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: points.deducted } }}
+            </tumaet-ui-tag>
+            <tumaet-ui-tag severity="contrast" data-testid="assessment-final-points">
+                <span class="assessment-submission-panel__tag-label">{{ 'artemisApp.assessment.detail.finalScore' | artemisTranslate }}</span>
+                {{ 'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: points.total, maxPoints: maxPoints() } }}
+            </tumaet-ui-tag>
+        </div>
+    </header>
+    <div class="assessment-submission-panel__content" [class.assessment-submission-panel__content--scroll]="scrollContent()">
+        <ng-content />
+    </div>
+</section>

@@ -128,16 +128,16 @@ describe('Feedback', () => {
             expect(getFeedbackBodyText(feedback)).toBe('Consider adding visibility modifiers (+, -).');
         });
 
-        it("should show only the description of a tutor's feedback that already contains the criterion's text", () => {
-            const feedback = { text: 'Visibility', detailText: 'Consider adding visibility modifiers (+, -). Make the fields private.', gradingInstruction } as Feedback;
-
-            expect(getFeedbackBodyText(feedback)).toBe('Consider adding visibility modifiers (+, -). Make the fields private.');
-        });
-
-        it("should still show the criterion's text and the description of an older tutor's feedback that does not contain it", () => {
+        it("should show only the description of a tutor's feedback, even if it does not contain the criterion's text", () => {
             const feedback = { text: 'Visibility', detailText: 'Make the fields private.', gradingInstruction } as Feedback;
 
-            expect(getFeedbackBodyText(feedback)).toBe('Consider adding visibility modifiers (+, -).\nMake the fields private.');
+            expect(getFeedbackBodyText(feedback)).toBe('Make the fields private.');
+        });
+
+        it("should fall back to the criterion's text for a tutor's feedback without a description", () => {
+            const feedback = { text: 'Visibility', gradingInstruction } as Feedback;
+
+            expect(getFeedbackBodyText(feedback)).toBe('Consider adding visibility modifiers (+, -).');
         });
 
         it('should show the description of a feedback without a criterion', () => {

@@ -26,35 +26,33 @@
         (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
     >
         @if (submission()) {
-            <jhi-assessment-workspace
-                class="modeling-assessment-page__workspace"
-                storageKey="modeling-submission-assessment-split"
-                [detailsLabelKey]="'artemisApp.assessment.feedbackAndNotes'"
-            >
+            <jhi-assessment-workspace class="modeling-assessment-page__workspace" storageKey="modeling-submission-assessment-split" [customDetailsHeader]="true">
                 <div assessmentWorkspaceCanvas class="modeling-assessment-page__canvas">
-                    <jhi-modeling-assessment
-                        [diagramType]="modelingExercise()?.diagramType"
-                        [umlModel]="model()!"
-                        [readOnly]="readOnly"
-                        [resultFeedbacks]="result()?.feedbacks || []"
-                        [highlightedElements]="highlightedElements()"
-                        (feedbackChanged)="onFeedbackChanged($event)"
-                        [explanation]="submission()?.explanationText || ''"
-                        [highlightDifferences]="highlightDifferences"
-                        [elementCounts]="submission()?.similarElements"
-                    >
-                        <jhi-feedback-suggestions-banner
-                            [modelingAssessmentTopLeft]="feedbackSuggestionsNotice() === 'loading'"
-                            appearance="chrome"
-                            [isLoading]="loadingFeedbackSuggestions()"
-                            [hasAutomaticFeedback]="hasAutomaticFeedback()"
-                            [isAssessor]="isAssessor()"
-                            [resultCompletionDate]="result()?.completionDate"
-                            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
-                        />
+                    <jhi-assessment-submission-panel [score]="scoreSummary()" [maxPoints]="getTotalMaxPoints(modelingExercise())" [scrollContent]="false">
+                        <jhi-modeling-assessment
+                            [diagramType]="modelingExercise()?.diagramType"
+                            [umlModel]="model()!"
+                            [readOnly]="readOnly"
+                            [resultFeedbacks]="result()?.feedbacks || []"
+                            [highlightedElements]="highlightedElements()"
+                            (feedbackChanged)="onFeedbackChanged($event)"
+                            [explanation]="submission()?.explanationText || ''"
+                            [highlightDifferences]="highlightDifferences"
+                            [elementCounts]="submission()?.similarElements"
+                        >
+                            <jhi-feedback-suggestions-banner
+                                [modelingAssessmentTopLeft]="feedbackSuggestionsNotice() === 'loading'"
+                                appearance="chrome"
+                                [isLoading]="loadingFeedbackSuggestions()"
+                                [hasAutomaticFeedback]="hasAutomaticFeedback()"
+                                [isAssessor]="isAssessor()"
+                                [resultCompletionDate]="result()?.completionDate"
+                                [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+                            />
 
-                        <jhi-modeling-assessment-legend [modelingAssessmentTopRight]="true" [highlights]="legendHighlights()" />
-                    </jhi-modeling-assessment>
+                            <jhi-modeling-assessment-legend [modelingAssessmentTopRight]="true" [highlights]="legendHighlights()" />
+                        </jhi-modeling-assessment>
+                    </jhi-assessment-submission-panel>
                     @if (complaint(); as complaint) {
                         <section class="modeling-assessment-page__complaint">
                             <jhi-complaints-for-tutor-form
@@ -76,21 +74,40 @@
                     }
                 </div>
 
-                <div assessmentWorkspaceDetails class="modeling-assessment-page__details">
-                    @if (result()?.id) {
-                        <jhi-unreferenced-feedback
-                            [feedbacks]="unreferencedFeedback()"
-                            (feedbacksChange)="unreferencedFeedback.set($event); validateFeedback()"
-                            [readOnly]="readOnly"
-                            [highlightDifferences]="highlightDifferences"
-                            [resultId]="result()!.id!"
-                            [gradingCriteria]="modelingExercise()?.gradingCriteria ?? []"
-                            [allFeedbacks]="allAssessmentFeedbacks()"
-                            [maxPoints]="getTotalMaxPoints(modelingExercise())"
-                        />
-                    }
+                <jhi-assessment-details-header
+                    assessmentWorkspaceDetailsHeader
+                    [(activeTab)]="detailsTab"
+                    [feedbackCount]="unreferencedFeedback().length"
+                    [hasNote]="hasTutorNote()"
+                    [disabled]="readOnly || !result()?.id"
+                    (addGeneralFeedback)="addGeneralFeedback()"
+                />
 
-                    <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="onAssessmentNoteChange($event)" />
+                <div assessmentWorkspaceDetails class="modeling-assessment-page__details">
+                    <!-- Both tabs stay rendered: the general feedback list must stay registered for the instruction checkboxes. -->
+                    <div [hidden]="detailsTab() !== 'feedback'">
+                        @if (result()?.id) {
+                            <jhi-unreferenced-feedback
+                                [feedbacks]="unreferencedFeedback()"
+                                (feedbacksChange)="unreferencedFeedback.set($event); validateFeedback()"
+                                [readOnly]="readOnly"
+                                [showAddButton]="false"
+                                [showHeader]="false"
+                                [highlightDifferences]="highlightDifferences"
+                                [resultId]="result()!.id!"
+                                [gradingCriteria]="modelingExercise()?.gradingCriteria ?? []"
+                                [allFeedbacks]="allAssessmentFeedbacks()"
+                                [maxPoints]="getTotalMaxPoints(modelingExercise())"
+                            />
+                        }
+                    </div>
+                    <div [hidden]="detailsTab() !== 'notes'">
+                        <jhi-assessment-note
+                            [assessmentNote]="result()?.assessmentNote"
+                            [showTitle]="false"
+                            (onAssessmentNoteChange)="onAssessmentNoteChange($event)"
+                        />
+                    </div>
                 </div>
             </jhi-assessment-workspace>
         } @else {

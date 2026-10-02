@@ -27,6 +27,8 @@ export class TextAssessmentAreaComponent {
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     allowManualBlockSelection = input<boolean>(true);
+    /** Whether the word and character counts are shown below the text; a host that shows them in its own header turns this off. */
+    showCounts = input<boolean>(true);
 
     // outputs
     textBlockRefsAddedRemoved = output<void>();

@@ -24,6 +24,13 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     assessmentsAreValid = false;
 
     readonly readOnly = input<boolean>(undefined!);
+    /** Whether the list has its own add button; a host that adds feedback from elsewhere (e.g. its panel header) turns it off. */
+    readonly showAddButton = input(true);
+    /**
+     * Whether the list shows its title and the awarded, deducted and final points; a host that names the list and shows the
+     * points elsewhere (e.g. in a tab and a panel header) turns this off.
+     */
+    readonly showHeader = input(true);
     readonly highlightDifferences = input<boolean>(undefined!);
     readonly resultId = input<number>(undefined!);
 

@@ -340,38 +340,14 @@ export class Feedback implements BaseEntity {
 }
 
 /**
- * Whether the description of a feedback already contains the feedback text of its grading instruction, as it does once a
- * tutor drops a criterion on their own feedback. The criterion's text then must not be shown a second time.
- *
- * @param feedback the feedback to check
- * @returns true if the description contains the criterion's feedback text
- */
-const isGradingInstructionTextInDetail = (feedback: Feedback): boolean => {
-    const instructionText = feedback.gradingInstruction?.feedback;
-    return !!instructionText && !!feedback.detailText?.includes(instructionText);
-};
-
-/**
- * The body a student reads for a feedback that may be linked to a grading instruction:
- * - An AI suggestion shows only its own description. Athena tends to restate the criterion's feedback text in it, so
- *   showing both would repeat the same sentence; the criterion's text is only the fallback for an empty description.
- * - A tutor's own feedback gets the criterion's text copied into its description when the criterion is dropped on it,
- *   so the description alone is shown. Feedback assessed before that, whose description does not contain the criterion's
- *   text, still shows both.
+ * The body a student reads for a feedback that may be linked to a grading instruction: its description, which is what the
+ * assessor sees and edits, or the criterion's feedback text if the description is empty. The assessor's card only names the
+ * criterion, not its text, so the text is never shown beside a description the assessor could not see it next to.
  *
  * @param feedback the feedback to read
  * @returns the body of the feedback, or undefined if it has none
  */
-export const getFeedbackBodyText = (feedback: Feedback): string | undefined => {
-    const instructionText = feedback.gradingInstruction?.feedback;
-    if (!instructionText || !feedback.detailText) {
-        return feedback.detailText || instructionText;
-    }
-    if (Feedback.isAIFeedback(feedback) || isGradingInstructionTextInDetail(feedback)) {
-        return feedback.detailText;
-    }
-    return instructionText + '\n' + feedback.detailText;
-};
+export const getFeedbackBodyText = (feedback: Feedback): string | undefined => feedback.detailText || feedback.gradingInstruction?.feedback;
 
 /**
  * Helper method to build the feedback text for the review. When the feedback has a link with grading instruction

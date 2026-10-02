@@ -3,7 +3,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faExclamationTriangle, faMinus, faPlus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faLink, faLinkSlash, faMinus, faPlus, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -16,7 +16,7 @@ import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-a
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
-import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FormsModule } from '@angular/forms';
@@ -39,7 +39,6 @@ interface FeedbackTypeConfig {
         TumAetUiTooltipDirective,
         FormsModule,
         ConfirmIconComponent,
-        GradingInstructionLinkIconComponent,
         FeedbackSuggestionBadgeComponent,
         AssessmentCorrectionRoundBadgeComponent,
         ArtemisTranslatePipe,
@@ -49,6 +48,7 @@ export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
     private destroyRef = inject(DestroyRef);
+    private gradingInstructionSelectionService = inject(GradingInstructionSelectionService);
 
     constructor() {
         // afterRenderEffect (not effect): the textarea DOM read/write here must happen after the view -
@@ -123,6 +123,8 @@ export class UnifiedFeedbackComponent {
     feedback = input<Feedback | undefined>(undefined);
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
+    /** Whether a read-only feedback names the criterion it is linked to. An editable one always does; a student view never should. */
+    showLinkedCriterion = input<boolean>(false);
 
     editable = input<boolean>(false);
     readOnly = input<boolean>(false);
@@ -240,7 +242,7 @@ export class UnifiedFeedbackComponent {
 
     readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
 
-    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    /** Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call. */
     canDismissWithoutConfirm(): boolean {
         return (
             (this.feedbackCredits() ?? 0) === 0 &&
@@ -253,35 +255,44 @@ export class UnifiedFeedbackComponent {
 
     readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
 
-    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    /** Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call. */
     isDetailMissing(): boolean {
         const detailRequired = this.detailRequired() || !this.feedback()?.reference;
         return this.editable() && detailRequired && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
     }
 
-    /**
-     * Plain method, not computed: see {@link gradingInstructionText}. Says what the student reads (see getFeedbackBodyText): an AI
-     * suggestion with a description shows only that description, any other feedback the criterion's text and its description.
-     */
-    rubricHint(): string {
-        const feedback = this.feedback();
-        const showsOnlyDescription = !!feedback && Feedback.isAIFeedback(feedback) && !!this.feedbackDetail();
-        return this.artemisTranslatePipe.transform(showsOnlyDescription ? 'artemisApp.assessment.feedbackHintAiSuggestion' : 'artemisApp.assessment.feedbackHint');
-    }
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
     readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
     readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
     /**
+     * The title of the criterion the feedback is linked to, shown as a chip beside its reference.
      * A plain method, not a computed: consumers (drag-and-drop rubric assignment, the rubric dropdown) mutate
      * `feedback().gradingInstruction` in place rather than replacing the feedback object, so a computed signal
      * keyed on the `feedback` input would never see its dependency change and would keep returning a stale value.
      */
-    gradingInstructionText(): string | undefined {
-        const instructionText = this.feedback()?.gradingInstruction?.feedback;
-        // Once the criterion's text is in the description, as after dropping it on a tutor's own feedback, the label would repeat it.
-        // It stays shown while the description lacks the text, which is exactly when the student reads the two separately.
-        return instructionText && !(this.feedbackDetail() ?? '').includes(instructionText) ? instructionText : undefined;
+    linkedCriterionTitle(): string | undefined {
+        const instruction = this.feedback()?.gradingInstruction;
+        // Only the assessor sees which criterion a feedback is linked to, never the student.
+        if (!instruction || !(this.editable() || this.showLinkedCriterion())) {
+            return undefined;
+        }
+        return this.gradingInstructionSelectionService.criterionTitleOf(instruction) ?? this.artemisTranslatePipe.transform('artemisApp.assessment.linkedCriterionFallback');
+    }
+
+    /**
+     * Whether the chip names the criterion itself, which it follows with "Criterion"; the generic fallback name already says it.
+     * Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call.
+     */
+    isLinkedCriterionKnown(): boolean {
+        const instruction = this.feedback()?.gradingInstruction;
+        return !!instruction && !!this.gradingInstructionSelectionService.criterionTitleOf(instruction);
+    }
+
+    /** Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call. */
+    linkedCriterionTooltip(): string {
+        const description = this.feedback()?.gradingInstruction?.instructionDescription ?? '';
+        return this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + description;
     }
 
     /**
@@ -313,7 +324,8 @@ export class UnifiedFeedbackComponent {
     protected readonly Feedback = Feedback;
     protected readonly faTimes = faTimes;
     protected readonly faTrashAlt = faTrashAlt;
-    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faLink = faLink;
+    protected readonly faLinkSlash = faLinkSlash;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faMinus = faMinus;
     protected readonly faPlus = faPlus;
@@ -342,7 +354,7 @@ export class UnifiedFeedbackComponent {
      */
     private pendingRawCredits: string | undefined;
 
-    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    /** Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call. */
     protected stepCreditsDisabled(): boolean {
         return this.readOnly() || !!this.feedback()?.gradingInstruction;
     }
@@ -380,10 +392,15 @@ export class UnifiedFeedbackComponent {
     }
 
     /**
-     * Removing the grading instruction from an accepted AI suggestion changes it like any other edit, so it becomes adapted.
-     * The title change also tells the host that the feedback changed.
+     * Unlinks the feedback from its grading instruction, which makes its points editable again. For an accepted AI suggestion this is
+     * an edit like any other, so it becomes adapted; the title change also tells the host that the feedback changed.
      */
-    onGradingInstructionRemoved(): void {
+    removeGradingInstructionLink(): void {
+        const feedback = this.feedback();
+        if (!feedback) {
+            return;
+        }
+        feedback.gradingInstruction = undefined;
         this.markAdaptedIfSuggestion();
     }
 
