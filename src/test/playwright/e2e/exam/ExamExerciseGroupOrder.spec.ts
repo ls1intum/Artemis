@@ -75,4 +75,39 @@ test.describe('Exam exercise group order', { tag: '@slow' }, () => {
         await examParticipation.startParticipation(studentOne, course, exam);
         await expect(page.getByTestId('sidebar-card-title').filter({ hasText: uid })).toHaveText(finalOrder);
     });
+    test('An instructor drags an exercise into another group and the move is saved', async ({ page, login, examAPIRequests, exerciseAPIRequests }) => {
+        await login(admin);
+        exam = await examAPIRequests.createRunningExam({ course, numberOfExercisesInExam: 2, examMaxPoints: 20 });
+        const uid = generateUUID();
+        const groupA = await examAPIRequests.addExerciseGroupForExam(exam, 'Group A ' + uid);
+        const groupB = await examAPIRequests.addExerciseGroupForExam(exam, 'Group B ' + uid);
+        const movedExercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup: groupA }, 'Moved ' + uid);
+        const stayingExercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup: groupB }, 'Staying ' + uid);
+
+        await login(instructor, `/course-management/${course.id}/exams/${exam.id}/exercise-groups`);
+        const groupOf = (title: string) => page.locator('[id^="group-"]', { hasText: title });
+        const movedRow = page.locator(`#exercise-${movedExercise.id}`);
+        await expect(groupOf(groupA.title!).locator(`#exercise-${movedExercise.id}`)).toBeVisible();
+
+        // The exercise is picked up at its handle and dropped onto a row of the other group.
+        const handle = (await movedRow.getByTestId('exercise-drag-handle').boundingBox())!;
+        const target = (await page.locator(`#exercise-${stayingExercise.id}`).boundingBox())!;
+        const moved = page.waitForResponse((response) => response.url().includes(`/exercises/${movedExercise.id}/exercise-group`), { timeout: 30_000 });
+        await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(handle.x + 30, handle.y + 20, { steps: 5 });
+        await page.mouse.move(target.x + 200, target.y + target.height / 2, { steps: 20 });
+        await page.mouse.up();
+        expect((await moved).status()).toBe(200);
+
+        // The exercise is listed in the second group now, the first group has none left, and the move survives a reload.
+        await expect(groupOf(groupB.title!).locator(`#exercise-${movedExercise.id}`)).toBeVisible();
+        await expect(groupOf(groupA.title!).locator(`#exercise-${movedExercise.id}`)).toHaveCount(0);
+        await page.reload();
+        await expect(groupOf(groupB.title!).locator(`#exercise-${movedExercise.id}`)).toBeVisible();
+        const groups = await examAPIRequests.getExerciseGroups(exam);
+        const titlesIn = (title: string) => (groups.find((group) => group.title === title)!.exercises ?? []).map((exercise) => exercise.title);
+        expect(titlesIn(groupA.title!)).toEqual([]);
+        expect(titlesIn(groupB.title!).sort()).toEqual([movedExercise.title, stayingExercise.title].sort());
+    });
 });

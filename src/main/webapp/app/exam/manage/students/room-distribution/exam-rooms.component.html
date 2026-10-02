@@ -1,57 +1,58 @@
 <div class="m-2">
-    <div class="upload-container">
-        <h2><span jhiTranslate="artemisApp.examRooms.management.title" class="large-text"></span></h2>
-        <div class="mt-2">
+    <div class="flex flex-col gap-2">
+        <h2 class="my-0!"><span jhiTranslate="artemisApp.examRooms.management.title"></span></h2>
+        <div>
             <span jhiTranslate="artemisApp.examRooms.management.introText"></span>
         </div>
-        <div class="mt-2">
-            <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
-            <label for="roomDataFileSelect" class="btn btn-outline-primary">
+        <div class="flex items-center gap-2">
+            <input #roomDataFileSelect id="roomDataFileSelect" type="file" class="hidden" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
+            <button id="roomDataFileSelectButton" type="button" tumAetUiButton variant="outlined" (click)="roomDataFileSelect.click()">
                 @if (!hasSelectedFile()) {
                     {{ 'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate }}
                 } @else {
                     {{ selectedFileName() }}
                 }
-            </label>
-            <button type="button" id="roomDataUpload" jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
+            </button>
+            <button type="button" id="roomDataUpload" tumAetUiButton jhiTranslate="entity.action.save" (click)="upload()" [disabled]="!canUpload()"></button>
         </div>
-        <div class="mt-2">
+        <div class="flex items-center gap-1">
             <button
                 type="button"
                 id="roomDataDeleteOutdatedAndUnused"
+                tumAetUiButton
+                severity="warn"
                 jhiTranslate="artemisApp.examRooms.management.deleteExamRoomsSafe"
-                class="btn btn-warning"
                 (click)="deleteOutdatedAndUnusedExamRooms()"
             ></button>
-            <jhi-help-icon class="ps-1" text="artemisApp.examRooms.management.deleteExamRoomsSafeTooltip" />
+            <jhi-help-icon text="artemisApp.examRooms.management.deleteExamRoomsSafeTooltip" />
         </div>
 
         @if (isUploading()) {
-            <div jhiTranslate="entity.action.saving" class="text info"></div>
+            <div jhiTranslate="entity.action.saving"></div>
         }
         @if (hasUploadInformation()) {
-            <div class="card mt-4">
-                <h3 class="pt-2 ps-3"><span jhiTranslate="artemisApp.examRooms.management.uploadSummary.title"></span></h3>
-                <ul>
+            <tumaet-ui-card class="mt-4">
+                <h3 class="mt-0! mb-2!"><span jhiTranslate="artemisApp.examRooms.management.uploadSummary.title"></span></h3>
+                <ul class="my-0! ps-6">
                     <li><strong jhiTranslate="artemisApp.examRooms.management.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
                     <li><strong jhiTranslate="artemisApp.examRooms.management.uploadSummary.roomsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedRooms }}</li>
                     <li><strong jhiTranslate="artemisApp.examRooms.management.uploadSummary.seatsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedSeats }}</li>
                 </ul>
-            </div>
+            </tumaet-ui-card>
         }
         @if (isDeleting()) {
-            <div jhiTranslate="artemisApp.examRooms.management.deleting" class="text info"></div>
+            <div jhiTranslate="artemisApp.examRooms.management.deleting"></div>
         }
         @if (hasDeletionInformation()) {
-            <div class="card mt-4">
-                <h3 class="pt-2 ps-3"><span jhiTranslate="artemisApp.examRooms.management.deletionSummary.title"></span></h3>
-                <ul>
+            <tumaet-ui-card class="mt-4">
+                <h3 class="mt-0! mb-2!"><span jhiTranslate="artemisApp.examRooms.management.deletionSummary.title"></span></h3>
+                <ul class="my-0! ps-6">
                     <li><strong jhiTranslate="artemisApp.examRooms.management.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>
                 </ul>
-            </div>
+            </tumaet-ui-card>
         }
     </div>
-    <div class="info mt-4">
+    <div class="mt-6">
         @if (hasOverview()) {
             <h3>
                 <div jhiTranslate="artemisApp.examRooms.management.examRoomOverview.title"></div>
@@ -60,9 +61,9 @@
                 <div class="m-1"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalExamRooms"></span> {{ numberOfAvailable()!.examRooms }}</div>
                 <div class="m-1"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalSeats"></span> {{ numberOfAvailable()!.examSeats }}</div>
             </strong>
-            <h4 class="mt-4"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.examRoomsTitle"></span></h4>
-            <div class="table-responsive">
-                <table class="table table-striped">
+            <h4 class="mt-6!"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.examRoomsTitle"></span></h4>
+            <div class="overflow-x-auto">
+                <table tumAetUiTable [striped]="true">
                     <thead>
                         <tr jhiSort [(predicate)]="sortAttribute" [(ascending)]="ascending" (sortChange)="sortRows()">
                             <th jhiSortBy="roomNumber">
