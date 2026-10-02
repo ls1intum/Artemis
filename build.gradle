@@ -347,6 +347,9 @@ dependencies {
     // Content-Encoding decode error leading to pool exhaustion, (httpcore5) HTTP/1 header parsing memory
     // exhaustion, and (httpcore5-h2) an unbounded HPackDecoder header list before SETTINGS ACK. httpcore5-h2 is
     // declared explicitly so the transitive request from httpclient5 cannot resolve down to a vulnerable 5.3.x.
+    // core5 is deliberately one patch (5.4.4) above the 5.4.3 that the httpclient5 5.6.4 parent POM declares: it is the
+    // same 5.4 train, and Eureka discovery and Hazelcast cluster formation were verified on this pair with the
+    // multi-node end-to-end run. If cluster formation ever breaks after a bump, go back to the declared version first.
     implementation "org.apache.httpcomponents.client5:httpclient5:5.6.4"
     // httpclient5-cache reaches the runtime classpath transitively (webauthn4j, helios-status-spring-starter) and
     // would otherwise sit at an older patch than httpclient5. Pinned so the whole family stays on one version.
