@@ -3,7 +3,7 @@
     "description": "Playwright tests for Artemis",
     "private": true,
     "license": "MIT",
-    "packageManager": "pnpm@12.5.1",
+    "packageManager": "pnpm@12.8.1",
     "devDependencies": {
         "@eslint/js": "10.0.1",
         "@playwright/test": "1.63.0",
@@ -24,7 +24,7 @@
         "monocart-reporter": "2.14.0",
         "npm-check-updates": "23.1.0",
         "npm-run-all2": "9.0.3",
-        "simple-git": "3.36.0",
+        "simple-git": "4.0.2",
         "uuid": "14.0.2",
         "yauzl": "3.4.0"
     },

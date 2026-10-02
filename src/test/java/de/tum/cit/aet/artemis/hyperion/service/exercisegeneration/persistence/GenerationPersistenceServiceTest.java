@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -45,6 +46,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -53,7 +55,14 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
+import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
+import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
+import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
+import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -1055,6 +1064,33 @@ class GenerationPersistenceServiceTest {
         assertThat(java.nio.file.Files.readAllBytes(wrapperDir.resolve("gradle-wrapper.jar"))).as("scaffolded wrapper jar is byte-identical").containsExactly(wrapperBytes);
         assertThat(java.nio.file.Files.isExecutable(runScript)).isTrue();
         verify(repositoryService).createFile(eq(repository), eq("src/de/test/BankAccount.java"), any());
+    }
+
+    @Test
+    void persistencePreservesBinaryPathsFromTheActualFrozenOutcome(@TempDir Path workingTree) throws Exception {
+        byte[] bytes = new byte[] { 0, 1, 2, 3 };
+        Path binaryPath = workingTree.resolve("src/main/resources/fixture.bin");
+        FileUtils.writeByteArrayToFile(binaryPath.toFile(), bytes);
+        var binary = new WorkspaceFile("solution/src/main/resources/fixture.bin", bytes, false);
+        var source = new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false);
+        var candidate = new WorkspaceSnapshot(List.of(binary, source));
+        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of()));
+        var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "default");
+        GenerationOutcome outcome = ReflectionTestUtils.invokeMethod(GenerationOutcome.class, "received", output, seed, false);
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-solution");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-solution");
+        when(repository.getLocalPath()).thenReturn(workingTree);
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        when(repositoryService.getFiles(repository)).thenReturn(Map.of("src/Main.java", FileType.FILE, "src/main/resources/fixture.bin", FileType.FILE));
+
+        service.persist(exercise, user, outcome);
+
+        verify(repositoryService, never()).deleteFile(repository, "src/main/resources/fixture.bin");
+        verify(repositoryService, never()).createFile(eq(repository), eq("src/main/resources/fixture.bin"), any());
+        assertThat(FileUtils.readFileToByteArray(binaryPath.toFile())).containsExactly(bytes);
+        verify(repositoryService).createFile(eq(repository), eq("src/Main.java"), any());
     }
 
     @Test

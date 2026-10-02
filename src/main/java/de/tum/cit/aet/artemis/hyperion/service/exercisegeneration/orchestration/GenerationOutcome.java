@@ -132,6 +132,26 @@ public final class GenerationOutcome {
         return loopResult.finalMessage();
     }
 
+    /**
+     * Returns every frozen repository path, including canonical binaries excluded from text writes.
+     *
+     * @param role repository to inspect
+     * @return complete candidate paths relative to that repository
+     */
+    public Set<String> candidatePaths(RepositoryType role) {
+        if (output == null) {
+            return Set.of();
+        }
+        String prefix = switch (role) {
+            case TEMPLATE -> "template/";
+            case SOLUTION -> "solution/";
+            case TESTS -> "tests/";
+            default -> throw new IllegalArgumentException("Unexpected generated repository");
+        };
+        return output.candidate().files().stream().map(WorkspaceFile::path).filter(path -> path.startsWith(prefix)).map(path -> path.substring(prefix.length()))
+                .collect(Collectors.toUnmodifiableSet());
+    }
+
     public Map<String, String> producedFiles(RepositoryType role) {
         return files.getOrDefault(role, Map.of());
     }

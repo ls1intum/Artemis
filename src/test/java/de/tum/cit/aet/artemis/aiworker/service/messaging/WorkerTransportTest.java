@@ -113,18 +113,26 @@ class WorkerTransportTest {
     }
 
     @Test
-    void acknowledgedEventFinishesInterruptedCleanupWithoutApplyingAgain() {
-        worker.publish(event(WorkerEventType.FINISHED, "done", 1));
-        DistributedMap<String, String> inbox = provider.getMap("aiworker-events-worker-1");
-        String key = inbox.keySet().iterator().next();
-        provider.<String, String>getExpiringMap("aiworker-event-acknowledgements", java.time.Duration.ofHours(4)).put(key, "A:" + inbox.get(key).substring(2));
-        provider.getMap("aiworker-event-chunks").remove(key + ":0");
+    void acknowledgedEventFinishesCleanupAfterReplayTombstoneExpires() {
+        DistributedMap<String, String> chunks = spy(provider.getMap("aiworker-event-chunks"));
+        DistributedDataProvider faultingProvider = provider;
+        when(faultingProvider.<String, String>getMap("aiworker-event-chunks")).thenReturn(chunks);
+        WorkerTransport faultingCore = new WorkerTransport(faultingProvider, new WorkerMessageCodecApi());
+        worker.publish(event(WorkerEventType.CHECKPOINT, "x".repeat(1024 * 1024), 1));
+        worker.publish(event(WorkerEventType.FINISHED, "done", 2));
+        AtomicInteger applied = new AtomicInteger();
+        org.mockito.Mockito.doCallRealMethod().doThrow(new IllegalStateException("cleanup interrupted")).doCallRealMethod().when(chunks).remove(any(String.class));
 
-        assertThat(core.receive(identity, _ -> {
-            throw new AssertionError("Acknowledged events must not be applied again");
-        })).isTrue();
+        assertThatThrownBy(() -> faultingCore.receive(identity, _ -> applied.incrementAndGet())).isInstanceOf(IllegalStateException.class);
+        DistributedMap<String, String> inbox = provider.getMap("aiworker-events-worker-1");
+        assertThat(inbox.values()).anyMatch(manifest -> manifest.startsWith("A:"));
+        provider.getExpiringMap("aiworker-event-acknowledgements", java.time.Duration.ofHours(4)).clear();
+        assertThat(faultingCore.receive(identity, _ -> applied.incrementAndGet())).isTrue();
+        assertThat(applied).hasValue(1);
+        assertThat(faultingCore.receive(identity, _ -> applied.incrementAndGet())).isTrue();
+        assertThat(applied).hasValue(2);
         assertThat(inbox.isEmpty()).isTrue();
-        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isTrue();
+        assertThat(chunks.isEmpty()).isTrue();
     }
 
     @Test
