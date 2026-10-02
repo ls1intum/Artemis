@@ -29,6 +29,27 @@ class WorkerSupervisorTest {
     private static final String IMAGE = "sha256:" + "a".repeat(64);
 
     @Test
+    void escapedPayloadsBecomeDeliverableErrorTerminals() throws InterruptedException {
+        String payload = "\"".repeat(34 * 1024 * 1024);
+        for (boolean checkpointOutput : new boolean[] { false, true }) {
+            var events = new LinkedBlockingQueue<WorkerEventDTO>();
+            try (var worker = worker(events, (assignment, cancelled, observer, checkpoint) -> {
+                if (checkpointOutput) {
+                    checkpoint.accept(payload);
+                    return result();
+                }
+                return payload;
+            }, () -> {
+            }, new AtomicLong())) {
+                worker.accept(start(worker, events));
+                WorkerEventDTO terminal = take(events, WorkerEventType.ERROR);
+                assertThat(terminal.payload()).isNull();
+                assertThat(events).noneMatch(event -> event.type() == WorkerEventType.CHECKPOINT || event.type() == WorkerEventType.FINISHED);
+            }
+        }
+    }
+
+    @Test
     void oversizedAccountingCannotFillTheRetainedDeliveryQueue() throws InterruptedException {
         var events = new LinkedBlockingQueue<WorkerEventDTO>();
         try (var worker = worker(events, (assignment, cancelled, observer, checkpoint) -> {

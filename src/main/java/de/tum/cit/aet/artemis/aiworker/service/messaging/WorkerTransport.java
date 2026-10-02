@@ -215,7 +215,7 @@ public class WorkerTransport {
         events.lock(key);
         try {
             String manifest = events.get(key);
-            if (manifest == null || !manifest.startsWith("R:")) {
+            if (manifest == null || !(manifest.startsWith("R:") || manifest.startsWith("A:"))) {
                 return false;
             }
             String[] parts = manifest.substring(2).split(":", 4);
@@ -225,7 +225,7 @@ public class WorkerTransport {
                 throw new IllegalArgumentException("Invalid worker event manifest");
             }
             String acknowledgement = "A:" + manifest.substring(2);
-            if (!acknowledgement.equals(maps.acknowledgements().get(key))) {
+            if (!manifest.startsWith("A:") && !acknowledgement.equals(maps.acknowledgements().get(key))) {
                 StringBuilder body = new StringBuilder(length);
                 for (int index = 0; index < count; index++) {
                     String chunk = maps.chunks().get(key + ":" + index);
@@ -242,12 +242,14 @@ public class WorkerTransport {
                     throw new IllegalArgumentException("Worker event does not match its execution");
                 }
                 apply.accept(event);
-                maps.acknowledgements().put(key, acknowledgement);
+
             }
+            events.put(key, acknowledgement);
             for (int index = 0; index < count; index++) {
                 maps.chunks().remove(key + ":" + index);
             }
-            events.remove(key, manifest);
+            maps.acknowledgements().put(key, acknowledgement);
+            events.remove(key, acknowledgement);
         }
         finally {
             events.unlock(key);
