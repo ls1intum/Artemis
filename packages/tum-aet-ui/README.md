@@ -94,9 +94,7 @@ Colors:
   `--tumaet-ui-state-*-contrast` and `--tumaet-ui-state-*-foreground`;
 - specialized roles: `--tumaet-ui-contrast-background`, `--tumaet-ui-contrast-color`,
   `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
-  `--tumaet-ui-tooltip-color`;
-- component surfaces: `--tumaet-ui-tab-scroll-background` (the scroll buttons of a tab list that does
-  not fit, defaulting to the content background; set it on a tab list placed on another surface).
+  `--tumaet-ui-tooltip-color`.
 
 Primary is the brand fill; accent is the brand foreground for content and controls. Each state
 token is a fill or border, its `-contrast` token is text on that fill, and its `-foreground` token

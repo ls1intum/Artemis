@@ -24,11 +24,12 @@ import { TumAetUiTabsService, tabKey, tabValue } from './tumaet-ui-tabs.service'
         class: 'tumaet-ui-tab-list tumaet:relative tumaet:flex tumaet:w-full tumaet:min-w-0 tumaet:max-w-full tumaet:overflow-x-auto tumaet:border-b tumaet:border-border',
         '(focusin)': 'revealFocusedTab($event)',
         '(scroll)': 'updateScrollButtons()',
+        '[class.tumaet-ui-tab-list-muted]': "tabsService.surface() === 'muted'",
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumAetUiTabListComponent implements OnDestroy {
-    private readonly tabsService = inject(TumAetUiTabsService);
+    protected readonly tabsService = inject(TumAetUiTabsService);
     private readonly tabList = inject(TabList);
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     /**

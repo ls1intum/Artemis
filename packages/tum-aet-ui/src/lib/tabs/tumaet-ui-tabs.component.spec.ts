@@ -546,3 +546,33 @@ describe('TumAetUiTabs family (tabs declared with @for / @if)', () => {
         expect(errors).toEqual([]);
     });
 });
+
+@Component({
+    template: `
+        <tumaet-ui-tabs [value]="1" size="small" selectedColor="text" surface="muted">
+            <tumaet-ui-tab-list aria-label="Compact">
+                <tumaet-ui-tab [value]="1">One</tumaet-ui-tab>
+                <tumaet-ui-tab [value]="2">Two</tumaet-ui-tab>
+            </tumaet-ui-tab-list>
+        </tumaet-ui-tabs>
+    `,
+    imports: TABS_IMPORTS,
+})
+class CompactTabsHostComponent {}
+
+describe('TumAetUiTabs family (appearance)', () => {
+    it('shares the size, selected color and surface of the container with its tab list and tabs', async () => {
+        await TestBed.configureTestingModule({ imports: [CompactTabsHostComponent] }).compileComponents();
+        const fixture = TestBed.createComponent(CompactTabsHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const element = fixture.nativeElement as HTMLElement;
+        const [selected, other] = Array.from(element.querySelectorAll('tumaet-ui-tab'));
+
+        expect(selected.classList).toContain('tumaet-ui-tab-small');
+        expect(selected.classList).toContain('tumaet:text-text-hover');
+        expect(selected.classList).not.toContain('tumaet:text-accent');
+        expect(other.classList).toContain('tumaet:text-muted');
+        expect(element.querySelector('tumaet-ui-tab-list')!.classList).toContain('tumaet-ui-tab-list-muted');
+    });
+});

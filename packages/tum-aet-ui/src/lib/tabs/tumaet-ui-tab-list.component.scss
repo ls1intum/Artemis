@@ -8,10 +8,10 @@
 }
 
 // Each button sticks to its edge of the scrolling list and covers the cut-off tab there. Its negative margin keeps it out
-// of the layout, so the tabs do not shift when it appears and the indicator stays aligned with them. A list on another
-// surface than the content background sets --tumaet-ui-tab-scroll-background to that surface, so the button blends in.
+// of the layout, so the tabs do not shift when it appears and the indicator stays aligned with them. It takes the surface the
+// list sits on, so it blends in.
 .tumaet-ui-tab-scroll {
-    --tumaet-ui-tab-scroll-surface: var(--tumaet-ui-tab-scroll-background, var(--tumaet-ui-content-background));
+    --tumaet-ui-tab-scroll-surface: var(--tumaet-ui-content-background);
 
     position: sticky;
     z-index: 1;
@@ -22,16 +22,25 @@
     width: 1.75rem;
     padding: 0;
     border: 0;
-    background: var(--tumaet-ui-tab-scroll-surface);
+
+    // The surface lies on the content background, like the list's own surface does: a translucent surface, such as a
+    // dark theme's muted one, would otherwise let the tab the button covers show through it
+    background: linear-gradient(var(--tumaet-ui-tab-scroll-surface), var(--tumaet-ui-tab-scroll-surface)), var(--tumaet-ui-content-background);
 
     // A wide, soft veil of the surface fades the tab the button covers, hinting that more tabs follow. The list clips it.
-    box-shadow: 0 0 10px 50px color-mix(in srgb, var(--tumaet-ui-tab-scroll-surface) 60%, transparent);
+    box-shadow:
+        0 0 10px 50px color-mix(in srgb, var(--tumaet-ui-tab-scroll-surface) 60%, transparent),
+        0 0 10px 50px color-mix(in srgb, var(--tumaet-ui-content-background) 60%, transparent);
     color: var(--tumaet-ui-muted-color);
     cursor: pointer;
 
     &:hover {
         color: var(--tumaet-ui-text-hover-color);
     }
+}
+
+:host.tumaet-ui-tab-list-muted .tumaet-ui-tab-scroll {
+    --tumaet-ui-tab-scroll-surface: var(--tumaet-ui-hover-background);
 }
 
 .tumaet-ui-tab-scroll-start {
