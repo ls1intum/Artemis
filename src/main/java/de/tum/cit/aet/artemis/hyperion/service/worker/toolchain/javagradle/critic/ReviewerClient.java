@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.crit
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
@@ -95,8 +96,8 @@ final class ReviewerClient {
 
     /** One output-capped, tool-free reviewer call, sent again after a failure that provably produced no completion. */
     @Nullable
-    String call(String systemPromptTemplate, String userPrompt, @Nullable Consumer<ChatResponse> usageSink) {
-        return call(systemPromptTemplate, userPrompt, usageSink, CRITIC_MAX_OUTPUT_TOKENS);
+    String call(String systemPromptTemplate, String userPrompt, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return call(systemPromptTemplate, userPrompt, usageSink, cancelled, CRITIC_MAX_OUTPUT_TOKENS);
     }
 
     /**
@@ -104,23 +105,27 @@ final class ReviewerClient {
      * budget is computed from the prompt that is actually sent.
      */
     @Nullable
-    String call(String systemPromptTemplate, String userPrompt, @Nullable Consumer<ChatResponse> usageSink, int maxOutputTokens) {
+    String call(String systemPromptTemplate, String userPrompt, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, int maxOutputTokens) {
+        if (cancelled.getAsBoolean()) {
+            return null;
+        }
         String systemPrompt = templateService.render(systemPromptTemplate, Map.of());
         int outputTokens = reviewerOutputTokens(systemPrompt, userPrompt, maxOutputTokens);
-        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
-        if (configuredOptions instanceof OpenAiChatOptions openAiOptions) {
-            options.timeout(openAiOptions.getTimeout());
+        OpenAiChatOptions.Builder options = configuredOptions instanceof OpenAiChatOptions openAiOptions ? openAiOptions.mutate() : OpenAiChatOptions.builder();
+        if (configuredOptions != null && !(configuredOptions instanceof OpenAiChatOptions)) {
+            options.temperature(configuredOptions.getTemperature()).topP(configuredOptions.getTopP()).frequencyPenalty(configuredOptions.getFrequencyPenalty())
+                    .presencePenalty(configuredOptions.getPresencePenalty()).stopSequences(configuredOptions.getStopSequences());
         }
         if (usesLegacyMaxTokens) {
-            options.maxTokens(outputTokens);
+            options.maxCompletionTokens(null).maxTokens(outputTokens);
         }
         else {
-            options.maxCompletionTokens(outputTokens);
+            options.maxTokens(null).maxCompletionTokens(outputTokens);
         }
         if (configuredModel != null) {
             options.model(configuredModel);
         }
-        ChatResponse response = providerRetries.execute(() -> callOnce(systemPrompt, userPrompt, options, usageSink), () -> false, null, "reviewer call");
+        ChatResponse response = providerRetries.execute(() -> callOnce(systemPrompt, userPrompt, options, usageSink), cancelled, null, "reviewer call");
         if (response == null) {
             markUsageUncertain(usageSink);
         }

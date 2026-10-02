@@ -599,6 +599,27 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void exhaustedStatementGatePreservesUnresolvedApprovedSpecificationFindings() {
+        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
+        stageCheckService = mock(StageChecks.class);
+        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0) == GenerationStage.STATEMENT ? StageCheckResult.failed("Statement binding is invalid")
+                        : StageCheckResult.passed("Stage passed"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "stage finished"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY);
+
+        assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
+        assertThat(outcome.result().finalMessage()).contains("Statement binding is invalid");
+        assertThat(outcome.unresolvedSpecificationFindings()).singleElement().asString().contains("quality review was inconclusive", "instructor review");
+        verify(stageCheckService, times(2)).check(eq(GenerationStage.STATEMENT), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class));
+    }
+
+    @Test
     void unavailableSpecificationReviewFailsOpenAndFreezesTheMechanicallyValidSpec() {
         // Fail open on the subjective axis: a reviewer that cannot return a well-formed verdict must not discard a specification that already passed the mechanical gate.
         SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);

@@ -85,7 +85,7 @@ class ReferenceWitnessCritic {
                     .append(witness.ruleId()).append("\nTEST METHOD:\n").append(witness.code()).append("\nSANITIZED BUILD EVIDENCE:\n").append(candidate.diagnostic()).append('\n');
         }
         try {
-            String response = reviewer.call(PROMPT_TEMPLATE, prompt.toString(), usageSink, MAX_OUTPUT_TOKENS);
+            String response = reviewer.call(PROMPT_TEMPLATE, prompt.toString(), usageSink, cancelled, MAX_OUTPUT_TOKENS);
             return parse(response, specification, templateStatuses, candidates);
         }
         catch (RuntimeException exception) {

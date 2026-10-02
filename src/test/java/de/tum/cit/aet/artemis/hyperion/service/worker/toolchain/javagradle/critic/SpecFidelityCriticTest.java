@@ -2203,6 +2203,33 @@ class SpecFidelityCriticTest {
         verify(chatModel, times(4)).call(any(Prompt.class));
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void reviewerCancellationDuringRateLimitBackoffStopsFurtherProviderCalls(boolean specificationPass) {
+        ChatModel chatModel = mock(ChatModel.class);
+        AtomicBoolean cancelled = new AtomicBoolean();
+        var rateLimit = RateLimitException.builder().headers(Headers.builder().build()).build();
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            cancelled.set(true);
+            throw rateLimit;
+        });
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCritic critic = criticWithModel(ChatClient.create(chatModel), "configured-model");
+        critic.setProviderRetryTimingForTests(0, 0);
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
+
+        if (specificationPass) {
+            critic.reviewSpecification("brief", "specification", usageSink, cancelled::get);
+        }
+        else {
+            critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"), COMPLETE_ARTIFACTS, usageSink, cancelled::get, null, null, null, null);
+        }
+
+        verify(chatModel).call(any(Prompt.class));
+        verify(usageSink, never()).markUncertain();
+        verify(usageSink, never()).accept(any());
+    }
+
     @Test
     void rateLimitRejectionIsRetriedWithinThePassWithoutMarkingUsageUncertain() {
         ChatModel chatModel = mock(ChatModel.class);
@@ -2859,17 +2886,31 @@ class SpecFidelityCriticTest {
     }
 
     @Test
-    void forSettings_runsEveryReviewerPassOnTheProfilesModel() {
-        // A profile that pins a model but leaves the critics on the deployment model would review one configuration's output with another configuration's judgement.
-        ScriptedCritic scripted = criticScripted(jsonResponse("{\"complete\": true, \"findings\": []}"));
+    void forSettings_preservesTheProfilesModelReasoningAndSamplingOptions() {
+        ChatModel model = mock(ChatModel.class);
+        OpenAiChatOptions defaults = OpenAiChatOptions.builder().model("deployment-model").reasoningEffort("high").temperature(0.9).topP(0.95).verbosity("high").build();
+        when(model.getOptions()).thenReturn(defaults);
+        when(model.call(any(Prompt.class))).thenReturn(jsonResponse("{\"complete\": true, \"findings\": []}"));
+        SpecFidelityCritic critic = new SpecFidelityCritic(ChatClient.create(model), objectMapper, new PromptTemplates(), "deployment-model", Duration.ZERO,
+                ProviderFailureCooldown.disabled(), 128_000, defaults);
         HyperionGenerationSettings settings = new HyperionGenerationSettings("thorough", "Thorough", 90, Duration.ofMinutes(60), 6_000_000L, true, "CONTINUOUS", 96_000,
-                OpenAiChatOptions.builder().model("thorough-model").build(), false, true);
+                OpenAiChatOptions.builder().model("thorough-model").reasoningEffort("low").temperature(0.2).topP(0.7).verbosity("low").maxCompletionTokens(20_000).build(), false,
+                true);
 
-        scripted.critic().forSettings(settings).reviewSpecification("brief", "specification", null, () -> false);
+        critic.forSettings(settings).reviewSpecification("brief", "specification", null, () -> false);
 
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), atLeastOnce()).call(prompts.capture());
-        assertThat(prompts.getAllValues()).isNotEmpty().allSatisfy(prompt -> assertThat(prompt.getOptions().getModel()).isEqualTo("thorough-model"));
+        verify(model, atLeastOnce()).call(prompts.capture());
+        assertThat(prompts.getAllValues()).isNotEmpty().allSatisfy(prompt -> {
+            OpenAiChatOptions options = (OpenAiChatOptions) prompt.getOptions();
+            assertThat(options.getModel()).isEqualTo("thorough-model");
+            assertThat(options.getReasoningEffort()).isEqualTo("low");
+            assertThat(options.getTemperature()).isEqualTo(0.2);
+            assertThat(options.getTopP()).isEqualTo(0.7);
+            assertThat(options.getVerbosity()).isEqualTo("low");
+            assertThat(options.getMaxCompletionTokens()).isPositive().isLessThanOrEqualTo(20_000);
+            assertThat(options.getMaxTokens()).isNull();
+        });
     }
 
     @Test

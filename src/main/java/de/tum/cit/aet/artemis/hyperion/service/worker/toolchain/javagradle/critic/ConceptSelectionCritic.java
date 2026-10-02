@@ -88,13 +88,14 @@ class ConceptSelectionCritic {
         }
         String userPrompt = "INSTRUCTOR BRIEF (sole authority):\n" + brief.strip() + "\n\nGENERATOR-AUTHORED CONCEPT CANDIDATES:\n" + candidateText;
         try {
-            String response = reviewer.call(CONCEPT_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, CONCEPT_REVIEW_MAX_OUTPUT_TOKENS);
+            String response = reviewer.call(CONCEPT_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONCEPT_REVIEW_MAX_OUTPUT_TOKENS);
             ConceptSelectionReview review = parseConceptReview(readConceptReviewResponse(response), candidates, candidateEvidence);
             if (review.complete() || cancelled.getAsBoolean()) {
                 return review;
             }
             String correction = reviewer.call(CONCEPT_REVIEW_SYSTEM_PROMPT_TEMPLATE,
-                    userPrompt + CONCEPT_REVIEW_CORRECTION + "\n\nSERVER VALIDATION FAILURE TO CORRECT:\n" + review.auditSummary(), usageSink, CONCEPT_REVIEW_MAX_OUTPUT_TOKENS);
+                    userPrompt + CONCEPT_REVIEW_CORRECTION + "\n\nSERVER VALIDATION FAILURE TO CORRECT:\n" + review.auditSummary(), usageSink, cancelled,
+                    CONCEPT_REVIEW_MAX_OUTPUT_TOKENS);
             return parseConceptReview(readConceptReviewResponse(correction), candidates, candidateEvidence);
         }
         catch (RuntimeException e) {
