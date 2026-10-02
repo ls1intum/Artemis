@@ -572,3 +572,41 @@ describe('TumAetUiTabPanelComponent preserveContent', () => {
         expect(panel(2).hasAttribute('inert')).toBe(false);
     });
 });
+
+@Component({
+    template: `
+        <tumaet-ui-tabs [value]="value()" (valueChange)="value.set($event)">
+            <tumaet-ui-tab-list aria-label="Artifacts">
+                @if (showDesign()) {
+                    <tumaet-ui-tab value="design">Design</tumaet-ui-tab>
+                }
+                <tumaet-ui-tab value="files">Files</tumaet-ui-tab>
+            </tumaet-ui-tab-list>
+            <tumaet-ui-tab-panels>
+                @if (showDesign()) {
+                    <tumaet-ui-tab-panel value="design">Exercise design</tumaet-ui-tab-panel>
+                }
+                <tumaet-ui-tab-panel value="files">Exercise files</tumaet-ui-tab-panel>
+            </tumaet-ui-tab-panels>
+        </tumaet-ui-tabs>
+    `,
+    imports: TABS_IMPORTS,
+})
+class ConditionalFirstTabHostComponent {
+    readonly value = signal<string | number | undefined>('design');
+    readonly showDesign = signal(true);
+}
+
+describe('conditional first tab selection', () => {
+    it('keeps the bound selection until conditional tabs have registered', async () => {
+        await TestBed.configureTestingModule({ imports: [ConditionalFirstTabHostComponent] }).compileComponents();
+        const fixture = TestBed.createComponent(ConditionalFirstTabHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.value()).toBe('design');
+        const tabs = fixture.debugElement.queryAll(By.css('tumaet-ui-tab'));
+        expect(tabs[0].nativeElement.getAttribute('aria-selected')).toBe('true');
+        expect(tabs[1].nativeElement.getAttribute('aria-selected')).toBe('false');
+    });
+});
