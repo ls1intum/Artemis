@@ -96,7 +96,7 @@ class WorkerTransportProviderTest {
     private static void verifyDelivery(WorkerTransport writer, WorkerTransport reader) {
         var identity = new ExecutionIdentityDTO("job", "document:1", UUID.randomUUID(), "worker-1", UUID.randomUUID(), 0);
         var event = new WorkerEventDTO(WorkerCommandDTO.PROTOCOL_VERSION, "worker-1", identity.workerIncarnation(), 1, Instant.now(), WorkerEventType.FINISHED, identity, true,
-                "sha256:" + "a".repeat(64), null, "result", new WorkerCapacityDTO(1, List.of()), new WorkloadCapabilityDTO("document-check", 1, "text"));
+                "sha256:" + "a".repeat(64), null, "result".repeat(100_000), new WorkerCapacityDTO(1, List.of()), new WorkloadCapabilityDTO("document-check", 1, "text"));
         writer.publish(event);
         assertThatThrownBy(() -> reader.receive(identity, _ -> {
             throw new IllegalStateException("apply failed");

@@ -26,7 +26,7 @@ public class WorkerTransport {
 
     private static final Duration COMMAND_TTL = Duration.ofMinutes(2);
 
-    private static final Duration EVENT_TTL = Duration.ofHours(4);
+    private static final Duration ACKNOWLEDGEMENT_TTL = Duration.ofHours(4);
 
     private static final Duration HEARTBEAT_TTL = Duration.ofSeconds(10);
 
@@ -57,8 +57,9 @@ public class WorkerTransport {
             synchronized (this) {
                 current = cachedMaps;
                 if (current == null) {
-                    current = new Maps(provider.getExpiringMap("aiworker-event-chunks", EVENT_TTL), provider.getExpiringMap("aiworker-heartbeats", HEARTBEAT_TTL),
-                            provider.getExpiringMap("aiworker-dead-commands", Duration.ofHours(24)), provider.getExpiringMap("aiworker-command-failures", COMMAND_TTL));
+                    current = new Maps(provider.getMap("aiworker-event-chunks"), provider.getExpiringMap("aiworker-event-acknowledgements", ACKNOWLEDGEMENT_TTL),
+                            provider.getExpiringMap("aiworker-heartbeats", HEARTBEAT_TTL), provider.getExpiringMap("aiworker-dead-commands", Duration.ofHours(24)),
+                            provider.getExpiringMap("aiworker-command-failures", COMMAND_TTL));
                     cachedMaps = current;
                 }
             }
@@ -71,7 +72,7 @@ public class WorkerTransport {
     }
 
     private DistributedMap<String, String> events(String workerId) {
-        return eventMaps.computeIfAbsent(workerId, id -> provider.getExpiringMap("aiworker-events-" + id, EVENT_TTL));
+        return eventMaps.computeIfAbsent(workerId, id -> provider.getMap("aiworker-events-" + id));
     }
 
     public void send(WorkerCommandDTO command) {
@@ -153,10 +154,12 @@ public class WorkerTransport {
         events.lock(event.workerId());
         String existing;
         try {
-            existing = events.get(key);
+            existing = maps.acknowledgements().get(key);
             if (existing == null) {
-                long outstanding = events.entrySet().stream().filter(entry -> !entry.getValue().startsWith("A:"))
-                        .mapToLong(entry -> Long.parseLong(entry.getValue().substring(entry.getValue().lastIndexOf(':') + 1))).sum();
+                existing = events.get(key);
+            }
+            if (existing == null) {
+                long outstanding = events.entrySet().stream().mapToLong(entry -> Long.parseLong(entry.getValue().substring(entry.getValue().lastIndexOf(':') + 1))).sum();
                 if (outstanding + bytes > MAX_OUTSTANDING_BYTES_PER_WORKER) {
                     throw new IllegalStateException("Worker event storage is full");
                 }
@@ -172,19 +175,19 @@ public class WorkerTransport {
         if (existing != null && !writing.equals(existing)) {
             throw new IllegalStateException("Worker event sequence was reused with different content");
         }
-        int count = (body.length() + CHUNK_CHARS - 1) / CHUNK_CHARS;
-        for (int index = 0; index < count; index++) {
-            int start = index * CHUNK_CHARS;
-            maps.chunks().put(key + ":" + index, body.substring(start, Math.min(start + CHUNK_CHARS, body.length())));
-        }
         events.lock(key);
         try {
-            String current = events.get(key);
-            if (acknowledged.equals(current)) {
+            if (acknowledged.equals(maps.acknowledgements().get(key))) {
                 return;
             }
+            String current = events.get(key);
             if (!writing.equals(current) && !ready.equals(current)) {
                 throw new IllegalStateException("Worker event reservation changed during publication");
+            }
+            int count = (body.length() + CHUNK_CHARS - 1) / CHUNK_CHARS;
+            for (int index = 0; index < count; index++) {
+                int start = index * CHUNK_CHARS;
+                maps.chunks().put(key + ":" + index, body.substring(start, Math.min(start + CHUNK_CHARS, body.length())));
             }
             events.put(key, ready);
         }
@@ -204,8 +207,7 @@ public class WorkerTransport {
         Maps maps = maps();
         DistributedMap<String, String> events = events(identity.workerId());
         String prefix = identity.workerId() + ":" + identity.executionId() + ":";
-        String key = events.keySet().stream().filter(candidate -> candidate.startsWith(prefix) && !String.valueOf(events.get(candidate)).startsWith("A:")).min(String::compareTo)
-                .orElse(null);
+        String key = events.keySet().stream().filter(candidate -> candidate.startsWith(prefix)).min(String::compareTo).orElse(null);
         if (key == null) {
             return false;
         }
@@ -222,29 +224,33 @@ public class WorkerTransport {
             if (length < 1 || length > WorkerMessageCodecApi.MAX_MESSAGE_CHARS || count < 1 || count > (WorkerMessageCodecApi.MAX_MESSAGE_CHARS / CHUNK_CHARS) + 1) {
                 throw new IllegalArgumentException("Invalid worker event manifest");
             }
-            StringBuilder body = new StringBuilder(length);
-            for (int index = 0; index < count; index++) {
-                String chunk = maps.chunks().get(key + ":" + index);
-                if (chunk == null) {
-                    return false;
+            String acknowledgement = "A:" + manifest.substring(2);
+            if (!acknowledgement.equals(maps.acknowledgements().get(key))) {
+                StringBuilder body = new StringBuilder(length);
+                for (int index = 0; index < count; index++) {
+                    String chunk = maps.chunks().get(key + ":" + index);
+                    if (chunk == null) {
+                        return false;
+                    }
+                    body.append(chunk);
                 }
-                body.append(chunk);
+                if (body.length() != length || !sha256(body.toString()).equals(parts[2])) {
+                    throw new IllegalStateException("Worker event chunks do not match their manifest");
+                }
+                WorkerEventDTO event = codec.decodeEvent(body.toString());
+                if (!identity.equals(event.identity())) {
+                    throw new IllegalArgumentException("Worker event does not match its execution");
+                }
+                apply.accept(event);
+                maps.acknowledgements().put(key, acknowledgement);
             }
-            if (body.length() != length || !sha256(body.toString()).equals(parts[2])) {
-                throw new IllegalStateException("Worker event chunks do not match their manifest");
+            for (int index = 0; index < count; index++) {
+                maps.chunks().remove(key + ":" + index);
             }
-            WorkerEventDTO event = codec.decodeEvent(body.toString());
-            if (!identity.equals(event.identity())) {
-                throw new IllegalArgumentException("Worker event does not match its execution");
-            }
-            apply.accept(event);
-            events.put(key, "A:" + manifest.substring(2));
+            events.remove(key, manifest);
         }
         finally {
             events.unlock(key);
-        }
-        for (int index = 0; index < count; index++) {
-            maps.chunks().remove(key + ":" + index);
         }
         return true;
     }
@@ -269,8 +275,8 @@ public class WorkerTransport {
         }
     }
 
-    private record Maps(DistributedMap<String, String> chunks, DistributedMap<String, String> heartbeats, DistributedMap<String, String> deadCommands,
-            DistributedMap<String, Integer> commandFailures) {
+    private record Maps(DistributedMap<String, String> chunks, DistributedMap<String, String> acknowledgements, DistributedMap<String, String> heartbeats,
+            DistributedMap<String, String> deadCommands, DistributedMap<String, Integer> commandFailures) {
     }
 
 }
