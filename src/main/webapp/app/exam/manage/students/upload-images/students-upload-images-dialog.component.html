@@ -1,83 +1,68 @@
-<form id="userImportDialogForm" name="importForm" role="form" novalidate>
-    <div class="form-group">
-        <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.introText"></p>
-        <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.pdfExampleText"></p>
-    </div>
-    <div class="d-flex justify-content-center align-items-center">
-        <img
-            class="border"
-            width="300"
-            height="425"
-            ngSrc="/content/images/upload_student_images_pdf_example_img.png"
-            [alt]="'artemisApp.exam.examUsers.pdfExampleAlt' | artemisTranslate"
-        />
-    </div>
-    <div class="form-group">
-        <div class="d-flex align-items-end">
-            <div>
-                <label for="importPDF" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.exam.examUsers.pdfFile.label"></label>
-                <jhi-help-icon text="artemisApp.exam.examUsers.pdfFile.tooltip" class="me-1" />
+<tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.exam.examUsers.dialogTitle' | artemisTranslate" size="medium">
+    <!-- The dialog projects its content only once, so the form is rebuilt on every opening to drop the file chosen before. -->
+    @if (visible()) {
+        <form id="userImportDialogForm" name="importForm" role="form" novalidate class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+                <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.introText"></p>
+                <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.pdfExampleText"></p>
             </div>
-            @if (isParsing()) {
-                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" animation="spin" />
-            }
-        </div>
-        <div class="mt-2">
-            <input id="importPDF" type="file" accept=".pdf" (change)="onPDFFileSelect($event)" />
-        </div>
-    </div>
-    <div class="d-flex justify-content-between mt-4">
-        @let usersNotFound = notFoundUsers()?.numberOfUsersNotFound ?? 0;
-        @let imagesSaved = notFoundUsers()?.numberOfImagesSaved ?? 0;
-        @if (usersNotFound > 0 || imagesSaved === 0) {
-            <div class="flex-shrink-0 me-2 d-flex">
-                @if (hasParsed()) {
-                    <div>
-                        <div class="ms-2">
+            <div class="flex items-center justify-center">
+                <img
+                    class="border border-(--border-color)"
+                    width="300"
+                    height="425"
+                    ngSrc="/content/images/upload_student_images_pdf_example_img.png"
+                    [alt]="'artemisApp.exam.examUsers.pdfExampleAlt' | artemisTranslate"
+                />
+            </div>
+            <div class="flex flex-col gap-2">
+                <div class="flex items-end gap-2">
+                    <div class="flex items-center gap-1">
+                        <label for="importPDF" class="m-0 font-semibold" jhiTranslate="artemisApp.exam.examUsers.pdfFile.label"></label>
+                        <jhi-help-icon text="artemisApp.exam.examUsers.pdfFile.tooltip" />
+                    </div>
+                    @if (isParsing()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                </div>
+                <input id="importPDF" type="file" accept=".pdf" (change)="onPDFFileSelect($event)" />
+            </div>
+            @if (hasParsed()) {
+                @if (usersNotFound() > 0 || imagesSaved() === 0) {
+                    <div class="flex flex-col gap-1">
+                        <div>
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotFound"></strong>
-                            <span>
-                                <b class="text-state-danger">{{ usersNotFound }}</b>
-                            </span>
+                            <span class="font-bold text-state-danger">{{ usersNotFound() }}</span>
                         </div>
-                        <div class="ms-2">
+                        <div>
                             <strong>{{ 'artemisApp.exam.examUsers.numberOfImagesSaved' | artemisTranslate }}:</strong>
-                            <span
-                                ><b style="color: green">{{ imagesSaved }}</b></span
-                            >
+                            <span class="font-bold text-state-success">{{ imagesSaved() }}</span>
                         </div>
                     </div>
+                } @else {
+                    <strong class="text-state-success" jhiTranslate="artemisApp.exam.examUsers.allImagesSaved"></strong>
                 }
-            </div>
-        }
-        @if (imagesSaved > 0 && usersNotFound === 0) {
-            <div class="flex-shrink-0 me-2 d-flex">
-                @if (hasParsed()) {
-                    <div>
-                        <div class="ms-2">
-                            <strong style="color: green" jhiTranslate="artemisApp.exam.examUsers.allImagesSaved"></strong>
-                        </div>
-                    </div>
+            }
+        </form>
+    }
+    <ng-template #footer>
+        @if (!hasParsed()) {
+            <button tumAetUiButton type="button" severity="secondary" (click)="clear()">
+                <fa-icon [icon]="faBan" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            <button id="import" tumAetUiButton type="button" name="importButton" [disabled]="!file() || isParsing()" (click)="parsePDFFile()">
+                <fa-icon [icon]="faUpload" />
+                <span jhiTranslate="artemisApp.exam.examUsers.saveImages"></span>
+                @if (isParsing()) {
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
                 }
-            </div>
+            </button>
+        } @else {
+            <button id="finish-button" tumAetUiButton type="button" [severity]="usersNotFound() === 0 ? 'success' : 'danger'" (click)="onFinish()">
+                <fa-icon [icon]="faCheck" />
+                <span jhiTranslate="entity.action.finish"></span>
+            </button>
         }
-        <div class="flex-grow-1 d-flex justify-content-end">
-            @if (!hasParsed()) {
-                <button type="button" class="btn btn-secondary cancel me-2" (click)="clear()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                </button>
-            }
-            @if (!hasParsed()) {
-                <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="!file() || isParsing()" (click)="parsePDFFile()">
-                    <fa-icon [icon]="faUpload" class="me-2" />
-                    <span jhiTranslate="artemisApp.exam.examUsers.saveImages"></span>
-                    <fa-icon class="ms-1" [hidden]="!isParsing()" animation="spin" [icon]="faCircleNotch" />
-                </button>
-            } @else {
-                <button type="button" [ngClass]="hasParsed() && usersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
-                    <fa-icon [icon]="faCheck" class="me-2" />
-                    <span jhiTranslate="entity.action.finish"></span>
-                </button>
-            }
-        </div>
-    </div>
-</form>
+    </ng-template>
+</tumaet-ui-dialog>

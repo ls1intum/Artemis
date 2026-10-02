@@ -661,10 +661,6 @@
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
                     "AttendanceChecked": "Anwesenheitsprüfung bestanden"
                 },
-                "filterGroup": {
-                    "progress": "Fortschritt",
-                    "attendance": "Anwesenheit"
-                },
                 "menu": {
                     "manageStudents": "Studierende",
                     "examLogistics": "Logistik",
