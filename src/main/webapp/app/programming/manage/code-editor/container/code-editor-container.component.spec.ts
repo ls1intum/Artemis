@@ -466,20 +466,6 @@ describe('CodeEditorContainerComponent', () => {
         expect(gridStub.toggleCollapse).toHaveBeenCalledWith(event, CollapsableCodeEditorElement.BuildOutput);
     });
 
-    it('should collapse only the build output column beside the feedback panel of an assessment', () => {
-        fixture.componentRef.setInput('isTutorAssessment', true);
-        const event = { event: { target: undefined }, horizontal: false } as any;
-        expect(component.buildOutputCollapsed()).toBe(false);
-
-        component.onToggleCollapse(event, CollapsableCodeEditorElement.BuildOutput);
-        // The whole row would hide the panel as well, so the grid is left alone
-        expect(gridStub.toggleCollapse).not.toHaveBeenCalled();
-        expect(component.buildOutputCollapsed()).toBe(true);
-
-        component.onToggleCollapse(event, CollapsableCodeEditorElement.BuildOutput);
-        expect(component.buildOutputCollapsed()).toBe(false);
-    });
-
     it('should expose feedbacks for submission when inline feedback is enabled', () => {
         const feedback = { id: 1 } as Feedback;
         fixture.componentRef.setInput('participation', {

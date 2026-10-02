@@ -76,6 +76,7 @@
                 [referencedFeedback]="referencedFeedbackForBadges()"
                 [showEditorInstructions]="showEditorInstructions"
                 [isTutorAssessment]="true"
+                [buildable]="false"
                 [highlightFileChanges]="true"
                 [readOnlyManualFeedback]="readOnly()"
                 [highlightDifferences]="highlightDifferences"
@@ -86,15 +87,17 @@
                 <div editorTitle *ngTemplateOutlet="editorTitle"></div>
                 <div editorToolbar *ngTemplateOutlet="editorToolbar"></div>
                 <ng-container editorSidebar *ngTemplateOutlet="editorSidebar" />
-                <!-- Beside the build output: the general feedback, the private note and the student's complaint, as in the text
-                     and modeling assessments. All tabs stay rendered: the general feedback list must stay registered for the
-                     instruction checkboxes. -->
-                <section editorBottomSide class="programming-assessment-details">
+                <!-- Below the instructions: the build output, the general feedback, the private note and the student's complaint,
+                     as in the text and modeling assessments. All tabs stay rendered: the general feedback list must stay registered
+                     for the instruction checkboxes, and the build output marks compilation errors and code analysis issues in the
+                     editor. -->
+                <section editorSidebarPanel class="programming-assessment-details">
                     <div class="programming-assessment-details__header">
                         <jhi-assessment-details-header
                             [(activeTab)]="detailsTab"
                             [feedbackCount]="unreferencedFeedback().length"
                             [hasNote]="hasTutorNote()"
+                            [showBuildOutput]="true"
                             [disabled]="readOnly() || !manualResult()?.id"
                             [complaintType]="complaint()?.complaintType"
                             [complaintAwaitsResponse]="complaint()?.accepted === undefined"
@@ -102,6 +105,14 @@
                         />
                     </div>
                     <div class="programming-assessment-details__content">
+                        <div class="programming-assessment-details__build-output" [hidden]="detailsTab() !== 'buildOutput'">
+                            <jhi-code-editor-build-output
+                                [participation]="participation()!"
+                                [showHeader]="false"
+                                (onAnnotations)="codeEditorContainer()?.onAnnotations($event)"
+                                (onError)="codeEditorContainer()?.onError($event)"
+                            />
+                        </div>
                         <div [hidden]="detailsTab() !== 'feedback'">
                             @if (manualResult()?.id; as resultId) {
                                 <jhi-unreferenced-feedback

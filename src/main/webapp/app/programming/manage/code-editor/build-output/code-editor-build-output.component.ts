@@ -38,6 +38,8 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     participation = input.required<Participation>();
     secondaryHeader = input<boolean>(false);
     readonly collapsed = input(false);
+    /** Whether it shows its collapsible header. Off in a tab of the assessment's feedback panel, which names it already. */
+    readonly showHeader = input(true);
 
     onAnnotations = output<Array<Annotation>>();
     onToggleCollapse = output<{ event: MouseEvent; horizontal: boolean }>();

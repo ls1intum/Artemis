@@ -23,6 +23,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -64,6 +65,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         AssessmentLayoutComponent,
         NgTemplateOutlet,
         CodeEditorContainerComponent,
+        CodeEditorBuildOutputComponent,
         IncludedInScoreBadgeComponent,
         RouterLink,
         ProgrammingAssessmentRepoExportButtonComponent,
@@ -159,7 +161,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly isAtLeastEditor = signal(false);
 
     readonly unreferencedFeedback = signal<Feedback[]>([]);
-    /** The open tab of the general feedback, notes and complaint panel beside the build output. */
+    /** The open tab of the build output, general feedback, notes and complaint panel below the instructions. */
     readonly detailsTab = signal<AssessmentDetailsTab>('feedback');
     /** The complaint whose tab was already opened for the assessor, so it is not opened again on every change. */
     private complaintTabOpenedFor?: number;

@@ -91,49 +91,46 @@
         />
     </ng-container>
     <ng-container editorSidebarRight>
+        @if (isTutorAssessment()) {
+            <!-- In an assessment the instructions share their column with the page's feedback panel below them, as in the
+                 text and modeling assessments. They do not collapse, which would take the panel along. -->
+            <div class="code-editor-assessment-sidebar">
+                <ng-container [ngTemplateOutlet]="instructionsTemplate" />
+                <fa-icon [icon]="faGripLines" class="rg-sidebar-split" />
+                <div
+                    class="code-editor-assessment-sidebar__panel"
+                    jhiResizable
+                    [resizableEdges]="{ top: '.rg-sidebar-split' }"
+                    [resizableHandleOutsideHost]="true"
+                    [resizableConstraints]="{ minHeight: 160 }"
+                >
+                    <ng-content select="[editorSidebarPanel]" />
+                </div>
+            </div>
+        } @else {
+            <ng-container [ngTemplateOutlet]="instructionsTemplate" />
+        }
+    </ng-container>
+    <ng-template #instructionsTemplate>
         <jhi-code-editor-instructions
             [class.d-none]="!showEditorInstructions()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
             [isAssessmentMode]="isTutorAssessment()"
+            [disableCollapse]="isTutorAssessment()"
         >
             <ng-content select="[editorSidebar]" />
         </jhi-code-editor-instructions>
-    </ng-container>
+    </ng-template>
     <ng-container editorBottomArea>
-        @if (isTutorAssessment()) {
-            <!-- In an assessment the build output shares its row with the feedback panel the page projects beside it. -->
-            <div class="code-editor-assessment-bottom" [class.code-editor-assessment-bottom--output-collapsed]="buildOutputCollapsed()">
-                @if (buildable()) {
-                    <div
-                        class="code-editor-assessment-bottom__output"
-                        jhiResizable
-                        [resizableEdges]="{ right: '.rg-bottom-split' }"
-                        [resizableHandleOutsideHost]="true"
-                        [resizableConstraints]="{ minWidth: 240 }"
-                        [resizableEnabled]="!buildOutputCollapsed()"
-                    >
-                        <ng-container [ngTemplateOutlet]="buildOutputTemplate" />
-                    </div>
-                    @if (!buildOutputCollapsed()) {
-                        <fa-icon [icon]="faGripLinesVertical" class="rg-bottom-split" />
-                    }
-                }
-                <div class="code-editor-assessment-bottom__side">
-                    <ng-content select="[editorBottomSide]" />
-                </div>
-            </div>
-        } @else if (buildable()) {
-            <ng-container [ngTemplateOutlet]="buildOutputTemplate" />
+        @if (buildable()) {
+            <jhi-code-editor-build-output
+                [participation]="participation()"
+                [secondaryHeader]="!showNavbar()"
+                [collapsed]="grid.buildOutputIsCollapsed()"
+                (onAnnotations)="onAnnotations($event)"
+                (onError)="onError($event)"
+                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
+            />
         }
     </ng-container>
-    <ng-template #buildOutputTemplate>
-        <jhi-code-editor-build-output
-            [participation]="participation()"
-            [secondaryHeader]="!showNavbar()"
-            [collapsed]="buildOutputCollapsed()"
-            (onAnnotations)="onAnnotations($event)"
-            (onError)="onError($event)"
-            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
-        />
-    </ng-template>
 </jhi-code-editor-grid>

@@ -2,6 +2,12 @@
     <tumaet-ui-tabs class="assessment-details-header__tabs" [value]="activeTab()" (valueChange)="selectTab($event)">
         <!-- The panel header draws the line below the tabs, so the tab list's own line would double it. -->
         <tumaet-ui-tab-list style="border-bottom: 0" [attr.aria-label]="'artemisApp.assessment.feedbackAndNotes' | artemisTranslate">
+            @if (showBuildOutput()) {
+                <tumaet-ui-tab value="buildOutput" data-testid="assessment-details-tab-build-output">
+                    <fa-icon [icon]="faTerminal" aria-hidden="true" />
+                    <span>{{ 'artemisApp.editor.buildOutput' | artemisTranslate }}</span>
+                </tumaet-ui-tab>
+            }
             <tumaet-ui-tab value="feedback" data-testid="assessment-details-tab-feedback">
                 <fa-icon [icon]="faCommentDots" aria-hidden="true" />
                 <span>{{ 'artemisApp.assessment.generalFeedback' | artemisTranslate }}</span>

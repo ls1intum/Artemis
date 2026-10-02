@@ -1,5 +1,5 @@
-// The page fills the viewport like the text and modeling assessments: the code editor grid splits it into the editor and
-// the row of the build output and the feedback panel, and each of them scrolls on its own instead of the whole page.
+// The page fills the viewport like the text and modeling assessments: the code editor grid splits it into the file browser,
+// the editor, and the instructions above the feedback panel, and each of them scrolls on its own instead of the whole page.
 :host {
     display: block;
     height: 100%;
@@ -38,8 +38,8 @@
     }
 }
 
-// The general feedback, notes and complaint panel beside the build output. It is framed like the build output card next to
-// it, and only its content scrolls, so the tabs stay in reach.
+// The build output, general feedback, notes and complaint panel below the instructions. It is framed like the instructions
+// card above it, and only its content scrolls, so the tabs stay in reach.
 .programming-assessment-details {
     display: flex;
     height: 100%;
@@ -51,7 +51,7 @@
     background: var(--tumaet-ui-content-background);
 
     &__header {
-        // The tabs scroll on the header's surface, the same as the build output header beside it
+        // The tabs scroll on the header's surface, the same as the instructions header above it
         --tumaet-ui-tab-scroll-background: var(--code-editor-panel-header-background);
 
         display: flex;

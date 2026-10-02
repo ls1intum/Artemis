@@ -42,8 +42,11 @@ export class CodeEditorGridComponent {
     private static readonly EDITOR_CENTER_MIN_WIDTH = 300;
     private static readonly VERTICAL_BUFFER_PX = 40;
     private static readonly HORIZONTAL_BUFFER_PX = 24;
-    /** Height the code editor keeps in an assessment, where the bottom row takes its height from the editor's. */
-    private static readonly ASSESSMENT_EDITOR_MIN_HEIGHT = 200;
+    /**
+     * Widest share of the row the instructions column takes in an assessment, like the text and modeling assessment
+     * workspace, which keeps the side with the submission at 36% or more.
+     */
+    private static readonly ASSESSMENT_INSTRUCTIONS_MAX_SHARE = 0.64;
 
     /**
      * Maximum panel sizes (px), recomputed on layout-affecting events (see {@link recomputeMaxConstraints}) rather
@@ -104,12 +107,11 @@ export class CodeEditorGridComponent {
 
         this.maxConstraints.set({
             heightMain: Math.max(this.resizableMinHeightMain, Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom))),
-            heightBottom: this.isTutorAssessment()
-                ? // The editor and the bottom row share the page's height, so the bottom row grows only into what the editor can spare
-                  Math.max(this.resizableMinHeightBottom, (main?.offsetHeight ?? 0) + (bottom?.offsetHeight ?? 0) - CodeEditorGridComponent.ASSESSMENT_EDITOR_MIN_HEIGHT)
-                : Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain))),
+            heightBottom: Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain))),
             widthLeft: Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
-            widthRight: Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
+            widthRight: this.isTutorAssessment()
+                ? availableWidth * CodeEditorGridComponent.ASSESSMENT_INSTRUCTIONS_MAX_SHARE
+                : Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
         });
     }
 

@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
@@ -74,7 +74,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
-    protected readonly faGripLinesVertical = faGripLinesVertical;
+    protected readonly faGripLines = faGripLines;
     // grid is the root layout element and is always rendered, so it is required and safe to dereference.
     readonly grid = viewChild.required(CodeEditorGridComponent);
     // fileBrowser, actions, buildOutput and monacoEditor are optional viewChildren:
@@ -96,12 +96,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     buildable = input<boolean>(true);
     showEditorInstructions = input<boolean>(true);
     isTutorAssessment = input<boolean>(false);
-    /**
-     * In an assessment the build output shares its row with the feedback panel beside it, so collapsing it narrows its own
-     * column instead of the whole row, which would hide the panel as well.
-     */
-    private readonly buildOutputCollapsedBesidePanel = signal(false);
-    readonly buildOutputCollapsed = computed(() => (this.isTutorAssessment() ? this.buildOutputCollapsedBesidePanel() : this.grid().buildOutputIsCollapsed()));
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
     /**
@@ -458,11 +452,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
-        if (this.isTutorAssessment() && collapsableElement === CollapsableCodeEditorElement.BuildOutput) {
-            (event.event.target as HTMLElement | undefined)?.blur();
-            this.buildOutputCollapsedBesidePanel.update((collapsed) => !collapsed);
-            return;
-        }
         this.grid().toggleCollapse(event, collapsableElement);
     }
 
