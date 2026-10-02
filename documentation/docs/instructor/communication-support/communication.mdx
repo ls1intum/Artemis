@@ -99,7 +99,7 @@ Depending on the confidence score, one of three things happens:
 
 Exemplary thread view with an autonomously posted response:
 
-<Image src={autonomousTutorResponseImg} alt={"autonomous-tutor-response"} size={ImageSize.large} />
+<Image src={autonomousTutorResponseImg} alt={"autonomous-tutor-response"} size={ImageSize.medium} />
 
 If a response requires tutor review, it appears in the thread with a yellow highlight and the `Awaiting tutor review` badge next to the Iris Bot sender name. Tutors can act on it directly from the thread using three buttons:
 
@@ -109,7 +109,7 @@ If a response requires tutor review, it appears in the thread with a yellow high
 
 Reviewing an unverified response:
 
-<Image src={autonomousTutorReviewImg} alt={"autonomous-tutor-review"} size={ImageSize.large} />
+<Image src={autonomousTutorReviewImg} alt={"autonomous-tutor-review"} size={ImageSize.medium} />
 
 Once a tutor approves or edits a response, the badge disappears and the message becomes visible to the student, indistinguishable in structure from any other reply aside from the Iris icon and bot tag.
 
@@ -129,11 +129,11 @@ Every response that is approved or edited, as well as every thread that is marke
 
 Confirmation after resolving a thread:
 
-<Image src={autonomousTutorMemorySavedImg} alt={"autonomous-tutor-memory-saved"} size={ImageSize.large} />
+<Image src={autonomousTutorMemorySavedImg} alt={"autonomous-tutor-memory-saved"} size={ImageSize.medium} />
 
 An Iris response that refers to an earlier verified answer:
 
-<Image src={autonomousTutorMemoryReferenceImg} alt={"autonomous-tutor-memory-reference"} size={ImageSize.large} />
+<Image src={autonomousTutorMemoryReferenceImg} alt={"autonomous-tutor-memory-reference"} size={ImageSize.medium} />
 
 The Autonomous Tutor is only available in public course channels; private conversations are excluded. The feature is disabled by default and must be explicitly enabled by instructors in the course's Iris settings. All processing runs on self-hosted language models, and students who have opted out of AI interaction are excluded from every processing step, including reading, embedding, and storage.
 
