@@ -49,6 +49,7 @@
                     "number": "Room Number",
                     "name": "Name",
                     "building": "Building",
+                    "registeredStudentsUnknown": "The number of registered students is not available yet, or it could not be loaded. You can distribute the students as soon as it is known; if this message stays, close the dialog and open it again.",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
                     "distribute": "Distribute",

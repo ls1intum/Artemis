@@ -85,7 +85,11 @@
                 </table>
             </div>
             @let capacities = seatInfo();
-            @if (canSeatAllStudents()) {
+            @if (!registeredStudentsKnown()) {
+                <tumaet-ui-message severity="warn" data-testid="registered-students-unknown">
+                    <span jhiTranslate="artemisApp.exam.examUsers.rooms.registeredStudentsUnknown"></span>
+                </tumaet-ui-message>
+            } @else if (canSeatAllStudents()) {
                 <tumaet-ui-message severity="success">
                     <span jhiTranslate="artemisApp.exam.examUsers.rooms.enoughSeatsForStudents" [translateValues]="{ totalStudents: capacities.totalStudents }"></span>
                 </tumaet-ui-message>
