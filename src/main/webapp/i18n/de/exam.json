@@ -13,6 +13,10 @@
                 "introText": "Dieser Dialog kann zum Hochladen von PDF-Dateien und zum Extrahieren von Bildern für registrierte Studenten verwendet werden.",
                 "dialogText": "Jeder Eintrag in der Eingabedatei muss entweder einen Wert für die Matrikelnummer, das Login oder die E-Mail enthalten.\nDie Angaben zu Name und Vorname sind optional.",
                 "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
+                "pdfExampleAlt": "Beispiel-PDF-Seite mit Kopfzeile und zwei Spalten mit Studierendenfotos und Angaben zur Identifizierung",
+                "studentPhotoAlt": "Foto von {{ login }}",
+                "studentPhotoMissingAlt": "Kein Foto für {{ login }} verfügbar",
+                "studentSignatureAlt": "Unterschrift von {{ login }}",
                 "pdfFile": {
                     "label": "PDF-Datei auswählen",
                     "tooltip": "Bitte wähle eine PDF-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
@@ -45,6 +49,7 @@
                     "number": "Raumnummer",
                     "name": "Name",
                     "building": "Gebäude",
+                    "registeredStudentsUnknown": "Die Anzahl der registrierten Studierenden liegt noch nicht vor oder konnte nicht geladen werden. Du kannst die Studierenden verteilen, sobald sie bekannt ist; falls diese Meldung bleibt, schließe den Dialog und öffne ihn erneut.",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
@@ -115,7 +120,7 @@
                 "feedbackRequested": "KI-Feedback angefordert",
                 "feedbackRequestSent": "KI-Feedback wurde für alle Text- und Modellierungsaufgaben angefordert. Die Ergebnisse erscheinen in Kürze.",
                 "feedbackUsageLoadFailed": "Die verbleibenden KI-Feedback-Anfragen konnten nicht geladen werden. Bitte lade die Seite neu, um es erneut zu versuchen.",
-                "noFeedbackSuggestionModuleConfigured": "Für keine der Aufgaben in dieser Prüfung ist KI-Feedback konfiguriert.",
+                "noCourseLevelAthenaFormativeEnabled": "KI-Feedback ist für diesen Kurs nicht aktiviert.",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
                 "noCommitHash": "Es hat kein Commit stattgefunden",
@@ -503,6 +508,11 @@
             "title": "Klausuren",
             "createExam": "Erstelle eine neue Klausur",
             "importExam": "Importiere eine Klausur",
+            "empty": {
+                "title": "Noch keine Klausuren",
+                "description": "Erstelle eine Klausur oder importiere eine aus einem anderen Kurs, um zu beginnen.",
+                "documentation": "Mehr über Klausuren erfahren"
+            },
             "editExam": "Bearbeiten",
             "courseTitle": "Kursname",
             "examId": "Klausur ID",
@@ -651,10 +661,6 @@
                     "DidNotAttend": "Nicht teilgenommen",
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
                     "AttendanceChecked": "Anwesenheitsprüfung bestanden"
-                },
-                "filterGroup": {
-                    "progress": "Fortschritt",
-                    "attendance": "Anwesenheit"
                 },
                 "menu": {
                     "manageStudents": "Studierende",

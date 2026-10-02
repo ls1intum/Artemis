@@ -104,6 +104,7 @@ export const expectedProfileInfo: ProfileInfo = {
     needsToAcceptTerms: false,
     operatorAdminName: '',
     operatorName: 'TUM',
+    universityName: 'Artemis Test University',
     programmingLanguageFeatures: programmingLanguageFeatures,
     registrationEnabled: true,
     repositoryAuthenticationMechanisms: ['token', 'ssh', 'password'],

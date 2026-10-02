@@ -9,6 +9,7 @@ import {
     isResumeExerciseAvailable,
     isStartExerciseAvailable,
     isStartPracticeAvailable,
+    validateStrictDateSequence,
 } from 'app/exercise/util/exercise.utils';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -27,6 +28,22 @@ describe('ExerciseUtils', () => {
         participation.individualDueDate = dueDate;
         return participation;
     };
+
+    describe('validateStrictDateSequence()', () => {
+        const date = dayjs('2026-01-01T12:00:00Z');
+
+        it('should validate all configured preceding and following dates', () => {
+            expect(validateStrictDateSequence([date.subtract(2, 'hour'), date.subtract(1, 'hour')], date, [date.add(1, 'hour'), date.add(2, 'hour')])).toBe(true);
+            expect(validateStrictDateSequence([date.subtract(1, 'hour'), date.add(1, 'hour')], date, [])).toBe(false);
+            expect(validateStrictDateSequence([], date, [date.add(1, 'hour'), date.subtract(1, 'hour')])).toBe(false);
+        });
+
+        it('should ignore missing dates and reject equal dates', () => {
+            expect(validateStrictDateSequence([undefined], undefined, [undefined])).toBe(true);
+            expect(validateStrictDateSequence([date], date, [])).toBe(false);
+            expect(validateStrictDateSequence([], date, [date])).toBe(false);
+        });
+    });
 
     describe('getExerciseDueDate()', () => {
         it('should return no due date if the exercise has no due date', () => {
@@ -110,6 +127,24 @@ describe('ExerciseUtils', () => {
             };
 
             expect(isStartPracticeAvailable(exercise, participation)).toBe(startPracticeAvailable);
+        });
+
+        it.each([
+            { type: ExerciseType.TEXT, teamMode: false, startPracticeAvailable: true },
+            { type: ExerciseType.TEXT, teamMode: true, startPracticeAvailable: false },
+            { type: ExerciseType.MODELING, teamMode: false, startPracticeAvailable: true },
+            { type: ExerciseType.MODELING, teamMode: true, startPracticeAvailable: false },
+        ])('should only allow practicing a $type exercise after the due date if it is not a team exercise (teamMode: $teamMode)', ({ type, teamMode, startPracticeAvailable }) => {
+            const exercise: Exercise = {
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                type,
+                teamMode,
+                dueDate: dayjs().subtract(1, 'day'),
+            };
+
+            expect(isStartPracticeAvailable(exercise)).toBe(startPracticeAvailable);
         });
 
         it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, undefined])('should not allow practicing for other exercises', (type) => {

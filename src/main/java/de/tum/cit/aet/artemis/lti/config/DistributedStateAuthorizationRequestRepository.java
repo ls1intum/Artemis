@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -8,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,9 +59,8 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
     }
 
     @Override
-    public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
+    public OAuth2AuthorizationRequest loadAuthorizationRequest(@NonNull HttpServletRequest request) {
         log.info("Loading authorization request from distributed store");
-        Objects.requireNonNull(request, "request cannot be null");
         String stateParameter = request.getParameter("state");
         if (stateParameter == null) {
             return null;
@@ -86,10 +85,8 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
     }
 
     @Override
-    public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest, HttpServletRequest request, HttpServletResponse response) {
+    public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest, @NonNull HttpServletRequest request, @NonNull HttpServletResponse response) {
         log.info("Saving authorization request to distributed store");
-        Objects.requireNonNull(request, "request cannot be null");
-        Objects.requireNonNull(response, "response cannot be null");
         if (authorizationRequest == null) {
             this.removeAuthorizationRequest(request, response);
         }

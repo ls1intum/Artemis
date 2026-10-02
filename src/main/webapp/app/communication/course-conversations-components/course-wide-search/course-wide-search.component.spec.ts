@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Directive, input, output } from '@angular/core';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -16,8 +16,13 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { PostSortCriterion, SortDirection } from 'app/communication/metis.util';
-import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisLectureChannelDTO } from 'test/helpers/sample/metis-sample-data';
+import { PostSortCriterion, SortDirection } from 'app/communication/communication.util';
+import {
+    communicationExamChannelDTO,
+    communicationExerciseChannelDTO,
+    communicationGeneralChannelDTO,
+    communicationLectureChannelDTO,
+} from 'test/helpers/sample/communication-sample-data';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -45,11 +50,11 @@ describe('CourseWideSearchComponent', () => {
     let component: CourseWideSearchComponent;
     let fixture: ComponentFixture<CourseWideSearchComponent>;
 
-    let metisService: MetisService;
-    let metisConversationService: MetisConversationService;
+    let communicationService: CommunicationService;
+    let courseConversationsService: CourseConversationsService;
     let examplePost: Post;
     const course = { id: 1 } as Course;
-    const conversationDtoArray = [metisGeneralChannelDTO, metisExerciseChannelDTO, metisLectureChannelDTO, metisExamChannelDTO];
+    const conversationDtoArray = [communicationGeneralChannelDTO, communicationExerciseChannelDTO, communicationLectureChannelDTO, communicationExamChannelDTO];
 
     const courseWideSearchConfig = new CourseWideSearchConfig();
     courseWideSearchConfig.searchTerm = '';
@@ -80,8 +85,8 @@ describe('CourseWideSearchComponent', () => {
                 InfiniteScrollStubDirective,
             ],
             providers: [
-                MockProvider(MetisConversationService),
-                MockProvider(MetisService),
+                MockProvider(CourseConversationsService),
+                MockProvider(CommunicationService),
                 MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -96,18 +101,18 @@ describe('CourseWideSearchComponent', () => {
     beforeEach(() => {
         examplePost = { id: 1, content: 'test' } as Post;
 
-        metisService = TestBed.inject(MetisService);
-        metisConversationService = TestBed.inject(MetisConversationService);
-        Object.defineProperty(metisConversationService, 'isServiceSetup$', {
+        communicationService = TestBed.inject(CommunicationService);
+        courseConversationsService = TestBed.inject(CourseConversationsService);
+        Object.defineProperty(courseConversationsService, 'isServiceSetup$', {
             get: () => new BehaviorSubject(true).asObservable(),
         });
-        Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
+        Object.defineProperty(courseConversationsService, 'conversationsOfUser$', {
             get: () => new BehaviorSubject(conversationDtoArray).asObservable(),
         });
-        Object.defineProperty(metisService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
-        Object.defineProperty(metisService, 'createEmptyPostForContext', { value: () => new Post() });
-        Object.defineProperty(metisConversationService, 'course', { get: () => course });
-        Object.defineProperty(metisService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
+        Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
+        Object.defineProperty(communicationService, 'createEmptyPostForContext', { value: () => new Post() });
+        Object.defineProperty(courseConversationsService, 'course', { get: () => course });
+        Object.defineProperty(communicationService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
 
         fixture = TestBed.createComponent(CourseWideSearchComponent);
         component = fixture.componentInstance;
@@ -187,7 +192,7 @@ describe('CourseWideSearchComponent', () => {
     });
 
     it('should fetch posts on next page fetch', () => {
-        const getFilteredPostSpy = vi.spyOn(metisService, 'getFilteredPosts');
+        const getFilteredPostSpy = vi.spyOn(communicationService, 'getFilteredPosts');
         fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
         component.totalNumberOfPosts = 10;
         component.fetchNextPage();
@@ -223,7 +228,7 @@ describe('CourseWideSearchComponent', () => {
             filterToUnresolved: false,
             filterToAnsweredOrReacted: false,
         });
-        component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
+        component.courseWideSearchConfig().selectedConversations = [communicationGeneralChannelDTO];
         component.onSearchConfigSelectionChange();
         fixture.changeDetectorRef.detectChanges();
 
@@ -234,7 +239,7 @@ describe('CourseWideSearchComponent', () => {
 
     it('should re-enable the filterToCourseWide if no conversation is selected', () => {
         fixture.changeDetectorRef.detectChanges();
-        component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
+        component.courseWideSearchConfig().selectedConversations = [communicationGeneralChannelDTO];
         component.onSearchConfigSelectionChange();
         fixture.changeDetectorRef.detectChanges();
 
@@ -303,5 +308,34 @@ describe('CourseWideSearchComponent', () => {
         const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
         selectedDirectionOption.dispatchEvent(new Event('click'));
         expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.DESCENDING);
+    });
+
+    it('should change sorting direction once when a held Space key is released', () => {
+        const sortControl = fixture.nativeElement.querySelector('[role="button"]') as HTMLElement;
+        const initialDirection = component.sortingOrder();
+        const changeDirection = vi.spyOn(component, 'onChangeSortDir');
+
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            sortControl.querySelector('fa-icon')!.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(changeDirection).not.toHaveBeenCalled();
+
+        for (const repeat of [false, true, true]) {
+            const event = new KeyboardEvent('keydown', { key: ' ', repeat, bubbles: true, cancelable: true });
+            sortControl.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(true);
+        }
+        expect(changeDirection).not.toHaveBeenCalled();
+        expect(component.sortingOrder()).toBe(initialDirection);
+
+        sortControl.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(changeDirection).toHaveBeenCalledOnce();
+        expect(component.sortingOrder()).not.toBe(initialDirection);
     });
 });

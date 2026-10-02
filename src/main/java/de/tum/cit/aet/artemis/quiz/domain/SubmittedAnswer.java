@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A SubmittedAnswer.
@@ -35,7 +36,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 // add JsonTypeInfo and JsonSubTypes annotation to help Jackson decide which class the JSON should be deserialized to
 // depending on the value of the "type" property.
-// Note: The "type" property has to be added on the front-end when making a request that includes a SubmittedAnswer Object
+// Note: The "type" property has to be added by the client when making a request that includes a SubmittedAnswer Object
 // However, the "type" property will be automatically added by Jackson when an object is serialized
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
@@ -59,6 +60,7 @@ public abstract class SubmittedAnswer extends DomainObject {
     @ManyToOne
     @JsonIgnore
     @JoinColumn(nullable = false)
+    @Parent
     private QuizSubmission submission;
 
     // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection). All three submitted-answer types

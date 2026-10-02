@@ -56,7 +56,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         // Seed a LocalVC-compatible repository for the TESTS repo
         var testsSlug = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + RepositoryType.TESTS.getName();
@@ -357,7 +356,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
             assertThat(testRepo.workingCopyCommits().getFirst()).isNotEqualTo(testRepo.bareRepositoryCommits().getFirst());
 
             // Execute the Rest call
-            request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/pull", HttpStatus.OK, Void.class);
+            request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/pull", null, HttpStatus.OK, null);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
             assertThat(testRepo.workingCopyCommits().getFirst()).isEqualTo(testRepo.bareRepositoryCommits().getFirst());

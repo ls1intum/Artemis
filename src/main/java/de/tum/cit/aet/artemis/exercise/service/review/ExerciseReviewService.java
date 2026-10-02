@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewRepositorySe
 import de.tum.cit.aet.artemis.exercise.service.review.validation.ExerciseReviewValidationUtil;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
@@ -75,22 +75,22 @@ public class ExerciseReviewService {
 
     private final UserRepository userRepository;
 
-    private final GitService gitService;
+    private final BareGitRepositoryService bareGitRepositoryService;
 
     private final ExerciseReviewRepositoryService exerciseReviewRepositoryService;
 
     private final RepositoryService repositoryService;
 
     public ExerciseReviewService(CommentThreadGroupRepository commentThreadGroupRepository, CommentThreadRepository commentThreadRepository, CommentRepository commentRepository,
-            ExerciseRepository exerciseRepository, ExerciseVersionRepository exerciseVersionRepository, UserRepository userRepository, GitService gitService,
-            ExerciseReviewRepositoryService exerciseReviewRepositoryService, RepositoryService repositoryService) {
+            ExerciseRepository exerciseRepository, ExerciseVersionRepository exerciseVersionRepository, UserRepository userRepository,
+            BareGitRepositoryService bareGitRepositoryService, ExerciseReviewRepositoryService exerciseReviewRepositoryService, RepositoryService repositoryService) {
         this.commentThreadGroupRepository = commentThreadGroupRepository;
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
         this.exerciseRepository = exerciseRepository;
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.userRepository = userRepository;
-        this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
         this.exerciseReviewRepositoryService = exerciseReviewRepositoryService;
         this.repositoryService = repositoryService;
     }
@@ -635,7 +635,7 @@ public class ExerciseReviewService {
 
     @Nullable
     private String readFileContentAtCommit(LocalVCRepositoryUri repositoryUri, String commitSha, String filePath, long exerciseId, CommentThreadLocationType targetType) {
-        try (Repository repository = gitService.getBareRepository(repositoryUri, false)) {
+        try (Repository repository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             return repositoryService.getFileContentFromBareRepository(repository, commitSha, filePath).orElse(null);
         }
         catch (Exception ex) {

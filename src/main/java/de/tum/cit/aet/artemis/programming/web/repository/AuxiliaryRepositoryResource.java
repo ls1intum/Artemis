@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
@@ -55,9 +56,9 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("configuration/auxiliary-repositories")
+@FeatureUsage(UserFeature.PROGRAMMING_REPOSITORY_EDITING)
 @RestController
-@RequestMapping({ "api/programming/auxiliary-repositories/", "api/programming/auxiliary-repository/" })
+@RequestMapping("api/programming/auxiliary-repositories/")
 public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -148,7 +149,10 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "{auxiliaryRepositoryId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    // POST rather than GET, even though nothing is submitted: a pull mutates the server-side working copy, and
+    // SameSite=Lax - the only thing standing in for CSRF tokens here - still sends the auth cookie on a cross-site
+    // top-level GET navigation. See the comment on csrf(...) in SecurityConfiguration.
+    @PostMapping(value = "{auxiliaryRepositoryId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Void> pullChanges(@PathVariable Long auxiliaryRepositoryId) {
         return super.pullChanges(auxiliaryRepositoryId);

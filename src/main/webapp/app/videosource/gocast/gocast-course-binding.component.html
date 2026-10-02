@@ -6,9 +6,9 @@
         </header>
 
         @if (error()) {
-            <tum-ui-message severity="error" role="alert" aria-live="assertive">
+            <tumaet-ui-message severity="error" role="alert" aria-live="assertive">
                 <span jhiTranslate="artemisApp.gocast.error"></span>
-            </tum-ui-message>
+            </tumaet-ui-message>
         }
 
         @if (statusAnnouncement(); as announcement) {
@@ -16,9 +16,9 @@
         }
 
         @if (error() && !binding() && !loading()) {
-            <tum-ui-button data-testid="gocast-load-retry" severity="secondary" variant="outlined" (clicked)="refresh()">
+            <tumaet-ui-button data-testid="gocast-load-retry" severity="secondary" variant="outlined" (clicked)="refresh()">
                 <span jhiTranslate="artemisApp.gocast.refresh"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         }
 
         @if (loading() && !binding()) {
@@ -30,7 +30,7 @@
             <div class="rounded-xl border border-default bg-surface p-4 sm:p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <span class="text-sm font-medium text-(--text-body-secondary)" jhiTranslate="artemisApp.gocast.status.label"></span>
-                    <tum-ui-tag [severity]="statusSeverity()" [value]="'artemisApp.gocast.status.' + current.status.toLowerCase() | artemisTranslate" />
+                    <tumaet-ui-tag [severity]="statusSeverity()" [value]="'artemisApp.gocast.status.' + current.status.toLowerCase() | artemisTranslate" />
                 </div>
 
                 @if (current.courseName) {
@@ -54,30 +54,30 @@
                 }
 
                 @if (current.upstreamUnavailable) {
-                    <tum-ui-message severity="error" class="mt-4 block">
+                    <tumaet-ui-message severity="error" class="mt-4 block">
                         <span jhiTranslate="artemisApp.gocast.refreshUnavailable"></span>
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
 
                 @if (isRestricted()) {
-                    <tum-ui-message severity="warn" class="mt-4 block">
+                    <tumaet-ui-message severity="warn" class="mt-4 block">
                         <span jhiTranslate="artemisApp.gocast.restrictedWarning"></span>
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
 
                 <div class="mt-4 flex flex-wrap gap-3 border-t border-default pt-4">
                     @if (current.status === 'UNLINKED' || current.status === 'PENDING' || current.status === 'EXPIRED' || current.status === 'REVOKED') {
-                        <tum-ui-button severity="primary" [loading]="action() === 'connect'" [disabled]="!!action()" (clicked)="connect()">
+                        <tumaet-ui-button severity="primary" [loading]="action() === 'connect'" [disabled]="!!action()" (clicked)="connect()">
                             <span [jhiTranslate]="current.status === 'UNLINKED' ? 'artemisApp.gocast.connect' : 'artemisApp.gocast.restart'"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     }
-                    <tum-ui-button severity="secondary" variant="outlined" [loading]="loading()" [disabled]="loading() || !!action()" (clicked)="refresh()">
+                    <tumaet-ui-button severity="secondary" variant="outlined" [loading]="loading()" [disabled]="loading() || !!action()" (clicked)="refresh()">
                         <span jhiTranslate="artemisApp.gocast.refresh"></span>
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                     @if (current.status === 'ACTIVE' || current.status === 'REVOKED') {
-                        <tum-ui-button severity="danger" variant="outlined" [loading]="action() === 'disconnect'" [disabled]="!!action()" (clicked)="showDisconnectDialog()">
+                        <tumaet-ui-button severity="danger" variant="outlined" [loading]="action() === 'disconnect'" [disabled]="!!action()" (clicked)="showDisconnectDialog()">
                             <span jhiTranslate="artemisApp.gocast.disconnect"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     }
                 </div>
                 @if (action()) {
@@ -88,7 +88,7 @@
     </section>
 }
 
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="disconnectDialogVisible"
     [header]="'artemisApp.gocast.disconnectTitle' | artemisTranslate"
     [closable]="true"
@@ -98,11 +98,11 @@
 >
     <p jhiTranslate="artemisApp.gocast.disconnectQuestion"></p>
     <ng-template #footer>
-        <tum-ui-button severity="secondary" variant="text" (clicked)="cancelDisconnect()">
+        <tumaet-ui-button severity="secondary" variant="text" (clicked)="cancelDisconnect()">
             <span jhiTranslate="entity.action.cancel"></span>
-        </tum-ui-button>
-        <tum-ui-button severity="danger" (clicked)="disconnect()">
+        </tumaet-ui-button>
+        <tumaet-ui-button severity="danger" (clicked)="disconnect()">
             <span jhiTranslate="artemisApp.gocast.disconnect"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

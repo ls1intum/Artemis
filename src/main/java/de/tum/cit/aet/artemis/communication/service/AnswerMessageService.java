@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -25,8 +23,8 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
@@ -60,7 +58,7 @@ public class AnswerMessageService extends PostingService {
 
     private static final Logger log = LoggerFactory.getLogger(AnswerMessageService.class);
 
-    private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
+    private static final String ANSWER_POST_ENTITY_NAME = "messages.answerPost";
 
     private final AnswerPostRepository answerPostRepository;
 
@@ -78,8 +76,6 @@ public class AnswerMessageService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
-    private final TransactionTemplate transactionTemplate;
-
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     @SuppressWarnings("PMD.ExcessiveParameterList")
@@ -88,8 +84,7 @@ public class AnswerMessageService extends PostingService {
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
-            Optional<AutonomousTutorApi> autonomousTutorApi, PlatformTransactionManager transactionManager,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            Optional<AutonomousTutorApi> autonomousTutorApi, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -99,7 +94,6 @@ public class AnswerMessageService extends PostingService {
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
@@ -208,7 +202,7 @@ public class AnswerMessageService extends PostingService {
 
         // checks
         if (!Objects.equals(answerMessage.id(), answerMessageId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ANSWER_POST_ENTITY_NAME, "idnull");
         }
         AnswerPost existingAnswerMessage = this.findById(answerMessageId);
 
@@ -313,7 +307,7 @@ public class AnswerMessageService extends PostingService {
         var savedPosts = savedPostRepository.findSavedPostByPostIdAndPostType(answerMessageId, PostingType.ANSWER);
         savedPostRepository.deleteAll(savedPosts);
 
-        broadcastForPost(updatedMessage, MetisCrudAction.UPDATE, course.getId(), null);
+        broadcastForPost(updatedMessage, CommunicationCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -321,7 +315,7 @@ public class AnswerMessageService extends PostingService {
      */
     @Override
     public String getEntityName() {
-        return METIS_ANSWER_POST_ENTITY_NAME;
+        return ANSWER_POST_ENTITY_NAME;
     }
 
     /**
@@ -332,10 +326,6 @@ public class AnswerMessageService extends PostingService {
      */
     public AnswerPost findById(Long answerMessageId) {
         return answerPostRepository.findAnswerMessageByIdElseThrow(answerMessageId);
-    }
-
-    public AnswerPost findByIdWithPessimisticWriteLock(Long answerMessageId) {
-        return answerPostRepository.findAnswerMessageByIdWithPessimisticWriteLockElseThrow(answerMessageId);
     }
 
     public List<AnswerPost> findByIdIn(List<Long> answerMessageIds) {
@@ -376,47 +366,44 @@ public class AnswerMessageService extends PostingService {
         var course = preCheckUserAndCourseForMessaging(user, courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
-        var verificationResult = transactionTemplate.execute(status -> verifyAnswerMessageWithinTransaction(courseId, answerMessageId, verifyDto, user, course));
-
-        // Strip any other unverified Iris siblings before broadcast so students never receive their content via the post update.
-        verificationResult.answerMessage().getPost().getAnswers()
-                .removeIf(answer -> !Objects.equals(answer.getId(), verificationResult.answerMessage().getId()) && answer.isUnverifiedIrisReply());
-
-        sendMentionNotificationForAnswerMessage(course, verificationResult.conversation(), verificationResult.answerMessage(), verificationResult.mentionedUsers());
-        this.preparePostAndBroadcast(verificationResult.answerMessage(), course);
-        return verificationResult.answerMessage();
-    }
-
-    private VerificationResult verifyAnswerMessageWithinTransaction(Long courseId, Long answerMessageId, VerifyAnswerMessageDTO verifyDto, User user, Course course) {
-        AnswerPost existingAnswerMessage = this.findByIdWithPessimisticWriteLock(answerMessageId);
+        AnswerPost existingAnswerMessage = answerPostRepository.findAnswerMessageWithPostConversationAndVerifierByIdElseThrow(answerMessageId);
         if (!existingAnswerMessage.getPost().getConversation().getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("Answer message does not belong to the specified course", METIS_ANSWER_POST_ENTITY_NAME, "invalidCourse");
+            throw new BadRequestAlertException("Answer message does not belong to the specified course", ANSWER_POST_ENTITY_NAME, "invalidCourse");
         }
         if (!existingAnswerMessage.getAuthor().isBot()) {
-            throw new BadRequestAlertException("Only Iris-generated answers can be verified", METIS_ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
+            throw new BadRequestAlertException("Only Iris-generated answers can be verified", ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
         }
         if (existingAnswerMessage.isVerified()) {
-            throw new BadRequestAlertException("Answer message is already verified", METIS_ANSWER_POST_ENTITY_NAME, "alreadyVerified");
+            throw new BadRequestAlertException("Answer message is already verified", ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
         // The acting tutor must belong to the conversation, mirroring mayUpdateOrDeleteAnswerMessageElseThrow:
         // any course member may verify in a course-wide channel, but a restricted channel requires membership.
         conversationService.isMemberOrCreateForCourseWideElseThrow(existingAnswerMessage.getPost().getConversation().getId(), user, Optional.empty());
 
         Set<User> mentionedUsers = Set.of();
+        String updatedContent = null;
         if (verifyDto != null && verifyDto.content() != null && !verifyDto.content().isBlank()) {
             mentionedUsers = parseUserMentions(course, verifyDto.content());
-            existingAnswerMessage.setContent(verifyDto.content());
-            existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
+            updatedContent = verifyDto.content();
         }
-        existingAnswerMessage.setVerified(true);
-        existingAnswerMessage.setVerifiedBy(user);
-        existingAnswerMessage.setVerifiedAt(ZonedDateTime.now());
+        // The isVerified() check above is only a fast rejection for the common case; two tutors pressing approve at the
+        // same moment both pass it. This is the one that decides, because the guard lives inside the statement.
+        if (!answerPostRepository.verifyIfUnverified(answerMessageId, user, ZonedDateTime.now(), updatedContent)) {
+            throw new BadRequestAlertException("Answer message is already verified", ANSWER_POST_ENTITY_NAME, "alreadyVerified");
+        }
 
-        AnswerPost savedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
-        Conversation conversation = conversationService.getConversationById(savedAnswerMessage.getPost().getConversation().getId());
-        savedAnswerMessage.getPost().setConversation(conversation);
+        // The update above is a bulk statement and does not touch the instance read before it, so re-read what is
+        // broadcast and returned. Each repository call runs in its own session, so this read sees the committed row.
+        AnswerPost verifiedAnswerMessage = answerPostRepository.findAnswerMessageWithPostConversationAndVerifierByIdElseThrow(answerMessageId);
+        Conversation conversation = conversationService.getConversationById(verifiedAnswerMessage.getPost().getConversation().getId());
+        verifiedAnswerMessage.getPost().setConversation(conversation);
 
-        return new VerificationResult(savedAnswerMessage, conversation, mentionedUsers);
+        // Strip any other unverified Iris siblings before broadcast so students never receive their content via the post update.
+        verifiedAnswerMessage.getPost().getAnswers().removeIf(answer -> !Objects.equals(answer.getId(), verifiedAnswerMessage.getId()) && answer.isUnverifiedIrisReply());
+
+        sendMentionNotificationForAnswerMessage(course, conversation, verifiedAnswerMessage, mentionedUsers);
+        this.preparePostAndBroadcast(verifiedAnswerMessage, course);
+        return verifiedAnswerMessage;
     }
 
     private void sendMentionNotificationForAnswerMessage(Course course, Conversation conversation, AnswerPost answerMessage, Set<User> mentionedUsers) {
@@ -434,9 +421,6 @@ public class AnswerMessageService extends PostingService {
                 answerMessage.getId(), conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversation.getId(), answerMessage.getAuthor().isBot());
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
-    }
-
-    private record VerificationResult(AnswerPost answerMessage, Conversation conversation, Set<User> mentionedUsers) {
     }
 
     /**

@@ -35,7 +35,7 @@ import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-ite
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -51,12 +51,13 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
 import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
+import { MODULE_FEATURE_ATLASLLM } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-container',
     templateUrl: './course-management-container.component.html',
     styleUrls: ['course-management-container.component.scss'],
-    providers: [MetisConversationService],
+    providers: [CourseConversationsService],
     imports: [
         CdkScrollable,
         NgClass,
@@ -136,7 +137,11 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     activatedComponentReference = signal<SidebarView | undefined>(undefined);
 
-    override async ngOnInit() {
+    override ngOnInit() {
+        void this.initializeCourseManagementContainerComponent();
+    }
+
+    private async initializeCourseManagementContainerComponent(): Promise<void> {
         this.gocastEnabled = this.profileService.isGocastEnabled();
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
@@ -155,17 +160,20 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             .getFeatureToggleActive(FeatureToggle.AtlasAgent)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
-                this.autoOrchestrationActive = isActive;
+                // The runtime toggle alone is not enough. Auto orchestration runs only where AtlasLLM is configured,
+                // and without it nothing ever publishes to the topic, so subscribing would open a channel that stays
+                // silent forever.
+                this.autoOrchestrationActive = isActive && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
                 const currentCourseId = this.courseId();
-                if (isActive && currentCourseId !== undefined) {
+                if (this.autoOrchestrationActive && currentCourseId !== undefined) {
                     this.subscribeToAutoOrchestrationNotifications(currentCourseId);
-                } else if (!isActive && this.autoOrchestrationCourseId !== undefined) {
+                } else if (!this.autoOrchestrationActive && this.autoOrchestrationCourseId !== undefined) {
                     this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
                     this.autoOrchestrationCourseId = undefined;
                 }
             });
 
-        await super.ngOnInit();
+        await super.initializeBaseCourseContainerComponent();
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
@@ -229,6 +237,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.courseSub?.unsubscribe();
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
+                this.storeCourseIfAbsent(courseResponse.body);
                 this.course.set(courseResponse.body);
             }
             this.sidebarItems.set(this.getSidebarItems());
@@ -241,10 +250,17 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return this.courseManagementService.find(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
+                    this.storeCourseIfAbsent(res.body);
                     this.course.set(res.body);
                 }
             }),
         );
+    }
+
+    private storeCourseIfAbsent(course: Course): void {
+        if (course.id && !this.courseStorageService.getCourse(course.id)) {
+            this.courseStorageService.updateCourse(course);
+        }
     }
 
     protected getHasSidebar(): boolean {

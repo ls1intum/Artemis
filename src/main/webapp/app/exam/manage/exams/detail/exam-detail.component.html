@@ -1,5 +1,5 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0" data-testid="exam-detail-title">
+    <h5 class="mb-0!" data-testid="exam-detail-title">
         <span jhiTranslate="artemisApp.exam.details"></span>
     </h5>
 </div>
@@ -10,8 +10,9 @@
             <jhi-course-exam-archive-button class="flex flex-wrap items-center gap-2" [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
         }
         <button
+            type="button"
             [title]="'entity.action.reset' | artemisTranslate"
-            tumUiButton
+            tumAetUiButton
             severity="danger"
             size="small"
             jhiDeleteButton
@@ -28,9 +29,10 @@
             <span class="title-bar-collapsible-label" jhiTranslate="entity.action.reset"></span>
         </button>
         <button
+            type="button"
             [title]="'entity.action.delete' | artemisTranslate"
             data-testid="exam-delete"
-            tumUiButton
+            tumAetUiButton
             severity="danger"
             size="small"
             jhiDeleteButton
@@ -50,27 +52,27 @@
     }
 </ng-template>
 
-<div class="row justify-content-center">
-    <div class="col-11">
+<div class="flex justify-center">
+    <div class="w-full max-w-[91.666667%]">
         @if (exam()) {
             <div>
                 @if (exam()?.course?.isAtLeastInstructor) {
-                    <div>
+                    <div class="flex flex-wrap gap-2">
                         @if (canHaveBonus()) {
-                            <a [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
+                            <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier('bonus')">
                                 <fa-icon [icon]="faAward" />
                                 <span jhiTranslate="artemisApp.examManagement.bonus"></span>
                             </a>
                         }
                         <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-                            <a [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" class="tab-item btn btn-info btn-md mt-1">
+                            <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')">
                                 <fa-icon [icon]="faHeartBroken" />
                                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                             </a>
                         </jhi-feature-overlay>
                     </div>
                 }
-                <hr />
+                <hr class="my-4 border-(--border-color)" />
                 @if (exam()?.course?.isAtLeastInstructor) {
                     <div>
                         <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam()" />

@@ -29,16 +29,17 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -107,7 +108,7 @@ describe('CourseManagementContainerComponent', () => {
     let courseAccessStorageService: CourseAccessStorageService;
     let eventManager: EventManager;
     let featureToggleService: FeatureToggleService;
-    let metisConversationService: MetisConversationService;
+    let courseConversationsService: CourseConversationsService;
     let profileService: ProfileService;
     let localStorageService: LocalStorageService;
     let router: Router;
@@ -157,7 +158,7 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: HasAnyAuthorityDirective, useClass: MockHasAnyAuthorityDirective },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -186,18 +187,10 @@ describe('CourseManagementContainerComponent', () => {
             ),
         );
         findCourseSpy = findSpy;
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
-            activeProfiles: [PROFILE_PROD],
-            gocastEnabled: true,
-        } as unknown as ProfileInfo);
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
-        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-
         fixture = TestBed.createComponent(CourseManagementContainerComponent);
         component = fixture.componentInstance;
         component.isShownViaLti.set(false);
-        metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
+        courseConversationsService = fixture.debugElement.injector.get(CourseConversationsService);
 
         getCourseSummarySpy = vi.spyOn(courseAdminService, 'getCourseSummary').mockReturnValue(
             of(
@@ -237,7 +230,15 @@ describe('CourseManagementContainerComponent', () => {
 
         deleteSpy = vi.spyOn(courseAdminService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
-        vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
+            activeProfiles: [PROFILE_PROD],
+            gocastEnabled: true,
+        } as unknown as ProfileInfo);
+
+        vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
     });
     afterEach(() => {
         component?.ngOnDestroy();
@@ -253,7 +254,7 @@ describe('CourseManagementContainerComponent', () => {
         const getSidebarItems = vi.spyOn(component, 'getSidebarItems');
         const subscribeToCourseUpdates = vi.spyOn(component as any, 'subscribeToCourseUpdates');
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(getCourseStub).toHaveBeenCalledWith(1);
         expect(getSidebarItems).toHaveBeenCalledOnce();
@@ -266,7 +267,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should subscribe to profileService and set values correctly', async () => {
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isProduction).toBe(true);
         expect(component.isTestServer).toBe(false);
@@ -590,7 +591,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set up conversation service if course has communication enabled', () => {
-        const setUpConversationServiceSpy = vi.spyOn(metisConversationService, 'setUpConversationService').mockImplementation(() => {
+        const setUpConversationServiceSpy = vi.spyOn(courseConversationsService, 'setUpConversationService').mockImplementation(() => {
             return new Observable((subscriber) => subscriber.complete());
         });
 
@@ -620,7 +621,7 @@ describe('CourseManagementContainerComponent', () => {
     it('should get collapse state from localStorage on init', async () => {
         localStorageService.store<boolean>('navbar.collapseState', true);
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isNavbarCollapsed()).toBe(true);
 
@@ -634,7 +635,7 @@ describe('CourseManagementContainerComponent', () => {
     it('should set isNavbarCollapsed to false by default if not in localStorageService', async () => {
         localStorageService.remove('navbar.collapseState');
 
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(component.isNavbarCollapsed()).toBe(false);
     });
@@ -663,7 +664,7 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should subscribe to course modifications', async () => {
         const eventSubscription = vi.spyOn(eventManager, 'subscribe');
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
 
         expect(eventSubscription).toHaveBeenCalledWith('courseModification', expect.any(Function));
     });
@@ -757,7 +758,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should check for unread messages if messaging is enabled', () => {
-        const checkForUnreadMessagesSpy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const checkForUnreadMessagesSpy = vi.spyOn(courseConversationsService, 'checkForUnreadMessages');
         const subscribeToHasUnreadMessagesSpy = vi.spyOn(component as any, 'subscribeToHasUnreadMessages');
         const courseWithMessaging = {
             ...course1,
@@ -773,7 +774,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should not check for unread messages if communication is disabled', () => {
-        const checkForUnreadMessagesSpy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const checkForUnreadMessagesSpy = vi.spyOn(courseConversationsService, 'checkForUnreadMessages');
 
         component.course.set({
             ...course1,
@@ -797,13 +798,35 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should set isSettingsPage to false when not on settings page', async () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
         expect(component.isSettingsPage()).toBe(false);
     });
     it('should set isSettingsPage to true when on settings page', async () => {
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/settings');
         vi.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1/settings', '')));
-        await component.ngOnInit();
+        await component['initializeCourseManagementContainerComponent']();
         expect(component.isSettingsPage()).toBe(true);
+    });
+
+    it('should not subscribe to auto orchestration notifications when AtlasLLM is inactive', async () => {
+        // Atlas is active in the default profile of this spec, AtlasLLM is not, and the runtime toggle returns true.
+        // Nothing publishes to the orchestrator topic on such a server, so the subscription must not be opened.
+        const subscribeSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
+
+        await component['initializeCourseManagementContainerComponent']();
+
+        expect(subscribeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should subscribe to auto orchestration notifications when AtlasLLM is active', async () => {
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM],
+            activeProfiles: [PROFILE_PROD],
+        } as unknown as ProfileInfo);
+        const subscribeSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
+
+        await component['initializeCourseManagementContainerComponent']();
+
+        expect(subscribeSpy).toHaveBeenCalled();
     });
 });

@@ -14,8 +14,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -23,7 +25,10 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -202,13 +207,11 @@ public class TutorParticipationService {
     /**
      * Validates the tutor example submission. If invalid, throw bad request exception with information which feedback are incorrect.
      */
-    private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission, boolean modelingExercise) {
-        var latestResult = tutorExampleSubmission.getSubmission().getLatestResult();
-        if (latestResult == null) {
+    private void validateTutorialExampleSubmission(long exampleSubmissionId, @Nullable List<Feedback> tutorFeedback, boolean modelingExercise) {
+        if (tutorFeedback == null) {
             throw new BadRequestAlertException("The training does not contain an assessment", ENTITY_NAME, "invalid_assessment");
         }
-        var tutorFeedback = latestResult.getFeedbacks();
-        var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+        var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(exampleSubmissionId);
         boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
 
         var unreferencedInstructorFeedbackCount = instructorFeedback.stream().filter(feedback -> feedback.getType() == MANUAL_UNREFERENCED).toList().size();
@@ -248,11 +251,12 @@ public class TutorParticipationService {
      * @throws EntityNotFoundException  if example submission or tutor participation is not found
      * @throws BadRequestAlertException if tutor didn't review the instructions before assessing example submissions
      */
-    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission tutorExampleSubmission, User user)
+    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmissionRequestDTO tutorExampleSubmission, User user)
             throws EntityNotFoundException, BadRequestAlertException {
         TutorParticipation existingTutorParticipation = this.findByExerciseAndTutor(exercise, user);
         // Do not trust the user input
-        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(tutorExampleSubmission.getId());
+        Optional<ExampleSubmission> exampleSubmissionFromDatabase = tutorExampleSubmission.id() == null ? Optional.empty()
+                : exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(tutorExampleSubmission.id());
 
         if (existingTutorParticipation == null || exampleSubmissionFromDatabase.isEmpty()) {
             throw new EntityNotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
@@ -270,13 +274,13 @@ public class TutorParticipationService {
 
         // If it is a tutorial we check the assessment
         if (isTutorial) {
-            validateTutorialExampleSubmission(tutorExampleSubmission, exercise instanceof ModelingExercise);
+            validateTutorialExampleSubmission(originalExampleSubmission.getId(), tutorFeedbackFrom(tutorExampleSubmission), exercise instanceof ModelingExercise);
         }
 
         Set<ExampleSubmission> alreadyAssessedSubmissions = new HashSet<>(existingTutorParticipation.getTrainedExampleSubmissions());
 
         // If the example submission was already assessed, we do not assess it again, we just return the current participation
-        if (alreadyAssessedSubmissions.contains(tutorExampleSubmission)) {
+        if (alreadyAssessedSubmissions.contains(originalExampleSubmission)) {
             return existingTutorParticipation;
         }
 
@@ -308,6 +312,41 @@ public class TutorParticipationService {
         existingTutorParticipation.getTrainedExampleSubmissions().add(originalExampleSubmission);
 
         return existingTutorParticipation;
+    }
+
+    /**
+     * Reads the tutor's assessment off the request: the feedback of the last result the client attached to the
+     * submission, mapped to transient feedback carrying only what the comparison against the instructor's assessment
+     * reads (credits, reference, type, text, grading instruction id).
+     *
+     * @param request the tutor's example submission request
+     * @return the tutor feedback, or null when the client attached no result
+     */
+    @Nullable
+    private static List<Feedback> tutorFeedbackFrom(ExampleSubmissionRequestDTO request) {
+        if (request.submission() == null || request.submission().results() == null || request.submission().results().isEmpty()) {
+            return null;
+        }
+        List<FeedbackDTO> feedbackDTOs = request.submission().results().getLast().feedbacks();
+        if (feedbackDTOs == null) {
+            return new ArrayList<>();
+        }
+        return feedbackDTOs.stream().map(TutorParticipationService::feedbackFrom).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private static Feedback feedbackFrom(FeedbackDTO dto) {
+        Feedback feedback = new Feedback();
+        feedback.setCredits(dto.credits());
+        feedback.setReference(dto.reference());
+        feedback.setType(dto.type());
+        feedback.setText(dto.text());
+        feedback.setDetailText(dto.detailText());
+        if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
+            GradingInstruction gradingInstruction = new GradingInstruction();
+            gradingInstruction.setId(dto.gradingInstruction().id());
+            feedback.setGradingInstruction(gradingInstruction);
+        }
+        return feedback;
     }
 
     /**

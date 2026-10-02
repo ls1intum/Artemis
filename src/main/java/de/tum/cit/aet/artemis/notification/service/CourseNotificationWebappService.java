@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.notification.web.NotificationWebsocketTopics.ALL_COURSE_NOTIFICATIONS;
+import static de.tum.cit.aet.artemis.notification.web.NotificationWebsocketTopics.COURSE_NOTIFICATIONS;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,20 +32,6 @@ import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 @Service
 public class CourseNotificationWebappService extends CourseNotificationBroadcastService {
 
-    private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/notification/";
-
-    private static final String WEBSOCKET_BROADCAST_TOPIC_PREFIX = "/topic/notification/all";
-
-    // Legacy STOMP destinations kept in parallel during the migration to /topic/notification/...
-    // Deployed mobile and external clients may still be subscribed here.
-    // TODO: Remove these legacy destinations together with the mirrored sends below once external clients
-    // have migrated. Target sunset: 2026-09-30 — keep in sync with LegacyNotificationPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_WEBSOCKET_TOPIC_PREFIX = "/topic/communication/notification/";
-
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX = "/topic/communication/notification/all";
-
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseNotificationWebappService(WebsocketMessagingService websocketMessagingService) {
@@ -64,18 +52,14 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
      */
     @Async
     @Override
-    @SuppressWarnings("deprecation")
     protected CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         // Every send returns its own future and all of them are composed, so this method reports the outcome of the
         // websocket work rather than of having started it. Discarding them completed this future immediately, and a
         // broker failure afterwards was recorded as a successful delivery with dispatch-only latency.
         var sends = new ArrayList<CompletableFuture<Void>>();
         recipients.forEach(recipient -> {
-            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification));
-            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification));
-            // Mirror to the legacy destinations so older subscribers continue to receive notifications during the migration window.
-            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification));
-            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification));
+            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), COURSE_NOTIFICATIONS.at(courseNotification.courseId()), courseNotification));
+            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), ALL_COURSE_NOTIFICATIONS.at(), courseNotification));
         });
         return CompletableFuture.allOf(sends.toArray(CompletableFuture[]::new));
     }

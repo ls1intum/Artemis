@@ -285,9 +285,14 @@ const getSubmissionUnderReview = (result: Result | undefined, participation: Par
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
  * This could be because all test cases are only visible after the due date.
  */
-export const isOnlyCompilationTested = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus): boolean => {
+export const isOnlyCompilationTested = (
+    result: Result | undefined,
+    participation: Participation | undefined,
+    templateStatus: ResultTemplateStatus,
+    exercise?: Exercise,
+): boolean => {
     const zeroTests = !result?.testCaseCount;
-    const isProgrammingExercise: boolean = participation?.exercise?.type === ExerciseType.PROGRAMMING;
+    const isProgrammingExercise: boolean = (exercise ?? participation?.exercise)?.type === ExerciseType.PROGRAMMING;
     return (
         templateStatus !== ResultTemplateStatus.NO_RESULT &&
         templateStatus !== ResultTemplateStatus.IS_BUILDING &&
@@ -302,7 +307,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
  *
  * @return {string} the css class
  */
-export const getTextColorClass = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus) => {
+export const getTextColorClass = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus, exercise?: Exercise) => {
     if (!result) {
         return 'text-muted-color';
     }
@@ -325,7 +330,7 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
         return 'text-state-danger';
     }
 
-    if (resultIsPreliminary(result, participation)) {
+    if (resultIsPreliminary(result, participation, exercise)) {
         return 'text-muted-color';
     }
 
@@ -333,7 +338,7 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
         return result?.successful ? 'text-state-success' : 'text-state-danger';
     }
 
-    if (isOnlyCompilationTested(result, participation, templateStatus)) {
+    if (isOnlyCompilationTested(result, participation, templateStatus, exercise)) {
         return 'text-state-success';
     }
 
@@ -352,7 +357,7 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
  * Get the icon type for the result icon as an array
  *
  */
-export const getResultIconClass = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus): IconProp => {
+export const getResultIconClass = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus, exercise?: Exercise): IconProp => {
     if (!result) {
         return faQuestionCircle;
     }
@@ -381,11 +386,11 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
         return faCircleNotch;
     }
 
-    if (resultIsPreliminary(result, participation) || isAIResultAndTimedOut(result)) {
+    if (resultIsPreliminary(result, participation, exercise) || isAIResultAndTimedOut(result)) {
         return faQuestionCircle;
     }
 
-    if (isOnlyCompilationTested(result, participation, templateStatus)) {
+    if (isOnlyCompilationTested(result, participation, templateStatus, exercise)) {
         return faCheckCircle;
     }
 
@@ -401,13 +406,16 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
 /**
  * Returns true if the specified result is preliminary.
  * @param result the result.
+ * @param participation the participation of the result.
+ * @param exercise the exercise the caller already knows, for participations that carry no exercise of their own.
  */
-export const resultIsPreliminary = (result: Result, participation: Participation | undefined) => {
-    const exerciseType = participation?.exercise?.type;
+export const resultIsPreliminary = (result: Result, participation: Participation | undefined, exercise?: Exercise) => {
+    const resolvedExercise = exercise ?? participation?.exercise;
+    const exerciseType = resolvedExercise?.type;
     if (exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.MODELING) {
         return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
-    return !!participation && isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, participation.exercise);
+    return !!participation && isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, resolvedExercise);
 };
 
 /**

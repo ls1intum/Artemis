@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -13,11 +15,13 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "programming_exercise_build_config")
@@ -61,7 +65,10 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "docker_flags", columnDefinition = "longtext")
     private String dockerFlags;
 
-    @OneToOne(mappedBy = "buildConfig")
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "exercise_id", nullable = false, unique = true)
+    @JsonIgnore
+    @Parent
     private ProgrammingExercise programmingExercise;
 
     @Nullable
@@ -223,11 +230,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void setAllowBranching(boolean allowBranching) {
         this.allowBranching = allowBranching;
-    }
-
-    public void filterSensitiveInformation() {
-        setBuildPlanConfiguration(null);
-        setBuildScript(null);
     }
 
     public ProgrammingExercise getProgrammingExercise() {

@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run",
+            "type": "shell",
+            "command": "mvn compile exec:java",
+            "group": { "kind": "build", "isDefault": true },
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "mvn compile",
+            "group": "build",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "panel": "shared" }
+        }
+    ]
+}

@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
  * <p>
  * It routes by cache name: large blob values and the title lookups stay on the node that reads them, and every cache
  * whose entries have to be identical on all nodes stays shared. See {@link BlobCacheConfiguration} and
- * {@link TitleCacheConfiguration} for why those two are local.
+ * {@link BlobCacheConfiguration} for why those are local.
  *
  * <p>
  * Caching is enabled here rather than on the Hazelcast configuration, because that one only exists when Hazelcast is the
@@ -52,9 +52,12 @@ public class CacheManagerConfiguration {
      */
     private static final Duration ATLAS_SESSION_TIME_TO_LIVE = Duration.ofHours(2);
 
+    /** How long the latest GitHub release looked up by {@code ArtemisVersionService} is reused, so a new release is noticed without a restart. */
+    private static final Duration ARTEMIS_VERSION_TIME_TO_LIVE = Duration.ofHours(1);
+
     private static final Map<String, Duration> EXPIRING_CACHES = Map.of("atlas-session-pending-operations", ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-pending-relations",
             ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-exercise-preview", ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-relation-preview", ATLAS_SESSION_TIME_TO_LIVE,
-            "atlas-execution-plan", ATLAS_SESSION_TIME_TO_LIVE);
+            "atlas-execution-plan", ATLAS_SESSION_TIME_TO_LIVE, "artemisVersion", ARTEMIS_VERSION_TIME_TO_LIVE);
 
     /**
      * @param distributedDataProvider the configured provider backing all cluster-wide caches
@@ -68,14 +71,12 @@ public class CacheManagerConfiguration {
     /**
      * @param distributedCacheManager serves the caches shared across nodes
      * @param blobCacheManager        serves the per-node blob caches
-     * @param titleCacheManager       serves the per-node title caches
      * @return the cache manager Spring resolves {@code @Cacheable} against
      */
     @Bean
     @Primary
-    public CacheManager cacheManager(@Qualifier("distributedCacheManager") CacheManager distributedCacheManager, @Qualifier("blobCacheManager") CacheManager blobCacheManager,
-            @Qualifier("titleCacheManager") CacheManager titleCacheManager) {
-        return new RoutingCacheManager(distributedCacheManager, blobCacheManager, titleCacheManager);
+    public CacheManager cacheManager(@Qualifier("distributedCacheManager") CacheManager distributedCacheManager, @Qualifier("blobCacheManager") CacheManager blobCacheManager) {
+        return new RoutingCacheManager(distributedCacheManager, blobCacheManager);
     }
 
     /**

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * Created by Josias Montag on 11.11.16.
@@ -35,6 +36,7 @@ public class BuildLogEntry extends DomainObject {
     @ManyToOne
     @JsonIgnore
     @JoinColumn(nullable = false)
+    @Parent
     private ProgrammingSubmission programmingSubmission;
 
     public BuildLogEntry(ZonedDateTime time, String log) {

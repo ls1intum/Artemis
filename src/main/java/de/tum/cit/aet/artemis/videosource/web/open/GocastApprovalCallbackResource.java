@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.videosource.dto.GocastApprovalResultDTO;
 import de.tum.cit.aet.artemis.videosource.service.GocastBindingConflictException;
 import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
@@ -34,7 +35,7 @@ import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
 
 @Lazy
 @Profile(PROFILE_CORE)
-@FeatureUsage("video/tum-live")
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
 @RestController
 @RequestMapping("api/videosource/public/gocast/approval/")
 public class GocastApprovalCallbackResource {

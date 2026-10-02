@@ -11,7 +11,7 @@ import {
 } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
-import { Course } from 'app/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -82,6 +82,11 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     });
 
     it('should show channel deletion warning when channel option is disabled in edit mode', () => {
+        // The channel section, and its warning, only exist when the course has messaging enabled.
+        fixture.componentRef.setInput('course', {
+            id: 1,
+            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+        } as Course);
         fixture.componentRef.setInput('isEditMode', true);
         runOnPushChangeDetection(fixture);
         const formData: TutorialGroupsConfigurationFormData = {
@@ -117,8 +122,8 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
         }
     });
 
-    it('should render a PrimeNG-style invalid-feedback message only once the invalid period is touched/dirty', () => {
-        const feedback = () => fixture.nativeElement.querySelectorAll('.invalid-feedback');
+    it('should render the period error message only once the invalid period is touched/dirty', () => {
+        const feedback = () => fixture.nativeElement.querySelectorAll('[data-testid="period-error"]');
 
         // invalid (empty period) but still pristine/untouched -> no message yet
         fixture.detectChanges();

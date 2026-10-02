@@ -16,6 +16,9 @@ public final class Constants {
 
     public static final int PASSWORD_MAX_LENGTH = 100;
 
+    /** Maximum UTF-8 byte length supported by BCrypt. */
+    public static final int PASSWORD_MAX_BYTES = 72;
+
     public static final String SET_UP_TEMPLATE_FOR_EXERCISE = "Set up template for exercise";
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
@@ -66,21 +69,7 @@ public final class Constants {
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
-    public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
-
-    public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
-
-    public static final String NEW_RESULT_TOPIC = "/topic/newResults";
-
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
-
-    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
-
-    public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String SUBMISSION_PROCESSING = "/submissionProcessing";
-
-    public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
 
@@ -324,8 +313,6 @@ public final class Constants {
 
     public static final String ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN = "allowedCourseRegistrationUsernamePattern";
 
-    public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
-
     public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
 
     public static final String PLAGIARISM_CACHE_PREFIX = "plagiarism-";
@@ -364,6 +351,25 @@ public final class Constants {
 
     public static final String COURSE_OPERATION_PROGRESS_STATUS = "course-operation-progress-status";
 
+    /**
+     * The cipher the server encrypts push notification payloads with, and — because the name is handed to the device in
+     * {@code PushNotificationRegisterDTO} at registration — the cipher the iOS and Android clients decrypt with. It is a
+     * wire contract, so it cannot be changed on the server alone: every already-installed app would stop being able to
+     * read its notifications.
+     *
+     * <p>
+     * Static analysis flags CBC for being unauthenticated, and that is true as far as it goes. It is accepted here for
+     * what this encryption is actually for. The purpose is data privacy in transit through a third-party relay that
+     * should not be able to read notification text — not integrity of a security decision. Nothing sensitive rides in
+     * the payload: it is the same title and body the user is about to see on their lock screen, never credentials,
+     * tokens or grades-in-confidence. The classic CBC attacks also need a decryption oracle, and the server has none —
+     * it only ever encrypts, and the ciphertext reaches the relay over TLS with a fresh IV per notification.
+     *
+     * <p>
+     * Moving to an AEAD mode stays worthwhile, but it is a staged migration rather than an edit here: teach the clients
+     * the new mode, ship those releases, pick per device from the {@code versionCode} / {@code apiType} the client
+     * already reports at registration, and only then retire CBC.
+     */
     public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
 
     /**
@@ -454,6 +460,11 @@ public final class Constants {
      * The name of the module feature used for AtlasML functionality.
      */
     public static final String MODULE_FEATURE_ATLASML = "atlasml";
+
+    /**
+     * The name of the module feature used for the LLM-backed part of Atlas.
+     */
+    public static final String MODULE_FEATURE_ATLASLLM = "atlasllm";
 
     /**
      * The name of the module feature used for Hyperion functionality.
@@ -549,6 +560,13 @@ public final class Constants {
      * The name of the property used to enable or disable AtlasML functionality.
      */
     public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
+
+    /**
+     * The name of the property used to enable or disable the LLM-backed part of Atlas: the chat agent, the autonomous
+     * competency orchestrator, and the tool surfaces they call. Disabled by default, because none of it can work
+     * without a configured chat model, and every bean behind it is dead weight on an installation that has none.
+     */
+    public static final String ATLASLLM_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasllm.enabled";
 
     /**
      * The name of the property used to enable or disable Hyperion functionality.

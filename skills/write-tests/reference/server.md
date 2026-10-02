@@ -6,7 +6,7 @@ The bases live in `src/test/java/de/tum/cit/aet/artemis/shared/base/`:
 
 | Base                                            | Use for                                                                                                             |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `AbstractSpringIntegrationIndependentTest`      | The default. A test that needs the Spring context but no CI or version control backend.                             |
+| `AbstractSpringIntegrationIndependentTest`      | The default. A test that needs the Spring context but no CI or version control system.                              |
 | `AbstractSpringIntegrationIndependentBatchTest` | Same context, but batched under a shared `@ResourceLock`, so tests using it never run concurrently with each other. |
 | `AbstractSpringIntegrationLocalCILocalVCTest`   | Needs the embedded git server and local CI.                                                                         |
 | `AbstractSpringIntegrationJenkinsLocalVCTest`   | Needs the Jenkins connector.                                                                                        |

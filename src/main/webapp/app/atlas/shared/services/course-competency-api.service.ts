@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import {
     CompetencyRelationDTO,
@@ -20,7 +20,7 @@ interface SuggestCompetencyRelationsResponseDTO {
     relations: { tail_id: string; head_id: string; relation_type: string }[];
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseCompetencyApiService extends BaseApiHttpService {
     private readonly basePath = `atlas/courses/$courseId/course-competencies`;
 

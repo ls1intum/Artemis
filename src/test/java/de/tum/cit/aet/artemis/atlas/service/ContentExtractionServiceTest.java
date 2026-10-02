@@ -124,7 +124,9 @@ class ContentExtractionServiceTest {
 
     @Test
     void extractContent_nullLearningObject_throwsException() {
-        assertThatThrownBy(() -> contentExtractionService.extractContent(null)).isInstanceOf(NullPointerException.class).hasMessage("learningObject must not be null");
+        // The parameter is declared @NonNull rather than asserted with Objects.requireNonNull, so the message is the
+        // one the JVM produces for the pattern-matching switch that dereferences it, not one this service chose.
+        assertThatThrownBy(() -> contentExtractionService.extractContent(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test

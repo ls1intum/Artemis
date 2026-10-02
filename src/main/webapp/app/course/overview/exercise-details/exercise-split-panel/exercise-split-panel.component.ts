@@ -4,7 +4,7 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseSubmission, isExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -13,6 +13,8 @@ import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-part
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -44,6 +46,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
         RouterLink,
         ResizablePanelsComponent,
         PanelDirective,
+        ExerciseHeadersInformationComponent,
         ProblemStatementComponent,
         IrisBaseChatbotComponent,
         IrisLogoComponent,
@@ -87,13 +90,20 @@ export class ExerciseSplitPanelComponent {
     readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
+    // Exposes the active quiz component's mode as a reactive signal so parent templates
+    // can guard against stale submit-disabled state during the live→practice transition.
+    readonly quizComponentMode = computed(() => this._quizComponent()?.mode());
+    // The attempt state is cached per UI tick, so pair it with the mode the component reports right now.
+    readonly quizPracticeAttemptFinished = computed(() => this.quizComponentMode() === 'practice' && (this._quizComponent()?.practiceAttemptFinished() ?? false));
+    readonly quizPracticeInProgress = computed(() => this.exercise().type === ExerciseType.QUIZ && this.participationMode() === 'practice' && !this.quizPracticeAttemptFinished());
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
+
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
     protected readonly faGraduationCap = faGraduationCap;
-    protected readonly faAlignLeft = faAlignLeft;
+    protected readonly faCircleInfo = faCircleInfo;
     protected readonly getIcon = getIcon;
     protected readonly ExerciseType = ExerciseType;
     protected readonly AssessmentType = AssessmentType;
@@ -110,6 +120,11 @@ export class ExerciseSplitPanelComponent {
     readonly allowComplaintsForAutomaticAssessments = input<boolean>(false);
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
+    readonly submissionPolicy = input<SubmissionPolicy>();
+    readonly athenaEnabled = input<boolean>(false);
+    readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
+    /** Whether the title bar is showing the status and due date pills, in which case the details leave them out. */
+    readonly titleBarShowsPills = input<boolean>(false);
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
@@ -244,10 +259,23 @@ export class ExerciseSplitPanelComponent {
 
                 const type = exercise.type;
                 if (type === ExerciseType.QUIZ) {
-                    const targetSegment = mode === 'practice' ? 'practice' : 'live';
                     const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
-                    if (currentSegment !== targetSegment) {
-                        void this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                    if (mode === 'practice') {
+                        // Already on a practice route — either viewing a result or a fresh attempt is in progress.
+                        // Do not re-navigate, so an in-progress attempt is never disrupted.
+                        if (currentSegment === 'practice') {
+                            return;
+                        }
+                        // Entering practice from another mode: show the latest practice result if a practice attempt exists,
+                        // otherwise start the first attempt. Gate on testRun so we never navigate with a graded participation id.
+                        const practiceParticipationId = participation?.testRun ? participation.id : undefined;
+                        if (practiceParticipationId) {
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent });
+                        } else {
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent });
+                        }
+                    } else if (currentSegment !== 'live') {
+                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent });
                     }
                     return;
                 }
@@ -310,11 +338,18 @@ export class ExerciseSplitPanelComponent {
 
     restartPractice(): boolean {
         const quizComponent = this._quizComponent();
-        if (quizComponent && quizComponent.mode() === 'practice') {
-            quizComponent.restartPractice();
+        if (!quizComponent || quizComponent.mode() !== 'practice') {
+            return false;
+        }
+        const params = this.route.firstChild?.snapshot.paramMap;
+        if (params?.get('participationId') || params?.get('submissionId')) {
+            // The URL still names the attempt that was opened, so restart on the bare route, which re-creates the
+            // quiz component — it starts the fresh attempt itself, free of the previous result.
+            void this.router.navigate(['quiz-exercises', this.exercise().id, 'practice'], { relativeTo: this.route.parent });
             return true;
         }
-        return false;
+        quizComponent.restartPractice();
+        return true;
     }
 
     onOutletActivate(component: unknown): void {

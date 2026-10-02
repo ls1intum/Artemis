@@ -13,7 +13,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -92,6 +92,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                         snapshot: {
                             paramMap: convertToParamMap({}),
                             queryParamMap: convertToParamMap({}),
+                            queryParams: { 'correction-round': '0', testRun: 'false' },
                         },
                         parent: {
                             paramMap: of(convertToParamMap({})),
@@ -193,14 +194,15 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should rewrite only the new segment of the assessment path once a random submission is locked', async () => {
         const location = TestBed.inject(Location);
-        vi.spyOn(location, 'path').mockReturnValue('/course-management/1/modeling-exercises/7/submissions/new/assessment?correction-round=0');
         const go = vi.spyOn(location, 'go').mockImplementation(() => {});
+        component.courseId = 1;
+        component.exerciseId = 7;
         vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(getSubmissionWithData()));
 
         component['loadRandomSubmission'](7);
         await fixture.whenStable();
 
-        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0');
+        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0&testRun=false');
     });
 
     describe('ngOnInit tests', () => {
@@ -344,7 +346,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.referencedFeedback).toHaveLength(1);
             component.loadingFeedbackSuggestions.set(true);
             component.highlightedElements.set(new Map([['element', 'red']]));
-            component.feedbackSuggestions = [createTestFeedback()];
             component.hasAutomaticFeedback.set(true);
 
             paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
@@ -354,8 +355,57 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.unreferencedFeedback()).toHaveLength(0);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
             expect(component.highlightedElements()).toBeUndefined();
-            expect(component.feedbackSuggestions).toHaveLength(0);
             expect(component.hasAutomaticFeedback()).toBe(false);
+        });
+
+        it('should fetch feedback suggestions when Athena grading feedback is enabled and only automatic feedback exists', async () => {
+            // Every other test here uses a course with athenaGradingFeedbackEnabled left unset, so the suggestion
+            // fetch this component triggers after loading a submission (only for assessments that are still new) was
+            // never exercised.
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestion = { ...new Feedback(), reference: 'element:1', type: FeedbackType.MANUAL };
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
+            expect(component.referencedFeedback).toContainEqual(suggestion);
+            expect(component.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should not re-fetch feedback suggestions when the submission already has a persisted adapted suggestion', async () => {
+            // Referenced modeling suggestions are typed AUTOMATIC, so a saved adapted suggestion alone still looked
+            // like "only automatic feedback" (a fresh assessment) to the old gate, causing it to refetch and
+            // duplicate the suggestion - and its credits - on every reload.
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [
+                { id: 3, reference: 'element:1', type: FeedbackType.AUTOMATIC, credits: 2, text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Adapted suggestion` } as Feedback,
+            ];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback()]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+            expect(component.result()?.feedbacks).toHaveLength(1);
+        });
+
+        it('should not fetch feedback suggestions when Athena grading feedback is disabled', async () => {
+            const submission = getSubmissionWithData();
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback()]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
         });
 
         it('call ngOnInit with submissionId set to new', async () => {
@@ -374,7 +424,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                     exercise: {
                         id: 1,
                         type: 'modeling',
-                        feedbackSuggestionModule: 'modeling',
                     } as unknown as Exercise,
                 },
             } as ModelingSubmission;
@@ -388,6 +437,78 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.submission()).toBe(mockSubmission);
             expect(component.assessmentsAreValid()).toBe(false);
+        });
+
+        it('should merge unreferenced Athena feedback suggestions directly into the editable unreferenced feedback list', async () => {
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    courseId: '1',
+                    exerciseId: '1',
+                }),
+            );
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                        course: { athenaGradingFeedbackEnabled: true },
+                    } as unknown as Exercise,
+                },
+                results: [{ id: 55, feedbacks: [], correctionRound: 0 } as unknown as Result],
+            } as ModelingSubmission;
+
+            const unreferencedSuggestion = { id: 42, credits: 1, text: 'FeedbackSuggestion:accepted:Suggestion', type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
+
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([unreferencedSuggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            // The suggestion must land directly in the editable feedback list (auto-accepted), not in a separate pending list.
+            expect(component.unreferencedFeedback()).toHaveLength(1);
+            expect(component.unreferencedFeedback()[0]?.id).toBe(unreferencedSuggestion.id);
+            expect(component.result()?.feedbacks).toContainEqual(unreferencedSuggestion);
+        });
+
+        it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
+            const mockSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                    } as Exercise,
+                },
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
+            const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    courseId: '2',
+                    examId: '3',
+                    exerciseGroupId: '4',
+                    exerciseId: '14',
+                }),
+            );
+            await fixture.whenStable();
+
+            expect(createUrlTreeSpy).toHaveBeenCalledWith(
+                ['/course-management', '2', 'exams', '3', 'exercise-groups', '4', 'modeling-exercises', '14', 'submissions', '123', 'assessment'],
+                { queryParams: { 'correction-round': '0', testRun: 'false' } },
+            );
+            expect(goSpy).toHaveBeenCalledExactlyOnceWith(
+                '/course-management/2/exams/3/exercise-groups/4/modeling-exercises/14/submissions/123/assessment?correction-round=0&testRun=false',
+            );
         });
     });
 
@@ -783,16 +904,18 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     it('should report feedback suggestions enabled', () => {
-        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
-        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
+        const courseWithAthena = new Course();
+        courseWithAthena.athenaGradingFeedbackEnabled = true;
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithAthena, undefined));
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled).toBe(true);
     });
 
     describe('feedback suggestions chrome', () => {
         const setNoticeInputs = (overrides: Partial<{ loading: boolean; automatic: boolean; assessor: boolean; enabled: boolean }> = {}) => {
-            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-            exercise.feedbackSuggestionModule = overrides.enabled ? 'module_modeling_llm' : undefined;
+            const course = new Course();
+            course.athenaGradingFeedbackEnabled = overrides.enabled ?? false;
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.set(exercise);
             component.loadingFeedbackSuggestions.set(overrides.loading ?? false);
             component.hasAutomaticFeedback.set(overrides.automatic ?? false);
@@ -822,7 +945,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         it('should mount the banner as canvas chrome rather than a band above the workspace, but only while loading', async () => {
             const submission = getSubmissionWithData();
-            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
             component.submission.set(submission);
             setNoticeInputs({ loading: true, enabled: true });
             fixture.detectChanges();
@@ -837,7 +959,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         it('should let the legend, not a second island, say that suggestions are available', async () => {
             const submission = getSubmissionWithData();
-            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
             component.submission.set(submission);
             setNoticeInputs({ automatic: true, assessor: true, enabled: true });
             component.result.set({ id: 7 } as Result);
@@ -857,9 +978,8 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         it('should hand a referenced suggestion to the canvas, so Apollon can draw and highlight it', async () => {
             const submission = getSubmissionWithData();
-            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
             component.submission.set(submission);
-            component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module_modeling_llm' } as ModelingExercise);
+            component.modelingExercise.set({ id: 1 } as ModelingExercise);
             component.result.set({ id: 7, feedbacks: [] } as unknown as Result);
 
             const referencedSuggestion = new Feedback();
@@ -888,22 +1008,5 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
             expect(banner.query(By.css('.feedback-suggestions-chrome'))).toBeNull();
         });
-    });
-
-    it('should return unreferenced feedback only', () => {
-        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
-        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
-        component.ngOnInit();
-
-        const unreferencedFeedback = createTestFeedback();
-        const referencedFeedback = createTestFeedback();
-
-        referencedFeedback.type = FeedbackType.MANUAL;
-        referencedFeedback.reference = 'element_id';
-
-        component.feedbackSuggestions = [unreferencedFeedback, referencedFeedback];
-
-        expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
-        expect(component.unreferencedFeedbackSuggestions[0]?.id).toBe(unreferencedFeedback.id);
     });
 });

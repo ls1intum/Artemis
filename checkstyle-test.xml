@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN" "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<!--
+    Checkstyle configuration for test sources.
+
+    Deliberately not checkstyle.xml. That configuration requires Javadoc on public methods, which would demand a
+    comment on every test method, so checkstyleTest was disabled outright rather than run against it. This file exists
+    so that a rule which does apply to tests can be enforced without dragging the Javadoc requirements along; add to it
+    only rules that genuinely make sense for test code.
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8" />
+    <property name="severity" value="error" />
+    <property name="fileExtensions" value="java" />
+    <module name="TreeWalker">
+        <!--
+            Objects.requireNonNull is not used anywhere in this project; see the longer note in checkstyle.xml. In test
+            code the replacement is an assertion rather than an annotation: assertThat(value).isNotNull() states what
+            the test relies on and, when it does not hold, fails as a test failure naming the value rather than as a
+            NullPointerException thrown from somewhere further down.
+
+            Parameters of test helpers and fixtures are the exception: those are contracts like any other, so they take
+            @NonNull from org.jspecify.annotations, exactly as production code does.
+
+            requireNonNullElse and requireNonNullElseGet are not matched: "Else" sits between the name and the
+            parenthesis, and they supply a default rather than assert a contract.
+        -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\brequireNonNull\s*\(" />
+            <property name="message" value="Objects.requireNonNull is not used in this project. In a test, assert what the test relies on with assertThat(value).isNotNull(); in a test helper, declare the contract with @NonNull from org.jspecify.annotations." />
+            <property name="ignoreComments" value="true" />
+            <property name="severity" value="error" />
+        </module>
+    </module>
+</module>

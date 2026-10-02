@@ -29,8 +29,8 @@ import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionPipelineExecutionDTO;
 
 @Component
 @Conditional(IrisEnabled.class)
@@ -91,7 +92,7 @@ public class IrisRequestMockProvider {
     private String serverUrl;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     private AutoCloseable closeable;
 
@@ -170,6 +171,10 @@ public class IrisRequestMockProvider {
         mockPostRequest("/autonomous-tutor/run", PyrisAutonomousTutorPipelineExecutionDTO.class, responseConsumer);
     }
 
+    public void mockStruggleInterventionResponse(Consumer<PyrisStruggleInterventionPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/struggle-intervention/run", PyrisStruggleInterventionPipelineExecutionDTO.class, responseConsumer);
+    }
+
     public void mockRunCompetencyExtractionResponseAnd(Consumer<PyrisCompetencyExtractionPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
@@ -226,11 +231,23 @@ public class IrisRequestMockProvider {
         mockPostError(webhooksApiURL.toString(), "/lectures/ingest", httpStatus);
     }
 
+    /**
+     * Answers the lecture unit visibility webhook with an error and a body, so that a caller which distinguishes
+     * Pyris's own "not ingested" answer from any other 404 can be exercised.
+     *
+     * @param httpStatus the status to answer with
+     * @param body       the response body
+     */
+    public void mockLectureVisibilityWebhookError(int httpStatus, String body) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/visibility")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.valueOf(httpStatus)).body(body).contentType(MediaType.APPLICATION_JSON));
+    }
+
     public void mockDeletionWebhookRunError(int httpStatus) {
         mockPostError(webhooksApiURL.toString(), "/lectures/delete", httpStatus);
     }
 
-    public void mockStatusResponses() throws JsonProcessingException {
+    public void mockStatusResponses() throws JacksonException {
         // @formatter:off
         PyrisHealthStatusDTO activeIrisStatusDTO = new PyrisHealthStatusDTO(
             true,
@@ -286,7 +303,7 @@ public class IrisRequestMockProvider {
     }
 
     /** Healthy response with configurable module statuses. */
-    public void mockHealthStatusSuccess(boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ServiceStatus> moduleStatuses) throws JsonProcessingException {
+    public void mockHealthStatusSuccess(boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ServiceStatus> moduleStatuses) throws JacksonException {
         var modules = moduleStatuses.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, e -> new PyrisHealthStatusDTO.ModuleStatusDTO(e.getValue(), null, null)));
         var dto = new PyrisHealthStatusDTO(overallHealthy, modules);
@@ -319,13 +336,13 @@ public class IrisRequestMockProvider {
     }
 
     /** Full control over modules, including null, error, and metaData. */
-    public void mockHealthWithModules(Boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) throws JsonProcessingException {
+    public void mockHealthWithModules(Boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) throws JacksonException {
         var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules); // allow null → false
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
     }
 
-    public void mockLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId, IngestionState state) throws JsonProcessingException {
+    public void mockLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId, IngestionState state) throws JacksonException {
         var responseBody = new IngestionStateResponseDTO(state);
         mockServer
                 .expect(ExpectedCount.once(),
@@ -342,7 +359,7 @@ public class IrisRequestMockProvider {
                 .andRespond(withRawStatus(status.value()));
     }
 
-    public void mockFaqIngestionState(long courseId, long faqId, IngestionState state) throws JsonProcessingException {
+    public void mockFaqIngestionState(long courseId, long faqId, IngestionState state) throws JacksonException {
         var responseBody = new IngestionStateResponseDTO(state);
         mockServer.expect(ExpectedCount.once(), request -> assertThat(request.getURI().getPath()).isEqualTo("/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state"))
                 .andRespond(withSuccess(mapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
@@ -505,7 +522,7 @@ public class IrisRequestMockProvider {
         try {
             return mapper.writeValueAsString(responseBody);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -41,8 +41,7 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
          * @param bonus the entity to convert
          * @return a DTO representation of the bonus
          */
-        public static BonusDTO of(Bonus bonus) {
-            Objects.requireNonNull(bonus, "bonus must exist");
+        public static BonusDTO of(@NonNull Bonus bonus) {
 
             if (bonus.getSourceGradingScale() == null || bonus.getSourceGradingScale().getId() == null) {
                 throw new InternalServerErrorException("The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists.");
@@ -57,8 +56,7 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
      * @param scale the grading scale entity
      * @return a DTO representing the given grading scale
      */
-    public static GradingScaleDTO of(GradingScale scale) {
-        Objects.requireNonNull(scale, "grading scale must exist");
+    public static GradingScaleDTO of(@NonNull GradingScale scale) {
 
         Set<GradeStepDTO> gradeSteps = Set.of();
         if (Hibernate.isInitialized(scale.getGradeSteps()) && scale.getGradeSteps() != null) {

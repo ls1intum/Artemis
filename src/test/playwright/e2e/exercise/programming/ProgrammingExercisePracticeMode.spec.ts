@@ -81,7 +81,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             // being enabled is what says the writable practice repository is the one on screen.
             await expect(getExercise(page, exercise.id!).locator('[data-testid="file-browser-folder-create-file"]').first()).toBeEnabled({ timeout: 30000 });
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
-                await expect(page.locator('[data-testid="exercise-headers-information"]')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
+                await expect(page.locator('[data-testid="exercise-status"]')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
             });
         });
     });
@@ -111,7 +111,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             // The graded mode stays reachable, so the student can recognize that they missed the due date
             await gradedButton.click();
             await expectModeSelected(gradedButton);
-            await expect(page.locator('[data-testid="exercise-headers-information"]')).toContainText('Missed due date');
+            await expect(page.locator('[data-testid="exercise-status"]')).toContainText('Missed due date');
 
             // ... and practice can be selected again
             await practiceButton.click();
@@ -132,11 +132,11 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
 
             // The live submission state is shown in practice mode even though the due date has passed
             // (instead of a static "currently participating" text that never updates)
-            await expect(page.locator('[data-testid="exercise-headers-information"]')).toContainText('No result');
+            await expect(page.locator('[data-testid="exercise-status"]')).toContainText('No result');
 
             // Submitting in practice mode must process the submission and show its result
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
-                await expect(page.locator('[data-testid="exercise-headers-information"]')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
+                await expect(page.locator('[data-testid="exercise-status"]')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
             });
         });
     });

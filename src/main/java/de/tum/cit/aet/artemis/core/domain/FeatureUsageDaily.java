@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 public class FeatureUsageDaily extends DomainObject {
 
     @Column(name = "feature_id", nullable = false)
+    @Parent
     private Long featureId;
 
     @Column(name = "usage_day", nullable = false)

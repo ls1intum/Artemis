@@ -11,17 +11,23 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration;
+import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
@@ -67,12 +73,18 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * <li>Add corresponding tests in {@code ContentExtractionServiceTest}</li>
  * </ol>
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @Service
 public class ContentExtractionService {
 
     private static final Logger log = LoggerFactory.getLogger(ContentExtractionService.class);
+
+    /** Horizontal whitespace at the end of a line, stripped from extracted content. */
+    private static final Pattern TRAILING_HORIZONTAL_WHITESPACE = Pattern.compile("(?m)[ \\t]+$");
+
+    /** Three or more newlines in a row, collapsed into exactly two. */
+    private static final Pattern NEWLINE_RUN = Pattern.compile("\\n{3,}");
 
     private static final String FLAVOR_STRIP_PROMPT_PATH = "/prompts/atlas/flavor_text_strip_prompt.st";
 
@@ -88,10 +100,18 @@ public class ContentExtractionService {
 
     private final double flavorStripTemperature;
 
+    @Autowired
     public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
-            @Value("${artemis.atlas.flavor-strip-model:gpt-5.4-mini}") String flavorStripModel,
-            @Value("${artemis.atlas.flavor-strip-reasoning-effort:medium}") String flavorStripReasoningEffort,
-            @Value("${artemis.atlas.flavor-strip-temperature:1.0}") double flavorStripTemperature) {
+            @Value("${artemis.atlas.flavor-strip-model:gpt-5.6-luna}") String flavorStripModel,
+            @Value("${artemis.atlas.flavor-strip-reasoning-effort:high}") String flavorStripReasoningEffort,
+            @Value("${artemis.atlas.flavor-strip-temperature:1.0}") double flavorStripTemperature, AtlasOrchestratorProperties orchestratorProperties,
+            @Qualifier(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_CHAT_CLIENT) @Nullable AtlasResponsesChatClient responsesClient) {
+        this(orchestratorProperties.responsesApiEnabled() ? (responsesClient == null ? null : responsesClient.chatClient()) : chatClient, templateService, quizExerciseRepository,
+                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
+    }
+
+    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
+            String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -121,8 +141,7 @@ public class ContentExtractionService {
      * @return a DTO containing the title, learning text, and metadata
      * @throws IllegalArgumentException if the learning object type is not yet supported
      */
-    public ExtractedContentDTO extractContent(LearningObject learningObject, boolean stripFlavorText) {
-        Objects.requireNonNull(learningObject, "learningObject must not be null");
+    public ExtractedContentDTO extractContent(@NonNull LearningObject learningObject, boolean stripFlavorText) {
         return switch (learningObject) {
             case ProgrammingExercise programmingExercise -> extractFromProgrammingExercise(programmingExercise, stripFlavorText);
             case TextExercise textExercise -> extractFromTextExercise(textExercise, stripFlavorText);
@@ -267,9 +286,9 @@ public class ContentExtractionService {
      */
     private String normalizeWhitespace(String text) {
         // Strip trailing horizontal whitespace from every line.
-        String stripped = text.replaceAll("(?m)[ \\t]+$", "");
+        String stripped = TRAILING_HORIZONTAL_WHITESPACE.matcher(text).replaceAll("");
         // Collapse three or more consecutive newlines to exactly two.
-        return stripped.replaceAll("\n{3,}", "\n\n");
+        return NEWLINE_RUN.matcher(stripped).replaceAll("\n\n");
     }
 
     private ExtractedContentDTO extractFromProgrammingExercise(ProgrammingExercise exercise, boolean applyFlavorStrip) {

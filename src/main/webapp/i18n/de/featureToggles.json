@@ -49,6 +49,10 @@
                     "name": "Atlas (Adaptives Lernen)",
                     "description": "Aktiviert kompetenzbasierte Lernfunktionen einschließlich Lernpfade, Kompetenz-Tracking und Analysen."
                 },
+                "atlasllm": {
+                    "name": "Atlas KI (LLM)",
+                    "description": "Aktiviert den Atlas-Kurs-Chat-Agenten und den autonomen Kompetenz-Orchestrator. Erfordert ein konfiguriertes Sprachmodell. Kompetenzen, Lernpfade und Analysen funktionieren auch ohne."
+                },
                 "hyperion": {
                     "name": "Hyperion (Aufgabenerstellung)",
                     "description": "Aktiviert KI-gestützte Aufgabenerstellung mit Hyperion zur Generierung von Programmieraufgaben."
@@ -197,6 +201,11 @@
                     "name": "Deimos Analyse",
                     "description": "Aktiviert manuelle Analysen von potenziell bösartigen Teilnahmen an Programmieraufgaben.",
                     "disableWarning": "Lehrende können keine Deimos-Analysen starten."
+                },
+                "IrisProactiveStruggle": {
+                    "name": "Iris Proaktive Schwierigkeitserkennung",
+                    "description": "Iris erkennt von sich aus, wenn Studierende in einer Programmieraufgabe nicht weiterkommen, und bietet Hilfe an. Lehrende schalten das pro Kurs ein; dieser Schalter entscheidet, ob sie das können.",
+                    "disableWarning": "Iris bietet in keinem Kurs mehr von sich aus Hilfe an. Studierende können weiterhin selbst einen Chat starten, und ein Kurs behält seine eigene Einstellung für den Fall, dass wieder eingeschaltet wird."
                 }
             }
         }

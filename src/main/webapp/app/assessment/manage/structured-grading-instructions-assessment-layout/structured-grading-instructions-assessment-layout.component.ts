@@ -9,7 +9,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiCheckboxComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -32,8 +32,8 @@ export interface SortedGradingCriterion {
         NgbTooltip,
         HelpIconComponent,
         MarkdownDirective,
-        TumUiCheckboxComponent,
-        TumUiTagComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiTagComponent,
         ArtemisTranslatePipe,
     ],
 })

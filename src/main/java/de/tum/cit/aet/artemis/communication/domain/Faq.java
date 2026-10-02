@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
@@ -45,6 +46,8 @@ public class Faq extends AbstractAuditingEntity {
 
     @ManyToOne
     @JsonIgnoreProperties(value = { "faqs" }, allowSetters = true)
+    @JoinColumn(nullable = false)
+    @Parent
     private Course course;
 
     public String getQuestionTitle() {

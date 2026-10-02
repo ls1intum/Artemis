@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { finalize } from 'rxjs';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent, TumUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
 
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -11,7 +11,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { GocastBinding, GocastBindingStatus } from './gocast.model';
 import { GocastService } from './gocast.service';
 
-const STATUS_SEVERITY: Record<GocastBindingStatus, TumUiTagSeverity> = {
+const STATUS_SEVERITY: Record<GocastBindingStatus, TumAetUiTagSeverity> = {
     UNLINKED: 'secondary',
     PENDING: 'info',
     EXPIRED: 'warn',
@@ -22,14 +22,23 @@ const STATUS_SEVERITY: Record<GocastBindingStatus, TumUiTagSeverity> = {
 @Component({
     selector: 'jhi-gocast-course-binding',
     templateUrl: './gocast-course-binding.component.html',
-    imports: [TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        TumAetUiButtonComponent,
+        TumAetUiDialogComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GocastCourseBindingComponent {
-    readonly courseId = input.required<number>();
-
     private readonly gocastService = inject(GocastService);
     private readonly destroyRef = inject(DestroyRef);
+
+    readonly courseId = input.required<number>();
     private requestSequence = 0;
     private courseGeneration = 0;
 

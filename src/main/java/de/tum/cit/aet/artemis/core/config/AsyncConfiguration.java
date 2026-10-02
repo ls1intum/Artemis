@@ -136,35 +136,6 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
-     * Executor for asynchronous quiz statistics updates (see {@code QuizSubmissionService}).
-     * <p>
-     * In production this is a dedicated, single-threaded executor rather than a delegate to the shared
-     * {@code taskExecutor}. It isolates the statistics work from the shared pool and, by using a single worker,
-     * serializes all statistics updates on a node so same-node updates cannot race. The incremental update itself is
-     * the same mechanism used for live and exam quiz submissions. Statistics are only relevant for instructors, so the
-     * student's submission request does not wait for this work.
-     * <p>
-     * In the {@code test} profile it is a {@link SyncTaskExecutor} so the statistics update runs on the calling thread,
-     * keeping tests that assert on quiz statistics deterministic.
-     *
-     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single-threaded executor
-     */
-    @Bean("quizStatisticsTaskExecutor")
-    public Executor quizStatisticsTaskExecutor() {
-        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return new SyncTaskExecutor();
-        }
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        // Single worker: serializes incremental statistics updates so concurrent updates for the same quiz cannot
-        // overwrite each other's counter changes.
-        executor.setCorePoolSize(1);
-        executor.setMaxPoolSize(1);
-        executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
-        executor.setThreadNamePrefix("quiz-statistics-");
-        return new ExceptionHandlingAsyncTaskExecutor(executor);
-    }
-
-    /**
      * Executor for the few background jobs that are long running and heavy rather than small and frequent: archiving a
      * course, archiving an exam, and splitting a lecture attachment into slides.
      * <p>

@@ -15,10 +15,10 @@ import { CommonModule } from '@angular/common';
     styleUrl: './learning-paths-analytics.component.scss',
 })
 export class LearningPathsAnalyticsComponent {
-    protected readonly CompetencyGraphNodeValueType = CompetencyGraphNodeValueType;
-
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
+
+    protected readonly CompetencyGraphNodeValueType = CompetencyGraphNodeValueType;
 
     readonly courseId = input.required<number>();
 

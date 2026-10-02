@@ -14,11 +14,11 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
-import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO.LearningObjectType;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendationService.RecommendationState;
 
@@ -34,9 +34,13 @@ public class LearningPathNavigationService {
 
     private final LearningObjectService learningObjectService;
 
-    public LearningPathNavigationService(LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService) {
+    private final CourseLearnerProfileRepository courseLearnerProfileRepository;
+
+    public LearningPathNavigationService(LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService,
+            CourseLearnerProfileRepository courseLearnerProfileRepository) {
         this.learningPathRecommendationService = learningPathRecommendationService;
         this.learningObjectService = learningObjectService;
+        this.courseLearnerProfileRepository = courseLearnerProfileRepository;
     }
 
     /**
@@ -47,14 +51,13 @@ public class LearningPathNavigationService {
      * @return the navigation
      */
     public LearningPathNavigationDTO getNavigation(LearningPath learningPath) {
-        LearnerProfile learnerProfile = learningPath.getUser().getLearnerProfile();
-        CourseLearnerProfile courseLearnerProfile = learnerProfile.getCourseLearnerProfiles().stream().findAny().orElse(new CourseLearnerProfile());
+        CourseLearnerProfile courseLearnerProfile = courseLearnerProfileOf(learningPath);
         RecommendationState recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
         List<CourseCompetency> competenciesForRepeatedTests = learningPathRecommendationService.determineCompetenciesForRepeatedTests(recommendationState, courseLearnerProfile);
 
-        LearningPathNavigationObjectDTO currentLearningObject = learningPathRecommendationService.findLearningObject(learningPath.getUser(), recommendationState,
-                competenciesForRepeatedTests, null);
-        return getNavigationRelativeToLearningObject(learningPath, recommendationState, competenciesForRepeatedTests, currentLearningObject);
+        LearningPathNavigationObjectDTO currentLearningObject = learningPathRecommendationService.findLearningObject(learningPath.getUser(), courseLearnerProfile,
+                recommendationState, competenciesForRepeatedTests, null);
+        return getNavigationRelativeToLearningObject(learningPath, courseLearnerProfile, recommendationState, competenciesForRepeatedTests, currentLearningObject);
     }
 
     /**
@@ -69,8 +72,7 @@ public class LearningPathNavigationService {
      */
     public LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, long learningObjectId, LearningObjectType learningObjectType,
             long competencyId, boolean repeatedTest) {
-        LearnerProfile learnerProfile = learningPath.getUser().getLearnerProfile();
-        CourseLearnerProfile courseLearnerProfile = learnerProfile.getCourseLearnerProfiles().stream().findAny().orElse(new CourseLearnerProfile());
+        CourseLearnerProfile courseLearnerProfile = courseLearnerProfileOf(learningPath);
         RecommendationState recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
         List<CourseCompetency> competenciesForRepeatedTests = learningPathRecommendationService.determineCompetenciesForRepeatedTests(recommendationState, courseLearnerProfile);
 
@@ -82,7 +84,7 @@ public class LearningPathNavigationService {
                     .findAny().orElse(null);
         };
 
-        return getNavigationRelativeToLearningObject(learningPath, recommendationState, competenciesForRepeatedTests,
+        return getNavigationRelativeToLearningObject(learningPath, courseLearnerProfile, recommendationState, competenciesForRepeatedTests,
                 createLearningPathNavigationObjectDTO(currentLearningObject, repeatedTest, learningPath.getUser(), currentCompetency));
     }
 
@@ -90,16 +92,17 @@ public class LearningPathNavigationService {
      * Get the navigation for the given learning path relative to a given learning object.
      *
      * @param learningPath                 the learning path
+     * @param courseLearnerProfile         the profile the user keeps for the course, read once for the whole navigation
      * @param recommendationState          the current state of the recommendation system
      * @param competenciesForRepeatedTests the competencies that should be repeated
      * @param currentLearningObject        the current learning object the navigation should be relative to
      * @return the navigation
      */
-    private LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, RecommendationState recommendationState,
-            List<CourseCompetency> competenciesForRepeatedTests, LearningPathNavigationObjectDTO currentLearningObject) {
-        LearningPathNavigationObjectDTO previousLearningObject = learningPathRecommendationService.findPreviousLearningObject(learningPath, recommendationState,
-                currentLearningObject);
-        LearningPathNavigationObjectDTO nextLearningObject = learningPathRecommendationService.findLearningObject(learningPath.getUser(), recommendationState,
+    private LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, CourseLearnerProfile courseLearnerProfile,
+            RecommendationState recommendationState, List<CourseCompetency> competenciesForRepeatedTests, LearningPathNavigationObjectDTO currentLearningObject) {
+        LearningPathNavigationObjectDTO previousLearningObject = learningPathRecommendationService.findPreviousLearningObject(learningPath, courseLearnerProfile,
+                recommendationState, currentLearningObject);
+        LearningPathNavigationObjectDTO nextLearningObject = learningPathRecommendationService.findLearningObject(learningPath.getUser(), courseLearnerProfile, recommendationState,
                 competenciesForRepeatedTests, currentLearningObject);
 
         return new LearningPathNavigationDTO(previousLearningObject, currentLearningObject, nextLearningObject, learningPath.getProgress());
@@ -113,12 +116,24 @@ public class LearningPathNavigationService {
      */
     public LearningPathNavigationOverviewDTO getNavigationOverview(LearningPath learningPath) {
         var learningPathUser = learningPath.getUser();
+        CourseLearnerProfile courseLearnerProfile = courseLearnerProfileOf(learningPath);
         RecommendationState recommendationState = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
         var learningObjects = recommendationState.recommendedOrderOfCompetencies().stream().map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
-                .flatMap(competency -> learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competency, learningPathUser, false).stream()
+                .flatMap(competency -> learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competency, learningPathUser, courseLearnerProfile, false).stream()
                         .map(learningObject -> createLearningPathNavigationObjectDTO(learningObject, false, learningPathUser, competency)))
                 .toList();
         return new LearningPathNavigationOverviewDTO(learningObjects);
+    }
+
+    /**
+     * Reads the profile the user keeps for the course of this learning path, defaulting to a neutral one where the
+     * user has none yet.
+     *
+     * @param learningPath the learning path being navigated
+     * @return the profile that shapes the recommendation
+     */
+    private CourseLearnerProfile courseLearnerProfileOf(LearningPath learningPath) {
+        return courseLearnerProfileRepository.findByUserIdAndCourseId(learningPath.getUser().getId(), learningPath.getCourse().getId()).orElseGet(CourseLearnerProfile::new);
     }
 
     private LearningPathNavigationObjectDTO createLearningPathNavigationObjectDTO(LearningObject learningObject, boolean repeatedTest, User user, CourseCompetency competency) {

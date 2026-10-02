@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * Represents an internal assessment note.
@@ -46,7 +47,8 @@ public class AssessmentNote extends DomainObject {
      * Read-only mapping of the FK column managed by {@link Result#assessmentNote}.
      * Allows JPQL queries (e.g. {@code deleteByResultId}) without a full {@code @ManyToOne} relationship.
      */
-    @Column(name = "result_id", insertable = false, updatable = false)
+    @Column(name = "result_id", insertable = false, updatable = false, nullable = false)
+    @Parent
     private Long resultId;
 
     @Column(name = "note")

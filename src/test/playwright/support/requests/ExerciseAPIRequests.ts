@@ -39,7 +39,7 @@ import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
@@ -86,7 +86,7 @@ export class ExerciseAPIRequests {
      *   - programmingShortName: The short name of the programming exercise
      *   - programmingLanguage: The programming language for the exercise
      *   - packageName: The package name of the programming exercise
-     *   - assessmentDate: The due date of the assessment
+     *   - assessmentDate: The due date of the assessment, which the server requires to be strictly after the due date
      *   - assessmentType: The assessment type of the exercise
      *   - buildPlanConfiguration: Serialized LocalCI build phases used when the exercise is created
      * @returns Promise<ProgrammingExercise> representing the programming exercise created.
@@ -112,6 +112,10 @@ export class ExerciseAPIRequests {
         buildPlanConfiguration?: string;
         // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
         auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
+        /** Whether students may work in the online editor; the server default of the template applies when omitted. */
+        allowOnlineEditor?: boolean;
+        /** Whether students may clone the repository and work in their own IDE; the server default of the template applies when omitted. */
+        allowOfflineIde?: boolean;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -125,7 +129,9 @@ export class ExerciseAPIRequests {
             programmingLanguage = ProgrammingLanguage.JAVA,
             projectType,
             packageName = 'de.test',
-            assessmentDate = dayjs().add(2, 'days'),
+            // Derived from the due date rather than from now: the server requires a strictly increasing date sequence, and a
+            // caller passing a due date two days out would otherwise land in the same millisecond as an absolute default
+            assessmentDate = dueDate.add(1, 'day'),
             exampleSolutionPublicationDate,
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
@@ -133,6 +139,8 @@ export class ExerciseAPIRequests {
             problemStatement,
             buildPlanConfiguration,
             auxiliaryRepositories,
+            allowOnlineEditor,
+            allowOfflineIde,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -157,6 +165,8 @@ export class ExerciseAPIRequests {
             ...(problemStatement ? { problemStatement } : {}),
             ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
             ...(projectType ? { projectType } : {}),
+            ...(allowOnlineEditor !== undefined ? { allowOnlineEditor } : {}),
+            ...(allowOfflineIde !== undefined ? { allowOfflineIde } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
@@ -185,6 +195,11 @@ export class ExerciseAPIRequests {
         }
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
+        // Asserted so a rejected setup throws loudly here, instead of cascading into an undefined exercise id and a
+        // test that waits three minutes for a page it was never going to reach
+        if (!response.ok()) {
+            throw new Error(`Failed to create programming exercise: ${response.status()} ${await response.text()}`);
+        }
         return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
@@ -222,12 +237,12 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Submits the example submission to the specified repository.
+     * Submits the example submission to the participation's repository.
      *
-     * @param repositoryId - The repository ID. The repository ID is equal to the participation ID.
+     * @param participationId - The ID of the participation whose repository is written to.
      * @param submission - The example submission to be submitted.
      */
-    async makeProgrammingExerciseSubmission(repositoryId: number, submission: ProgrammingExerciseSubmission) {
+    async makeProgrammingExerciseSubmission(participationId: number, submission: ProgrammingExerciseSubmission) {
         const data = await Promise.all(
             submission.files.map(async (file) => {
                 let fileName = file.name;
@@ -240,11 +255,11 @@ export class ExerciseAPIRequests {
                 };
             }),
         );
-        await this.page.request.put(`api/programming/repository/${repositoryId}/files?commit=yes`, { data });
+        await this.page.request.put(`api/programming/participations/${participationId}/repository/files?commit=yes`, { data });
     }
 
-    async createProgrammingExerciseFile(repositoryId: number, filename: string) {
-        return await this.page.request.post(`api/programming/repository/${repositoryId}/file?file=${filename}`);
+    async createProgrammingExerciseFile(participationId: number, filename: string) {
+        return await this.page.request.post(`api/programming/participations/${participationId}/repository/file?file=${filename}`);
     }
 
     /**
@@ -421,10 +436,8 @@ export class ExerciseAPIRequests {
             bonusPoints: exercise.bonusPoints,
             includedInOverallScore: exercise.includedInOverallScore,
             allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments ?? false,
-            allowFeedbackRequests: exercise.allowFeedbackRequests ?? false,
             presentationScoreEnabled: exercise.presentationScoreEnabled ?? false,
             secondCorrectionEnabled: exercise.secondCorrectionEnabled ?? false,
-            feedbackSuggestionModule: exercise.feedbackSuggestionModule,
             gradingInstructions: exercise.gradingInstructions,
             releaseDate: dayjsToString(due.subtract(2, 'hours')),
             startDate: fileUploadDateToString(exercise.startDate),
@@ -651,6 +664,8 @@ export class ExerciseAPIRequests {
         duration?: number;
         quizMode?: QuizMode;
         competencyLinks?: { competency: { id: number }; weight: number }[];
+        /** The background image of a drag and drop question; its name is the `backgroundFilePath` of the question. */
+        backgroundFile?: { name: string; mimeType: string; buffer: Buffer };
     }): Promise<QuizExercise> {
         const {
             body,
@@ -662,6 +677,7 @@ export class ExerciseAPIRequests {
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
             competencyLinks,
+            backgroundFile,
         } = options;
 
         const quizExercise: any = {
@@ -699,12 +715,13 @@ export class ExerciseAPIRequests {
             newQuizExercise.competencyLinks = competencyLinks;
         }
         const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
-        const multipartData = {
+        const multipartData: Record<string, { name: string; mimeType: string; buffer: Buffer }> = {
             exercise: {
                 name: 'exercise',
                 mimeType: 'application/json',
                 buffer: Buffer.from(JSON.stringify(quizExerciseDTO)),
             },
+            ...(backgroundFile ? { files: backgroundFile } : {}),
         };
 
         const response = await this.page.request.post(url, {
@@ -795,7 +812,10 @@ export class ExerciseAPIRequests {
      * @param exam - The exam for which to evaluate the quiz exercises.
      */
     async evaluateExamQuizzes(exam: Exam) {
-        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        if (!response.ok()) {
+            throw new Error(`Failed to evaluate quiz exercises of exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
     }
 
     /**
@@ -852,15 +872,6 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Gets the participation data for a programming exercise with the specified exercise ID.
-     * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
-     * participation data (with latest result) via the per-participation endpoint.
-     *
-     * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
-     * @returns A Promise<StudentParticipation> representing the student participation with latest result.
-     * @throws Error if no participations are found for the exercise.
-     */
-    /**
      * Triggers an instructor build-and-test run for ALL student participations of a programming exercise.
      * Used by exam tests to run the AFTER_DUE_DATE-gated build "test" phase on demand instead of waiting for
      * the server's scheduled build-and-test-after-due-date (which defaults to dueDate + 15 min for exams).
@@ -873,7 +884,30 @@ export class ExerciseAPIRequests {
         }
     }
 
-    async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
+    /**
+     * Gets the participations of an exercise as the participation management lists them (at most one hundred), with the login of the student and
+     * the number of submissions of each.
+     */
+    async getExerciseParticipations(exerciseId: number): Promise<{ participationId: number; studentLogin?: string; submissionCount: number }[]> {
+        const response = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=100&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!response.ok()) {
+            throw new Error(`Failed to get the participations of exercise ${exerciseId}: ${response.status()}`);
+        }
+        return await response.json();
+    }
+
+    /**
+     * Gets the participation data for a programming exercise with the specified exercise ID.
+     * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
+     * participation data (with latest result) via the per-participation endpoint.
+     *
+     * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
+     * @returns A Promise<StudentParticipationDTO> representing the student participation with latest result.
+     * @throws Error if no participations are found for the exercise.
+     */
+    async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipationDTO> {
         const pageResponse = await this.page.request.get(
             `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
         );
@@ -892,14 +926,14 @@ export class ExerciseAPIRequests {
      * who own the participation.
      *
      * @param participationId - The ID of the participation to retrieve.
-     * @returns A Promise<StudentParticipation> representing the student participation with latest results.
+     * @returns A Promise<StudentParticipationDTO> representing the student participation with latest results.
      */
-    async getParticipationWithLatestResult(participationId: number): Promise<StudentParticipation> {
+    async getParticipationWithLatestResult(participationId: number): Promise<StudentParticipationDTO> {
         const response = await this.page.request.get(`api/exercise/participations/${participationId}/with-latest-result`);
         if (!response.ok()) {
             throw new Error(`Failed to get participation ${participationId}: ${response.status()}`);
         }
-        return (await response.json()) as StudentParticipation;
+        return (await response.json()) as StudentParticipationDTO;
     }
 
     /**

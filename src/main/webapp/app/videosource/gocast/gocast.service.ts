@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { GocastApprovalStart, GocastBinding } from './gocast.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class GocastService {
     private readonly http = inject(HttpClient);
 

@@ -353,9 +353,10 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
     `,
 })
 export class LandingFooterComponent {
+    private router: Router = inject(Router);
+
     protected readonly faLink: IconDefinition = faLink;
 
-    private router: Router = inject(Router);
     linkGroups: FooterLinkGroup[] = FOOTER_LINK_GROUPS;
     currentYear: number = new Date().getFullYear();
 

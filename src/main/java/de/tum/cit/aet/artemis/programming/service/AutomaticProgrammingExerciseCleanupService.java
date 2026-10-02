@@ -72,6 +72,10 @@ public class AutomaticProgrammingExerciseCleanupService {
     /**
      * cleans up old build plans on the continuous integration server and old local git repositories on the Artemis server at 3:00:00 am in the night in form of a repeating "cron"
      * job
+     * <p>
+     * Each phase logs and swallows its own failures so that one failing phase does not skip the other. An interrupted
+     * thread is the exception: the git working copy phase does not start, because an interruption means the node is
+     * shutting down.
      */
     @Scheduled(cron = "${artemis.scheduling.programming-exercises-cleanup-time:0 0 3 * * *}") // execute this every night at 3:00:00 am
     public void cleanup() {
@@ -88,6 +92,10 @@ public class AutomaticProgrammingExerciseCleanupService {
         }
         catch (Exception ex) {
             log.error("Exception occurred during cleanupBuildPlansOnContinuousIntegrationServer", ex);
+        }
+        if (Thread.currentThread().isInterrupted()) {
+            log.warn("Skipping the git working copy cleanup because the cleanup thread was interrupted.");
+            return;
         }
         try {
             cleanupGitWorkingCopiesOnArtemisServer();
@@ -289,6 +297,14 @@ public class AutomaticProgrammingExerciseCleanupService {
         return false;
     }
 
+    /**
+     * Deletes the build plans of the given participations on the external build system, at most 5000 per run and
+     * pausing between batches so the deletions do not arrive all at once.
+     * <p>
+     * Stops early when the thread is interrupted during such a pause, leaving the remaining plans to the next run.
+     *
+     * @param participationsWithBuildPlanToDelete the participations whose build plans should be deleted
+     */
     private void deleteBuildPlans(Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete) {
         // Limit to 5000 deletions per night
         List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(5000).toList();
@@ -303,7 +319,12 @@ public class AutomaticProgrammingExerciseCleanupService {
                     Thread.sleep(externalSystemRequestBatchWaitingTime);
                 }
                 catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing before cleaning up build plans", ex);
+                    // The sleep paces deletions against the external build system. Restoring the interrupt status makes
+                    // every later sleep of this loop throw at once, so carrying on would delete the rest of the batch
+                    // with no pacing at all. Stop here and leave the remaining plans to the next nightly run.
+                    Thread.currentThread().interrupt();
+                    log.warn("Interrupted while pausing during build plan cleanup. Stopping after {} of {} build plans.", index, actualParticipationsToClean.size());
+                    break;
                 }
             }
 
@@ -316,6 +337,6 @@ public class AutomaticProgrammingExerciseCleanupService {
 
             index++;
         }
-        log.info("{} build plans have been cleaned", actualParticipationsToClean.size());
+        log.info("{} of {} build plans have been cleaned", index, actualParticipationsToClean.size());
     }
 }

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,18 +10,18 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.admin.service.export.DataExportQuizExerciseCreationService;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 
 /**
@@ -36,14 +35,14 @@ public class QuizExerciseWithSubmissionsExportService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService;
 
-    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, JsonMapper objectMapper,
             DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService) {
         this.quizExerciseRepository = quizExerciseRepository;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.objectMapper = objectMapper;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
     }
 
@@ -57,26 +56,30 @@ public class QuizExerciseWithSubmissionsExportService {
      * @return the path to the directory where the quiz exercise was exported to
      */
     public Path exportExerciseWithSubmissions(QuizExercise quizExercise, Path exerciseExportDir, List<String> exportErrors, List<ArchivalReportEntry> reportEntries) {
-        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExercise.getId());
         // do not store unnecessary information in the JSON file
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(null);
         try {
-            FileUtil.writeObjectToJsonFile(quizExercise, objectMapper, exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json"));
+            // the same record the quiz endpoints return, so the file keeps the questions with their solutions but no entity graph
+            FileUtil.writeObjectToJsonFile(QuizExerciseDetailsDTO.of(quizExercise), objectMapper,
+                    exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json"));
         }
-        catch (IOException e) {
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, so a serialization failure would
+        // otherwise unwind past here and drop the whole exercise from the archive instead of adding one line
+        // to exportErrors and carrying on.
+        catch (JacksonException e) {
             exportErrors.add("Failed to export quiz exercise details " + quizExercise.getTitle() + " with id " + quizExercise.getId() + " due to a JSON processing error.");
         }
         List<Path> imagesToExport = new ArrayList<>();
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    imagesToExport
-                            .add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragAndDropQuestion.getBackgroundFilePath()), FilePathType.DRAG_AND_DROP_BACKGROUND));
+                    imagesToExport.add(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path());
                 }
                 for (var dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null) {
-                        imagesToExport.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM));
+                        imagesToExport.add(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path());
 
                     }
                 }

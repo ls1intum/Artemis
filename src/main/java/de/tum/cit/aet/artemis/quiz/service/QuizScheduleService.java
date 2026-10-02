@@ -130,7 +130,7 @@ public class QuizScheduleService {
      */
     void executeQuizStartNowTask(Long quizExerciseId) {
         log.debug("Sending quiz {} start", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
 
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
             throw new IllegalStateException();

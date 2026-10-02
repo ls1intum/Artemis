@@ -76,6 +76,35 @@ describe('TeamsImportDialogComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('associates source exercise and file labels with their inputs', () => {
+        fixture.detectChanges();
+        const root = fixture.nativeElement as HTMLElement;
+        const exerciseLabel = root.querySelector('label[for="exercise-search-input"]') as HTMLLabelElement;
+        const exerciseInput = root.querySelector('input#exercise-search-input');
+        expect(exerciseInput).not.toBeNull();
+        expect(exerciseLabel.control).toBe(exerciseInput);
+
+        comp.showImportFromExercise.set(false);
+        fixture.detectChanges();
+        const fileLabel = root.querySelector('label[for="importFileInput"]') as HTMLLabelElement;
+        const fileInput = root.querySelector('input#importFileInput');
+        expect(fileInput).not.toBeNull();
+        expect(fileLabel.control).toBe(fileInput);
+    });
+
+    it('names the import strategy radio group with its visible caption', () => {
+        comp.showImportFromExercise.set(false);
+        comp.sourceTeams.set(mockSourceTeams);
+        fixture.detectChanges();
+
+        const root = fixture.nativeElement as HTMLElement;
+        const group = root.querySelector('[role="group"]') as HTMLElement;
+        const caption = root.querySelector('#import-strategy-label') as HTMLElement;
+        expect(group.getAttribute('aria-labelledby')).toBe(caption.id);
+        expect(caption.textContent?.trim()).toBeTruthy();
+        expect(group.querySelectorAll('input[type="radio"]')).toHaveLength(2);
+    });
+
     describe('onInit', () => {
         beforeEach(() => {
             resetComponent();

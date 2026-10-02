@@ -167,7 +167,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
                 return;
             }
 
-            var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName(), null, null);
+            var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName());
             if (!mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true)) {
                 // Mail not configured for this deployment, or the message could not be built or sent. Either way this
                 // recipient did not get their notification, which is what the channel's error rate has to reflect.

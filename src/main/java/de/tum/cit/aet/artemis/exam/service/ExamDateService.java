@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -96,21 +96,51 @@ public class ExamDateService {
      * @return <code>true</code> if the working period is over, <code>false</code> otherwise
      */
     public boolean isIndividualExerciseWorkingPeriodOver(Exam exam, StudentParticipation studentParticipation) {
-        if (studentParticipation.isTestRun()) {
+        return isIndividualExerciseWorkingPeriodOver(exam, studentParticipation.isTestRun(), studentParticipation.getParticipant().getId(), studentParticipation.getId());
+    }
+
+    /**
+     * Whether the student's working period is over, for a caller that holds only the exam's id.
+     * <p>
+     * The git request path authorizes a push against a projection of the exercise, so it never loads the exam. Reading
+     * the exam here, once and only for an exam exercise that actually reaches the write check, is cheaper than
+     * carrying it through the whole authorization path - and keeps this date logic reading the entity it was written
+     * against.
+     *
+     * @param examId               the exam the exercise belongs to
+     * @param studentParticipation the participation to check
+     * @return true if the working period is over
+     */
+    public boolean isIndividualExerciseWorkingPeriodOver(long examId, StudentParticipation studentParticipation) {
+        return isIndividualExerciseWorkingPeriodOver(examRepository.findByIdElseThrow(examId), studentParticipation);
+    }
+
+    /**
+     * Scalar form of {@link #isIndividualExerciseWorkingPeriodOver(Exam, StudentParticipation)} for callers holding a
+     * projection of the participation rather than the entity.
+     *
+     * @param exam            the exam the exercise belongs to
+     * @param testRun         whether the participation is an instructor test run
+     * @param participantId   the id of the student the participation belongs to
+     * @param participationId the id of the participation, named in the error when no student exam exists
+     * @return true if the working period is over, false otherwise
+     */
+    public boolean isIndividualExerciseWorkingPeriodOver(Exam exam, boolean testRun, long participantId, long participationId) {
+        if (testRun) {
             return false;
         }
         // Students can participate in a test exam multiple times, meaning there can be multiple student exams for a single exam.
         // For test exams, we aim to find the latest student exam.
         // For real exams, we aim to find the only existing student exam.
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByCreatedDateDesc(exam.getId(),
-                studentParticipation.getParticipant().getId());
+        // A projection: the caller already holds the exam, and reading the two values off the student exam entity pulled
+        // its eager exam, that exam's course and the course configuration in behind them, on every exam submission.
+        Optional<StudentExamWorkingPeriodDTO> workingPeriod = studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(exam.getId(), participantId);
 
-        if (optionalStudentExam.isPresent()) {
-            StudentExam studentExam = optionalStudentExam.get();
-            return Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.isEnded();
+        if (workingPeriod.isPresent()) {
+            return workingPeriod.get().isWorkingPeriodOver(exam);
         }
 
-        throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());
+        throw new IllegalStateException("No student exam found for student participation " + participationId);
     }
 
     /**
@@ -178,6 +208,7 @@ public class ExamDateService {
      * @param originalExamDuration the exam duration in seconds before the change
      * @param workingTimeChange    the change to the exam duration in seconds (may be negative)
      * @return the working time in seconds the student exam will have after the change
+     * @throws ArithmeticException if the time adjustment or resulting working time exceeds the supported integer range
      */
     public static int projectWorkingTimeAfterDurationChange(int currentWorkingTime, int originalExamDuration, int workingTimeChange) {
         if (workingTimeChange == 0) {
@@ -191,7 +222,7 @@ public class ExamDateService {
         double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
         int newNormalWorkingTime = originalExamDuration + workingTimeChange;
         int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-        return Math.max(newNormalWorkingTime + timeAdjustment, 0);
+        return Math.max(Math.addExact(newNormalWorkingTime, timeAdjustment), 0);
     }
 
     /**

@@ -27,14 +27,14 @@ import io.github.bucket4j.redis.redisson.Bucket4jRedisson;
  *
  * <p>
  * Rate-limit state has to be shared across nodes, otherwise each node would enforce the limit on its own and the
- * effective limit would scale with the node count. Bucket4j ships a separate storage module per backend, so exactly one
+ * effective limit would scale with the node count. Bucket4j ships a separate storage module per provider, so exactly one
  * {@link ProxyManager} bean is contributed here depending on the configured distributed data provider. Callers depend on
  * the {@link ProxyManager} interface so they are unaffected by which one is active. Every provider that
  * {@link DistributedDataProviderResolver} accepts must be covered here, otherwise a core node configured with it cannot
  * start.
  *
  * <p>
- * Bucket state is small and short-lived, so one round trip per check is acceptable on either backend.
+ * Bucket state is small and short-lived, so one round trip per check is acceptable on either provider.
  */
 @Profile(PROFILE_CORE)
 @Configuration

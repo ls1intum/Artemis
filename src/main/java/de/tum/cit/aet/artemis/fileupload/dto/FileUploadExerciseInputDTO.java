@@ -36,10 +36,8 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param mode                                   whether the exercise is individual or team-based
  * @param teamAssignmentConfig                   the team-assignment settings
  * @param allowComplaintsForAutomaticAssessments whether complaints for automatic assessments are allowed
- * @param allowFeedbackRequests                  whether feedback requests are allowed
  * @param presentationScoreEnabled               whether presentation scores are enabled
  * @param secondCorrectionEnabled                whether a second correction round is enabled
- * @param feedbackSuggestionModule               the feedback suggestion module
  * @param gradingInstructions                    the free-text grading instructions
  * @param releaseDate                            the release date
  * @param startDate                              the start date
@@ -58,11 +56,10 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 public record FileUploadExerciseInputDTO(@Nullable Long id, @Nullable String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
         @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints,
         @Nullable IncludedInOverallScore includedInOverallScore, @Nullable ExerciseMode mode, @Nullable FileUploadTeamAssignmentConfigDTO teamAssignmentConfig,
-        @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests, @Nullable Boolean presentationScoreEnabled,
-        @Nullable Boolean secondCorrectionEnabled, @Nullable String feedbackSuggestionModule, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
-        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
-        @Nullable String exampleSolution, @Nullable String filePattern, @Nullable Long courseId, @Nullable Long exerciseGroupId,
-        @Nullable List<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks,
+        @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled,
+        @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate,
+        @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution, @Nullable String filePattern,
+        @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable List<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks,
         @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CompetencyLinksHolderDTO {
 
     private static final String ENTITY_NAME = "fileUploadExercise";
@@ -104,16 +101,12 @@ public record FileUploadExerciseInputDTO(@Nullable Long id, @Nullable String tit
         if (allowComplaintsForAutomaticAssessments != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(allowComplaintsForAutomaticAssessments);
         }
-        if (allowFeedbackRequests != null) {
-            exercise.setAllowFeedbackRequests(allowFeedbackRequests);
-        }
         if (presentationScoreEnabled != null) {
             exercise.setPresentationScoreEnabled(presentationScoreEnabled);
         }
         if (secondCorrectionEnabled != null) {
             exercise.setSecondCorrectionEnabled(secondCorrectionEnabled);
         }
-        exercise.setFeedbackSuggestionModule(feedbackSuggestionModule);
         exercise.setGradingInstructions(gradingInstructions);
         exercise.setReleaseDate(releaseDate);
         exercise.setStartDate(startDate);

@@ -16,10 +16,9 @@ export class CourseOverviewPage {
      * @param term The search term to use.
      */
     async search(term: string) {
-        // The sidebar's search field used to be a reactive form control bound via
-        // formControlName="searchFilter"; PR #12382 migrated it to a plain input with id="search"
-        // and a (input)/[value] binding. Match the new selector.
-        const searchInput = this.page.locator('jhi-sidebar input#search');
+        // Matched through the filter component rather than an id: the shared field no longer carries one,
+        // since a hardcoded id collides wherever two search filters render on the same page.
+        const searchInput = this.page.locator('jhi-sidebar jhi-search-filter input');
         await searchInput.pressSequentially(term, { delay: 20 });
     }
 

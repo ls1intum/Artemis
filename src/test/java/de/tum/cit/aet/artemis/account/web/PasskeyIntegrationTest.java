@@ -27,8 +27,8 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -69,7 +69,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private WebAuthnClientSimulator webAuthnClientSimulator;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Value("${server.url:http://localhost}")
     private String serverUrl;
@@ -117,15 +117,13 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testGetPasskeysViaLegacyPath_Success() throws Exception {
-            // The pre-9.3 prefix "api/core/passkey/" must keep working for deployed clients; it is retained as a legacy alias
-            // (AccountLegacyRestPaths.CORE_PASSKEY_PREFIX) alongside the canonical "api/account/passkeys/".
+        void testGetPasskeysViaRemovedLegacyPath_NotFound() throws Exception {
+            // The pre-9.3 prefix "api/account/passkey/" (singular, under the account prefix) was retired: no client called it.
+            // Asserting the 404 keeps the removal deliberate, so that re-adding an alias has to be a conscious decision.
             User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-            PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+            passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
-            List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
-
-            assertThat(passkeys).extracting(PasskeyDTO::credentialId).containsExactly(credential.getCredentialId());
+            request.getList("/api/account/passkey/user", HttpStatus.NOT_FOUND, PasskeyDTO.class);
         }
 
         @Test

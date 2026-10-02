@@ -84,16 +84,11 @@ public class PlagiarismService {
      * @param submissionsWithoutDeletedUsers a set of plagiarism submissions for which the user still exists.
      */
     private void addSubmissionsIfUserHasNotBeenDeleted(PlagiarismComparison comparison, Set<PlagiarismSubmission> submissionsWithoutDeletedUsers) {
-        var plagiarismSubmissionA = comparison.getSubmissionA();
-        var plagiarismSubmissionB = comparison.getSubmissionB();
-        var submissionA = submissionRepository.findById(plagiarismSubmissionA.getSubmissionId()).orElseThrow();
-        var submissionB = submissionRepository.findById(plagiarismSubmissionB.getSubmissionId()).orElseThrow();
-        if (!userForSubmissionDeleted(submissionA)) {
-            submissionsWithoutDeletedUsers.add(plagiarismSubmissionA);
-        }
-        if (!userForSubmissionDeleted(submissionB)) {
-            submissionsWithoutDeletedUsers.add(plagiarismSubmissionB);
-
+        for (var plagiarismSubmission : comparison.getSubmissions()) {
+            var submission = submissionRepository.findById(plagiarismSubmission.getSubmissionId()).orElseThrow();
+            if (!userForSubmissionDeleted(submission)) {
+                submissionsWithoutDeletedUsers.add(plagiarismSubmission);
+            }
         }
     }
 

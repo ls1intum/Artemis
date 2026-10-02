@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
@@ -80,9 +80,6 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        // Make sure the build config is loaded
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(sourceExercise);
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(targetExercise);
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
     }
 
@@ -113,7 +110,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             TestResultsDTO dto = TestResultsDTO.convert(requestBody);
             return jenkinsBuildPlanService.getBuildPlanKeyFromTestResults(dto);
         }
-        catch (JsonProcessingException jsonProcessingException) {
+        catch (JacksonException jsonProcessingException) {
             throw new JenkinsException("Something went wrong trying to parse the requestBody while getting the PlanKey from Jenkins!");
         }
     }

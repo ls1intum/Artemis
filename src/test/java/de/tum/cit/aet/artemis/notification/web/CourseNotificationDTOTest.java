@@ -7,9 +7,8 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
@@ -27,7 +26,7 @@ import de.tum.cit.aet.artemis.notification.dto.payload.NewPostPayloadDTO;
  */
 class CourseNotificationDTOTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
+    private static final JsonMapper MAPPER = new JsonMapper();
 
     private static final NewPostPayloadDTO PAYLOAD = new NewPostPayloadDTO(90037L, "content", 12L, "channel", "LECTURE", "Author", "image.url", 7L, false);
 
@@ -42,15 +41,15 @@ class CourseNotificationDTOTest {
 
         // The typed shape a migrated client narrows on its notificationType
         assertThat(json.path("payload").path("postId").asLong()).isEqualTo(90037L);
-        assertThat(json.path("courseTitle").asText()).isEqualTo("Course Title");
+        assertThat(json.path("courseTitle").asString()).isEqualTo("Course Title");
 
         // The flat shape a client that has not migrated reads, which carries both at the same level
         JsonNode parameters = json.path("parameters");
         assertThat(parameters.path("postId").asLong()).isEqualTo(90037L);
-        assertThat(parameters.path("channelName").asText()).isEqualTo("channel");
-        assertThat(parameters.path("authorName").asText()).isEqualTo("Author");
-        assertThat(parameters.path("courseTitle").asText()).isEqualTo("Course Title");
-        assertThat(parameters.path("courseIconUrl").asText()).isEqualTo("icon.url");
+        assertThat(parameters.path("channelName").asString()).isEqualTo("channel");
+        assertThat(parameters.path("authorName").asString()).isEqualTo("Author");
+        assertThat(parameters.path("courseTitle").asString()).isEqualTo("Course Title");
+        assertThat(parameters.path("courseIconUrl").asString()).isEqualTo("icon.url");
     }
 
     @Test
@@ -95,7 +94,7 @@ class CourseNotificationDTOTest {
     void shouldStillWriteTheSharedValuesWhenThePayloadIsAbsent() {
         JsonNode parameters = MAPPER.valueToTree(notification(null)).path("parameters");
 
-        assertThat(parameters.path("courseTitle").asText()).isEqualTo("Course Title");
-        assertThat(parameters.path("courseIconUrl").asText()).isEqualTo("icon.url");
+        assertThat(parameters.path("courseTitle").asString()).isEqualTo("Course Title");
+        assertThat(parameters.path("courseIconUrl").asString()).isEqualTo("icon.url");
     }
 }

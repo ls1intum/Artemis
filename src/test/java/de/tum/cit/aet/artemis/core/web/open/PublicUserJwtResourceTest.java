@@ -10,7 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.dto.OIDCCodeExchangeDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -19,10 +19,10 @@ class PublicUserJwtResourceTest extends AbstractSpringIntegrationIndependentTest
 
     private final MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     @Autowired
-    public PublicUserJwtResourceTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+    public PublicUserJwtResourceTest(MockMvc mockMvc, JsonMapper objectMapper) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
     }

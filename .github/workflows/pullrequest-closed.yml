@@ -13,6 +13,11 @@ jobs:
     name: Delete image from ghcr.io
     runs-on: ubuntu-latest
     steps:
+      # The action takes exactly one selector and aborts with "too many selectors defined, use only
+      # one" when it is given more, so `tag` is the only one here. Pairing it with
+      # `untagged-older-than` failed the step on every closed pull request, which meant no image was
+      # ever deleted — the opposite of what this job is for. Pruning untagged versions needs its own
+      # invocation of the action, on a schedule rather than on this event.
       - name: Delete image
         uses: bots-house/ghcr-delete-image-action@3827559c68cb4dcdf54d813ea9853be6d468d3a4  # v1.1.0
         with:
@@ -20,4 +25,3 @@ jobs:
           name: artemis
           token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
           tag: pr-${{ github.event.pull_request.number }}
-          untagged-older-than: 28

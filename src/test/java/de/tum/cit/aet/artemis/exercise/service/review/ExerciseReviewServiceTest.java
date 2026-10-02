@@ -880,7 +880,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         auxiliaryRepository.setExercise(programmingExercise);
         programmingExercise.getAuxiliaryRepositories().add(auxiliaryRepository);
         programmingExerciseRepository.save(programmingExercise);
-        auxiliaryRepository = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories().getFirst();
+        auxiliaryRepository = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories().iterator()
+                .next();
 
         String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepository.getId(), programmingExercise.getId());
 
@@ -1330,8 +1331,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private ExerciseSnapshotDTO buildExerciseSnapshot(long exerciseId, String problemStatement, ProgrammingExerciseSnapshotDTO programmingData) {
-        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null,
-                null, null, null, null, null, null, null, programmingData, null, null, null, null);
+        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null, null,
+                null, null, null, null, null, programmingData, null, null, null, null);
     }
 
     private ProgrammingExerciseSnapshotDTO buildProgrammingSnapshot(String testRepositoryUri, String testsCommitId,

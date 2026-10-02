@@ -27,6 +27,16 @@ public record FileUploadTeamAssignmentConfigDTO(@Nullable Long id, @Nullable Int
     }
 
     /**
+     * Returns the same configuration without the row id, for payloads that are written to a file and read back
+     * elsewhere, where the id of this instance's row means nothing.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public FileUploadTeamAssignmentConfigDTO withoutId() {
+        return new FileUploadTeamAssignmentConfigDTO(null, minTeamSize, maxTeamSize);
+    }
+
+    /**
      * Creates a new configuration for a create or import request.
      * The DTO identifier is intentionally ignored so that requests cannot attach an existing configuration.
      *

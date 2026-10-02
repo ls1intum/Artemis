@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.quiz.dto.question;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.AnswerOptionWithSolutionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record MultipleChoiceQuestionWithSolutionDTO(List<AnswerOptionWithSolutionDTO> answerOptions, boolean singleChoice) {
 
     public static MultipleChoiceQuestionWithSolutionDTO of(MultipleChoiceQuestion multipleChoiceQuestion) {

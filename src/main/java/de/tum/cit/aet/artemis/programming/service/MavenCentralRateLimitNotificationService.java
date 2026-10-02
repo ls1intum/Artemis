@@ -69,7 +69,7 @@ public class MavenCentralRateLimitNotificationService {
     /** Hosts used by Maven Central. Requiring one avoids misclassifying rate limits from private Maven-compatible registries. */
     private static final List<String> MAVEN_CENTRAL_HOSTS = List.of("repo.maven.apache.org", "repo1.maven.org");
 
-    static final String DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise#prevent-maven-central-rate-limits-java-and-kotlin";
+    static final String DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#prevent-maven-central-rate-limits-java-and-kotlin";
 
     private static final String NOTIFICATION_SENT_MAP = "maven-central-rate-limit-notification-sent";
 

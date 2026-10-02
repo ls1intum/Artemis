@@ -11,7 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.dto.OIDCCodeExchangeDTO;
 import de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService;
@@ -28,7 +28,7 @@ class PublicUserJwtResourceOIDCIntegrationTest extends AbstractSpringIntegration
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Test
     void testExchangeCodeToJwtToken_success() throws Exception {

@@ -22,7 +22,7 @@
             }
         },
         {
-            "files": ["src/main/webapp/tailwind.css", "packages/tum-ui/tailwind.css", "packages/tum-ui/tailwind-theme.css"],
+            "files": ["src/main/webapp/tailwind.css", "packages/tum-aet-ui/tailwind.css", "packages/tum-aet-ui/tailwind-theme.css"],
             "rules": {
                 "scss/at-rule-no-unknown": [
                     true,
@@ -47,6 +47,8 @@
                 "src/main/webapp/app/shared-ui/confirm-entity-name/**/*.scss",
                 "src/main/webapp/app/shared-ui/delete-dialog/**/*.scss",
                 "src/main/webapp/app/core/alert/**/*.scss",
+                "src/main/webapp/app/core/about-us/**/*.scss",
+                "src/main/webapp/app/core/feature-overview/**/*.scss",
                 "src/main/webapp/app/core/layouts/footer/**/*.scss",
                 "src/main/webapp/app/course/overview/setup-passkey-modal/**/*.scss",
                 "src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.scss",
@@ -56,12 +58,20 @@
                 "src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.scss",
                 "src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.scss",
                 "src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.scss",
-                "src/main/webapp/app/exam/manage/exercise-groups/**/*.scss",
+                "src/main/webapp/app/exam/manage/**/*.scss",
+                "src/main/webapp/app/exam/shared/**/*.scss",
                 "src/main/webapp/app/exercise/exercise-action-bar/**/*.scss",
                 "src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.scss",
                 "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",
+                "src/main/webapp/app/course/manage/update/**/*.scss",
                 "src/main/webapp/app/account/**/*.scss",
-                "packages/tum-ui/src/lib/**/*.scss"
+                "src/main/webapp/app/lecture/manage/lecture-update/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-period/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-units/**/*.scss",
+                "src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.scss",
+                "src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.scss",
+                "packages/tum-aet-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {

@@ -14,6 +14,7 @@ import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -283,5 +284,33 @@ describe('TeamParticipationTableComponent', () => {
             submission5,
         );
         expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
+
+    it('currentExerciseSubmissions only includes the submission of the current exercise, not other exercises in the team course', () => {
+        const athenaSubmission = {
+            id: 999,
+            submitted: true,
+            results: [{ id: 999, assessmentType: AssessmentType.AUTOMATIC_ATHENA }],
+        } as Submission;
+        const otherExerciseWithAthenaSubmission = {
+            id: 42,
+            type: ExerciseType.TEXT,
+            mode: ExerciseMode.TEAM,
+            teams: [mockTeam],
+            course,
+            studentParticipations: [{ id: 42, team: mockTeam, submissions: [athenaSubmission] }],
+        } as Exercise;
+
+        vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(
+            of(new HttpResponse({ body: { ...course, exercises: [otherExerciseWithAthenaSubmission, exercise4] } })),
+        );
+        fixture.componentRef.setInput('exercise', exercise4);
+        comp.loadAll();
+
+        const submissions = comp.currentExerciseSubmissions();
+
+        expect(submissions).toHaveLength(1);
+        expect(submissions[0]?.id).toBe(submission4.id);
+        expect(submissions.some((submission) => submission.results?.some((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA))).toBe(false);
     });
 });

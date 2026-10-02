@@ -17,7 +17,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
@@ -45,16 +45,17 @@ import { isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, take, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
-import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-validation.util';
 import { countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/modeling-markdown-explanation-editor/modeling-markdown-explanation-editor.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -80,14 +81,14 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
-        ModelingExerciseTimelineComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
-        TumUiConfirmDialogComponent,
-        TumUiSelectComponent,
+        ExerciseTimelineComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiSelectComponent,
         ModelingMarkdownExplanationEditorComponent,
         ExerciseGroupTimelineLockComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private static readonly SCROLL_SNAP_CLASS = 'modeling-exercise-editor-scroll-snap';
@@ -106,13 +107,14 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
     private readonly translateService = inject(TranslateService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
-    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNamePrimengComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
     readonly modelingEditor = viewChild(ModelingEditorComponent);
+    readonly gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
@@ -273,11 +275,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     async calculateFormSectionStatus() {
         const modelingEditor = this.modelingEditor();
-        // Before Apollon has mounted, fall back to the model imported from the exercise so the example solution is
-        // recognised on the first render (the publication date opt-in in the timeline depends on it).
+        // Before Apollon has mounted, fall back to the model imported from the exercise so the example solution is recognized on the first render.
         const currentModel = (modelingEditor?.isApollonEditorMounted ? modelingEditor.getCurrentModel() : undefined) ?? this.exampleSolution();
         const hasExampleSolutionDiagram = !isEmpty(currentModel?.nodes);
-        this.hasExampleSolution.set(hasExampleSolutionDiagram || !!this.modelingExercise?.exampleSolutionExplanation);
+        this.hasExampleSolution.set(hasExampleSolutionDiagram || !!this.modelingExercise.exampleSolutionExplanation);
 
         this.formSectionStatus.set([
             {
@@ -301,6 +302,21 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);
+    }
+
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
+    getInvalidReasons(): ValidationReason[] {
+        if (!this.modelingExercise) {
+            return [];
+        }
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        return getCommonExerciseInvalidReasons(this.modelingExercise, {
+            isExamMode: this.isExamMode(),
+            minTitleLength: 3,
+            isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
+            isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
+            timelineStatus: this.timelineStatus(),
+        });
     }
 
     updateCategories(categories: ExerciseCategory[]): void {
@@ -397,9 +413,14 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
+        // Flush text-mode Monaco before isSaving disables the child (editable becomes false). A
+        // rejected parse aborts the save: the model still holds the previous grading criteria.
+        if (this.gradingInstructionsDetails()?.prepareForSave() === false) {
+            return;
+        }
         this.isSaving.set(true);
 
-        new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
+        new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)
             .save(this.modelingExercise, this.isExamMode(), this.notificationText)
             .subscribe({
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),

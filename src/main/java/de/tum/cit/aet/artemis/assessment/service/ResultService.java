@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
@@ -107,6 +109,8 @@ public class ResultService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final GradingInstructionRepository gradingInstructionRepository;
+
     private final ComplaintRepository complaintRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
@@ -151,7 +155,8 @@ public class ResultService {
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
             Optional<ParticipantScoreScheduleService> participantScoreScheduleService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            ScaFeedbackRepository scaFeedbackRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
+            GradingInstructionRepository gradingInstructionRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.assessmentNoteRepository = assessmentNoteRepository;
@@ -160,6 +165,7 @@ public class ResultService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
         this.feedbackRepository = feedbackRepository;
+        this.gradingInstructionRepository = gradingInstructionRepository;
         this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
@@ -186,6 +192,7 @@ public class ResultService {
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean ratedResult) {
+        validateGradingInstructions(result.getFeedbacks(), result.getExerciseId());
         User user = userRepository.getUserWithAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -216,6 +223,24 @@ public class ResultService {
 
     public void createNewRatedManualResult(Result result) {
         createNewManualResult(result, true);
+    }
+
+    /**
+     * Rejects feedback referencing missing instructions or instructions from another exercise. Ownership is checked
+     * against the database, not against instruction data supplied by the caller. Call before any assessment writes.
+     *
+     * @param feedbacks  the new feedback, or null when a complaint update retains the existing feedback
+     * @param exerciseId the trusted id of the exercise being assessed
+     */
+    public void validateGradingInstructions(Collection<Feedback> feedbacks, long exerciseId) {
+        if (feedbacks == null) {
+            return;
+        }
+        Set<Long> instructionIds = feedbacks.stream().map(Feedback::getGradingInstruction).filter(Objects::nonNull).map(GradingInstruction::getId).collect(Collectors.toSet());
+        if (!instructionIds.isEmpty()
+                && (instructionIds.contains(null) || gradingInstructionRepository.countByIdInAndGradingCriterionExerciseId(instructionIds, exerciseId) != instructionIds.size())) {
+            throw new BadRequestAlertException("Every grading instruction must belong to the assessed exercise.", "feedback", "invalidGradingInstruction");
+        }
     }
 
     /**
@@ -614,6 +639,7 @@ public class ResultService {
 
     @NonNull
     private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, List<Feedback> feedbackList) {
+        validateGradingInstructions(feedbackList, result.getExerciseId());
         List<Feedback> savedFeedbacks = new ArrayList<>();
 
         // Fetch long feedback texts associated with the provided feedback list
@@ -960,7 +986,7 @@ public class ResultService {
             entry.setValue(rounded);
         });
 
-        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
+        return new ResultWithPointsPerGradingCriterionDTO(ResultWithPointsPerGradingCriterionDTO.ResultForExportDTO.of(result), totalPoints, pointsPerCriterion);
     }
 
 }

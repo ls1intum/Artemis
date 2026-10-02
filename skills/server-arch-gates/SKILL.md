@@ -1,14 +1,12 @@
 ---
 name: server-arch-gates
-description: Check Artemis server code against the architectural rules the build enforces, before pushing. Use when writing or changing Java under src/main/java, adding a service, repository, REST resource, DTO, cache, or cross-node state, or when an ArchUnit test fails and the message does not make the rule obvious. Gives the rule, the reason, and the exact local command that proves it.
+description: Apply Artemis architecture rules when changing server Java or diagnosing an ArchUnit failure.
 ---
 
 # Server architecture gates
 
-Artemis enforces its server conventions with a large ArchUnit suite under `src/test/java`, most of
-it module-scoped subclasses of a handful of abstract rule bases. They are not style preferences. Each one exists because the pattern it forbids
-produced a production bug. The failure messages are often terse, so this skill maps a change to the
-rules it is subject to and to the reason behind each.
+Artemis enforces server conventions with ArchUnit tests under `src/test/java`. This skill maps
+server changes to those checks and explains rules whose failure messages lack context.
 
 ## Run them locally
 
@@ -36,19 +34,35 @@ A single class while iterating:
 | A repository                           | Transactions, raw JDBC                              |
 | A DTO record                           | DTO conventions                                     |
 | Anything holding state across requests | Caching, distributed data                           |
-| An entity or an association            | Caching, entity conventions                         |
+| An entity or an association            | Caching, entity conventions, column mapping         |
 | Anything at all in a large file        | Counted gates                                       |
 | Anything that lowercases or uppercases | Case conversion                                     |
+| Anything that serializes JSON          | Jackson version                                     |
+| A websocket topic or message handler   | Websocket topics                                    |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
+
+**Jackson 2 must not appear in production code.** Artemis serializes with Jackson 3, whose packages are
+`tools.jackson`. Jackson 2 stays on the runtime classpath for third-party libraries that carry their own
+mapper, so a `com.fasterxml.jackson.databind`, `.core`, `.dataformat`, `.datatype`, `.module`, `.jr` or
+`.jaxrs` import still compiles — `testNoJackson2InProductionCode` in `ArchitectureTest` is what rejects it.
+The one exception is `com.fasterxml.jackson.annotation`: `jackson-annotations` never moved to the
+`tools.jackson` group, so `@JsonInclude`, `@JsonProperty` and `@JsonTypeInfo` stay where they are and must
+not be "fixed". Mappers are immutable in Jackson 3 — derive one with `JsonMapper.builder()` or
+`rebuild()`, never `configure()` or `registerModule()` on a built instance — and its exceptions are
+unchecked, so a `catch (IOException)` no longer catches a parse failure.
 
 ## The rules most often broken
 
 **No transaction boundaries in services or controllers.** `@Transactional`,
 `TransactionTemplate`, and `PlatformTransactionManager` belong in repositories, typically on
-modifying queries. Enforced by `testTransactional` in
-`src/test/java/de/tum/cit/aet/artemis/shared/architecture/module/AbstractModuleRepositoryArchitectureTest.java`.
+modifying queries, and `TransactionSynchronizationManager` is banned outright. Enforced globally by
+`testTransactionBoundariesOnlyInRepositories`, `testNoProgrammaticTransactionManagement` and
+`testNoTransactionSynchronization` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`. The replacements
+are a check in the `WHERE` clause of a `@Modifying` query, or explicit compensation in a `catch`
+block.
 
 **No direct persistence access.** No injected `EntityManager` or `EntityManagerFactory`, and no
 `JdbcClient`, `JdbcTemplate`, or `DataSource`. Write the statement as a `@Query` on a repository,
@@ -67,7 +81,13 @@ has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 `DistributedDataProvider` in
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`. Enforced by
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`.
-The backend is configurable, so direct usage does not fail loudly, it silently loses the state.
+The provider is configurable, so direct usage does not fail loudly, it silently loses the state.
+
+**No `@Lob`.** A CLOB on PostgreSQL is a large object, so the value lands in `pg_largeobject` and the
+column keeps only its id - while the long text columns here are Liquibase `longtext` or `clob`, both
+`text` on PostgreSQL, holding the text itself. A `String` or a converted attribute needs no
+annotation at all; for a structured value use `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column.
+Enforced by `testNoLobAnnotation` in `ArchitectureTest.java`.
 
 **No Hibernate second-level cache.** No `@Cache` on entities or associations. Enforced by
 `testNoHibernateSecondLevelCacheAnnotation` in `ArchitectureTest.java`. For DTO and projection
@@ -82,6 +102,15 @@ default locale, so the same input gives a different answer depending on where th
 does for that kind of value. Enforced by `testNoLocaleLessCaseConversion` in `ArchitectureTest.java`,
 over production and test classes both.
 
+**Every websocket destination is a declared topic.** Declare a `WebsocketTopic` with its
+`WebsocketTopicAccess` rule, or a `WebsocketUserTopic` for data of one user, as a `public static final`
+constant of the module's `web/<Module>WebsocketTopics` class, and send with
+`websocketMessagingService.sendMessage(TOPIC.at(id), dto)`. A subscription to an undeclared destination
+is rejected, so a topic that is sent but not declared silently reaches nobody. Clients send only to
+`/app/...` destinations handled by `@MessageMapping` methods, which check the sender themselves.
+Enforced by `WebsocketTopicArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`.
+
 ## Before adding a cache
 
 The default answer is not to. The bar is a measured performance gain that justifies the
@@ -91,9 +120,9 @@ rationale, and `reference/gates.md` for the pattern if you do proceed.
 
 ## Adding a capability to the distributed data layer
 
-If `DistributedDataProvider` lacks what you need, add it there, implement it for all three backends
+If `DistributedDataProvider` lacks what you need, add it there, implement it for all three providers
 (Hazelcast, Redis, Local), and add a case to `AbstractDistributedDataTest`. That suite is what keeps
-the backends in agreement. Request entry lifetimes at the call site with
-`getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL deliberately, because a backend
-map configuration only applies to that one backend. Full guidance:
+the providers in agreement. Request entry lifetimes at the call site with
+`getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL deliberately, because a provider
+map configuration only applies to that one provider. Full guidance:
 `documentation/docs/developer/guidelines/distributed-data.mdx`.

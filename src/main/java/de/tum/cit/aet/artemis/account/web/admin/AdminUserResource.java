@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactDTO;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactRequestDTO;
@@ -54,6 +53,7 @@ import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletio
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionMode;
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
@@ -66,6 +66,8 @@ import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
@@ -93,10 +95,9 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("users/user-administration")
+@FeatureUsage(UserFeature.USER_MANAGEMENT)
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/admin/", AccountLegacyRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/account/admin/")
 public class AdminUserResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminUserResource.class);
@@ -388,6 +389,7 @@ public class AdminUserResource {
         return ResponseEntity.ok(userDeletionPlanService.createImpact(target, UserDeletionMode.ADMIN_FORCED));
     }
 
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("users/deletion-impact")
     public ResponseEntity<BulkUserDeletionImpactDTO> getBulkUserDeletionImpact(@Valid @RequestBody BulkUserDeletionImpactRequestDTO request) {
         List<User> targets = loadDeletionTargets(request.logins());

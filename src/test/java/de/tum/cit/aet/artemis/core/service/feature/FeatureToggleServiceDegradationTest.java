@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
  * request. A node can be in that state while it is starting or reconnecting.
  *
  * <p>
- * Each backend throws its own unavailability type, so the service guards on a runtime exception. These tests pin down that
+ * Each provider throws its own unavailability type, so the service guards on a runtime exception. These tests pin down that
  * the guard actually holds for both shapes it can take: the provider reporting itself as not running, and the provider
  * throwing on access.
  */

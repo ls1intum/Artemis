@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.COURSE_WIDE_POSTS;
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.PLAGIARISM_CASE_POSTS;
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.USER_CONVERSATION_POSTS;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
@@ -58,16 +62,7 @@ public abstract class PostingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    protected static final String METIS_POST_ENTITY_NAME = "metis.post";
-
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
-
-    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
-    // Deployed mobile and external clients may still be subscribed here.
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
+    protected static final String POST_ENTITY_NAME = "messages.post";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -114,7 +109,7 @@ public abstract class PostingService {
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
+        broadcastForPost(updatedPost, CommunicationCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -125,6 +120,9 @@ public abstract class PostingService {
      * before the frame leaves the server. Sending the {@link Post} entity directly used to walk
      * the same JSON cycle that fires Jackson's {@code DeserializerCache} race during integration
      * test deserialization (see {@code JacksonDeserializerInitializationConfig}).
+     * <p>
+     * The conversation of the post must still carry the exercise and exam of its channel: whether students may see the channel depends on them, so hide the
+     * details of the conversation only after broadcasting.
      *
      * @param post       the affected post
      * @param action     the action performed on the post
@@ -133,8 +131,7 @@ public abstract class PostingService {
      *                       ({@link #hasPendingIrisReply}); in that case recipients are re-resolved via {@link #getNotificationRecipients}
      *                       because per-user delivery needs each recipient's course role to choose the tutor vs. student payload.
      */
-    @SuppressWarnings("deprecation")
-    public void broadcastForPost(Post post, MetisCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
+    public void broadcastForPost(Post post, CommunicationCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
         // A pending (unverified) Iris reply must never reach students. Clients replace their whole cached
         // post — including its answers — on every UPDATE frame, so a single shared payload cannot serve
         // students and tutors at once: re-broadcasting an unrelated change (a reaction, an edit, another
@@ -151,24 +148,27 @@ public abstract class PostingService {
         PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, action);
 
         if (postConversation != null) {
-            String coursePathSuffix = "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
-                // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
-                websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
+                if (channel.isVisibleToStudents()) {
+                    websocketMessagingService.sendMessage(COURSE_WIDE_POSTS.at(courseId), broadcastPayload);
+                }
+                else {
+                    // Staff discuss an exercise or exam in its channel before students can see it. The course-wide topic reaches every
+                    // student of the course, so the post goes to the personal topic of each staff member instead.
+                    userRepository.findStaffNotificationRecipientsInCourseForConversation(channel.getId(), courseId)
+                            .forEach(recipient -> websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), broadcastPayload));
+                }
             }
             else {
                 if (recipients == null) {
                     // send to all participants of the conversation
                     recipients = getConversationParticipantsAsSummaries(postConversation);
                 }
-                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", broadcastPayload));
+                recipients.forEach(recipient -> websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), broadcastPayload));
             }
         }
         else if (post.getPlagiarismCase() != null) {
-            String plagiarismCaseSuffix = "plagiarismCase/" + post.getPlagiarismCase().getId();
-            websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
-            websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
+            websocketMessagingService.sendMessage(PLAGIARISM_CASE_POSTS.at(post.getPlagiarismCase().getId()), broadcastPayload);
         }
     }
 
@@ -210,18 +210,19 @@ public abstract class PostingService {
      * @param action       the CRUD action this broadcast describes
      * @param conversation the conversation the post belongs to
      */
-    @SuppressWarnings("deprecation")
-    private void broadcastPostWithPendingIrisReply(Post post, MetisCrudAction action, Conversation conversation) {
+    private void broadcastPostWithPendingIrisReply(Post post, CommunicationCrudAction action, Conversation conversation) {
         // Tutor payload first, while the pending reply is still attached.
         PostBroadcastDTO tutorPayload = PostBroadcastDTO.from(post, action);
         // Then strip the pending replies and re-project for everyone else.
         post.getAnswers().removeIf(AnswerPost::isUnverifiedIrisReply);
         PostBroadcastDTO studentPayload = PostBroadcastDTO.from(post, action);
 
+        // Students must not see posts of a channel whose exercise or exam is not visible to them yet.
+        boolean visibleToStudents = !(conversation instanceof Channel channel) || channel.isVisibleToStudents();
         // Resolve recipients together with their course role — a caller-supplied set need not carry the tutor flag.
-        getNotificationRecipients(conversation).forEach(recipient -> {
+        getNotificationRecipients(conversation).filter(recipient -> visibleToStudents || recipient.isAtLeastTutorInCourse()).forEach(recipient -> {
             PostBroadcastDTO payload = recipient.isAtLeastTutorInCourse() ? tutorPayload : studentPayload;
-            websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", payload);
+            websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), payload);
         });
     }
 
@@ -404,17 +405,17 @@ public abstract class PostingService {
         Set<User> mentionedUsers = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
-            throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
+            throw new BadRequestAlertException("At least one of the mentioned users does not exist", POST_ENTITY_NAME, "invalidUserMention");
         }
 
         mentionedUsers.forEach(user -> {
             if (!user.getName().equals(matches.get(user.getLogin()))) {
-                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(),
-                        METIS_POST_ENTITY_NAME, "invalidUserMention");
+                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(), POST_ENTITY_NAME,
+                        "invalidUserMention");
             }
 
             if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-                throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", METIS_POST_ENTITY_NAME, "invalidUserMention");
+                throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", POST_ENTITY_NAME, "invalidUserMention");
             }
         });
 

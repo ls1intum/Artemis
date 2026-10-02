@@ -19,11 +19,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * @param type                   how the submission came about
  * @param submissionExerciseType the concrete submission kind; the client discriminates on this, so a projection has to
  *                                   carry it explicitly rather than rely on Jackson's type information
+ * @param buildFailed            whether the build of a programming submission failed
+ * @param commitHash             the commit of a programming submission, which the feedback dialog needs to show the
+ *                                   referenced source lines
  * @param results                the results of this submission
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmissionOverviewDTO(Long id, ZonedDateTime submissionDate, Boolean submitted, SubmissionType type, String submissionExerciseType, Boolean buildFailed,
-        List<ResultOverviewDTO> results) {
+        String commitHash, List<ResultOverviewDTO> results) {
 
     /**
      * Projects a submission and its results for the course overview.
@@ -35,8 +38,9 @@ public record SubmissionOverviewDTO(Long id, ZonedDateTime submissionDate, Boole
         List<ResultOverviewDTO> results = submission.getResults() == null ? List.of()
                 : submission.getResults().stream().filter(java.util.Objects::nonNull).map(ResultOverviewDTO::of).toList();
         Boolean buildFailed = submission instanceof ProgrammingSubmission programmingSubmission ? programmingSubmission.isBuildFailed() : null;
+        String commitHash = submission instanceof ProgrammingSubmission programmingSubmission ? programmingSubmission.getCommitHash() : null;
         return new SubmissionOverviewDTO(submission.getId(), submission.getSubmissionDate(), submission.isSubmitted(), submission.getType(), submission.getSubmissionExerciseType(),
-                buildFailed, results);
+                buildFailed, commitHash, results);
     }
 
     /**

@@ -13,12 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.JacksonJsonMessageConverter;
 import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
-public class GzipMessageConverter extends MappingJackson2MessageConverter {
+public class GzipMessageConverter extends JacksonJsonMessageConverter {
 
     private static final Logger log = LoggerFactory.getLogger(GzipMessageConverter.class);
 
@@ -26,8 +26,8 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
 
     public static final Map<String, Object> COMPRESSION_HEADER = Map.of(COMPRESSION_HEADER_KEY, true);
 
-    public GzipMessageConverter(ObjectMapper objectMapper) {
-        super(objectMapper);
+    public GzipMessageConverter(JsonMapper jsonMapper) {
+        super(jsonMapper);
     }
 
     @Override

@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
-import de.tum.cit.aet.artemis.communication.dto.SavedPostDTO;
+import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
 import de.tum.cit.aet.artemis.core.config.cache.BlobCacheConfiguration;
 import de.tum.cit.aet.artemis.core.service.cache.PerNodeCacheEvictionService.PerNodeCacheEviction;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.MapItemEvent;
@@ -121,7 +121,8 @@ class DistributedDataSurfaceTest {
      * Stored types this package cannot name directly, because they are package-private where they are declared.
      * Loaded by name so that they are still covered rather than quietly left out.
      */
-    private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo");
+    private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo",
+            "de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandCoordinationService$AckMessage");
 
     /**
      * Cache annotations that can write a method's return value. {@link Caching} is included because it may wrap either
@@ -242,12 +243,14 @@ class DistributedDataSurfaceTest {
         String recorded = Files.exists(RECORDED_SURFACE) ? Files.readString(RECORDED_SURFACE, StandardCharsets.UTF_8) : "";
 
         // Each name is followed by a space, because every recorded line reads "<kind> <name> serialVersionUID=...". A bare
-        // name is a substring of a longer one, so the SavedPost sentinel below went on passing on SavedPostStatus alone
-        // after the cached value became a projection, and stopped guarding anything.
+        // name is a substring of a longer one, so a sentinel on a bare name can go on passing on a longer name that
+        // merely starts with it, and stop guarding anything.
         assertThat(surface).as("notification and direct-topic payloads must remain part of the compatibility gate").contains(named(QueueItemEvent.class),
                 named(QueueItemEvent.EventType.class), named(MapItemEvent.class), named(MapItemEvent.EventType.class), named(PerNodeCacheEviction.class),
                 named(WebsocketBrokerReconnectMessage.class), named(ControlAction.class));
-        assertThat(surface).as("values stored through the distributed Spring cache must remain part of the compatibility gate").contains(named(SavedPostDTO.class));
+        // The link preview is the remaining @Cacheable value served by the distributed manager, so it is the sentinel
+        // that proves this gate still covers Spring cache values at all.
+        assertThat(surface).as("values stored through the distributed Spring cache must remain part of the compatibility gate").contains(named(LinkPreviewDTO.class));
 
         if (!surface.equals(recorded)) {
             // Written before asserting so that the fix is a reviewed copy rather than a hand edit.
@@ -265,6 +268,27 @@ class DistributedDataSurfaceTest {
                 """.formatted(ACTUAL_SURFACE, RECORDED_SURFACE)).isEqualTo(recorded);
 
         Files.deleteIfExists(ACTUAL_SURFACE);
+    }
+
+    /**
+     * Serializability is a property of the same surface, so it is checked here rather than by a rule of its own.
+     * The recorded surface has always reported it per type; this makes it a requirement instead of a note, because
+     * a type that fails it does not fail at build time but on the first call that stores it in production.
+     */
+    @Test
+    void testEveryStoredTypeIsSerializable() {
+        Set<Class<?>> visited = new LinkedHashSet<>();
+        roots().forEach(root -> collect(root, visited));
+
+        var notSerializable = visited.stream().filter(type -> !Serializable.class.isAssignableFrom(type)).map(Class::getName).sorted().toList();
+
+        assertThat(notSerializable).as("""
+                A type stored in the distributed store does not implement Serializable.
+
+                Map values are encoded with Java serialization, so storing such a value throws NotSerializableException \
+                and the request that wrote it answers 500. Let the type implement Serializable and give it an explicit \
+                serialVersionUID, or keep it out of the distributed store.
+                """).isEmpty();
     }
 
     /**

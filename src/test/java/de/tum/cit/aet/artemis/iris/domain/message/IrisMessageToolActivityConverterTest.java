@@ -29,4 +29,15 @@ class IrisMessageToolActivityConverterTest {
         assertThat(converter.convertToDatabaseColumn(null)).isNull();
         assertThat(converter.convertToEntityAttribute(null)).isNull();
     }
+
+    /**
+     * A stored value that is not a trail reads as no trail. It is the read of a whole chat session that would
+     * otherwise fail over a rendering detail of one of its messages - which is how a mapping storing the trail in a
+     * PostgreSQL large object, leaving the object's id in the column, took every session load down with it.
+     */
+    @Test
+    void readsAValueThatIsNotATrailAsNoTrail() {
+        assertThat(converter.convertToEntityAttribute("19841")).isNull();
+        assertThat(converter.convertToEntityAttribute("not json")).isNull();
+    }
 }

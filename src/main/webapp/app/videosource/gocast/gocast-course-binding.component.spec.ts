@@ -53,7 +53,7 @@ describe('GocastCourseBindingComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const tag = fixture.nativeElement.querySelector('tum-ui-tag span');
+        const tag = fixture.nativeElement.querySelector('tumaet-ui-tag span');
         expect(tag?.getAttribute('data-severity')).toBe(severity);
         expect(tag?.textContent).toContain(`artemisApp.gocast.status.${status.toLowerCase()}`);
     });
@@ -92,7 +92,7 @@ describe('GocastCourseBindingComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const alert = fixture.nativeElement.querySelector('tum-ui-message[role="alert"][data-severity="error"]');
+        const alert = fixture.nativeElement.querySelector('tumaet-ui-message[role="alert"][data-severity="error"]');
         expect(alert?.textContent).toContain('artemisApp.gocast.refreshUnavailable');
         expect(fixture.nativeElement.textContent).toContain('Connected course');
     });

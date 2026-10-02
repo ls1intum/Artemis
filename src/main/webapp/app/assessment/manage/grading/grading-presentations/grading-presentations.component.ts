@@ -63,6 +63,12 @@ export interface PresentationsConfig {
 })
 export class GradingPresentationsComponent {
     // =========================================================================
+    // Injected Dependencies
+    // =========================================================================
+
+    private readonly destroyRef = inject(DestroyRef);
+
+    // =========================================================================
     // Template Constants (exposed for use in template)
     // =========================================================================
 
@@ -130,7 +136,6 @@ export class GradingPresentationsComponent {
     // Private Properties
     // =========================================================================
 
-    private readonly destroyRef = inject(DestroyRef);
     private pendingEmitTimeout?: ReturnType<typeof setTimeout>;
 
     // =========================================================================

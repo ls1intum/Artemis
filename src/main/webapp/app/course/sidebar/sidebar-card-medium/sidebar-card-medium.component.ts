@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, output } from '@angular/core';
-import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
+import { DifficultyLevel, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgClass } from '@angular/common';
@@ -10,7 +11,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
     selector: 'jhi-medium-sidebar-card',
     templateUrl: './sidebar-card-medium.component.html',
     styleUrls: ['./sidebar-card-medium.component.scss'],
-    imports: [NgClass, SidebarCardItemComponent, RouterLink, RouterLinkActive],
+    imports: [NgClass, SidebarCardItemComponent, RouterLink, RouterLinkActive, ProgrammingExerciseStudentTriggerBuildButtonComponent],
 })
 export class SidebarCardMediumComponent {
     private sidebarEventService = inject(SidebarEventService);
@@ -18,6 +19,7 @@ export class SidebarCardMediumComponent {
     private route = inject(ActivatedRoute);
 
     protected readonly DifficultyLevel = DifficultyLevel;
+    protected readonly ExerciseType = ExerciseType;
 
     readonly sidebarItem = input.required<SidebarCardElement>();
     readonly sidebarType = input<SidebarTypes>();
@@ -25,21 +27,30 @@ export class SidebarCardMediumComponent {
     readonly pageChange = output<string | number>();
     /** Key used for grouping or categorizing sidebar items */
     readonly groupKey = input<string>();
+    /** Id of the entity the detail route currently shows, set by {@link SidebarCardDirective}. */
+    readonly activeItemId = input<number>();
 
     /**
-     * True when this card heads a connected variant group. The card styles itself (see `.group-header` in the SCSS) so
-     * the accordion need not reach into its markup.
+     * True when this card stands for a variant group rather than a single exercise. A group has no difficulty of its
+     * own, so the left stripe that would carry the difficulty colour marks it as a group instead.
      */
-    protected readonly isConnectedGroupHeader = computed<boolean>(() => {
-        const item = this.sidebarItem();
-        return !!item.groupedItems?.length && !!item.groupConnected;
+    protected readonly isVariantGroup = computed<boolean>(() => !!this.sidebarItem().groupedItems?.length);
+
+    /**
+     * True when the open detail page belongs to one of this card's grouped members. A variant group is a single card
+     * whose members have no card of their own, so `routerLinkActive` cannot highlight it while a variant is open.
+     */
+    protected readonly containsActiveVariant = computed<boolean>(() => {
+        const activeItemId = this.activeItemId();
+        return activeItemId !== undefined && !!this.sidebarItem().groupedItems?.some((member) => member.id === activeItemId);
     });
 
-    onNonExamCardClicked() {
-        if (this.sidebarItem().groupedItems?.length) {
-            this.storeTargetComponentSubRoute();
+    onNonExamCardClicked(event?: MouseEvent) {
+        // Leave modified clicks to the native link (for example, opening a card in a new tab).
+        if (event && (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) {
             return;
         }
+
         this.storeTargetComponentSubRoute();
         if (this.itemSelected()) {
             this.refreshChildComponent();

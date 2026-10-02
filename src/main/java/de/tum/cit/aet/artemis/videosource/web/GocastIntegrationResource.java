@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingConnectionStatus;
 import de.tum.cit.aet.artemis.videosource.dto.GocastApprovalStartDTO;
 import de.tum.cit.aet.artemis.videosource.dto.GocastBindingDTO;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
 
 @Lazy
 @Profile(PROFILE_CORE)
-@FeatureUsage("video/tum-live")
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
 @RestController
 @RequestMapping("api/videosource/courses/{courseId}/")
 public class GocastIntegrationResource {
