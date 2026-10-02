@@ -24,7 +24,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
-import { TumUiButtonComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
@@ -48,9 +48,9 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                     MockComponent(StandardizedCompetencyDetailComponent),
                     MockComponent(KnowledgeAreaTreeComponent),
                     MockComponent(ButtonComponent),
-                    MockComponent(TumUiButtonComponent),
-                    MockComponent(TumUiMessageComponent),
-                    MockDirective(TumUiTooltipDirective),
+                    MockComponent(TumAetUiButtonComponent),
+                    MockComponent(TumAetUiMessageComponent),
+                    MockDirective(TumAetUiTooltipDirective),
                     MockDirective(MarkdownDirective),
                 ],
             },

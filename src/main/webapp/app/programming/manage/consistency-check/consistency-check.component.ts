@@ -8,13 +8,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
 @Component({
     selector: 'jhi-consistency-check',
     templateUrl: './consistency-check.component.html',
-    imports: [TranslateDirective, FaIconComponent, RouterLink, ArtemisTranslatePipe, TumUiDialogComponent],
+    imports: [TranslateDirective, FaIconComponent, RouterLink, ArtemisTranslatePipe, TumAetUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConsistencyCheckComponent {

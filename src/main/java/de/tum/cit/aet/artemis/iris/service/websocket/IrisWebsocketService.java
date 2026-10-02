@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 
 /**
@@ -19,8 +20,6 @@ public class IrisWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisWebsocketService.class);
 
-    private static final String TOPIC_PREFIX = "/topic/iris/";
-
     private final WebsocketMessagingService websocketMessagingService;
 
     public IrisWebsocketService(WebsocketMessagingService websocketMessagingService) {
@@ -31,17 +30,16 @@ public class IrisWebsocketService {
      * Sends a message over the websocket to a specific user
      *
      * @param userLogin   the login of the user
-     * @param topicSuffix the suffix of the topic, which will be appended to "/topic/iris/"
+     * @param destination a destination of one of the {@link de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics}
      * @param payload     the DTO to send, which will be serialized to JSON
      */
-    public void send(String userLogin, String topicSuffix, Object payload) {
-        String topic = TOPIC_PREFIX + topicSuffix;
-        websocketMessagingService.sendMessageToUser(userLogin, topic, payload).whenComplete((ignored, throwable) -> {
+    public void send(String userLogin, WebsocketUserDestination destination, Object payload) {
+        websocketMessagingService.sendMessageToUser(userLogin, destination, payload).whenComplete((ignored, throwable) -> {
             if (throwable != null) {
-                log.warn("Error while sending message to Iris user {} on topic {}: {}", userLogin, topic, payload, throwable);
+                log.warn("Error while sending message to Iris user {} on topic {}: {}", userLogin, destination, payload, throwable);
             }
             else {
-                log.debug("Sent message to Iris user {} on topic {}: {}", userLogin, topic, payload);
+                log.debug("Sent message to Iris user {} on topic {}: {}", userLogin, destination, payload);
             }
         });
     }

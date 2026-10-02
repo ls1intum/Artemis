@@ -89,6 +89,14 @@ interface InstructorActionItem {
 })
 export class ExerciseHeaderActionsComponent {
     private readonly elementRef = inject(ElementRef);
+    private readonly quizExerciseService = inject(QuizExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly courseExerciseService = inject(CourseExerciseService);
+    private readonly participationService = inject(ParticipationService);
+    private readonly router = inject(Router);
+    private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
+
     private readonly actionButtons = viewChildren(ExerciseActionButtonComponent);
     private readonly submitPopoverRef = viewChild<NgbPopover>('submitPopoverRef');
 
@@ -106,14 +114,6 @@ export class ExerciseHeaderActionsComponent {
     protected readonly InitializationState = InitializationState;
     protected readonly ButtonType = ButtonType;
     protected readonly PlagiarismVerdict = PlagiarismVerdict;
-
-    private readonly quizExerciseService = inject(QuizExerciseService);
-    private readonly alertService = inject(AlertService);
-    private readonly courseExerciseService = inject(CourseExerciseService);
-    private readonly participationService = inject(ParticipationService);
-    private readonly router = inject(Router);
-    private readonly accountService = inject(AccountService);
-    private readonly profileService = inject(ProfileService);
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();

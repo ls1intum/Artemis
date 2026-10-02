@@ -98,8 +98,6 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
     encapsulation: ViewEncapsulation.None,
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
-    protected readonly faDownload = faDownload;
-    protected readonly faXmark = faXmark;
     private readonly destroyRef = inject(DestroyRef);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     private readonly fileService = inject(FileService);
@@ -110,6 +108,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
     private readonly chatService = inject(IrisChatService);
+
+    protected readonly faDownload = faDownload;
+    protected readonly faXmark = faXmark;
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking

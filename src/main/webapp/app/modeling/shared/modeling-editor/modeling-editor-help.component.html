@@ -1,15 +1,15 @@
-<tum-ui-dialog [(visible)]="visible" [header]="'artemisApp.modelingEditor.helpModal.title' | artemisTranslate" [closable]="true" [dismissableMask]="true" size="large">
-    <tum-ui-tabs value="walkthrough">
-        <tum-ui-tab-list [attr.aria-label]="'artemisApp.modelingEditor.helpModal.title' | artemisTranslate">
-            <tum-ui-tab value="walkthrough">
+<tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.modelingEditor.helpModal.title' | artemisTranslate" [closable]="true" [dismissableMask]="true" size="large">
+    <tumaet-ui-tabs value="walkthrough">
+        <tumaet-ui-tab-list [attr.aria-label]="'artemisApp.modelingEditor.helpModal.title' | artemisTranslate">
+            <tumaet-ui-tab value="walkthrough">
                 <span jhiTranslate="artemisApp.modelingEditor.helpModal.walkthrough"></span>
-            </tum-ui-tab>
-            <tum-ui-tab value="shortcuts">
+            </tumaet-ui-tab>
+            <tumaet-ui-tab value="shortcuts">
                 <span jhiTranslate="artemisApp.modelingEditor.helpModal.shortcuts.title"></span>
-            </tum-ui-tab>
-        </tum-ui-tab-list>
-        <tum-ui-tab-panels>
-            <tum-ui-tab-panel value="walkthrough">
+            </tumaet-ui-tab>
+        </tumaet-ui-tab-list>
+        <tumaet-ui-tab-panels>
+            <tumaet-ui-tab-panel value="walkthrough">
                 <div class="modeling-editor-help__intro">
                     <h2 jhiTranslate="artemisApp.modelingEditor.helpModal.basicsTitle"></h2>
                     <p jhiTranslate="artemisApp.modelingEditor.helpModal.intro"></p>
@@ -18,7 +18,7 @@
                     @for (walkthrough of walkthroughs(); track walkthrough.topic) {
                         <li class="modeling-editor-help__step">
                             <div class="modeling-editor-help__image" aria-hidden="true">
-                                <img [src]="walkthrough.image" [attr.width]="walkthrough.width" [attr.height]="walkthrough.height" alt="" loading="lazy" />
+                                <img [ngSrc]="walkthrough.image" [width]="walkthrough.width" [height]="walkthrough.height" alt="" />
                             </div>
                             <div class="modeling-editor-help__step-copy">
                                 <span class="modeling-editor-help__step-number" aria-hidden="true">{{ $index + 1 }}</span>
@@ -42,8 +42,8 @@
                         }
                     </dl>
                 </section>
-            </tum-ui-tab-panel>
-            <tum-ui-tab-panel value="shortcuts">
+            </tumaet-ui-tab-panel>
+            <tumaet-ui-tab-panel value="shortcuts">
                 <p class="modeling-editor-help__muted" jhiTranslate="artemisApp.modelingEditor.helpModal.shortcuts.description"></p>
                 <div class="modeling-editor-help__shortcut-groups">
                     @for (group of shortcutGroups; track group.label) {
@@ -71,7 +71,7 @@
                         </section>
                     }
                 </div>
-            </tum-ui-tab-panel>
-        </tum-ui-tab-panels>
-    </tum-ui-tabs>
-</tum-ui-dialog>
+            </tumaet-ui-tab-panel>
+        </tumaet-ui-tab-panels>
+    </tumaet-ui-tabs>
+</tumaet-ui-dialog>

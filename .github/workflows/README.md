@@ -9,7 +9,7 @@ children + one required status check**.
 CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, published Artemis
 releases, merge-queue runs, and a manual `workflow_dispatch`) so that the answer to "what
 runs on event X?" is in exactly one file. Scoped package releases (`@tumaet/*`)
-do not run Artemis builds or Android tests. TUM UI uses `release-tum-ui.yml`: a manual run on a
+do not run Artemis builds or Android tests. TUM AET UI uses `release-tum-aet-ui.yml`: a manual run on a
 branch validates; a run on an `@tumaet/ui-angular@<version>` tag validates and stages for npm approval.
 
 ```text

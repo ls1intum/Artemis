@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -25,7 +25,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamParticipationService {
     private httpClient = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);

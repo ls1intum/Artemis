@@ -13,10 +13,10 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
     imports: [FaIconComponent, TranslateDirective],
 })
 export class ExerciseSaveButtonComponent {
+    private readonly examParticipationService = inject(ExamParticipationService);
+
     protected readonly faFloppyDisk = faFloppyDisk;
     protected readonly facSaveSuccess = facSaveSuccess;
-
-    private readonly examParticipationService = inject(ExamParticipationService);
 
     submission = input<Submission>();
     save = output<void>();

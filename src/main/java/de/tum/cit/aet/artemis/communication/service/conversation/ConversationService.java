@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service.conversation;
 
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.CONVERSATION_MEMBERSHIP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
@@ -30,11 +31,11 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationSummary;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.communication.dto.GeneralConversationInfo;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.UserConversationInfo;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -58,8 +59,6 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 public class ConversationService {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationService.class);
-
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
 
     private final ConversationDTOService conversationDTOService;
 
@@ -297,8 +296,8 @@ public class ConversationService {
         }
         if (!newConversationParticipants.isEmpty()) {
             conversationParticipantRepository.saveAll(newConversationParticipants);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToBeRegistered);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, existingUsers);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, conversation, usersToBeRegistered);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.UPDATE, conversation, existingUsers);
         }
     }
 
@@ -310,7 +309,7 @@ public class ConversationService {
     public void notifyAllConversationMembersAboutUpdate(Conversation conversation) {
         var usersToContact = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
-        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
+        broadcastOnConversationMembershipChannel(conversation.getCourse(), CommunicationCrudAction.UPDATE, conversation, usersToContact);
     }
 
     /**
@@ -329,8 +328,8 @@ public class ConversationService {
                 usersToBeDeregistered.stream().map(User::getId).collect(Collectors.toSet()));
         if (!participantsToRemove.isEmpty()) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersToBeDeregistered);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingUsers);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.DELETE, conversation, usersToBeDeregistered);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.UPDATE, conversation, remainingUsers);
         }
     }
 
@@ -348,25 +347,19 @@ public class ConversationService {
     /**
      * Broadcasts a message on the conversation membership channel of users
      *
-     * @param course          the course in which the conversation is located
-     * @param metisCrudAction the action that was performed
-     * @param conversation    the conversation that was affected
-     * @param recipients      the users to be messaged
+     * @param course       the course in which the conversation is located
+     * @param crudAction   the action that was performed
+     * @param conversation the conversation that was affected
+     * @param recipients   the users to be messaged
      */
     // TODO: this should be Async
-    public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
-        String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
-        recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
+    public void broadcastOnConversationMembershipChannel(Course course, CommunicationCrudAction crudAction, Conversation conversation, Set<User> recipients) {
+        recipients.forEach(user -> sendToConversationMembershipChannel(crudAction, conversation, user, course.getId()));
     }
 
-    @NonNull
-    public static String getConversationParticipantTopicName(Long courseId) {
-        return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
-    }
-
-    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
+    private void sendToConversationMembershipChannel(CommunicationCrudAction crudAction, Conversation conversation, User user, long courseId) {
         ConversationDTO dto;
-        if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
+        if (crudAction.equals(CommunicationCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
             dto = conversationDTOService.convertToDTOWithNoExtraDBCalls(conversation);
         }
@@ -376,8 +369,8 @@ public class ConversationService {
             conversationDTOService.fillSubTypeReferenceDates(List.of(dto));
         }
 
-        var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
-        websocketMessagingService.sendMessageToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
+        var websocketDTO = new ConversationWebsocketDTO(dto, crudAction);
+        websocketMessagingService.sendMessageToUser(user.getLogin(), CONVERSATION_MEMBERSHIP.at(courseId, user.getId()), websocketDTO);
     }
 
     /**
@@ -599,13 +592,7 @@ public class ConversationService {
      * @return true if the channel is visible to students
      */
     public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
-        if (channel.getExercise() != null) {
-            return channel.getExercise().isVisibleToStudents();
-        }
-        else if (channel.getExam() != null) {
-            return channel.getExam().isVisibleToStudents();
-        }
-        return true;
+        return channel.isVisibleToStudents();
     }
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {

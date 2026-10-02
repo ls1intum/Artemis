@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -1363,8 +1364,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         jenkinsRequestMockProvider.reset();
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         var examWithExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
+        // A test run names its build plan after the practice-prefixed participant, so that it cannot collide with the
+        // plan of a graded participation of the same instructor and exercise.
         mockConnectorRequestsForStartParticipation(ExerciseUtilService.getFirstExerciseWithType(examWithExercises, ProgrammingExercise.class),
-                instructor.getParticipantIdentifier(), Set.of(instructor), true);
+                "practice-" + instructor.getParticipantIdentifier(), Set.of(instructor), true);
 
         StudentExamDTO createdTestRun = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs",
                 new CreateTestRunDTO(exam.getId(), exerciseIds, 6000), StudentExamDTO.class, HttpStatus.OK);
@@ -3204,7 +3207,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // When a client supplies an importId, the importing user receives live progress on an import-specific websocket channel.
         request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import?importId=" + importId, importDTO, ExamImportResultDTO.class, CREATED);
 
-        verify(websocketMessagingService, atLeastOnce()).sendMessageToUser(eq(TEST_PREFIX + "instructor1"), eq("/topic/exam-import/" + importId), any());
+        verify(websocketMessagingService, atLeastOnce()).sendMessageToUser(eq(TEST_PREFIX + "instructor1"), userTopic("/topic/exam-import/" + importId), any());
     }
 
     @Test

@@ -9,7 +9,7 @@ import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
-import { NgClass, NgStyle } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -37,7 +37,6 @@ enum MappingResult {
         CdkDropListGroup,
         ImageComponent,
         CdkDropList,
-        NgStyle,
         DragItemComponent,
         NgbTooltip,
     ],

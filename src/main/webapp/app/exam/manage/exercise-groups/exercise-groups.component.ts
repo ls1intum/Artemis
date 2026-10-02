@@ -1,4 +1,4 @@
-import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
 import { Component, OnInit, Type, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
@@ -17,7 +17,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faAngleDown, faAngleUp, faFileImport, faLayerGroup, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -44,8 +44,10 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         TranslateDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
-        TumUiPanelComponent,
-        TumUiButtonComponent,
+        TumAetUiPanelComponent,
+        TumAetUiButtonComponent,
+        TumAetUiDialogComponent,
+        ExamImportComponent,
         ExamExerciseTableComponent,
         ExamExerciseGroupEditModalComponent,
         ExamExerciseTypePickerComponent,
@@ -95,6 +97,7 @@ export class ExerciseGroupsComponent implements OnInit {
     readonly typePickerMode = signal<ExamExerciseTypePickerMode>('create');
 
     readonly groupEditVisible = signal(false);
+    protected readonly groupImportVisible = signal(false);
     readonly groupEditTarget = signal<ExerciseGroup | undefined>(undefined);
     /** Selects the create vs. update persistence path in {@link onGroupEditSaved}. */
     readonly groupEditIsNew = signal(false);
@@ -418,32 +421,20 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
-     * Opens the import module for an exam import
+     * Opens the import dialog for an import of the exercise groups of another exam
      */
     openExerciseGroupImportModal() {
-        const dialogData: ExamImportDialogData = {
-            subsequentExerciseGroupSelection: true,
-            targetCourseId: this.courseId(),
-            targetExamId: this.examId(),
-        };
+        this.groupImportVisible.set(true);
+    }
 
-        const dialogRef = this.dialogService.open(ExamImportComponent, {
-            header: this.translateService.instant('artemisApp.examManagement.importExam'),
-            width: '70rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: dialogData,
-        });
-
-        dialogRef?.onClose.subscribe((exerciseGroups: ExerciseGroup[] | undefined) => {
-            if (exerciseGroups) {
-                this.exerciseGroups.set(exerciseGroups);
-                this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
-            }
-        });
+    /**
+     * Closes the import dialog and shows the exercise groups of the exam after the import
+     * @param exerciseGroups all exercise groups of the exam after the import
+     */
+    protected onExerciseGroupsImported(exerciseGroups: ExerciseGroup[]): void {
+        this.groupImportVisible.set(false);
+        this.exerciseGroups.set(exerciseGroups);
+        this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
     }
 
     protected containsProgrammingExercise(exerciseGroup: ExerciseGroup): boolean {

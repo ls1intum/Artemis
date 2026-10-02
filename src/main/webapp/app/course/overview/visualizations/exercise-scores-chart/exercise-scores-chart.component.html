@@ -3,6 +3,7 @@
     @if (exerciseTypeFilter.typeSet.size > 0) {
         <div class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
             <button
+                type="button"
                 class="btn"
                 [class.btn-secondary]="exerciseTypeFilter.numberOfActiveFilters === 0"
                 [class.btn-success]="exerciseTypeFilter.numberOfActiveFilters > 0"
@@ -36,7 +37,7 @@
 <div class="d-flex mt-2 justify-content-center">
     <div class="line-chart-container" id="scores-line-chart">
         <div class="chart-scroll-content" [style.width.px]="chartWidth()">
-            <tum-ui-line-chart
+            <tumaet-ui-line-chart
                 [labels]="chartData().labels"
                 [series]="chartData().series"
                 [config]="chartConfig()"

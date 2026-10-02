@@ -352,16 +352,23 @@
                 "shortname": {
                     "minlength": "Short Name must contain at least 3 characters.",
                     "maxlength": "Short Name must not exceed 24 characters.",
-                    "forbidden": "Short Name must start with a letter and cannot contain special characters."
+                    "forbidden": "Short Name must start with a letter and cannot contain special characters.",
+                    "required": "Enter a short name.",
+                    "hint": "Between 3 and 24 letters or digits, starting with a letter. It appears in URLs and group names and cannot be changed later.",
+                    "hintReadOnly": "The short name cannot be changed after the course has been created."
                 },
                 "startDate": {
-                    "invalid": "Must be before the end date of the course"
+                    "invalid": "Must be before the end date of the course",
+                    "required": "Enter a start date."
                 },
                 "endDate": {
-                    "invalid": "Must be after the start date of the course"
+                    "invalid": "Must be after the start date of the course",
+                    "required": "Enter an end date."
                 },
                 "semester": {
-                    "required": "Please select a semester."
+                    "required": "Select a semester.",
+                    "hint": "Selecting a semester fills in its start and end date, unless you have set them yourself.",
+                    "placeholder": "Select a semester"
                 },
                 "enrollmentStartDate": {
                     "invalid": "Can't be after the start date of the course and must be before the enrollment end date"
@@ -372,16 +379,34 @@
                 "unenrollmentEndDate": {
                     "invalid": "Must be after enrollment end date and can not be after the end date of the course"
                 },
-                "invalidForm": "Please fill in all required fields."
+                "invalidForm": "Please fill in all required fields.",
+                "title": {
+                    "required": "Enter a title.",
+                    "maxlength": "The title must not exceed {{ max }} characters."
+                },
+                "invalidNumber": "Enter a valid number.",
+                "accuracyOfScoresRange": "Enter a number from 1 to 5.",
+                "noDefaultProgrammingLanguage": "No default",
+                "changeIcon": "Change Icon",
+                "organizations": {
+                    "toggle": "Assign the course to organizations",
+                    "description": "Only members of the selected organizations can enroll themselves in this course. Without organizations, every user can enroll.",
+                    "empty": "No organization selected yet. As long as none is selected, every user can enroll.",
+                    "add": "Add organization"
+                },
+                "issues": {
+                    "one": "1 field needs your attention:",
+                    "other": "{{ count }} fields need your attention:"
+                },
+                "requiredLegend": "Fields marked with * are required.",
+                "timeZone": {
+                    "required": "A course keeps its time zone once one is set. Select a time zone."
+                }
             },
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
             "courseGroup": {
-                "outOf": "out of",
-                "usersPerPage": "{{number}} users per page",
-                "showAllUsers": "Show all users",
-                "searchForUsers": "Add a user to this group by searching for login or name",
-                "searchNoResults": "No users found",
+                "searchForUsers": "Search for users by login, name, email, or registration number",
                 "login": "Login",
                 "registrationNumber": "Registration Number",
                 "name": "Name",
@@ -389,7 +414,9 @@
                 "removeFromGroup": {
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
                 },
-                "profilePicture": "Profile Picture"
+                "addUsers": "Add Users",
+                "profilePicture": "Profile Picture",
+                "notFoundUsers": "The following users could not be registered because they were not found: {{ logins }}"
             },
             "averageScore": "Average Score",
             "assessmentProgress": "Assessments",

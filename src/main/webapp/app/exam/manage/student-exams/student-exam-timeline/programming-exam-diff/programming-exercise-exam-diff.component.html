@@ -15,24 +15,14 @@
     [submissions]="submissions()"
     [exerciseProjectKey]="exercise()?.projectKey"
 />
-<p-dialog
-    [(visible)]="diffModalVisible"
-    [modal]="true"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    [draggable]="false"
-    [appendTo]="'body'"
-    styleClass="diff-view-modal"
-    [style]="{ width: '90dvw', height: '90dvh' }"
->
+<tumaet-ui-dialog [(visible)]="diffModalVisible" size="full" dismissableMask>
     <ng-template #header>
-        <h3 class="modal-title mb-0" jhiTranslate="artemisApp.programmingExercise.diffReport.titleForSubmissions"></h3>
+        <h3 class="my-0!" jhiTranslate="artemisApp.programmingExercise.diffReport.titleForSubmissions"></h3>
     </ng-template>
     @if (diffModalInformation()) {
         <jhi-git-diff-report [repositoryDiffInformation]="diffModalInformation()!" [diffForTemplateAndSolution]="false" />
     }
-</p-dialog>
+</tumaet-ui-dialog>
 @if (diffInformation() && diffReady()) {
     <div>
         <dt>
@@ -50,11 +40,11 @@
             }
         </dt>
         <dd>
-            <div class="fw-bold">
+            <div class="font-bold">
                 <jhi-git-diff-line-stat
                     [addedLineCount]="addedLineCount()"
                     [removedLineCount]="removedLineCount()"
-                    ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}"
+                    [tumAetUiTooltip]="'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate"
                 />
                 @if (addedLineCount() > 0 || removedLineCount() > 0) {
                     <jhi-button

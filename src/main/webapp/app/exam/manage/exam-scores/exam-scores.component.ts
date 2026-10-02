@@ -29,7 +29,7 @@ import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exerc
 import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { faCheckCircle, faDownload, faExclamationTriangle, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faDownload, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
 import { ExcelExportRowBuilder } from 'app/shared-ui/export/row-builder/excel-export-row-builder';
@@ -64,8 +64,14 @@ import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scor
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import {
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -91,8 +97,11 @@ export enum MedianType {
         ParticipantScoresDistributionComponent,
         ExportButtonComponent,
         HelpIconComponent,
-        SortByDirective,
-        SortDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         FontAwesomeModule,
@@ -110,6 +119,7 @@ export class ExamScoresComponent implements OnInit {
     private participantScoresService = inject(ParticipantScoresService);
     private gradingService = inject(GradingService);
     private courseManagementService = inject(CourseManagementService);
+    private readonly translateService = inject(TranslateService);
 
     readonly examScoreDTO = signal<ExamScoreDTO>(undefined!);
     readonly exerciseGroups = signal<ExerciseGroup[]>(undefined!);
@@ -143,8 +153,8 @@ export class ExamScoresComponent implements OnInit {
     // exam score dtos
     studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
 
-    public predicate = 'id';
-    public reverse = false;
+    readonly predicate = signal('id');
+    readonly ascending = signal(false);
     readonly isLoading = signal(true);
     readonly filterForSubmittedExams = signal(false);
     readonly filterForNonEmptySubmissions = signal(false);
@@ -160,11 +170,9 @@ export class ExamScoresComponent implements OnInit {
     readonly presentationScoreThreshold = signal<number | undefined>(undefined);
 
     readonly course = signal<Course | undefined>(undefined);
-    private readonly translateService = inject(TranslateService);
     private readonly currentLanguage = toSignal(this.translateService.onLangChange);
 
     // Icons
-    faSort = faSort;
     faDownload = faDownload;
     faTimes = faTimes;
     faCheckCircle = faCheckCircle;
@@ -628,8 +636,15 @@ export class ExamScoresComponent implements OnInit {
         return examStatistics;
     }
 
+    onSortChange(event: TumAetUiTableSortEvent) {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order > 0);
+        this.sortRows();
+    }
+
     sortRows() {
-        this.sortService.sortByProperty(this.examScoreDTO().studentResults, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.examScoreDTO().studentResults, this.predicate(), this.ascending());
+        this.studentResults.set([...this.examScoreDTO().studentResults]);
     }
 
     /**

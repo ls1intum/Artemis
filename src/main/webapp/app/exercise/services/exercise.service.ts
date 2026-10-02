@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -67,7 +67,7 @@ export interface ExerciseServicable<T extends Exercise> {
     reevaluateAndUpdate(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);

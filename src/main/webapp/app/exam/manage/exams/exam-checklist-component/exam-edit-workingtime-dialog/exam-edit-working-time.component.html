@@ -1,4 +1,7 @@
-<button data-testid="edit-working-time-button" class="btn btn-md btn-warning" [disabled]="!workingTimeChangeAllowed()" (click)="openDialog($event)">
+<button tumAetUiButton type="button" severity="warn" data-testid="edit-working-time-button" [disabled]="!workingTimeChangeAllowed()" (click)="openDialog($event)">
     <fa-icon [icon]="faHourglassHalf" />
-    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.editWorkingTime.title"></span>
+    <span class="hidden md:inline" jhiTranslate="artemisApp.examManagement.editWorkingTime.title"></span>
 </button>
+@if (dialogVisible()) {
+    <jhi-edit-working-time-dialog [(visible)]="dialogVisible" [exam]="exam()" (workingTimeUpdated)="examChange.emit($event)" />
+}

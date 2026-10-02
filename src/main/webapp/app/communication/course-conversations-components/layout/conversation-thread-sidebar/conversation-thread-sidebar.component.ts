@@ -33,6 +33,8 @@ import { ResizableConstraints, ResizableDirective } from 'app/shared-ui/directiv
     ],
 })
 export class ConversationThreadSidebarComponent {
+    private readonly conversationSelectionState = inject(ConversationSelectionState);
+
     readonly scrollBody = viewChild<ElementRef<HTMLDivElement>>('scrollBody');
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
@@ -44,7 +46,6 @@ export class ConversationThreadSidebarComponent {
     course = input<Course>();
 
     readonly closePostThread = output<void>();
-    private readonly conversationSelectionState = inject(ConversationSelectionState);
 
     constructor() {
         effect(() => {

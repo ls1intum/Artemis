@@ -22,11 +22,11 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {
-    protected readonly LectureUnitType = LectureUnitType;
-
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService = inject(AlertService);
+
+    protected readonly LectureUnitType = LectureUnitType;
 
     readonly courseId = input.required<number>();
     readonly lectureUnitId = input.required<number>();

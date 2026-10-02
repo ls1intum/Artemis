@@ -11,7 +11,7 @@ see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native ski
 | Diagnose failed, stuck, or missing CI checks                | [ci-triage](skills/ci-triage/SKILL.md)                     |
 | Change server Java or investigate an architecture violation | [server-arch-gates](skills/server-arch-gates/SKILL.md)     |
 | Change a database schema or fix a failing changeset         | [liquibase-migration](skills/liquibase-migration/SKILL.md) |
-| Change Angular application or TUM UI code                   | [client-conventions](skills/client-conventions/SKILL.md)   |
+| Change Angular application or TUM AET UI code               | [client-conventions](skills/client-conventions/SKILL.md)   |
 | Write or debug JUnit or Vitest tests                        | [write-tests](skills/write-tests/SKILL.md)                 |
 | Set up, build, or troubleshoot the local application        | [local-setup](skills/local-setup/SKILL.md)                 |
 
@@ -43,19 +43,30 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Jackson 3 uses `tools.jackson`; annotations remain `com.fasterxml.jackson.annotation`. Inject
   the configured `JsonMapper` in Spring beans; see the [REST API guideline](documentation/docs/developer/guidelines/rest-api.mdx)
   for other contexts.
+- Every websocket destination is a declared topic: a `WebsocketTopic` with its `WebsocketTopicAccess`
+  rule, or a `WebsocketUserTopic`, as a constant of the module's `web/<Module>WebsocketTopics` class.
+  Send only through `WebsocketMessagingService` with `TOPIC.at(...)`. Clients send only to `/app/...`
+  `@MessageMapping` handlers, which check the sender; no `@SubscribeMapping`. [websocket](documentation/docs/developer/guidelines/websocket.mdx)
 
 ### Client
 
 - Use signal APIs. `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild` and
   `@ContentChildren` are banned in application and test support code; `ngOnChanges` is banned.
   [client development](documentation/docs/developer/guidelines/client-development.mdx)
-- Use `@if`, `@for` and `@switch`, not structural directives. [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- Use `@if`, `@for` and `@switch`, not structural directives, and give every `@switch` a `@default`.
+  Bind styles with `[style]`, not `[ngStyle]`. [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- Declare root services with `@Service()`, not `@Injectable({ providedIn: 'root' })`, and declare
+  `inject()` fields before any other member. [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- Route guards return or emit a `UrlTree` or `RedirectCommand`; resolvers return, emit or throw a
+  `RedirectCommand`. Never call `router.navigate()` in either, or throw a redirect from a guard.
+  `localRules/no-navigation-in-guard-or-resolver` bans the navigation calls. [client development](documentation/docs/developer/guidelines/client-development.mdx#redirecting-from-guards-and-resolvers)
 - In production client TypeScript, do not copy objects with spread, `Object.assign` or
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)
-- Use TUM UI and Tailwind. Do not add Bootstrap or ng-bootstrap. If TUM UI lacks a reusable
-  feature, extend it; use PrimeNG only if that cannot reasonably be done in the same change,
-  and explain the fallback in the PR. [TUM UI](documentation/docs/developer/guidelines/tum-ui-kit.mdx)
+- Use TUM AET UI and Tailwind. Do not add Bootstrap or ng-bootstrap. If TUM AET UI lacks a reusable
+  feature, extend it on native HTML, Angular Aria or stable Angular CDK primitives; use PrimeNG
+  only if that cannot reasonably be done in the same change, and explain the fallback in the PR.
+  [TUM AET UI](documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx)
 - Use semantic colour tokens, not primitive colours, Bootstrap classes or hand-written PrimeNG
   root classes. [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
 
@@ -74,7 +85,7 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   Node 24, and the pnpm version pinned in `package.json` (`corepack enable`). Exact versions live
   in `gradle.properties`, `pnpm-workspace.yaml`, and `package.json`.
 - Server features live under `src/main/java/de/tum/cit/aet/artemis/`; the Angular application is
-  under `src/main/webapp/app/`. Keep reusable TUM UI components in `packages/tum-ui`, with no
+  under `src/main/webapp/app/`. Keep reusable TUM AET UI components in `packages/tum-aet-ui`, with no
   imports from the Artemis application. Client tests are co-located; server tests are in
   `src/test/java`, Playwright tests in `src/test/playwright`.
 - `src/main/webapp/app/openapi/` is generated client code. Change the API source/generation input

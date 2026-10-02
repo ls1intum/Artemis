@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
+import static de.tum.cit.aet.artemis.lecture.web.LectureWebsocketTopics.UNIT_PROCESSING_STATE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -81,8 +82,6 @@ public class ProcessingStateCallbackService {
     private final ReentrantLock dispatchLock = new ReentrantLock();
 
     private static final JsonMapper objectMapper = JsonObjectMapper.get();
-
-    private static final String PROCESSING_STATE_TOPIC = "/topic/lectures/%d/unit-processing-state";
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -610,7 +609,7 @@ public class ProcessingStateCallbackService {
         }
         long lectureId = unit.getLecture().getId();
         var dto = LectureUnitCombinedStatusDTO.of(unit.getId(), state, transcriptionStatus);
-        String topic = PROCESSING_STATE_TOPIC.formatted(lectureId);
+        var topic = UNIT_PROCESSING_STATE.at(lectureId);
         websocketMessagingService.sendMessage(topic, dto);
         log.debug("Sent processing state WebSocket update for unit {} on topic {}", unit.getId(), topic);
     }

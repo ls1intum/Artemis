@@ -37,7 +37,7 @@ public class IrisCommandWebsocketController {
      * @param ack       the ack payload sent by the client
      * @param principal the authenticated user sending the ack
      */
-    @MessageMapping("topic/iris/command-ack")
+    @MessageMapping("/iris/command-ack")
     public void acknowledgeCommand(@Payload IrisCommandAckDTO ack, Principal principal) {
         if (ack == null || !isUuid(ack.correlationId())) {
             // Only server-generated UUIDs can match a command. Reject arbitrary client input before it is amplified

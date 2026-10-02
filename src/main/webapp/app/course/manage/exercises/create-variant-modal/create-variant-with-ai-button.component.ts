@@ -32,7 +32,7 @@ import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-
             display: contents;
         }
 
-        // The wizard is a mount point only: tum-ui-dialog portals its panel into the CDK overlay container at
+        // The wizard is a mount point only: tumaet-ui-dialog portals its panel into the CDK overlay container at
         // body level, so this element never renders anything inline. Left visible it would become a SECOND flex
         // item in the host's button row (display: contents promotes every child) and consume another \`gap\`
         // slot, doubling the space between this button and the next one.

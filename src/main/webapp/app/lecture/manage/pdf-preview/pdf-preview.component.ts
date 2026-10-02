@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -8,7 +8,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
@@ -24,7 +24,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { finalize } from 'rxjs/operators';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
@@ -103,10 +104,19 @@ export interface HiddenPageMap {
         DeleteButtonDirective,
         TranslateDirective,
         ConfirmAutofocusButtonComponent,
+        ButtonComponent,
         PdfPreviewDateBoxComponent,
     ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
+    // Injected services
+    private readonly route = inject(ActivatedRoute);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly alertService = inject(AlertService);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly pdfEngineService = inject(PdfEngineService);
+
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     showPopover = viewChild.required<NgbPopover>('showPopover');
 
@@ -156,19 +166,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             .sort((a, b) => a.order - b.order);
     });
 
-    // Injected services
-    private readonly route = inject(ActivatedRoute);
-    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly lectureUnitService = inject(LectureUnitService);
-    private readonly alertService = inject(AlertService);
-    private readonly router = inject(Router);
-    private readonly pdfEngineService = inject(PdfEngineService);
+    /** Set once the page is left, after which a request that completes late must not navigate. */
+    private isDestroyed = false;
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
     protected readonly faCancel = faCancel;
+    protected readonly faArrowLeft = faArrowLeft;
     protected readonly faExclamationCircle = faExclamationCircle;
     protected readonly faFileImport = faFileImport;
     protected readonly faEye = faEye;
@@ -333,6 +339,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.isDestroyed = true;
         this.attachmentVideoUnitSub?.unsubscribe();
 
         const sources = this.sourcePDFs();
@@ -595,7 +602,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.hasOperations.set(false);
         this.isFileChanged.set(false);
         this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-        this.navigateToCourseManagement();
+        this.navigateBack();
     }
 
     /**
@@ -639,7 +646,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         if (this.attachmentVideoUnit()) {
             this.lectureUnitService.delete(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
                 next: () => {
-                    this.navigateToCourseManagement();
+                    this.navigateBack();
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {
@@ -856,9 +863,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Navigates back to the unit management page of the lecture the unit belongs to.
+     * Goes back to the page the user came from, such as the lecture editor, or else to the content page of the lecture the unit belongs to.
+     * A save or deletion that completes after the user left the page does not go back once more from wherever the user is now.
      */
-    navigateToCourseManagement(): void {
-        void this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+    navigateBack(): void {
+        if (this.isDestroyed) {
+            return;
+        }
+        this.navigationUtilService.navigateBack(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id!, 'unit-management']);
     }
 }

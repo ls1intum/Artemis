@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -47,7 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Validated
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("feedback/student-ratings")
+@FeatureUsage(UserFeature.FEEDBACK_RATINGS)
 @RestController
 @RequestMapping("api/assessment/")
 public class RatingResource {

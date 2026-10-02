@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
@@ -66,7 +67,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("users/user-directory")
+@FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/account/")
@@ -99,6 +100,7 @@ public class UserResource {
      * @param loginOrName the login or name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
+    @FeatureUsage(UserFeature.COURSE_MEMBERS)
     @GetMapping("users/search")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<UserDTO>> searchAllUsers(@RequestParam("loginOrName") String loginOrName) {

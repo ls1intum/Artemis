@@ -11,7 +11,7 @@ description: Set up or troubleshoot a local Artemis server and client developmen
 | ------ | ---------------- | --------------------------------------------------------------------- |
 | JDK    | 25               | Pinned by the Gradle toolchain                                        |
 | Node   | 24.20.0 or newer | Pinned in `gradle.properties` and `package.json`                      |
-| pnpm   | 12.5.1           | Pinned by the `packageManager` field; activate with `corepack enable` |
+| pnpm   | 12.8.1           | Pinned by the `packageManager` field; activate with `corepack enable` |
 | Docker | current          | Required for the database and for server tests                        |
 
 Run `corepack enable` once. It activates the exact pnpm version the repository pins, which avoids a
@@ -98,6 +98,13 @@ alongside the server and point the mail configuration at it. See
 `documentation/docs/developer/mailpit-setup.mdx`.
 
 ## When it will not start
+
+**"Configure meaningful values for info.operatorName ...".** A core node under the `prod`
+profile refuses to start without `info.operatorName`, `info.operatorAdminName` and
+`info.universityName`, even with telemetry off, unless `info.testServer` is `true`. Development
+profiles never hit it; locally it comes from the **Artemis (Server, Prod, LocalCI)** run
+configuration or a prod Docker setup. Set all three in `application-local.yml` (empty and template
+values such as `Admin`, `Your University` or `<name>` are rejected), or set `info.testServer: true`.
 
 **"Unable to determine Dialect".** The Spring profile set does not include a database profile, or
 an `autoconfigure.exclude` is replacing rather than merging the expected exclusions.
