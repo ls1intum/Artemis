@@ -186,6 +186,12 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionIds()).toEqual(new Set([1]));
         });
 
+        it("should write the criterion's text into the description of a feedback created for it, as dropping the criterion does", () => {
+            comp.applyInstruction(documentationInstruction);
+
+            expect(comp.unreferencedFeedback[0].detailText).toBe('documented');
+        });
+
         it('should remove every feedback of the instruction when it is un-applied', () => {
             comp.applyInstruction(documentationInstruction);
             comp.applyInstruction(documentationInstruction);

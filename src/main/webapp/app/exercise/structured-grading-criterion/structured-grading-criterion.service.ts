@@ -29,22 +29,30 @@ export class StructuredGradingCriterionService {
         event.preventDefault();
         try {
             const data = (event as DragEvent).dataTransfer!.getData('text/plain');
-            const instruction = parseJson<GradingInstruction>(data);
-            const previousInstructionText = feedback.gradingInstruction?.feedback;
-            feedback.gradingInstruction = instruction;
-            feedback.credits = instruction.credits;
-            // A tutor's own feedback takes the criterion's text as its description, where the tutor can edit it, so it is not shown
-            // twice. An AI suggestion keeps its own description: the student only reads that (see getFeedbackBodyText). The text
-            // replaces an empty description or the one a previously dropped criterion wrote, never what the tutor wrote.
-            const isAIFeedback = Feedback.isFeedbackSuggestion(feedback) || Feedback.isNonGradedFeedbackSuggestion(feedback);
-            if (!isAIFeedback && instruction.feedback && (!feedback.detailText || feedback.detailText === previousInstructionText)) {
-                feedback.detailText = instruction.feedback;
-            }
+            this.applyGradingInstruction(feedback, parseJson<GradingInstruction>(data));
         } catch (err) {
             // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
             if (!(err instanceof SyntaxError)) {
                 throw err;
             }
+        }
+    }
+
+    /**
+     * Links a feedback to a grading instruction, whether it was dropped on the feedback or the feedback was created for it.
+     * The feedback takes the instruction's credits, and a tutor's own feedback takes the criterion's text as its description,
+     * where the tutor can edit it, so it is not shown twice. An AI suggestion keeps its own description: the student only reads
+     * that (see getFeedbackBodyText). The text replaces an empty description or the one a previously linked criterion wrote,
+     * never what the tutor wrote.
+     * @param feedback the feedback to link
+     * @param instruction the grading instruction to link it to
+     */
+    applyGradingInstruction(feedback: Feedback, instruction: GradingInstruction) {
+        const previousInstructionText = feedback.gradingInstruction?.feedback;
+        feedback.gradingInstruction = instruction;
+        feedback.credits = instruction.credits;
+        if (!Feedback.isAIFeedback(feedback) && instruction.feedback && (!feedback.detailText || feedback.detailText === previousInstructionText)) {
+            feedback.detailText = instruction.feedback;
         }
     }
 

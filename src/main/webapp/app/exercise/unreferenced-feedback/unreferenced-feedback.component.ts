@@ -213,8 +213,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
 
     applyInstruction(instruction: GradingInstruction): void {
         const feedback = this.createFeedback();
-        feedback.gradingInstruction = instruction;
-        feedback.credits = instruction.credits;
+        this.structuredGradingCriterionService.applyGradingInstruction(feedback, instruction);
         this.appendFeedback(feedback);
     }
 
