@@ -558,6 +558,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
                 const scoreChanged = feedback.credits !== assessment.score;
+                // Linking a grading instruction to the element or removing it in Apollon is an edit like any other.
+                const instructionChanged = feedback.gradingInstruction?.id !== instruction?.id;
                 if (scoreChanged && feedback.gradingInstruction) {
                     feedback.gradingInstruction = undefined;
                 }
@@ -565,8 +567,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 if (Feedback.isFeedbackSuggestion(feedback)) {
                     // A suggestion's state (suggested/accepted/adapted) is tracked as a prefix on `text`,
                     // with the title itself right after that prefix; `detailText` holds the description,
-                    // same as a regular assessment. Any edit — title, description or score — while still
-                    // accepted flips it to adapted, rewriting the prefix with the (possibly just-edited) title.
+                    // same as a regular assessment. Any edit — title, description, score or grading instruction —
+                    // while still accepted flips it to adapted, rewriting the prefix with the (possibly just-edited) title.
                     const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
                     if (alreadyAdapted) {
                         if (assessment.title !== undefined) {
@@ -580,7 +582,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         const lastShownDetail = this.shownInApollon.get(assessment.modelElementId);
                         const titleChanged = assessment.title !== undefined && lastShownTitle !== undefined && assessment.title !== lastShownTitle;
                         const detailChanged = assessment.feedback !== undefined && lastShownDetail !== undefined && assessment.feedback !== lastShownDetail;
-                        if (titleChanged || detailChanged || scoreChanged) {
+                        if (titleChanged || detailChanged || scoreChanged || instructionChanged) {
                             const newTitle = titleChanged ? assessment.title! : this.stripSuggestionPrefix(feedback.text ?? '');
                             feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(newTitle, assessment.score);
                             if (titleChanged) {

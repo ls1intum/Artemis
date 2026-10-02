@@ -461,6 +461,33 @@ describe('ModelingAssessmentComponent', () => {
             expect(graded.gradingInstruction).toBeUndefined();
         });
 
+        it('marks an accepted suggestion as adapted once Apollon removes its grading instruction, keeping the points', () => {
+            const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            suggestion.gradingInstruction = { id: 7, credits: 1 } as any;
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ feedback: 'Original detail', dropInfo: undefined })]);
+
+            expect(suggestion.gradingInstruction).toBeUndefined();
+            expect(suggestion.credits).toBe(1);
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+        });
+
+        it('keeps an accepted suggestion accepted when Apollon reports its grading instruction unchanged', () => {
+            const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            suggestion.gradingInstruction = { id: 7, credits: 1 } as any;
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ feedback: 'Original detail', dropInfo: { id: 7, credits: 1 } })]);
+
+            expect(suggestion.gradingInstruction?.id).toBe(7);
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction');
+        });
+
         it('marks an accepted suggestion as adapted once its text is edited, and keeps the title unprefixed', () => {
             const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
             suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
