@@ -183,7 +183,7 @@ overrides:
   # jsdom fixes it; keep this equal to the catalog entry.
   jsdom: '30.0.1'
   katex: '0.18.10'
-  # Must stay >= 0.2.118. Mend flags 0.2.117 (CVE-2026-102521, CVE-2026-102360), reached through yjs,
+  # Must stay >= 0.2.119: 0.2.118 only fixes CVE-2026-102360, 0.2.119 also fixes CVE-2026-102521. Mend flags 0.2.117, reached through yjs,
   # y-protocols, y-monaco and @tumaet/apollon, none of which declare a patched range of their own yet.
   lib0: '0.2.119'
   # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
