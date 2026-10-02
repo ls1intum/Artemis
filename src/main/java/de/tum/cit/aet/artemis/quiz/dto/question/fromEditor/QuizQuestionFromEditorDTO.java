@@ -8,11 +8,17 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO interface for quiz questions in the editor context.
  * Supports both creating new questions (id is null) and updating existing questions (id is non-null).
  */
+@Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "multiple-choice", schema = MultipleChoiceQuestionFromEditorDTO.class),
+        @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropQuestionFromEditorDTO.class),
+        @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerQuestionFromEditorDTO.class) }, oneOf = { MultipleChoiceQuestionFromEditorDTO.class,
+                DragAndDropQuestionFromEditorDTO.class, ShortAnswerQuestionFromEditorDTO.class })
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionFromEditorDTO.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionFromEditorDTO.class, name = "drag-and-drop"),
