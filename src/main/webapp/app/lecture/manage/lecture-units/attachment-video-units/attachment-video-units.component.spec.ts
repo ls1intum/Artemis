@@ -402,6 +402,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         let deleteSpy: MockInstance<LectureUnitService['delete']>;
         let createSpy: MockInstance<AttachmentVideoUnitService['createUnits']>;
         let backSpy: MockInstance<Location['back']>;
+        let replaceStateSpy: MockInstance<Location['replaceState']>;
 
         function open(state: Record<string, unknown>, fromHistory = false) {
             const fullState = { file: new File(['%PDF'], 'Slides.pdf', { type: 'application/pdf' }), fileName: 'Slides.pdf', returnToEditor: true, ...state };
@@ -429,6 +430,7 @@ describe('AttachmentVideoUnitsComponent', () => {
             createSpy = vi.spyOn(attachmentVideoUnitService, 'createUnits');
             navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             backSpy = vi.spyOn(TestBed.inject(Location), 'back').mockImplementation(() => {});
+            replaceStateSpy = vi.spyOn(TestBed.inject(Location), 'replaceState').mockImplementation(() => {});
         });
 
         function expectBackToEditor() {
@@ -457,6 +459,15 @@ describe('AttachmentVideoUnitsComponent', () => {
 
             expect(deleteSpy).not.toHaveBeenCalled();
             expectBackToEditor();
+        });
+
+        it('should drop the file from the history entry of the finished split, so Forward does not offer to create the items again', () => {
+            open({ sourceUnit: { id: 9, name: 'Slides' } });
+
+            attachmentVideoUnitsComponent.createAttachmentVideoUnits();
+
+            expect(replaceStateSpy).toHaveBeenCalledExactlyOnceWith(expect.any(String), '', { returnToEditor: true });
+            expect(replaceStateSpy.mock.invocationCallOrder[0]).toBeLessThan(backSpy.mock.invocationCallOrder[0]);
         });
 
         it('should go back to the editor and report it when the PDF item cannot be removed', () => {
@@ -499,6 +510,8 @@ describe('AttachmentVideoUnitsComponent', () => {
             attachmentVideoUnitsComponent.cancelSplit();
 
             expectBackToEditor();
+            // Nothing was created, so the split may be opened again with Forward.
+            expect(replaceStateSpy).not.toHaveBeenCalled();
         });
 
         it('should continue the split with the file of the history entry after a reload', () => {

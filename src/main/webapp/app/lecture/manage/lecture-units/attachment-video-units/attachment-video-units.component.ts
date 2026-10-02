@@ -276,6 +276,8 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     private leaveAfterCreation(): void {
         this.isLoading.set(false);
         if (this.returnToEditor) {
+            // The finished split stays in the history as the next entry; without its file, Forward leads back to the editor.
+            this.location.replaceState(this.location.path(), '', { returnToEditor: true });
             this.backToEditor();
         } else {
             // The page replaces itself in the history, so Back does not open the finished split again.

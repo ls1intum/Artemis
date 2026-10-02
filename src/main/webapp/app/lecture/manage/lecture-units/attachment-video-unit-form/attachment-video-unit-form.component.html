@@ -280,8 +280,9 @@
             </button>
         </div>
     </tumaet-ui-form-field>
-    @if (isVideoSourceChanged()) {
-        <!-- A new video link is transcribed and processed again, so an item edited in place saves it only when the user confirms it. -->
+    <!-- A new video link is transcribed and processed again, so an item edited in place saves it only when the user confirms it. A link typed
+         while the confirmed one is saved, also the saved one, needs a decision as well. -->
+    @if (isVideoSourceChanged() || hasUnconfirmedContent()) {
         <div class="flex flex-wrap items-center gap-2" data-testid="video-source-confirm">
             <button tumAetUiButton type="button" size="small" data-testid="save-video-source-button" [disabled]="!canSaveVideoSource()" (click)="saveVideoSource()">
                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.saveVideoSource"></span>
@@ -334,7 +335,8 @@
     @let replacesFile = !!currentFileName();
     <div class="mt-2 flex flex-col gap-2" data-testid="upload-options">
         <div class="flex items-center gap-2">
-            <tumaet-ui-checkbox inputId="notify-students" [checked]="notifyStudents()" (checkedChange)="notifyStudents.set($event)" />
+            <!-- The choice is taken when the file is chosen, so it cannot change while that file is uploaded. -->
+            <tumaet-ui-checkbox inputId="notify-students" [checked]="notifyStudents()" [disabled]="isFileUploadRequested()" (checkedChange)="notifyStudents.set($event)" />
             <label
                 class="m-0"
                 for="notify-students"

@@ -1270,6 +1270,20 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(flushPendingEdits).toHaveBeenCalledTimes(2);
         });
 
+        it('should keep an item open that the user opened while a new item was created', () => {
+            const created = new Subject<HttpResponse<TextUnit>>();
+            vi.spyOn(textUnitService, 'create').mockReturnValue(created);
+            wizardUnitComponent.onCreateLectureUnit(LectureUnitType.TEXT);
+            wizardUnitComponent.createTextUnit({ name: 'New reading' });
+
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            created.next(new HttpResponse({ body: new TextUnit(), status: 201 }));
+            created.complete();
+
+            expect(wizardUnitComponent.isEditingLectureUnit()).toBe(true);
+            expect(wizardUnitComponent.editingUnitId()).toBe(3);
+        });
+
         it('should not count the running save of a deleted item for the item opened next', () => {
             const response = new Subject<HttpResponse<TextUnit>>();
             vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
@@ -1720,6 +1734,25 @@ describe('LectureUpdateUnitsComponent', () => {
                 expect(wizardUnitComponent.showsUnconfirmedContentHint()).toBe(true);
                 // What can be saved is saved anyway.
                 expect(updateSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should hold a file that waits behind a change of the details that failed for Retry, not count it as being saved', () => {
+                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                updateSpy.mockReset();
+                updateSpy.mockReturnValueOnce(running).mockReturnValue(of(new HttpResponse({ body: savedFileUnit(), status: 200 })));
+                const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
+
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'Week 1' }, newFile));
+                running.error(new HttpErrorResponse({ status: 400, error: { title: 'The description is too long' } }));
+
+                expect(updateSpy).toHaveBeenCalledOnce();
+                expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+                // Leaving does not claim that the file is still being saved.
+                expect(wizardUnitComponent.isSavingContent()).toBe(false);
+
+                wizardUnitComponent.retryAutosave();
+                expect(updateSpy.mock.calls[1][2].get('file')).toBeInstanceOf(File);
             });
 
             it('should keep the item open on Done when another video URL was typed while the confirmed one was saved', () => {

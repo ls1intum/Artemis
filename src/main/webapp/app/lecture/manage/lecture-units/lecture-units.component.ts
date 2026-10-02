@@ -227,10 +227,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
     /**
      * Whether content is still being saved: a save of the item that is edited in place waits or runs, PDFs dropped on the page are uploaded,
      * or a creation form sends a new item. A change held for Retry after a failure does not count; {@link hasUnsavedContent} covers it.
-     * Both can be true at once, such as a failed file upload while a change of the details is sent.
+     * This includes a file that waits behind a change of the details that failed, since Retry sends both. Both can be true at once, such as
+     * a failed file upload while a change of the details is sent.
      */
     readonly isSavingContent = computed(
-        () => this.isSaveInFlight() || this.pendingConfirmed().length > 0 || (!!this.pendingDetails() && !this.saveFailure()) || this.isUploadingPdfs() || this.isCreatingUnit(),
+        () => this.isSaveInFlight() || ((this.pendingConfirmed().length > 0 || !!this.pendingDetails()) && !this.saveFailure()) || this.isUploadingPdfs() || this.isCreatingUnit(),
     );
     /** Set once the page is left; a save that fails afterwards is reported in an alert, because the item is gone. */
     private isDestroyed = false;
@@ -399,7 +400,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
     };
 
     private onUnitCreated(): void {
-        this.onCloseLectureUnitForms();
+        // A request that completes after the user opened an item keeps that item open.
+        if (!this.isEditingLectureUnit()) {
+            this.onCloseLectureUnitForms();
+        }
         this.unitManagementComponent()?.loadData();
     }
 

@@ -761,6 +761,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
             expect(uploadSpy).toHaveBeenCalledOnce();
             expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(false);
+            // Whether students are notified was decided with the choice of the file.
+            expect(attachmentVideoUnitFormComponentFixture.debugElement.query(By.css('tumaet-ui-checkbox')).componentInstance.disabled()).toBe(true);
             query('discard-new-file-button').nativeElement.click();
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
@@ -799,6 +801,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
             attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/old');
             expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
+            // The choice is offered, so the hint that asks for it is not a dead end.
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(query('video-source-confirm')).not.toBeNull();
 
             attachmentVideoUnitFormComponent.takeOverSavedVideoSource('https://www.youtube.com/embed/first');
             expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
