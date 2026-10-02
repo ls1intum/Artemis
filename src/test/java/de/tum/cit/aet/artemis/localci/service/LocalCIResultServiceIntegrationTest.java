@@ -495,6 +495,29 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(programmingExerciseGradingService.finalizeContainerResult(running.getId(), participation, true, false, ZonedDateTime.now()).getCompletionDate()).isNotNull();
     }
 
+    /** A build whose containers reported no test is finalized with a score of zero, so students see a failed build, not no result. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testABuildWithoutTestFeedbackIsFinalizedWithAScoreOfZero() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000098";
+        submissionOf(participation, commitHash);
+        // neither container compiles, so neither reports a test case
+        var first = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "container_a does not compile"), true, "container_a", null);
+        buildJobRepository.save(new BuildJob(buildJobFor("no-tests-0", "no-tests", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, first.result(), true));
+        var second = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "container_b does not compile"), true, "container_b",
+                first.result().getId());
+        buildJobRepository.save(new BuildJob(buildJobFor("no-tests-1", "no-tests", participation, commitHash, "container_b"), BuildStatus.SUCCESSFUL, second.result(), true));
+
+        programmingExerciseGradingService.finalizeContainerResult(first.result().getId(), participation, true, true, ZonedDateTime.now());
+
+        Result finalizedResult = resultRepository.findById(first.result().getId()).orElseThrow();
+        assertThat(finalizedResult.getCompletionDate()).isNotNull();
+        assertThat(finalizedResult.getScore()).as("the stored result carries a score").isZero();
+        assertThat(finalizedResult.isSuccessful()).isFalse();
+    }
+
     /**
      * A container that creates its group's aggregate holds the participation's lock until its job links to it, so a newer
      * build's finalization waits instead of deleting the unlinked aggregate as abandoned. The container's job was declared

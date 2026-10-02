@@ -519,6 +519,11 @@ public class ProgrammingExerciseGradingService {
                 feedbackCreationService.deactivateSolutionTestCasesAbsentFromMergedResult(presentTestCaseNames, participation.getProgrammingExercise());
             }
         }
+        // The scoring leaves a result without test-case feedback as it is, so a build whose containers reported no test
+        // keeps this score and shows as a failed build, like a single-container build, rather than as no result.
+        if (aggregatedResult.getScore() == null) {
+            aggregatedResult.setScore(0D);
+        }
         calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
         Integer testCaseCount = aggregatedResult.getTestCaseCount();
         boolean everyRelevantTestCasePassed = testCaseCount != null && testCaseCount > 0 && testCaseCount.equals(aggregatedResult.getPassedTestCaseCount());
