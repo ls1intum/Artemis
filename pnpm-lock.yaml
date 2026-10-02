@@ -516,8 +516,8 @@ importers:
         specifier: 15.0.2
         version: 15.0.2
       monaco-editor:
-        specifier: 0.56.0
-        version: 0.56.0
+        specifier: 0.57.0
+        version: 0.57.0
       papaparse:
         specifier: 5.7.0
         version: 5.7.0
@@ -538,7 +538,7 @@ importers:
         version: 7.2.4
       y-monaco:
         specifier: 0.1.6
-        version: 0.1.6(patch_hash=1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e)(monaco-editor@0.56.0)(yjs@13.6.33)
+        version: 0.1.6(patch_hash=1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e)(monaco-editor@0.57.0)(yjs@13.6.33)
       y-protocols:
         specifier: 1.0.7
         version: 1.0.7(yjs@13.6.33)
@@ -5466,8 +5466,8 @@ packages:
   module-details-from-path@1.0.4:
     resolution: {integrity: sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w==}
 
-  monaco-editor@0.56.0:
-    resolution: {integrity: sha512-sXboRm3BeBeLm938eaiyLMe0OxzfXIlZvbv4ir/jVgQy1zDhWjgmny0WoN45fuDKhCCQsYMbBJrv/A6jd8aCUg==}
+  monaco-editor@0.57.0:
+    resolution: {integrity: sha512-5BkI9KGoqrNvBGUe15/QlZq3OooZ8WLg1AxTpaqHRCP3HNpzPPZKE2EDz8M7c+VRmCeUw1Brp4cx/PWm3kI/5A==}
 
   moo-color@1.0.3:
     resolution: {integrity: sha512-i/+ZKXMDf6aqYtBhuOcej71YSlbjT3wCO/4H1j8rPvxDJEifdwgg5MaFyu6iYAT8GBZJg2z0dkgK4YMzvURALQ==}
@@ -11277,7 +11277,7 @@ snapshots:
 
   module-details-from-path@1.0.4: {}
 
-  monaco-editor@0.56.0:
+  monaco-editor@0.57.0:
     dependencies:
       dompurify: 3.4.16
       marked: 14.0.0
@@ -12872,10 +12872,10 @@ snapshots:
 
   xxhash-wasm@1.1.0: {}
 
-  y-monaco@0.1.6(patch_hash=1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e)(monaco-editor@0.56.0)(yjs@13.6.33):
+  y-monaco@0.1.6(patch_hash=1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e)(monaco-editor@0.57.0)(yjs@13.6.33):
     dependencies:
       lib0: 0.2.119
-      monaco-editor: 0.56.0
+      monaco-editor: 0.57.0
       yjs: 13.6.33
 
   y-protocols@1.0.7(yjs@13.6.33):
