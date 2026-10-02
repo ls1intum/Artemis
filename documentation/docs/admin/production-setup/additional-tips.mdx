@@ -114,6 +114,12 @@ map $http_upgrade $connection_upgrade {
     ''      "";
 }
 
+# Only needed behind a TLS-terminating load balancer, see below
+map $http_x_forwarded_proto $forwarded_proto {
+    default $http_x_forwarded_proto;
+    ''      $scheme;
+}
+
 location / {
     proxy_pass              http://<artemis node>:8080;
     proxy_http_version      1.1;
@@ -121,13 +127,16 @@ location / {
     proxy_set_header        Connection          $connection_upgrade;
     proxy_set_header        Host                $host;
     proxy_set_header        X-Forwarded-For     $proxy_add_x_forwarded_for;
-    proxy_set_header        X-Forwarded-Proto   $scheme;
+    proxy_set_header        X-Forwarded-Proto   $forwarded_proto;
     proxy_set_header        X-Forwarded-Host    $host;
     proxy_set_header        X-Forwarded-Port    $server_port;
 }
 ```
 
-If another load balancer or NAT sits in front of nginx and changes the port, set `X-Forwarded-Port` to the port users see instead of `$server_port`.
+If another load balancer terminates TLS and talks plain HTTP to nginx, `$scheme` is `http`.
+The `$forwarded_proto` map above then passes on the `X-Forwarded-Proto` header of the load balancer and falls back to `$scheme` when it is missing.
+Use it only if the load balancer is the sole client that can reach nginx and overwrites this header, otherwise clients can set it themselves.
+If the load balancer or NAT also changes the port, set `X-Forwarded-Port` to the port users see instead of `$server_port`.
 
 Do not use `$http_host` for `X-Forwarded-Host`.
 Some nginx versions no longer handle it as before, and users are then redirected to `https://localhost/…` when they log in with SAML2.
