@@ -80,6 +80,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ElementRef, signal } from '@angular/core';
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -436,6 +437,24 @@ describe('CourseExerciseDetailsComponent', () => {
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
+    });
+
+    it('should not take requested AI feedback as the latest rated result, so complaints stay about the tests', () => {
+        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as EntityResponseType));
+        const testResult = { id: 1, rated: true, assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs().subtract(2, 'hours') } as Result;
+        const athenaResult = { id: 2, rated: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().subtract(1, 'hours') } as Result;
+        const gradedParticipation = { submissions: [{ id: 55, results: [testResult, athenaResult] }], testRun: false } as StudentParticipation;
+        vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) => {
+            return participations?.find((p) => p.testRun === testRun);
+        });
+
+        comp.studentParticipations = [gradedParticipation];
+        comp.sortedHistoryResults = [testResult, athenaResult];
+        comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING };
+
+        comp.loadComplaintAndLatestRatedResult();
+
+        expect(comp.latestRatedResult()).toBe(testResult);
     });
 
     it('should handle participation update', async () => {

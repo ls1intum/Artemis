@@ -778,8 +778,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
+        // AI feedback a student requested is not an assessment: complaints and ratings belong to the result before it
         const ratedResults = getAllResultsOfAllSubmissions(graded?.submissions)
-            ?.filter((result: Result) => result.rated)
+            ?.filter((result: Result) => result.rated && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)
             .sort(this.resultSortFunction);
         if (ratedResults) {
             const latestResult = ratedResults.last();
