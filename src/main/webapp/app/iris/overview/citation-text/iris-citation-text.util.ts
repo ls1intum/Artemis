@@ -235,7 +235,7 @@ export function parseCitation(raw: string): IrisCitationParsed | undefined {
  * @param parts The colon-separated parts of the citation block.
  * @returns The pinned version, or undefined when the block carries no version field.
  */
-function parseTrailingVersion(parts: string[]): IrisCitationVersion | undefined {
+const parseTrailingVersion = (parts: string[]): IrisCitationVersion | undefined => {
     if (parts.length < CITE_AMOUNT_PARTS_WITH_VERSION) {
         return undefined;
     }
@@ -244,7 +244,7 @@ function parseTrailingVersion(parts: string[]): IrisCitationVersion | undefined 
         return undefined;
     }
     return { kind: match[1] === 't' ? 'video' : 'attachment', version: match[2] };
-}
+};
 
 /**
  * Checks whether a value is a supported citation type.
