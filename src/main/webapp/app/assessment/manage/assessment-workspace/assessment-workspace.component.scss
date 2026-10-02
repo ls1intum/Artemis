@@ -33,6 +33,9 @@
 }
 
 .assessment-workspace__section-header {
+    // Tabs in the header, e.g. the general feedback, notes and complaint tabs, scroll on the header's surface
+    --tumaet-ui-tab-scroll-background: var(--tumaet-ui-hover-background);
+
     display: flex;
     min-height: 2.5rem;
     align-items: center;

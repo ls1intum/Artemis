@@ -19,7 +19,10 @@
             @if (complaintType(); as complaintType) {
                 <tumaet-ui-tab value="complaint" data-testid="assessment-details-tab-complaint">
                     <fa-icon [icon]="faFlag" aria-hidden="true" />
-                    <span>{{ (complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.title' : 'artemisApp.complaint.title') | artemisTranslate }}</span>
+                    <span>{{
+                        (complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.assessment.detail.studentRequestTab' : 'artemisApp.assessment.detail.studentComplaintTab')
+                            | artemisTranslate
+                    }}</span>
                     @if (complaintAwaitsResponse()) {
                         <span class="assessment-details-header__marker" [attr.aria-label]="'artemisApp.assessment.detail.complaintTabAwaitsResponse' | artemisTranslate"></span>
                     }

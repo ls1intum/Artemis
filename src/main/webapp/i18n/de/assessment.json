@@ -52,6 +52,8 @@
                 "notesTab": "Notizen",
                 "notesTabHasNote": "Die private Notiz enthält Text",
                 "complaintTabAwaitsResponse": "Wartet auf deine Antwort",
+                "studentComplaintTab": "Studierendenbeschwerde",
+                "studentRequestTab": "Studierendenanfrage",
                 "addGeneralFeedback": "Allgemeines Feedback hinzufügen",
                 "generalFeedbackAddHint": "Füge über die Schaltfläche + oben allgemeines Feedback hinzu oder ziehe eine Bewertungsanweisung hierher.",
                 "assessmentNoteInfo": "Nur Tutor:innen können diese Notizen sehen. Sie werden Studierenden niemals angezeigt.",
