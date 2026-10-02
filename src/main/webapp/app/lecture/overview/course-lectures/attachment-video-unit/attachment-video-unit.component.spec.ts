@@ -1723,6 +1723,47 @@ describe('AttachmentVideoUnitComponent', () => {
                 expect(component.syncDisabledByPointOut()).toBeUndefined();
             });
 
+            it('synchronizes the video when a page-only deep link emits a PDF page change', () => {
+                const { goToPage, seekTo } = mockViewers(signal(3));
+                component.lectureUnitCard()!.isCollapsed.set(false);
+
+                fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2 });
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                expect(seekTo).toHaveBeenCalledExactlyOnceWith(10, false);
+                expect(component.synchronizeVideoAndSlides()).toBe(true);
+            });
+
+            it.each([
+                { timestamp: 0, page: 1, startingPage: 2 },
+                { timestamp: 12, page: 2, startingPage: 1 },
+            ])('preserves an explicit deep-link timestamp on its matching slide: %j', ({ timestamp, page, startingPage }) => {
+                const { goToPage, seekTo } = mockViewers(signal(3));
+                component.lectureUnitCard()!.isCollapsed.set(false);
+                goToPage(startingPage);
+                goToPage.mockClear();
+                seekTo.mockClear();
+
+                fixture.componentRef.setInput('deepLink', { unitId: 1, page, timestamp });
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveBeenCalledExactlyOnceWith(page);
+                expect(seekTo).toHaveBeenCalledExactlyOnceWith(timestamp, false);
+                expect(component.synchronizeVideoAndSlides()).toBe(true);
+            });
+
+            it('keeps an explicit timestamp when its requested page emits a conflicting synchronization target', () => {
+                const { goToPage, seekTo } = mockViewers(signal(3));
+                component.lectureUnitCard()!.isCollapsed.set(false);
+
+                fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2, timestamp: 0 });
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                expect(seekTo).toHaveBeenCalledExactlyOnceWith(0, false);
+            });
+
             it('drops the explanation once the student decides about the toggle themselves', () => {
                 mockViewers(signal(3));
                 component['handlePointOut'](pointOutRequest({ correlationId: 's5', page: 2, displayPage: 8, timestamp: 25 }));

@@ -409,7 +409,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
         const pdfViewer = this.pdfViewer();
         if (deepLink.page !== undefined && pdfViewer && pdfViewer.getCurrentPage() !== deepLink.page) {
-            this.pendingPdfTargetPage = deepLink.page;
+            // A page-only request lets synchronization seek the video; an explicit timestamp must take precedence.
+            this.pendingPdfTargetPage = deepLink.timestamp !== undefined ? deepLink.page : undefined;
             pdfViewer.goToPage(deepLink.page);
         }
     }
