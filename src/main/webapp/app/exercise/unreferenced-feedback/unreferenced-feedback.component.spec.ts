@@ -242,24 +242,19 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionCounts()).toEqual(new Map([[2, 1]]));
         });
 
-        it('should group the feedback by criterion, with uncategorized feedback last', () => {
-            comp.applyInstruction(cameraInstruction);
+        it('should list the feedback in the order it was added, without a heading per criterion', () => {
             comp.applyInstruction(documentationInstruction);
             comp.addUnreferencedFeedback();
+            comp.applyInstruction(cameraInstruction);
+            fixture.detectChanges();
 
-            const groups = comp.feedbackGroups();
-            expect(groups.map((group) => group.title)).toEqual(['Camera', 'Documentation', 'artemisApp.assessment.detail.otherFeedback']);
-            expect(groups.map((group) => group.points)).toEqual([-2, 4, 0]);
-            expect(groups[2].translateTitle).toBe(true);
-            expect(comp.showGroupHeaders()).toBe(true);
-        });
-
-        it('should not show a group header for a single uncategorized block', () => {
-            fixture.componentRef.setInput('gradingCriteria', []);
-            comp.addUnreferencedFeedback();
-
-            expect(comp.feedbackGroups()).toHaveLength(1);
-            expect(comp.showGroupHeaders()).toBe(false);
+            const cards = fixture.debugElement.queryAll(By.directive(UnreferencedFeedbackDetailStubComponent));
+            expect(cards.map((card) => (card.componentInstance as UnreferencedFeedbackDetailStubComponent).feedback().gradingInstruction)).toEqual([
+                documentationInstruction,
+                undefined,
+                cameraInstruction,
+            ]);
+            expect(fixture.nativeElement.querySelector('h5')).toBeNull();
         });
 
         it('should summarize awarded, deducted and resulting points', () => {
@@ -278,7 +273,6 @@ describe('UnreferencedFeedbackComponent', () => {
             comp.applyInstruction(limitedInstruction);
 
             expect(comp.pointsSummary()).toEqual({ awarded: 3, deducted: 0, total: 3 });
-            expect(comp.feedbackGroups()[0].points).toBe(3);
         });
 
         it('should cap the final score at maxPoints and floor negatives at zero', () => {
@@ -307,8 +301,6 @@ describe('UnreferencedFeedbackComponent', () => {
             fixture.componentRef.setInput('maxPoints', 10);
 
             expect(comp.pointsSummary()).toEqual({ awarded: 5, deducted: -2, total: 3 });
-            // Group points still only cover the cards in this list, but usage is global.
-            expect(comp.feedbackGroups().find((group) => group.title === 'Camera')!.points).toBe(-2);
         });
 
         it('should not count an unreferenced instruction that was already used in referenced feedback', () => {
@@ -325,7 +317,6 @@ describe('UnreferencedFeedbackComponent', () => {
             fixture.componentRef.setInput('allFeedbacks', [referenced, ...comp.unreferencedFeedback]);
 
             expect(comp.pointsSummary()).toEqual({ awarded: 2, deducted: 0, total: 2 });
-            expect(comp.feedbackGroups()[0].points).toBe(0);
         });
 
         it('should report an instruction applied to referenced feedback as applied but not removable', () => {

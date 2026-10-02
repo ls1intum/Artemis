@@ -7,8 +7,6 @@ import { getPositiveAndCappedTotalScore } from 'app/exercise/util/exercise.utils
 
 /** Score of a complete assessment, broken down the way it is presented to and saved for a tutor. */
 export interface AssessmentScore {
-    /** Points a single feedback adds to the score. Zero once the usage limit of its grading instruction is reached. */
-    contributions: Map<Feedback, number>;
     /** Sum of all positive contributions, including the (capped) automatic test points. */
     awarded: number;
     /** Sum of all negative contributions. Zero or negative. */
@@ -110,7 +108,6 @@ export class StructuredGradingCriterionService {
      *                                 manual points are added. Only programming exercises grade that way.
      */
     computeAssessmentScore(feedbacks: Feedback[], maxPoints: number, capAutomaticTestSubtotal = false): AssessmentScore {
-        const contributions = new Map<Feedback, number>();
         const encounteredInstructions = new Map<number, number>();
         let manualScore = 0;
         let automaticTestScore = 0;
@@ -121,7 +118,6 @@ export class StructuredGradingCriterionService {
             if (capAutomaticTestSubtotal && feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                 const credits = feedback.credits ?? 0;
                 automaticTestScore += credits;
-                contributions.set(feedback, credits);
                 continue;
             }
 
@@ -133,7 +129,6 @@ export class StructuredGradingCriterionService {
             }
 
             const contribution = manualScore - scoreBeforeFeedback;
-            contributions.set(feedback, contribution);
             if (contribution > 0) {
                 awarded += contribution;
             } else if (contribution < 0) {
@@ -148,7 +143,7 @@ export class StructuredGradingCriterionService {
             deducted += cappedAutomaticTestScore;
         }
 
-        return { contributions, awarded, deducted, total: getPositiveAndCappedTotalScore(awarded + deducted, maxPoints) };
+        return { awarded, deducted, total: getPositiveAndCappedTotalScore(awarded + deducted, maxPoints) };
     }
 
     calculateScoreForGradingInstructions(feedback: Feedback, score: number, encounteredInstructions: Map<number, number>): number {

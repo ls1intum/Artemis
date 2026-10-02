@@ -56,7 +56,6 @@
                     "one": "{{points}} Point",
                     "many": "{{points}} Points"
                 },
-                "otherFeedback": "Other feedback",
                 "baseAward": "Base award",
                 "deductions": "Deductions",
                 "finalScore": "Final",

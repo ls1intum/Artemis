@@ -39,30 +39,18 @@
         <tumaet-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
-    @for (group of feedbackGroups(); track $index) {
-        <section class="unreferenced-feedback__group">
-            @if (showGroupHeaders()) {
-                <header class="unreferenced-feedback__group-header">
-                    @if (group.translateTitle) {
-                        <h5 class="unreferenced-feedback__group-title" [jhiTranslate]="group.title"></h5>
-                    } @else {
-                        <h5 class="unreferenced-feedback__group-title">{{ group.title }}</h5>
-                    }
-                    <tumaet-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
-                </header>
+    @if (unreferencedFeedback.length > 0) {
+        <div class="unreferenced-feedback__cards">
+            @for (feedback of unreferencedFeedback; track feedback) {
+                <jhi-unreferenced-feedback-detail
+                    [feedback]="feedback"
+                    [resultId]="resultId()"
+                    (onFeedbackChange)="updateFeedback($event)"
+                    (onFeedbackDelete)="deleteFeedback(feedback)"
+                    [readOnly]="readOnly()"
+                    [highlightDifferences]="highlightDifferences()"
+                />
             }
-            <div class="unreferenced-feedback__cards">
-                @for (feedback of group.feedbacks; track feedback) {
-                    <jhi-unreferenced-feedback-detail
-                        [feedback]="feedback"
-                        [resultId]="resultId()"
-                        (onFeedbackChange)="updateFeedback($event)"
-                        (onFeedbackDelete)="deleteFeedback(feedback)"
-                        [readOnly]="readOnly()"
-                        [highlightDifferences]="highlightDifferences()"
-                    />
-                }
-            </div>
-        </section>
+        </div>
     }
 </div>
