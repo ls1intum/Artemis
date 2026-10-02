@@ -25,6 +25,9 @@ import createExerciseUnit from './assets/lectures/create-exercise-unit.png';
 import createOnlineUnit from './assets/lectures/create-online-unit.png';
 import createTextUnit from './assets/lectures/create-text-unit.png';
 import lectureDetails from './assets/lectures/lecture-details.png';
+import pdfUploadTarget from './assets/lectures/pdf-upload-target.png';
+import editUnitInPlace from './assets/lectures/edit-unit-in-place.png';
+import replaceFileInPlace from './assets/lectures/replace-file-in-place.png';
 
 ## Overview
 
@@ -39,33 +42,35 @@ The **Lectures** page in the course management holds every lecture of the course
 
 ## Managing Lectures
 
-Instructors have two options for creating a lecture.
+Instructors have three options for creating a lecture.
 
 ### Option 1: Create from Scratch
 
 **Create Lecture** opens the creation form. A lecture needs a title, and takes a description and a start and
-end date; the content is added afterwards.
+end date. The channel name follows the title, so students find the lecture's discussion under a matching name.
 
 <Image src={createLecture} alt="Create Lecture" size={ImageSize.large} caption={"Lecture Creation Form"}></Image>
 
-#### Automatic Unit Processing
+**Jump to** in the title bar scrolls to a section of the page: the details, the period and, in the editor, the content.
+It marks a section that needs attention. **Save** and **Close** stay at the bottom of the page wherever you scroll. The
+footer names the sections with unsaved changes, and **Close** turns into **Cancel** as soon as there are any; leaving
+the page with unsaved changes asks first. **Save**, or Enter in a field of the details, saves the lecture details;
+changes to the content are saved automatically. Content that could not be saved counts as unsaved as well, so the
+footer names it and leaving asks first. Saving a new lecture opens its editor, where you add the content. Saving an
+existing lecture keeps the editor open and confirms the time of the save.
 
-Artemis can split one lecture PDF into several units instead of adding them one at a time. The option belongs to
-an existing lecture rather than to the creation form, so save the lecture first, reopen it, and check **Automatic
-content processing**. Artemis then explains what it looks for in the file, asks for the PDF, and splits it when you
-click **Process content**.
+### Option 2: Create from PDFs
 
-<Image src={automaticUnitProcessing} alt="Automatic Unit Processing" size={ImageSize.large}></Image>
+Drop one or more PDFs onto the area at the top of the **Lectures** page, or choose **Select PDFs**. Artemis then asks
+whether the files become a new lecture, titled after the first file, or go into an existing one.
 
-Once the units are processed, instructors can view how the units are split, beginning from a start page to an end page. A name is automatically generated for each lecture unit. Instructors can also customize the table entries by removing or adding new units. Additionally, they can enter keywords if they want particular slides to be removed. Slides containing one of the comma-separated keywords will be removed.
+<Image src={pdfUploadTarget} alt="Dialog that asks where dropped PDFs go" size={ImageSize.medium} caption={"Target of dropped PDFs"}></Image>
 
-<Image src={processedLectureUnits} alt="Processed Lecture Units" size={ImageSize.large} caption={"Processed Lecture Units"}></Image>
+Each PDF becomes one content item, which students see 15 minutes after the upload. The editor of the lecture then
+opens with a confirmation that names the lecture, the file or the number of files, and the time students can see them. It stays until you
+dismiss it, so you can move the release date or adjust the details first.
 
-The following video shows how to split a lecture PDF into multiple units.
-
-<TumLiveVideo src="40577" title="Splitting lecture PDF into multiple units" />
-
-### Option 2: Import Lecture
+### Option 3: Import Lecture
 
 A lecture can also be copied from any other course you have at least editor access to. **Import Lecture** opens
 a search over those courses' lectures, and the one you pick is recreated in this course with its content.
@@ -74,13 +79,62 @@ a search over those courses' lectures, and the one you pick is recreated in this
 
 ## Lecture Units
 
-Instructors can create lecture units on the lecture unit management page.
+Instructors add lecture units, called content items on the page, in the **Content** section of the lecture editor or
+on the lecture's **Content** page. **Add one item** creates a text, an exercise, an online resource, or a file or
+video; dropping PDFs adds one item per file.
 
-<Image src={unitsManagementEmpty} alt="Empty Units Management" size={ImageSize.large} caption={"Lecture Unit Management Page (empty)"}></Image>
+<Image src={unitsManagementEmpty} alt="Empty Units Management" size={ImageSize.large} caption={"Content of a lecture without items"}></Image>
 
-After adding lecture units, instructors may edit or delete each one with the buttons to the right of the unit. Using the arrow buttons, the order of the lecture units can be changed.
+Each item shows its name, its kind and whether students see it yet, and, for files, the version and the state of the
+automatic processing. The buttons on the right view, edit and delete it. Drag an item to change the order.
 
-<Image src={unitsManagement} alt="Units Management" size={ImageSize.large} caption={"Lecture Unit Management Page"}></Image>
+<Image src={unitsManagement} alt="Units Management" size={ImageSize.large} caption={"Content of a lecture"}></Image>
+
+### Edit an Item in Place
+
+In the lecture editor, the pencil of an item opens its form right below it. The item is marked **Editing**, the other
+items are dimmed, and the order stays fixed until you close it. Only one item is open at a time: opening another item,
+or adding a new one, saves and closes the open one first.
+
+Changes to an item are saved automatically, so there is no Submit button. Typed text is saved about 1.5 seconds after
+you stop typing or when you leave the field; a release date or a competency is saved as soon as you choose it. The item
+shows whether it is saving, when all changes were saved, and when a change could not be saved: the change is kept, and
+**Retry** sends it again. A change that cannot be saved as it is, such as an empty name, waits until you correct it.
+**Discard change and close** drops a change that cannot be saved or failed to save and keeps what was saved before.
+**Save**, or Enter in a single-line field, saves at once; **Save** also closes the item. Leaving the editor, reloading
+the page or closing the tab asks first while a change is still being saved, could not be saved or was not confirmed.
+
+<Image src={editUnitInPlace} alt="Content item edited in place" size={ImageSize.large} caption={"A content item edited in place"}></Image>
+
+A new file or a new video URL is saved only when you confirm it, because Artemis then processes the content again.
+After choosing a new file, select **Upload version N**, optionally with **Notify students about the new version**;
+**Keep current file** goes back, also after a failed upload. A video item without a file gets its first one the same
+way, with **Upload file** or **Discard file**. After changing the video URL, select **Save video URL** or **Keep current
+URL**. Until you do, **Save**, opening another item and adding one keep the item open and ask you to decide first.
+
+<Image src={replaceFileInPlace} alt="New file waiting for confirmation" size={ImageSize.large} caption={"A new file that is uploaded once you confirm it"}></Image>
+
+### Split a Lecture PDF
+
+Artemis can split a lecture PDF into one item per section instead of you adding them one at a time. Choose a PDF item
+of the lecture under **Split a lecture PDF into several items** in the editor and select **Split into sections**, or
+select **Upload another PDF** for a PDF that is not part of the lecture yet. Artemis starts a new item at every slide
+that contains the word *Outline* or *Gliederung*, spelled exactly like this, and proposes a name from the text of that
+slide, so it needs slides that repeat their outline before each section. Slides before the first such slide belong to
+the first item. This works for PDFs from any program, such as PowerPoint, Keynote or LaTeX, as long as their text can
+be selected. For a PDF without such slides, add the items and their slides with **Add item**.
+
+<Image src={automaticUnitProcessing} alt="Automatic Unit Processing" size={ImageSize.large} caption={"Splitting a lecture PDF"}></Image>
+
+The review page says how many sections Artemis found in how many slides and shows each new item with its name, its
+slides and its release date. You can rename items, change their slides, add or remove items, and name key phrases
+whose slides are left out. Nothing is created before you select **Create N items**.
+
+When you split a PDF item of the lecture as an instructor, **Remove the original PDF item after splitting** is
+selected, so the lecture does not hold the slides twice. Removing the item also deletes the students' completions of it
+and its competency links. Clear the option to keep the PDF item, for example to move its release date instead.
+
+<Image src={processedLectureUnits} alt="Processed Lecture Units" size={ImageSize.large} caption={"Proposed items of a split PDF"}></Image>
 
 Students see all released lecture units on the lecture details page. Clicking on a unit opens its contents.
 
@@ -89,8 +143,12 @@ Students see all released lecture units on the lecture details page. Clicking on
 ### Attachment Video Unit
 
 An attachment video unit consists of a name, file, an embedded video link, and optionally a description, a release date and a transcription.
-Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
+Artemis can convert the website link from common video sources to an embeddable URL: paste it under **Video page link** and
+select **Use as video URL**.
 Students complete this unit when they watch the video for at least five minutes and download the attachment.
+When a unit is edited, the form shows its current file with its version. **Open** shows the file, and **Replace file**
+chooses a new file that becomes the next version: in the lecture editor when you confirm it, on the unit's own edit
+page when you save the unit. Slides hidden in the current file are not hidden in the new one.
 
 <Image src={createAttachmentVideoUnit} alt="Create Attachment Video Unit" size={ImageSize.large} caption={"Create Attachment Video Unit"}></Image>
 
@@ -101,8 +159,8 @@ When automatic transcription is enabled for your Artemis instance, videos from s
 To add a video with automatic transcription:
 
 1. Create or edit an attachment video unit.
-2. Paste the video link into the **Transform into embeddable format** helper field on the right and click the arrow button. Artemis converts it to an embeddable URL.
-3. Save the unit. Artemis automatically starts generating a transcript in the background — no additional steps are required.
+2. Paste the link of the page that shows the video under **Video page link** and select **Use as video URL**. Artemis turns it into an embeddable video URL.
+3. Save the unit, or select **Save video URL** when you edit it in the lecture editor. Artemis automatically starts generating a transcript in the background — no additional steps are required.
 4. On the lecture management page, status badges show the current progress (e.g. *Transcribing*, *Processing complete*, *Transcription complete*).
 5. Once complete, the transcript is attached to the unit and becomes available to students.
 

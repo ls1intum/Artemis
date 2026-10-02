@@ -322,7 +322,7 @@ describe('ExamManagementNavigationSidebarComponent', () => {
             fixture.componentRef.setInput('exams', []);
             fixture.detectChanges();
 
-            const emptyContainer = fixture.debugElement.query(By.css('.p-2.text-center.text-muted'));
+            const emptyContainer = fixture.debugElement.query(By.css('.p-2.text-center.text-muted-color'));
             expect(emptyContainer).not.toBeNull();
 
             const emptyMessage = fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.exam.overview.noExams"]'));

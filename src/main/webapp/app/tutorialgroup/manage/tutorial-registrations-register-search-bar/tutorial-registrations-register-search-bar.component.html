@@ -31,6 +31,7 @@
         } @else {
             <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="40" minBufferPx="200" maxBufferPx="400">
                 <button
+                    type="button"
                     *cdkVirtualFor="let student of suggestedStudents(); let index = index; trackBy: trackStudentById"
                     class="student-row"
                     [class.active]="suggestionHighlightIndex() === index"

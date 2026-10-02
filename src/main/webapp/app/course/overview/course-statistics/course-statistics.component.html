@@ -1,7 +1,14 @@
 <ng-template #controls>
     <div class="d-flex row course-overview-controls text-end">
         <div class="col" aria-label="Filter Dropdown" ngbDropdown>
-            <button class="btn" [class.btn-secondary]="!numberOfAppliedFilters()" [class.btn-success]="!!numberOfAppliedFilters()" ngbDropdownToggle id="filter-dropdown-button">
+            <button
+                type="button"
+                class="btn"
+                [class.btn-secondary]="!numberOfAppliedFilters()"
+                [class.btn-success]="!!numberOfAppliedFilters()"
+                ngbDropdownToggle
+                id="filter-dropdown-button"
+            >
                 <fa-icon [icon]="faFilter" />
                 <span jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: numberOfAppliedFilters() }"></span>
             </button>

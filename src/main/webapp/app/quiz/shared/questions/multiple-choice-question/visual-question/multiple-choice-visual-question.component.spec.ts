@@ -45,6 +45,37 @@ describe('QuizVisualEditorComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('keeps the current correct answer enabled while other single-choice answers are unavailable', () => {
+        const correct = { isCorrect: true } as AnswerOption;
+        const incorrect = { isCorrect: false } as AnswerOption;
+        fixture.componentRef.setInput('question', { singleChoice: true, answerOptions: [correct, incorrect] });
+        fixture.detectChanges();
+        const [selected, other] = Array.from(fixture.nativeElement.querySelectorAll('.visual-answer')) as HTMLElement[];
+        const changed = vi.spyOn(comp.questionChanged, 'emit');
+        expect(selected.getAttribute('role')).toBe('button');
+        expect(selected.tabIndex).toBe(0);
+        expect(other.hasAttribute('role')).toBe(false);
+        expect(other.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            other.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(changed).not.toHaveBeenCalled();
+        selected.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(correct.isCorrect).toBe(false);
+        expect(other.getAttribute('role')).toBe('button');
+        expect(other.tabIndex).toBe(0);
+        other.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(incorrect.isCorrect).toBe(true);
+        expect(changed).toHaveBeenCalledTimes(2);
+    });
+
     it('parse the given question properly to markdown', () => {
         fixture.detectChanges();
 
@@ -91,6 +122,24 @@ describe('QuizVisualEditorComponent', () => {
         comp.toggleIsCorrect(answerOption);
 
         expect(answerOption.isCorrect).toBe(false);
+    });
+
+    it('toggles correctness only once after repeated Space keydown events', () => {
+        const answerOption = new AnswerOption();
+        answerOption.text = 'Answer';
+        answerOption.isCorrect = false;
+        comp.question().answerOptions = [answerOption];
+        fixture.detectChanges();
+
+        const correctnessButton = fixture.nativeElement.querySelector('.visual-answer') as HTMLElement;
+        correctnessButton.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+        correctnessButton.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true, repeat: true }));
+        expect(answerOption.isCorrect).toBe(false);
+
+        correctnessButton.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(answerOption.isCorrect).toBe(true);
+        expect(correctnessButton.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('does not toggle the if single mode and already has correct answer', () => {

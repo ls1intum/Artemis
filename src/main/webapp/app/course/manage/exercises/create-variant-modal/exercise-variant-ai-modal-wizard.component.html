@@ -273,6 +273,7 @@
                             <span class="placement-option__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroup' | artemisTranslate }}</span>
                             <span class="placement-option__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroupHint' | artemisTranslate }}</span>
                             @if (placementChoice() === 'new-group') {
+                                <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This wrapper only prevents clicks on its native form fields from selecting the parent option. -->
                                 <div class="new-group-settings" (click)="$event.stopPropagation()">
                                     <div class="flex flex-wrap gap-2 items-end mt-2">
                                         <div class="grow" style="min-width: 120px">

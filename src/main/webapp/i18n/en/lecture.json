@@ -30,6 +30,7 @@
             },
             "title": "Title",
             "channelName": "Channel Name",
+            "channelNameHint": "Students discuss the lecture in a course channel with this name. It follows the title and may contain lowercase letters, digits and hyphens.",
             "description": "Description",
             "startDate": "Start Date",
             "endDate": "End Date",
@@ -52,20 +53,33 @@
                 "label": "Import Lecture"
             },
             "sections": {
-                "title": "Title",
-                "titleDescription": "Add a title and meaningful description to the lecture.",
+                "title": "Details",
+                "titleDescription": "The title and description students see for this lecture.",
                 "period": "Period",
-                "periodDescription": "Specify begin and end date of the lecture.",
+                "periodDescription": "When the lecture takes place. Both dates are optional.",
+                "periodOrderInvalid": "The end has to be after the start.",
                 "units": "Content",
-                "unitsDescription": "Add content to the lecture by creating different kinds of lecture content."
+                "unitsDescription": "Students see these items in this order. Drag an item to move it. Changes to content are saved automatically.",
+                "navigation": "Sections of the lecture",
+                "needsAttention": "needs attention",
+                "jumpTo": "Jump to"
             },
-            "newLectureUnit": "New Lecture Content",
-            "editLectureUnit": "Edit Lecture Content",
+            "editFooter": {
+                "noChanges": "No unsaved changes",
+                "unsavedChanges": "Unsaved changes:",
+                "saving": "Saving the lecture details…",
+                "saved": "Lecture details saved at {{ time }}",
+                "contentHint": "Content changes are saved automatically.",
+                "createHint": "Save the lecture to add content to it.",
+                "nothingToSave": "There are no changes to save.",
+                "detailsIncomplete": "Fill in the required details to save.",
+                "periodInvalid": "Correct the lecture period to save."
+            },
+            "newLectureUnit": "New content item",
             "dismissChangesModal": {
-                "title": "Discard unsaved lecture changes",
-                "message": "Are you sure you want to discard your unsaved changes?",
-                "sectionsThatContainUnsavedChangesSingular": "The following section contains unsaved changes:",
-                "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
+                "title": "Discard unsaved lecture changes?",
+                "message": "Unsaved changes in: {{ sections }}. Do you want to discard them?",
+                "keepEditing": "Keep editing"
             },
             "creationMode": {
                 "singleLectureLabel": "Single Lecture",
@@ -77,8 +91,8 @@
                 "title": "Lessons"
             },
             "pdfUpload": {
-                "dropZoneTitle": "Drop PDF files here to add slides",
-                "dropZoneHint": "or click to select files",
+                "dropZoneTitle": "Drop PDFs here to create a lecture from them or to add them to one",
+                "dropZoneHint": "Each PDF becomes one content item, which students see 15 minutes after the upload.",
                 "dialogTitle": "Add PDFs to Lecture",
                 "newLecture": "Create new lecture",
                 "existingLecture": "Add to existing lecture",
@@ -86,11 +100,23 @@
                 "selectLecturePlaceholder": "-- Select a lecture --",
                 "lectureTitle": "Lecture Title",
                 "lectureTitlePlaceholder": "Enter lecture title",
-                "confirm": "Create",
+                "confirm": "Create lecture",
                 "filesSelected": "{{ count }} PDF file(s) selected",
                 "success": "PDF content added successfully.",
                 "lectureCreated": "Lecture and content created successfully.",
-                "fileTooLarge": "One or more files exceed the maximum size of 20MB and were skipped."
+                "fileTooLarge": "One or more files exceed the maximum size of 20MB and were skipped.",
+                "confirmExisting": "Add to lecture",
+                "targetHint": "Each PDF becomes one content item, visible to students 15 minutes after upload. The lecture opens for editing next.",
+                "createdTitle": "Lecture created",
+                "createdSingle": "The lecture “{{ title }}” was created with the PDF {{ fileName }} as its first content item. You can now edit its details and content.",
+                "createdMultiple": "The lecture “{{ title }}” was created with {{ count }} PDFs as its first content items. You can now edit its details and content.",
+                "addedTitle": "Content added",
+                "addedSingle": "The PDF {{ fileName }} was added to “{{ title }}” as a new content item.",
+                "addedMultiple": "{{ count }} PDFs were added to “{{ title }}” as new content items.",
+                "releaseSingle": "Students can see it from {{ date }}.",
+                "releaseMultiple": "Students can see them from {{ date }}.",
+                "dropZoneContentTitle": "Drop PDFs here to add them as content",
+                "selectFiles": "Select PDFs"
             },
             "createSeries": {
                 "startAndEndDateExplanation": "Quickly create a lecture series by only defining titles and timing. Add lecture contents later. Start by specifying start and end of at least one lecture, that you would like to repeat weekly:",
@@ -109,6 +135,31 @@
                     "header": "Update existing lecture names?",
                     "message": "Some existing lectures follow the default naming format (e.g., \"Lecture 1\"). Would you like to update the numbering of these lectures according to the new order?"
                 }
+            },
+            "addContent": {
+                "title": "Add content"
+            },
+            "splitPdf": {
+                "title": "Split a lecture PDF into several items",
+                "description": "For PDFs whose slides repeat their outline before each section: Artemis proposes one item per section, each starting at a slide with the word “Outline” or “Gliederung”. You review the proposal before anything is created.",
+                "unit": "PDF to split",
+                "unitPlaceholder": "Select a PDF",
+                "start": "Split into sections",
+                "noPdf": "Add the lecture PDF as content first, for example by dropping it above.",
+                "otherPdf": "Upload another PDF",
+                "otherPdfHint": "For a PDF that is not part of this lecture yet."
+            },
+            "unitEditor": {
+                "title": "Editing this item",
+                "autosaveHint": "Changes are saved automatically.",
+                "saving": "Saving…",
+                "saved": "All changes saved · {{ time }}",
+                "invalid": "Not saved yet: correct the marked fields.",
+                "failed": "Not saved. Your changes are kept.",
+                "retry": "Retry",
+                "discard": "Discard change and close",
+                "failedAfterLeaving": "A change of lecture content could not be saved. Open the lecture again to check its content.",
+                "unconfirmedContent": "Save or discard the new file or video URL first."
             }
         },
         "attachment": {
@@ -134,6 +185,7 @@
                 "studentVersionCreateError": "Student Version of the Attachment Content could not be created.",
                 "studentVersionUpdateError": "Student Version of the Attachment Content could not be updated.",
                 "thumbnailGrid": {
+                    "previewPage": "Preview page {{ param }}",
                     "showPage": "Show Page {{ param }}",
                     "hiddenUntil": "This page is hidden until:",
                     "showPageConfirmation": "Would you like to show this page?",
