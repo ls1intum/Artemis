@@ -94,7 +94,8 @@ public class QuizSubmission extends Submission {
      * question, so that the save writes to that row and neither deletes nor inserts it. Only an answer to a question the stored submission has no answer for
      * gets inserted, and a stored answer to a question that is no longer answered is removed.
      * <p>
-     * A submission keeps one answer per question, so of several answers to one question the last one is kept. An answer without a stored counterpart gets no
+     * A submission keeps one answer per question, so of several answers to one question only one is kept, whichever the set yields last. An answer without a stored counterpart
+     * gets no
      * id, whatever the client sent, so that it cannot write to the answer of another submission.
      * <p>
      * The set is rebuilt because the hash of an answer depends on its id.
