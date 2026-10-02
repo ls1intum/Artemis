@@ -10,8 +10,9 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 // (e.g. "Dedupe") back to `string` so a mixed integration array stays assignable.
 type Integration = Omit<ReturnType<typeof dedupeIntegration>, 'name'> & { name: string };
 
-// Header and query parameter names that can identify a user or the network path; the same list Sentry 10 applied by default.
-const SENTRY_DENIED_HEADER_PATTERNS = ['forwarded', '-ip', 'remote-', 'via', '-user'];
+// Header and query parameter names that can identify a user or the network path. These are the patterns Sentry 10 denied
+// by default, plus `authorization` so credentials are excluded regardless of Sentry's built-in sensitive-data filtering.
+const SENTRY_DENIED_HEADER_PATTERNS = ['authorization', 'forwarded', '-ip', 'remote-', 'via', '-user'];
 
 @Service()
 export class SentryErrorHandler extends ErrorHandler {
