@@ -24,7 +24,7 @@
         flex: 1;
     }
 
-    // A column, so the complaint below the submission takes its height from the canvas rather than from the page
+    // A column, so the submission panel takes its height from the canvas rather than from the page
     &__canvas {
         display: flex;
         width: 100%;
@@ -33,18 +33,6 @@
         min-height: 0;
         flex-direction: column;
         gap: 0.75rem;
-    }
-
-    &__complaint {
-        display: flex;
-        min-height: 0;
-
-        // Never more than a third of the column: a long complaint scrolls inside itself and leaves the submission readable.
-        max-height: 33%;
-        flex: 0 0 auto;
-        flex-direction: column;
-        gap: 0.5rem;
-        overflow-y: auto;
     }
 
     &__details {

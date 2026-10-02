@@ -16,6 +16,15 @@
                     <span class="assessment-details-header__marker" [attr.aria-label]="'artemisApp.assessment.detail.notesTabHasNote' | artemisTranslate"></span>
                 }
             </tumaet-ui-tab>
+            @if (complaintType(); as complaintType) {
+                <tumaet-ui-tab value="complaint" data-testid="assessment-details-tab-complaint">
+                    <fa-icon [icon]="faFlag" aria-hidden="true" />
+                    <span>{{ (complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.title' : 'artemisApp.complaint.title') | artemisTranslate }}</span>
+                    @if (complaintAwaitsResponse()) {
+                        <span class="assessment-details-header__marker" [attr.aria-label]="'artemisApp.assessment.detail.complaintTabAwaitsResponse' | artemisTranslate"></span>
+                    }
+                </tumaet-ui-tab>
+            }
         </tumaet-ui-tab-list>
     </tumaet-ui-tabs>
     <!-- Only general feedback is added: the private tutor note is a single text box, open in its tab. -->

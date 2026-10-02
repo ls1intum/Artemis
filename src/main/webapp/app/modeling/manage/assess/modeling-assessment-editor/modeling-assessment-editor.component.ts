@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, Injector, OnInit, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
@@ -82,6 +82,7 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-an
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
     private alertService = inject(AlertService);
+    private injector = inject(Injector);
     private datePipe = inject(ArtemisDatePipe);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
@@ -152,6 +153,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isApollonModelLoaded = false;
     /** The open tab of the general feedback and notes panel. */
     readonly detailsTab = signal<AssessmentDetailsTab>('feedback');
+    /** The complaint whose tab was already opened for the assessor, so it is not opened again on every change. */
+    private complaintTabOpenedFor?: number;
 
     private readonly unreferencedFeedbackList = viewChild(UnreferencedFeedbackComponent);
 
@@ -161,6 +164,17 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const translateService = this.translateService;
 
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+
+        // Answering the complaint is what the page is opened for, so its tab opens once for each complaint that still
+        // awaits a response. The assessor can then switch to the general feedback without being sent back. The tab is only
+        // selected once rendered: the tab list falls back to its first tab for a value none of its tabs has.
+        effect(() => {
+            const complaint = this.complaint();
+            if (complaint?.id !== undefined && complaint.accepted === undefined && complaint.id !== this.complaintTabOpenedFor) {
+                this.complaintTabOpenedFor = complaint.id;
+                afterNextRender(() => this.detailsTab.set('complaint'), { injector: this.injector });
+            }
+        });
     }
 
     private get feedback(): Feedback[] {

@@ -56,19 +56,6 @@
                         (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
                     />
                 </jhi-assessment-submission-panel>
-                @if (complaint(); as complaint) {
-                    <section class="text-assessment-page__complaint">
-                        <jhi-complaints-for-tutor-form
-                            [complaint]="complaint"
-                            [zeroIndent]="false"
-                            [exercise]="exercise"
-                            [isAssessor]="isAssessor()"
-                            [submission]="submission"
-                            [isTestRun]="isTestRun()"
-                            (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
-                        />
-                    </section>
-                }
             </div>
 
             <div assessmentWorkspaceInstructions>
@@ -81,6 +68,8 @@
                 [(activeTab)]="detailsTab"
                 [feedbackCount]="unreferencedFeedback().length"
                 [hasNote]="hasTutorNote()"
+                [complaintType]="complaint()?.complaintType"
+                [complaintAwaitsResponse]="complaint()?.accepted === undefined"
                 [disabled]="readOnly || !result()?.id"
                 (addGeneralFeedback)="addGeneralFeedback()"
             />
@@ -105,12 +94,21 @@
                     }
                 </div>
                 <div [hidden]="detailsTab() !== 'notes'">
-                    <jhi-assessment-note
-                        [assessmentNote]="result()?.assessmentNote"
-                        [showTitle]="false"
-                        (onAssessmentNoteChange)="onAssessmentNoteChange($event)"
-                    />
+                    <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" [showTitle]="false" (onAssessmentNoteChange)="onAssessmentNoteChange($event)" />
                 </div>
+                @if (complaint(); as complaint) {
+                    <div [hidden]="detailsTab() !== 'complaint'">
+                        <jhi-complaints-for-tutor-form
+                            [complaint]="complaint"
+                            [stacked]="true"
+                            [exercise]="exercise"
+                            [isAssessor]="isAssessor()"
+                            [submission]="submission"
+                            [isTestRun]="isTestRun()"
+                            (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
+                        />
+                    </div>
+                }
             </div>
         </jhi-assessment-workspace>
     } @else {

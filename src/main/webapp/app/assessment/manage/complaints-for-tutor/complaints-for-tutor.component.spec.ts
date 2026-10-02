@@ -101,6 +101,25 @@ describe('ComplaintsForTutorComponent', () => {
         expect(complainTextArea.value).toEqual(handledComplaint.complaintText);
     });
 
+    it('should stack the complaint above the response and drop its heading inside a panel tab', () => {
+        const handledComplaint = new Complaint();
+        handledComplaint.id = 1;
+        handledComplaint.accepted = true;
+        handledComplaint.complaintResponse = new ComplaintResponse();
+        handledComplaint.complaintType = ComplaintType.COMPLAINT;
+        fixture.componentRef.setInput('complaint', handledComplaint);
+        fixture.detectChanges();
+        const columns = () => fixture.nativeElement.querySelectorAll('.row > .col-12') as NodeListOf<HTMLElement>;
+        expect(fixture.nativeElement.querySelector('h3')).not.toBeNull();
+        expect([...columns()].every((column) => column.classList.contains('col-md-6'))).toBe(true);
+
+        fixture.componentRef.setInput('stacked', true);
+        fixture.detectChanges();
+        // The tab already names the form, and the response sits below the complaint rather than beside it
+        expect(fixture.nativeElement.querySelector(':scope > h3')).toBeNull();
+        expect([...columns()].some((column) => column.classList.contains('col-md-6'))).toBe(false);
+    });
+
     it('should create a new complaint response for a unhandled complaint without a connected complaint response', () => {
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;

@@ -14,6 +14,8 @@
 // Tighter than the kit's default tabs, so the tabs fit the 2.5rem panel header like the instructions header beside it
 .assessment-details-header__tabs {
     --tumaet-ui-spacing: 0.125rem;
+    // The selected tab reads in the text colour rather than the accent blue; the indicator below it marks the selection
+    --tumaet-ui-accent-color: var(--tumaet-ui-text-hover-color);
 
     min-width: 0;
     flex: 1 1 auto;
