@@ -18,6 +18,8 @@ import autonomousTutorResponseImg from "./assets/communication/autonomous-tutor-
 import autonomousTutorReviewImg from "./assets/communication/autonomous-tutor-review.png";
 import autonomousTutorNotificationTabImg from "./assets/communication/autonomous-tutor-notification-tab.png";
 import autonomousTutorVerificationDashboardImg from "./assets/communication/autonomous-tutor-verification-dashboard.png";
+import autonomousTutorMemorySavedImg from "./assets/communication/autonomous-tutor-memory-saved.png";
+import autonomousTutorMemoryReferenceImg from "./assets/communication/autonomous-tutor-memory-reference.png";
 
 # Communication
 
@@ -123,7 +125,26 @@ Threads awaiting verification in the message overview:
 
 <Image src={autonomousTutorVerificationDashboardImg} alt={"autonomous-tutor-verification-dashboard"} size={ImageSize.medium} />
 
-Every response that is approved or edited, as well as every thread that is marked as resolved, is distilled into a question-answer pair and stored in a persistent, course-scoped memory. Before generating a new response, Iris searches this memory for similar previously verified answers, so recurring questions receive consistent answers as the course progresses. Where possible, responses include a citation linking back to the source lecture slide or the earlier verified thread.
+#### Course Memory
+
+Iris keeps a persistent, course-scoped memory of answers that have been confirmed in the course. Two events add an answer to this memory:
+
+* **Tutor verification**: a response that a tutor approves or edits in the review flow described above.
+* **Resolved threads**: a thread in which an answer is marked as resolving the question, whether that answer was written by a tutor, a student, or Iris.
+
+In both cases, the thread is distilled into a question-answer pair and saved to the course memory. When a thread is marked as resolved, a confirmation appears once the answer has been saved. If the thread is later marked as unresolved again, the corresponding entry is removed from the course memory.
+
+Confirmation after resolving a thread:
+
+<Image src={autonomousTutorMemorySavedImg} alt={"autonomous-tutor-memory-saved"} size={ImageSize.large} />
+
+Before generating a new response, Iris searches the course memory for similar, previously verified answers. This way, recurring questions receive consistent answers as the course progresses, and Iris can refer the student to the earlier thread in which the question was already discussed. Where possible, responses include a citation linking back to the source lecture slide or the earlier verified thread.
+
+An Iris response that refers to an earlier answer from the course memory:
+
+<Image src={autonomousTutorMemoryReferenceImg} alt={"autonomous-tutor-memory-reference"} size={ImageSize.large} />
+
+#### Availability and Privacy
 
 The Autonomous Tutor is only available in public course channels; private conversations are excluded. The feature is disabled by default and must be explicitly enabled by instructors in the course's Iris settings. All processing runs on self-hosted language models, and students who have opted out of AI interaction are excluded from every processing step, including reading, embedding, and storage.
 
