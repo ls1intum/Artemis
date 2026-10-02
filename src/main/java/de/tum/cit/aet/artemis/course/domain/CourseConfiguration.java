@@ -55,6 +55,13 @@ public class CourseConfiguration extends DomainObject {
     private boolean dataRetentionHold = false;
 
     /**
+     * Whether presentation assessments are enabled for this course. This setting lives in the lazily loaded course
+     * configuration because it is only needed by presentation-management and course-settings flows.
+     */
+    @Column(name = "presentation_assessments_enabled", nullable = false)
+    private boolean presentationAssessmentsEnabled = false;
+
+    /**
      * When the data-privacy cleanup sent the instructors the "student data will be deleted after the grace period"
      * warning (and archived the course). It stays {@code null} until the course has actually been warned. The reset phase
      * only deletes student data of courses whose {@code resetWarningSentDate + grace} has elapsed, so this anchors the
@@ -115,6 +122,14 @@ public class CourseConfiguration extends DomainObject {
 
     public void setDataRetentionHold(boolean dataRetentionHold) {
         this.dataRetentionHold = dataRetentionHold;
+    }
+
+    public boolean isPresentationAssessmentsEnabled() {
+        return presentationAssessmentsEnabled;
+    }
+
+    public void setPresentationAssessmentsEnabled(boolean presentationAssessmentsEnabled) {
+        this.presentationAssessmentsEnabled = presentationAssessmentsEnabled;
     }
 
     @JsonIgnore

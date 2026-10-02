@@ -37,4 +37,12 @@ describe('TumAetUiTagComponent', () => {
         fixture.detectChanges();
         expect(tag().textContent?.trim()).toBe('Active');
     });
+
+    it('can render regular-weight tag text', () => {
+        fixture.componentRef.setInput('bold', false);
+        fixture.detectChanges();
+
+        expect(tag().classList).toContain('tumaet:font-normal');
+        expect(tag().classList).not.toContain('tumaet:font-bold');
+    });
 });

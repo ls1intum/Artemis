@@ -1,0 +1,73 @@
+<div class="relative flex flex-col gap-2">
+    <h2 id="presentation-presenters-heading">
+        <span jhiTranslate="artemisApp.presentationAssessment.presenters"></span>
+        <span aria-hidden="true">*</span>
+        ({{ presenters().length }})
+    </h2>
+
+    @if (editable()) {
+        <input
+            #presenterSearchInput
+            id="presentation-presenter-search"
+            tumAetUiInput
+            class="w-full"
+            type="text"
+            role="searchbox"
+            aria-autocomplete="list"
+            autocomplete="off"
+            [placeholder]="'artemisApp.presentationAssessment.searchStudent' | artemisTranslate"
+            [ngbTypeahead]="searchPresenters"
+            popupClass="w-full"
+            [resultTemplate]="presenterSearchResultTemplate"
+            [inputFormatter]="presenterFormatter"
+            (selectItem)="selectPresenter($event.item); $event.preventDefault(); presenterSearchInput.value = ''"
+        />
+    }
+
+    <ng-template #presenterSearchResultTemplate let-presenter="result">
+        <div class="flex items-center gap-2">
+            <jhi-profile-picture
+                imageSizeInRem="2"
+                fontSizeInRem="0.8"
+                imageId="presentation-presenter-search-profile-picture"
+                defaultPictureId="presentation-presenter-search-default-picture"
+                [authorId]="presenter.id"
+                [authorName]="presenter.name"
+                [imageUrl]="addPublicFilePrefix(presenter.imageUrl)"
+            />
+            <span>{{ presenterFormatter(presenter) }}</span>
+        </div>
+    </ng-template>
+
+    <jhi-table-view [cols]="columns()" [vals]="presenters()" [totalRows]="presenters().length" [rowActions]="rowActionsTemplate" [options]="tableOptions" />
+</div>
+
+<ng-template #profilePictureTemplate let-cell>
+    <jhi-profile-picture
+        imageSizeInRem="2"
+        fontSizeInRem="0.8"
+        imageId="presentation-presenter-profile-picture"
+        defaultPictureId="presentation-presenter-default-picture"
+        [authorId]="cell.data.id"
+        [authorName]="cell.data.name"
+        [imageUrl]="addPublicFilePrefix(cell.data.imageUrl)"
+    />
+</ng-template>
+
+<ng-template #rowActionsTemplate let-presenter>
+    @if (editable()) {
+        <tumaet-ui-button
+            size="small"
+            severity="danger"
+            variant="text"
+            [icon]="faUserMinus"
+            jhiDeleteButton
+            [renderButtonStyle]="false"
+            [renderButtonText]="false"
+            [actionType]="ActionType.Remove"
+            [entityTitle]="presenter.login"
+            deleteQuestion="artemisApp.presentationAssessment.students.removeQuestion"
+            (delete)="removePresenter(presenter)"
+        />
+    }
+</ng-template>

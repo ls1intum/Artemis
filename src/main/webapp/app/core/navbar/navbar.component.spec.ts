@@ -340,6 +340,18 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
         });
 
+        it('should link a routed exercise-linked presentation to its exercise in the student view', () => {
+            router.setUrl('/course-management/123/presentations/17/exercises/42');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exercises', '42']);
+        });
+
+        it('should link a routed standalone presentation to the student course overview', () => {
+            router.setUrl('/course-management/123/presentations/17');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
+        });
+
         it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])('should not provide perspective links outside course routes for %s', (url) => {
             router.setUrl(url);
 
@@ -525,6 +537,17 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special Cases for Breadcrumbs', () => {
+        it.each(['', '?filter=pending'])('translates the presentation breadcrumb with suffix %s', (suffix) => {
+            router.setUrl(`/course-management/1/presentations${suffix}`);
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toEqual({
+                label: 'artemisApp.presentationAssessment.home.title',
+                translate: true,
+                uri: '/course-management/1/presentations/',
+            });
+        });
+
         it('submissions link to the scores, since there is no list of submissions only', () => {
             router.setUrl('/course-management/1/text-exercises/2/submissions');
 

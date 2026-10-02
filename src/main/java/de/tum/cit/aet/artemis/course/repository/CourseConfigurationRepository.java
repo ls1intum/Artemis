@@ -38,6 +38,19 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
     Optional<CourseConfiguration> findByCourseId(@Param("courseId") long courseId);
 
     /**
+     * Reads the presentation-assessment switch without loading the course or the full configuration entity.
+     *
+     * @param courseId the id of the course
+     * @return the switch value, or empty when the course has no configuration
+     */
+    @Query("""
+            SELECT configuration.presentationAssessmentsEnabled
+            FROM CourseConfiguration configuration
+            WHERE configuration.course.id = :courseId
+            """)
+    Optional<Boolean> findPresentationAssessmentsEnabledByCourseId(@Param("courseId") long courseId);
+
+    /**
      * Lightweight projection of a course's auto-orchestration configuration (kill switch plus the nullable debounce /
      * daily-cap overrides), read on the Atlas accumulator hot path without loading the full entity. Returns empty when the
      * course has no configuration row, in which case callers fall back to the global defaults and treat the pipeline as

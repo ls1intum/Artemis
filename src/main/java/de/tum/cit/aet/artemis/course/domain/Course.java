@@ -755,6 +755,11 @@ public class Course extends DomainObject {
         this.learningPathsEnabled = learningPathsEnabled;
     }
 
+    public boolean getPresentationAssessmentsEnabled() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration != null && configuration.isPresentationAssessmentsEnabled();
+    }
+
     /**
      * Flat accessor for the auto-orchestration kill switch stored on the {@link CourseConfiguration}, mirroring
      * {@link #isGradeRelevant()}. Used by the course update flow to detect admin-only changes. This is null-safe with

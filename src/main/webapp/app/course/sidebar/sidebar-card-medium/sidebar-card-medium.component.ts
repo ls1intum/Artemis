@@ -52,8 +52,18 @@ export class SidebarCardMediumComponent {
         }
 
         this.storeTargetComponentSubRoute();
-        if (this.itemSelected()) {
+        if (this.itemSelected() && !this.sidebarItem().disableNavigation) {
             this.refreshChildComponent();
+        }
+    }
+
+    onSelectionCardKeydown(event: Event): void {
+        if (!(event instanceof KeyboardEvent) || !this.sidebarItem().disableNavigation || event.target !== event.currentTarget) {
+            return;
+        }
+        event.preventDefault();
+        if (!event.repeat) {
+            this.onNonExamCardClicked();
         }
     }
 

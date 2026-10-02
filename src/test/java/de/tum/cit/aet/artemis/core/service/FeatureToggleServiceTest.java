@@ -32,6 +32,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.LearningPaths)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.StandardizedCompetencies)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.IrisProactiveStruggle)).isTrue();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.PresentationAssessments)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Science)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.TutorSuggestions)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasML)).isFalse();
@@ -51,6 +52,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.enableFeature(Feature.LearningPaths);
         featureToggleService.enableFeature(Feature.StandardizedCompetencies);
         featureToggleService.enableFeature(Feature.IrisProactiveStruggle);
+        featureToggleService.enableFeature(Feature.PresentationAssessments);
         // Disable features that should be disabled by default
         featureToggleService.disableFeature(Feature.Science);
         featureToggleService.disableFeature(Feature.TutorSuggestions);

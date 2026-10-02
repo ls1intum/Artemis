@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.course.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
+import java.util.Set;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,11 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
+import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentInstanceRepository;
+import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -83,6 +91,12 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    @Autowired
+    private PresentationAssessmentRepository presentationAssessmentRepository;
+
+    @Autowired
+    private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
     private Course course;
 
@@ -206,5 +220,43 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         // The unrelated course's exam users and conversation participants are untouched.
         assertThat(examUserRepository.countByExamId(otherExamId)).isEqualTo(1);
         assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(otherChannel.getId(), student.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetDeletesPresentationAssessmentInstancesButKeepsDefinitions() {
+        Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        PresentationAssessment presentationAssessment = createPresentationAssessmentWithInstance(course, "Course presentation");
+        PresentationAssessment otherPresentationAssessment = createPresentationAssessmentWithInstance(otherCourse, "Other course presentation");
+
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(course.getId())).isEqualTo(1);
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(otherCourse.getId())).isEqualTo(1);
+
+        courseResetService.resetStudentData(course.getId());
+
+        assertThat(presentationAssessmentRepository.findById(presentationAssessment.getId())).isPresent();
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(course.getId())).isZero();
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(otherCourse.getId())).isEqualTo(1);
+        assertThat(presentationAssessmentRepository.findById(otherPresentationAssessment.getId())).isPresent();
+    }
+
+    private PresentationAssessment createPresentationAssessmentWithInstance(Course course, String title) {
+        PresentationAssessment presentationAssessment = new PresentationAssessment();
+        presentationAssessment.setCourse(course);
+        presentationAssessment.setTitle(title);
+        presentationAssessment.setMaxPoints(20.0);
+        presentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
+
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(ZonedDateTime.now().plusDays(1));
+        instance.setLanguage("en");
+        instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        instance.setLocation("Room 1");
+        instance.setResultPoints(17.0);
+        instance.setRemark("Strong presentation");
+        instance.setStudents(Set.of(student));
+        presentationAssessmentInstanceRepository.save(instance);
+        return presentationAssessment;
     }
 }

@@ -56,7 +56,7 @@ public record CourseCreateDTO(
         String color, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
 
         // Course features
-        boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        boolean learningPathsEnabled, boolean presentationAssessmentsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
         @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, String timeZone,
         CourseInformationSharingConfiguration courseInformationSharingConfiguration,
 
@@ -136,6 +136,7 @@ public record CourseCreateDTO(
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         CourseConfiguration configuration = new CourseConfiguration();
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        configuration.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);

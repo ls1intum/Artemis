@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * @param athenaGradingFeedbackEnabled                   whether Athena grading feedback is enabled
  * @param athenaFormativeFeedbackEnabled                 whether Athena formative feedback is enabled
  * @param learningPathsEnabled                           whether learning paths are enabled
+ * @param presentationAssessmentsEnabled                 whether presentation assessments are enabled
  * @param trainingEnabled                                whether training mode is enabled
  * @param numberOfStudents                               the optional student count
  * @param numberOfTeachingAssistants                     the optional teaching-assistant count
@@ -74,10 +75,10 @@ public record CourseManagementDTO(long id, String title, String shortName, @Null
         @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, @Nullable String courseInformationSharingMessagingCodeOfConduct,
         @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
         int maxComplaintResponseTextLimit, @Nullable Integer presentationScore, @Nullable Integer maxPoints, @Nullable Integer accuracyOfScores, boolean complaintsEnabled,
-        boolean requestMoreFeedbackEnabled, boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, boolean learningPathsEnabled, boolean trainingEnabled,
-        @Nullable Long numberOfStudents, @Nullable Long numberOfTeachingAssistants, @Nullable Long numberOfEditors, @Nullable Long numberOfInstructors,
-        @Nullable OnlineCourseConfigurationResponseDTO onlineCourseConfiguration, @Nullable TutorialGroupsConfigurationResponseDTO tutorialGroupsConfiguration,
-        @Nullable CourseConfigurationResponseDTO courseConfiguration) {
+        boolean requestMoreFeedbackEnabled, boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, boolean learningPathsEnabled,
+        boolean presentationAssessmentsEnabled, boolean trainingEnabled, @Nullable Long numberOfStudents, @Nullable Long numberOfTeachingAssistants, @Nullable Long numberOfEditors,
+        @Nullable Long numberOfInstructors, @Nullable OnlineCourseConfigurationResponseDTO onlineCourseConfiguration,
+        @Nullable TutorialGroupsConfigurationResponseDTO tutorialGroupsConfiguration, @Nullable CourseConfigurationResponseDTO courseConfiguration) {
 
     /**
      * Maps a course without traversing any collection or uninitialized configuration association.
@@ -97,7 +98,8 @@ public record CourseManagementDTO(long id, String title, String shortName, @Null
                 course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),
                 course.getMaxComplaintResponseTextLimit(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getComplaintsEnabled(),
                 course.getRequestMoreFeedbackEnabled(), course.isAthenaGradingFeedbackEnabled(), course.isAthenaFormativeFeedbackEnabled(), course.getLearningPathsEnabled(),
-                course.isTrainingEnabled(), course.getNumberOfStudents(), course.getNumberOfTeachingAssistants(), course.getNumberOfEditors(), course.getNumberOfInstructors(),
+                course.getPresentationAssessmentsEnabled(), course.isTrainingEnabled(), course.getNumberOfStudents(), course.getNumberOfTeachingAssistants(),
+                course.getNumberOfEditors(), course.getNumberOfInstructors(),
                 onlineConfiguration != null && Hibernate.isInitialized(onlineConfiguration) ? OnlineCourseConfigurationResponseDTO.of(onlineConfiguration) : null,
                 tutorialConfiguration != null && Hibernate.isInitialized(tutorialConfiguration) ? TutorialGroupsConfigurationResponseDTO.of(tutorialConfiguration) : null,
                 configuration == null ? null : CourseConfigurationResponseDTO.of(configuration));
