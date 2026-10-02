@@ -7,6 +7,7 @@
             <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
                 <div class="me-2 align-self-center" aria-label="Filter Dropdown" ngbDropdown>
                     <button
+                        type="button"
                         class="btn btn-sm"
                         [ngClass]="{ 'btn-secondary': activeFilters().size === 0, 'btn-success': activeFilters().size > 0 }"
                         ngbDropdownToggle
@@ -41,7 +42,7 @@
                         <span jhiTranslate="{{ isAtLeastInstructor() ? 'artemisApp.faq.home.createLabel' : 'artemisApp.faq.home.proposeLabel' }}"></span>
                     </a>
                     @if (isAtLeastInstructor() && irisEnabled()) {
-                        <button (click)="ingestFaqsInPyris()" class="btn btn-primary btn-sm jh-create-entity">
+                        <button type="button" (click)="ingestFaqsInPyris()" class="btn btn-primary btn-sm jh-create-entity">
                             <fa-icon [icon]="faFileExport" />
                             <span jhiTranslate="artemisApp.faq.home.ingestLabel"></span>
                         </button>
@@ -106,7 +107,7 @@
                                 <div class="btn-group flex-btn-group-container">
                                     @if (faq.faqState === FaqState.PROPOSED && isAtLeastInstructor()) {
                                         <div class="btn-group-vertical me-1 mb-1">
-                                            <button class="btn btn-success btn-sm" (click)="acceptProposedFaq(courseId(), faq)">
+                                            <button type="button" class="btn btn-success btn-sm" (click)="acceptProposedFaq(courseId(), faq)">
                                                 <fa-icon [icon]="faCheck" />
                                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.faq.home.accept"></span>
                                             </button>
@@ -125,6 +126,7 @@
                                         }
                                         @if (isAtLeastInstructor()) {
                                             <button
+                                                type="button"
                                                 class="mt-1"
                                                 jhiDeleteButton
                                                 id="delete-faq-{{ faq.id }}"

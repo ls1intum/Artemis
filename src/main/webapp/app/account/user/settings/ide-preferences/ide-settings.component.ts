@@ -61,7 +61,11 @@ export class IdeSettingsComponent implements OnInit {
     // languages that have no IDE assigned yet
     readonly remainingProgrammingLanguages = signal<ProgrammingLanguage[]>(Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.EMPTY));
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeIdeSettingsComponent();
+    }
+
+    private async initializeIdeSettingsComponent(): Promise<void> {
         try {
             // Load the predefined IDEs and the saved preferences together and only then render, so the
             // selection is shown correctly from the start instead of flashing on the VS Code default.

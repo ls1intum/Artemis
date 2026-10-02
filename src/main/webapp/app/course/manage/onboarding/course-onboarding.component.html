@@ -13,6 +13,14 @@
                 [class.active]="activeStep() === i"
                 [class.completed]="activeStep() > i"
                 (click)="goToStep(i)"
+                [attr.aria-current]="activeStep() === i ? 'step' : null"
+                #keyboardAction9
+                role="button"
+                [attr.aria-disabled]="isSaving()"
+                [attr.tabindex]="!isSaving() ? 0 : -1"
+                (keydown.enter)="!isSaving() && $event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
+                (keydown.space)="!isSaving() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="!isSaving() && $event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
             >
                 <div class="step-circle">
                     @if (activeStep() > i) {
@@ -53,7 +61,7 @@
     <div class="onboarding-footer">
         <div class="footer-left">
             @if (!isFirstStep()) {
-                <button data-testid="onboarding-previous-button" class="btn btn-secondary" (click)="previousStep()" [disabled]="isSaving()">
+                <button type="button" data-testid="onboarding-previous-button" class="btn btn-secondary" (click)="previousStep()" [disabled]="isSaving()">
                     <fa-icon [icon]="faChevronLeft" class="me-1" />
                     <span jhiTranslate="artemisApp.course.onboarding.actions.previous"></span>
                 </button>
@@ -61,7 +69,7 @@
         </div>
         <div class="footer-right">
             @if (canFinish()) {
-                <button data-testid="onboarding-finish-button" class="btn btn-success" (click)="finishSetup()" [disabled]="isSaving()">
+                <button type="button" data-testid="onboarding-finish-button" class="btn btn-success" (click)="finishSetup()" [disabled]="isSaving()">
                     @if (isSaving()) {
                         <span jhiTranslate="artemisApp.course.onboarding.actions.saving"></span>
                     } @else {
@@ -70,12 +78,12 @@
                     }
                 </button>
             } @else if (isLastStep()) {
-                <button data-testid="onboarding-go-to-course-button" class="btn btn-primary" (click)="goToCourse()">
+                <button type="button" data-testid="onboarding-go-to-course-button" class="btn btn-primary" (click)="goToCourse()">
                     <span jhiTranslate="artemisApp.course.onboarding.actions.goToCourse"></span>
                     <fa-icon [icon]="faChevronRight" class="ms-1" />
                 </button>
             } @else {
-                <button data-testid="onboarding-next-button" class="btn btn-primary" (click)="nextStep()" [disabled]="isSaving()">
+                <button type="button" data-testid="onboarding-next-button" class="btn btn-primary" (click)="nextStep()" [disabled]="isSaving()">
                     @if (isSaving()) {
                         <span jhiTranslate="artemisApp.course.onboarding.actions.saving"></span>
                     } @else {

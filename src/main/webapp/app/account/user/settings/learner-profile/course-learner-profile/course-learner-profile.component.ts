@@ -63,7 +63,11 @@ export class CourseLearnerProfileComponent implements OnInit {
     timeInvestment = signal<number>(this.defaultProfileValue);
     repetitionIntensity = signal<number>(this.defaultProfileValue);
 
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
+        void this.initializeCourseLearnerProfileComponent();
+    }
+
+    private async initializeCourseLearnerProfileComponent(): Promise<void> {
         await this.loadProfiles();
     }
 

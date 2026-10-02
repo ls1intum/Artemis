@@ -68,6 +68,59 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(selectSpy).not.toHaveBeenCalled();
     });
 
+    it.each([
+        { readOnly: true, selectable: true },
+        { readOnly: false, selectable: false },
+        { readOnly: true, selectable: false },
+    ])('should not expose an inactive block as a button ($readOnly, $selectable)', ({ readOnly, selectable }) => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.selectable = selectable;
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.componentRef.setInput('readOnly', readOnly);
+        fixture.detectChanges();
+        const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+        const select = vi.spyOn(component, 'select');
+        const didSelect = vi.spyOn(component.didSelect, 'emit');
+
+        expect(block.hasAttribute('role')).toBe(false);
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+        expect(block.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            block.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(select).not.toHaveBeenCalled();
+        expect(didSelect).not.toHaveBeenCalled();
+    });
+
+    it('should expose a selectable block as a button and select once on Space release', () => {
+        vi.useFakeTimers();
+        try {
+            const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+            const didSelect = vi.spyOn(component.didSelect, 'emit');
+            expect(block.getAttribute('role')).toBe('button');
+            expect(block.tabIndex).toBe(0);
+            for (const repeat of [false, true, true]) {
+                const event = new KeyboardEvent('keydown', { key: ' ', repeat, bubbles: true, cancelable: true });
+                block.dispatchEvent(event);
+                expect(event.defaultPrevented).toBe(true);
+            }
+            expect(didSelect).not.toHaveBeenCalled();
+            block.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            expect(didSelect).toHaveBeenCalledExactlyOnceWith(component.textBlockRef());
+            block.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(didSelect).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
     it('should select and emit when autofocus is enabled', () => {
         fixture.componentRef.setInput('readOnly', false);
         const textBlockRef = TextBlockRef.new();
@@ -84,6 +137,32 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(didSelectSpy).toHaveBeenCalledWith(textBlockRef);
+    });
+
+    it('should expose selected state only while the block is interactive', () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+        expect(block.getAttribute('aria-pressed')).toBe('false');
+
+        fixture.componentRef.setInput('selected', true);
+        fixture.detectChanges();
+        expect(block.getAttribute('aria-pressed')).toBe('true');
+
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+
+        fixture.componentRef.setInput('readOnly', false);
+        textBlockRef.selectable = false;
+        reapplyTextBlockRef(textBlockRef);
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+
+        textBlockRef.selectable = true;
+        reapplyTextBlockRef(textBlockRef);
+        expect(block.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('should show text block', () => {

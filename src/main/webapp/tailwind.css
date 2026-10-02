@@ -66,8 +66,9 @@
 @source './app/editor/markdown-editor';
 @source './app/shared-ui/date-time-picker';
 
-/* The exam-scores page still carries legacy Bootstrap markup, but its layout and chart spacing are Tailwind. */
-@source './app/exam/manage/exam-scores';
+/* The instructor pages of the exam mode and the pieces they share with the student pages. */
+@source './app/exam/manage';
+@source './app/exam/shared';
 
 @source './app/localci/build-queue';
 @source './app/course/request';
@@ -76,6 +77,18 @@
 @source './app/shared-ui/confirm-entity-name';
 @source './app/shared-ui/delete-dialog';
 @source './app/core/alert';
+@source './app/core/about-us';
+/* Lecture editor: the page, its sections, its content and the dialogs and pages it opens lay out with Tailwind. */
+@source './app/lecture/manage/lecture-update';
+
+/* The lecture list still has Bootstrap markup, but the actions of a lecture lay out with Tailwind. */
+@source './app/lecture/manage/lecture';
+@source './app/lecture/manage/lecture-period';
+@source './app/lecture/manage/lecture-title-channel-name';
+@source './app/lecture/manage/lecture-units';
+@source './app/lecture/manage/pdf-drop-zone';
+@source './app/lecture/manage/pdf-upload-target-dialog';
+@source './app/core/feature-overview';
 @source './app/core/layouts/footer';
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
 @source './app/course/overview/setup-passkey-modal';
@@ -89,12 +102,12 @@
 @source './app/core/navbar/variant-generation-tray';
 @source './app/course/manage/exercises/create-variant-modal';
 @source './app/account';
-@source './app/course/manage/update/course-update.component.html';
-@source './app/exam/manage/exercise-groups';
+@source './app/course/manage/update';
 @source './app/assessment/shared/assessment-dashboard';
 @source './app/exercise/dashboards/tutor-leaderboard';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
+@source './app/exercise/structured-grading-criterion/grading-instructions-details';
 @source './app/exercise/unreferenced-feedback';
 @source './app/programming/shared/programming-exercise-update-timeline';
 @source './app/course/manage/user-management-dropdown';
@@ -162,8 +175,10 @@
 [data-theme='dark'] {
     color-scheme: dark;
 
-    --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 80%, white);
-    --tumaet-ui-primary-contrast-color: var(--module-bg);
+    /* A solid blue with a white label, matching the legacy Bootstrap primary button (and light mode), rather than a
+       pale tint with near-black text that reads as washed-out on a dark page. */
+    --tumaet-ui-primary-color: var(--primary);
+    --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
     --tumaet-ui-accent-color: color-mix(in srgb, var(--primary) 80%, white);
     --tumaet-ui-focus-color: color-mix(in srgb, var(--primary) 80%, white);
     --tumaet-ui-state-danger: var(--artemis-alert-danger-color);

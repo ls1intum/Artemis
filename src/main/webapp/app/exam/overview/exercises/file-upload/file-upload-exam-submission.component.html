@@ -28,6 +28,7 @@
                                 </div>
                                 <div class="col-4">
                                     <button
+                                        type="button"
                                         class="btn btn-primary"
                                         data-testid="file-upload-submit"
                                         (click)="saveUploadedFile()"
@@ -50,7 +51,17 @@
             @if (submittedFileName() && studentSubmission()?.filePathUrl) {
                 <div class="card-text">
                     <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></h6>
-                    <a class="text-primary" (click)="downloadFile(studentSubmission()!.filePathUrl!)" jhiTranslate="artemisApp.fileUploadSubmission.download"></a>
+                    <a
+                        class="text-primary"
+                        (click)="downloadFile(studentSubmission()!.filePathUrl!)"
+                        jhiTranslate="artemisApp.fileUploadSubmission.download"
+                        #keyboardAction53
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction53.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction53.click() : undefined"
+                    ></a>
                     @if (submittedFileExtension()) {
                         <span class="ms-2 badge bg-info">
                             {{ submittedFileExtension() | uppercase }}

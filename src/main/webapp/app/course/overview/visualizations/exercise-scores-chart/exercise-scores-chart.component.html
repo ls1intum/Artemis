@@ -3,6 +3,7 @@
     @if (exerciseTypeFilter.typeSet.size > 0) {
         <div class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
             <button
+                type="button"
                 class="btn"
                 [class.btn-secondary]="exerciseTypeFilter.numberOfActiveFilters === 0"
                 [class.btn-success]="exerciseTypeFilter.numberOfActiveFilters > 0"

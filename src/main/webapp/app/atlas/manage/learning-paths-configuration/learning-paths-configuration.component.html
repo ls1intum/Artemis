@@ -2,7 +2,7 @@
     <div class="row m-0 align-items-center justify-content-between">
         <h5 class="m-0 col-md-auto p-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.title"></h5>
         @if (isEditMode()) {
-            <button id="save-learning-paths-configuration-button" class="btn btn-primary btn-sm col-md-auto" (click)="saveLearningPathsConfiguration()">
+            <button type="button" id="save-learning-paths-configuration-button" class="btn btn-primary btn-sm col-md-auto" (click)="saveLearningPathsConfiguration()">
                 @if (isSaving()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 }
@@ -10,6 +10,7 @@
             </button>
         } @else {
             <button
+                type="button"
                 id="edit-learning-paths-configuration-button"
                 class="btn btn-secondary btn-sm col-md-auto"
                 (click)="enableEditMode()"
