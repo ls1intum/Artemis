@@ -57,8 +57,8 @@ import { ResizablePanelsComponent } from 'app/shared-ui/components/resizable-pan
 import { DialogService } from 'primeng/dynamicdialog';
 import { FileService } from 'app/foundation/service/file.service';
 import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -163,8 +163,8 @@ describe('CourseLectureDetailsComponent', () => {
                 MockProvider(DialogService),
                 { provide: AccountService, useClass: MockAccountService },
                 /*
-                 * `DiscussionSectionComponent` declares `providers: [MetisService]`, and ng-mocks carries a mocked
-                 * component's providers over, so rendering it builds the real `MetisService`. Its constructor
+                 * `DiscussionSectionComponent` declares `providers: [CommunicationService]`, and ng-mocks carries a mocked
+                 * component's providers over, so rendering it builds the real `CommunicationService`. Its constructor
                  * subscribes to a notification topic as soon as it has a user, and the websocket service opens a
                  * connection for the first subscriber — which in jsdom throws on the relative broker URL and fails the
                  * run as an unhandled rejection, without failing a single test.
@@ -192,7 +192,7 @@ describe('CourseLectureDetailsComponent', () => {
                 MockProvider(Router),
                 MockProvider(ScienceService),
                 MockProvider(IrisSettingsService),
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
             ],
         })
             .overrideComponent(CourseLectureDetailsComponent, {

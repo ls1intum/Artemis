@@ -303,7 +303,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     setUserAuthorityIconAndTooltip(): void {
-        const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
+        const toolTipTranslationPath = 'artemisApp.communication.userAuthorityTooltips.';
         // highest authority is displayed
         if (this.conversationMember()?.isInstructor) {
             this.userIcon.set(faUserGraduate);

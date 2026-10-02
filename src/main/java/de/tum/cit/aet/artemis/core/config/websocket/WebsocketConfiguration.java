@@ -34,7 +34,9 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandler;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.converter.MessageConverter;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -203,19 +205,23 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             public void onApplicationEvent(ApplicationEvent event) {
                 if (event instanceof SessionSubscribeEvent subscription) {
-                    var headers = StompHeaderAccessor.wrap(subscription.getMessage());
-                    if (headers.getSessionId() == null || headers.getSubscriptionId() == null) {
+                    // Read the headers in place instead of copying them with StompHeaderAccessor.wrap. Spring publishes this event after it handed the frame to the
+                    // inbound channel, so a handler on another thread may still add headers to the very same mutable map, which makes a copy throw a
+                    // ConcurrentModificationException. The superclass reads them the same way.
+                    MessageHeaders headers = subscription.getMessage().getHeaders();
+                    if (SimpMessageHeaderAccessor.getSessionId(headers) == null || SimpMessageHeaderAccessor.getSubscriptionId(headers) == null) {
                         return;
                     }
+                    String destination = SimpMessageHeaderAccessor.getDestination(headers);
                     // A rejected reuse of an id must not retain the authorization of an earlier subscription.
                     super.onApplicationEvent(new SessionUnsubscribeEvent(this, subscription.getMessage(), subscription.getUser()));
                     try {
-                        if (websocketTopicRegistry.getObject().authorizeSubscription(subscription.getUser(), headers.getDestination()) != WebsocketTopicRegistry.Decision.ALLOWED) {
+                        if (websocketTopicRegistry.getObject().authorizeSubscription(subscription.getUser(), destination) != WebsocketTopicRegistry.Decision.ALLOWED) {
                             return;
                         }
                     }
                     catch (RuntimeException e) {
-                        log.error("Could not authorize the subscription event for {}, rejecting it", headers.getDestination(), e);
+                        log.error("Could not authorize the subscription event for {}, rejecting it", destination, e);
                         return;
                     }
                 }

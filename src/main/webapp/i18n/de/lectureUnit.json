@@ -144,7 +144,7 @@
             },
             "createAttachmentVideoUnits": {
                 "noFile": "Es gibt keine Datei für die automatische Verarbeitung. Bitte gehe einen Schritt zurück und versuche es erneut.",
-                "noUnitDetected": "Es wurde kein Inhalt erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jeden Inhalt hinzu!",
+                "noUnitDetected": "Dieses PDF enthält keine Folie mit dem Wort „Outline“ oder „Gliederung“, daher konnte Artemis keine Inhalte vorschlagen. Lege die Inhalte und ihre Folien mit „Inhalt hinzufügen“ an.",
                 "pageTitle": "Inhalte verarbeiten",
                 "addUnit": "Inhalt hinzufügen",
                 "removeSlides": "Entferne Folien",
@@ -178,7 +178,8 @@
                     "summarySingle": "Artemis hat 1 Abschnitt in {{ slides }} Folien gefunden.",
                     "hint": "Jede Zeile wird ein Inhalt mit ihren Folien. Prüfe die Namen und Folienbereiche, bevor du die Inhalte erstellst.",
                     "slides": "Folien",
-                    "summaryNone": "Artemis hat in {{ slides }} Folien keine Abschnitte gefunden."
+                    "summaryNone": "Artemis hat in {{ slides }} Folien keine Abschnitte gefunden.",
+                    "detectionHint": "Artemis beginnt bei jeder Folie, die das Wort „Outline“ oder „Gliederung“ genau so geschrieben enthält, einen neuen Abschnitt und schlägt einen Namen aus dem Text dieser Folie vor. Das funktioniert mit PDFs aus jedem Programm, etwa PowerPoint, Keynote oder LaTeX, solange sich ihr Text markieren lässt. Prüfe die vorgeschlagenen Namen und Folien."
                 },
                 "processTimeInfo": "Die Verarbeitung der Vorlesungsinhalte kann einige Sekunden dauern. Habe bitte etwas Geduld.",
                 "removeSource": "Den ursprünglichen PDF-Inhalt „{{ name }}“ nach dem Aufteilen entfernen",
