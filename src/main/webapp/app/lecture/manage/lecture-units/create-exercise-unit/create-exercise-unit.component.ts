@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -63,6 +63,12 @@ export class CreateExerciseUnitComponent implements OnInit {
     /** Whether the course has exercises at all, which tells an empty list apart from one whose exercises are all content already. */
     readonly hasCourseExercises = signal(false);
     exercisesToCreateUnitFor = signal<Exercise[]>([]);
+    /** Set once the form is closed; create requests that still run complete without it, and the page that follows them reloads its list. */
+    private isDestroyed = false;
+
+    constructor() {
+        inject(DestroyRef).onDestroy(() => (this.isDestroyed = true));
+    }
 
     ngOnInit(): void {
         this.isLoading.set(true);
@@ -108,7 +114,7 @@ export class CreateExerciseUnitComponent implements OnInit {
                 finalize(() => {
                     if (this.shouldNavigateOnSubmit()) {
                         void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                    } else {
+                    } else if (!this.isDestroyed) {
                         this.onExerciseUnitCreated.emit();
                     }
                 }),

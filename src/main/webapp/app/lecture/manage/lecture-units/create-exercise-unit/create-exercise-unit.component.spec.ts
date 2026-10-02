@@ -188,6 +188,25 @@ describe('CreateExerciseUnitComponent', () => {
         expect(createdSpy).toHaveBeenCalledOnce();
     });
 
+    it('should not report the created items once the form is closed, since the page that followed the requests reloads its list', () => {
+        const exercise = new TextExercise(new Course(), undefined);
+        exercise.id = 1;
+        const response = new Subject<HttpResponse<ExerciseUnit>>();
+        createStub.mockReturnValue(response);
+        const createdSpy = vi.fn();
+        createExerciseUnitComponent.onExerciseUnitCreated.subscribe(createdSpy);
+        createExerciseUnitComponentFixture.componentRef.setInput('shouldNavigateOnSubmit', false);
+        createExerciseUnitComponentFixture.componentRef.setInput('lectureId', 1);
+        createExerciseUnitComponent.exercisesToCreateUnitFor.set([exercise]);
+
+        createExerciseUnitComponent.createExerciseUnits();
+        createExerciseUnitComponentFixture.destroy();
+        response.next(new HttpResponse({ body: new ExerciseUnit(), status: 201 }));
+        response.complete();
+
+        expect(createdSpy).not.toHaveBeenCalled();
+    });
+
     describe('choosing exercises', () => {
         let textExercise: TextExercise;
         let modelingExercise: ModelingExercise;

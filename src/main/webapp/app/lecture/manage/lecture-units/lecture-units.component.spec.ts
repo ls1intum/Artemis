@@ -586,16 +586,22 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(createStub).not.toHaveBeenCalled();
     });
 
-    it('should update units upon exercise unit creation', async () => {
+    it('should close the exercise form once its items are created and reload the list when their requests completed', async () => {
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
-
         const updateSpy = vi.spyOn(unitManagementComponentMock, 'loadData');
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.EXERCISE);
+        wizardUnitComponentFixture.detectChanges();
+        const exerciseForm: CreateExerciseUnitComponent = wizardUnitComponentFixture.debugElement.query(By.directive(CreateExerciseUnitComponent)).componentInstance;
+        const request = new Subject<void>();
+        exerciseForm.trackRequest()(request).subscribe();
 
+        // The form reports the items before its requests are counted as done, as its finalize runs first.
         wizardUnitComponent.onExerciseUnitCreated();
-        await wizardUnitComponentFixture.whenStable();
+        request.complete();
 
-        expect(updateSpy).toHaveBeenCalledTimes(1);
+        expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBe(false);
+        expect(updateSpy).toHaveBeenCalledOnce();
         updateSpy.mockRestore();
     });
 
@@ -1477,7 +1483,8 @@ describe('LectureUpdateUnitsComponent', () => {
             });
         });
 
-        it('should count exercise items that are being created as content that is still being saved, also after their form closed', () => {
+        it('should count exercise items that are being created as content that is still being saved, and show them, also after their form closed', () => {
+            const loadDataSpy = vi.spyOn(unitManagementComponentMock, 'loadData');
             wizardUnitComponent.onCreateLectureUnit(LectureUnitType.EXERCISE);
             wizardUnitComponentFixture.detectChanges();
             const exerciseForm: CreateExerciseUnitComponent = wizardUnitComponentFixture.debugElement.query(By.directive(CreateExerciseUnitComponent)).componentInstance;
@@ -1489,8 +1496,49 @@ describe('LectureUpdateUnitsComponent', () => {
             wizardUnitComponentFixture.detectChanges();
             expect(wizardUnitComponent.isSavingContent()).toBe(true);
 
+            expect(loadDataSpy).not.toHaveBeenCalled();
             request.complete();
             expect(wizardUnitComponent.isSavingContent()).toBe(false);
+            // The form is gone, so the list is reloaded by the page that followed the requests.
+            expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not send a failed change again when the user leaves its field, but on Retry', () => {
+            const updateSpy = vi
+                .spyOn(textUnitService, 'update')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503, error: { title: 'Service unavailable' } })))
+                .mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+            expect(updateSpy).toHaveBeenCalledOnce();
+
+            // Leaving the name field comes before the click that leaves the page; the form may report the same text again.
+            wizardUnitComponent.onEditorFocusOut();
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+            vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+            expect(wizardUnitComponent.isSavingContent()).toBe(false);
+
+            wizardUnitComponent.retryAutosave();
+            expect(updateSpy).toHaveBeenCalledTimes(2);
+            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+        });
+
+        it('should send a newer change after a failed save when the user leaves its field', () => {
+            const updateSpy = vi
+                .spyOn(textUnitService, 'update')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503, error: { title: 'Service unavailable' } })))
+                .mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list for week 2'));
+            wizardUnitComponent.onEditorFocusOut();
+
+            expect(updateSpy).toHaveBeenCalledTimes(2);
+            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list for week 2');
         });
 
         describe('file and video items', () => {

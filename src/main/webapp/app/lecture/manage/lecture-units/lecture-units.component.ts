@@ -239,6 +239,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
     private lastSavedKey?: string;
     /** The details sent last, which the server has or is about to have. */
     private lastRequestedKey?: string;
+    /** The details whose save failed last; they wait for Retry instead of being sent again when the user leaves a field or the page. */
+    private failedDetailsKey?: string;
     /** The newest details of the file item that can be saved, which a confirmed file or video link is sent with. */
     private latestAttachmentDetails?: AttachmentVideoUnitFormData;
     private autosaveTimer?: ReturnType<typeof setTimeout>;
@@ -407,12 +409,16 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.unitManagementComponent()?.loadData();
     }
 
-    /**
-     * Called when all selected exercises were linked from the component
-     */
+    /** Called when all selected exercises were linked; the list is reloaded by {@link trackExerciseCreation}, also after the form closed. */
     onExerciseUnitCreated() {
-        this.onUnitCreated();
+        if (!this.isEditingLectureUnit()) {
+            this.onCloseLectureUnitForms();
+        }
     }
+
+    /** Follows the create requests of the exercise form and reloads the list once they completed, also when the form was closed before. */
+    protected readonly trackExerciseCreation = <T>(request: Observable<T>): Observable<T> =>
+        this.trackCreation(request).pipe(finalize(() => this.unitManagementComponent()?.loadData()));
 
     /**
      * Scrolls to the edit form container
@@ -623,7 +629,15 @@ export class LectureUpdateUnitsComponent implements OnInit {
     /** Saves a waiting change as soon as the user leaves a field of the form, instead of after the pause. */
     onEditorFocusOut(): void {
         this.textUnitForm()?.flushPendingEdits();
-        this.flushAutosave();
+        // A change whose save failed waits for Retry, so leaving its field, or the page, does not send it again unnoticed.
+        if (!this.isFailedChangeWaiting()) {
+            this.flushAutosave();
+        }
+    }
+
+    /** Whether the change that waits is the one whose save failed, which only Retry sends again. */
+    private isFailedChangeWaiting(): boolean {
+        return !!this.saveFailure() && this.pendingDetails()?.key === this.failedDetailsKey;
     }
 
     /**
@@ -678,6 +692,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
             return;
         }
         this.pendingDetails.set(pending);
+        if (this.isFailedChangeWaiting()) {
+            // The form reported the change that failed again, such as text the markdown editor held back; it still waits for Retry.
+            return;
+        }
         if (change.immediate) {
             this.flushAutosave();
         } else {
@@ -790,6 +808,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
         if (this.pendingDetails()) {
             this.saveFailure.set({ reason });
+            this.failedDetailsKey = pending.key;
         }
     }
 
