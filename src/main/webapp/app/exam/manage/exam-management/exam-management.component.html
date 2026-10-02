@@ -11,7 +11,7 @@
                     }
                     <!-- Current exam title -->
                     @if (currentExam()) {
-                        <h5 class="flex items-center gap-2 mb-0 min-w-0">
+                        <h5 class="flex items-center gap-2 mb-0! min-w-0">
                             @if (course().isAtLeastInstructor) {
                                 <a
                                     class="exam-title-link tab-link inline-flex items-center gap-2 rounded-md min-w-0"
@@ -31,7 +31,7 @@
                     <!-- Inject page specific title -->
                     @if (courseTitleBarService.titleTemplate()) {
                         @if (currentExam()) {
-                            <fa-icon class="text-secondary shrink-0" [icon]="faChevronRight" />
+                            <fa-icon class="text-muted-color shrink-0" [icon]="faChevronRight" />
                         }
                         <div class="min-w-0 shrink-0">
                             <ng-container *ngTemplateOutlet="courseTitleBarService.titleTemplate()!" />

@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component, input } from '@angular/core';
 import { AttachmentVideoUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
@@ -310,6 +311,9 @@ describe('AttachmentVideoUnitsComponent', () => {
         expect(attachmentVideoUnitsComponent.createLabelKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.create');
         expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-summary"]')).not.toBeNull();
         expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-create"]')).not.toBeNull();
+        // How the sections are found is explained next to the proposal, and nothing warns about a missing outline.
+        expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-detection-hint"]')).not.toBeNull();
+        expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-no-sections"]')).toBeNull();
     });
 
     it('should turn the release dates of the proposal into dates for the date pickers', () => {
@@ -332,11 +336,28 @@ describe('AttachmentVideoUnitsComponent', () => {
     it('should still give the number of slides and a neutral label when Artemis found no sections', () => {
         attachmentVideoUnitsComponent.foundSections.set(0);
         attachmentVideoUnitsComponent.units.set([]);
+        attachmentVideoUnitsComponent.numberOfPages.set(22);
 
         expect(attachmentVideoUnitsComponent.summaryKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.summaryNone');
         expect(attachmentVideoUnitsComponent.createLabelKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.createEmpty');
         attachmentVideoUnitsComponentFixture.detectChanges();
         expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-summary"]')).not.toBeNull();
+        // Without an outline slide, the page says why nothing was proposed and what to do instead, as a warning rather than an error.
+        const noSections = attachmentVideoUnitsComponentFixture.debugElement.query(By.css('[data-testid="split-no-sections"]'));
+        expect(noSections).not.toBeNull();
+        expect(noSections.componentInstance.severity()).toBe('warn');
+    });
+
+    it('should not blame a missing outline slide when the proposal could not be loaded', () => {
+        vi.spyOn(attachmentVideoUnitService, 'getSplitUnitsData').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        // A page that opens has neither items nor a number of slides until the proposal arrives.
+        attachmentVideoUnitsComponent.units.set([]);
+        attachmentVideoUnitsComponent.numberOfPages.set(undefined!);
+
+        attachmentVideoUnitsComponent.ngOnInit();
+        attachmentVideoUnitsComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitsComponentFixture.nativeElement.querySelector('[data-testid="split-no-sections"]')).toBeNull();
     });
 
     it('should let the user try again when the items cannot be created', () => {

@@ -1,4 +1,6 @@
-import { TumAetUiButtonComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -69,6 +71,8 @@ describe('Exercise Groups Component', () => {
                 MockComponent(ExamExerciseGroupEditModalComponent),
                 MockComponent(ExamExerciseTypePickerComponent),
                 MockComponent(TumAetUiPanelComponent),
+                MockComponent(TumAetUiDialogComponent),
+                MockComponent(ExamImportComponent),
                 MockComponent(TumAetUiButtonComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
@@ -417,24 +421,34 @@ describe('Exercise Groups Component', () => {
         expect(alertSpy).not.toHaveBeenCalled();
     });
 
-    it('opens the import modal for exercise groups', async () => {
-        const alertSpy = vi.spyOn(alertService, 'success');
-        const exerciseGroup = { id: 1 } as ExerciseGroup;
-
-        const onCloseSubject = new Subject<ExerciseGroup[] | undefined>();
-        const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+    it('opens the exercise group import in a dialog that targets the current exam', () => {
+        fixture.detectChanges();
+        expect(comp['groupImportVisible']()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(ExamImportComponent))).toBeNull();
 
         comp.openExerciseGroupImportModal();
+        fixture.detectChanges();
 
-        // Simulate dialog closing with result
-        onCloseSubject.next([exerciseGroup]);
-        onCloseSubject.complete();
-        await Promise.resolve();
+        const importComponent = fixture.debugElement.query(By.directive(ExamImportComponent)).componentInstance;
+        expect(importComponent.subsequentExerciseGroupSelection()).toBe(true);
+        expect(importComponent.targetCourseId()).toBe(course.id);
+        expect(importComponent.targetExamId()).toBe(exam.id);
+    });
 
-        expect(dialogService.open).toHaveBeenCalledOnce();
+    it('shows the imported exercise groups and closes the import dialog', () => {
+        const alertSpy = vi.spyOn(alertService, 'success');
+        const exerciseGroup = { id: 1 } as ExerciseGroup;
+        comp.openExerciseGroupImportModal();
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.directive(ExamImportComponent)).componentInstance.imported.emit([exerciseGroup]);
+        fixture.detectChanges();
+
         expect(comp.exerciseGroups()).toEqual([exerciseGroup]);
         expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importSuccessful');
+        expect(comp['groupImportVisible']()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(ExamImportComponent))).toBeNull();
     });
 
     it('shows the exercise group import button only to instructors, not to editors', () => {

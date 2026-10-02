@@ -1,11 +1,11 @@
+// A tbody per exercise group: every second group gets a tint, like the stripes of a table with a single tbody.
 .body-striped {
-    tbody {
-        &:nth-child(even) {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
+    tbody:nth-child(even) {
+        background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
     }
 }
 
-.table-clear-width {
-    width: unset;
+// Separates the columns of the first correction from those of the second correction.
+.correction-divider {
+    border-left: 3px solid var(--tumaet-ui-border-color);
 }
