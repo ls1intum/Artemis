@@ -1,4 +1,5 @@
-import { Service } from '@angular/core';
+import { Service, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -16,8 +17,17 @@ export interface AssessmentScore {
     total: number;
 }
 
+/**
+ * The payload dragged from the grading instructions panel: the instruction, plus the title of its criterion, which an
+ * instruction does not carry itself. The criterion title only names the feedback and is not stored with the instruction.
+ */
+export type DraggedGradingInstruction = GradingInstruction & { criterionTitle?: string };
+
 @Service()
 export class StructuredGradingCriterionService {
+    // Optional so that the scoring helpers stay usable without translations; without them only an empty title is a default.
+    private readonly translateService = inject(TranslateService, { optional: true });
+
     /**
      * Connects the structured grading instructions with the feedback of a submission element
      * @param {Event} event - The drop event
@@ -29,7 +39,10 @@ export class StructuredGradingCriterionService {
         event.preventDefault();
         try {
             const data = (event as DragEvent).dataTransfer!.getData('text/plain');
-            this.applyGradingInstruction(feedback, parseJson<GradingInstruction>(data));
+            const dragged = parseJson<DraggedGradingInstruction>(data);
+            const criterionTitle = dragged.criterionTitle;
+            delete dragged.criterionTitle;
+            this.applyGradingInstruction(feedback, dragged, criterionTitle);
         } catch (err) {
             // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
             if (!(err instanceof SyntaxError)) {
@@ -43,17 +56,33 @@ export class StructuredGradingCriterionService {
      * The feedback takes the instruction's credits, and a tutor's own feedback takes the criterion's text as its description,
      * where the tutor can edit it, so it is not shown twice. An AI suggestion keeps its own description: the student only reads
      * that (see getFeedbackBodyText). The text replaces an empty description or the one a previously linked criterion wrote,
-     * never what the tutor wrote.
+     * never what the tutor wrote. The criterion's title names the feedback if its title is empty or one of the points-based
+     * defaults, so the title a tutor wrote and an AI suggestion's own title stay.
      * @param feedback the feedback to link
      * @param instruction the grading instruction to link it to
+     * @param criterionTitle the title of the instruction's criterion, if known
      */
-    applyGradingInstruction(feedback: Feedback, instruction: GradingInstruction) {
+    applyGradingInstruction(feedback: Feedback, instruction: GradingInstruction, criterionTitle?: string) {
         const previousInstructionText = feedback.gradingInstruction?.feedback;
         feedback.gradingInstruction = instruction;
         feedback.credits = instruction.credits;
         if (!Feedback.isAIFeedback(feedback) && instruction.feedback && (!feedback.detailText || feedback.detailText === previousInstructionText)) {
             feedback.detailText = instruction.feedback;
         }
+        const title = criterionTitle?.trim();
+        if (title && this.hasDefaultTitle(feedback)) {
+            feedback.text = title;
+        }
+    }
+
+    /** Whether the feedback's title is empty or one of the points-based defaults the unified feedback card fills in. */
+    private hasDefaultTitle(feedback: Feedback): boolean {
+        const title = feedback.text?.trim();
+        if (!title) {
+            return true;
+        }
+        const translateService = this.translateService;
+        return !!translateService && Feedback.DEFAULT_TITLE_KEYS.some((key) => translateService.instant(key) === title);
     }
 
     computeTotalScore(assessments: Feedback[]) {

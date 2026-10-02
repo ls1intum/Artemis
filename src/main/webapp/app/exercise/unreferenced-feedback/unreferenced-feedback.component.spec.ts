@@ -192,6 +192,36 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.unreferencedFeedback[0].detailText).toBe('documented');
         });
 
+        it('should title a feedback created for an instruction after its criterion', () => {
+            comp.applyInstruction(documentationInstruction);
+
+            expect(comp.unreferencedFeedback[0].text).toBe('Documentation');
+        });
+
+        it('should title a feedback created by dropping an instruction after its criterion', () => {
+            comp.unreferencedFeedback = [];
+            // The grading instructions panel drags the instruction together with its criterion's title
+            const payload = JSON.stringify({ ...cameraInstruction, criterionTitle: 'Camera' });
+            const dropEvent = { preventDefault: () => {}, dataTransfer: { getData: () => payload } } as unknown as DragEvent;
+
+            comp.createAssessmentOnDrop(dropEvent);
+
+            expect(comp.unreferencedFeedback).toHaveLength(1);
+            expect(comp.unreferencedFeedback[0].gradingInstruction?.id).toBe(2);
+            expect(comp.unreferencedFeedback[0].text).toBe('Camera');
+            // The criterion's title names the feedback but is not stored with the instruction
+            expect(comp.unreferencedFeedback[0].gradingInstruction).not.toHaveProperty('criterionTitle');
+        });
+
+        it('should leave the title empty for an instruction whose criterion has no title, so the card fills in its default', () => {
+            const untitledInstruction = { id: 3, credits: 1, feedback: 'untitled' } as GradingInstruction;
+            fixture.componentRef.setInput('gradingCriteria', [...criteria, { id: 3, structuredGradingInstructions: [untitledInstruction] } as GradingCriterion]);
+
+            comp.applyInstruction(untitledInstruction);
+
+            expect(comp.unreferencedFeedback[0].text).toBeUndefined();
+        });
+
         it('should remove every feedback of the instruction when it is un-applied', () => {
             comp.applyInstruction(documentationInstruction);
             comp.applyInstruction(documentationInstruction);

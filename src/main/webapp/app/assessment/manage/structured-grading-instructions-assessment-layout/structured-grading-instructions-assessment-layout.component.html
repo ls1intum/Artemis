@@ -35,7 +35,7 @@
                     class="rounded"
                     [draggable]="isDraggable(instruction)"
                     (dragstart)="disableDrag()"
-                    (dragstart)="drag($event, instruction)"
+                    (dragstart)="drag($event, instruction, criterion.title)"
                     id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     [style.background-color]="setInstrColour(instruction)"
                 >

@@ -5,6 +5,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('Structured Grading Criteria Service', () => {
     let service: StructuredGradingCriterionService;
@@ -13,7 +14,7 @@ describe('Structured Grading Criteria Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
         });
         service = TestBed.inject(StructuredGradingCriterionService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -91,6 +92,48 @@ describe('Structured Grading Criteria Service', () => {
             expect(feedback.gradingInstruction?.id).toBe(1);
             expect(feedback.credits).toBe(2);
             expect(feedback.detailText).toBe('Bubble Sort is implemented correctly.');
+        });
+
+        describe('title', () => {
+            // The panel drags the instruction together with its criterion's title (DraggedGradingInstruction)
+            const withCriterion = (instruction: Partial<GradingInstruction>) => dropEventWith({ ...instruction, criterionTitle: 'Bubble Sort' });
+
+            it("should name a feedback without a title after the instruction's criterion", () => {
+                const feedback = new Feedback();
+
+                service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, withCriterion(correct));
+
+                expect(feedback.text).toBe('Bubble Sort');
+                // The criterion's title only names the feedback and is not stored with the instruction
+                expect(feedback.gradingInstruction).not.toHaveProperty('criterionTitle');
+            });
+
+            it('should replace a points-based default title', () => {
+                const feedback = new Feedback();
+                feedback.text = 'artemisApp.feedback.type.positive';
+
+                service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, withCriterion(correct));
+
+                expect(feedback.text).toBe('Bubble Sort');
+            });
+
+            it('should keep a title the tutor wrote', () => {
+                const feedback = new Feedback();
+                feedback.text = 'Swap in the inner loop';
+
+                service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, withCriterion(correct));
+
+                expect(feedback.text).toBe('Swap in the inner loop');
+            });
+
+            it("should keep an AI suggestion's own title", () => {
+                const feedback = new Feedback();
+                feedback.text = 'FeedbackSuggestion:accepted:Sorting';
+
+                service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, withCriterion(correct));
+
+                expect(feedback.text).toBe('FeedbackSuggestion:accepted:Sorting');
+            });
         });
 
         it('should replace the text a previously dropped criterion wrote', () => {

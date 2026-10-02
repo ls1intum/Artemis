@@ -213,8 +213,16 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
 
     applyInstruction(instruction: GradingInstruction): void {
         const feedback = this.createFeedback();
-        this.structuredGradingCriterionService.applyGradingInstruction(feedback, instruction);
+        this.structuredGradingCriterionService.applyGradingInstruction(feedback, instruction, this.criterionTitleOf(instruction));
         this.appendFeedback(feedback);
+    }
+
+    /**
+     * The title of the instruction's criterion, which names a feedback created for it. Dropping an instruction brings the
+     * title along (see DraggedGradingInstruction); ticking it does not, so the criterion is looked up among the exercise's.
+     */
+    private criterionTitleOf(instruction: GradingInstruction): string | undefined {
+        return this.gradingCriteria().find((criterion) => criterion.structuredGradingInstructions?.some((candidate) => candidate.id === instruction.id))?.title;
     }
 
     unapplyInstruction(instruction: GradingInstruction): void {
