@@ -379,6 +379,14 @@ export class UnifiedFeedbackComponent {
         }
     }
 
+    /**
+     * Removing the grading instruction from an accepted AI suggestion changes it like any other edit, so it becomes adapted.
+     * The title change also tells the host that the feedback changed.
+     */
+    onGradingInstructionRemoved(): void {
+        this.markAdaptedIfSuggestion();
+    }
+
     onTitleInput(value: string): void {
         this.feedbackTitle.set(`${this.nextTitlePrefix()}${value}`);
     }

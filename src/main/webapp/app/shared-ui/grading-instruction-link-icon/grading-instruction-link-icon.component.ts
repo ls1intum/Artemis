@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,6 +17,8 @@ export class GradingInstructionLinkIconComponent implements OnInit {
 
     linkIcon = input(faLink);
     feedback = input.required<Feedback>();
+    /** Emitted after the grading instruction was removed from the feedback, so the host can treat it as an edit. */
+    removed = output<void>();
 
     instruction = signal<GradingInstruction | undefined>(undefined);
     confirmIcon = faTrash;
@@ -33,6 +35,7 @@ export class GradingInstructionLinkIconComponent implements OnInit {
         this.toggle();
         this.feedback().gradingInstruction = undefined;
         this.instruction.set(undefined);
+        this.removed.emit();
     }
 
     /**

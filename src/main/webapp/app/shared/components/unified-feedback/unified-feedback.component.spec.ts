@@ -11,6 +11,7 @@ import {
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { By } from '@angular/platform-browser';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
@@ -424,6 +425,35 @@ describe('UnifiedFeedbackComponent', () => {
 
         expect(component.feedbackCredits()).toBe(2);
         expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it('should mark an accepted suggestion as adapted when its grading instruction is removed', () => {
+        const feedback = {
+            credits: 2,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
+            gradingInstruction: { id: 3, feedback: 'Fixed rubric text', credits: 2 },
+        } as any;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', feedback);
+        component.feedbackTitle.set(feedback.text);
+        fixture.detectChanges();
+
+        // Remove the criterion the way the link icon does when the tutor confirms it.
+        const linkIcon = fixture.debugElement.query(By.directive(GradingInstructionLinkIconComponent)).componentInstance as GradingInstructionLinkIconComponent;
+        linkIcon.removeLink();
+
+        expect(feedback.gradingInstruction).toBeUndefined();
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it("should leave a tutor's own feedback title unchanged when its grading instruction is removed", () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set('Missing null check');
+        fixture.detectChanges();
+
+        component.onGradingInstructionRemoved();
+
+        expect(component.feedbackTitle()).toBe('Missing null check');
     });
 
     it('should not touch a non-suggestion title when editing', () => {
