@@ -143,7 +143,7 @@
             },
             "splitPdf": {
                 "title": "Ein Vorlesungs-PDF in mehrere Inhalte aufteilen",
-                "description": "Artemis findet die Gliederungsfolie und schlägt einen Inhalt pro Abschnitt vor. Du prüfst den Vorschlag, bevor etwas erstellt wird.",
+                "description": "Für PDFs, deren Folien die Gliederung vor jedem Abschnitt wiederholen: Artemis schlägt einen Inhalt pro Abschnitt vor, der jeweils bei einer Folie mit dem Wort „Outline“ oder „Gliederung“ beginnt. Du prüfst den Vorschlag, bevor etwas erstellt wird.",
                 "unit": "Aufzuteilendes PDF",
                 "unitPlaceholder": "PDF auswählen",
                 "start": "In Abschnitte aufteilen",

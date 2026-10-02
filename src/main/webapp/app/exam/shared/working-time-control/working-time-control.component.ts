@@ -1,5 +1,6 @@
 import { Component, effect, inject, input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { TumAetUiInputDirective, TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent } from '@tumaet/ui-angular';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { round } from 'app/foundation/util/utils';
@@ -10,7 +11,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-working-time-control',
     templateUrl: './working-time-control.component.html',
-    styleUrls: ['./working-time-control.component.scss'],
     providers: [
         ArtemisDurationFromSecondsPipe,
         {
@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             useExisting: WorkingTimeControlComponent,
         },
     ],
-    imports: [TranslateDirective, FormsModule],
+    imports: [TranslateDirective, FormsModule, TumAetUiInputDirective, TumAetUiInputGroupComponent, TumAetUiInputGroupAddonComponent],
 })
 export class WorkingTimeControlComponent implements ControlValueAccessor {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);

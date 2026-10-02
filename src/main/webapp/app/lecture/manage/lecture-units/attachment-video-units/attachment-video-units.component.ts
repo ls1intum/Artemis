@@ -92,6 +92,11 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     readonly numberOfPages = signal<number>(undefined!);
     /** How many sections Artemis found in the PDF, before the user changed the proposal. */
     readonly foundSections = signal(0);
+    /**
+     * Only a proposal that was loaded can lack sections; a failed load shows its own error instead. Rows the user removed from a proposal
+     * with sections do not mean that the PDF has none.
+     */
+    readonly showsNoSectionsHint = computed(() => !!this.numberOfPages() && this.foundSections() === 0 && this.units().length === 0);
     /** What Artemis found, which also says how many slides the ranges can use. */
     readonly summaryKey = computed(() => {
         const found = this.foundSections();

@@ -1,6 +1,6 @@
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { DisplayPriority } from 'app/communication/metis.util';
+import { DisplayPriority } from 'app/communication/communication.util';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 
 export class Post extends Posting {
