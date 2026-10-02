@@ -113,6 +113,22 @@ class AgentLoopRunnerTest {
         assertThat(tools.actions).containsExactly("submit", "write");
     }
 
+    @ParameterizedTest
+    @CsvSource({ "true", "false" })
+    void failedSubmitCannotCompleteBeforeRecovery(boolean throwsException) {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(calls("stop", "submit"));
+        RecordingTools tools = new RecordingTools();
+        tools.failSubmit = true;
+        tools.throwSubmit = throwsException;
+
+        var result = runner(model).run("system", "brief", tools, 1, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+        assertThat(tools.actions).containsExactly("submit");
+        verify(model).call(any(Prompt.class));
+    }
+
     @Test
     void truncatedToolResponseDoesNotExecuteEvenValidArguments() {
         ChatModel model = mock(ChatModel.class);
@@ -304,6 +320,10 @@ class AgentLoopRunnerTest {
 
         boolean veto;
 
+        boolean failSubmit;
+
+        boolean throwSubmit;
+
         @Tool(description = "Record an edit")
         public String write() {
             actions.add("write");
@@ -313,6 +333,12 @@ class AgentLoopRunnerTest {
         @Tool(description = "Submit the current workspace")
         public String submit() {
             actions.add("submit");
+            if (failSubmit) {
+                if (throwSubmit) {
+                    throw new IllegalStateException("submission failed before veto assignment");
+                }
+                return "ERROR: submission failed";
+            }
             return veto ? "Fix the exercise first" : "submitted";
         }
 
