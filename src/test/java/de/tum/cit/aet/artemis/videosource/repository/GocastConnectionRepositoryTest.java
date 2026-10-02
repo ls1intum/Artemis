@@ -24,6 +24,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
+import de.tum.cit.aet.artemis.videosource.domain.GocastCourseBinding;
 import de.tum.cit.aet.artemis.videosource.dto.GocastVerifiedCourseDTO;
 import de.tum.cit.aet.artemis.videosource.service.GocastBindingConflictException;
 
@@ -40,9 +41,6 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
     private GocastCourseBindingRepository bindingRepository;
 
     @Autowired
-    private GocastApprovalAttemptRepository attemptRepository;
-
-    @Autowired
     private PlatformTransactionManager transactionManager;
 
     @Autowired
@@ -57,14 +55,13 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
     @AfterEach
     void cleanUp() {
-        attemptRepository.deleteAll();
         bindingRepository.deleteAll();
     }
 
     @Test
     void completesUsableAttemptAndDeletesItsCorrelation() {
         var attempt = connectionRepository.startAttempt(course.getId(), "state-hash", 17, EXPIRY);
-        assertThat(attemptRepository.findByCourseId(course.getId())).contains(attempt);
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).contains(attempt);
         assertThat(connectionRepository.findUsableAttempt("state-hash", NOW)).get().satisfies(claim -> assertThat(claim.integrationId()).isEqualTo(17));
 
         var verified = verifiedCourse(37, 23);
@@ -75,7 +72,7 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
             assertThat(saved.getGocastCourseId()).isEqualTo(37);
             assertThat(saved.getGocastGrantId()).isEqualTo(23);
         });
-        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
         assertThatThrownBy(() -> connectionRepository.completeAttempt("state-hash", verified, NOW)).isInstanceOf(GocastBindingConflictException.class);
     }
 
@@ -87,7 +84,7 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
         assertThatThrownBy(() -> connectionRepository.completeAttempt("old-state", verifiedCourse(37, 23), NOW)).isInstanceOf(GocastBindingConflictException.class);
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
-        assertThat(attemptRepository.findByCourseId(course.getId())).get().satisfies(current -> assertThat(current.getStateHash()).isEqualTo("new-state"));
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).get().satisfies(current -> assertThat(current.getStateHash()).isEqualTo("new-state"));
     }
 
     @Test
@@ -107,7 +104,7 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
     void unlinkInvalidatesPendingAttemptAndConditionalDeleteCannotRemoveReplacement() {
         connectionRepository.startAttempt(course.getId(), "old-state", 17, EXPIRY);
         assertThat(connectionRepository.prepareUnlink(course.getId())).isEmpty();
-        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
         assertThatThrownBy(() -> connectionRepository.completeAttempt("old-state", verifiedCourse(37, 23), NOW)).isInstanceOf(GocastBindingConflictException.class);
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
 
@@ -164,6 +161,31 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
+    void restartingRevokedConnectionClearsRemoteDataAndReleasesRemoteCourse() {
+        complete(course, "active", verifiedCourse(37, 23));
+        assertThat(connectionRepository.markGrantRevoked(connectionRepository.getBindingSnapshot(course.getId()).orElseThrow())).isTrue();
+
+        connectionRepository.startAttempt(course.getId(), "replacement-state", 19, EXPIRY);
+
+        assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).get().satisfies(pending -> {
+            assertThat(pending.getStatus()).isEqualTo(GocastBindingStatus.PENDING);
+            assertThat(pending.getIntegrationId()).isEqualTo(19);
+            assertThat(pending.getStateHash()).isEqualTo("replacement-state");
+            assertThat(pending.getExpiresAt()).isEqualTo(EXPIRY);
+            assertThat(pending.getGocastCourseId()).isNull();
+            assertThat(pending.getGocastGrantId()).isNull();
+            assertThat(pending.getCourseSlug()).isNull();
+            assertThat(pending.getCourseName()).isNull();
+            assertThat(pending.getVisibility()).isNull();
+        });
+
+        Course secondCourse = courseUtilService.addEmptyCourse();
+        complete(secondCourse, "second-course", verifiedCourse(37, 29));
+        assertThat(bindingRepository.findByCourseId(secondCourse.getId())).get().satisfies(active -> assertThat(active.getGocastCourseId()).isEqualTo(37));
+    }
+
+    @Test
     void completionRechecksExpiry() {
         prepareAttempt(course, "state");
 
@@ -176,7 +198,7 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         connectionRepository.startAttempt(course.getId(), "state", 17, EXPIRY);
 
         assertThat(connectionRepository.findUsableAttempt("state", EXPIRY)).isEmpty();
-        assertThat(attemptRepository.findByCourseId(course.getId())).isPresent();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isPresent();
     }
 
     @Test
@@ -186,13 +208,14 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
         connectionRepository.cancelAttempt("old-state");
 
-        assertThat(attemptRepository.findByCourseId(course.getId())).get().satisfies(attempt -> assertThat(attempt.getStateHash()).isEqualTo("new-state"));
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).get().satisfies(attempt -> assertThat(attempt.getStateHash()).isEqualTo("new-state"));
         connectionRepository.cancelAttempt("new-state");
-        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
     }
 
     @Test
-    void courseLockSerializesInitialTransitions() throws Exception {
+    void pendingRowSerializesConditionalTransitions() throws Exception {
+        connectionRepository.startAttempt(course.getId(), "initial-state", 17, EXPIRY);
         CountDownLatch locked = new CountDownLatch(1);
         CountDownLatch transitionStarted = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
@@ -201,7 +224,7 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         String databaseProductName = jdbcTemplate.execute((ConnectionCallback<String>) connection -> connection.getMetaData().getDatabaseProductName());
 
         CompletableFuture<Void> holder = CompletableFuture.runAsync(() -> transaction.executeWithoutResult(status -> {
-            courseRepository.findByIdWithPessimisticWrite(course.getId()).orElseThrow();
+            jdbcTemplate.queryForList("SELECT id FROM gocast_course_binding WHERE course_id = ? FOR UPDATE", course.getId());
             locked.countDown();
             await(release);
         }));
@@ -216,14 +239,14 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
             assertThat(transitionStarted.await(5, TimeUnit.SECONDS)).isTrue();
             Awaitility.await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(25)).untilAsserted(
                     () -> assertThat(blockedTransitionCount(databaseProductName, waitingSessionId.get())).as("the transition's database session is blocked").isGreaterThan(0));
-            assertThat(waiting).as("the transition remains blocked until the course lock is released").isNotDone();
+            assertThat(waiting).as("the transition remains blocked until the row lock is released").isNotDone();
         }
         finally {
             release.countDown();
         }
         holder.get(5, TimeUnit.SECONDS);
         waiting.get(5, TimeUnit.SECONDS);
-        assertThat(attemptRepository.findByCourseId(course.getId())).isPresent();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isPresent();
     }
 
     private int currentDatabaseSessionId(String databaseProductName) {
@@ -240,7 +263,7 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
             case "MySQL" -> jdbcTemplate.queryForObject("""
                     SELECT COUNT(*)
                     FROM information_schema.PROCESSLIST
-                    WHERE ID = ? AND LOWER(INFO) LIKE '%for update%'
+                    WHERE ID = ? AND LOWER(INFO) LIKE '%gocast_course_binding%'
                     """, Integer.class, sessionId);
             default -> throw new AssertionError("Unsupported test database: " + databaseProductName);
         };
@@ -256,7 +279,10 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
         assertThat(first.join()).isNull();
         assertThat(second.join()).isNull();
-        assertThat(attemptRepository.findAll()).singleElement().extracting(a -> a.getStateHash()).isIn("parallel-a", "parallel-b");
+        assertThat(bindingRepository.findAll()).singleElement().satisfies(row -> {
+            assertThat(row.getStatus()).isEqualTo(GocastBindingStatus.PENDING);
+            assertThat(row.getStateHash()).isIn("parallel-a", "parallel-b");
+        });
     }
 
     @Test
@@ -270,10 +296,10 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
 
         assertThat(successCount(complete.join(), restart.join())).isEqualTo(1);
         if (bindingRepository.findByCourseId(course.getId()).isPresent()) {
-            assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+            assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
         }
         else {
-            assertThat(attemptRepository.findByCourseId(course.getId())).get().extracting(a -> a.getStateHash()).isEqualTo("new-state");
+            assertThat(bindingRepository.findPendingByCourseId(course.getId())).get().extracting(a -> a.getStateHash()).isEqualTo("new-state");
         }
     }
 
@@ -294,7 +320,7 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
             assertThat(completeResult).isInstanceOf(GocastBindingConflictException.class);
         }
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
-        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
     }
 
     @Test
@@ -309,7 +335,10 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         awaitReadyAndRelease(ready, go);
 
         assertThat(successCount(first.join(), second.join())).isEqualTo(1);
-        assertThat(bindingRepository.findAll()).singleElement().satisfies(binding -> assertThat(binding.getGocastCourseId()).isEqualTo(37));
+        assertThat(bindingRepository.findAll()).filteredOn(binding -> binding.getStatus() == GocastBindingStatus.ACTIVE).singleElement()
+                .satisfies(binding -> assertThat(binding.getGocastCourseId()).isEqualTo(37));
+        assertThat(bindingRepository.findAll()).filteredOn(binding -> binding.getStatus() == GocastBindingStatus.PENDING).singleElement()
+                .satisfies(pending -> assertThat(pending.getGocastCourseId()).isNull());
     }
 
     @Test
@@ -320,6 +349,23 @@ class GocastConnectionRepositoryTest extends AbstractSpringIntegrationIndependen
         assertThatThrownBy(() -> connectionRepository.completeAttempt("state", invalidInternalResult, NOW)).isInstanceOf(DataIntegrityViolationException.class)
                 .isNotInstanceOf(GocastBindingConflictException.class);
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
+    }
+
+    @Test
+    void insertingPendingRowCannotOverwriteAnActiveConnection() {
+        complete(course, "active", verifiedCourse(37, 23));
+        var pending = new GocastCourseBinding();
+        pending.setCourseId(course.getId());
+        pending.setIntegrationId(17);
+        pending.setStatus(GocastBindingStatus.PENDING);
+        pending.setStateHash("late-insert");
+        pending.setExpiresAt(EXPIRY);
+
+        assertThatThrownBy(() -> bindingRepository.saveAndFlush(pending)).isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(bindingRepository.findByCourseId(course.getId())).get().satisfies(active -> {
+            assertThat(active.getStatus()).isEqualTo(GocastBindingStatus.ACTIVE);
+            assertThat(active.getGocastGrantId()).isEqualTo(23);
+        });
     }
 
     private void complete(Course target, String state, GocastVerifiedCourseDTO verified) {

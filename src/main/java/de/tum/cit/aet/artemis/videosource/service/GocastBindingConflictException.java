@@ -10,7 +10,4 @@ public class GocastBindingConflictException extends RuntimeException {
         super(message);
     }
 
-    public GocastBindingConflictException(String message, Throwable cause) {
-        super(message);
-    }
 }

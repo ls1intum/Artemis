@@ -10,12 +10,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.videosource.domain.GocastApprovalAttempt;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastCourseBinding;
 import de.tum.cit.aet.artemis.videosource.dto.GocastVerifiedCourseDTO;
@@ -27,113 +24,97 @@ import de.tum.cit.aet.artemis.videosource.service.GocastConnectorService.GrantDe
 @Repository
 public class GocastConnectionRepository {
 
-    private final TransactionTemplate transactionTemplate;
-
     private final CourseRepository courseRepository;
 
     private final GocastCourseBindingRepository bindingRepository;
 
-    private final GocastApprovalAttemptRepository attemptRepository;
-
-    public GocastConnectionRepository(PlatformTransactionManager transactionManager, CourseRepository courseRepository, GocastCourseBindingRepository bindingRepository,
-            GocastApprovalAttemptRepository attemptRepository) {
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    public GocastConnectionRepository(CourseRepository courseRepository, GocastCourseBindingRepository bindingRepository) {
         this.courseRepository = courseRepository;
         this.bindingRepository = bindingRepository;
-        this.attemptRepository = attemptRepository;
     }
 
     /**
-     * Replaces the current approval attempt while holding the course row lock.
+     * Replaces the pending approval without overwriting an active connection.
      *
-     * @param courseId      the Artemis course identifier
-     * @param stateHash     the server-side hash of the browser state
-     * @param integrationId the GoCast integration identity authenticated at start
-     * @param expiresAt     the local attempt expiry
-     * @return the saved attempt
+     * @param courseId      the Artemis course
+     * @param stateHash     the new state hash
+     * @param integrationId the authenticated integration
+     * @param expiresAt     the approval expiry
+     * @return the pending connection row
      */
-    public GocastApprovalAttempt startAttempt(long courseId, String stateHash, long integrationId, Instant expiresAt) {
-        return transactionTemplate.execute(status -> {
-            lockCourse(courseId);
-            bindingRepository.findByCourseId(courseId).ifPresent(binding -> {
-                if (binding.getStatus() == GocastBindingStatus.ACTIVE) {
-                    throw conflict("This Artemis course is already connected to TUM.Live");
-                }
-                bindingRepository.delete(binding);
-            });
-            GocastApprovalAttempt attempt = attemptRepository.findByCourseId(courseId).orElseGet(GocastApprovalAttempt::new);
-            attempt.setCourseId(courseId);
-            attempt.setStateHash(stateHash);
-            attempt.setIntegrationId(integrationId);
-            attempt.setExpiresAt(expiresAt);
-            return attemptRepository.saveAndFlush(attempt);
-        });
+    public GocastCourseBinding startAttempt(long courseId, String stateHash, long integrationId, Instant expiresAt) {
+        if (!courseRepository.existsById(courseId)) {
+            throw new EntityNotFoundException("Course", courseId);
+        }
+        if (bindingRepository.replacePending(courseId, stateHash, integrationId, expiresAt) == 1) {
+            return pendingOrConflict(courseId);
+        }
+        if (bindingRepository.findByCourseId(courseId).isPresent()) {
+            throw conflict("This Artemis course is already connected to TUM.Live");
+        }
+        GocastCourseBinding pending = new GocastCourseBinding();
+        pending.setCourseId(courseId);
+        pending.setIntegrationId(integrationId);
+        pending.setStatus(GocastBindingStatus.PENDING);
+        pending.setStateHash(stateHash);
+        pending.setExpiresAt(expiresAt);
+        try {
+            // Null generated ID and wrapper version force INSERT, never a merge over a concurrent active row.
+            return bindingRepository.saveAndFlush(pending);
+        }
+        catch (DataIntegrityViolationException exception) {
+            if (bindingRepository.replacePending(courseId, stateHash, integrationId, expiresAt) == 1) {
+                return pendingOrConflict(courseId);
+            }
+            if (bindingRepository.findByCourseId(courseId).isPresent()) {
+                throw conflict("This Artemis course is already connected to TUM.Live");
+            }
+            throw exception;
+        }
+    }
+
+    private GocastCourseBinding pendingOrConflict(long courseId) {
+        return bindingRepository.findPendingByCourseId(courseId).orElseThrow(() -> conflict("The TUM.Live approval is no longer current"));
     }
 
     /**
-     * Finds a matching, unexpired approval attempt without mutating it.
+     * Reads an unexpired pending approval without changing it.
      *
-     * @param stateHash the saved state hash
-     * @param now       the current time used for the expiry check
-     * @return the usable attempt, or an empty result when it is not current
+     * @param stateHash the approval state hash
+     * @param now       the current time
+     * @return the matching approval claim
      */
     public Optional<AttemptClaim> findUsableAttempt(String stateHash, Instant now) {
-        return attemptRepository.findByStateHash(stateHash).filter(attempt -> attempt.getExpiresAt().isAfter(now))
+        return bindingRepository.findPendingByStateHash(stateHash).filter(attempt -> attempt.getExpiresAt().isAfter(now))
                 .map(attempt -> new AttemptClaim(attempt.getCourseId(), attempt.getIntegrationId(), attempt.getExpiresAt()));
     }
 
     /**
-     * Saves a verified course binding if the pending attempt is still current and usable.
+     * Converts only the exact usable approval into an active connection, in one guarded update.
      *
-     * @param stateHash      the saved state hash
-     * @param verifiedCourse the course and exact grant verified by GoCast
-     * @param now            the current time used for the expiry check
-     * @return the saved binding
+     * @param stateHash      the approval state hash
+     * @param verifiedCourse the course and grant verified by GoCast
+     * @param now            the current time
+     * @return the completed connection
      */
     public GocastCourseBinding completeAttempt(String stateHash, GocastVerifiedCourseDTO verifiedCourse, Instant now) {
-        Optional<GocastApprovalAttempt> observed = attemptRepository.findByStateHash(stateHash);
-        if (observed.isEmpty()) {
-            throw conflict("The TUM.Live approval is no longer current");
-        }
+        var observed = bindingRepository.findPendingByStateHash(stateHash).orElseThrow(() -> conflict("The TUM.Live approval is no longer current"));
         try {
-            return transactionTemplate.execute(status -> {
-                long courseId = observed.get().getCourseId();
-                lockCourse(courseId);
-                GocastApprovalAttempt attempt = attemptRepository.findByStateHash(stateHash).orElseThrow(() -> conflict("The TUM.Live approval is no longer current"));
-                if (attempt.getIntegrationId() != verifiedCourse.integrationId()) {
-                    throw conflict("The TUM.Live approval is no longer current");
-                }
-                if (!attempt.getExpiresAt().isAfter(now)) {
-                    throw conflict("The TUM.Live approval has expired");
-                }
-                if (bindingRepository.findByCourseId(courseId).isPresent()) {
-                    throw conflict("This Artemis course is already connected to TUM.Live");
-                }
-                if (bindingRepository.findByGocastCourseId(verifiedCourse.courseId()).isPresent()) {
-                    throw conflict("This TUM.Live course is already connected to another Artemis course");
-                }
-
-                GocastCourseBinding binding = new GocastCourseBinding();
-                binding.setCourseId(courseId);
-                binding.setIntegrationId(verifiedCourse.integrationId());
-                binding.setGocastCourseId(verifiedCourse.courseId());
-                binding.setGocastGrantId(verifiedCourse.grantId());
-                binding.setCourseSlug(verifiedCourse.courseSlug());
-                binding.setCourseName(verifiedCourse.courseName());
-                binding.setVisibility(verifiedCourse.courseVisibility());
-                binding.setStatus(GocastBindingStatus.ACTIVE);
-                binding = bindingRepository.saveAndFlush(binding);
-
-                attemptRepository.delete(attempt);
-                return binding;
-            });
+            if (bindingRepository.completePending(stateHash, verifiedCourse.integrationId(), now, verifiedCourse.courseId(), verifiedCourse.grantId(), verifiedCourse.courseSlug(),
+                    verifiedCourse.courseName(), verifiedCourse.courseVisibility()) != 1) {
+                throw conflict("The TUM.Live approval is no longer current or has expired");
+            }
         }
         catch (DataIntegrityViolationException exception) {
-            if (isRemoteCourseUniqueViolation(exception)) {
-                throw conflict("This TUM.Live course is already connected to another Artemis course", exception);
+            if (bindingRepository.findByGocastCourseId(verifiedCourse.courseId()).isPresent()) {
+                throw conflict("This TUM.Live course is already connected to another Artemis course");
             }
             throw exception;
         }
+        return bindingRepository.findByCourseId(observed.getCourseId())
+                .filter(binding -> binding.getStatus() == GocastBindingStatus.ACTIVE && binding.getIntegrationId() == verifiedCourse.integrationId()
+                        && binding.getGocastGrantId() == verifiedCourse.grantId() && binding.getGocastCourseId() == verifiedCourse.courseId())
+                .orElseThrow(() -> conflict("The TUM.Live connection changed while approval was being completed"));
     }
 
     public Optional<BindingSnapshot> getBindingSnapshot(long courseId) {
@@ -141,112 +122,69 @@ public class GocastConnectionRepository {
     }
 
     public Optional<AttemptSnapshot> getAttemptSnapshot(long courseId) {
-        return attemptRepository.findByCourseId(courseId).map(attempt -> new AttemptSnapshot(attempt.getExpiresAt()));
+        return bindingRepository.findPendingByCourseId(courseId).map(attempt -> new AttemptSnapshot(attempt.getExpiresAt()));
     }
 
     /**
-     * Cancels any pending approval and reads the exact saved grant under the course lock.
+     * Cancels a pending approval, then reads any completed connection for remote revocation.
      *
-     * @param courseId the Artemis course identifier
-     * @return the saved binding, or an empty result if no binding exists
+     * @param courseId the Artemis course
+     * @return the saved grant, if present
      */
     public Optional<BindingSnapshot> prepareUnlink(long courseId) {
-        return transactionTemplate.execute(status -> {
-            lockCourse(courseId);
-            attemptRepository.findByCourseId(courseId).ifPresent(attemptRepository::delete);
-            return bindingRepository.findByCourseId(courseId).map(GocastConnectionRepository::snapshot);
-        });
+        bindingRepository.deletePendingByCourseId(courseId);
+        return getBindingSnapshot(courseId);
     }
 
     /**
-     * Removes a pending approval only when it is still the attempt created by the caller.
+     * Cancels only the pending approval with this state hash.
      *
-     * @param stateHash the exact attempt state hash
+     * @param stateHash the exact approval state hash
      */
     public void cancelAttempt(String stateHash) {
-        Optional<GocastApprovalAttempt> observed = attemptRepository.findByStateHash(stateHash);
-        if (observed.isEmpty()) {
-            return;
-        }
-        transactionTemplate.executeWithoutResult(status -> {
-            lockCourse(observed.get().getCourseId());
-            attemptRepository.findByCourseId(observed.get().getCourseId()).filter(attempt -> stateHash.equals(attempt.getStateHash())).ifPresent(attemptRepository::delete);
-        });
+        bindingRepository.deletePendingByStateHash(stateHash);
     }
 
     /**
-     * Removes a binding only when it still matches the completed remote revoke.
+     * Removes only the exact grant revoked remotely. Metadata refresh does not prevent disconnection.
      *
-     * @param claim the exact binding that was revoked remotely
-     * @return whether the matching binding was removed
+     * @param claim the revoked grant snapshot
+     * @return whether the connection was removed or already absent
      */
     public boolean completeUnlink(BindingSnapshot claim) {
-        return Boolean.TRUE.equals(transactionTemplate.execute(status -> {
-            lockCourse(claim.courseId());
-            Optional<GocastCourseBinding> current = bindingRepository.findByCourseId(claim.courseId());
-            if (current.isEmpty()) {
-                return true;
-            }
-            if (!sameGrant(current.get(), claim)) {
-                return false;
-            }
-            bindingRepository.delete(current.get());
+        if (bindingRepository.deleteExactGrant(claim.courseId(), claim.integrationId(), claim.gocastCourseId(), claim.grantId()) == 1) {
             return true;
-        }));
+        }
+        return bindingRepository.findConnectionRowByCourseId(claim.courseId()).isEmpty();
     }
 
     /**
-     * Applies remote grant metadata only when the observed binding is still current.
+     * Refreshes metadata only if the observed active connection is still current.
      *
-     * @param claim       the binding snapshot used for the remote request
+     * @param claim       the observed connection
      * @param remoteGrant the verified remote response
-     * @return whether the matching binding was updated
+     * @return whether the observed connection remains current
      */
     public boolean updateGrantMetadata(BindingSnapshot claim, GrantDetails remoteGrant) {
-        return Boolean.TRUE.equals(transactionTemplate.execute(status -> {
-            lockCourse(claim.courseId());
-            Optional<GocastCourseBinding> current = bindingRepository.findByCourseId(claim.courseId());
-            if (current.isEmpty() || !matchesCurrentSnapshot(current.get(), claim)) {
-                return false;
-            }
-            GocastCourseBinding binding = current.get();
-            if (binding.getStatus() != GocastBindingStatus.ACTIVE) {
-                return false;
-            }
-            if (sameMetadata(binding, remoteGrant)) {
-                return true;
-            }
-            binding.setCourseSlug(remoteGrant.courseSlug());
-            binding.setCourseName(remoteGrant.courseName());
-            binding.setVisibility(remoteGrant.courseVisibility());
-            bindingRepository.save(binding);
-            return true;
-        }));
+        if (claim.status() != GocastBindingStatus.ACTIVE) {
+            return false;
+        }
+        if (Objects.equals(claim.courseSlug(), remoteGrant.courseSlug()) && Objects.equals(claim.courseName(), remoteGrant.courseName())
+                && Objects.equals(claim.visibility(), remoteGrant.courseVisibility())) {
+            return getBindingSnapshot(claim.courseId()).filter(claim::equals).isPresent();
+        }
+        return bindingRepository.updateExactGrantMetadata(claim.courseId(), claim.integrationId(), claim.gocastCourseId(), claim.grantId(), claim.version(),
+                remoteGrant.courseSlug(), remoteGrant.courseName(), remoteGrant.courseVisibility()) == 1;
     }
 
     /**
-     * Marks the exact observed binding revoked after GoCast reports that the grant does not exist.
+     * Marks only the exact observed connection revoked after GoCast reports that its grant is absent.
      *
-     * @param claim the binding used for the remote request
-     * @return whether the matching binding was marked revoked
+     * @param claim the observed connection
+     * @return whether the matching connection was marked revoked
      */
     public boolean markGrantRevoked(BindingSnapshot claim) {
-        return Boolean.TRUE.equals(transactionTemplate.execute(status -> {
-            lockCourse(claim.courseId());
-            Optional<GocastCourseBinding> current = bindingRepository.findByCourseId(claim.courseId());
-            if (current.isEmpty() || !matchesCurrentSnapshot(current.get(), claim)) {
-                return false;
-            }
-            if (current.get().getStatus() != GocastBindingStatus.REVOKED) {
-                current.get().setStatus(GocastBindingStatus.REVOKED);
-                bindingRepository.save(current.get());
-            }
-            return true;
-        }));
-    }
-
-    private void lockCourse(long courseId) {
-        courseRepository.findByIdWithPessimisticWrite(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return bindingRepository.markExactGrantRevoked(claim.courseId(), claim.integrationId(), claim.gocastCourseId(), claim.grantId(), claim.version()) == 1;
     }
 
     private static BindingSnapshot snapshot(GocastCourseBinding binding) {
@@ -254,36 +192,8 @@ public class GocastConnectionRepository {
                 binding.getStatus(), binding.getCourseSlug(), binding.getCourseName(), binding.getVisibility());
     }
 
-    private static boolean matchesCurrentSnapshot(GocastCourseBinding binding, BindingSnapshot claim) {
-        return sameGrant(binding, claim) && binding.getVersion() == claim.version();
-    }
-
-    private static boolean sameGrant(GocastCourseBinding binding, BindingSnapshot claim) {
-        return binding.getIntegrationId() == claim.integrationId() && binding.getGocastCourseId() == claim.gocastCourseId() && binding.getGocastGrantId() == claim.grantId();
-    }
-
-    private static boolean sameMetadata(GocastCourseBinding binding, GrantDetails remoteGrant) {
-        return Objects.equals(binding.getCourseSlug(), remoteGrant.courseSlug()) && Objects.equals(binding.getCourseName(), remoteGrant.courseName())
-                && Objects.equals(binding.getVisibility(), remoteGrant.courseVisibility());
-    }
-
     private static GocastBindingConflictException conflict(String message) {
         return new GocastBindingConflictException(message);
-    }
-
-    private static GocastBindingConflictException conflict(String message, Throwable cause) {
-        return new GocastBindingConflictException(message, cause);
-    }
-
-    private static boolean isRemoteCourseUniqueViolation(DataIntegrityViolationException exception) {
-        Throwable current = exception;
-        while (current != null) {
-            if (current.getMessage() != null && current.getMessage().contains("ux_gocast_binding_remote_course")) {
-                return true;
-            }
-            current = current.getCause();
-        }
-        return false;
     }
 
     public record BindingSnapshot(long courseId, long integrationId, long gocastCourseId, long grantId, long version, GocastBindingStatus status, String courseSlug,

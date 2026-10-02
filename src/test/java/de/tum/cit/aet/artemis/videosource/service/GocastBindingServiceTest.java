@@ -36,7 +36,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -44,7 +43,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingConnectionStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
 import de.tum.cit.aet.artemis.videosource.dto.GocastVerifiedCourseDTO;
-import de.tum.cit.aet.artemis.videosource.repository.GocastApprovalAttemptRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
 
@@ -66,9 +64,6 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
     @Autowired
     private GocastCourseBindingRepository bindingRepository;
 
-    @Autowired
-    private GocastApprovalAttemptRepository attemptRepository;
-
     private GocastConnectorService connector;
 
     private GocastBindingService service;
@@ -84,20 +79,17 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @AfterEach
     void cleanUp() {
-        attemptRepository.deleteAll();
         bindingRepository.deleteAll();
     }
 
     @Test
     void verifiesIdentityBeforeSavingPendingAttemptAndBuildsDirectAuthorizationUrl() {
         when(connector.getIntegration()).thenAnswer(invocation -> {
-            assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
-            assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+            assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
             return new GocastConnectorService.IntegrationIdentity(17, "Artemis", CALLBACK_URL);
         });
         when(connector.authorizationUrl(anyLong(), anyString())).thenAnswer(invocation -> {
-            assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
-            assertThat(attemptRepository.findByCourseId(course.getId())).isPresent();
+            assertThat(bindingRepository.findPendingByCourseId(course.getId())).isPresent();
             return "https://live.example/integration/authorize/17?state=" + invocation.getArgument(1, String.class);
         });
 
@@ -105,7 +97,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         assertThat(approval.approvalUrl()).startsWith("https://live.example/integration/authorize/17?state=");
         assertThat(approval.expiresAt()).isEqualTo(NOW.plusSeconds(900));
-        assertThat(attemptRepository.findByCourseId(course.getId())).get().satisfies(attempt -> {
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).get().satisfies(attempt -> {
             assertThat(attempt.getIntegrationId()).isEqualTo(17);
             assertThat(attempt.getExpiresAt()).isEqualTo(NOW.plusSeconds(900));
         });
@@ -117,7 +109,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         assertThatThrownBy(() -> service.startApproval(course.getId())).isInstanceOf(GocastIntegrationException.class)
                 .satisfies(error -> assertThat(((GocastIntegrationException) error).getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
-        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
     }
 
     @Test
@@ -148,7 +140,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
             assertThat(binding.getGocastCourseId()).isEqualTo(37);
             assertThat(binding.getGocastGrantId()).isEqualTo(23);
         });
-        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
     }
 
     @Test
@@ -158,10 +150,10 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
                 .thenReturn(verifiedCourse(17, 37, 23));
 
         assertThatThrownBy(() -> service.completeApproval(STATE, CODE)).isInstanceOf(GocastIntegrationException.class);
-        assertThat(attemptRepository.findByCourseId(course.getId())).isPresent();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isPresent();
 
         assertThat(service.completeApproval(STATE, CODE).completed()).isTrue();
-        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
     }
 
     @Test
@@ -170,7 +162,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
         when(connector.redeemApproval(17, STATE, CODE)).thenReturn(verifiedCourse(19, 37, 23));
 
         assertThatThrownBy(() -> service.completeApproval(STATE, CODE)).isInstanceOf(GocastBindingConflictException.class);
-        assertThat(attemptRepository.findByCourseId(course.getId())).isPresent();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isPresent();
         assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
     }
 
@@ -178,11 +170,11 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
     void denialClearsOnlyItsMatchingPendingAttempt() {
         connectionRepository.startAttempt(course.getId(), hash(STATE), 17, NOW.plusSeconds(900));
         service.cancelApproval(STATE);
-        assertThat(attemptRepository.findByCourseId(course.getId())).isEmpty();
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).isEmpty();
 
         connectionRepository.startAttempt(course.getId(), hash(OTHER_STATE), 17, NOW.plusSeconds(900));
         service.cancelApproval(STATE);
-        assertThat(attemptRepository.findByCourseId(course.getId())).get().satisfies(attempt -> assertThat(attempt.getStateHash()).isEqualTo(hash(OTHER_STATE)));
+        assertThat(bindingRepository.findPendingByCourseId(course.getId())).get().satisfies(attempt -> assertThat(attempt.getStateHash()).isEqualTo(hash(OTHER_STATE)));
         verifyNoInteractions(connector);
     }
 
@@ -224,10 +216,9 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     @Test
-    void remoteRevokeRunsOutsideTransactionAndFailurePreservesBindingForRetry() {
+    void remoteRevokeFailurePreservesBindingForRetry() {
         createBinding();
         doAnswer(invocation -> {
-            assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
             throw new GocastIntegrationException("unavailable", HttpStatus.SERVICE_UNAVAILABLE);
         }).when(connector).revokeGrant(23);
 

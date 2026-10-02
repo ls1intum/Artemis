@@ -11,53 +11,41 @@
                 <constraints nullable="false" unique="true" uniqueConstraintName="ux_gocast_binding_course"/>
             </column>
             <column name="gocast_course_id" type="BIGINT">
-                <constraints nullable="false" unique="true" uniqueConstraintName="ux_gocast_binding_remote_course"/>
+                <constraints unique="true" uniqueConstraintName="ux_gocast_binding_remote_course"/>
             </column>
             <column name="gocast_integration_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="gocast_grant_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="course_slug" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="course_name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="visibility" type="VARCHAR(32)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="gocast_grant_id" type="BIGINT"/>
+            <column name="course_slug" type="VARCHAR(255)"/>
+            <column name="course_name" type="VARCHAR(255)"/>
+            <column name="visibility" type="VARCHAR(32)"/>
             <column name="status" type="VARCHAR(32)">
                 <constraints nullable="false"/>
             </column>
             <column name="version" type="BIGINT" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
+            <column name="state_hash" type="VARCHAR(64)">
+                <constraints unique="true" uniqueConstraintName="ux_gocast_binding_state"/>
+            </column>
+            <column name="expires_at" type="DATETIME(3)"/>
         </createTable>
         <addForeignKeyConstraint baseTableName="gocast_course_binding" baseColumnNames="course_id" referencedTableName="course" referencedColumnNames="id"
                                  constraintName="fk_gocast_binding_course" onDelete="CASCADE"/>
-    </changeSet>
-
-    <changeSet id="20260905000000-2-create-gocast-approval-attempt" author="pat">
-        <createTable tableName="gocast_approval_attempt">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="course_id" type="BIGINT">
-                <constraints nullable="false" unique="true" uniqueConstraintName="ux_gocast_attempt_course"/>
-            </column>
-            <column name="state_hash" type="VARCHAR(64)">
-                <constraints nullable="false" unique="true" uniqueConstraintName="ux_gocast_attempt_state"/>
-            </column>
-            <column name="gocast_integration_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="expires_at" type="DATETIME(3)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addForeignKeyConstraint baseTableName="gocast_approval_attempt" baseColumnNames="course_id" referencedTableName="course" referencedColumnNames="id"
-                                 constraintName="fk_gocast_attempt_course" onDelete="CASCADE"/>
+        <!-- One row holds either approval correlation or a completed connection, never an incomplete mixture. -->
+        <sql>
+            ALTER TABLE gocast_course_binding ADD CONSTRAINT ck_gocast_binding_state CHECK (
+                (status = 'PENDING' AND state_hash IS NOT NULL AND expires_at IS NOT NULL
+                    AND gocast_course_id IS NULL AND gocast_grant_id IS NULL
+                    AND course_slug IS NULL AND course_name IS NULL AND visibility IS NULL)
+                OR (status IN ('ACTIVE', 'REVOKED') AND state_hash IS NULL AND expires_at IS NULL
+                    AND gocast_course_id IS NOT NULL AND gocast_grant_id IS NOT NULL
+                    AND course_slug IS NOT NULL AND course_name IS NOT NULL AND visibility IS NOT NULL)
+            )
+        </sql>
+        <rollback>
+            <dropTable tableName="gocast_course_binding"/>
+        </rollback>
     </changeSet>
 </databaseChangeLog>

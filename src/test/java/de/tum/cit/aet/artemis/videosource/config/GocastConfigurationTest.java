@@ -19,11 +19,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.videosource.repository.GocastApprovalAttemptRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
 import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
@@ -100,11 +98,6 @@ class GocastConfigurationTest {
     static class EnabledGocastTestConfiguration {
 
         @Bean
-        PlatformTransactionManager transactionManager() {
-            return mock(PlatformTransactionManager.class);
-        }
-
-        @Bean
         CourseRepository courseRepository() {
             return mock(CourseRepository.class);
         }
@@ -114,9 +107,5 @@ class GocastConfigurationTest {
             return mock(GocastCourseBindingRepository.class);
         }
 
-        @Bean
-        GocastApprovalAttemptRepository attemptRepository() {
-            return mock(GocastApprovalAttemptRepository.class);
-        }
     }
 }

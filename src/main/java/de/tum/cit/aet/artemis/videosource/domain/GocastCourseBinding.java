@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.videosource.domain;
 
+import java.time.Instant;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,30 +10,32 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "gocast_course_binding")
 public class GocastCourseBinding extends DomainObject {
 
     @Column(name = "course_id", nullable = false, unique = true)
+    @Parent
     private long courseId;
 
-    @Column(name = "gocast_course_id", nullable = false, unique = true)
-    private long gocastCourseId;
+    @Column(name = "gocast_course_id", unique = true)
+    private Long gocastCourseId;
 
-    @Column(name = "gocast_integration_id", nullable = false, updatable = false)
+    @Column(name = "gocast_integration_id", nullable = false)
     private long integrationId;
 
-    @Column(name = "gocast_grant_id", nullable = false, updatable = false)
-    private long gocastGrantId;
+    @Column(name = "gocast_grant_id")
+    private Long gocastGrantId;
 
-    @Column(name = "course_slug", nullable = false)
+    @Column(name = "course_slug")
     private String courseSlug;
 
-    @Column(name = "course_name", nullable = false)
+    @Column(name = "course_name")
     private String courseName;
 
-    @Column(name = "visibility", nullable = false, length = 32)
+    @Column(name = "visibility", length = 32)
     private String visibility;
 
     @Enumerated(EnumType.STRING)
@@ -40,7 +44,13 @@ public class GocastCourseBinding extends DomainObject {
 
     @Version
     @Column(name = "version", nullable = false)
-    private long version;
+    private Long version;
+
+    @Column(name = "state_hash", unique = true, length = 64)
+    private String stateHash;
+
+    @Column(name = "expires_at")
+    private Instant expiresAt;
 
     public long getCourseId() {
         return courseId;
@@ -50,7 +60,7 @@ public class GocastCourseBinding extends DomainObject {
         this.courseId = courseId;
     }
 
-    public long getGocastCourseId() {
+    public Long getGocastCourseId() {
         return gocastCourseId;
     }
 
@@ -66,7 +76,7 @@ public class GocastCourseBinding extends DomainObject {
         this.integrationId = integrationId;
     }
 
-    public long getGocastGrantId() {
+    public Long getGocastGrantId() {
         return gocastGrantId;
     }
 
@@ -106,7 +116,23 @@ public class GocastCourseBinding extends DomainObject {
         this.status = status;
     }
 
-    public long getVersion() {
+    public Long getVersion() {
         return version;
+    }
+
+    public String getStateHash() {
+        return stateHash;
+    }
+
+    public void setStateHash(String stateHash) {
+        this.stateHash = stateHash;
+    }
+
+    public Instant getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(Instant expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

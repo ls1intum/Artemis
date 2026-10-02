@@ -33,7 +33,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.config.LoggingAspect;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.videosource.repository.GocastApprovalAttemptRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
 
@@ -101,8 +100,7 @@ class GocastLoggingSafetyTest extends AbstractSpringIntegrationIndependentTest {
         pointcut.setExpression(expression);
 
         List<Class<?>> credentialBoundaryTypes = List.of(GocastConnectorService.class, GocastBindingService.class, GocastConnectionRepository.class,
-                GocastApprovalAttemptRepository.class, GocastCourseBindingRepository.class, handlerType("/api/videosource/public/gocast/approval/callback"),
-                handlerType("/api/videosource/courses/{courseId}/binding"));
+                GocastCourseBindingRepository.class, handlerType("/api/videosource/public/gocast/approval/callback"), handlerType("/api/videosource/courses/{courseId}/binding"));
         for (Class<?> type : credentialBoundaryTypes) {
             assertThat(List.of(type.getDeclaredMethods()).stream().filter(method -> Modifier.isPublic(method.getModifiers())).noneMatch(method -> pointcut.matches(method, type)))
                     .as("all public methods on %s are outside credential logging", type.getSimpleName()).isTrue();
