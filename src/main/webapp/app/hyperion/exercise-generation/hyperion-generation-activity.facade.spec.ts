@@ -705,6 +705,48 @@ describe('HyperionGenerationActivityFacade', () => {
         expect(component.revertPartialRepositories()).toBeUndefined();
         expect(errorAlert).not.toHaveBeenCalled();
     });
+    it.each(['success', 'partial', 'pending'])('clears %s undo state when REST polling alone adopts another run', async (outcome) => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'old', mode: 'GENERATE', fileChanges: [], running: false, events: [], revertAvailable: true });
+        const component = fixture.componentInstance.facade;
+        const response = new Subject<ExerciseGenerationRevertResult>();
+        vi.spyOn(service, 'revertExerciseGeneration').mockReturnValue(response);
+        component.acceptRevert();
+        if (outcome === 'success') {
+            response.next({ fullyReverted: true, revertedRepositories: ['template'], completedAt: '2026-07-10T20:00:00Z' });
+            response.complete();
+            expect(component.reverted()).toBe(true);
+        } else if (outcome === 'partial') {
+            response.error(
+                new HttpErrorResponse({
+                    status: 409,
+                    error: { fullyReverted: false, revertedRepositories: ['template'], completedAt: '2026-07-10T20:00:00Z' },
+                }),
+            );
+            expect(component.revertPartialRepositories()).toBe('template');
+        } else {
+            expect(component.reverting()).toBe(true);
+        }
+        component.confirmRevertVisible.set(true);
+        service.status = { jobId: 'current', mode: 'ADAPT', fileChanges: [], running: false, events: [], revertAvailable: true };
+
+        await vi.advanceTimersByTimeAsync(15_000);
+
+        expect(component.jobId()).toBe('current');
+        expect(component.mode()).toBe('ADAPT');
+        expect(component.reverted()).toBe(false);
+        expect(component.reverting()).toBe(false);
+        expect(component.revertedMode()).toBeUndefined();
+        expect(component.revertPartialRepositories()).toBeUndefined();
+        expect(component.confirmRevertVisible()).toBe(false);
+        expect(component.canRevert()).toBe(true);
+        if (outcome === 'pending') {
+            response.next({ fullyReverted: true, revertedRepositories: ['template'], completedAt: '2026-07-10T20:00:00Z' });
+            expect(component.jobId()).toBe('current');
+            expect(component.reverted()).toBe(false);
+            expect(component.canRevert()).toBe(true);
+        }
+    });
     it('clears pending undo state when another job replaces the observed run', () => {
         const fixture = createWith({ jobId: 'old', fileChanges: [], running: false, events: [], revertAvailable: true });
         const component = fixture.componentInstance.facade;

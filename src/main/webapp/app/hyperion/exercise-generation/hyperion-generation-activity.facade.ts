@@ -360,6 +360,9 @@ export class HyperionGenerationActivityFacade {
                         this.running.set(false);
                     }
                     const sameJob = this.jobId() === status.jobId;
+                    if (!sameJob) {
+                        this.resetRevertState();
+                    }
                     const wasActivelyObserved = sameJob && this.running();
                     this.jobId.set(status.jobId);
                     this.mode.set(status.mode ?? this.mode());
@@ -739,11 +742,19 @@ export class HyperionGenerationActivityFacade {
         this.pendingStatusLoad = undefined;
     }
 
+    private resetRevertState(): void {
+        this.revertAvailabilityRefresh.cancel();
+        this.reverting.set(false);
+        this.reverted.set(false);
+        this.revertedMode.set(undefined);
+        this.revertPartialRepositories.set(undefined);
+        this.confirmRevertVisible.set(false);
+    }
+
     private reset(): void {
         this.cancelStatusRequest();
         this.closeStream();
         this.streamLossRefresh.cancel();
-        this.revertAvailabilityRefresh.cancel();
         this.cancellationStatusRefresh.cancel();
         this.statusPoll.cancel();
         this.jobId.set(undefined);
@@ -753,10 +764,7 @@ export class HyperionGenerationActivityFacade {
         this.statusLoadFailed.set(false);
         this.statusLoadAttempts = 0;
         this.ownershipResolved = false;
-        this.reverting.set(false);
-        this.reverted.set(false);
-        this.revertedMode.set(undefined);
-        this.revertPartialRepositories.set(undefined);
+        this.resetRevertState();
         this.emittedTerminalJobs.clear();
         this.events.set([]);
         this.verdict.set(undefined);
@@ -774,8 +782,6 @@ export class HyperionGenerationActivityFacade {
         this.cancellable.set(false);
         this.cancelRequested.set(false);
         this.cancellationStatusChecks = 0;
-        // The undo confirmation belongs to the run being discarded here, so it must not survive into the next one.
-        this.confirmRevertVisible.set(false);
         this.clearFileChanges();
     }
 
