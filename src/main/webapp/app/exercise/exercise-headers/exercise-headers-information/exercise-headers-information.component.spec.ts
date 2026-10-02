@@ -530,23 +530,17 @@ describe('ExerciseHeadersInformationComponent', () => {
             expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
         });
 
-        it('should show the AI feedback item for a programming exercise with semi-automatic assessment', () => {
-            fixture.componentRef.setInput('athenaEnabled', true);
-            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC });
-            fixture.componentRef.setInput('course', athenaCourse);
-            fixture.detectChanges();
+        it.each([AssessmentType.SEMI_AUTOMATIC, AssessmentType.AUTOMATIC])(
+            'should show the AI feedback item for a programming exercise whatever its assessment type (%s)',
+            (assessmentType: AssessmentType) => {
+                fixture.componentRef.setInput('athenaEnabled', true);
+                fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType });
+                fixture.componentRef.setInput('course', athenaCourse);
+                fixture.detectChanges();
 
-            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
-        });
-
-        it('should not show the AI feedback item for a programming exercise without semi-automatic assessment', () => {
-            fixture.componentRef.setInput('athenaEnabled', true);
-            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC });
-            fixture.componentRef.setInput('course', athenaCourse);
-            fixture.detectChanges();
-
-            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(false);
-        });
+                expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
+            },
+        );
 
         it('should not show the AI feedback item for a file-upload exercise even when Athena is enabled course-wide', () => {
             fixture.componentRef.setInput('athenaEnabled', true);

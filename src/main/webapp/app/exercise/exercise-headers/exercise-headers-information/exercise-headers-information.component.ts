@@ -509,12 +509,9 @@ export class ExerciseHeadersInformationComponent {
         return this.athenaEnabled() && this.resolvedCourse()?.athenaFormativeFeedbackEnabled && this.isFeedbackRequestEligibleExerciseType() ? this.getAiFeedbackItem() : undefined;
     }
 
-    /** Mirrors the exercise-type/assessment-type eligibility used to show the feedback-request action itself, so the quota box isn't shown for exercise types (e.g. file-upload, quiz) that don't support feedback requests. */
+    /** Mirrors the exercise-type eligibility used to show the feedback-request action itself, so the quota box isn't shown for exercise types (e.g. file-upload, quiz) that don't support feedback requests. */
     isFeedbackRequestEligibleExerciseType(): boolean {
         const exercise = this.exercise();
-        if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
-            return false;
-        }
         return exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING;
     }
 
