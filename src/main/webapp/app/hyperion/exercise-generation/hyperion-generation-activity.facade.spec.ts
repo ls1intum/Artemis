@@ -86,9 +86,9 @@ function fileChange(path: string, action: 'write' | 'edit' | 'delete', overrides
 
 @Component({ template: '', providers: [HyperionGenerationActivityFacade] })
 class RunStateHost {
+    readonly facade = inject(HyperionGenerationActivityFacade);
     readonly exerciseId = input<number>();
     readonly refreshingEditor = input(false);
-    readonly facade = inject(HyperionGenerationActivityFacade);
     constructor() {
         this.facade.connect({ exerciseId: this.exerciseId, refreshingEditor: this.refreshingEditor });
     }

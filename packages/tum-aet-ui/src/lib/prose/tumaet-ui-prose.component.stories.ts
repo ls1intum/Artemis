@@ -98,7 +98,7 @@ export const AllBlockElements: Story = {
 };
 
 /**
- * Long-form reading is capped at `--tumaet-ui-prose-measure` (65ch by default) however wide its column is. Set the
+ * Long-form reading is capped at `--prose-measure` (65ch by default) however wide its column is. Set the
  * property to `none` where the prose has to fill a column it shares with something else.
  */
 export const Measure: Story = {
@@ -110,7 +110,7 @@ export const Measure: Story = {
         template: `
             <div class="tumaet-ui-story-stack">
                 <tumaet-ui-prose [density]="density" [innerHTML]="html"></tumaet-ui-prose>
-                <tumaet-ui-prose [density]="density" [innerHTML]="html" style="--tumaet-ui-prose-measure: none;"></tumaet-ui-prose>
+                <tumaet-ui-prose [density]="density" [innerHTML]="html" style="--prose-measure: none;"></tumaet-ui-prose>
             </div>
         `,
     }),

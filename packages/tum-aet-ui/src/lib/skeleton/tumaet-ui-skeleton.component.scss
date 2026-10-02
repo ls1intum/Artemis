@@ -1,14 +1,14 @@
 // One line fills the host, so `height` on the host sizes a block placeholder. Several lines stack inside it, and
 // the host becomes the paragraph rather than the line.
 :host {
-    --tumaet-ui-skeleton-color: var(--tumaet-ui-hover-background);
-    --tumaet-ui-skeleton-line-height: calc(var(--tumaet-ui-spacing) * 3);
-    --tumaet-ui-skeleton-gap: calc(var(--tumaet-ui-spacing) * 2);
+    --skeleton-color: var(--tumaet-ui-hover-background);
+    --skeleton-line-height: calc(var(--tumaet-ui-spacing) * 3);
+    --skeleton-gap: calc(var(--tumaet-ui-spacing) * 2);
 
     display: flex;
     flex-direction: column;
-    gap: var(--tumaet-ui-skeleton-gap);
-    min-height: var(--tumaet-ui-skeleton-line-height);
+    gap: var(--skeleton-gap);
+    min-height: var(--skeleton-line-height);
 
     // The crossfade the component does own: the placeholder and the real content share a grid cell, so the exchange
     // happens in place instead of the page resizing under the reader. Opacity only, and short — nothing moves.
@@ -18,9 +18,9 @@
 .tumaet-ui-skeleton-line {
     display: block;
     flex: 1 1 auto;
-    min-height: var(--tumaet-ui-skeleton-line-height);
+    min-height: var(--skeleton-line-height);
     border-radius: var(--tumaet-ui-radius-md);
-    background: var(--tumaet-ui-skeleton-color);
+    background: var(--skeleton-color);
 }
 
 // A paragraph's last line stops short. Without it a stack of equal bars reads as a table, which is a different

@@ -7,10 +7,10 @@
 .tumaet-ui-prose {
     // The comfortable measure for continuous reading. Set it to `none` where the prose shares a row with something
     // else and has to fill its column.
-    --tumaet-ui-prose-measure: 65ch;
-    --tumaet-ui-prose-block-gap: calc(var(--tumaet-ui-spacing) * 4);
+    --prose-measure: 65ch;
+    --prose-block-gap: calc(var(--tumaet-ui-spacing) * 4);
 
-    max-width: var(--tumaet-ui-prose-measure);
+    max-width: var(--prose-measure);
     color: var(--tumaet-ui-text-color);
     font-family: var(--tumaet-ui-font-family);
     font-size: var(--tumaet-ui-font-size-base);
@@ -19,7 +19,7 @@
 }
 
 .tumaet-ui-prose[data-density='compact'] {
-    --tumaet-ui-prose-block-gap: calc(var(--tumaet-ui-spacing) * 3);
+    --prose-block-gap: calc(var(--tumaet-ui-spacing) * 3);
 
     font-size: var(--tumaet-ui-font-size-sm);
     line-height: var(--tumaet-ui-line-height-sm);
@@ -32,7 +32,7 @@
 }
 
 .tumaet-ui-prose > * + * {
-    margin-block-start: var(--tumaet-ui-prose-block-gap);
+    margin-block-start: var(--prose-block-gap);
 }
 
 // A heading opens a new section, so it gets more room above it than an ordinary block does.
@@ -42,7 +42,7 @@
 .tumaet-ui-prose > * + h4,
 .tumaet-ui-prose > * + h5,
 .tumaet-ui-prose > * + h6 {
-    margin-block-start: calc(var(--tumaet-ui-prose-block-gap) * 1.75);
+    margin-block-start: calc(var(--prose-block-gap) * 1.75);
 }
 
 // The scale ends below a page's own `h1`: a projected document is subordinate to the surface that hosts it, however

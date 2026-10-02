@@ -1,5 +1,6 @@
 @if (indicatorState() !== 'idle') {
     <button
+        type="button"
         tumAetUiButton
         variant="text"
         severity="secondary"
@@ -26,7 +27,7 @@
                 <tumaet-ui-message severity="error" class="block" data-testid="hyperion-jobs-indicator-load-failed">
                     <div class="flex flex-col items-start gap-2">
                         <span jhiTranslate="artemisApp.hyperion.jobs.loadFailed"></span>
-                        <button tumAetUiButton variant="outlined" severity="secondary" size="small" data-testid="hyperion-jobs-indicator-retry" (click)="retry()">
+                        <button type="button" tumAetUiButton variant="outlined" severity="secondary" size="small" data-testid="hyperion-jobs-indicator-retry" (click)="retry()">
                             <span jhiTranslate="artemisApp.hyperion.jobs.retry"></span>
                         </button>
                     </div>
@@ -65,6 +66,7 @@
                                 </span>
                             </a>
                             <button
+                                type="button"
                                 tumAetUiButton
                                 variant="text"
                                 severity="secondary"

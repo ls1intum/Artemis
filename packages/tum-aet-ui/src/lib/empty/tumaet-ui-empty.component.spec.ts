@@ -11,7 +11,14 @@ import {
 import { TumAetUiEmptyComponent } from './tumaet-ui-empty.component';
 
 @Component({
-    imports: [TumAetUiEmptyComponent, TumAetUiEmptyHeaderComponent, TumAetUiEmptyMediaComponent, TumAetUiEmptyTitleComponent, TumAetUiEmptyDescriptionComponent, TumAetUiEmptyContentComponent],
+    imports: [
+        TumAetUiEmptyComponent,
+        TumAetUiEmptyHeaderComponent,
+        TumAetUiEmptyMediaComponent,
+        TumAetUiEmptyTitleComponent,
+        TumAetUiEmptyDescriptionComponent,
+        TumAetUiEmptyContentComponent,
+    ],
     template: `
         <tumaet-ui-empty size="small">
             <tumaet-ui-empty-header>

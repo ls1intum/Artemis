@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
+import { DestroyRef, Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, Subscription, defer, from, interval, of, timer } from 'rxjs';
 import { catchError, debounce, debounceTime, distinctUntilChanged, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap, timeout } from 'rxjs/operators';
@@ -73,7 +73,7 @@ export function isTerminalHyperionJobStatus(status: HyperionJobStatus): boolean 
  * Browser-local run history, stored per login. REST provides authoritative status per exercise;
  * websocket events trigger reconciliation. Runs started in another browser appear only when observed here.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class HyperionJobRegistryService {
     private readonly accountService = inject(AccountService);
     private readonly generationService = inject(HyperionExerciseGenerationService);

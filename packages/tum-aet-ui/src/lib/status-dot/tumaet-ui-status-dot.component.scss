@@ -6,53 +6,53 @@
 // warning fill measures 1.63:1 on a light surface — a yellow dot nobody can see is not a warning. Every
 // `-foreground` variant clears 7:1 in both themes.
 :host {
-    --tumaet-ui-status-dot-size: calc(var(--tumaet-ui-spacing) * 2);
-    --tumaet-ui-status-dot-fill: var(--tumaet-ui-muted-color);
-    --tumaet-ui-status-dot-edge: transparent;
-    --tumaet-ui-status-dot-edge-style: solid;
+    --status-dot-size: calc(var(--tumaet-ui-spacing) * 2);
+    --status-dot-fill: var(--tumaet-ui-muted-color);
+    --status-dot-edge: transparent;
+    --status-dot-edge-style: solid;
 }
 
 :host([data-state='running']) {
-    --tumaet-ui-status-dot-fill: var(--tumaet-ui-state-info-foreground);
+    --status-dot-fill: var(--tumaet-ui-state-info-foreground);
 }
 
 :host([data-state='success']) {
-    --tumaet-ui-status-dot-fill: var(--tumaet-ui-state-success-foreground);
+    --status-dot-fill: var(--tumaet-ui-state-success-foreground);
 }
 
 :host([data-state='warning']) {
-    --tumaet-ui-status-dot-fill: var(--tumaet-ui-state-warning-foreground);
+    --status-dot-fill: var(--tumaet-ui-state-warning-foreground);
 }
 
 :host([data-state='danger']) {
-    --tumaet-ui-status-dot-fill: var(--tumaet-ui-state-danger-foreground);
+    --status-dot-fill: var(--tumaet-ui-state-danger-foreground);
 }
 
 // Waiting to start: an outline, not a filled dot, so a screenshot separates it from `neutral`. A ring needs a little
 // more room than a filled dot to read as a ring at all, hence the slightly larger size.
 :host([data-state='queued']) {
-    --tumaet-ui-status-dot-size: calc(var(--tumaet-ui-spacing) * 2.5);
-    --tumaet-ui-status-dot-fill: transparent;
-    --tumaet-ui-status-dot-edge: var(--tumaet-ui-muted-color);
+    --status-dot-size: calc(var(--tumaet-ui-spacing) * 2.5);
+    --status-dot-fill: transparent;
+    --status-dot-edge: var(--tumaet-ui-muted-color);
 }
 
 // The state could not be determined — a broken outline, and deliberately motionless.
 :host([data-state='unknown']) {
-    --tumaet-ui-status-dot-size: calc(var(--tumaet-ui-spacing) * 2.5);
-    --tumaet-ui-status-dot-fill: transparent;
-    --tumaet-ui-status-dot-edge: var(--tumaet-ui-muted-color);
-    --tumaet-ui-status-dot-edge-style: dashed;
+    --status-dot-size: calc(var(--tumaet-ui-spacing) * 2.5);
+    --status-dot-fill: transparent;
+    --status-dot-edge: var(--tumaet-ui-muted-color);
+    --status-dot-edge-style: dashed;
 }
 
 .tumaet-ui-status-dot-indicator {
     display: block;
-    width: var(--tumaet-ui-status-dot-size);
-    height: var(--tumaet-ui-status-dot-size);
+    width: var(--status-dot-size);
+    height: var(--status-dot-size);
     box-sizing: border-box;
     flex-shrink: 0;
-    border: 2px var(--tumaet-ui-status-dot-edge-style) var(--tumaet-ui-status-dot-edge);
+    border: 2px var(--status-dot-edge-style) var(--status-dot-edge);
     border-radius: 50%;
-    background: var(--tumaet-ui-status-dot-fill);
+    background: var(--status-dot-fill);
 }
 
 // Only the in-flight states pulse, and only when motion is welcome. Terminal states, `neutral` and `unknown` carry no
