@@ -2,6 +2,9 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Content deleted",
+            "deepLink": {
+                "unitGone": "The linked lecture content no longer exists, so only the lecture is opened."
+            },
             "retryProcessing": "Retry processing",
             "processingRetryStarted": "Processing retry started",
             "home": {
