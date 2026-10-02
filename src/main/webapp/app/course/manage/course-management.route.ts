@@ -16,6 +16,9 @@ export const courseManagementRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'global.generic.create',
+            // The page renders its own shell (title bar above a scrolling card), like the course management container
+            // below, so it must not be wrapped in the app-level card as well.
+            usesModuleBackground: false,
         },
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
     },

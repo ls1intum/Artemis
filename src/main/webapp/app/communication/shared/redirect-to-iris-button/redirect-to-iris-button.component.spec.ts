@@ -9,11 +9,11 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { of, throwError } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -29,8 +29,8 @@ describe('RedirectToIrisButtonComponent', () => {
         vi.useFakeTimers();
         await TestBed.configureTestingModule({
             providers: [
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 MockProvider(ProfileService),
                 MockProvider(IrisSettingsService),
             ],
@@ -76,7 +76,7 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -97,7 +97,7 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -118,7 +118,7 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -139,7 +139,7 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -160,7 +160,7 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -181,7 +181,7 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -202,7 +202,7 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -223,7 +223,7 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -275,13 +275,13 @@ describe('RedirectToIrisButtonComponent', () => {
             subTypeReferenceId: 42,
         } as ConversationDTO;
 
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
     }
 
     it('should ignore undefined conversations', () => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         const spyCheckIrisSettings = vi.spyOn(component as any, 'checkIrisSettings');
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(undefined));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(undefined));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -295,7 +295,7 @@ describe('RedirectToIrisButtonComponent', () => {
 
         const firstConversation = { id: 1, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
         const secondConversation = { id: 2, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(firstConversation, secondConversation));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(firstConversation, secondConversation));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);
@@ -308,7 +308,7 @@ describe('RedirectToIrisButtonComponent', () => {
         const spyCheckIrisSettings = vi.spyOn(component as any, 'checkIrisSettings');
 
         const sameConversation = { id: 1, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
-        vi.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(sameConversation, sameConversation));
+        vi.spyOn(component.courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(sameConversation, sameConversation));
 
         component.ngOnInit();
         vi.advanceTimersByTime(0);

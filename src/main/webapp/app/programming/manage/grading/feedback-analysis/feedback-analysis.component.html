@@ -26,7 +26,7 @@
                         <fa-icon size="sm" [icon]="faCircleQuestion" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="btn-warning" />
                     </label>
                 </div>
-                <button class="btn me-2" (click)="openFilterModal()" [ngClass]="selectedFiltersCount() ? 'btn-success' : 'btn-secondary'">
+                <button type="button" class="btn me-2" (click)="openFilterModal()" [ngClass]="selectedFiltersCount() ? 'btn-success' : 'btn-secondary'">
                     <fa-icon [icon]="faFilter" />
                     <span [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
                 </button>

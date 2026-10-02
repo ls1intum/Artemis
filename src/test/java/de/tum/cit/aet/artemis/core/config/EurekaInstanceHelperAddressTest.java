@@ -23,6 +23,8 @@ import org.springframework.cloud.netflix.eureka.serviceregistry.EurekaRegistrati
 import org.springframework.core.env.Environment;
 
 import com.netflix.appinfo.ApplicationInfoManager;
+import com.netflix.appinfo.EurekaInstanceConfig;
+import com.netflix.appinfo.InstanceInfo;
 
 /**
  * Unit tests for the address formatting utilities in {@link EurekaInstanceHelper}.
@@ -43,8 +45,10 @@ class EurekaInstanceHelperAddressTest {
     @Test
     void publishesHazelcastAddressToLiveEurekaInstance() {
         EurekaRegistration registration = Mockito.mock(EurekaRegistration.class);
-        ApplicationInfoManager manager = Mockito.mock(ApplicationInfoManager.class);
-        Map<String, String> metadata = new HashMap<>();
+        Map<String, String> metadata = new HashMap<>(Map.of("profile", "prod,core", "zone", "zone-a", "version", "test"));
+        InstanceInfo info = InstanceInfo.Builder.newBuilder().setAppName("artemis").setHostName("core").setMetadata(new HashMap<>(metadata)).build();
+        ApplicationInfoManager manager = new ApplicationInfoManager(Mockito.mock(EurekaInstanceConfig.class), info);
+        info.setIsDirty(false);
         when(registration.getMetadata()).thenReturn(metadata);
         when(registration.getApplicationInfoManager()).thenReturn(manager);
         EurekaInstanceHelper helper = new EurekaInstanceHelper(Mockito.mock(DiscoveryClient.class), Optional.of(registration), Mockito.mock(Environment.class));
@@ -52,7 +56,9 @@ class EurekaInstanceHelperAddressTest {
         helper.registerHazelcastAddress("172.30.131.10", 5701);
 
         assertThat(metadata).containsEntry("hazelcast.host", "172.30.131.10").containsEntry("hazelcast.port", "5701");
-        Mockito.verify(manager).registerAppMetadata(Map.of("hazelcast.host", "172.30.131.10", "hazelcast.port", "5701"));
+        assertThat(info.getMetadata()).containsEntry("hazelcast.host", "172.30.131.10").containsEntry("hazelcast.port", "5701").containsEntry("profile", "prod,core")
+                .containsEntry("zone", "zone-a").containsEntry("version", "test");
+        assertThat(info.isDirty()).isTrue();
     }
 
     @Nested

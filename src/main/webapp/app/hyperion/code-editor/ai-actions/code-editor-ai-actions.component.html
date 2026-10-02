@@ -67,7 +67,7 @@
 
 <ng-template #aiMenu>
     <tumaet-ui-menu>
-        <button tumAetUiMenuItem [disabled]="!!refineBlockedReason()" (triggered)="openRefinement()" data-testid="hyperion-refine-problem-statement">
+        <button type="button" tumAetUiMenuItem [disabled]="!!refineBlockedReason()" (triggered)="openRefinement()" data-testid="hyperion-refine-problem-statement">
             <fa-icon [icon]="facArtemisIntelligence" />
             <span class="flex flex-col">
                 <span [jhiTranslate]="refineLabelKey()"></span>
@@ -76,7 +76,7 @@
                 }
             </span>
         </button>
-        <button tumAetUiMenuItem [disabled]="!!consistencyBlockedReason()" (triggered)="consistencyRequested.emit()" data-testid="hyperion-check-consistency">
+        <button type="button" tumAetUiMenuItem [disabled]="!!consistencyBlockedReason()" (triggered)="consistencyRequested.emit()" data-testid="hyperion-check-consistency">
             <fa-icon [icon]="faCheckDouble" />
             <span class="flex flex-col">
                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
@@ -86,7 +86,7 @@
             </span>
         </button>
         @if (issueCount()) {
-            <button tumAetUiMenuItem (triggered)="issuesToggled.emit()" data-testid="hyperion-show-issues">
+            <button type="button" tumAetUiMenuItem (triggered)="issuesToggled.emit()" data-testid="hyperion-show-issues">
                 <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" />
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.showIssues"></span>
                 <span class="text-muted-color">({{ issueCount() }})</span>

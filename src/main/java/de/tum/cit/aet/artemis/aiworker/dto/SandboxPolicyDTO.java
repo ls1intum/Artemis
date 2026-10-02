@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.aiworker.dto;
 
-import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -35,8 +35,11 @@ public record SandboxPolicyDTO(String id, String image, String runtime, long mem
         }
         Map<String, String> normalized = new HashMap<>();
         writableFilesystems.forEach((path, options) -> {
-            String mount = Path.of(path).normalize().toString();
-            if (!mount.startsWith("/") || mount.equals("/") || path.contains("..")) {
+            if (!path.startsWith("/") || path.contains("..") || path.contains("\\") || path.indexOf('\0') >= 0) {
+                throw new IllegalArgumentException("Sandbox writable mounts must be absolute POSIX non-root paths");
+            }
+            String mount = "/" + String.join("/", Arrays.stream(path.split("/")).filter(segment -> !segment.isEmpty() && !segment.equals(".")).toList());
+            if (mount.equals("/")) {
                 throw new IllegalArgumentException("Sandbox writable mounts must be absolute non-root paths");
             }
             if (normalized.putIfAbsent(mount, options) != null) {

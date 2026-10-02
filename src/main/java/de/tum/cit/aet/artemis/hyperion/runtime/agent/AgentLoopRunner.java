@@ -675,11 +675,13 @@ public class AgentLoopRunner {
                     accountingFailure.addSuppressed(error);
                     throw accountingFailure;
                 }
+                throw new UsageUncertainException(error);
             }
             throw error;
         }
         if (response == null) {
             markUsageUncertain(usageSink);
+            throw new UsageUncertainException(new IllegalStateException("Provider returned no response"));
         }
         else {
             emitUsage(usageSink, response);
@@ -726,7 +728,8 @@ public class AgentLoopRunner {
     /**
      * Compacts the conversation: keeps the protected prefix (system prompt + initial instruction), summarizes the oldest turns into one synthetic {@link UserMessage} marked with
      * {@link #SUMMARY_SENTINEL} (so a later compaction folds it forward), and keeps the newest turns verbatim. The cut lands on a turn boundary so the result satisfies the
-     * tool-pairing contract. If summarization fails, the old region is dropped behind a marker rather than aborting the run — the workspace files remain the source of truth.
+     * tool-pairing contract. If summarization fails without uncertain usage, the old region is dropped behind a marker rather than aborting the run — the workspace files remain
+     * the source of truth.
      */
     List<Message> compact(List<Message> conversation, @Nullable Consumer<ChatResponse> usageSink) {
         return compact(conversation, usageSink, () -> false, null);
@@ -758,7 +761,7 @@ public class AgentLoopRunner {
         catch (CancellationException ignored) {
             return conversation;
         }
-        catch (UsageAccountingException e) {
+        catch (UsageAccountingException | UsageUncertainException e) {
             throw e;
         }
         catch (RuntimeException e) {
@@ -948,6 +951,14 @@ public class AgentLoopRunner {
             catch (RuntimeException e) {
                 throw new UsageAccountingException(e);
             }
+        }
+    }
+
+    /** An indeterminate request must stop generation, including during compaction. */
+    private static final class UsageUncertainException extends RuntimeException {
+
+        private UsageUncertainException(RuntimeException cause) {
+            super("Provider usage could not be determined", cause);
         }
     }
 

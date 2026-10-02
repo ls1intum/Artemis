@@ -7,7 +7,6 @@ import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
 import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { AccountService } from 'app/core/auth/account.service';
-import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -27,7 +26,10 @@ export class ExerciseVariantGenerationService {
 
     private readonly jobSubscriptions = new Map<string, Subscription>();
 
-    /** Login of the user whose jobs are currently loaded, used to avoid redundant re-syncs. */
+    /** The load triggered by a change of login or access; cancelled on the next change so that a late response cannot restore stale jobs. */
+    private accessLoad?: Subscription;
+
+    /** Login of the user whose jobs are currently loaded (undefined while none are), used to avoid redundant re-syncs. */
     private loadedForLogin?: string;
 
     private identityRevision = 0;
@@ -39,17 +41,21 @@ export class ExerciseVariantGenerationService {
         effect(() => {
             const login = this.accountService.userIdentity()?.login;
             untracked(() => {
-                if (login === this.loadedForLogin) {
+                // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, and asking without that access
+                // only produces a 403 alert. A user who cannot generate variants has no jobs to show, and the tray stays hidden
+                // either way. Without Hyperion the endpoint is not registered at all, so there is nothing to fetch either.
+                const mayLoadJobs = !!login && this.accountService.hasEditorAccess() && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+                // Keyed on the access as well as the login, so that a user who gains editor access later in the same session
+                // gets the jobs without a reload
+                const loadFor = mayLoadJobs ? login : undefined;
+                if (loadFor === this.loadedForLogin) {
                     return;
                 }
+                this.loadedForLogin = loadFor;
+                this.accessLoad?.unsubscribe();
                 this.clearJobs();
-                this.loadedForLogin = login;
-                // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, so fetching as
-                // a student produced nothing but a 403 in the console. Mirror the server's rule here — a user who
-                // cannot generate variants has no jobs to show, and the tray stays hidden either way. Without
-                // Hyperion the endpoint is not registered at all, so there is nothing to fetch either.
-                if (login && this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION)) {
-                    this.loadJobs().subscribe({ error: () => {} });
+                if (mayLoadJobs) {
+                    this.accessLoad = this.loadJobs().subscribe({ error: () => {} });
                 }
             });
         });

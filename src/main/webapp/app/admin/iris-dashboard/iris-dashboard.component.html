@@ -97,7 +97,7 @@
         </div>
 
         <!-- Breakdown Tables -->
-        <tumaet-ui-tabs [value]="activeBreakdownTab()" (valueChange)="activeBreakdownTab.set($any($event))">
+        <tumaet-ui-tabs [value]="activeBreakdownTab()" (valueChange)="onBreakdownTabChange($event)">
             <tumaet-ui-tab-list>
                 <tumaet-ui-tab [value]="0" jhiTranslate="artemisApp.irisDashboard.breakdown.byChatMode" />
                 <tumaet-ui-tab [value]="1" jhiTranslate="artemisApp.irisDashboard.breakdown.byCourse" />

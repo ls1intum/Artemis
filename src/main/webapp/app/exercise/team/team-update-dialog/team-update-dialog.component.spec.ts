@@ -76,6 +76,49 @@ describe('TeamUpdateDialogComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('cancels deferred short-name validation when the dialog is destroyed', async () => {
+        await setupComponent(mockEmptyTeam);
+        fixture.detectChanges(false);
+        await fixture.whenStable();
+        vi.useFakeTimers();
+        const exists = vi.spyOn(teamService, 'existsByShortName');
+        comp.onTeamShortNameChanged('newteam');
+        fixture.destroy();
+        await vi.advanceTimersByTimeAsync(501);
+        expect(exists).not.toHaveBeenCalled();
+    });
+
+    it('unsubscribes from in-flight short-name validation before form destruction', async () => {
+        await setupComponent(mockEmptyTeam);
+        fixture.detectChanges(false);
+        await fixture.whenStable();
+        vi.useFakeTimers();
+        const response = new Subject<HttpResponse<boolean>>();
+        vi.spyOn(teamService, 'existsByShortName').mockReturnValue(response);
+        comp.onTeamShortNameChanged('newteam');
+        await vi.advanceTimersByTimeAsync(501);
+        expect(response.observed).toBe(true);
+        fixture.destroy();
+        expect(response.observed).toBe(false);
+        response.next(new HttpResponse({ body: true }));
+    });
+
+    it('associates the owner and student labels with their search inputs', async () => {
+        await setupComponent(mockEmptyTeam);
+        fixture.detectChanges(false);
+        await fixture.whenStable();
+
+        const root = fixture.nativeElement as HTMLElement;
+        for (const id of ['teamOwnerInput', 'teamStudentsInput']) {
+            const label = root.querySelector(`label[for="${id}"]`) as HTMLLabelElement;
+            const input = root.querySelector(`input#${id}`);
+            expect(input).not.toBeNull();
+            expect(label.control).toBe(input);
+        }
+
+        fixture.destroy();
+    });
+
     it('Team Update Dialog can be canceled via cancel button', async () => {
         await setupComponent(mockEmptyTeam);
         fixture.detectChanges(false);

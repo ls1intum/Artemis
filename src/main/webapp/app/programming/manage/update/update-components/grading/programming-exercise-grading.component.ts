@@ -61,6 +61,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     criteriaGenerated = output<void>();
 
     submissionPolicyUpdateComponent = viewChild(SubmissionPolicyUpdateComponent);
+    gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
     maxScoreField = viewChild<NgModel>('maxScore');
     bonusPointsField = viewChild<NgModel>('bonusPoints');
     maxPenaltyField = viewChild<NgModel>('maxPenalty');
@@ -88,6 +89,15 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
         for (const subscription of this.inputFieldSubscriptions) {
             subscription?.unsubscribe();
         }
+    }
+
+    /**
+     * Flushes pending text-mode grading-instruction markdown before the host save disables this form.
+     *
+     * @returns false when that text was rejected and the host must abort the save.
+     */
+    prepareForSave(): boolean {
+        return this.gradingInstructionsDetails()?.prepareForSave() !== false;
     }
 
     calculateFormStatus() {

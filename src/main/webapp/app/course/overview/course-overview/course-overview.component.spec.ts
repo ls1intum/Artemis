@@ -51,7 +51,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
@@ -63,7 +63,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -154,7 +154,7 @@ describe('CourseOverviewComponent', () => {
     let courseSidebarItemService: CourseSidebarItemService;
     let profileService: ProfileService;
 
-    let metisConversationService: MetisConversationService;
+    let courseConversationsService: CourseConversationsService;
 
     const course = {
         id: 1,
@@ -214,12 +214,12 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(ChangeDetectorRef),
                 MockProvider(TutorialGroupApi),
                 MockProvider(TutorialGroupsConfigurationService),
-                MockProvider(MetisConversationService),
+                MockProvider(CourseConversationsService),
                 MockProvider(CourseAccessStorageService),
                 MockProvider(CourseOverviewTabDataService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -243,7 +243,7 @@ describe('CourseOverviewComponent', () => {
         tutorialGroupApiService = TestBed.inject(TutorialGroupApi);
         tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
         courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
-        metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
+        courseConversationsService = fixture.debugElement.injector.get(CourseConversationsService);
         vi.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
         // default for findCourseForOverviewStub is to return the course
         findCourseForOverviewStub = vi.spyOn(courseService, 'findCourseForOverview').mockReturnValue(
@@ -260,7 +260,7 @@ describe('CourseOverviewComponent', () => {
         getCourseAvailableTabsStub = vi.spyOn(courseService, 'getCourseAvailableTabs').mockReturnValue(of(availableTabs()));
         // default for findOneForRegistrationStub is to return the course as well
         findOneForRegistrationStub = vi.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-        vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+        vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
             activeProfiles: [PROFILE_PROD],
@@ -283,7 +283,7 @@ describe('CourseOverviewComponent', () => {
         findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         expect(getCourseStub).toHaveBeenCalled();
         // The sidebar is built twice on purpose: once up front with the always-available items, and again when the
@@ -410,16 +410,16 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('loads conversations when switching to message tab once', async () => {
-        const metisConversationServiceStub = vi.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(EMPTY);
+        const courseConversationsServiceStub = vi.spyOn(courseConversationsService, 'setUpConversationService').mockReturnValue(EMPTY);
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         expect(getCourseStub).toHaveBeenCalled();
 
-        expect(metisConversationServiceStub).toHaveBeenCalledTimes(0);
+        expect(courseConversationsServiceStub).toHaveBeenCalledTimes(0);
         const baseUrl = '/' + 'courses/' + course1.id;
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
@@ -427,7 +427,7 @@ describe('CourseOverviewComponent', () => {
             component.onSubRouteActivate({ controlConfiguration: undefined });
             fixture.changeDetectorRef.detectChanges();
         });
-        expect(metisConversationServiceStub).toHaveBeenCalledOnce();
+        expect(courseConversationsServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should pass the page title to the exercises component', () => {
@@ -443,12 +443,12 @@ describe('CourseOverviewComponent', () => {
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
-        const spy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
-        metisConversationService._hasUnreadMessages$.next(hasNewMessages);
-        vi.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
+        const spy = vi.spyOn(courseConversationsService, 'checkForUnreadMessages');
+        courseConversationsService._hasUnreadMessages$.next(hasNewMessages);
+        vi.spyOn(courseConversationsService, 'setUpConversationService').mockReturnValue(of());
         vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/communication');
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -466,8 +466,8 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should not try to load message related data when not activated for course', () => {
-        const unreadMessagesSpy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
-        const setUpConversationServiceSpy = vi.spyOn(metisConversationService, 'setUpConversationService');
+        const unreadMessagesSpy = vi.spyOn(courseConversationsService, 'checkForUnreadMessages');
+        const setUpConversationServiceSpy = vi.spyOn(courseConversationsService, 'setUpConversationService');
 
         component.course.set({ courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED });
 
@@ -515,7 +515,7 @@ describe('CourseOverviewComponent', () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         expect(getCourseStub).toHaveBeenCalled();
     });
@@ -566,7 +566,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should fetch the course content exactly once when navigating into the course', async () => {
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(findCourseForOverviewStub).toHaveBeenCalledExactlyOnceWith(course1.id);
     });
 
@@ -575,7 +575,7 @@ describe('CourseOverviewComponent', () => {
         // and switching to another course in place must not reuse the previous course's tabs.
         const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
         (route as any).params = paramsSubject.asObservable();
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(getCourseAvailableTabsStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 
         paramsSubject.next({ courseId: 999 });
@@ -589,7 +589,7 @@ describe('CourseOverviewComponent', () => {
         availableTabsService.load(course1.id!).subscribe();
         getCourseAvailableTabsStub.mockClear();
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         expect(getCourseAvailableTabsStub).not.toHaveBeenCalled();
     });
@@ -598,7 +598,7 @@ describe('CourseOverviewComponent', () => {
         const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
         (route as any).params = paramsSubject.asObservable();
         const clearTabDataSpy = vi.spyOn(TestBed.inject(CourseOverviewTabDataService), 'clear');
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(findCourseForOverviewStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 
         const getSidebarItemsSpy = vi.spyOn(component, 'getSidebarItems');
@@ -619,7 +619,7 @@ describe('CourseOverviewComponent', () => {
             courseId === course1.id ? of(availableTabs({ exams: true, lectures: true, faq: true })) : newCourseTabs.asObservable(),
         );
         component.lectureEnabled = true;
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(component.availableTabs()?.exams).toBe(true);
         expect(component.sidebarItems().some((item) => item.title?.includes('Exams'))).toBe(true);
 
@@ -769,7 +769,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(component.isExamStarted()).toBe(true);
     });
 

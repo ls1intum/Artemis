@@ -11,6 +11,7 @@ import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfigura
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.convert.ApplicationConversionService;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.micrometer.observation.autoconfigure.ObservationAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
@@ -29,7 +30,8 @@ class WorkerModelConfigurationTest {
     void createsTheActualProviderModelAndEngineWithoutAWebApplicationStack() {
         new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
-                .withConfiguration(AutoConfigurations.of(ObservationAutoConfiguration.class, ToolCallingAutoConfiguration.class, OpenAiChatAutoConfiguration.class))
+                .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, ObservationAutoConfiguration.class, ToolCallingAutoConfiguration.class,
+                        OpenAiChatAutoConfiguration.class))
                 .withUserConfiguration(JavaGradleGenerationAdapterService.class, WorkerTelemetryConfiguration.class, DefaultGenerationEngineService.class)
                 .withBean(ObservationHandler.class, () -> new ObservationHandler<Observation.Context>() {
 

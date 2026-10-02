@@ -70,6 +70,12 @@ export class TumAetUiSelectComponent implements ControlValueAccessor {
 
     readonly disabled = input(false, { transform: booleanAttribute });
 
+    /**
+     * Reports the select as required to assistive technology. A `tumaet-ui-form-field` marker is decorative, so a
+     * required select sets this as well. Validation stays with the form control.
+     */
+    readonly required = input(false, { transform: booleanAttribute });
+
     readonly showClear = input(false, { transform: booleanAttribute });
 
     /** Adds a search field above the option list, for option sets too long to scan. */
