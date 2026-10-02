@@ -103,18 +103,31 @@ Replace them with your setup specific values.
 
 Artemis runs with `server.forward-headers-strategy: native`, so it builds absolute URLs from the headers the reverse proxy sends.
 This includes the redirect that starts the SAML2 login.
-Pass the original host of the request on with `$host`:
+Pass the original host and port of the request on with `$host` and `$server_port`.
+The websocket endpoint needs the `Upgrade` and `Connection` headers, which nginx does not forward on its own.
+The `map` belongs in the `http` block, the `location` in the `server` block that serves Artemis:
 
 ```nginx
+# Send "Connection: upgrade" only for websocket handshakes
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      "";
+}
+
 location / {
     proxy_pass              http://<artemis node>:8080;
     proxy_http_version      1.1;
+    proxy_set_header        Upgrade             $http_upgrade;
+    proxy_set_header        Connection          $connection_upgrade;
     proxy_set_header        Host                $host;
     proxy_set_header        X-Forwarded-For     $proxy_add_x_forwarded_for;
     proxy_set_header        X-Forwarded-Proto   $scheme;
     proxy_set_header        X-Forwarded-Host    $host;
+    proxy_set_header        X-Forwarded-Port    $server_port;
 }
 ```
+
+If another load balancer or NAT sits in front of nginx and changes the port, set `X-Forwarded-Port` to the port users see instead of `$server_port`.
 
 Do not use `$http_host` for `X-Forwarded-Host`.
 Some nginx versions no longer handle it as before, and users are then redirected to `https://localhost/…` when they log in with SAML2.
