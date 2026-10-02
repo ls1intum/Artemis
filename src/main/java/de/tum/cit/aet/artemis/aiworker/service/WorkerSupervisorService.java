@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.aiworker.api.ExecutionObserver;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
+import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerCommandType;
@@ -57,6 +58,8 @@ public class WorkerSupervisorService implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(WorkerSupervisorService.class);
 
     private static final int MAX_RECENT_ASSIGNMENTS = 1_024;
+
+    private final WorkerMessageCodecApi codec = new WorkerMessageCodecApi();
 
     private final WorkerSettings settings;
 
@@ -266,6 +269,7 @@ public class WorkerSupervisorService implements AutoCloseable {
             if (result == null || result.isBlank() || result.length() > WorkerEventDTO.MAX_PAYLOAD_LENGTH) {
                 throw new IllegalArgumentException("Workload returned invalid terminal output");
             }
+            codec.encode(event(WorkerEventType.FINISHED, identity, null, result));
             terminal = new TerminalResult(WorkerEventType.FINISHED, null, result);
         }
         catch (RuntimeException failure) {
@@ -294,8 +298,8 @@ public class WorkerSupervisorService implements AutoCloseable {
         synchronized (this) {
             active.remove(identity.executionId());
             // Retain this slot until cleanup and delivery both finish, without blocking other slots.
-            pendingTerminals.put(identity.executionId(), event(execution.cancelled.get() ? WorkerEventType.CANCELLED : terminal.type(), identity,
-                    execution.cancelled.get() ? "Execution cancelled." : terminal.message(), execution.cancelled.get() ? null : terminal.output()));
+            pendingTerminals.put(identity.executionId(), execution.cancelled.get() ? event(WorkerEventType.CANCELLED, identity, "Execution cancelled.", null)
+                    : event(terminal.type(), identity, terminal.message(), terminal.output()));
         }
         flushTerminal();
     }
@@ -329,8 +333,10 @@ public class WorkerSupervisorService implements AutoCloseable {
         if (checkpoint == null || checkpoint.isBlank() || checkpoint.length() > WorkerEventDTO.MAX_PAYLOAD_LENGTH) {
             throw new IllegalArgumentException("Workload returned invalid checkpoint output");
         }
+        WorkerEventDTO update = event(WorkerEventType.CHECKPOINT, identity, null, checkpoint);
+        codec.encode(update);
         synchronized (this) {
-            pendingCheckpoints.put(identity.executionId(), event(WorkerEventType.CHECKPOINT, identity, null, checkpoint));
+            pendingCheckpoints.put(identity.executionId(), update);
         }
         flushTerminal();
     }

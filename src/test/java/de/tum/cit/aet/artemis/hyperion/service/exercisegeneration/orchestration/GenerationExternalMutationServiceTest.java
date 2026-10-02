@@ -12,6 +12,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.CoordinationSnapshot;
@@ -22,6 +25,48 @@ import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobInfo;
 
 class GenerationExternalMutationServiceTest {
+
+    @Test
+    void disabledGenerationAllowsOrdinaryWritesInAnExistingTwoMemberCluster() {
+        var firstConfig = new Config();
+        firstConfig.setClusterName("disabled-generation-" + System.nanoTime());
+        firstConfig.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        firstConfig.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true).addMember("127.0.0.1");
+        firstConfig.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("127.0.0.1");
+        var first = Hazelcast.newHazelcastInstance(firstConfig);
+        try {
+            var secondConfig = new Config();
+            secondConfig.setClusterName(firstConfig.getClusterName());
+            secondConfig.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("127.0.0.1");
+            secondConfig.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+            var address = first.getCluster().getLocalMember().getAddress();
+            secondConfig.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true).addMember(address.getHost() + ":" + address.getPort());
+            var second = Hazelcast.newHazelcastInstance(secondConfig);
+            try (var context = new AnnotationConfigApplicationContext()) {
+                org.awaitility.Awaitility.await().until(() -> first.getCluster().getMembers().size() == 2);
+                context.getEnvironment().setActiveProfiles("core", "localvc");
+                context.registerBean(DistributedDataProvider.class, () -> HyperionDistributedDataTestProvider.provider(first));
+                context.register(GenerationExternalMutationService.class, HyperionExerciseMutationApi.class);
+                context.refresh();
+                var api = context.getBean(HyperionExerciseMutationApi.class);
+                String token = api.claimExternalMutationSlot(42);
+                api.clearExternalMutationSlot(42, token);
+                try (var reservation = api.reserveParticipation(42)) {
+                    assertThat(reservation).isNotNull();
+                }
+                DistributedMap<String, JobInfo> jobs = context.getBean(DistributedDataProvider.class).getMap(GenerationJobService.JOB_MAP_NAME);
+                jobs.put("42", new JobInfo("generation", "owner", 42, Instant.now(), null, "other-core", Instant.now(), true, null));
+                assertThatThrownBy(() -> api.claimExternalMutationSlot(42)).isInstanceOf(ConflictException.class);
+                assertThatThrownBy(() -> api.reserveParticipation(42)).isInstanceOf(ConflictException.class);
+            }
+            finally {
+                second.shutdown();
+            }
+        }
+        finally {
+            first.shutdown();
+        }
+    }
 
     @Test
     void sharedCopyRecoveryRequiresEveryRecordedOwnerToBeAbsent() {

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
@@ -12,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.WorkspaceArchive;
 
 /**
  * The file, shell, and verification tools the exercise-generation agent calls, bound to one sandbox session. Created per session (it holds the session id), so not a Spring bean.
@@ -197,16 +200,27 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (unreadable != null) {
             return unreadable;
         }
-        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
-        if (!result.isSuccess()) {
-            return screenObservation(safe, "ERROR: could not read '" + safe + "': " + result.combinedOutput());
+        String content;
+        try {
+            content = readCompleteFile(safe);
         }
-        // Screen the FULL content, not the returned page, so a secret can never escape by straddling a page boundary.
-        String screened = screenObservation(safe, result.stdout());
-        if (!screened.equals(result.stdout())) {
-            return screened;
+        catch (IOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
+            return "ERROR: could not read '" + safe + "': " + failure.getMessage();
         }
-        return pageFileContent(safe, result.stdout(), offset, limit);
+        String screened = screenObservation(safe, content);
+        return screened.equals(content) ? pageFileContent(safe, content, offset, limit) : screened;
+    }
+
+    private String readCompleteFile(String safe) throws IOException {
+        try (TarArchiveInputStream archive = sandbox.copyOut(sessionId, WORKSPACE + "/" + safe)) {
+            Map<String, String> files = WorkspaceArchive.readTar(archive, "");
+            String name = safe.substring(safe.lastIndexOf('/') + 1);
+            String content = files.get(name);
+            if (files.size() != 1 || content == null) {
+                throw new IOException("Expected one regular text file");
+            }
+            return content;
+        }
     }
 
     /**
@@ -330,6 +344,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
     public String writeFile(@ToolParam(description = AgentToolDescriptions.WRITE_FILE_PATH) String path,
             @ToolParam(description = AgentToolDescriptions.WRITE_FILE_CONTENT) String content) {
         latestMutationContent = null;
+        if (content.getBytes(StandardCharsets.UTF_8).length > WorkspaceArchive.MAX_FILE_BYTES) {
+            return "ERROR: file exceeds the workspace size limit. No file was written.";
+        }
         String safe = SandboxPathPolicy.workspaceRelativePath(path);
         if (safe == null) {
             return SandboxPathPolicy.invalidPathError(path);
@@ -396,11 +413,13 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (stageRejection != null) {
             return stageRejection;
         }
-        SandboxExecResultDTO read = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
-        if (!read.isSuccess()) {
-            return screenObservation(safe, "ERROR: could not read '" + safe + "' for editing: " + read.combinedOutput());
+        String current;
+        try {
+            current = readCompleteFile(safe);
         }
-        String current = read.stdout();
+        catch (IOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
+            return "ERROR: could not read '" + safe + "' for editing: " + failure.getMessage();
+        }
         String screened = screenObservation(safe, current);
         if (!screened.equals(current)) {
             return screened;
