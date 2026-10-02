@@ -181,6 +181,26 @@ describe('ExamUpdateComponent', () => {
             expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
         });
 
+        it('should not allow saving while a date field holds text that is not a date', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+
+            const input: HTMLInputElement = fixture.nativeElement.querySelector('input#publishResultsDate');
+            input.value = 'not a date';
+            input.dispatchEvent(new Event('input'));
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(false);
+
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+        });
+
         it('should validate the dates correctly', () => {
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');

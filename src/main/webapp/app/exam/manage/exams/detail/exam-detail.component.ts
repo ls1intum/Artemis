@@ -5,7 +5,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -20,7 +19,7 @@ import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { ExamChecklistComponent } from '../exam-checklist-component/exam-checklist.component';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
@@ -41,7 +40,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         TranslateDirective,
         RouterLink,
         FaIconComponent,
-        DeleteButtonDirective,
+        ExamDeleteDialogComponent,
         CourseExamArchiveButtonComponent,
         ExamChecklistComponent,
         DetailOverviewListComponent,
@@ -71,7 +70,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     formattedConfirmationEndText?: SafeHtml;
     readonly isExamOver = signal(true);
     resetType = ActionType.Reset;
-    buttonSize = ButtonSize.MEDIUM;
+    readonly resetDialogVisible = signal(false);
+    readonly deleteDialogVisible = signal(false);
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 

@@ -1,7 +1,9 @@
-<button type="button" id="highlightDiffButton" class="btn py-0 px-2 mt-0 mb-0 ms-2" [hidden]="isHidden()" (click)="toggleHighlightedProblemStatement($event)">
-    {{
-        showHighlightedDifferences()
-            ? ('artemisApp.exam.problemStatementUpdate.showNew' | artemisTranslate)
-            : ('artemisApp.exam.problemStatementUpdate.showDiff' | artemisTranslate)
-    }}
-</button>
+@if (!isHidden()) {
+    <button type="button" tumAetUiButton severity="warn" size="small" id="highlightDiffButton" class="ms-2" (click)="toggleHighlightedProblemStatement($event)">
+        {{
+            showHighlightedDifferences()
+                ? ('artemisApp.exam.problemStatementUpdate.showNew' | artemisTranslate)
+                : ('artemisApp.exam.problemStatementUpdate.showDiff' | artemisTranslate)
+        }}
+    </button>
+}

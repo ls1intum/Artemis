@@ -1,4 +1,4 @@
-import { Component, Injector, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import { Subscription } from 'rxjs';
@@ -9,7 +9,7 @@ import {
     ProblemStatementUpdateEvent,
 } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/overview/events/button/exam-live-events-button.component';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,15 +18,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-exam-live-events-overlay',
     templateUrl: './exam-live-events-overlay.component.html',
-    styleUrls: ['./exam-live-events-overlay.component.scss'],
-    imports: [ExamLiveEventComponent, FaIconComponent, TranslateDirective],
+    imports: [ExamLiveEventComponent, FaIconComponent, TranslateDirective, TumAetUiButtonDirective],
 })
 export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     private liveEventsService = inject(ExamParticipationLiveEventsService);
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
-    private injector = inject(Injector);
 
     private allLiveEventsSubscription?: Subscription;
     private newLiveEventsSubscription?: Subscription;
@@ -35,7 +31,10 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     readonly eventsToDisplay = signal<ExamLiveEvent[] | undefined>(undefined);
     readonly events = signal<ExamLiveEvent[]>([]);
 
-    readonly examStartDate = signal<dayjs.Dayjs | undefined>(undefined);
+    /** The start date of the exam. Read live, so that a postponed start date is reflected in the filter. */
+    readonly examStartDate = input<dayjs.Dayjs | undefined>();
+    /** Emitted when the overlay wants its dialog to close. */
+    readonly closed = output<void>();
     // Icons
     faCheck = faCheck;
 
@@ -47,14 +46,6 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        const data = this.dialogConfig?.data;
-        if (data?.examStartDate) {
-            const getter = data.examStartDate as () => dayjs.Dayjs | undefined;
-            this.examStartDate.set(getter());
-            // Re-evaluate whenever the source signal changes so a postponed start date is reflected live.
-            effect(() => this.examStartDate.set(getter()), { injector: this.injector });
-        }
-
         this.allLiveEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
             // display the problem statements events only after the start of the exam
             this.events.set(events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate()))));
@@ -96,7 +87,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     }
 
     closeOverlay() {
-        this.dialogRef.close('cancel');
+        this.closed.emit();
     }
 
     updateEventsToDisplay() {

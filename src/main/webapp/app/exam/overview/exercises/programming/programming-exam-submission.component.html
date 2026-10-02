@@ -1,4 +1,4 @@
-<h3 class="text-align-left fw-normal">
+<h3 class="font-normal">
     <span>
         {{ exercise().exerciseGroup?.title }}
     </span>
@@ -35,9 +35,9 @@
                     </div>
                 }
             </div>
-            <div editorToolbar class="d-inline-flex align-items-center">
+            <div editorToolbar class="inline-flex items-center">
                 @if (repositoryIsLocked) {
-                    <jhi-code-editor-repository-is-locked class="me-3" />
+                    <jhi-code-editor-repository-is-locked class="me-4" />
                 }
                 @if (studentParticipation()) {
                     <jhi-updating-result
@@ -64,7 +64,7 @@
                 [exercise]="exercise()"
                 [participation]="studentParticipation()"
                 [personalParticipation]="true"
-                class="instructions-wrapper__content card-body p-0"
+                class="instructions-wrapper__content flex-auto"
             />
         </jhi-code-editor-container>
     </div>
@@ -72,12 +72,12 @@
 <!-- ngIf Offline IDE code button start -->
 @if (!exercise().allowOnlineEditor && exercise().allowOfflineIde) {
     <div>
-        <div class="d-flex my-3 ms-1 align-items-center justify-content-between">
-            <div class="d-flex gap-3 align-items-center">
+        <div class="my-4 ms-1 flex items-center justify-between">
+            <div class="flex items-center gap-4">
                 <jhi-exercise-details-student-actions [exercise]="exercise()" [courseId]="courseId()" [examMode]="true" />
-                <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount()" class="flex-grow-1" />
+                <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount()" class="grow" />
             </div>
-            <div class="d-flex gap-3 align-items-center">
+            <div class="flex items-center gap-4">
                 @if (repositoryIsLocked) {
                     <jhi-code-editor-repository-is-locked class="me-1" />
                 }

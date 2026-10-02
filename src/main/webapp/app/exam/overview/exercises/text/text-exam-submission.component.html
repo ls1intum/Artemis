@@ -1,6 +1,6 @@
 @if (exercise()) {
-    <div class="d-flex justify-content-between align-items-center">
-        <h3 class="text-align-left fw-normal mb-0">
+    <div class="flex items-center justify-between">
+        <h3 class="mb-0! font-normal">
             <span>
                 {{ exercise().exerciseGroup?.title }}
             </span>
@@ -17,19 +17,18 @@
     </div>
     <hr />
     <!--resizable container-->
-    <jhi-resizeable-container class="col-12" [examTimeline]="examTimeline()">
+    <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
         <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
-        <div left-body class="text-editor-grid mt-4 ps-2 pb-2 w-100">
-            <div class="grid-area-main">
-                <div>
-                    <span class="badge bg-primary mb-2" data-testid="word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
-                    <span
-                        class="badge bg-primary mb-2"
-                        data-testid="character-count"
-                        jhiTranslate="artemisApp.textExercise.characterCount"
-                        [translateValues]="{ count: characterCount }"
-                    ></span>
+        <div left-body class="mt-6 w-full ps-2 pb-2">
+            <div>
+                <div class="mb-2 flex flex-wrap gap-1">
+                    <tumaet-ui-tag severity="info" data-testid="word-count">
+                        <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
+                    </tumaet-ui-tag>
+                    <tumaet-ui-tag severity="info" data-testid="character-count">
+                        <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount }"></span>
+                    </tumaet-ui-tag>
                 </div>
                 <ng-container>
                     <textarea
@@ -57,7 +56,7 @@
                 <jhi-exam-exercise-update-highlighter [exercise]="exercise()" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
             @if (problemStatementHtml()) {
-                <p class="markdown-preview mb-3">
+                <p class="markdown-preview mb-4!">
                     <span [innerHTML]="problemStatementHtml()"></span>
                 </p>
             }
