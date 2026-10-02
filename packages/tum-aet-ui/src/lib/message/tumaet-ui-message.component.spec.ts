@@ -53,6 +53,31 @@ describe('TumAetUiMessageComponent', () => {
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('.tumaet-ui-message-icon'))).not.toBeNull();
     });
+
+    it('offers no dismiss button unless it is dismissible', () => {
+        expect(fixture.debugElement.query(By.css('.tumaet-ui-message-dismiss'))).toBeNull();
+    });
+
+    it('emits dismissed from a labelled dismiss button', () => {
+        fixture.componentRef.setInput('dismissible', true);
+        fixture.detectChanges();
+        const dismissed = vi.fn();
+        fixture.componentInstance.dismissed.subscribe(dismissed);
+
+        const button: HTMLButtonElement = fixture.debugElement.query(By.css('.tumaet-ui-message-dismiss')).nativeElement;
+        expect(button.type).toBe('button');
+        expect(button.getAttribute('aria-label')).toBe('Dismiss');
+        button.click();
+
+        expect(dismissed).toHaveBeenCalledOnce();
+    });
+
+    it('uses a given accessible name for the dismiss button', () => {
+        fixture.componentRef.setInput('dismissible', true);
+        fixture.componentRef.setInput('dismissButtonAriaLabel', 'Hide confirmation');
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.tumaet-ui-message-dismiss')).nativeElement.getAttribute('aria-label')).toBe('Hide confirmation');
+    });
 });
 
 @Component({

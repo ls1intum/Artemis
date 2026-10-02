@@ -22,6 +22,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -48,6 +51,7 @@ describe('AccountService', () => {
                 SessionStorageService,
                 { provide: WebsocketService, useValue: MockService(WebsocketService) },
                 { provide: FeatureToggleService, useValue: MockService(FeatureToggleService) },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -407,6 +411,71 @@ describe('AccountService', () => {
         expect(exercise.isAtLeastInstructor).toBe(true);
         expect(exercise.course!.isAtLeastEditor).toBe(true);
         expect(exercise.course!.isAtLeastInstructor).toBe(true);
+    });
+
+    describe('test isPasskeyRequiredForAdministratorFeatures', () => {
+        const activateModuleFeatures = (...features: string[]) =>
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((feature: string) => features.includes(feature));
+
+        it('should require a passkey when passkeys are enabled and required for administrator features', () => {
+            activateModuleFeatures(MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+            expect(accountService.isPasskeyRequiredForAdministratorFeatures()).toBe(true);
+        });
+
+        it('should not require a passkey when administrator features do not require one', () => {
+            activateModuleFeatures(MODULE_FEATURE_PASSKEY);
+            expect(accountService.isPasskeyRequiredForAdministratorFeatures()).toBe(false);
+        });
+
+        it('should not require a passkey when passkeys are disabled', () => {
+            activateModuleFeatures(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+            expect(accountService.isPasskeyRequiredForAdministratorFeatures()).toBe(false);
+        });
+    });
+
+    describe('test hasEditorAccess', () => {
+        let passkeyRequired: boolean;
+
+        beforeEach(() => {
+            passkeyRequired = true;
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockImplementation(() => passkeyRequired);
+        });
+
+        it('should deny editor access to a user who is not logged in', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.hasEditorAccess()).toBe(false);
+        });
+
+        it.each([[Authority.STUDENT], [Authority.TUTOR]])('should deny editor access to a user with the authority %s', (authority) => {
+            accountService.userIdentity.set({ id: 1, authorities: [authority] } as User);
+            expect(accountService.hasEditorAccess()).toBe(false);
+        });
+
+        it.each([[Authority.EDITOR], [Authority.INSTRUCTOR]])('should grant editor access to a user with the authority %s without a passkey', (authority) => {
+            accountService.userIdentity.set({ id: 1, authorities: [authority] } as User);
+            expect(accountService.hasEditorAccess()).toBe(true);
+        });
+
+        it.each([[Authority.ADMIN], [Authority.SUPER_ADMIN]])('should deny editor access to a user with the authority %s without the required passkey', (authority) => {
+            accountService.userIdentity.set({ id: 1, authorities: [authority], loggedInWithPasskey: false, passkeySuperAdminApproved: true } as User);
+            expect(accountService.hasEditorAccess()).toBe(false);
+        });
+
+        it('should deny editor access to an administrator whose passkey is not approved', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN], loggedInWithPasskey: true, passkeySuperAdminApproved: false } as User);
+            expect(accountService.hasEditorAccess()).toBe(false);
+        });
+
+        it('should grant editor access to an administrator who signed in with an approved passkey', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN], loggedInWithPasskey: true, passkeySuperAdminApproved: true } as User);
+            expect(accountService.hasEditorAccess()).toBe(true);
+        });
+
+        it('should grant editor access to an administrator when administrator features require no passkey', () => {
+            passkeyRequired = false;
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN] } as User);
+            expect(accountService.hasEditorAccess()).toBe(true);
+        });
     });
 
     describe('test isOwnerOfParticipation', () => {

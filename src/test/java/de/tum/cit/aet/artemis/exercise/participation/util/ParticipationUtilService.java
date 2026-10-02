@@ -321,6 +321,22 @@ public class ParticipationUtilService {
     }
 
     /**
+     * Creates and saves a practice StudentParticipation for the given Exercise given the Participant's login, in addition to any graded participation.
+     *
+     * @param exercise The Exercise the StudentParticipation belongs to
+     * @param login    The login of the Participant the StudentParticipation belongs to
+     * @return The created practice StudentParticipation
+     */
+    public StudentParticipation createAndSavePracticeParticipationForExercise(Exercise exercise, String login) {
+        StudentParticipation participation = new StudentParticipation();
+        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setParticipant(userUtilService.getUserByLogin(login));
+        participation.setExercise(exercise);
+        participation.setPracticeMode(true);
+        return studentParticipationRepo.save(participation);
+    }
+
+    /**
      * Creates and saves a StudentParticipation for the given Exercise given the Participant's login. The StudentParticipation's initializationDate is set to now + 2 days.
      *
      * @param exercise The Exercise the StudentParticipation belongs to

@@ -30,6 +30,7 @@
             },
             "title": "Titel",
             "channelName": "Kanalname",
+            "channelNameHint": "Studierende besprechen die Vorlesung in einem Kurskanal mit diesem Namen. Er folgt dem Titel und darf Kleinbuchstaben, Ziffern und Bindestriche enthalten.",
             "description": "Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",
@@ -52,20 +53,33 @@
                 "label": "Vorlesung importieren"
             },
             "sections": {
-                "title": "Titel",
-                "titleDescription": "Gib einen Titel und eine aussagekräftige Beschreibung für die Vorlesung ein.",
+                "title": "Details",
+                "titleDescription": "Titel und Beschreibung, die Studierende für diese Vorlesung sehen.",
                 "period": "Zeitraum",
-                "periodDescription": "Lege Start- und Enddatum der Vorlesung fest.",
+                "periodDescription": "Wann die Vorlesung stattfindet. Beide Angaben sind optional.",
+                "periodOrderInvalid": "Das Ende muss nach dem Start liegen.",
                 "units": "Inhalte",
-                "unitsDescription": "Füge Inhalte zur Vorlesung hinzu, indem du verschiedene Vorlesungsinhalte erstellst."
+                "unitsDescription": "Studierende sehen diese Inhalte in dieser Reihenfolge. Ziehe einen Inhalt, um ihn zu verschieben. Änderungen an Inhalten werden automatisch gespeichert.",
+                "navigation": "Abschnitte der Vorlesung",
+                "needsAttention": "muss überprüft werden",
+                "jumpTo": "Springe zu"
             },
-            "newLectureUnit": "Neuer Vorlesungsinhalt",
-            "editLectureUnit": "Vorlesungsinhalt bearbeiten",
+            "editFooter": {
+                "noChanges": "Keine ungespeicherten Änderungen",
+                "unsavedChanges": "Ungespeicherte Änderungen:",
+                "saving": "Die Vorlesungsdetails werden gespeichert…",
+                "saved": "Vorlesungsdetails um {{ time }} gespeichert",
+                "contentHint": "Änderungen an Inhalten werden automatisch gespeichert.",
+                "createHint": "Speichere die Vorlesung, um Inhalte hinzuzufügen.",
+                "nothingToSave": "Es gibt keine Änderungen zum Speichern.",
+                "detailsIncomplete": "Fülle die Pflichtangaben aus, um zu speichern.",
+                "periodInvalid": "Korrigiere den Zeitraum der Vorlesung, um zu speichern."
+            },
+            "newLectureUnit": "Neuer Inhalt",
             "dismissChangesModal": {
                 "title": "Ungespeicherte Änderungen der Vorlesung verwerfen?",
-                "message": "Bist du sicher, dass du die ungespeicherten Änderungen verwerfen willst?",
-                "sectionsThatContainUnsavedChangesSingular": "Der folgende Abschnitt enthält ungespeicherte Änderungen:",
-                "sectionsThatContainUnsavedChangesPlural": "Die folgenden Abschnitte enthalten ungespeicherte Änderungen:"
+                "message": "Ungespeicherte Änderungen in: {{ sections }}. Willst du sie verwerfen?",
+                "keepEditing": "Weiter bearbeiten"
             },
             "creationMode": {
                 "singleLectureLabel": "Einzelne Vorlesung",
@@ -77,8 +91,8 @@
                 "title": "Lektionen"
             },
             "pdfUpload": {
-                "dropZoneTitle": "PDF-Dateien hier ablegen, um Folien hinzuzufügen",
-                "dropZoneHint": "oder klicken, um Dateien auszuwählen",
+                "dropZoneTitle": "PDFs hier ablegen, um daraus eine Vorlesung zu erstellen oder sie einer hinzuzufügen",
+                "dropZoneHint": "Jedes PDF wird ein Inhalt, den Studierende 15 Minuten nach dem Hochladen sehen.",
                 "dialogTitle": "PDFs zur Vorlesung hinzufügen",
                 "newLecture": "Neue Vorlesung erstellen",
                 "existingLecture": "Zu bestehender Vorlesung hinzufügen",
@@ -86,11 +100,23 @@
                 "selectLecturePlaceholder": "-- Vorlesung auswählen --",
                 "lectureTitle": "Vorlesungstitel",
                 "lectureTitlePlaceholder": "Vorlesungstitel eingeben",
-                "confirm": "Erstellen",
+                "confirm": "Vorlesung erstellen",
                 "filesSelected": "{{ count }} PDF-Datei(en) ausgewählt",
                 "success": "PDF-Inhalte wurden erfolgreich hinzugefügt.",
                 "lectureCreated": "Vorlesung und Inhalte wurden erfolgreich erstellt.",
-                "fileTooLarge": "Eine oder mehrere Dateien überschreiten die maximale Größe von 20MB und wurden übersprungen."
+                "fileTooLarge": "Eine oder mehrere Dateien überschreiten die maximale Größe von 20MB und wurden übersprungen.",
+                "confirmExisting": "Zur Vorlesung hinzufügen",
+                "targetHint": "Jedes PDF wird zu einem Inhalt, den Studierende 15 Minuten nach dem Hochladen sehen. Anschließend öffnet sich die Vorlesung zum Bearbeiten.",
+                "createdTitle": "Vorlesung erstellt",
+                "createdSingle": "Die Vorlesung „{{ title }}“ wurde mit dem PDF {{ fileName }} als erstem Inhalt erstellt. Du kannst jetzt ihre Details und Inhalte bearbeiten.",
+                "createdMultiple": "Die Vorlesung „{{ title }}“ wurde mit {{ count }} PDFs als ersten Inhalten erstellt. Du kannst jetzt ihre Details und Inhalte bearbeiten.",
+                "addedTitle": "Inhalt hinzugefügt",
+                "addedSingle": "Das PDF {{ fileName }} wurde „{{ title }}“ als neuer Inhalt hinzugefügt.",
+                "addedMultiple": "{{ count }} PDFs wurden „{{ title }}“ als neue Inhalte hinzugefügt.",
+                "releaseSingle": "Studierende sehen es ab {{ date }}.",
+                "releaseMultiple": "Studierende sehen sie ab {{ date }}.",
+                "dropZoneContentTitle": "PDFs hier ablegen, um sie als Inhalte hinzuzufügen",
+                "selectFiles": "PDFs auswählen"
             },
             "createSeries": {
                 "startAndEndDateExplanation": "Erstelle schnell eine Vorlesungsserie, indem du Title und Zeiten definierst. Füge Inhalte später hinzu. Definiere als erstes den Start und das Ende von mindestens einer Vorlesung, die du wöchentlich wiederholen willst:",
@@ -109,6 +135,31 @@
                     "header": "Bestehende Vorlesungsnamen aktualisieren?",
                     "message": "Einige bestehende Vorlesungen folgen dem Standard-Namensformat (z.B. „Lecture 1“). Möchtest du die Nummerierung dieser Vorlesungen gemäß der neuen Reihenfolge anpassen?"
                 }
+            },
+            "addContent": {
+                "title": "Inhalte hinzufügen"
+            },
+            "splitPdf": {
+                "title": "Ein Vorlesungs-PDF in mehrere Inhalte aufteilen",
+                "description": "Für PDFs, deren Folien die Gliederung vor jedem Abschnitt wiederholen: Artemis schlägt einen Inhalt pro Abschnitt vor, der jeweils bei einer Folie mit dem Wort „Outline“ oder „Gliederung“ beginnt. Du prüfst den Vorschlag, bevor etwas erstellt wird.",
+                "unit": "Aufzuteilendes PDF",
+                "unitPlaceholder": "PDF auswählen",
+                "start": "In Abschnitte aufteilen",
+                "noPdf": "Füge das Vorlesungs-PDF zuerst als Inhalt hinzu, zum Beispiel indem du es oben ablegst.",
+                "otherPdf": "Anderes PDF hochladen",
+                "otherPdfHint": "Für ein PDF, das noch nicht Teil dieser Vorlesung ist."
+            },
+            "unitEditor": {
+                "title": "Dieser Inhalt wird bearbeitet",
+                "autosaveHint": "Änderungen werden automatisch gespeichert.",
+                "saving": "Wird gespeichert…",
+                "saved": "Alle Änderungen gespeichert · {{ time }}",
+                "invalid": "Noch nicht gespeichert: Korrigiere die markierten Felder.",
+                "failed": "Nicht gespeichert. Deine Änderungen bleiben erhalten.",
+                "retry": "Erneut versuchen",
+                "discard": "Änderung verwerfen und schließen",
+                "failedAfterLeaving": "Eine Änderung an einem Vorlesungsinhalt konnte nicht gespeichert werden. Öffne die Vorlesung erneut, um ihre Inhalte zu prüfen.",
+                "unconfirmedContent": "Speichere oder verwirf zuerst die neue Datei oder Video-URL."
             }
         },
         "attachment": {

@@ -709,6 +709,8 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
             'src/main/webapp/app/core/alert/**/*.html',
+            'src/main/webapp/app/core/about-us/**/*.html',
+            'src/main/webapp/app/core/feature-overview/**/*.html',
             'src/main/webapp/app/core/layouts/footer/**/*.html',
             // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
@@ -719,11 +721,21 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
-            'src/main/webapp/app/exam/manage/exercise-groups/**/*.html',
+            // The instructor pages of the exam mode, and the working-time, live-event and course-exams pieces that they share with the student pages.
+            'src/main/webapp/app/exam/manage/**/*.html',
+            'src/main/webapp/app/exam/shared/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
+            'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/account/**/*.html',
+            // The lecture editor with its content, the pages that create, edit and split content, and the PDF drop zone and dialog.
+            'src/main/webapp/app/lecture/manage/lecture-update/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-period/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
+            'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
+            'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {
