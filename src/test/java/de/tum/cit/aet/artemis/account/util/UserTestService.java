@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.account.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -24,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -585,8 +584,17 @@ public class UserTestService {
         params.add("registrationNumbers", "");
         params.add("courseIds", "");
         // Only the first page fits, so the total has to come from the count query
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/account/admin/users").params(params)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
-                .andExpect(header().string("X-Total-Count", String.valueOf(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS)));
+        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/account/admin/users").params(params)).andExpect(status().isOk()).andReturn();
+        List<UserDTO> users = request.getObjectMapper().readValue(result.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserDTO.class));
+        assertThat(users).hasSize(2);
+        assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS));
+
+        // Selected roles are combined with AND: tutors, editors and instructors are TAs, but only the instructor has both
+        params.set("pageSize", "100");
+        params.set("authorities", "TA,INSTRUCTOR");
+        List<UserDTO> instructors = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
+        assertThat(instructors).extracting(UserDTO::getLogin).containsExactly(TEST_PREFIX + "instructor1");
     }
 
     // Test
