@@ -1,5 +1,6 @@
 @if (visibleRows().length || loadFailed()) {
     <button
+        type="button"
         tumAetUiButton
         variant="text"
         severity="secondary"
@@ -32,6 +33,7 @@
                 <span role="heading" aria-level="2" class="text-base font-semibold">{{ 'artemisApp.hyperion.activity.title' | artemisTranslate }}</span>
                 @if (hiddenCount()) {
                     <button
+                        type="button"
                         tumAetUiButton
                         variant="text"
                         size="small"
@@ -47,7 +49,7 @@
             @if (loadFailed()) {
                 <tumaet-ui-message severity="error" data-testid="ai-activity-load-error">
                     {{ 'artemisApp.hyperion.jobs.loadFailed' | artemisTranslate }}
-                    <button tumAetUiButton variant="text" size="small" (click)="refresh(true)">{{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}</button>
+                    <button type="button" tumAetUiButton variant="text" size="small" (click)="refresh(true)">{{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}</button>
                 </tumaet-ui-message>
             }
             <ul class="m-0 flex max-h-[min(65vh,36rem)] list-none flex-col gap-3 overflow-y-auto p-0" [attr.aria-label]="'artemisApp.hyperion.activity.title' | artemisTranslate">
@@ -62,6 +64,7 @@
                             <span class="text-xs font-semibold tracking-wide text-muted-color">{{ row.kindKey | artemisTranslate }}</span>
                             @if (!row.active) {
                                 <button
+                                    type="button"
                                     tumAetUiButton
                                     variant="text"
                                     size="small"
@@ -127,6 +130,7 @@
                         }
                         @if (row.canCancel) {
                             <button
+                                type="button"
                                 tumAetUiButton
                                 variant="outlined"
                                 severity="danger"
@@ -143,7 +147,7 @@
                 }
             </ul>
             @if (hasMoreHistory()) {
-                <button tumAetUiButton variant="text" size="small" (click)="loadMoreHistory()" data-testid="ai-activity-load-more">
+                <button type="button" tumAetUiButton variant="text" size="small" (click)="loadMoreHistory()" data-testid="ai-activity-load-more">
                     {{ 'artemisApp.hyperion.activity.loadMore' | artemisTranslate }}
                 </button>
             }

@@ -20,7 +20,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 
 /**

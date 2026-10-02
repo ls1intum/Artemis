@@ -154,7 +154,7 @@ describe('ExerciseVariantGenerationService', () => {
         apiMock.getJobsOfCurrentUser.mockReturnValue(of([{ jobId: 'persisted-1', phase: 'VERIFYING' }]));
         userIdentity.set({ login: 'editor1' } as User);
         TestBed.tick();
-        expect(service.hasJobs()).toBe(true);
+        expect(service.jobs()).toHaveLength(1);
 
         editorAccess = false;
         userIdentity.set({ login: 'editor1' } as User);

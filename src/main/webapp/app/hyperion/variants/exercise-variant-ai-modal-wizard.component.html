@@ -285,7 +285,7 @@
                                 <span class="placement-option__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroup' | artemisTranslate }}</span>
                                 <span class="placement-option__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroupHint' | artemisTranslate }}</span>
                                 @if (placementChoice() === 'new-group') {
-                                    <div class="new-group-settings" (click)="$event.stopPropagation()">
+                                    <div class="new-group-settings">
                                         <div class="flex flex-wrap gap-2 items-end mt-2">
                                             <div class="grow" style="min-width: 120px">
                                                 <label class="new-group-settings__label" for="wiz-group-title">{{

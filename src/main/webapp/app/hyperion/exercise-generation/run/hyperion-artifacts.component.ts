@@ -54,7 +54,7 @@ export class HyperionArtifactsComponent {
     protected readonly filesEmptyHintKey = computed(() => `artemisApp.hyperion.generation.artifacts.${this.terminal() ? 'notKeptHint' : 'filesPendingHint'}`);
 
     protected onTabChange(value: string | number | undefined): void {
-        if (value === 'files' || (value === 'spec' && this.showDesign())) {
+        if (this.showDesign() && (value === 'files' || value === 'spec')) {
             this.activeTab.set(value);
         }
     }
