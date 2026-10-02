@@ -515,15 +515,8 @@ export class HyperionGenerationActivityFacade {
         if (state.running) {
             const sameOwnedJob = this.jobId() === state.jobId && this.ownedByCaller();
             if (this.jobId() !== state.jobId) {
-                this.reverting.set(false);
-                this.confirmRevertVisible.set(false);
-                this.closeStream();
+                this.reset();
                 this.jobId.set(state.jobId);
-                this.mode.set(undefined);
-                this.events.set([]);
-                this.usage.set(undefined);
-                this.accountingState.set(undefined);
-                this.clearFileChanges();
             }
             this.running.set(true);
             if (!sameOwnedJob) {

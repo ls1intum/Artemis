@@ -972,6 +972,30 @@ describe('HyperionGenerationActivityFacade', () => {
         expect(component.jobId()).toBe('live');
         expect(component.running()).toBe(true);
     });
+    it('clears the previous design and undo state before adopting another public run', () => {
+        const fixture = createWith(
+            normalizeStatus({ jobId: 'previous', mode: 'GENERATE', running: false, ownedByCaller: true, specDocument: 'Previous design', events: [], fileChanges: [] }),
+        );
+        const component = fixture.componentInstance.facade;
+        expect(component.specDocument()).toBe('Previous design');
+        component.reverted.set(true);
+        component.revertedMode.set('GENERATE');
+        component.revertPartialRepositories.set('tests');
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
+        service.getStatus = () => pendingStatus.asObservable();
+
+        service.exerciseState$.next({ exerciseId: 42, jobId: 'current', running: true });
+
+        expect(component.specDocument()).toBeUndefined();
+        expect(component.reverted()).toBe(false);
+        expect(component.revertedMode()).toBeUndefined();
+        expect(component.revertPartialRepositories()).toBeUndefined();
+        pendingStatus.next(normalizeStatus({ jobId: 'current', mode: 'ADAPT', running: true, ownedByCaller: false, events: [], fileChanges: [] }));
+        expect(component.jobId()).toBe('current');
+        expect(component.specDocument()).toBeUndefined();
+        expect(component.ownedByCaller()).toBe(false);
+    });
+
     it('adopts a newer active run owned by the same instructor', () => {
         const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = () => pendingStatus.asObservable();
