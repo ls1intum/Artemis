@@ -74,13 +74,18 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     readonly feedback = input<Feedback>();
 
+    private readonly editSessionActive = signal(false);
+    private pendingStepCredits: number | undefined;
+
     /**
      * The feedback currently displayed/edited. It is seeded from the {@link feedback} input (defaulting to a fresh
-     * {@link Feedback} when none is provided) and can be reassigned internally (e.g. when the user cancels an edit).
-     * Using a {@link linkedSignal} preserves the original setter behavior: whenever the bound input changes, the
-     * working copy resets to the new value.
+     * {@link Feedback} when none is provided). Monaco rebinds fresh clones after unrelated feedback updates;
+     * keep the working copy until this card's edit session ends.
      */
-    readonly currentFeedback = linkedSignal<Feedback>(() => this.feedback() ?? new Feedback());
+    readonly currentFeedback = linkedSignal<Feedback | undefined, Feedback>({
+        source: () => this.feedback(),
+        computation: (feedback, previous) => (this.editSessionActive() && previous ? previous.value : (feedback ?? new Feedback())),
+    });
 
     /** Bumped when an instruction is unlinked in place so {@link saveEnabled} re-evaluates. */
     private readonly contentRevision = signal(0);
@@ -114,9 +119,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     /** Shows the apply-armed-instruction control while an instruction is armed and the card is open for editing. */
     protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !this.viewOnly() && this.selectionService.hasArmedInstruction());
-
-    /** Keeps an open edit session stable when Monaco rebinds a deep-cloned feedback after an update. */
-    private readonly editSessionActive = signal(false);
 
     /**
      * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
@@ -248,12 +250,18 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     protected stepCredits(delta: number): void {
         const feedback = deepClone(this.currentFeedback());
+        const credits = this.pendingStepCredits ?? feedback.credits;
+        this.pendingStepCredits = undefined;
         // Points of a feedback linked to a grading instruction are owned by that instruction.
         if (feedback.gradingInstruction) {
             return;
         }
-        feedback.credits = steppedCredits(feedback.credits, delta);
+        feedback.credits = steppedCredits(credits, delta);
         this.currentFeedback.set(feedback);
+    }
+
+    protected captureStepCredits(input: HTMLInputElement): void {
+        this.pendingStepCredits = Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : undefined;
     }
 
     protected updateCredits(credits: number | null | undefined): void {

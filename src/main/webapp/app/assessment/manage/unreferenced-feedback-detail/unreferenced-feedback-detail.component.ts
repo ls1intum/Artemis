@@ -101,6 +101,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      * Bumping this re-runs credit-dependent template bindings.
      */
     private readonly creditsEpoch = signal(0);
+    private pendingStepCredits: number | undefined;
 
     /** Card accent stripe: follows credits; reads {@link creditsEpoch} so in-place edits still refresh. */
     protected cardTone(): FeedbackTone {
@@ -204,12 +205,18 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      * @param delta the signed step to apply
      */
     stepCredits(delta: number): void {
+        const credits = this.pendingStepCredits ?? this.feedback().credits;
+        this.pendingStepCredits = undefined;
         if (this.pointsDisabled()) {
             return;
         }
         const feedback = this.feedback();
-        feedback.credits = steppedCredits(feedback.credits, delta);
+        feedback.credits = steppedCredits(credits, delta);
         this.emitChanges();
+    }
+
+    captureStepCredits(input: HTMLInputElement): void {
+        this.pendingStepCredits = Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : undefined;
     }
 
     /**

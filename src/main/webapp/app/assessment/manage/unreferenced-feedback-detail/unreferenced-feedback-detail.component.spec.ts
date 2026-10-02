@@ -304,6 +304,25 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(feedback.credits).toBe(0.5);
     });
 
+    it('steps from the typed value when blur precedes the stepper click', () => {
+        const feedback = { credits: 1, detailText: 'note' } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('.feedback-card__points-input') as HTMLInputElement;
+        const increase = fixture.nativeElement.querySelectorAll('.feedback-card__step')[1] as HTMLButtonElement;
+        input.value = '1.3';
+        input.dispatchEvent(new Event('input'));
+        increase.dispatchEvent(new Event('pointerdown'));
+        input.dispatchEvent(new Event('blur'));
+        increase.click();
+        fixture.detectChanges();
+
+        expect(feedback.credits).toBe(1.5);
+    });
+
     it('should give each card unique control ids linked to Title and Feedback labels', () => {
         fixture.componentRef.setInput('feedback', { detailText: 'note', credits: 1 } as Feedback);
         fixture.componentRef.setInput('readOnly', false);

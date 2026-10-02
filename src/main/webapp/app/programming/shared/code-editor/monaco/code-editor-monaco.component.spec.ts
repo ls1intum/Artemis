@@ -256,6 +256,41 @@ describe('CodeEditorMonacoComponent', () => {
         expect(linkedCard.viewOnly()).toBe(true);
     });
 
+    it('keeps an open card’s comment and points when another suggestion is accepted', () => {
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const first = { id: 1, reference: 'file:file1.java_line:1', text: 'Manual', detailText: 'Original', credits: 1, type: FeedbackType.MANUAL } as Feedback;
+        const suggestion = { id: 2, reference: 'file:file1.java_line:2', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Second`, detailText: 'Suggested' } as Feedback;
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbacks', [first]);
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+        fixture.detectChanges();
+        comp.onUpdateFeedback.subscribe((feedbacks) => fixture.componentRef.setInput('feedbacks', feedbacks));
+
+        const card = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
+            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
+        card.editFeedback(1);
+        fixture.detectChanges();
+        const textarea = card.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]') as HTMLTextAreaElement;
+        textarea.value = 'Edited comment';
+        textarea.dispatchEvent(new Event('input'));
+        const points = card.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-points-input"]') as HTMLInputElement;
+        points.value = '1.5';
+        points.dispatchEvent(new Event('change'));
+        fixture.detectChanges();
+
+        comp.acceptSuggestion(suggestion);
+        fixture.detectChanges();
+
+        const rebound = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
+            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
+        expect(rebound).toBe(card);
+        expect(card.currentFeedback().detailText).toBe('Edited comment');
+        expect(card.currentFeedback().credits).toBe(1.5);
+        card.updateFeedback();
+
+        expect(comp.feedbackInternal().find((feedback) => feedback.id === 1)).toEqual(expect.objectContaining({ detailText: 'Edited comment', credits: 1.5 }));
+    });
+
     it('should remove only the selected suggestion when identical text appears on another line', () => {
         const first = { text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Title`, detailText: 'Comment', reference: 'file:file1.java_line:1' } as Feedback;
         const second = { text: first.text, detailText: first.detailText, reference: 'file:file1.java_line:2' } as Feedback;

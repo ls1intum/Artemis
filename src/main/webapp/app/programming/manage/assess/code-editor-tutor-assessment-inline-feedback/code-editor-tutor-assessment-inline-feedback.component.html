@@ -25,6 +25,7 @@
                             type="button"
                             class="inline-feedback__step"
                             [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
+                            (pointerdown)="captureStepCredits(pointsInput)"
                             (click)="stepCredits(-CREDITS_STEP)"
                         >
                             <fa-icon [icon]="faMinus" />
@@ -48,6 +49,7 @@
                             type="button"
                             class="inline-feedback__step"
                             [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                            (pointerdown)="captureStepCredits(pointsInput)"
                             (click)="stepCredits(CREDITS_STEP)"
                         >
                             <fa-icon [icon]="faPlus" />

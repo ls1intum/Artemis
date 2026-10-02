@@ -601,6 +601,25 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(expect.objectContaining({ credits: 0.5 }));
     });
 
+    it('steps from the typed value when change precedes the stepper click', () => {
+        const feedback = { credits: 1, detailText: 'note', type: FeedbackType.MANUAL } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('#feedback-points') as HTMLInputElement;
+        const increase = fixture.nativeElement.querySelectorAll('.inline-feedback__step')[1] as HTMLButtonElement;
+        input.value = '1.3';
+        input.dispatchEvent(new Event('input'));
+        increase.dispatchEvent(new Event('pointerdown'));
+        input.dispatchEvent(new Event('change'));
+        increase.click();
+        fixture.detectChanges();
+
+        expect(comp.currentFeedback().credits).toBe(1.5);
+    });
+
     it('should not step the points of a feedback linked to a grading instruction', () => {
         const feedback = new Feedback();
         feedback.credits = 2;

@@ -62,6 +62,7 @@
                                     type="button"
                                     class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
                                     [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
+                                    (pointerdown)="captureStepCredits(pointsInput)"
                                     (click)="stepCredits(-CREDITS_STEP)"
                                 >
                                     <fa-icon [icon]="faMinus" />
@@ -69,6 +70,7 @@
                             </tumaet-ui-input-group-addon>
                             <input
                                 [id]="pointsInputId"
+                                #pointsInput
                                 tumAetUiInput
                                 [tumAetUiInputId]="pointsInputId"
                                 class="feedback-card__points-input rounded-none text-center font-semibold"
@@ -85,6 +87,7 @@
                                     type="button"
                                     class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
                                     [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                                    (pointerdown)="captureStepCredits(pointsInput)"
                                     (click)="stepCredits(CREDITS_STEP)"
                                 >
                                     <fa-icon [icon]="faPlus" />
@@ -133,6 +136,7 @@
                                 type="button"
                                 class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
                                 [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
+                                (pointerdown)="captureStepCredits(pointsInput)"
                                 (click)="stepCredits(-CREDITS_STEP)"
                             >
                                 <fa-icon [icon]="faMinus" />
@@ -140,6 +144,7 @@
                         </tumaet-ui-input-group-addon>
                         <input
                             [id]="pointsInputId"
+                            #pointsInput
                             tumAetUiInput
                             [tumAetUiInputId]="pointsInputId"
                             class="feedback-card__points-input rounded-none text-center font-semibold"
@@ -156,6 +161,7 @@
                                 type="button"
                                 class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
                                 [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                                (pointerdown)="captureStepCredits(pointsInput)"
                                 (click)="stepCredits(CREDITS_STEP)"
                             >
                                 <fa-icon [icon]="faPlus" />
