@@ -26,12 +26,12 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -127,13 +127,13 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
         return participants;
     }
 
-    void verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String... userLoginsWithoutPrefix) {
+    void verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction crudAction, Long conversationId, String... userLoginsWithoutPrefix) {
         for (String userLoginWithoutPrefix : userLoginsWithoutPrefix) {
             verifyParticipantTopicWebsocketSent(crudAction, conversationId, userLoginWithoutPrefix);
         }
     }
 
-    void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
+    void verifyParticipantTopicWebsocketSent(CommunicationCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
         var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
         var topic = "/topic/communication/courses/" + exampleCourseId + "/conversations/user/" + receivingUser.getId();
         verify(websocketMessagingService, timeout(10000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), userTopic(topic),
@@ -146,7 +146,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
         verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(ConversationWebsocketDTO.class));
     }
 
-    void verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction... actions) {
+    void verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction... actions) {
         verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && !Arrays.asList(actions).contains(((ConversationWebsocketDTO) argument).action())));
     }

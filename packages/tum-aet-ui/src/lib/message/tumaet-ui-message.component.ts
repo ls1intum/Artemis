@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, output } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 
 export type TumAetUiMessageSeverity = 'info' | 'success' | 'warn' | 'error' | 'secondary' | 'contrast';
 
@@ -19,7 +21,7 @@ const MESSAGE_SEVERITY: Record<TumAetUiMessageSeverity, string> = {
     selector: 'tumaet-ui-message',
     templateUrl: './tumaet-ui-message.component.html',
     styleUrl: './tumaet-ui-message.component.scss',
-    imports: [FaIconComponent],
+    imports: [FaIconComponent, TumAetUiTranslatePipe],
     host: {
         '[attr.role]': 'messageRole()',
         '[class]': 'hostClasses()',
@@ -36,6 +38,16 @@ export class TumAetUiMessageComponent {
     readonly text = input<string>();
 
     readonly icon = input<IconProp>();
+
+    /** Shows a dismiss button at the end of the message. The message does not hide itself: the host removes it on {@link dismissed}. */
+    readonly dismissible = input(false, { transform: booleanAttribute });
+
+    /** Accessible name of the dismiss button; defaults to the translated "Dismiss". */
+    readonly dismissButtonAriaLabel = input<string>();
+
+    readonly dismissed = output<void>();
+
+    protected readonly faXmark = faXmark;
 
     protected readonly messageRole = computed(() => (this.announce() ? (this.severity() === 'error' ? 'alert' : 'status') : null));
 

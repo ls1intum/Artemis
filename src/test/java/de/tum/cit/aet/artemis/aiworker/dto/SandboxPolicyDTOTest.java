@@ -40,7 +40,7 @@ class SandboxPolicyDTOTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "/", "/.", "//", "///", "/././", "relative", "/workspace/../etc" })
+    @ValueSource(strings = { "/", "/.", "//", "///", "/././", "relative", "/workspace/../etc", "/workspace\\scratch", "C:/workspace", "/workspace\0scratch" })
     void rejectsUnsafeWritableRoots(String path) {
         assertThatIllegalArgumentException().isThrownBy(() -> policy("documents", IMAGE, Map.of(path, "rw")));
     }

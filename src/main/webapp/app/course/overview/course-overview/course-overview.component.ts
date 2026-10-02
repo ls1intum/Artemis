@@ -12,7 +12,7 @@ import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/cours
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
@@ -30,7 +30,7 @@ import { CourseTabRefreshService } from 'app/course/overview/services/course-tab
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
     imports: [CdkScrollable, NgClass, RouterOutlet, NgTemplateOutlet, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
-    providers: [MetisConversationService],
+    providers: [CourseConversationsService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
     private alertService = inject(AlertService);
@@ -84,7 +84,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
 
-    override async ngOnInit() {
+    override ngOnInit() {
+        void this.initializeCourseOverviewComponent();
+    }
+
+    private async initializeCourseOverviewComponent(): Promise<void> {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed() ?? !value);
         });
@@ -110,7 +114,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                 });
             }
         });
-        await super.ngOnInit();
+        await super.initializeBaseCourseContainerComponent();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
             this.isExamStarted.set(isStarted);

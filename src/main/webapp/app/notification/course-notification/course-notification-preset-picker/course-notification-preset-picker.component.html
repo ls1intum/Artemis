@@ -13,6 +13,13 @@
                 [class.is-selected]="selectedCourseSettingPreset()?.identifier === preset.identifier"
                 ngbDropdownItem
                 (click)="presetSelected(preset.typeId)"
+                [attr.aria-pressed]="selectedCourseSettingPreset()?.identifier === preset.identifier"
+                #keyboardAction11
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
             >
                 <div class="course-notification-preset-picker-item-title">
                     <fa-icon [icon]="getPresetIcon(preset.identifier)" class="course-notification-preset-picker-item-icon" />
@@ -31,7 +38,19 @@
             </div>
         }
 
-        <div class="course-notification-preset-picker-item" [class.is-selected]="selectedCourseSettingPreset() === undefined" ngbDropdownItem (click)="presetSelected(0)">
+        <div
+            class="course-notification-preset-picker-item"
+            [class.is-selected]="selectedCourseSettingPreset() === undefined"
+            ngbDropdownItem
+            (click)="presetSelected(0)"
+            [attr.aria-pressed]="selectedCourseSettingPreset() === undefined"
+            #keyboardAction34
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
+        >
             <div class="course-notification-preset-picker-item-title">
                 <fa-icon [icon]="getPresetIcon('customUserCourseNotificationSettingPreset')" class="course-notification-preset-picker-item-icon" />
                 @if (selectedCourseSettingPreset() === undefined) {

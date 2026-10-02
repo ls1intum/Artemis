@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -189,9 +192,9 @@ class AgentLoopCompactionTest {
     }
 
     @Test
-    void compact_onSummarizerFailure_dropsOldTurnsBehindAMarkerWithoutThrowing() {
+    void compact_onRejectedSummarizer_dropsOldTurnsBehindAMarkerWithoutThrowing() {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("summarizer 500"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new ProviderFailureCooldown.ProviderInCooldownException(java.time.Instant.now().plusSeconds(60)));
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
 
         List<Message> conversation = conversationWithTurns(12, 24_000);
@@ -200,6 +203,37 @@ class AgentLoopCompactionTest {
         assertThat(compacted.get(2).getText()).contains("SESSION SUMMARY").contains("omitted to fit the context window");
         assertThat(compacted).hasSizeLessThan(conversation.size());
         assertThatNoException().isThrownBy(() -> AgentConversationContext.assertValidPairing(compacted));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void uncertainCompactionCannotIssueAnotherTurn(boolean missingResponse) {
+        ChatModel chatModel = mock(ChatModel.class);
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        when(chatModel.call(any(Prompt.class))).thenAnswer(ignored -> {
+            if (calls.incrementAndGet() == 1) {
+                return new ChatResponse(List.of(new Generation(assistantToolCall("write-next", "write", "{}"))));
+            }
+            if (missingResponse) {
+                return null;
+            }
+            throw com.openai.errors.InternalServerException.builder().statusCode(500).headers(com.openai.core.http.Headers.builder().build()).build();
+        });
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
+        List<Message> prior = new ArrayList<>();
+        prior.add(new SystemMessage("system"));
+        prior.add(new UserMessage("brief"));
+        for (int turn = 0; turn < 12; turn++) {
+            prior.add(new AssistantMessage("previous turn"));
+            prior.add(new UserMessage("x".repeat(24_000)));
+        }
+        int contextWindow = Math.toIntExact(AgentConversationContext.estimateTokens(prior, 0, prior.size()) + 8_192);
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), contextWindow);
+
+        assertThatThrownBy(() -> runner.runSession("system", prior.subList(1, prior.size()), "continue", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usageSink, null))
+                .hasMessage("Provider usage could not be determined");
+        verify(usageSink).markUncertain();
+        verify(chatModel, times(2)).call(any(Prompt.class));
     }
 
     @Test

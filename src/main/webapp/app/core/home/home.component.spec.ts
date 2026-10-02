@@ -104,6 +104,16 @@ describe('HomeComponent', () => {
         expect(component.isPasskeyEnabled()).toBe(false);
     });
 
+    it('should place the password field before the reset link in keyboard order', () => {
+        component.currentStage.set(2);
+        component.loginMethod.set('PASSWORD');
+        fixture.detectChanges();
+
+        const passwordInput = fixture.nativeElement.querySelector('#password') as HTMLInputElement;
+        const resetLink = fixture.nativeElement.querySelector('a[routerLink="/account/reset/request"]') as HTMLAnchorElement;
+        expect(passwordInput.compareDocumentPosition(resetLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
     it('should validate identifier length and pattern correctly', () => {
         component.username = 'validUser';
         component.checkIdentifierValidity();

@@ -56,11 +56,12 @@
                 />
                 <!-- repository select -->
                 <div ngbDropdown class="d-inline-block me-2">
-                    <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                    <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
                         {{ selectedRepository === RepositoryType.AUXILIARY ? selectedAuxiliaryRepositoryName : selectedRepository }}
                     </button>
                     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                         <button
+                            type="button"
                             [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
                             (click)="selectTemplateParticipation()"
                             ngbDropdownItem
@@ -69,6 +70,7 @@
                             <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                         </button>
                         <button
+                            type="button"
                             [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
                             (click)="selectSolutionParticipation()"
                             ngbDropdownItem
@@ -133,6 +135,7 @@
                             }
                         </div>
                         <button
+                            type="button"
                             [disabled]="!exercise"
                             (click)="selectTestRepository()"
                             ngbDropdownItem
@@ -142,6 +145,7 @@
                         @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
                             @if (auxiliaryRepository.id) {
                                 <button
+                                    type="button"
                                     [disabled]="!exercise"
                                     (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
                                     ngbDropdownItem
@@ -340,7 +344,7 @@
         @if (generationSupported()) {
             <tumaet-ui-confirm-dialog key="hyperionReloadSavedExerciseConfirmation" />
             @if (generationRefreshFailed()) {
-                <button tumAetUiButton severity="secondary" variant="outlined" (click)="retryHyperionRefresh()" data-testid="hyperion-editor-reload-saved">
+                <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="retryHyperionRefresh()" data-testid="hyperion-editor-reload-saved">
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
                 </button>
             }

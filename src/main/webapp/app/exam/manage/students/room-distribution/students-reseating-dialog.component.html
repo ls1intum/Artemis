@@ -1,78 +1,62 @@
-<p-dialog
-    [(visible)]="dialogVisible"
-    [modal]="true"
-    [closable]="true"
-    [dismissableMask]="true"
-    [closeOnEscape]="false"
-    (onHide)="closeDialog()"
-    [style]="{ width: '45dvw' }"
-    [draggable]="false"
-    appendTo="body"
->
-    <ng-template #header>
-        <h4>
-            <span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.dialogTitle"></span>
-        </h4>
-    </ng-template>
-    <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
-        <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.introText" class="intro-text"></p>
-        <b>
-            <p
-                jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectedStudent"
-                [translateValues]="{
-                    studentLogin: examUser()?.user?.login ?? '',
-                    studentName: getSelectedStudentName(),
-                    plannedRoom: examUser()?.plannedRoom ?? '',
-                    plannedSeat: examUser()?.plannedSeat ?? '',
-                }"
-            ></p>
-        </b>
-        <div class="form-check ms-auto">
-            <label for="isLocationKnownCheckbox" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.isLocationKnown" class="form-check-label"></label>
-            <input
-                id="isLocationKnownCheckbox"
-                type="checkbox"
-                class="form-check-input"
-                [checked]="selectedSeatIsPersisted() || (selectedRoomIsPersisted() && !selectedSeat())"
-                [disabled]="true"
-            />
-            <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reseating.isLocationKnownTooltip" />
+<tumaet-ui-dialog [(visible)]="dialogVisible" [header]="'artemisApp.exam.examUsers.rooms.reseating.dialogTitle' | artemisTranslate" size="medium">
+    <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate class="flex flex-col gap-4" (keydown.enter)="$event.preventDefault()">
+        <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.introText"></p>
+        <p
+            class="my-0! font-bold"
+            jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectedStudent"
+            [translateValues]="{
+                studentLogin: examUser()?.user?.login ?? '',
+                studentName: getSelectedStudentName(),
+                plannedRoom: examUser()?.plannedRoom ?? '',
+                plannedSeat: examUser()?.plannedSeat ?? '',
+            }"
+        ></p>
+        <div class="flex items-center gap-2">
+            <tumaet-ui-checkbox inputId="isLocationKnownCheckbox" [disabled]="true" [checked]="selectedSeatIsPersisted() || (selectedRoomIsPersisted() && !selectedSeat())" />
+            <label for="isLocationKnownCheckbox" class="m-0" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.isLocationKnown"></label>
+            <jhi-help-icon text="artemisApp.exam.examUsers.rooms.reseating.isLocationKnownTooltip" />
         </div>
-        <p></p>
-        <span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectRoom"></span>
-        <input
-            type="text"
-            class="form-control"
-            placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examRoomSearchPlaceholder' | artemisTranslate }}"
-            [ngbTypeahead]="roomSearch"
-            [value]="selectedRoomNumber()"
-            [resultFormatter]="roomFormatter"
-            [inputFormatter]="roomRoomNumberFormatter"
-            (change)="setSelectedRoomNumber($event)"
-            (selectItem)="pickSelectedRoom($event)"
-            (focusin)="selectAllTextAndOpenDropdown($event)"
-        />
-        <span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectSeat"></span>
-        <input
-            type="text"
-            class="form-control"
-            placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examSeatSearchPlaceholder' | artemisTranslate }}"
-            [ngbTypeahead]="examSeatSearch"
-            [value]="selectedSeat()"
-            [resultFormatter]="examSeatFormatter"
-            [inputFormatter]="examSeatFormatter"
-            (change)="setSelectedSeat($event)"
-            (selectItem)="pickSelectedSeat($event)"
-            (focusin)="selectAllTextAndOpenDropdown($event)"
-            [disabled]="!selectedRoomNumber()"
-        />
+        <div class="flex flex-col gap-1">
+            <label for="reseatingRoomSearch" class="m-0" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectRoom"></label>
+            <tumaet-ui-autocomplete
+                inputId="reseatingRoomSearch"
+                name="reseatingRoomSearch"
+                optionLabel="label"
+                [completeOnFocus]="true"
+                [minLength]="0"
+                [debounceMs]="200"
+                [suggestions]="roomSuggestions()"
+                [placeholder]="'artemisApp.exam.examUsers.rooms.reseating.examRoomSearchPlaceholder' | artemisTranslate"
+                [ngModel]="selectedRoomNumber()"
+                (ngModelChange)="onRoomChange($event)"
+                (searchRequested)="searchRooms($event.query)"
+            />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label for="reseatingSeatSearch" class="m-0" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectSeat"></label>
+            <tumaet-ui-autocomplete
+                inputId="reseatingSeatSearch"
+                name="reseatingSeatSearch"
+                [completeOnFocus]="true"
+                [minLength]="0"
+                [debounceMs]="200"
+                [suggestions]="seatSuggestions()"
+                [placeholder]="'artemisApp.exam.examUsers.rooms.reseating.examSeatSearchPlaceholder' | artemisTranslate"
+                [disabled]="!selectedRoomNumber()"
+                [ngModel]="selectedSeat()"
+                (ngModelChange)="onSeatChange($event)"
+                (searchRequested)="searchSeats($event.query)"
+            />
+        </div>
     </form>
     <ng-template #footer>
-        <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
-            <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel" class="m-1"></span>
+        <button id="cancel-button" tumAetUiButton type="button" severity="secondary" (click)="closeDialog()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button class="btn btn-success" id="finish-button" (click)="attemptReseatAndCloseDialogOnSuccess()">
-            <fa-icon [icon]="faChair" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.reseat" class="m-1"></span>
+        <button id="finish-button" tumAetUiButton type="button" severity="success" (click)="attemptReseatAndCloseDialogOnSuccess()">
+            <fa-icon [icon]="faChair" />
+            <span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.reseat"></span>
         </button>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>
