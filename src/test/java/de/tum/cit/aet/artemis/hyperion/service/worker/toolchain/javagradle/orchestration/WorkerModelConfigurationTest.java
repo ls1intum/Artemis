@@ -11,11 +11,14 @@ import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfigura
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.convert.ApplicationConversionService;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.micrometer.observation.autoconfigure.ObservationAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
 import de.tum.cit.aet.artemis.aiworker.config.telemetry.WorkerTelemetryConfiguration;
+import de.tum.cit.aet.artemis.hyperion.service.worker.DefaultGenerationEngineService;
+import de.tum.cit.aet.artemis.hyperion.service.worker.GenerationEngine;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
@@ -26,9 +29,9 @@ class WorkerModelConfigurationTest {
     void createsTheActualProviderModelAndEngineWithoutAWebApplicationStack() {
         new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
-                .withConfiguration(AutoConfigurations.of(ObservationAutoConfiguration.class, ToolCallingAutoConfiguration.class, OpenAiChatAutoConfiguration.class))
-                .withUserConfiguration(JavaGradleGenerationAdapterService.class, WorkerTelemetryConfiguration.class,
-                        de.tum.cit.aet.artemis.hyperion.service.worker.DefaultGenerationEngineService.class)
+                .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, ObservationAutoConfiguration.class, ToolCallingAutoConfiguration.class,
+                        OpenAiChatAutoConfiguration.class))
+                .withUserConfiguration(JavaGradleGenerationAdapterService.class, WorkerTelemetryConfiguration.class, DefaultGenerationEngineService.class)
                 .withBean(ObservationHandler.class, () -> new ObservationHandler<Observation.Context>() {
 
                     @Override
@@ -39,8 +42,7 @@ class WorkerModelConfigurationTest {
                 .withPropertyValues("artemis.aiworker.workload=hyperion-generation", "artemis.aiworker.profile=java-gradle", "spring.ai.openai.api-key=test-only-not-used",
                         "spring.ai.openai.chat.options.model=test-model", "spring.ai.openai.max-retries=0")
                 .run(context -> {
-                    assertThat(context.getBean(de.tum.cit.aet.artemis.hyperion.service.worker.GenerationEngine.class))
-                            .isInstanceOf(de.tum.cit.aet.artemis.hyperion.service.worker.DefaultGenerationEngineService.class);
+                    assertThat(context.getBean(GenerationEngine.class)).isInstanceOf(DefaultGenerationEngineService.class);
                     assertThat(context).hasNotFailed().hasSingleBean(ChatModel.class).hasSingleBean(JavaGradleGenerationAdapterService.class);
                     assertThat(context.getBean(ChatModel.class).getOptions().getModel()).isEqualTo("test-model");
                     assertThat(context.getBean(JavaGradleGenerationAdapterService.class).requestCancel(
