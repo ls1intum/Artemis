@@ -269,7 +269,6 @@ public class WorkerSupervisorService implements AutoCloseable {
             if (result == null || result.isBlank() || result.length() > WorkerEventDTO.MAX_PAYLOAD_LENGTH) {
                 throw new IllegalArgumentException("Workload returned invalid terminal output");
             }
-            codec.encode(event(WorkerEventType.FINISHED, identity, null, result));
             terminal = new TerminalResult(WorkerEventType.FINISHED, null, result);
         }
         catch (RuntimeException failure) {
@@ -298,8 +297,16 @@ public class WorkerSupervisorService implements AutoCloseable {
         synchronized (this) {
             active.remove(identity.executionId());
             // Retain this slot until cleanup and delivery both finish, without blocking other slots.
-            pendingTerminals.put(identity.executionId(), execution.cancelled.get() ? event(WorkerEventType.CANCELLED, identity, "Execution cancelled.", null)
-                    : event(terminal.type(), identity, terminal.message(), terminal.output()));
+            WorkerEventDTO completed = execution.cancelled.get() ? event(WorkerEventType.CANCELLED, identity, "Execution cancelled.", null)
+                    : event(terminal.type(), identity, terminal.message(), terminal.output());
+            try {
+                codec.encode(completed);
+            }
+            catch (RuntimeException invalidEvent) {
+                log.warn("Worker execution {} produced an invalid terminal event ({})", identity.executionId(), invalidEvent.getClass().getSimpleName());
+                completed = event(WorkerEventType.ERROR, identity, "Execution failed on the worker.", null);
+            }
+            pendingTerminals.put(identity.executionId(), completed);
         }
         flushTerminal();
     }
