@@ -1,5 +1,6 @@
 <div class="assessment-details-header">
-    <tumaet-ui-tabs class="assessment-details-header__tabs" [value]="activeTab()" (valueChange)="selectTab($event)">
+    <!-- Compact tabs in the panel's title row, with the selected one in the text color: the indicator below marks it. -->
+    <tumaet-ui-tabs class="assessment-details-header__tabs" size="small" selectedColor="text" [surface]="surface()" [value]="activeTab()" (valueChange)="selectTab($event)">
         <!-- The panel header draws the line below the tabs, so the tab list's own line would double it. -->
         <tumaet-ui-tab-list style="border-bottom: 0" [attr.aria-label]="'artemisApp.assessment.feedbackAndNotes' | artemisTranslate">
             @if (showBuildOutput()) {

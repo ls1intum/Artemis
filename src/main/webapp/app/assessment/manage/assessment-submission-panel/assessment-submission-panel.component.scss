@@ -13,9 +13,9 @@
     min-height: 0;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid var(--tumaet-ui-border-color);
-    border-radius: var(--tumaet-ui-radius-md);
-    background: var(--tumaet-ui-content-background);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background: var(--module-bg);
 }
 
 // Less vertical padding than the workspace's section headers, so the 28px tags still fit their 2.5rem height and the
@@ -26,9 +26,9 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.3rem 0.75rem;
-    border-bottom: 1px solid var(--tumaet-ui-border-color);
-    background: var(--tumaet-ui-hover-background);
-    color: var(--tumaet-ui-text-color);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--hover-slightly-darker-body-bg);
+    color: var(--body-color);
 
     h2 {
         margin: 0;

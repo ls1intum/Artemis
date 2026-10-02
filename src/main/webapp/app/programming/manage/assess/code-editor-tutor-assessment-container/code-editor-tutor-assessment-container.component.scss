@@ -46,14 +46,11 @@
     min-height: 0;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid var(--tumaet-ui-border-color);
-    border-radius: var(--tumaet-ui-radius-md);
-    background: var(--tumaet-ui-content-background);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background: var(--module-bg);
 
     &__header {
-        // The tabs scroll on the header's surface, the same as the instructions header above it
-        --tumaet-ui-tab-scroll-background: var(--code-editor-panel-header-background);
-
         display: flex;
         min-height: 42px;
         flex: none;

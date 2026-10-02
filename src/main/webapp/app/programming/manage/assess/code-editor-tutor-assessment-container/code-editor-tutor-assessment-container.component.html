@@ -99,6 +99,7 @@
                             [feedbackCount]="unreferencedFeedback().length"
                             [hasNote]="hasTutorNote()"
                             [showBuildOutput]="true"
+                            surface="content"
                             [disabled]="readOnly() || !manualResult()?.id"
                             [complaintType]="complaint()?.complaintType"
                             [complaintAwaitsResponse]="complaint()?.accepted === undefined"

@@ -1,7 +1,7 @@
 import { Component, input, model, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCommentDots, faFlag, faLock, faPlus, faTerminal } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent, TumAetUiTabsSurface, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 
@@ -26,6 +26,11 @@ export class AssessmentDetailsHeaderComponent {
     /** Whether the note has text, marked on its tab so a note is noticed while the general feedback is open. */
     readonly hasNote = input(false);
     readonly disabled = input(false);
+    /**
+     * The surface of the panel header the tabs sit on, which their scroll buttons blend into: the `muted` header of the
+     * assessment workspace, or the `content` header of the code editor's panels.
+     */
+    readonly surface = input<TumAetUiTabsSurface>('muted');
     /** Whether the panel has a build output tab, which leads the tabs; only a programming assessment has one. */
     readonly showBuildOutput = input(false);
     /** The type of the student's complaint or more feedback request, which adds a tab for it; none without one. */
