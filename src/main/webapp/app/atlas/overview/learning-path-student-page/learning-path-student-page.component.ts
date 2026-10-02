@@ -59,7 +59,7 @@ export class LearningPathStudentPageComponent {
             const learningPath = await this.learningApiService.getLearningPathForCurrentUser(courseId);
             this.learningPath.set(learningPath);
 
-            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id);
+            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id, this.courseId());
         } catch (error) {
             // If learning path does not exist (404) ignore the error
             if (!(error instanceof HttpErrorResponse) || error.status != 404) {
