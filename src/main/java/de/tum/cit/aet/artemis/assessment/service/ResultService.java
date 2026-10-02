@@ -613,7 +613,9 @@ public class ResultService {
     }
 
     /**
-     * Get a map of result ids to the respective build job ids if build log files for this build job exist.
+     * Get a map of result ids to the respective build job ids if build log files for this build job exist. The containers
+     * of a multi-container build link their jobs to one result; such a result maps to the first of its jobs that has a
+     * log file, in the order of the job ids.
      *
      * @param participationId the participation id for which the results and build logs should be checked
      * @return a map of result ids to respective build job ids if the build log files exist, null otherwise
@@ -628,10 +630,11 @@ public class ResultService {
                 names = programmingExerciseRepository.findNames(buildJob.programmingExerciseId());
             }
             if (buildLogEntryService.buildJobHasLogFile(buildJob.buildJobId(), names)) {
-                logsAvailability.put(buildJob.resultId(), buildJob.buildJobId());
+                logsAvailability.merge(buildJob.resultId(), buildJob.buildJobId(), (known, other) -> known.compareTo(other) <= 0 ? known : other);
             }
             else {
-                logsAvailability.put(buildJob.resultId(), null);
+                // a sibling job of the same result may have a log file, which this job must not hide
+                logsAvailability.putIfAbsent(buildJob.resultId(), null);
             }
         }
         return logsAvailability;

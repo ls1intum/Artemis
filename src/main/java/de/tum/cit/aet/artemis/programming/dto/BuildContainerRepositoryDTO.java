@@ -13,20 +13,12 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * out remains configured per exercise via the checkout paths of its build config. Scoping the repositories per
  * container is what keeps trusted and untrusted code apart: a container that does not list the test repository never
  * receives the instructor's test files.
+ * <p>
+ * {@link RepositoryType#AUXILIARY} selects every auxiliary repository of the exercise. The type is wrapped in a record
+ * so that a field, such as an auxiliary repository's name, can be added without changing the stored build plan format.
  *
  * @param type the type of the repository
- * @param name the name of the auxiliary repository, only set for {@link RepositoryType#AUXILIARY}
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildContainerRepositoryDTO(@NotNull RepositoryType type, String name) {
-
-    /**
-     * Creates a repository selection for a repository that is identified by its type alone, i.e. any repository except
-     * an auxiliary one.
-     *
-     * @param type the type of the repository
-     */
-    public BuildContainerRepositoryDTO(RepositoryType type) {
-        this(type, null);
-    }
+public record BuildContainerRepositoryDTO(@NotNull RepositoryType type) {
 }

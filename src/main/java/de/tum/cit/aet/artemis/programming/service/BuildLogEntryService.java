@@ -114,6 +114,53 @@ public class BuildLogEntryService {
     }
 
     /**
+     * Stores the build logs of one failed container of a multi-container build, labeled with its name, in the file of the
+     * build's aggregated result, see {@link FailedBuildLogService#appendBuildLogs}.
+     *
+     * @param buildLogs             build logs of the container
+     * @param programmingSubmission submission shared by all containers of the build
+     * @param aggregatedResult      the aggregated result of the build, which names the file
+     * @param containerName         the container the logs came from
+     * @return the entries as they were stored for this container
+     */
+    public List<BuildLogEntry> appendContainerBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result aggregatedResult, String containerName) {
+        List<BuildLogEntry> stored;
+        try {
+            ZonedDateTime retentionTime = programmingSubmission.getSubmissionDate() != null ? programmingSubmission.getSubmissionDate() : ZonedDateTime.now();
+            stored = failedBuildLogService.appendBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), aggregatedResult.getId(), retentionTime,
+                    containerName, buildLogs);
+        }
+        catch (UncheckedIOException e) {
+            log.error("Could not store the build logs of container {} of submission {}", containerName, programmingSubmission.getId(), e);
+            return List.of();
+        }
+        // as for a single-container build: a submission is never represented in both stores
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+        return stored;
+    }
+
+    /**
+     * Moves the logs of a multi-container build from its aggregated result to the tutor's assessment its feedback was
+     * merged into, before the aggregate is deleted.
+     *
+     * @param programmingSubmission submission shared by the aggregate and the assessment
+     * @param aggregatedResult      the aggregated result of the build, whose file is removed
+     * @param manualResult          the assessment the build's feedback was merged into
+     * @param buildFailed           whether a container of the build failed to build
+     */
+    public void moveContainerBuildLogs(ProgrammingSubmission programmingSubmission, Result aggregatedResult, Result manualResult, boolean buildFailed) {
+        long exerciseId = exerciseIdOf(programmingSubmission);
+        if (buildFailed) {
+            failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), aggregatedResult.getId())
+                    .ifPresent(buildLogs -> saveBuildLogs(buildLogs, programmingSubmission, manualResult));
+        }
+        else {
+            deleteBuildLogsOfSucceededResult(programmingSubmission, manualResult);
+        }
+        failedBuildLogService.deleteBuildLogs(exerciseId, programmingSubmission.getId(), aggregatedResult.getId());
+    }
+
+    /**
      * Discards the stored logs of a result whose build did not fail.
      * <p>
      * A result that is updated in place rather than replaced keeps its id, so a build that succeeds after an earlier one failed writes nothing and would leave the earlier

@@ -1,20 +1,5 @@
 <div class="mb-2">
     <div class="mb-2">
-        <label>
-            <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
-        </label>
-        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
-        <input
-            type="text"
-            class="form-control"
-            name="dockerImage"
-            id="field_dockerImage"
-            [ngModel]="dockerImage()"
-            [placeholder]="dockerImagePlaceholder()"
-            (ngModelChange)="dockerImageChange.emit($event)"
-        />
-    </div>
-    <div class="mb-2">
         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
         <jhi-table-view id="envVarsTable" [cols]="envVarColumns()" [vals]="envVars()" [rowActions]="envVarActionsRef" [options]="envVarTableOptions" />

@@ -87,7 +87,7 @@ class SharedQueueManagementServiceOrphanedJobsTest {
         return new BuildJobQueueItem(id, id, new BuildAgentDTO(agentName, "127.0.0.1:5701", agentName), 10L, 1L, 3L, retryCount, 1, BuildStatus.BUILDING,
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(startedAt.minusMinutes(1), startedAt, null, null, 60),
-                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
+                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null, null);
     }
 
     private static BuildJobQueueItem longRunningJobOn(String agentName, String id) {
@@ -190,7 +190,7 @@ class SharedQueueManagementServiceOrphanedJobsTest {
         BuildJobQueueItem noStartDate = new BuildJobQueueItem("no-start", "no-start", new BuildAgentDTO(VANISHED_AGENT, "127.0.0.1:5701", VANISHED_AGENT), 10L, 1L, 3L, 0, 1,
                 BuildStatus.BUILDING, new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now().minusMinutes(5), null, null, null, 60),
-                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
+                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null, null);
         withProcessingJobs(noStartDate);
         when(processingJobs.remove("no-start")).thenReturn(noStartDate);
 
@@ -220,7 +220,7 @@ class SharedQueueManagementServiceOrphanedJobsTest {
         BuildJobQueueItem running = new BuildJobQueueItem("job", "job", new BuildAgentDTO(LIVE_AGENT, "127.0.0.1:5701", LIVE_AGENT), 10L, 1L, 3L, 0, 1, BuildStatus.BUILDING,
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(startedAt.minusSeconds(5), startedAt, null, startedAt.plusSeconds(60), 60),
-                new BuildConfig(null, null, "abc123", "abc123", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
+                new BuildConfig(null, null, "abc123", "abc123", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null, null);
         withProcessingJobs(running);
 
         var timing = sharedQueueManagementService.isSubmissionProcessing(10L, "abc123");

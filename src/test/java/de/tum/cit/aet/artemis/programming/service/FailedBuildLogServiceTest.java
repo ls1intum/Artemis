@@ -150,6 +150,45 @@ class FailedBuildLogServiceTest {
     }
 
     @Test
+    void shouldKeepTheContainerOfEachLineOfAMultiContainerBuild() {
+        failedBuildLogService.appendBuildLogs(EXERCISE_ID, SUBMISSION_ID, RESULT_ID, TIME, "student_tests", List.of(new BuildLogEntry(TIME, "crashed")));
+        failedBuildLogService.appendBuildLogs(EXERCISE_ID, SUBMISSION_ID, RESULT_ID, TIME, "instructor_tests", List.of(new BuildLogEntry(TIME, "timed out")));
+
+        assertThat(get(RESULT_ID)).hasValueSatisfying(entries -> {
+            assertThat(entries).extracting(BuildLogEntry::getLog).containsExactly("crashed", "timed out");
+            assertThat(entries).extracting(BuildLogEntry::getContainerName).containsExactly("student_tests", "instructor_tests");
+        });
+    }
+
+    @Test
+    void shouldReplaceTheLinesOfAContainerThatReportsAgain() {
+        // a container retried after its agent was lost reports a second time; its first report must not show twice
+        failedBuildLogService.appendBuildLogs(EXERCISE_ID, SUBMISSION_ID, RESULT_ID, TIME, "student_tests", List.of(new BuildLogEntry(TIME, "first attempt")));
+        failedBuildLogService.appendBuildLogs(EXERCISE_ID, SUBMISSION_ID, RESULT_ID, TIME, "instructor_tests", List.of(new BuildLogEntry(TIME, "sibling")));
+        failedBuildLogService.appendBuildLogs(EXERCISE_ID, SUBMISSION_ID, RESULT_ID, TIME, "student_tests", List.of(new BuildLogEntry(TIME, "retried")));
+
+        assertThat(get(RESULT_ID)).hasValueSatisfying(entries -> assertThat(entries).extracting(BuildLogEntry::getLog).containsExactly("sibling", "retried"));
+    }
+
+    @Test
+    void shouldReadALineOfASingleContainerBuildWithoutAContainer() {
+        save(RESULT_ID, new BuildLogEntry(TIME, "single container"));
+
+        assertThat(get(RESULT_ID)).hasValueSatisfying(entries -> assertThat(entries).extracting(BuildLogEntry::getContainerName).containsOnlyNulls());
+    }
+
+    @Test
+    void shouldNotTakeAMarkerInsideALogForAContainer() {
+        // the marker is only read in front of a line, where a build's output never stands: the timestamp comes first
+        save(RESULT_ID, new BuildLogEntry(TIME, "not a container text"));
+
+        assertThat(get(RESULT_ID)).hasValueSatisfying(entries -> {
+            assertThat(entries).extracting(BuildLogEntry::getLog).containsExactly("not a container text");
+            assertThat(entries).extracting(BuildLogEntry::getContainerName).containsOnlyNulls();
+        });
+    }
+
+    @Test
     void shouldTruncateALineToTheLengthTheBuildOutputPanelHasAlwaysReceived() {
         save(RESULT_ID, new BuildLogEntry(TIME, "x".repeat(300)));
 
