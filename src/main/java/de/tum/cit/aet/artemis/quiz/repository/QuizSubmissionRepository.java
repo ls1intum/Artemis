@@ -11,8 +11,12 @@ import java.util.Set;
 
 import jakarta.persistence.LockModeType;
 
+import org.hibernate.exception.ConstraintViolationException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -95,6 +99,62 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
             WHERE answer.submission.id = :submissionId
             """)
     List<StoredSubmittedAnswerIdDTO> findStoredAnswerIdsBySubmissionId(@Param("submissionId") long submissionId);
+
+    /**
+     * Save the submission of an exam, writing its answers to the rows of the stored answers to the same questions.
+     * <p>
+     * The answers of an exam, in the autosave as well as in the final hand-in, arrive without ids. The database allows only
+     * one answer per question and submission, and replacing an answer inserts the new one before the old one is removed, so
+     * every answer has to take over the id of the stored answer to its question, see {@link QuizSubmission#adoptIdsOfStoredAnswers}.
+     * <p>
+     * This needs no lock: an exam save marks the submission as submitted every time and the student can save again, so
+     * there is no stored state that a later request has to respect. Two saves that reach the server together cannot store
+     * two answers to a question either, as the database allows only one. The one that would insert the second answer, or
+     * that loses a deadlock over the rows the other one updates, fails and is repeated, and then updates what the first one
+     * stored. A violation of another constraint is not the other save's doing and is not repeated.
+     *
+     * @param submission           the submission with the new answers
+     * @param knownStoredAnswerIds the ids of the stored answers by the id of the question they answer, if the caller has read the stored answers already, else
+     *                                 {@code null} and the ids are read here. Only the first attempt uses it, as a repeated one has to see what the other save stored.
+     * @return the stored submission
+     */
+    default QuizSubmission saveUpdatingStoredAnswers(QuizSubmission submission, @Nullable Map<Long, Long> knownStoredAnswerIds) {
+        final int maximumAttempts = 3;
+        for (int attempt = 1;; attempt++) {
+            Map<Long, Long> storedAnswerIdByQuestionId = new HashMap<>();
+            if (attempt == 1 && knownStoredAnswerIds != null) {
+                storedAnswerIdByQuestionId.putAll(knownStoredAnswerIds);
+            }
+            else if (submission.getId() != null) {
+                // several stored answers to one question can only come from before the unique index: the latest one is updated, the others are removed by the save
+                findStoredAnswerIdsBySubmissionId(submission.getId())
+                        .forEach(storedAnswer -> storedAnswerIdByQuestionId.merge(storedAnswer.questionId(), storedAnswer.answerId(), Math::max));
+            }
+            submission.adoptIdsOfStoredAnswers(storedAnswerIdByQuestionId);
+            try {
+                return save(submission);
+            }
+            catch (DataIntegrityViolationException e) {
+                if (attempt == maximumAttempts || !isUniqueConstraintViolation(e)) {
+                    throw e;
+                }
+            }
+            catch (ConcurrencyFailureException e) {
+                if (attempt == maximumAttempts) {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private static boolean isUniqueConstraintViolation(Throwable error) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException violation && violation.getKind() == ConstraintViolationException.ConstraintKind.UNIQUE) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Query("""
             SELECT DISTINCT submission
