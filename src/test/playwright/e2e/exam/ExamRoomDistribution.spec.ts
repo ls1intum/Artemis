@@ -223,9 +223,7 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
         await expect(page.locator('tbody tr', { hasText: roomNumber }), 'the current version of the room is listed').toHaveCount(1);
     });
 
-    // KNOWN BUG: the dialog takes the number of students from `exam.numberOfExamUsers`, which the exam of the student list does not carry
-    // (the exam is loaded without it), so it always reports "You can seat all 0 students", also when the room is too small.
-    test.fixme('The dialog reports how many of the registered students the room can seat', async ({ page }) => {
+    test('The dialog reports how many of the registered students the room can seat', async ({ page }) => {
         await expect(
             page
                 .getByTestId('exam-students-table')
