@@ -43,11 +43,14 @@ export class StudentExamManagementPage {
     }
 
     getStudentExamRows() {
-        return this.page.locator('p-table tbody tr');
+        return this.page
+            .getByTestId('exam-students-table')
+            .locator('tbody tr')
+            .filter({ has: this.page.getByTestId('table-cell') });
     }
 
     private async checkPropertyValue(column: string, value: string, studentName: string) {
-        const table = this.page.locator('p-table').first();
+        const table = this.page.getByTestId('exam-students-table');
         await table.waitFor({ state: 'visible' });
         const row = table.locator('tbody tr', { hasText: studentName }).first();
         await expect(row.locator(`[data-testid="table-cell"][data-column="${column}"]`)).toContainText(value);
@@ -60,22 +63,21 @@ export class StudentExamManagementPage {
     }
 
     async checkStudent(username: string) {
-        await expect(this.page.locator('p-table tbody tr', { hasText: username }).first()).toBeVisible();
+        await expect(this.page.getByTestId('exam-students-table').locator('tbody tr', { hasText: username }).first()).toBeVisible();
     }
 
     async checkExamStudent(username: string) {
         const studentInfo = await users.getUserInfo(username, this.page);
         // Extend the default 10s expect timeout to 30s. Callers run this immediately after
         // `typeSearchText`, which fires a server-side filter request — under multi-node CI
-        // load that round trip + the PrimeNG p-table re-render can exceed the default.
-        await expect(this.page.locator('p-table tbody tr', { hasText: studentInfo.name! }).first()).toBeVisible({ timeout: 30000 });
+        // load that round trip + the table re-render can exceed the default.
+        await expect(this.page.getByTestId('exam-students-table').locator('tbody tr', { hasText: studentInfo.name! }).first()).toBeVisible({ timeout: 30000 });
     }
 
     async typeSearchText(text: string) {
-        // The exam students page renders the shared search-filter component. Its own test id is the contract:
-        // both the role and the accessible name of the inner control are implementation details of the field,
-        // and targeting either broke this test when the component changed.
-        const searchTextField = this.page.locator('[data-testid="search-filter"] input');
+        // The search field's own test id is the contract: the role and accessible name of its inner control are
+        // implementation details of the field. The page applies the term after a short debounce.
+        const searchTextField = this.page.getByTestId('exam-students-search').locator('input');
         await searchTextField.clear();
         await searchTextField.fill(text);
     }

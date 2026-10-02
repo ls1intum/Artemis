@@ -23,11 +23,6 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
-    inputElement.value = value;
-    inputElement.dispatchEvent(new Event('input'));
-}
-
 describe('StudentsRoomDistributionDialogComponent', () => {
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
@@ -98,7 +93,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should show finish button after selecting a room', () => {
         fixture.detectChanges();
-        component.pickSelectedRoom({ item: rooms[0] });
+        component.pickSelectedRoom(rooms[0]);
         fixture.changeDetectorRef.detectChanges();
 
         const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
@@ -108,7 +103,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should remove selected room and disable finish button again', () => {
         fixture.detectChanges();
-        component.pickSelectedRoom({ item: rooms[0] });
+        component.pickSelectedRoom(rooms[0]);
         fixture.changeDetectorRef.detectChanges();
         expect(component.hasSelectedRooms()).toBe(true);
 
@@ -121,15 +116,15 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should not be able to select same room twice', () => {
-        component.pickSelectedRoom({ item: rooms[0] });
-        component.pickSelectedRoom({ item: rooms[0] });
+        component.pickSelectedRoom(rooms[0]);
+        component.pickSelectedRoom(rooms[0]);
         expect(component.selectedRooms()).toEqual([rooms[0]]);
     });
 
     it('should call distributeStudentsAcrossRooms with default arguments and close modal on finish', () => {
         const distributeSpy = vi.spyOn(service, 'distributeStudentsAcrossRooms');
 
-        component.pickSelectedRoom({ item: rooms[0] });
+        component.pickSelectedRoom(rooms[0]);
         fixture.changeDetectorRef.detectChanges();
 
         component.attemptDistributeAndCloseDialog();
@@ -149,86 +144,55 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(formatted).toBe('A (Alt) – 101 (102) - [B]');
     });
 
-    it('should find correct rooms', () => {
-        vi.useFakeTimers();
+    it('should suggest the rooms matching the search text', () => {
         (service as unknown as MockStudentsRoomDistributionService).availableRooms.set(rooms);
 
-        let searchResult: RoomForDistributionDTO[] = [];
-        component.search(of('t')).subscribe((rooms) => {
-            searchResult = rooms;
-        });
+        component.searchRooms('t');
 
-        vi.advanceTimersByTime(200);
-
-        expect(searchResult).toHaveLength(2);
-        expect(searchResult).toContainEqual(rooms[1]);
-        expect(searchResult).toContainEqual(rooms[2]);
-        vi.useRealTimers();
+        expect(component.roomSuggestions().map((suggestion) => suggestion.room)).toEqual([rooms[1], rooms[2]]);
+        expect(component.roomSuggestions()[0].label).toBe('two – 2 (002) - [AA]');
     });
 
-    it('should update reserve percentage when typing valid numbers', () => {
-        fixture.detectChanges();
-        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
+    it('should not suggest rooms that are already selected', () => {
+        (service as unknown as MockStudentsRoomDistributionService).availableRooms.set(rooms);
+        component.pickSelectedRoom(rooms[1]);
 
-        dispatchInputEvent(input, '25');
-        fixture.changeDetectorRef.detectChanges();
-        expect(input.value).toBe('25');
+        component.searchRooms('');
 
-        input.dispatchEvent(new FocusEvent('focusout'));
-        fixture.changeDetectorRef.detectChanges();
-        expect(input.value).toBe('25');
+        expect(component.roomSuggestions().map((suggestion) => suggestion.room)).toEqual([rooms[0], rooms[2]]);
     });
 
-    it('should reset reserve factor to latest value when invalid input is entered', () => {
-        fixture.detectChanges();
-        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
+    it('should empty the search field after a room was picked', () => {
+        component.roomSearchValue.set(component.formatter(rooms[0]));
 
-        dispatchInputEvent(input, '25');
-        fixture.changeDetectorRef.detectChanges();
+        component.pickSelectedRoom(rooms[0]);
 
-        dispatchInputEvent(input, '259');
-        fixture.changeDetectorRef.detectChanges();
-        expect(input.value).toBe('25');
-
-        input.dispatchEvent(new FocusEvent('focusout'));
-        fixture.changeDetectorRef.detectChanges();
-        expect(input.value).toBe('25');
-
-        dispatchInputEvent(input, '2 5');
-        fixture.changeDetectorRef.detectChanges();
-        expect(input.value).toBe('25');
-
-        dispatchInputEvent(input, '25a');
-        fixture.changeDetectorRef.detectChanges();
-        expect(input.value).toBe('25');
+        expect(component.roomSearchValue()).toBeUndefined();
     });
 
-    it('should select all text when the input gains focus', () => {
-        vi.useFakeTimers();
-        const input = document.createElement('input');
-        input.value = '42';
-        const selectSpy = vi.spyOn(input, 'select');
+    it('should clamp the reserve percentage to 0-100', () => {
+        component.setReservePercentage(25);
+        expect(component.reservePercentage()).toBe(25);
 
-        component.selectAllTextAndOpenDropdown({ target: input } as unknown as FocusEvent);
-        vi.runAllTimers();
+        component.setReservePercentage(259);
+        expect(component.reservePercentage()).toBe(100);
 
-        expect(selectSpy).toHaveBeenCalled();
-        vi.useRealTimers();
+        component.setReservePercentage(-4);
+        expect(component.reservePercentage()).toBe(0);
+
+        component.setReservePercentage(null);
+        expect(component.reservePercentage()).toBe(0);
     });
 
-    it('should toggle use narrow layouts when switch is pressed', () => {
-        fixture.detectChanges();
-        const checkbox: HTMLInputElement = document.body.querySelector('#allowNarrowLayoutsToggle') as HTMLInputElement;
+    it('should distribute with the configured reserve factor and narrow layouts', () => {
+        const distributeSpy = vi.spyOn(service, 'distributeStudentsAcrossRooms');
+        component.pickSelectedRoom(rooms[0]);
+        component.setReservePercentage(25);
+        component.allowNarrowLayouts.set(true);
 
-        expect(component.allowNarrowLayouts()).toBe(false);
+        component.attemptDistributeAndCloseDialog();
 
-        checkbox.click();
-        fixture.changeDetectorRef.detectChanges();
-        expect(component.allowNarrowLayouts()).toBe(true);
-
-        checkbox.click();
-        fixture.changeDetectorRef.detectChanges();
-        expect(component.allowNarrowLayouts()).toBe(false);
+        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], 0.25, false);
     });
 
     it('should never show percentage >= 100 in the not enough capacity warning message', () => {
@@ -252,7 +216,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(component.canSeatAllStudents()).toBe(false);
 
-        const warningElement: HTMLElement | null = fixture.nativeElement.querySelector('.alert-warning');
+        const warningElement: HTMLElement | null = document.body.querySelector('tumaet-ui-message[severity="warn"]') ?? document.body.querySelector('tumaet-ui-message');
 
         expect(warningElement).toBeTruthy();
 
@@ -276,7 +240,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('exam room management link should open in a new tab', () => {
         fixture.changeDetectorRef.detectChanges();
 
-        const link: HTMLAnchorElement = fixture.debugElement.nativeElement.querySelector('#examRoomManagementLink');
+        const link = document.body.querySelector<HTMLAnchorElement>('#examRoomManagementLink')!;
 
         expect(link).toBeTruthy();
         expect(link.href).toContain('/exams/rooms');

@@ -1,41 +1,36 @@
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import {
-    Component,
-    InputSignal,
-    ModelSignal,
-    OnInit,
-    OutputEmitterRef,
-    Signal,
-    ViewEncapsulation,
-    WritableSignal,
-    computed,
-    effect,
-    inject,
-    input,
-    model,
-    output,
-    signal,
-} from '@angular/core';
+import { Component, InputSignal, ModelSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiAutoCompleteComponent, TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { faBan, faChair } from '@fortawesome/free-solid-svg-icons';
 import { RoomForDistributionDTO, SeatsOfExamRoomDTO } from './students-room-distribution.model';
-import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+
+/** A room as listed by the search field; the field shows `label` and hands the suggestion back on selection. */
+interface RoomSuggestion {
+    label: string;
+    room: RoomForDistributionDTO;
+}
 
 @Component({
     selector: 'jhi-students-reseating-dialog',
-    standalone: true,
     templateUrl: './students-reseating-dialog.component.html',
-    encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, DialogModule, ButtonModule, HelpIconComponent],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        TumAetUiAutoCompleteComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiDialogComponent,
+    ],
 })
 export class StudentsReseatingDialogComponent implements OnInit {
     private readonly studentsRoomDistributionService = inject(StudentsRoomDistributionService);
@@ -50,6 +45,8 @@ export class StudentsReseatingDialogComponent implements OnInit {
     dialogVisible: ModelSignal<boolean> = model(false);
     onSave: OutputEmitterRef<void> = output();
 
+    protected roomSuggestions: WritableSignal<RoomSuggestion[]> = signal([]);
+    protected seatSuggestions: WritableSignal<string[]> = signal([]);
     private roomsUsedInExam: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     selectedRoomNumber: WritableSignal<string> = signal('');
     private readonly selectedRoom: Signal<RoomForDistributionDTO | undefined> = computed(() => this.getRoomDTOFromSelectedRoomNumber());
@@ -130,37 +127,22 @@ export class StudentsReseatingDialogComponent implements OnInit {
             });
     }
 
-    protected pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
-        const selectedRoom: RoomForDistributionDTO = event.item;
-
-        this.selectedRoomNumber.set(selectedRoom.roomNumber);
+    /** The search field reports typed text as a string and a picked suggestion as an object. */
+    protected onRoomChange(value: string | RoomSuggestion | null | undefined): void {
+        this.selectedRoomNumber.set(typeof value === 'object' && value !== null ? value.room.roomNumber : (value ?? ''));
     }
 
-    protected pickSelectedSeat(event: { item: string }): void {
-        const selectedSeat: string = event.item;
-
-        this.selectedSeat.set(selectedSeat);
+    protected onSeatChange(value: string | null | undefined): void {
+        this.selectedSeat.set(value ?? '');
     }
 
-    /**
-     * Filters out all exam rooms that might fit the search text.
-     * This is not defined in the regular function way, because only this way does it keep the {@code this} reference,
-     * as this function is passed by reference to another component.
-     *
-     * @param text$ An input text
-     */
-    protected roomSearch = (text$: Observable<string>): Observable<RoomForDistributionDTO[]> => {
-        return text$.pipe(debounceTime(200), distinctUntilChanged(), map(this.findAllMatchingRoomsForTerm));
-    };
+    protected searchRooms(term: string): void {
+        this.roomSuggestions.set(this.findAllMatchingRoomsForTerm(term).map((room) => ({ label: this.roomFormatter(room), room })));
+    }
 
-    /**
-     * Finds all exam seats that might fit the search text.
-     *
-     * @param text$ An input text
-     */
-    protected examSeatSearch = (text$: Observable<string>): Observable<string[]> => {
-        return text$.pipe(debounceTime(200), distinctUntilChanged(), map(this.findAllMatchingSeatsForTerm));
-    };
+    protected searchSeats(term: string): void {
+        this.seatSuggestions.set(this.findAllMatchingSeatsForTerm(term));
+    }
 
     private findAllMatchingRoomsForTerm = (term: string): RoomForDistributionDTO[] => {
         const potentialRooms: RoomForDistributionDTO[] = this.roomsUsedInExam();
@@ -214,22 +196,6 @@ export class StudentsReseatingDialogComponent implements OnInit {
         return `${namePart} – ${numberPart} - [${room.building}]`;
     }
 
-    protected roomRoomNumberFormatter(room: RoomForDistributionDTO): string {
-        return room.roomNumber;
-    }
-
-    protected examSeatFormatter(seatName: string): string {
-        return seatName;
-    }
-
-    protected selectAllTextAndOpenDropdown(focusEvent: FocusEvent): void {
-        const input = focusEvent.target as HTMLInputElement;
-        setTimeout(() => input.select(), 0);
-
-        const fakeInputEvent = new Event('input', { bubbles: true });
-        input.dispatchEvent(fakeInputEvent);
-    }
-
     /**
      * Returns true if the subsequence is part of the string.
      * A string is a subsequence of another, if it matches the other string, while allowing for omitted characters.
@@ -264,15 +230,5 @@ export class StudentsReseatingDialogComponent implements OnInit {
 
     private getRoomDTOFromSelectedRoomNumber(): RoomForDistributionDTO | undefined {
         return this.roomsUsedInExam().find((room) => room.roomNumber === this.selectedRoomNumber());
-    }
-
-    protected setSelectedRoomNumber($event: Event) {
-        const input: HTMLInputElement = $event.target as HTMLInputElement;
-        this.selectedRoomNumber.set(input.value);
-    }
-
-    protected setSelectedSeat($event: Event) {
-        const input: HTMLInputElement = $event.target as HTMLInputElement;
-        this.selectedSeat.set(input.value);
     }
 }

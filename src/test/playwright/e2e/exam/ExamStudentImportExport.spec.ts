@@ -48,7 +48,10 @@ test.describe('Exam students CSV import and export', { tag: '@fast' }, () => {
         await expect(dialog).toContainText(unknownLogin);
         await dialog.locator('#finish-button').click();
 
-        const rows = page.locator('p-table tbody tr');
+        const rows = page
+            .getByTestId('exam-students-table')
+            .locator('tbody tr')
+            .filter({ has: page.getByTestId('table-cell') });
         await expect(rows).toHaveCount(2);
         await expect(rows.filter({ hasText: studentOne.username })).toContainText('HS1');
         await expect(rows.filter({ hasText: studentOne.username })).toContainText('A1');
