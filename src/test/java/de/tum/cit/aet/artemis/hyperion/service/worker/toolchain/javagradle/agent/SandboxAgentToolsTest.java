@@ -64,7 +64,7 @@ class SandboxAgentToolsTest {
         // Everything the stage legitimately consults stays readable, including the prior statement an
         // adaptation starts from.
         tools.readFile("problem-statement.md");
-        assertThat(sandbox.execCount()).isOne();
+        assertThat(sandbox.copiedPaths()).hasSize(1);
     }
 
     @Test
@@ -100,7 +100,7 @@ class SandboxAgentToolsTest {
         tools.enterStage(GenerationStage.STATEMENT);
         tools.readFile("reference/style/final-statement.md");
 
-        assertThat(sandbox.execCount()).isEqualTo(2);
+        assertThat(sandbox.copiedPaths().size()).isEqualTo(2);
     }
 
     @Test
@@ -192,8 +192,9 @@ class SandboxAgentToolsTest {
         sandbox.files().put("/workspace/solution/A.java", GITHUB_SENTINEL + " sentinel sentinel");
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
 
-        assertThat(tools.editFile("solution/A.java", "sentinel", "replacement")).contains("blocked secret material").doesNotContain("occurs");
-        assertThat(sandbox.execCount()).isOne();
+        assertThat(tools.editFile("solution/A.java", "sentinel", "replacement")).startsWith("ERROR:").contains("GITHUB_TOKEN", "solution/A.java").doesNotContain(GITHUB_SENTINEL,
+                "occurs");
+        assertThat(sandbox.copiedPaths().size()).isOne();
         assertThat(sandbox.lastWrittenBase64()).isNull();
     }
 
@@ -247,6 +248,50 @@ class SandboxAgentToolsTest {
         // Untouched lines keep their original bytes.
         String written = new String(java.util.Base64.getDecoder().decode(sandbox.lastWrittenBase64()), java.nio.charset.StandardCharsets.UTF_8);
         assertThat(written).isEqualTo("int a;\nint b2;\n// still fine\nint c;");
+    }
+
+    @Test
+    void tolerantEditKeepsUnrelatedUnicodeOnTheSameLine() {
+        String current = "String label = \"①\"; // don’t change";
+        var result = AgentTextEdit.applyUniqueReplacement("solution/A.java", current, "// don't change", "// updated");
+        assertThat(result.error()).isNull();
+        assertThat(result.content()).isEqualTo("String label = \"①\"; // updated");
+    }
+
+    @Test
+    void completeCopyOutReadPreservesThePrefixWhenEditingALongFile() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox() {
+
+            @Override
+            protected SandboxExecResultDTO respond(String[] command) {
+                SandboxExecResultDTO result = catFromFiles(command);
+                if (result != null && result.stdout().length() > 50_000) {
+                    return new SandboxExecResultDTO(0, result.stdout().substring(result.stdout().length() - 50_000), "", false);
+                }
+                return result;
+            }
+        };
+        String prefix = "preserve this prefix\n".repeat(4_000);
+        sandbox.withFile("/workspace/problem-statement.md", prefix + "replace this suffix");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.readFile("problem-statement.md", 1, 1)).isEqualTo("preserve this prefix\n\n[Showing lines 1-1 of 4001. Call read_file with offset=2 to continue.]");
+        assertThat(tools.editFile("problem-statement.md", "replace this suffix", "updated suffix")).startsWith("Replaced 1");
+        String written = new String(java.util.Base64.getDecoder().decode(sandbox.lastWrittenBase64()), java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(written).isEqualTo(prefix + "updated suffix");
+        assertThat(sandbox.copiedPaths()).containsExactly("/workspace/problem-statement.md", "/workspace/problem-statement.md");
+        assertThat(sandbox.executedCommands()).noneMatch(command -> command.startsWith("cat "));
+    }
+
+    @Test
+    void oversizedCopyOutFileIsRejectedWithoutAWrite() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        sandbox.withFile("/workspace/problem-statement.md", "x".repeat(31 * 1024 * 1024));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.editFile("problem-statement.md", "x", "replacement")).contains("oversized");
+        assertThat(sandbox.lastWrittenBase64()).isNull();
+        assertThat(sandbox.executedCommands()).isEmpty();
     }
 
     @Test

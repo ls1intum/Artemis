@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -8,7 +12,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
@@ -29,6 +35,8 @@ public class FakeInteractiveSandbox implements InteractiveSandbox {
 
     /** File contents keyed by absolute container path, served by {@code cat <path>}; an absent path reads back as a failed {@code cat}, exactly as a real container would. */
     private final Map<String, String> files = new LinkedHashMap<>();
+
+    private final List<String> copiedPaths = new ArrayList<>();
 
     private final List<String> executedCommands = new ArrayList<>();
 
@@ -109,9 +117,30 @@ public class FakeInteractiveSandbox implements InteractiveSandbox {
     }
 
     @Override
-    @Nullable
     public TarArchiveInputStream copyOut(String sessionId, String path) {
-        return null;
+        copiedPaths.add(path);
+        try {
+            var bytes = new ByteArrayOutputStream();
+            try (var archive = new TarArchiveOutputStream(bytes)) {
+                String content = files.get(path);
+                if (content != null) {
+                    byte[] data = content.getBytes(StandardCharsets.UTF_8);
+                    var entry = new TarArchiveEntry(path.substring(path.lastIndexOf('/') + 1));
+                    entry.setSize(data.length);
+                    archive.putArchiveEntry(entry);
+                    archive.write(data);
+                    archive.closeArchiveEntry();
+                }
+            }
+            return new TarArchiveInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+        }
+        catch (IOException failure) {
+            throw new UncheckedIOException(failure);
+        }
+    }
+
+    public List<String> copiedPaths() {
+        return List.copyOf(copiedPaths);
     }
 
     @Override

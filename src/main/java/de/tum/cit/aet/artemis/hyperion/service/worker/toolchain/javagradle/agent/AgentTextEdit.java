@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent;
 
+import java.text.BreakIterator;
 import java.text.Normalizer;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -42,7 +44,7 @@ final class AgentTextEdit {
 
     /**
      * Tries the exact text first and only then a normalized match (see {@link #normalizeForTolerantMatch}), because a tolerant match must never win over a byte-exact one. A
-     * normalized match is accepted only when it is unique, and only the lines it touches are rewritten from the normalized text; every other line keeps its original bytes.
+     * normalized match is accepted only when it is unique, and only the original matched range is replaced; all other text keeps its original bytes.
      *
      * @param safe    the workspace-relative path, used only in the error messages the model reads
      * @param current the file's current content
@@ -74,8 +76,8 @@ final class AgentTextEdit {
     }
 
     /**
-     * Rebuilds the file after a tolerant match: lines outside the matched range keep their original bytes, and only the matched range is emitted from the normalized text. Bails
-     * out rather than corrupt the file if normalization changed the line structure, which {@link #normalizeForTolerantMatch} guarantees it does not.
+     * Maps a tolerant match back to original character boundaries before replacing it. Rejects a match if normalization cannot be mapped safely.
+     * The line structure is preserved by {@link #normalizeForTolerantMatch}.
      */
     private static Outcome spliceNormalizedMatch(String current, String normalizedCurrent, int matchIndex, int matchLength, String newText) {
         String[] originalLines = current.split("\n", -1);
@@ -96,17 +98,35 @@ final class AgentTextEdit {
             endLineStartOffset += normalizedLines[endLine].length() + 1;
             endLine++;
         }
-        int lineEndOffset = endLineStartOffset + normalizedLines[endLine].length();
-        String replacedBlock = normalizedCurrent.substring(lineStartOffset, matchIndex) + newText + normalizedCurrent.substring(matchEnd, lineEndOffset);
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < startLine; i++) {
-            result.append(originalLines[i]).append('\n');
+        int startOffset = originalBoundary(originalLines[startLine], normalizedLines[startLine], matchIndex - lineStartOffset);
+        int endOffset = originalBoundary(originalLines[endLine], normalizedLines[endLine], matchEnd - endLineStartOffset);
+        if (startOffset < 0 || endOffset < 0) {
+            return Outcome.failed("ERROR: normalized match does not align with original characters. Read the file again and use exact text.");
         }
-        result.append(replacedBlock);
-        for (int i = endLine + 1; i < originalLines.length; i++) {
-            result.append('\n').append(originalLines[i]);
+        int originalStart = startOffset;
+        for (int line = 0; line < startLine; line++) {
+            originalStart += originalLines[line].length() + 1;
         }
-        return Outcome.updated(result.toString());
+        int originalEnd = endOffset;
+        for (int line = 0; line < endLine; line++) {
+            originalEnd += originalLines[line].length() + 1;
+        }
+        return Outcome.updated(current.substring(0, originalStart) + newText + current.substring(originalEnd));
+    }
+
+    private static int originalBoundary(String original, String normalized, int boundary) {
+        BreakIterator characters = BreakIterator.getCharacterInstance(Locale.ROOT);
+        characters.setText(original);
+        StringBuilder folded = new StringBuilder();
+        int result = boundary == 0 ? 0 : -1;
+        int start = characters.first();
+        for (int end = characters.next(); end != BreakIterator.DONE; start = end, end = characters.next()) {
+            folded.append(foldTypography(original.substring(start, end)));
+            if (folded.length() == boundary) {
+                result = end;
+            }
+        }
+        return TRAILING_SPACES.matcher(folded).replaceAll("").equals(normalized) ? result : -1;
     }
 
     private static int countOccurrences(String content, String needle) {
@@ -126,10 +146,13 @@ final class AgentTextEdit {
      * @return the folded text, with the same number of newlines as the input
      */
     static String normalizeForTolerantMatch(String text) {
+        return Arrays.stream(foldTypography(text).split("\n", -1)).map(line -> TRAILING_SPACES.matcher(line).replaceAll("")).collect(Collectors.joining("\n"));
+    }
+
+    private static String foldTypography(String text) {
         String folded = SINGLE_QUOTES.matcher(Normalizer.normalize(text, Normalizer.Form.NFKC)).replaceAll("'");
         folded = DOUBLE_QUOTES.matcher(folded).replaceAll("\"");
         folded = DASHES.matcher(folded).replaceAll("-");
-        folded = SPACES.matcher(folded).replaceAll(" ");
-        return Arrays.stream(folded.split("\n", -1)).map(line -> TRAILING_SPACES.matcher(line).replaceAll("")).collect(Collectors.joining("\n"));
+        return SPACES.matcher(folded).replaceAll(" ");
     }
 }
