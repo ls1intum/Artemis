@@ -352,7 +352,17 @@ public class StudentExamService {
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
 
         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
-            quizSubmissionRepository.save(quizSubmissionFromClient);
+            // The answers of the hand-in come without ids, and the database allows one answer per question: they are written to the rows of the stored answers,
+            // which were loaded above for the comparison. Only the answers of the submission that is saved count, so that an answer can never be moved to another one.
+            Map<Long, Long> storedAnswerIdByQuestionId = new HashMap<>();
+            if (existingSubmissionInDatabase != null && Objects.equals(existingSubmissionInDatabase.getId(), quizSubmissionFromClient.getId())) {
+                for (SubmittedAnswer storedAnswer : existingSubmissionInDatabase.getSubmittedAnswers()) {
+                    if (storedAnswer.getQuizQuestion() != null) {
+                        storedAnswerIdByQuestionId.merge(storedAnswer.getQuizQuestion().getId(), storedAnswer.getId(), Math::max);
+                    }
+                }
+            }
+            quizSubmissionRepository.saveUpdatingStoredAnswers(quizSubmissionFromClient, storedAnswerIdByQuestionId);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
     }
