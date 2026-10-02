@@ -17,7 +17,16 @@
                 />
                 <jhi-exam-live-events-button [examStartDate]="examStartDate()" />
                 @if (!isEndView()) {
-                    <button type="button" tumAetUiButton severity="danger" size="small" data-testid="hand-in-early" class="ml-2" aria-label="Hand In Early" (click)="handInEarly()">
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="danger"
+                        size="small"
+                        data-testid="hand-in-early"
+                        class="ml-2!"
+                        aria-label="Hand In Early"
+                        (click)="handInEarly()"
+                    >
                         <span>
                             <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
                             <span class="hidden sm:inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
