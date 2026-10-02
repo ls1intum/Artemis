@@ -107,7 +107,7 @@ class SemanticMutantAuthor {
         String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt
                 + exclusionPrompt;
         try {
-            return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
+            return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
         }
         catch (RuntimeException exception) {
             log.warn("Semantic-mutant authoring failed: {}", exception.getMessage());

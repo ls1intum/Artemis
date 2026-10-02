@@ -536,7 +536,7 @@ public class SpecFidelityCritic {
         }
         List<SpecFidelityReport.Finding> contractFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.CONTRACT, CONTRACT_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt,
                 adaptationChanges != null, contractGroundingSource, authoritativeSource, repairableDownstreamSource, downstreamEvidenceByArtifact,
-                problemStatement == null ? "" : problemStatement, expectExampleChecks, expectApiChecks, expectTestChecks, false, templateStatuses, usageSink);
+                problemStatement == null ? "" : problemStatement, expectExampleChecks, expectApiChecks, expectTestChecks, false, templateStatuses, usageSink, cancelled);
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
@@ -544,7 +544,7 @@ public class SpecFidelityCritic {
             List<SpecFidelityReport.Finding> correctedContractFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.CONTRACT, CONTRACT_REVIEW_SYSTEM_PROMPT_TEMPLATE,
                     userPrompt + CONTRACT_REVIEW_CORRECTION, adaptationChanges != null, contractGroundingSource, authoritativeSource, repairableDownstreamSource,
                     downstreamEvidenceByArtifact, problemStatement == null ? "" : problemStatement, expectExampleChecks, expectApiChecks, expectTestChecks, false, templateStatuses,
-                    usageSink);
+                    usageSink, cancelled);
             if (correctedContractFindings != null
                     && correctedContractFindings.stream().noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE)) {
                 contractFindings = correctedContractFindings;
@@ -554,7 +554,7 @@ public class SpecFidelityCritic {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
         List<SpecFidelityReport.Finding> oracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, false,
-                authoritativeSource, authoritativeSource, authoritativeSource, Map.of(), "", false, false, false, expectTestChecks, templateStatuses, usageSink);
+                authoritativeSource, authoritativeSource, authoritativeSource, Map.of(), "", false, false, false, expectTestChecks, templateStatuses, usageSink, cancelled);
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
@@ -562,7 +562,7 @@ public class SpecFidelityCritic {
         if (!cancelled.getAsBoolean() && oracleReviewInvalid && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
             List<SpecFidelityReport.Finding> correctedOracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE,
                     userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, authoritativeSource, Map.of(), "", false, false, false,
-                    expectTestChecks, templateStatuses, usageSink);
+                    expectTestChecks, templateStatuses, usageSink, cancelled);
             if (correctedOracleFindings != null && !CriticVerdictParser.hasUngroundedOracleReview(correctedOracleFindings)
                     && correctedOracleFindings.stream().noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE)) {
                 // The correction replaces the verdict rather than extending it: substring grounding proves provenance only, so merging in the initially grounded claims would
@@ -615,11 +615,11 @@ public class SpecFidelityCritic {
     private @Nullable List<SpecFidelityReport.Finding> callReviewerSafely(CriticVerdictParser.ReviewPass pass, String systemPromptTemplate, String userPrompt,
             boolean requireScopeVerdict, String authoritativeSource, String contradictionAuthoritySource, String repairableDownstreamSource,
             Map<String, String> downstreamEvidenceByArtifact, String candidateProblemStatement, boolean expectExampleChecks, boolean expectApiChecks, boolean expectTemplateChecks,
-            boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
+            boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         try {
             return callReviewer(pass, systemPromptTemplate, userPrompt, requireScopeVerdict, authoritativeSource, contradictionAuthoritySource, repairableDownstreamSource,
                     downstreamEvidenceByArtifact, candidateProblemStatement, expectExampleChecks, expectApiChecks, expectTemplateChecks, expectMutantChecks, templateStatuses,
-                    usageSink);
+                    usageSink, cancelled);
         }
         catch (RuntimeException e) {
             log.warn("{} exercise review failed: {}", pass, e.getMessage());
@@ -633,8 +633,8 @@ public class SpecFidelityCritic {
     private @Nullable List<SpecFidelityReport.Finding> callReviewer(CriticVerdictParser.ReviewPass pass, String systemPromptTemplate, String userPrompt,
             boolean requireScopeVerdict, String authoritativeSource, String contradictionAuthoritySource, String repairableDownstreamSource,
             Map<String, String> downstreamEvidenceByArtifact, String candidateProblemStatement, boolean expectExampleChecks, boolean expectApiChecks, boolean expectTemplateChecks,
-            boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
-        String text = reviewer.call(systemPromptTemplate, userPrompt, usageSink);
+            boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        String text = reviewer.call(systemPromptTemplate, userPrompt, usageSink, cancelled);
         return text == null || text.isBlank() ? null
                 : verdictParser.parseCritique(text, pass, requireScopeVerdict, authoritativeSource, contradictionAuthoritySource, repairableDownstreamSource,
                         downstreamEvidenceByArtifact, candidateProblemStatement, expectExampleChecks, expectApiChecks, expectTemplateChecks, expectMutantChecks, templateStatuses);

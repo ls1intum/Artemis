@@ -83,7 +83,7 @@ class ContractWitnessAuthor {
                 + renderTemplateOwnership(templateStatuses) + "\n\nREFERENCE SOLUTION (fixes the exact API a witness may call):\n" + boundedEvidence(solutionSources)
                 + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
         try {
-            String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
+            String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
             return parseContractWitnesses(response, specificationContract, testSources);
         }
         catch (RuntimeException e) {

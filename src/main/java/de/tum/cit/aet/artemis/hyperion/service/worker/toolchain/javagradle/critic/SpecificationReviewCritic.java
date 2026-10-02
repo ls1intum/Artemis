@@ -173,7 +173,7 @@ class SpecificationReviewCritic {
         String finalInstruction = "\n\nReturn the complete evidence-grounded JSON verdict specified by the system prompt.";
         String userPrompt = evidencePrompt + previousReviewContext(previousReview) + finalInstruction;
         try {
-            String response = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
+            String response = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
             SpecificationReviewResponse parsed = readSpecificationReviewResponse(response);
             SpecificationReview review = parseSpecificationReview(parsed, evidence, previousReview);
             if (review.complete()) {
@@ -189,7 +189,7 @@ class SpecificationReviewCritic {
             String correctedResponse = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE,
                     evidencePrompt + previousReviewContext(correctionContinuity.review()) + finalInstruction + SPECIFICATION_REVIEW_CORRECTION + evidenceCorrectionGuide(evidence)
                             + previousResponseContext(response) + "\n\nSERVER VALIDATION FAILURE TO CORRECT:\n" + review.auditSummary(),
-                    usageSink, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
+                    usageSink, cancelled, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
             SpecificationReviewResponse correctedParsed = readSpecificationReviewResponse(correctedResponse);
             return parseSpecificationReview(correctedParsed, evidence, correctionContinuity.review());
         }
