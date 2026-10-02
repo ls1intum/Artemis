@@ -371,12 +371,12 @@ export class HyperionGenerationActivityFacade {
                         this.running.set(false);
                     }
                     if (this.pinnedRunId() && status.jobId !== this.pinnedRunId()) return;
-                    this.run.set(status.run);
-                    this.reverted.set(!!status.run?.revertedAt);
                     const sameJob = this.jobId() === status.jobId;
                     if (!sameJob) {
                         this.resetRevertState();
                     }
+                    this.run.set(status.run);
+                    this.reverted.set(!!status.run?.revertedAt);
                     const wasActivelyObserved = sameJob && this.running();
                     this.jobId.set(status.jobId);
                     this.mode.set(status.mode ?? this.mode());
@@ -764,6 +764,7 @@ export class HyperionGenerationActivityFacade {
     }
 
     private resetRevertState(): void {
+        this.confirmedRevertJobId = undefined;
         this.revertAvailabilityRefresh.cancel();
         this.reverting.set(false);
         this.reverted.set(false);
@@ -774,7 +775,6 @@ export class HyperionGenerationActivityFacade {
 
     private reset(): void {
         this.run.set(undefined);
-        this.confirmedRevertJobId = undefined;
         this.cancelStatusRequest();
         this.closeStream();
         this.streamLossRefresh.cancel();

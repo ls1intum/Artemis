@@ -719,6 +719,7 @@ describe('HyperionGenerationActivityFacade', () => {
         const component = fixture.componentInstance.facade;
         const response = new Subject<ExerciseGenerationRevertResult>();
         vi.spyOn(service, 'revertExerciseGeneration').mockReturnValue(response);
+        component.confirmRevert();
         component.acceptRevert();
         if (outcome === 'success') {
             response.next({ fullyReverted: true, revertedRepositories: ['template'], completedAt: '2026-07-10T20:00:00Z' });
@@ -754,6 +755,21 @@ describe('HyperionGenerationActivityFacade', () => {
             expect(component.reverted()).toBe(false);
             expect(component.canRevert()).toBe(true);
         }
+    });
+    it('discards the confirmed undo target when REST polling adopts another run', async () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'old', fileChanges: [], running: false, events: [], revertAvailable: true });
+        const component = fixture.componentInstance.facade;
+        component.confirmRevert();
+        expect(component.confirmRevertVisible()).toBe(true);
+        service.status = { jobId: 'current', fileChanges: [], running: false, events: [], revertAvailable: true };
+
+        await vi.advanceTimersByTimeAsync(15_000);
+        component.acceptRevert();
+
+        expect(component.jobId()).toBe('current');
+        expect(component.confirmRevertVisible()).toBe(false);
+        expect(service.revertCalls).toEqual([]);
     });
     it('clears pending undo state when another job replaces the observed run', () => {
         const fixture = createWith({ jobId: 'old', fileChanges: [], running: false, events: [], revertAvailable: true });
