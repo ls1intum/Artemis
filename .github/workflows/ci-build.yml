@@ -87,7 +87,11 @@ jobs:
         # output directory, anything written there before Gradle even starts would be wiped again
         # before the first task runs. build/webapp-dist is not declared as any task's output, so
         # it survives; the `webapp` Gradle task picks it up from there.
-        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false --stats-json && mv build/resources/main/static build/webapp-dist
+        #
+        # stats.json (the esbuild metafile for the eager-chunk report below) is moved out first:
+        # the `webapp` task copies everything in build/webapp-dist into the WAR, where it would
+        # otherwise be served publicly.
+        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false --stats-json && mv build/resources/main/static/stats.json build/client-stats.json && mv build/resources/main/static build/webapp-dist
       - name: Generate eager-chunk loading report
         # Feeds the chunk-eager-quality job below (PR runs) and, on develop pushes, becomes the
         # next baseline that PR runs compare against. See supporting_scripts/chunk-eager-loading/README.md.
@@ -101,7 +105,7 @@ jobs:
         env:
           CHUNK_REPORT_SHA: ${{ inputs.commit_sha }}
           CHUNK_REPORT_BRANCH: ${{ github.head_ref }}
-        run: node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs build/webapp-dist/stats.json --out chunk-eager-report.json
+        run: node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs build/client-stats.json --out chunk-eager-report.json
       - name: Upload eager-chunk report artifact
         uses: actions/upload-artifact@v7
         with:

@@ -10,11 +10,11 @@ instead of loading it on demand.
 1. Build with `statsJson: true` (an `@angular/build:application` option) to get an esbuild
    metafile — a module → chunk map where every dependency edge is tagged `import-statement`
    (static/eager), `dynamic-import` (lazy), or `url-token` (asset reference).
-2. `discover_route_entries.mjs` scans every `*.route.ts` file under `src/main/webapp/app` and
-   extracts every `loadComponent: () => import(...)` target — i.e. every route Angular itself
-   lazy-loads — deduped by source file (the same detail component reused across several routes
+2. `discover_route_entries.mjs` scans every route config file (`*.route.ts`, `*.routes.ts`,
+   `*-routes.ts`) under `src/main/webapp/app` and extracts every `loadComponent: () => import(...)`
+   target — i.e. every route Angular itself lazy-loads — deduped by source file (the same detail component reused across several routes
    only counts once). No hand-maintained list: a new lazy route is picked up automatically the
-   next time this runs, currently around 177 routes.
+   next time this runs, currently around 215 routes.
 3. `analyze_eager_chunks.mjs` computes, for each discovered route component, the **eager set**:
    everything reachable from that route's own chunk by following only static edges. That's exactly
    what downloads the instant the route's chunk loads, regardless of whether the user ever
@@ -28,7 +28,7 @@ instead of loading it on demand.
    `course-exercises.component.ts` — 83 chunks, 2.8 MB including its dependencies) and folds the
    full size-sorted list away. Each chunk names its largest source modules (npm package for vendor
    code, file name for app code) since the content-hashed filename alone says nothing about why it
-   is there. Reports without import edges (an older baseline) fall back to the plain list. Only non-`unchanged` routes get a table row — with ~177 routes, tabulating
+   is there. Reports without import edges (an older baseline) fall back to the plain list. Only non-`unchanged` routes get a table row — with ~215 routes, tabulating
    every unchanged one would bury the ones that actually need a look; `unchanged` routes are still
    counted in the summary line, just not listed individually.
 
