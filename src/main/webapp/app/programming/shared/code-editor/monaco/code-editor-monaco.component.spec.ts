@@ -1033,6 +1033,49 @@ describe('CodeEditorMonacoComponent', () => {
         expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', expect.any(HTMLElement));
     });
 
+    it('keeps a same-line draft distinct when a late suggestion is accepted', async () => {
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        getInlineFeedbackNodeStub.mockRestore();
+        const addLineWidget = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        comp.addNewFeedback(2);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const draft = fixture.debugElement
+            .queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
+            .map((element) => element.componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent)
+            .find((card) => card.feedback() === undefined)!;
+        draft.currentFeedback().detailText = 'Unsaved draft';
+        draft.currentFeedback().credits = 1;
+        const draftNode = draft.elementRef.nativeElement as HTMLElement;
+
+        const suggestion = { id: 42, reference: 'file:file1.java_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Late` } as Feedback;
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        addLineWidget.mockClear();
+        comp.acceptSuggestion(suggestion);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const accepted = fixture.debugElement
+            .queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent))
+            .map((element) => element.componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent)
+            .find((card) => card.feedback() !== undefined)!;
+        const acceptedNode = accepted.elementRef.nativeElement as HTMLElement;
+        expect(comp.newFeedbackLines()).toEqual([1]);
+        expect(draft.currentFeedback()).toEqual(expect.objectContaining({ detailText: 'Unsaved draft', credits: 1 }));
+        expect(draftNode.querySelector('[data-testid="feedback-save"]')).not.toBeNull();
+        expect(draftNode.querySelector('.inline-feedback__footer button')).not.toBeNull();
+        expect(acceptedNode).not.toBe(draftNode);
+        expect(addLineWidget).toHaveBeenCalledTimes(2);
+        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', acceptedNode);
+        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-new-1', draftNode);
+    });
+
     it('should add a new feedback widget', async () => {
         vi.useFakeTimers();
         // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.

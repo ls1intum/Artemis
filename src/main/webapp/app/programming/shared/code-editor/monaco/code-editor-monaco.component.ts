@@ -697,6 +697,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             () => {
                 this.renderScheduled = false;
                 this.editor().disposeWidgetsByPrefix('feedback-');
+                if (!this.selectedFile()) {
+                    this.renderFocusLine = undefined;
+                    return;
+                }
                 const feedbacks = this.filterFeedbackForSelectedFile(this.feedbackInternal());
                 const suggestions = this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal());
                 for (const [index, feedback] of feedbacks.entries()) {
@@ -708,14 +712,17 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
                 // New, unsaved feedback has no associated object yet.
                 for (const line of this.newFeedbackLines()) {
-                    const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                    const feedbackNode = this.getNewFeedbackNode(line);
+                    if (!feedbackNode) {
+                        throw new Error('No new feedback node found at line ' + line);
+                    }
                     this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
                 }
 
                 const focusLine = this.renderFocusLine;
                 this.renderFocusLine = undefined;
                 if (focusLine !== undefined) {
-                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                    this.getNewFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
                 }
             },
             { injector: this.injector },
@@ -997,6 +1004,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             : [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()];
         return components.find((comp) => comp.codeLine() === line && (!feedback || (comp.feedback() && Feedback.areIdentical(comp.feedback()!, feedback))))?.elementRef
             ?.nativeElement;
+    }
+
+    private getNewFeedbackNode(line: number): HTMLElement | undefined {
+        return this.inlineFeedbackComponents().find((component) => component.codeLine() === line && component.feedback() === undefined)?.elementRef.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback, isSuggestion: boolean, index: number): void {
