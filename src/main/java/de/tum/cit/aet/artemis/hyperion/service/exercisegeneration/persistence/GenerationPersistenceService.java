@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -219,8 +220,9 @@ public class GenerationPersistenceService {
                 if (repositoryType == RepositoryType.TESTS && producedFiles != null && !producedFiles.isEmpty()) {
                     testsBuildSignal = prepareTestsBuildSignal(exercise, null);
                 }
-                String commitHash = commitRepository(exercise, user, repositoryType, producedFiles, outcome.seedRepositoryHeads().get(repositoryType), repositoryBranch, mode,
-                        commitMessage, prePersistHashes, postPersistHashes, stillOwnsMutationSlot, beforeFirstDurableMutation);
+                String commitHash = commitRepository(exercise, user, repositoryType, producedFiles, outcome.candidatePaths(repositoryType),
+                        outcome.seedRepositoryHeads().get(repositoryType), repositoryBranch, mode, commitMessage, prePersistHashes, postPersistHashes, stillOwnsMutationSlot,
+                        beforeFirstDurableMutation);
                 if (commitHash != null) {
                     committed.add(repositoryType);
                     if (repositoryType == RepositoryType.TESTS) {
@@ -609,9 +611,9 @@ public class GenerationPersistenceService {
         return fullyReverted;
     }
 
-    private String commitRepository(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String seedHead,
-            String repositoryBranch, GenerationMode mode, String commitMessage, Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes,
-            BooleanSupplier stillOwnsMutationSlot, Runnable beforeFirstDurableMutation) {
+    private String commitRepository(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, Set<String> candidatePaths,
+            String seedHead, String repositoryBranch, GenerationMode mode, String commitMessage, Map<RepositoryType, String> prePersistHashes,
+            Map<RepositoryType, String> postPersistHashes, BooleanSupplier stillOwnsMutationSlot, Runnable beforeFirstDurableMutation) {
         if (producedFiles == null || producedFiles.isEmpty()) {
             return null;
         }
@@ -635,7 +637,7 @@ public class GenerationPersistenceService {
                 throw new IllegalStateException(
                         "The " + repositoryType + " repository changed after Hyperion verified the generated exercise; refusing to overwrite newer instructor edits");
             }
-            mirrorProducedFilesIntoWorkingCopy(exercise, repository, repositoryType, producedFiles, mode);
+            mirrorProducedFilesIntoWorkingCopy(exercise, repository, repositoryType, producedFiles, candidatePaths, mode);
             if (gitService.isWorkingCopyClean(repository)) {
                 return null;
             }
@@ -749,7 +751,7 @@ public class GenerationPersistenceService {
     }
 
     private void mirrorProducedFilesIntoWorkingCopy(ProgrammingExercise exercise, Repository repository, RepositoryType repositoryType, Map<String, String> producedFiles,
-            GenerationMode mode) throws IOException {
+            Set<String> candidatePaths, GenerationMode mode) throws IOException {
         Map<String, String> safeProducedFiles = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
             String safePath = safeRepositoryPath(repository, entry.getKey());
@@ -759,7 +761,9 @@ public class GenerationPersistenceService {
         }
         assertNoSymbolicLinks(repository);
         Map<String, String> persistableFiles = safeProducedFiles;
-        deleteOrphanedFiles(repository, repositoryType, persistableFiles.keySet(), mode);
+        Set<String> retainedPaths = new HashSet<>(persistableFiles.keySet());
+        candidatePaths.stream().map(path -> safeRepositoryPath(repository, path)).forEach(retainedPaths::add);
+        deleteOrphanedFiles(repository, repositoryType, retainedPaths, mode);
         for (Map.Entry<String, String> entry : persistableFiles.entrySet()) {
             String path = entry.getKey();
             Path repositoryRoot = repository.getLocalPath();

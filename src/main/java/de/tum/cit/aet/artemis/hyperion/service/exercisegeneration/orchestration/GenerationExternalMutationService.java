@@ -50,8 +50,7 @@ public class GenerationExternalMutationService {
 
     private String requireWriterNode() {
         String owner = distributedDataProvider.getLocalNodeId();
-        if (!distributedDataProvider.getCoordinationSnapshot().map(snapshot -> snapshot.permitsAdmission(expectedDataMemberCount) && snapshot.ownerNodeIds().contains(owner))
-                .orElse(false)) {
+        if (!distributedDataProvider.getCoordinationSnapshot().map(snapshot -> !snapshot.ownerNodeIds().isEmpty() && snapshot.ownerNodeIds().contains(owner)).orElse(false)) {
             throw new ServiceUnavailableAlertException("Exercise writers require a connected owner and a complete coordination view.", "hyperionExerciseGeneration",
                     "hyperionDataMemberTopologyUnavailable");
         }

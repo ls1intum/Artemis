@@ -45,7 +45,7 @@ public final class WorkspaceArchive {
     private static final Path ARCHIVE_ROOT = Path.of("/workspace-archive");
 
     /** Leaves room for tar headers below the relay's 32 MiB payload limit. */
-    static final long MAX_FILE_BYTES = WORKSPACE_CONTENT_LIMIT_BYTES;
+    public static final long MAX_FILE_BYTES = WORKSPACE_CONTENT_LIMIT_BYTES;
 
     /** Whole-archive cap on read-back, so a flood of files each under the per-file cap still cannot exhaust node memory when the copyOut tar is materialised into Strings. */
     static final long MAX_TOTAL_BYTES = WORKSPACE_CONTENT_LIMIT_BYTES;

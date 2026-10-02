@@ -145,10 +145,10 @@ public class AgentLoopRunner {
         ChatModel configuredChatModel = chatModels.isEmpty() ? null : chatModels.iterator().next();
         this.chatModel = configuredChatModel == null ? null : new HarmonyScrubbingChatModel(configuredChatModel);
         this.effectiveOptions = configuredChatModel == null ? null : configuredChatModel.getOptions();
-        // Sandbox loss must reach the terminal-error branch, not become model-visible text that invites another command.
+        // Callback failures must reach loop recovery; sandbox loss ends the session.
         // This loop owns the turn budget and polls the job's time/token guards. Spring AI's independent conversation-wide limits would reject valid staged work early.
         this.toolCallingManager = ToolCallingManager.builder().unlimitedCallsPerTool().unlimitedTotalToolCalls()
-                .toolExecutionExceptionProcessor(DefaultToolExecutionExceptionProcessor.builder().rethrowExceptions(List.of(SandboxUnavailableException.class)).build()).build();
+                .toolExecutionExceptionProcessor(DefaultToolExecutionExceptionProcessor.builder().alwaysThrow(true).build()).build();
         this.contextWindowTokens = contextWindowTokens;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
@@ -470,7 +470,7 @@ public class AgentLoopRunner {
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
             if (submitRequested) {
-                if (isSubmitVetoed(tools)) {
+                if (isSubmitVetoed(tools) || hasRejectedToolAction(conversation)) {
                     // The rejection message is already the tool result in `conversation`, so falling through to the ordinary next-turn handling lets the model fix and resubmit.
                     emit(stepListener, "Submit was rejected by the stage check; continuing to address the reported issues.");
                 }
