@@ -131,7 +131,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     private async loadPasskeysWhenUserDetailsChange() {
-        if (this.currentUser != undefined) {
+        if (this.currentUser() != undefined) {
             await this.updateRegisteredPasskeys();
         }
     }

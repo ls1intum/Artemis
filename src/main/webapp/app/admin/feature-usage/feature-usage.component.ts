@@ -130,6 +130,12 @@ export class FeatureUsageComponent implements OnInit {
     readonly adoption = signal<FeatureAdoption[] | undefined>(undefined);
     readonly selectedWindow = signal<number>(30);
     readonly activeTab = signal<number>(TAB_FEATURES);
+
+    onTabChange(value: number | string | undefined): void {
+        if (typeof value === 'number') {
+            this.activeTab.set(value);
+        }
+    }
     readonly searchTerm = signal<string>('');
     readonly selectedArea = signal<string>(ALL_AREAS);
     readonly selectedCallerRole = signal<string>(ALL_ROLES);

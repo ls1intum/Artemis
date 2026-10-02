@@ -1,7 +1,16 @@
 <h5 *adminTitleBarTitle id="feature-usage-page-heading" class="mb-0" jhiTranslate="artemisApp.featureUsage.title"></h5>
 
 <div *adminTitleBarActions class="flex items-center gap-2">
-    <button tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="sendDigestEmail()" [disabled]="sendingDigest()" data-testid="send-digest-button">
+    <button
+        type="button"
+        tumAetUiButton
+        severity="secondary"
+        size="small"
+        variant="outlined"
+        (click)="sendDigestEmail()"
+        [disabled]="sendingDigest()"
+        data-testid="send-digest-button"
+    >
         <fa-icon [icon]="sendingDigest() ? faSpinner : faEnvelope" [animation]="sendingDigest() ? 'spin' : undefined" />
         <span jhiTranslate="artemisApp.featureUsage.sendDigest"></span>
     </button>
@@ -122,7 +131,7 @@
         </tumaet-ui-card>
     }
 
-    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="activeTab.set($any($event))">
+    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
         <tumaet-ui-tab-list>
             <tumaet-ui-tab [value]="TAB_FEATURES" jhiTranslate="artemisApp.featureUsage.tab.features" data-testid="tab-features" />
             <tumaet-ui-tab [value]="TAB_ATTENTION" jhiTranslate="artemisApp.featureUsage.tab.attention" data-testid="tab-attention" />
@@ -209,7 +218,7 @@
                         <span class="ms-2 font-mono text-sm">{{ target.title }}</span>
                     }
                 </div>
-                <button tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="closeTrend()">
+                <button type="button" tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="closeTrend()">
                     <span jhiTranslate="artemisApp.featureUsage.closeTrend"></span>
                 </button>
             </div>

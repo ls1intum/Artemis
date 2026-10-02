@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.micrometer.observation.autoconfigure.ObservationAutoConfiguration;
 import org.springframework.boot.micrometer.tracing.autoconfigure.MicrometerTracingAutoConfiguration;
 import org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.OpenTelemetryTracingAutoConfiguration;
@@ -49,8 +50,8 @@ class WorkerTelemetryConfigurationTest {
             }
         };
         new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
-                .withConfiguration(AutoConfigurations.of(ObservationAutoConfiguration.class, MicrometerTracingAutoConfiguration.class, OpenTelemetryTracingAutoConfiguration.class,
-                        OpenTelemetrySdkAutoConfiguration.class))
+                .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, ObservationAutoConfiguration.class, MicrometerTracingAutoConfiguration.class,
+                        OpenTelemetryTracingAutoConfiguration.class, OpenTelemetrySdkAutoConfiguration.class))
                 .withUserConfiguration(WorkerTelemetryConfiguration.class).withBean(SpanProcessor.class, () -> SimpleSpanProcessor.create(exporter))
                 .withPropertyValues("management.tracing.sampling.probability=1.0", "artemis.telemetry.gen-ai.capture-content=" + captureContent).run(context -> {
                     assertThat(context).hasNotFailed();

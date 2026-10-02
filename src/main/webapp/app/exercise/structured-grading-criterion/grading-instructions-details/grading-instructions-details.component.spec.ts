@@ -18,6 +18,7 @@ import { GradingFeedbackAction } from 'app/editor/monaco-editor/model/actions/gr
 import { GradingUsageCountAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
 import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -35,7 +36,6 @@ describe('GradingInstructionsDetailsComponent', () => {
     let gradingInstructionWithoutId: GradingInstruction;
     let gradingCriterionWithoutId: GradingCriterion;
     let exercise: Exercise;
-    let backupExercise: Exercise;
     let generationService: { generate: ReturnType<typeof vi.fn> };
     let accountService: { isAtLeastEditorForExercise: ReturnType<typeof vi.fn> };
     let alertService: MockAlertService;
@@ -69,13 +69,45 @@ describe('GradingInstructionsDetailsComponent', () => {
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService) as unknown as MockAlertService;
         exercise = { id: 1 } as Exercise;
-        backupExercise = { id: 1 } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
-        component.backupExercise = backupExercise;
         gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
         gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] };
         gradingInstructionWithoutId = { credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
         gradingCriterionWithoutId = { title: 'testCriteria', structuredGradingInstructions: [gradingInstructionWithoutId] };
+    });
+
+    it.each([false, true])('disables delete keyboard actions when read-only (feedback used: %s)', (feedbackUsed) => {
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = feedbackUsed;
+        fixture.componentRef.setInput('editable', false);
+        fixture.detectChanges();
+        const controls = Array.from(
+            fixture.nativeElement.querySelectorAll('tumaet-ui-button[data-testid="delete-criterion-button"] button, button[data-testid="delete-instruction-button"]'),
+        ) as HTMLButtonElement[];
+        expect(controls).toHaveLength(2);
+        const deleteCriterion = vi.spyOn(component, 'deleteGradingCriterion').mockImplementation(() => {});
+        const deleteInstruction = vi.spyOn(component, 'deleteInstruction').mockImplementation(() => {});
+        for (const control of controls) {
+            expect(control.hasAttribute('role')).toBe(false);
+            expect(control.disabled).toBe(true);
+            for (const [type, key] of [
+                ['keydown', 'Enter'],
+                ['keydown', ' '],
+                ['keyup', ' '],
+            ]) {
+                const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+                control.dispatchEvent(event);
+                expect(event.defaultPrevented).toBe(false);
+            }
+        }
+        expect(deleteCriterion).not.toHaveBeenCalled();
+        expect(deleteInstruction).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('editable', true);
+        fixture.detectChanges();
+        for (const control of controls) {
+            expect(control.disabled).toBe(false);
+            expect(control.tabIndex).toBe(0);
+        }
     });
 
     describe('assessment criteria generation', () => {
@@ -183,38 +215,68 @@ describe('GradingInstructionsDetailsComponent', () => {
         it('should render the edit controls and generation button in the same header', () => {
             fixture.detectChanges();
 
-            const header = fixture.nativeElement.querySelector('.assessment-criteria-generation__header') as HTMLElement;
+            const header = fixture.nativeElement.querySelector('[data-testid="assessment-criteria-header"]') as HTMLElement;
 
             expect(header).not.toBeNull();
             expect(header.querySelector('#edit-mode')).not.toBeNull();
             expect(header.querySelector('[data-testid="generate-assessment-criteria"]')).not.toBeNull();
         });
 
-        it('should render the add-instruction action as a labelled icon button', () => {
+        it('should render the add-instruction action as a labelled button', () => {
             exercise.gradingCriteria = [gradingCriterion];
             fixture.detectChanges();
 
-            const buttonHost = fixture.nativeElement.querySelector('#add-instruction-button') as HTMLElement;
+            const buttonHost = fixture.nativeElement.querySelector('#add-instruction-button-0') as HTMLElement;
             const button = buttonHost.querySelector('button') as HTMLButtonElement;
 
             expect(button.tagName).toBe('BUTTON');
-            expect(button.getAttribute('aria-label')).toBe('artemisApp.exercise.addAssessmentInstruction');
-            expect(button.textContent?.trim()).toBe('');
+            expect(button.textContent?.trim()).toBe('artemisApp.exercise.addAssessmentInstruction');
         });
 
-        it('should not persist the display-only grading instruction placeholder while generating', () => {
+        it('should generate without parsing markdown when feedback is already used', () => {
             exercise.gradingInstructionFeedbackUsed = true;
             const markdownEditor = {
-                parseMarkdown: vi.fn(() => component.setExerciseGradingInstructionText([{ text: '  Add Assessment Instruction text here  \n', action: undefined }])),
+                flushLiveMarkdownAndParse: vi.fn(),
             };
             Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
             generationService.generate.mockReturnValue(of([]));
 
             component.generateAssessmentCriteria();
 
-            expect(markdownEditor.parseMarkdown).toHaveBeenCalledOnce();
-            expect(exercise.gradingInstructions).toBeUndefined();
+            expect(markdownEditor.flushLiveMarkdownAndParse).not.toHaveBeenCalled();
             expect(generationService.generate).toHaveBeenCalledWith(exercise, { exampleSolution: undefined, additionalContext: undefined });
+        });
+
+        it('should allow switching to edit-as-text when grading instruction feedback is used', () => {
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.showEditMode.set(true);
+
+            component.setEditMode(false);
+
+            expect(component.showEditMode()).toBe(false);
+        });
+
+        it('should render structured instruction fields when grading instruction feedback is used', () => {
+            exercise.gradingInstructionFeedbackUsed = true;
+            exercise.gradingCriteria = [gradingCriterion];
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="instruction-credits"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="instruction-usage-count"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('jhi-markdown-editor-monaco')).toBeNull();
+            expect(component.showEditMode()).toBe(true);
+        });
+
+        it('should render the plain markdown editor without criterion cards in edit-as-text mode', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            fixture.detectChanges();
+            component.setEditMode('text');
+            fixture.detectChanges();
+
+            expect(component.showEditMode()).toBe(false);
+            expect(fixture.nativeElement.querySelector('jhi-markdown-editor-monaco')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#criterionTitle-0')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#add-criterion-button')).toBeNull();
         });
 
         it('should use the current user permissions for a new exam exercise without populated permission flags', () => {
@@ -342,7 +404,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             generationService.generate.mockReturnValue(response);
 
             component.generateAssessmentCriteria();
-            component.switchMode();
+            component.setEditMode('text');
             response.next([generatedCriterion]);
             response.complete();
 
@@ -353,7 +415,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         it('should parse, generate, and remain in edit-as-text mode', () => {
             const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
             const markdownEditor = {
-                parseMarkdown: vi.fn(() => {
+                flushLiveMarkdownAndParse: vi.fn(() => {
                     exercise.gradingInstructions = 'Current unsaved text';
                     exercise.gradingCriteria = [];
                 }),
@@ -365,39 +427,58 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             component.generateAssessmentCriteria();
 
-            expect(markdownEditor.parseMarkdown).toHaveBeenCalledOnce();
+            expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
             expect(markdownEditor.setMarkdown).toHaveBeenCalledOnce();
             expect(component.showEditMode()).toBe(false);
             expect(exercise.gradingInstructions).toBe('Current unsaved text');
         });
 
-        it('should keep generated criterion markup out of the general editor when grading instruction feedback is used', () => {
+        it('should refresh structured markdown snapshot after generation when grading instruction feedback is used', () => {
             const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
             const markdownEditor = {
-                parseMarkdown: vi.fn(() => {
-                    exercise.gradingInstructions = 'General assessment instructions';
-                }),
+                parseMarkdown: vi.fn(),
                 setMarkdown: vi.fn(),
             };
             Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+            exercise.gradingInstructions = 'General assessment instructions';
             exercise.gradingInstructionFeedbackUsed = true;
             generationService.generate.mockReturnValue(of([generatedCriterion]));
-            const initializeMarkdownSpy = vi.spyOn(component, 'initializeMarkdown').mockImplementation(() => undefined);
-            const generateMarkdownSpy = vi.spyOn(component, 'generateMarkdown');
 
             component.generateAssessmentCriteria();
 
-            expect(component.markdownEditorText()).toBe('General assessment instructions\n\n');
-            expect(component.markdownEditorText()).not.toContain(GradingCriterionAction.IDENTIFIER);
-            expect(generateMarkdownSpy).not.toHaveBeenCalled();
-            expect(initializeMarkdownSpy).toHaveBeenCalledOnce();
+            expect(component.showEditMode()).toBe(true);
+            expect(component.markdownEditorText()).toContain('General assessment instructions');
+            expect(component.markdownEditorText()).toContain(GradingCriterionAction.IDENTIFIER);
             expect(markdownEditor.setMarkdown).not.toHaveBeenCalled();
-            expect(exercise.gradingInstructions).toBe('General assessment instructions');
+            expect(exercise.gradingCriteria).toEqual([generatedCriterion]);
+        });
+
+        it('allows a text-mode addition after generated criteria replace persisted feedback-linked criteria', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            const generatedInstruction = { credits: 2, gradingScale: 'generated', instructionDescription: 'generated', feedback: 'generated', usageCount: 0 } as GradingInstruction;
+            const addedInstruction = { credits: 3, gradingScale: 'added', instructionDescription: 'added', feedback: 'added', usageCount: 0 } as GradingInstruction;
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [generatedInstruction] } as GradingCriterion;
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => confirmation.accept());
+            generationService.generate.mockReturnValue(of([generatedCriterion]));
+
+            component.generateAssessmentCriteria();
+            component.showEditMode.set(false);
+            const markdown = `${component.generateMarkdown()}[criterion] Added\n\t${component.generateInstructionText(addedInstruction)}`;
+            component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(true);
+            expect(exercise.gradingCriteria).toHaveLength(2);
+            expect(exercise.gradingCriteria![0]).toBe(generatedCriterion);
+            expect(exercise.gradingCriteria![1].title).toBe('Added');
+            expect(exercise.gradingCriteria![1].id).toBeUndefined();
         });
 
         it('should abort when edit-as-text syntax cannot be parsed', () => {
             const markdownEditor = {
-                parseMarkdown: vi.fn(() => {
+                flushLiveMarkdownAndParse: vi.fn(() => {
                     exercise.gradingCriteria = [{ title: '', structuredGradingInstructions: [] } as GradingCriterion];
                 }),
             };
@@ -482,7 +563,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.addNewGradingCriterion();
             component.deleteGradingCriterion(gradingCriterion);
             component.onCriterionTitleChange({ target: { value: 'changed' } } as unknown as Event, gradingCriterion);
-            component.switchMode();
+            component.setEditMode('text');
 
             expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
             expect(gradingCriterion.title).toBe(originalTitle);
@@ -506,27 +587,284 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.markdownEditorText()).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
         });
 
-        it('should initialize only general instructions in the main editor when grading instruction feedback is used', () => {
+        it('should initialize full markdown snapshot when grading instruction feedback is used', () => {
             exercise.gradingInstructions = 'General assessment instructions';
             exercise.gradingCriteria = [gradingCriterion];
             exercise.gradingInstructionFeedbackUsed = true;
 
             component.ngOnInit();
 
-            expect(component.markdownEditorText()).toBe('General assessment instructions\n\n');
-            expect(component.markdownEditorText()).not.toContain(GradingCriterionAction.IDENTIFIER);
+            expect(component.showEditMode()).toBe(true);
+            expect(component.markdownEditorText()).toContain('General assessment instructions');
+            expect(component.markdownEditorText()).toContain(GradingCriterionAction.IDENTIFIER);
         });
 
-        it('should parse per-instruction editors with only grading instruction actions', () => {
+        it('should skip markdown parsing while in structured edit mode', () => {
             exercise.gradingInstructionFeedbackUsed = true;
-            const mainEditor = { parseMarkdown: vi.fn() };
-            const instructionEditor = { parseMarkdown: vi.fn() };
+            component.ngOnInit();
+            const mainEditor = { flushLiveMarkdownAndParse: vi.fn() };
             Object.defineProperty(component, 'markdownEditor', { value: () => mainEditor });
-            Object.defineProperty(component, 'markdownEditors', { value: () => [instructionEditor] });
 
             component.prepareForSave();
 
-            expect(instructionEditor.parseMarkdown).toHaveBeenCalledWith(component.domainActionsForGradingInstructionParsing);
+            expect(mainEditor.flushLiveMarkdownAndParse).not.toHaveBeenCalled();
+        });
+
+        it('should flush pending markdown synchronously so a save within the debounce window keeps the latest text', () => {
+            component.showEditMode.set(false);
+            exercise.gradingInstructions = 'stale instructions';
+            const markdownEditor = {
+                currentMarkdown: () => 'latest instructions from monaco',
+                flushLiveMarkdownAndParse: vi.fn(() => {
+                    // Host save calls prepareForSave before the debounced markdownChange fires.
+                    exercise.gradingInstructions = 'latest instructions from monaco';
+                }),
+            };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+
+            component.prepareForSave();
+
+            expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
+            expect(exercise.gradingInstructions).toBe('latest instructions from monaco');
+        });
+
+        it('should clear grading criteria when prepareForSave flushes an empty monaco buffer', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const markdownEditor = {
+                currentMarkdown: () => '',
+                // Empty buffer: parseMarkdown does not emit textWithDomainActionsFound.
+                flushLiveMarkdownAndParse: vi.fn(),
+            };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+
+            component.prepareForSave();
+
+            expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
+            expect(exercise.gradingCriteria).toEqual([]);
+            component.onDomainActionsFound(getDomainActionArray());
+            expect(exercise.gradingCriteria![0].id).toBeUndefined();
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
+        });
+
+        it('should clear grading criteria when switching to structured mode with an empty buffer', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            Object.defineProperty(component, 'markdownEditor', {
+                value: () => ({
+                    currentMarkdown: () => '',
+                    flushLiveMarkdownAndParse: vi.fn(),
+                }),
+            });
+
+            component.setEditMode('structured');
+
+            expect(exercise.gradingCriteria).toEqual([]);
+            expect(component.showEditMode()).toBe(true);
+        });
+
+        /** Two criteria carrying the same {@id:1} marker, neither still matching the persisted content. */
+        const rejectedDomainActions = () => {
+            const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+            return [
+                { text: '{@id:1} renamed copy', action: domainActions[0].action },
+                ...domainActions.slice(1, 5),
+                { text: 'copy feedback', action: domainActions[5].action },
+                domainActions[6],
+                { text: '{@id:1} renamed original', action: domainActions[0].action },
+                ...domainActions.slice(1),
+            ] as TextWithDomainAction[];
+        };
+
+        it('should apply a parse with duplicated legacy markers by content without rejecting', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            vi.spyOn(alertService, 'error');
+            // Two renamed criteria both carrying a leftover {@id:1}; markers are ignored.
+            const rejected = rejectedDomainActions();
+            Object.defineProperty(component, 'markdownEditor', {
+                value: () => ({
+                    currentMarkdown: () => 'markdown with a duplicated legacy marker',
+                    flushLiveMarkdownAndParse: vi.fn(() => component.onDomainActionsFound(rejected)),
+                }),
+            });
+
+            expect(component.prepareForSave()).toBe(true);
+            expect(exercise.gradingCriteria).toHaveLength(2);
+            expect(alertService.error).not.toHaveBeenCalled();
+        });
+
+        it('should enter structured mode after flushing text that carries duplicated legacy markers', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const rejected = rejectedDomainActions();
+            Object.defineProperty(component, 'markdownEditor', {
+                value: () => ({
+                    currentMarkdown: () => 'markdown with a duplicated legacy marker',
+                    flushLiveMarkdownAndParse: vi.fn(() => component.onDomainActionsFound(rejected)),
+                }),
+            });
+
+            component.editModeValue.set('structured');
+            component.setEditMode('structured');
+
+            expect(component.showEditMode()).toBe(true);
+            expect(exercise.gradingCriteria).toHaveLength(2);
+        });
+
+        it('should reclaim persisted ids after a live empty clear when the same content is pasted back', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            Object.defineProperty(component, 'markdownEditor', {
+                value: () => ({
+                    currentMarkdown: () => '',
+                    flushLiveMarkdownAndParse: vi.fn(),
+                }),
+            });
+
+            // Debounced cut: clear the exercise model but keep the identity baseline.
+            component.onMarkdownChange();
+            expect(exercise.gradingCriteria).toEqual([]);
+
+            const originalCriterion = gradingCriterion;
+            const originalInstruction = gradingInstruction;
+            component.onDomainActionsFound(getDomainActionArray());
+
+            expect(exercise.gradingCriteria![0]).toBe(originalCriterion);
+            expect(exercise.gradingCriteria![0].id).toBe(1);
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(originalInstruction);
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
+        });
+
+        it('should reclaim a cut criterion after a debounced partial parse', () => {
+            const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            const cutCriterion = { id: 2, title: 'Other criterion', structuredGradingInstructions: [cutInstruction] } as GradingCriterion;
+            exercise.gradingCriteria = [gradingCriterion, cutCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const fullMarkdown = component.generateMarkdown();
+
+            component.onDomainActionsFound(getDomainActionArray());
+            expect(exercise.gradingCriteria).toHaveLength(1);
+            component.onDomainActionsFound(parseMarkdownForDomainActions(fullMarkdown, component.domainActionsForMainEditor));
+
+            expect(exercise.gradingCriteria![1]).toBe(cutCriterion);
+            expect(exercise.gradingCriteria![1].structuredGradingInstructions[0]).toBe(cutInstruction);
+        });
+
+        it('rejects an edited criterion repaste after a partial parse when feedback is used', () => {
+            const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            const cutCriterion = { id: 2, title: 'Other criterion', structuredGradingInstructions: [cutInstruction] } as GradingCriterion;
+            exercise.gradingCriteria = [gradingCriterion, cutCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const editedMarkdown = component.generateMarkdown().replace('[feedback] other', '[feedback] edited other');
+
+            component.onDomainActionsFound(getDomainActionArray());
+            const partialCriteria = exercise.gradingCriteria;
+            component.onDomainActionsFound(parseMarkdownForDomainActions(editedMarkdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(false);
+            expect(exercise.gradingCriteria).toBe(partialCriteria);
+            expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+            expect(cutCriterion.id).toBe(2);
+            expect(cutInstruction.id).toBe(2);
+            expect(cutInstruction.feedback).toBe('other');
+        });
+
+        it('allows a distinct new criterion after deleting a persisted one when feedback is used', () => {
+            const removedInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            const removedCriterion = { id: 2, title: 'Other criterion', structuredGradingInstructions: [removedInstruction] } as GradingCriterion;
+            const newInstruction = { credits: 3, gradingScale: 'new', instructionDescription: 'new', feedback: 'new', usageCount: 0 } as GradingInstruction;
+            exercise.gradingCriteria = [gradingCriterion, removedCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const markdown = component
+                .generateMarkdown()
+                .replace('[criterion] Other criterion', '[criterion] New criterion')
+                .replace(component.generateInstructionText(removedInstruction), component.generateInstructionText(newInstruction));
+
+            component.onDomainActionsFound(getDomainActionArray());
+            component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(true);
+            expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+            expect(exercise.gradingCriteria![1].title).toBe('New criterion');
+            expect(exercise.gradingCriteria![1].id).toBeUndefined();
+            expect(exercise.gradingCriteria![1].structuredGradingInstructions[0].id).toBeUndefined();
+        });
+
+        it('should reclaim a cut instruction after a debounced partial parse', () => {
+            const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            gradingCriterion.structuredGradingInstructions.push(cutInstruction);
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const fullMarkdown = component.generateMarkdown();
+
+            component.onDomainActionsFound(getDomainActionArray());
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions).toHaveLength(1);
+            component.onDomainActionsFound(parseMarkdownForDomainActions(fullMarkdown, component.domainActionsForMainEditor));
+
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions[1]).toBe(cutInstruction);
+        });
+
+        it('rejects an edited instruction repaste after a partial parse when feedback is used', () => {
+            const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            gradingCriterion.structuredGradingInstructions.push(cutInstruction);
+            exercise.gradingCriteria = [gradingCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const editedMarkdown = component.generateMarkdown().replace('[feedback] other', '[feedback] edited other');
+
+            component.onDomainActionsFound(getDomainActionArray());
+            const partialCriteria = exercise.gradingCriteria;
+            component.onDomainActionsFound(parseMarkdownForDomainActions(editedMarkdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(false);
+            expect(exercise.gradingCriteria).toBe(partialCriteria);
+            expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction]);
+            expect(cutInstruction.id).toBe(2);
+            expect(cutInstruction.feedback).toBe('other');
+        });
+
+        it('allows a distinct new instruction after deleting a persisted one when feedback is used', () => {
+            const removedInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            const newInstruction = { credits: 3, gradingScale: 'new', instructionDescription: 'new', feedback: 'new', usageCount: 0 } as GradingInstruction;
+            gradingCriterion.structuredGradingInstructions.push(removedInstruction);
+            exercise.gradingCriteria = [gradingCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const markdown = component.generateMarkdown().replace(component.generateInstructionText(removedInstruction), component.generateInstructionText(newInstruction));
+
+            component.onDomainActionsFound(getDomainActionArray());
+            component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(true);
+            expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+            expect(gradingCriterion.structuredGradingInstructions[0]).toBe(gradingInstruction);
+            expect(gradingCriterion.structuredGradingInstructions[1].feedback).toBe('new');
+            expect(gradingCriterion.structuredGradingInstructions[1].id).toBeUndefined();
+        });
+
+        it('should flush the live monaco buffer before switching to structured mode', () => {
+            component.showEditMode.set(false);
+            const markdownEditor = { flushLiveMarkdownAndParse: vi.fn() };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+
+            component.setEditMode('structured');
+
+            expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
+            expect(component.showEditMode()).toBe(true);
         });
     });
 
@@ -546,13 +884,15 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(index).toBe(0);
     });
 
-    it('should expose the grading instruction domain actions used by the template', () => {
-        expect(component.domainActionsForGradingInstructionParsing).toEqual([
+    it('should expose the grading instruction domain actions used by the text editor', () => {
+        expect(component.domainActionsForMainEditor).toEqual([
             component.creditsAction,
             component.gradingScaleAction,
             component.descriptionAction,
             component.feedbackAction,
             component.usageCountAction,
+            component.gradingInstructionAction,
+            component.gradingCriterionAction,
         ]);
     });
 
@@ -572,33 +912,6 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria).toHaveLength(0);
     });
 
-    it('should reset the grading criterion', () => {
-        exercise.gradingCriteria = [gradingCriterion];
-        component.backupExercise.gradingCriteria = [gradingCriterion];
-        component.resetCriterionTitle(gradingCriterion);
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(exercise.gradingCriteria).toEqual(component.backupExercise.gradingCriteria);
-    });
-
-    it('should reset only the selected no-ID instruction when multiple no-ID objects exist', () => {
-        const firstInstruction = { credits: 1, gradingScale: 'first' } as GradingInstruction;
-        const secondInstruction = { credits: 2, gradingScale: 'second' } as GradingInstruction;
-        const firstCriterion = { title: 'first', structuredGradingInstructions: [firstInstruction] } as GradingCriterion;
-        const secondCriterion = { title: 'second', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
-        exercise.gradingCriteria = [firstCriterion, secondCriterion];
-        component.backupExercise.gradingCriteria = [
-            { title: 'first', structuredGradingInstructions: [{ credits: 3, gradingScale: 'backup first' }] },
-            { title: 'second', structuredGradingInstructions: [{ credits: 4, gradingScale: 'backup second' }] },
-        ] as GradingCriterion[];
-
-        component.resetInstruction(secondInstruction, secondCriterion);
-
-        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0]).toBe(firstInstruction);
-        expect(exercise.gradingCriteria[1].structuredGradingInstructions[0]).not.toBe(secondInstruction);
-        expect(exercise.gradingCriteria[1].structuredGradingInstructions[0]).toEqual(new GradingInstruction());
-    });
-
     it('should add new grading criteria to corresponding exercise', () => {
         exercise.gradingCriteria = [gradingCriterion];
         component.addNewGradingCriterion();
@@ -616,15 +929,22 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria[0].title).toEqual(event.target.value);
     });
 
-    it('should change grading instruction', () => {
-        const newDescription = 'new text';
-        const domainActions = [{ text: newDescription, action: new GradingDescriptionAction() }] as TextWithDomainAction[];
-
+    it('should replace a grading instruction looked up by stable id', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        component.onInstructionChange(domainActions, gradingInstruction);
+        const updatedInstruction = {
+            id: gradingInstruction.id,
+            credits: gradingInstruction.credits,
+            gradingScale: gradingInstruction.gradingScale,
+            instructionDescription: 'new text',
+            feedback: gradingInstruction.feedback,
+            usageCount: gradingInstruction.usageCount,
+        } as GradingInstruction;
+
+        component.updateGradingInstruction(updatedInstruction, gradingCriterion);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(newDescription);
+        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0]).toBe(updatedInstruction);
+        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toBe('new text');
     });
 
     it('should delete a grading instruction', () => {
@@ -655,7 +975,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingInstructions).toBe(genuineInstructions);
     });
 
-    const getDomainActionArray = () => {
+    const getDomainActionArray = (ids?: { criterionId?: number; instructionId?: number }) => {
         const creditsAction = new GradingCreditsAction();
         const scaleAction = new GradingScaleAction();
         const descriptionAction = new GradingDescriptionAction();
@@ -663,10 +983,12 @@ describe('GradingInstructionsDetailsComponent', () => {
         const usageCountAction = new GradingUsageCountAction();
         const instructionAction = new GradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
         const criterionAction = new GradingCriterionAction(instructionAction);
+        const criterionText = ids?.criterionId != undefined ? `{@id:${ids.criterionId}} testCriteria` : 'testCriteria';
+        const instructionText = ids?.instructionId != undefined ? `{@id:${ids.instructionId}}` : '';
 
         return [
-            { text: 'testCriteria', action: criterionAction },
-            { text: '', action: instructionAction },
+            { text: criterionText, action: criterionAction },
+            { text: instructionText, action: instructionAction },
             { text: '1', action: creditsAction },
             { text: 'scale', action: scaleAction },
             { text: 'description', action: descriptionAction },
@@ -695,6 +1017,729 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria).toBeDefined();
         const gradingCriteria = exercise.gradingCriteria![0];
         expect(gradingCriteria).toEqual(gradingCriterionWithoutId);
+    });
+
+    it('should retain persisted criterion and instruction ids when parsing edited text', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalCriterion = gradingCriterion;
+        const originalInstruction = gradingInstruction;
+        const domainActions = getDomainActionArray();
+        domainActions[5] = { text: 'updated feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(originalCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(originalInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('updated feedback');
+    });
+
+    it('should keep persisted ids on unchanged instructions when another instruction is inserted', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalInstruction = gradingInstruction;
+        const domainActions = getDomainActionArray();
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        const instructionAction = domainActions[1].action;
+        domainActions.splice(
+            1,
+            0,
+            { text: '', action: instructionAction },
+            { text: '9', action: creditsAction },
+            { text: 'inserted', action: scaleAction },
+            { text: 'new', action: descriptionAction },
+            { text: 'new feedback', action: feedbackAction },
+            { text: '1', action: usageCountAction },
+        );
+
+        component.onDomainActionsFound(domainActions);
+
+        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
+        expect(instructions).toHaveLength(2);
+        expect(instructions[0].id).toBeUndefined();
+        expect(instructions[0].gradingScale).toBe('inserted');
+        expect(instructions[1]).toBe(originalInstruction);
+        expect(instructions[1].id).toBe(1);
+    });
+
+    it('should give the persisted id to an unchanged copy that precedes an edited original', () => {
+        // Without markers, the unchanged fingerprint claims the id; the edited row becomes new.
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalInstruction = gradingInstruction;
+        const domainActions = getDomainActionArray();
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        domainActions.splice(
+            1,
+            0,
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        );
+        domainActions[domainActions.length - 2] = { text: 'edited feedback', action: feedbackAction };
+
+        component.onDomainActionsFound(domainActions);
+
+        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
+        expect(instructions).toHaveLength(2);
+        expect(instructions[0]).toBe(originalInstruction);
+        expect(instructions[0].id).toBe(1);
+        expect(instructions[0].feedback).toBe('feedback');
+        expect(instructions[1].id).toBeUndefined();
+        expect(instructions[1].feedback).toBe('edited feedback');
+    });
+
+    it('should keep instruction ids across reorders of distinct content', () => {
+        const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;
+        const instructionB = { id: 20, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
+        const criterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [instructionA, instructionB] } as GradingCriterion;
+        exercise.gradingCriteria = [criterion];
+
+        const base = getDomainActionArray();
+        const instructionAction = base[1].action;
+        const creditsAction = base[2].action;
+        const scaleAction = base[3].action;
+        const descriptionAction = base[4].action;
+        const feedbackAction = base[5].action;
+        const usageCountAction = base[6].action;
+        const domainActions = [
+            base[0],
+            { text: '', action: instructionAction },
+            { text: '2', action: creditsAction },
+            { text: 'b', action: scaleAction },
+            { text: 'b', action: descriptionAction },
+            { text: 'b', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'a', action: scaleAction },
+            { text: 'a', action: descriptionAction },
+            { text: 'a', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(domainActions);
+
+        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
+        expect(instructions[0]).toBe(instructionB);
+        expect(instructions[0].id).toBe(20);
+        expect(instructions[1]).toBe(instructionA);
+        expect(instructions[1].id).toBe(10);
+    });
+
+    it('should reject an ambiguous insertion and edit without replacing the model', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalCriteria = exercise.gradingCriteria;
+        const domainActions = getDomainActionArray();
+        domainActions[5] = { text: 'edited feedback', action: domainActions[5].action };
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        domainActions.push(
+            { text: '', action: instructionAction },
+            { text: '3', action: creditsAction },
+            { text: 'extra', action: scaleAction },
+            { text: 'extra', action: descriptionAction },
+            { text: 'extra', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        );
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingInstruction.feedback).toBe('feedback');
+    });
+
+    it('should not transfer a persisted instruction id to an edited copy placed before the original', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalInstruction = gradingInstruction;
+        const domainActions = getDomainActionArray();
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        domainActions.splice(
+            1,
+            0,
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'copied feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        );
+
+        component.onDomainActionsFound(domainActions);
+
+        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
+        expect(instructions).toHaveLength(2);
+        expect(instructions[0]).not.toBe(originalInstruction);
+        expect(instructions[0].id).toBeUndefined();
+        expect(instructions[0].feedback).toBe('copied feedback');
+        expect(instructions[1]).toBe(originalInstruction);
+        expect(instructions[1].id).toBe(1);
+        expect(instructions[1].feedback).toBe('feedback');
+    });
+
+    it('should keep criterion and instruction ids across a one-character title edit', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: 'testCriteria!', action: domainActions[0].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].title).toBe('testCriteria!');
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
+    });
+
+    it('sends an explicitly cleared criterion title in the save payload', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const markdown = component.generateMarkdown().replace('[criterion] testCriteria', '[criterion]');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(component.prepareForSave()).toBe(true);
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        const savedCriteria = JSON.parse(JSON.stringify(exercise.gradingCriteria)) as GradingCriterion[];
+        expect(savedCriteria[0].title).toBe('');
+        expect(savedCriteria[0].id).toBe(1);
+    });
+
+    it('should keep title-less criterion identity when an instruction field is edited', () => {
+        const instruction = {
+            id: 11,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'feedback',
+            usageCount: 0,
+        } as GradingInstruction;
+        const dummyCriterion = { id: 7, structuredGradingInstructions: [instruction] } as GradingCriterion;
+        exercise.gradingCriteria = [dummyCriterion];
+
+        const domainActions = getDomainActionArray().slice(1);
+        domainActions[4] = { text: 'edited feedback', action: domainActions[4].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(dummyCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(7);
+        expect(exercise.gradingCriteria![0].title).toBeUndefined();
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(instruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(11);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('edited feedback');
+    });
+
+    it('should not assign an unrelated criterion id when a new criterion is inserted before an unchanged one', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        const criterionAction = domainActions[0].action;
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        const withInsert = [
+            { text: 'brand new', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '9', action: creditsAction },
+            { text: 'new', action: scaleAction },
+            { text: 'new', action: descriptionAction },
+            { text: 'new feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            ...domainActions,
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(withInsert);
+
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].title).toBe('brand new');
+        expect(exercise.gradingCriteria![1]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![1].id).toBe(1);
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[0]).toBe(gradingInstruction);
+    });
+
+    it('should keep title-less criterion identity across a content-identical text round trip', () => {
+        const instruction = {
+            id: 11,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'feedback',
+            usageCount: 0,
+        } as GradingInstruction;
+        const dummyCriterion = { id: 7, structuredGradingInstructions: [instruction] } as GradingCriterion;
+        exercise.gradingCriteria = [dummyCriterion];
+
+        const markdown = component.generateMarkdown();
+        expect(markdown).not.toContain('{@id:');
+        expect(markdown).toContain(GradingCriterionAction.IDENTIFIER);
+        expect(markdown).toContain(GradingInstructionAction.IDENTIFIER);
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria![0]).toBe(dummyCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(7);
+        expect(exercise.gradingCriteria![0].title).toBe('');
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(instruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(11);
+    });
+
+    it('keeps a title-less criterion with two instructions grouped with their IDs after a text round trip', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, instructionDescription: 'second' };
+        const criterion = { id: 3, structuredGradingInstructions: [gradingInstruction, secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [criterion];
+        component.ngOnInit();
+
+        const markdown = component.generateMarkdown();
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toEqual([criterion]);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
+    });
+
+    it.each([undefined, ''])('keeps a persisted title-less group with title %s when parsing legacy top-level instructions', (title) => {
+        const secondInstruction = { ...gradingInstruction, id: 2, instructionDescription: 'second' };
+        const criterion = { id: 3, title, structuredGradingInstructions: [gradingInstruction, secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [criterion];
+        const legacyMarkdown = component.generateInstructionsMarkdown(criterion);
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(legacyMarkdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toEqual([criterion]);
+        expect(criterion.title).toBe(title);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
+    });
+
+    it('rejects an edit to one of two identical persisted instructions without swapping IDs', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2 };
+        gradingCriterion.structuredGradingInstructions.push(secondInstruction);
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component.generateMarkdown().replace('[feedback] feedback', '[feedback] edited feedback');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondInstruction.feedback).toBe('feedback');
+    });
+
+    it('keeps both IDs when identical persisted instructions are unchanged', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2 };
+        gradingCriterion.structuredGradingInstructions.push(secondInstruction);
+        exercise.gradingCriteria = [gradingCriterion];
+        const markdown = component.generateMarkdown();
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
+    });
+
+    it('rejects an edit to one of two identical persisted criteria without swapping IDs', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2 };
+        const secondCriterion = { id: 2, title: gradingCriterion.title, structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [gradingCriterion, secondCriterion];
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component.generateMarkdown().replace('[feedback] feedback', '[feedback] edited feedback');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(exercise.gradingCriteria).toEqual([gradingCriterion, secondCriterion]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondInstruction.feedback).toBe('feedback');
+        expect(exercise.gradingCriteria!.map(({ id }) => id)).toEqual([1, 2]);
+        expect(exercise.gradingCriteria!.map(({ structuredGradingInstructions }) => structuredGradingInstructions[0].id)).toEqual([1, 2]);
+    });
+
+    it('rejects editing one criterion to match another with the same title', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, feedback: 'second feedback' };
+        const secondCriterion = { id: 2, title: gradingCriterion.title, structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [gradingCriterion, secondCriterion];
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component.generateMarkdown().replace(component.generateInstructionText(gradingInstruction), component.generateInstructionText(secondInstruction));
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(secondCriterion.structuredGradingInstructions[0]).toBe(secondInstruction);
+        expect(gradingInstruction.feedback).toBe('feedback');
+    });
+
+    it('rejects editing one instruction to match another in the same criterion', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, feedback: 'second feedback' };
+        gradingCriterion.structuredGradingInstructions.push(secondInstruction);
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component.generateMarkdown().replace(component.generateInstructionText(gradingInstruction), component.generateInstructionText(secondInstruction));
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+    });
+
+    it('rejects a pasted rewrite of two persisted criteria with used feedback', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, feedback: 'second feedback' };
+        const secondCriterion = { id: 2, title: 'Second criterion', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [gradingCriterion, secondCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component
+            .generateMarkdown()
+            .replace('[criterion] testCriteria', '[criterion] Rewritten first')
+            .replace('[criterion] Second criterion', '[criterion] Rewritten second')
+            .replace('[feedback] feedback', '[feedback] rewritten first')
+            .replace('[feedback] second feedback', '[feedback] rewritten second');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(exercise.gradingCriteria).toEqual([gradingCriterion, secondCriterion]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondInstruction.feedback).toBe('second feedback');
+    });
+
+    it('should not adopt unknown legacy criterion markers as ids', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: '{@id:999} brand new criterion', action: domainActions[0].action };
+        domainActions[5] = { text: 'brand new feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).not.toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].title).toBe('brand new criterion');
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
+    });
+
+    it('should keep the instruction id via positional leftover when all fields change under the same criterion', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        domainActions[2] = { text: '9', action: domainActions[2].action };
+        domainActions[3] = { text: 'unknown', action: domainActions[3].action };
+        domainActions[4] = { text: 'unknown', action: domainActions[4].action };
+        domainActions[5] = { text: 'unknown feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('unknown feedback');
+    });
+
+    it('should reject deleting one instruction while editing another without replacing the model', () => {
+        const instructionB = { id: 2, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
+        gradingCriterion.structuredGradingInstructions.push(instructionB);
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructions = 'original text';
+        component.ngOnInit();
+        component.showEditMode.set(false);
+        const originalCriteria = exercise.gradingCriteria;
+        const domainActions = getDomainActionArray();
+        domainActions[2] = { text: '2', action: domainActions[2].action };
+        domainActions[3] = { text: 'b', action: domainActions[3].action };
+        domainActions[4] = { text: 'b', action: domainActions[4].action };
+        domainActions[5] = { text: 'edited b', action: domainActions[5].action };
+        Object.defineProperty(component, 'markdownEditor', {
+            value: () => ({
+                currentMarkdown: () => 'edited instructions',
+                flushLiveMarkdownAndParse: () => component.onDomainActionsFound(domainActions),
+            }),
+        });
+
+        expect(component.prepareForSave()).toBe(false);
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction, instructionB]);
+        expect(instructionB.feedback).toBe('b');
+        expect(exercise.gradingInstructions).toBe('original text');
+    });
+
+    it('rejects a missing usage-count marker before a second persisted instruction', () => {
+        const secondInstruction = { id: 2, credits: 2, gradingScale: 'second', instructionDescription: 'second', feedback: 'second', usageCount: 0 } as GradingInstruction;
+        gradingCriterion.structuredGradingInstructions.push(secondInstruction);
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        component.ngOnInit();
+        component.showEditMode.set(false);
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component.generateMarkdown().replace('\t[maxCountInScore] 0\n', '');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(component.prepareForSave()).toBe(false);
+        component.setEditMode('structured');
+        expect(component.showEditMode()).toBe(false);
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondInstruction.feedback).toBe('second');
+    });
+
+    it('should apply a cross-criterion content move without preserving the moved instruction id', () => {
+        const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;
+        const instructionB = { id: 20, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
+        const criterionA = { id: 1, title: 'Criterion A', structuredGradingInstructions: [instructionA] } as GradingCriterion;
+        const criterionB = { id: 2, title: 'Criterion B', structuredGradingInstructions: [instructionB] } as GradingCriterion;
+        exercise.gradingCriteria = [criterionA, criterionB];
+
+        const creditsAction = new GradingCreditsAction();
+        const scaleAction = new GradingScaleAction();
+        const descriptionAction = new GradingDescriptionAction();
+        const feedbackAction = new GradingFeedbackAction();
+        const usageCountAction = new GradingUsageCountAction();
+        const instructionAction = new GradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
+        const criterionAction = new GradingCriterionAction(instructionAction);
+        const domainActions = [
+            { text: 'Criterion A', action: criterionAction },
+            { text: 'Criterion B', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '2', action: creditsAction },
+            { text: 'b', action: scaleAction },
+            { text: 'b', action: descriptionAction },
+            { text: 'b', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'a', action: scaleAction },
+            { text: 'a', action: descriptionAction },
+            { text: 'a', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(criterionA);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions).toEqual([]);
+        expect(exercise.gradingCriteria![1]).toBe(criterionB);
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[0]).toBe(instructionB);
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[0].id).toBe(20);
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[1].id).toBeUndefined();
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[1].feedback).toBe('a');
+    });
+
+    it('should reject two edited copies with only one persisted instruction', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalCriteria = exercise.gradingCriteria;
+        const domainActions = getDomainActionArray();
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        domainActions[5] = { text: 'edited original feedback', action: feedbackAction };
+        domainActions.splice(
+            1,
+            0,
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'edited copy feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        );
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingInstruction.feedback).toBe('feedback');
+    });
+
+    it('should create two new criteria when both duplicate copies are renamed away from the persisted title', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        const criterionAction = domainActions[0].action;
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        const edited = [
+            { text: 'renamed copy', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'copy feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            { text: 'renamed original', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '2', action: creditsAction },
+            { text: 'other', action: scaleAction },
+            { text: 'other', action: descriptionAction },
+            { text: 'other feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(edited);
+
+        expect(exercise.gradingCriteria).toHaveLength(2);
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![1].id).toBeUndefined();
+    });
+
+    it('should keep the persisted criterion with the row whose instruction content still matches', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        const criterionAction = domainActions[0].action;
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        const copied = [
+            { text: 'testCriteria', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'copied feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            ...domainActions,
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(copied);
+
+        const criteria = exercise.gradingCriteria!;
+        expect(criteria).toHaveLength(2);
+        expect(criteria[0].id).toBeUndefined();
+        expect(criteria[0].structuredGradingInstructions[0].id).toBeUndefined();
+        expect(criteria[0].structuredGradingInstructions[0].feedback).toBe('copied feedback');
+        expect(criteria[1]).toBe(gradingCriterion);
+        expect(criteria[1].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(criteria[1].structuredGradingInstructions[0].id).toBe(1);
+    });
+
+    it('should keep criterion identity when renamed but instruction content is unchanged', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: 'brand new criterion', action: domainActions[0].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].title).toBe('brand new criterion');
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
+    });
+
+    it('rejects changing both title and instruction content when persisted feedback is used', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        const originalCriteria = exercise.gradingCriteria;
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: 'renamed criterion', action: domainActions[0].action };
+        domainActions[5] = { text: 'edited feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.title).toBe('testCriteria');
+        expect(gradingInstruction.feedback).toBe('feedback');
+    });
+
+    it('rejects editing a used criterion and adding another when neither parsed criterion matches', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        const originalCriteria = exercise.gradingCriteria;
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: 'renamed criterion', action: domainActions[0].action };
+        domainActions[5] = { text: 'edited feedback', action: domainActions[5].action };
+        domainActions.push(
+            { text: 'added criterion', action: domainActions[0].action },
+            { text: '', action: domainActions[1].action },
+            { text: '2', action: domainActions[2].action },
+            { text: 'new scale', action: domainActions[3].action },
+            { text: 'new description', action: domainActions[4].action },
+            { text: 'new feedback', action: domainActions[5].action },
+            { text: '0', action: domainActions[6].action },
+        );
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(component.prepareForSave()).toBe(false);
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.id).toBe(1);
+        expect(gradingCriterion.title).toBe('testCriteria');
+        expect(gradingInstruction.id).toBe(1);
+        expect(gradingInstruction.feedback).toBe('feedback');
+    });
+
+    it('keeps criterion and instruction IDs when two titles are exchanged', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, feedback: 'second feedback' };
+        const secondCriterion = { id: 2, title: 'Second criterion', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [gradingCriterion, secondCriterion];
+        const markdown = component
+            .generateMarkdown()
+            .replace('[criterion] testCriteria', '[criterion] temporary title')
+            .replace('[criterion] Second criterion', '[criterion] testCriteria')
+            .replace('[criterion] temporary title', '[criterion] Second criterion');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![1]).toBe(secondCriterion);
+        expect(exercise.gradingCriteria!.map(({ id }) => id)).toEqual([1, 2]);
+        expect(gradingCriterion.structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(secondCriterion.structuredGradingInstructions[0]).toBe(secondInstruction);
+        expect(gradingCriterion.title).toBe('Second criterion');
+        expect(secondCriterion.title).toBe('testCriteria');
+    });
+
+    it('should keep a literal {id:N} criterion title prefix for an unsaved criterion', () => {
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: '{id:3} Intro', action: domainActions[0].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].title).toBe('{id:3} Intro');
+    });
+
+    it('should not emit identity markers in generated markdown', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+
+        const markdown = component.generateMarkdown();
+
+        expect(markdown).not.toContain('{@id:');
+        expect(markdown).toContain(`${GradingCriterionAction.IDENTIFIER} testCriteria`);
+        expect(markdown).toContain(GradingInstructionAction.IDENTIFIER);
     });
 
     it('should update properties for grading instruction', () => {

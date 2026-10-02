@@ -1,52 +1,25 @@
-.upload-summary {
-    padding: 0.75rem;
-    border: 1px solid var(--bs-border-color);
-    border-radius: 4px;
-
-    .file-list {
-        list-style: none;
-        padding-left: 1.75rem;
-        max-height: 120px;
-        overflow-y: auto;
-    }
+// Layout is Tailwind in the template; the surface, border and muted text roles have no Tailwind utility in the application.
+.pdf-upload-summary,
+.pdf-upload-target {
+    border: 1px solid var(--border-color);
 }
 
-.target-options {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.target-option {
-    padding: 1rem;
-    border: 1px solid var(--bs-border-color);
-    border-radius: 8px;
-    cursor: pointer;
+.pdf-upload-target {
     transition:
         border-color 0.2s,
         background-color 0.2s;
 
-    &:hover {
-        border-color: var(--bs-primary);
+    &:hover,
+    &.pdf-upload-target-selected {
+        border-color: var(--primary);
     }
 
-    &.selected {
-        border-color: var(--bs-primary);
-        background-color: color-mix(in srgb, var(--bs-primary) 5%, transparent);
-    }
-
-    .form-check-input {
-        margin-left: 0.05rem;
-    }
-
-    .form-check-label {
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        margin-left: 1.25rem;
+    &.pdf-upload-target-selected {
+        background-color: color-mix(in srgb, var(--primary) 5%, transparent);
     }
 }
 
-.lecture-select {
-    margin-left: 1.5rem;
+.pdf-upload-file-list,
+.pdf-upload-target-hint {
+    color: var(--text-body-secondary);
 }

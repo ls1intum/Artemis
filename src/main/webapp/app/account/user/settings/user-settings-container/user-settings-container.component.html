@@ -4,7 +4,13 @@
             <!-- profile header -->
             <div class="flex flex-col">
                 @if (currentUser()?.imageUrl) {
-                    <img class="user-settings-container-profile-picture rounded-lg" [src]="addPublicFilePrefix(currentUser()!.imageUrl!)" alt="User Profile Picture" />
+                    <img
+                        class="user-settings-container-profile-picture rounded-lg"
+                        [ngSrc]="addPublicFilePrefix(currentUser()!.imageUrl!)!"
+                        width="64"
+                        height="64"
+                        alt="User Profile Picture"
+                    />
                 } @else {
                     <fa-icon id="avatar" size="3x" [icon]="faUser" />
                 }
