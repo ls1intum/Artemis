@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.api;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Controller
 @Lazy
 @Profile(PROFILE_CORE + " | " + PROFILE_LOCALVC)
-@ConditionalOnProperty(name = "artemis.hyperion.exercise-generation.enabled", havingValue = "true")
 public class HyperionExerciseMutationApi implements AbstractApi {
 
     private final GenerationExternalMutationService mutationService;

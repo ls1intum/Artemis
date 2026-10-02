@@ -21,7 +21,7 @@ Hyperion extends Artemis with AI-assisted authoring features. For programming ex
 
 ## Enable the Hyperion module
 
-Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. The generation setting protects repository writes across the deployment, so every writer node needs it even if that node does not run Hyperion.
+Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. All writer nodes coordinate repository mutations through the selected distributed provider, even when generation is disabled locally.
 
 ```yaml
 artemis:
@@ -258,21 +258,20 @@ not supported. The worker receives a frozen, bounded repository snapshot, not cr
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
-Set `artemis.hyperion.exercise-generation.enabled=true` on **every `core` and
-`localvc` writer node** in a generation-enabled deployment. Writer-only nodes may
-keep `artemis.hyperion.enabled=false` and `artemis.aiworker.enabled=false`: their
-mutation guard does not load a model or connect to the worker. All writers
-must run this version and use the same distributed provider. Do not mix guarded
-and unguarded nodes while generation is enabled.
+All `core` and `localvc` writer nodes must run this version and use the same
+distributed provider. Their mutation guard remains active even when local
+generation is disabled, so they cannot overwrite a generation-owned exercise
+on another node. The guard does not load a model or connect to an AI Worker.
+Do not mix guarded and unguarded nodes while generation is enabled.
 
-On a writer-only node, use only the generation setting:
+A writer-only node can keep both Hyperion settings disabled:
 
 ```yaml
 artemis:
     hyperion:
         enabled: false
         exercise-generation:
-            enabled: true
+            enabled: false
 ```
 
 On an eligible generation core, these two Hyperion settings also start AI Worker
@@ -281,12 +280,10 @@ setting is optional and reserved for a core that must coordinate workers while
 Hyperion generation is off. Provider access and worker IDs are still required
 on a generation core.
 
-When the generation setting is absent or false throughout a deployment, ordinary
-writes do not load the generation mutation service or require its coordination
-checks. This is a deployment setting, not automatic cluster discovery. Drain
-active runs and stop all writers before enabling or disabling it across the
-cluster, then restart with consistent values. Never disable it to bypass an
-interrupted save; reconcile that save first.
+Disabling generation does not disable distributed mutation coordination or
+release an interrupted save's slot. Writer nodes still require a connected
+provider and a complete coordination view. Reconcile interrupted saves through
+the audited operator path; do not disable a feature flag to bypass their guards.
 
 Coordination follows the selected provider rather than assuming every store is a
 Hazelcast cluster:
@@ -539,13 +536,13 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Node and settings                                                    | What happens                                                                                                                       |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Core with both settings false                                        | No Hyperion tools or generation.                                                                                                   |
-| Core with only `artemis.hyperion.enabled=true`                       | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation or worker connection.         |
-| Core with both settings true and profiles `core,localci,localvc`     | All Hyperion tools plus programming exercise generation and AI Worker coordination. Worker and provider configuration is required. |
-| Writer with only `artemis.hyperion.exercise-generation.enabled=true` | Protects repository writes against generation. It does not load Hyperion tools or connect to AI Workers.                           |
-| Core with both settings true but a required profile missing          | Generation stays off. The generation setting still protects writes if this node is a repository writer.                            |
+| Node and settings                                                | What happens                                                                                                                       |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Core with both settings false                                    | No Hyperion tools or generation. Distributed mutation guards remain active.                                                        |
+| Core with only `artemis.hyperion.enabled=true`                   | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation or worker connection.         |
+| Core with both settings true and profiles `core,localci,localvc` | All Hyperion tools plus programming exercise generation and AI Worker coordination. Worker and provider configuration is required. |
+| Writer with both Hyperion settings false                         | Protects repository writes against generation on another node. It does not load Hyperion tools or connect to AI Workers.           |
+| Core with both settings true but a required profile missing      | Generation stays off. Mutation guards still protect writes if this node is a repository writer.                                    |
 
 The Administration > Features page shows AI authoring and programming exercise
 generation as separate module cards. Their status reports which features this

@@ -83,10 +83,14 @@ not cancel its job; history keeps it accessible. A partial save stays visible.
 </details>
 
 Your authorized programming runs are discovered from the server, including runs
-started in another browser. **Load older runs** pages through history. Durable
-outcomes remain after detailed progress, artifacts, and usage expire; missing
-details are not reported as zero usage. History and private inspection belong
-to the run's owner, not everyone who can edit the course.
+started in another browser. **Load older runs** pages through history. Run history
+and status links are retained for the configured run-history window, which is
+four hours by default (`artemis.hyperion.generation.terminal-replay-ttl`). After
+that window expires, the run no longer appears in history and its status link is
+unavailable. Ordinary exercise version snapshots remain available independently
+of run history. Detailed progress, artifacts, and usage have their own retention
+limits; missing usage is not reported as zero. History and private inspection
+belong to the run's owner, not everyone who can edit the course.
 
 The exercise details page offers **View AI progress** while a run
 is active and **View AI results** while its results remain available. During a

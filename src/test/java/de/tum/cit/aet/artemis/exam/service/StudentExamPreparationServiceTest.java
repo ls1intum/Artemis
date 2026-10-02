@@ -5,10 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -16,11 +19,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
@@ -53,6 +63,72 @@ class StudentExamPreparationServiceTest {
 
     private final List<String> calls = new ArrayList<>();
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void simultaneousIndividualStartsReturnOneAttempt(boolean testExam) throws Exception {
+        exam.setTestExam(testExam);
+        var arrived = new CountDownLatch(2);
+        var release = new CountDownLatch(1);
+        var lock = new ReentrantLock();
+        var assigned = new AtomicReference<StudentExam>();
+        var created = new AtomicInteger();
+        when(mutations.reserveParticipation(anyLong())).thenAnswer(_ -> new ParticipationReservation(() -> {
+        }));
+        doAnswer(invocation -> {
+            arrived.countDown();
+            assertThat(release.await(5, TimeUnit.SECONDS)).isTrue();
+            lock.lock();
+            try {
+                Function<Exam, StudentExam> assignment = invocation.getArgument(1);
+                return assignment.apply(exam);
+            }
+            finally {
+                lock.unlock();
+            }
+        }).when(exams).withExerciseSelectionLock(anyLong(), any());
+        when(studentExams.findWithExercisesByUserIdAndExamId(11L, 10L, false)).thenAnswer(_ -> Optional.ofNullable(assigned.get()));
+        when(studentExams.findStudentExamsForTestExamsByUserIdAndExamId(11L, 10L)).thenAnswer(_ -> assigned.get() == null ? List.of() : List.of(assigned.get()));
+        when(studentExams.findByIdWithExercisesElseThrow(55L)).thenAnswer(_ -> assigned.get());
+        when(studentExams.createRandomStudentExams(exam, Set.of(11L))).thenAnswer(_ -> {
+            created.incrementAndGet();
+            var attempt = new StudentExam();
+            attempt.setId(55L);
+            assigned.set(attempt);
+            return List.of(attempt);
+        });
+        try (var callers = Executors.newFixedThreadPool(2)) {
+            var first = callers.submit(() -> service.assignStudent(10L, 11L));
+            var second = callers.submit(() -> service.assignStudent(10L, 11L));
+            try {
+                assertThat(arrived.await(5, TimeUnit.SECONDS)).isTrue();
+            }
+            finally {
+                release.countDown();
+            }
+            assertThat(first.get(5, TimeUnit.SECONDS)).isSameAs(second.get(5, TimeUnit.SECONDS));
+            assertThat(created).hasValue(1);
+        }
+    }
+
+    @Test
+    void newlyAddedBusyExerciseInTheLockedGraphPreventsAssignment() {
+        Exam locked = new Exam();
+        locked.setId(10L);
+        var added = new ProgrammingExercise();
+        added.setId(4L);
+        var group = new ExerciseGroup();
+        group.setExercises(Set.of(added));
+        locked.setExerciseGroups(List.of(group));
+        doAnswer(invocation -> {
+            Function<Exam, ?> assignment = invocation.getArgument(1);
+            return assignment.apply(locked);
+        }).when(exams).withExerciseSelectionLock(anyLong(), any());
+        doThrow(new IllegalStateException("new draft is being generated")).when(mutations).reserveParticipation(4L);
+
+        assertThatThrownBy(() -> service.assignRegisteredStudents(10L, false)).hasMessage("new draft is being generated");
+        verifyNoInteractions(studentExams, users);
+    }
+
     @Test
     void preparationProgressDoesNotRegressAndCanBeInvalidated() {
         var cache = new ConcurrentMapCacheManager(Constants.EXAM_EXERCISE_START_STATUS);
@@ -64,7 +140,7 @@ class StudentExamPreparationServiceTest {
         preparation.sendAndCacheExercisePreparationStatus(42L, 3, 1, 8, 12, start, lock);
         var expected = new ExamExerciseStartPreparationStatus(5, 2, 10, 20, start);
         assertThat(preparation.getExerciseStartStatusOfExam(42L)).contains(expected);
-        verify(messages, org.mockito.Mockito.times(2)).sendMessage(EXERCISE_START_STATUS.at(42), expected);
+        verify(messages, times(2)).sendMessage(EXERCISE_START_STATUS.at(42), expected);
         assertThat(lock.isLocked()).isFalse();
         preparation.invalidateExerciseStartStatus(42L);
         assertThat(preparation.getExerciseStartStatusOfExam(42L)).isEmpty();
@@ -83,10 +159,10 @@ class StudentExamPreparationServiceTest {
         group.setExercises(Set.of(second, quiz, first));
         exam.setExerciseGroups(List.of(group));
         when(exams.findWithExerciseGroupsAndExercisesByIdOrElseThrow(10L)).thenReturn(exam);
-        when(exams.withExerciseSelectionLock(anyLong(), any())).thenAnswer(invocation -> {
+        doAnswer(invocation -> {
             Function<Exam, ?> operation = invocation.getArgument(1);
             return operation.apply(exam);
-        });
+        }).when(exams).withExerciseSelectionLock(anyLong(), any());
         when(studentExams.createRandomStudentExams(any(), any())).thenAnswer(ignored -> {
             calls.add("save");
             return List.of(new StudentExam());
@@ -150,8 +226,9 @@ class StudentExamPreparationServiceTest {
     @Test
     void individualAssignmentUsesTheExistingCreationPath() {
         service.assignStudent(10L, 11L);
+        verify(studentExams).findWithExercisesByUserIdAndExamId(11L, 10L, false);
         verify(studentExams).createRandomStudentExams(exam, Set.of(11L));
-        org.mockito.Mockito.verifyNoMoreInteractions(studentExams);
+        verifyNoMoreInteractions(studentExams);
         assertThat(calls).containsExactly("reserve1", "reserve2", "save", "release2", "release1");
     }
 

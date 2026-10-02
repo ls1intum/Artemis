@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,10 +86,29 @@ public class StudentExamPreparationService {
      *
      * @param examId exam to assign
      * @param userId student to assign
-     * @return newly assigned student exam
+     * @return existing regular exam or unfinished test-exam attempt, otherwise a new assignment
      */
     public StudentExam assignStudent(long examId, long userId) {
-        return assign(examId, exam -> studentExamRepository.createRandomStudentExams(exam, Set.of(userId)).getFirst());
+        return assign(examId, exam -> {
+            if (exam.isTestExam()) {
+                // The access-layer preflight can race another start. Recheck after acquiring the exam-row lock.
+                List<StudentExam> unfinished = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(userId, examId).stream().filter(attempt -> !attempt.isFinished())
+                        .toList();
+                if (unfinished.size() > 1) {
+                    throw new IllegalStateException("Multiple unfinished test-exam attempts exist for user " + userId + " in exam " + examId);
+                }
+                if (!unfinished.isEmpty()) {
+                    return studentExamRepository.findByIdWithExercisesElseThrow(unfinished.getFirst().getId());
+                }
+            }
+            else {
+                var existing = studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId, false);
+                if (existing.isPresent()) {
+                    return existing.get();
+                }
+            }
+            return studentExamRepository.createRandomStudentExams(exam, Set.of(userId)).getFirst();
+        });
     }
 
     /**
@@ -102,12 +122,20 @@ public class StudentExamPreparationService {
     }
 
     private <T> T assign(long examId, Function<Exam, T> assignment) {
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        return withReservations(exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).toList(),
-                () -> examRepository.withExerciseSelectionLock(examId, assignment));
+        List<ParticipationReservation> reservations = new ArrayList<>();
+        try {
+            return examRepository.withExerciseSelectionLock(examId, exam -> {
+                reserve(exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).toList(), reservations);
+                return assignment.apply(exam);
+            });
+        }
+        finally {
+            // Outside the repository proxy: keep generation excluded until commit (or rollback), not merely until saveAll returns.
+            close(reservations);
+        }
     }
 
-    private <T> T withReservations(Collection<Exercise> exercises, java.util.function.Supplier<T> assignment) {
+    private <T> T withReservations(Collection<Exercise> exercises, Supplier<T> assignment) {
         List<ParticipationReservation> reservations = new ArrayList<>();
         try {
             reserve(exercises, reservations);

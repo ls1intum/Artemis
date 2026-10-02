@@ -103,8 +103,12 @@ Programming variants use the same cancellation boundary as adaptation: they can
 be cancelled before persistence, but not during draft repository preparation or
 saving. Their destination remains a visible draft when generation fails or is
 cancelled, so you can inspect, retry, or delete it. No unverified generated
-candidate is saved. Their owner-scoped history is durable, while detailed
-progress and retained working files are temporary.
+candidate is saved. Owner-scoped run history and status links are temporary:
+the configured retention window defaults to four hours
+(`artemis.hyperion.generation.terminal-replay-ttl`). After the run records expire,
+the run is absent from history and its status link is unavailable. Ordinary
+exercise version snapshots remain available independently. Detailed progress
+and retained working files have their own retention limits.
 
 ### Review the Result
 
