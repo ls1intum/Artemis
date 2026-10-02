@@ -5,15 +5,21 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
+import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerCommandType;
@@ -23,10 +29,70 @@ import de.tum.cit.aet.artemis.aiworker.dto.ExecutionIdentityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
+import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
 class WorkerSupervisorTest {
 
     private static final String IMAGE = "sha256:" + "a".repeat(64);
+
+    @ParameterizedTest
+    @EnumSource(value = WorkerEventType.class, names = { "STARTED", "PROGRESS", "CHECKPOINT" })
+    void partialPublicationRetainsEveryEventUntilTerminalDelivery(WorkerEventType failedType) throws Exception {
+        var provider = org.mockito.Mockito.spy(new LocalDataProviderService());
+        DistributedMap<String, String> chunks = org.mockito.Mockito.spy(provider.getMap("aiworker-event-chunks"));
+        org.mockito.Mockito.when(provider.<String, String>getMap("aiworker-event-chunks")).thenReturn(chunks);
+        var unavailable = new AtomicBoolean();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            if (unavailable.get()) {
+                throw new IllegalStateException("chunk storage is temporarily unavailable");
+            }
+            return invocation.callRealMethod();
+        }).when(chunks).put(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+        var transport = new WorkerTransport(provider, new WorkerMessageCodecApi());
+        var reader = new WorkerTransport(provider, new WorkerMessageCodecApi());
+        var events = new LinkedBlockingQueue<WorkerEventDTO>();
+        var cleaned = new CountDownLatch(1);
+        TestWorkload engine = (assignment, cancelled, observer, checkpoint) -> {
+            observer.progress("progress", "details", false);
+            checkpoint.accept("first checkpoint");
+            checkpoint.accept("second checkpoint");
+            return result();
+        };
+        try (var worker = new WorkerSupervisorService(settings(), event -> {
+            if (event.type() == failedType) {
+                unavailable.set(true);
+            }
+            transport.publish(event);
+            events.add(event);
+        }, () -> engine, cleaned::countDown, () -> IMAGE, System::nanoTime)) {
+            var command = start(worker, events);
+            worker.accept(command);
+            assertThat(cleaned.await(5, TimeUnit.SECONDS)).isTrue();
+            DistributedMap<String, String> inbox = provider.getMap("aiworker-events-worker-1");
+            assertThat(inbox.values()).anyMatch(manifest -> manifest.startsWith("W:"));
+            List<WorkerEventDTO> delivered = new ArrayList<>();
+            while (reader.receive(command.identity(), delivered::add)) {
+                // Drain successful events before the incomplete manifest.
+            }
+            assertThat(delivered).noneMatch(event -> event.type() == WorkerEventType.FINISHED);
+            org.mockito.Mockito.doAnswer(invocation -> invocation.callRealMethod()).when(chunks).put(org.mockito.ArgumentMatchers.anyString(),
+                    org.mockito.ArgumentMatchers.anyString());
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+                worker.heartbeat();
+                while (reader.receive(command.identity(), delivered::add)) {
+                    // Retry both the failed event and the events queued behind it.
+                }
+                assertThat(delivered).extracting(WorkerEventDTO::type).containsExactly(WorkerEventType.STARTED, WorkerEventType.PROGRESS, WorkerEventType.CHECKPOINT,
+                        WorkerEventType.CHECKPOINT, WorkerEventType.FINISHED);
+                assertThat(inbox.isEmpty()).isTrue();
+                assertThat(chunks.isEmpty()).isTrue();
+            });
+            assertThat(delivered.stream().filter(event -> event.type() == WorkerEventType.CHECKPOINT).map(WorkerEventDTO::payload)).containsExactly("first checkpoint",
+                    "second checkpoint");
+        }
+    }
 
     @Test
     void escapedPayloadsBecomeDeliverableErrorTerminals() throws InterruptedException {
