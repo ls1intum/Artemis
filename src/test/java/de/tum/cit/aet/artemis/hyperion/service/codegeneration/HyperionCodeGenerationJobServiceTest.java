@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -40,6 +41,9 @@ class HyperionCodeGenerationJobServiceTest {
     @Mock
     private DistributedMap<String, HyperionCodeGenerationJobService.JobInfo> jobMap;
 
+    @Mock
+    private GenerationExternalMutationService mutationService;
+
     private HyperionCodeGenerationJobService service;
 
     private User user;
@@ -49,15 +53,49 @@ class HyperionCodeGenerationJobServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        service = new HyperionCodeGenerationJobService(distributedDataProvider, taskService);
+        service = new HyperionCodeGenerationJobService(distributedDataProvider, taskService, mutationService);
         when(distributedDataProvider.<String, HyperionCodeGenerationJobService.JobInfo>getExpiringMap(eq(JOB_MAP_NAME), any())).thenReturn(jobMap);
         service.init();
+        when(mutationService.claimExternalMutationSlot(42L)).thenReturn("external-mutation-test");
 
         user = new User();
         user.setLogin("testuser");
 
         exercise = new ProgrammingExercise();
         exercise.setId(42L);
+    }
+
+    @Test
+    void completionReleasesTheSharedMutationSlot() {
+        service.startJob(user, exercise, 1L, RepositoryType.SOLUTION, false, null);
+        ArgumentCaptor<Runnable> completion = ArgumentCaptor.forClass(Runnable.class);
+        verify(taskService).runJobAsync(any(), eq(user), eq(exercise), eq(1L), eq(RepositoryType.SOLUTION), eq(false), isNull(), completion.capture());
+        verify(mutationService, never()).clearExternalMutationSlot(org.mockito.ArgumentMatchers.anyLong(), any());
+        completion.getValue().run();
+        verify(mutationService).clearExternalMutationSlot(42L, "external-mutation-test");
+    }
+
+    @Test
+    void rejectedDispatchReleasesBothSlots() {
+        var claimed = new java.util.concurrent.atomic.AtomicReference<HyperionCodeGenerationJobService.JobInfo>();
+        when(jobMap.putIfAbsent(eq("42"), any())).thenAnswer(invocation -> {
+            claimed.set(invocation.getArgument(1));
+            return null;
+        });
+        when(jobMap.get("42")).thenAnswer(invocation -> claimed.get());
+        org.mockito.Mockito.doThrow(new java.util.concurrent.RejectedExecutionException("busy")).when(taskService).runJobAsync(any(), eq(user), eq(exercise), eq(1L),
+                eq(RepositoryType.SOLUTION), eq(false), isNull(), any());
+        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.SOLUTION, false, null)).isInstanceOf(java.util.concurrent.RejectedExecutionException.class);
+        verify(jobMap).remove("42", claimed.get());
+        verify(mutationService).clearExternalMutationSlot(42L, "external-mutation-test");
+    }
+
+    @Test
+    void wholeExerciseGenerationBlocksLegacyTaskBeforeDispatch() {
+        when(mutationService.claimExternalMutationSlot(42L)).thenThrow(new ConflictException("busy", "hyperionExerciseGeneration", "exerciseGenerationRunning"));
+        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.SOLUTION, false, null)).isInstanceOf(ConflictException.class);
+        org.mockito.Mockito.verifyNoInteractions(taskService);
+        verify(jobMap, never()).putIfAbsent(any(), any());
     }
 
     @Test

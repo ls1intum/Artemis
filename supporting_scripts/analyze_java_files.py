@@ -109,7 +109,9 @@ def analyze_java_files(base_dir, max_lines=1000, max_params=10, include_repo_dep
 
             # Check for Spring beans with complex constructors
             if annotation_pattern.search(code):
-                constructors = re.findall(r'(?:public|protected)\s+\w+\s*\(([^)]*)\)', code)
+                # Only constructors of this bean count, not constructors of nested DTOs or value records.
+                bean_name = re.escape(os.path.splitext(file)[0])
+                constructors = re.findall(rf'(?:public|protected)\s+{bean_name}\s*\(([^)]*)\)', code)
                 for params in constructors:
                     # split parameters and strip whitespace
                     param_list = [p.strip() for p in params.split(',') if p.strip()]

@@ -8,11 +8,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERT
 import static de.tum.cit.aet.artemis.core.config.Constants.DEIMOS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.OIDC_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
@@ -22,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
  * Helper class for property configuration, in particular for determining conditions
@@ -93,13 +98,22 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Hyperion module is enabled.
+     * Check if the Hyperion module is enabled on a core node. Worker-only nodes cannot load its server services.
      *
      * @param environment the Spring environment
      * @return true if the Hyperion module is enabled, false otherwise
      */
     public boolean isHyperionEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+        return environment.acceptsProfiles(Profiles.of(PROFILE_CORE)) && getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * @param environment the Spring environment
+     * @return whether core may coordinate opt-in generation using LocalVC and LocalCI
+     */
+    public boolean isHyperionExerciseGenerationEnabled(Environment environment) {
+        return isHyperionEnabled(environment) && environment.getProperty(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)
+                && environment.acceptsProfiles(Profiles.of(PROFILE_CORE + " & " + PROFILE_LOCALCI + " & " + PROFILE_LOCALVC));
     }
 
     /**
@@ -294,6 +308,9 @@ public class ArtemisConfigHelper {
         }
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isHyperionExerciseGenerationEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
         }
         if (isDeimosEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);

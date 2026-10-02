@@ -39,6 +39,12 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     private static Stream<Arguments> templateProvider() {
         // @formatter:off
         return Stream.of(
+            new TestProvider("JAVA/GRADLE_GRADLE?examMode=false", 2),
+            new TestProvider("JAVA/GRADLE_GRADLE?sequentialRuns=true&examMode=false", 3),
+            new TestProvider("JAVA/GRADLE_GRADLE?staticAnalysis=true&examMode=false", 3),
+            new TestProvider("JAVA/MAVEN_MAVEN?examMode=false", 2),
+            new TestProvider("JAVA/MAVEN_MAVEN?sequentialRuns=true&examMode=false", 4),
+            new TestProvider("JAVA/MAVEN_MAVEN?staticAnalysis=true&examMode=false", 3),
             new TestProvider("JAVA/PLAIN_GRADLE?examMode=false", 2),
             new TestProvider("JAVA/PLAIN_GRADLE?sequentialRuns=true&examMode=false", 3),
             new TestProvider("JAVA/PLAIN_GRADLE?staticAnalysis=true&examMode=false", 3),

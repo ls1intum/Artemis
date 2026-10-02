@@ -4,8 +4,8 @@ title: Hyperion Service
 sidebar_label: Hyperion Setup
 ---
 
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import Callout from "../../src/components/Callout/Callout";
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+import Callout from '../../src/components/Callout/Callout';
 
 Hyperion extends Artemis with AI-assisted authoring features. For programming exercises, it offers consistency checks for problem statements and exercise artifacts and can rewrite instructions with the help of generative AI. For programming exercises and quizzes (except quizzes with drag-and-drop questions) it can generate a verified [exercise variant](/instructor/exercises/variant-generation) from an existing exercise, in courses and in exams. A programming variant is verified with real template and solution builds, a quiz variant by checking that the generated questions are valid. For quiz exercises, it generates Multiple-Choice questions from a topic or, in courses with competencies, from the course's competencies and linked lecture content ([see here](/instructor/exercises/quiz-exercise#generate-multiple-choice-questions-with-ai)), and it can refine existing Multiple-Choice questions from a natural-language instruction, either individually or in bulk ([see here](/instructor/exercises/quiz-exercise#refine-multiple-choice-questions-with-ai)). The functionality is provided by Artemis and Spring AI, so no EduTelligence service needs to be deployed. Competency-grounded quiz generation additionally requires the Atlas module to be enabled. Pyris is used only for semantic lecture search when it is deployed, and quiz generation falls back gracefully to the other context sources if Pyris is not available.
 
@@ -25,8 +25,8 @@ Hyperion is disabled by default. Activate it by overriding the `artemis.hyperion
 
 ```yaml
 artemis:
-  hyperion:
-    enabled: true
+    hyperion:
+        enabled: true
 ```
 
 ## Configure Spring AI
@@ -37,68 +37,88 @@ Hyperion delegates all model interactions to Spring AI. Artemis ships the single
 
 ```yaml
 spring:
-  ai:
-    model:
-      chat: openai
-    openai:
-      api-key: <openai-api-key>
-      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-      chat:
-        model: gpt-5-mini # Or another (reasonably capable) model
-        temperature: 1.0 # Required to be 1.0 for gpt-5
-    # Retry/response handling tuning for AI providers
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
+    ai:
+        model:
+            chat: openai
+        openai:
+            api-key: <openai-api-key>
+            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+            chat:
+                model: gpt-5-mini # Or another (reasonably capable) model
+                temperature: 1.0 # Required to be 1.0 for gpt-5
+        # Retry/response handling tuning for AI providers
+        retry:
+            # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+            on-http-codes: [429]
+            # Conservative defaults; adjust if needed
+            max-attempts: 5
+            backoff:
+                initial-interval: 1000ms
+                multiplier: 2.0
+                max-interval: 30000ms
 ```
 
 ### Azure OpenAI / Microsoft Foundry
 
 ```yaml
 spring:
-  ai:
-    model:
-      chat: openai
-    openai:
-      api-key: <azure-openai-api-key>
-      base-url: https://<your-resource-name>.openai.azure.com
-      microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
-      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-      chat:
-        model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
-        temperature: 1.0 # Required to be 1.0 for gpt-5
-    # Retry/response handling tuning for AI providers
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
+    ai:
+        model:
+            chat: openai
+        openai:
+            api-key: <azure-openai-api-key>
+            base-url: https://<your-resource-name>.openai.azure.com
+            microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
+            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+            chat:
+                model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
+                temperature: 1.0 # Required to be 1.0 for gpt-5
+        # Retry/response handling tuning for AI providers
+        retry:
+            # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+            on-http-codes: [429]
+            # Conservative defaults; adjust if needed
+            max-attempts: 5
+            backoff:
+                initial-interval: 1000ms
+                multiplier: 2.0
+                max-interval: 30000ms
 ```
 
 ### Token Usage Tracking
 
-Artemis tracks LLM token usage and costs per request. Configure model pricing under `artemis.llm.model-costs` to enable accurate cost reporting in admin dashboards.
+Artemis tracks LLM token usage and costs per request. Configure model pricing under `artemis.llm.model-costs` to enable operator-configured EUR cost estimates in admin dashboards.
 
 ```yaml
 artemis:
-  llm:
-    model-costs:
-      gpt-5-mini:
-        input-cost-per-million-eur: 0.23
-        output-cost-per-million-eur: 1.84
+    llm:
+        model-costs:
+            gpt-5-mini:
+                input-cost-per-million-eur: 0.23
+                output-cost-per-million-eur: 1.84
 ```
 
-Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). If a model has no cost entry, costs default to zero but token counts are still recorded.
+Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). For whole-exercise generation, missing rates make the estimate incomplete; they do not establish zero cost. Token counts remain available.
+
+Cache pricing and cache usage are separate inputs. When the provider explicitly reports **zero cache-read tokens**, configured input and output rates suffice for a complete estimate. When cache reads are positive, also configure `cached-input-cost-per-million-eur`. An omitted cache count means **unknown**, not zero: without a reported split, a complete estimate is possible only when the configured cached and uncached input rates are equal. Artemis does not silently substitute the uncached rate for a missing cache price.
+
+The shared usage ledger stores the effective input rate in `cost_per_million_input_tokens`. When a provider reports a cache split, this is the token-weighted blend of the configured cached and uncached rates, not the model's catalogue input price. This applies to all LLM services using the ledger, including Iris, Athena and Atlas. Administrative queries can use the stored rate to reproduce the recorded estimate; use deployment configuration to inspect catalogue rates. Incomplete estimates remain incomplete even if the ledger has a numeric value.
+
+When using catalogue prices as a reference for another provider, retain the catalogue retrieval date and currency conversion with the deployment configuration. A reference estimate is not an invoice or evidence of provider billing.
+
+For example, the [OpenRouter model catalogue](https://openrouter.ai/api/v1/models) retrieved on 11 September 2026 lists `qwen/qwen3.8-27b` at USD 0.42 per million input tokens, USD 0.085 per million cached input tokens, and USD 3.00 per million output tokens. At the [ECB reference rate](https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml) dated 10 September 2026 (EUR 1 = USD 1.1616), a deployment whose provider returns `Qwen/Qwen3.8-27B` can configure:
+
+```yaml
+artemis:
+    llm:
+        model-costs:
+            '[Qwen/Qwen3.8-27B]':
+                input-cost-per-million-eur: 0.361570248
+                cached-input-cost-per-million-eur: 0.073174931
+                output-cost-per-million-eur: 2.582644628
+```
+
+Refresh the rates deliberately rather than treating this dated example as a permanent default. Re-register evaluation campaigns when their effective pricing configuration changes.
 
 ### Observability (Optional)
 
@@ -118,32 +138,36 @@ Key benefits of adding observability:
 Langfuse is a platform for observability and tracing of LLM applications and agents. It captures everything happening during an LLM interaction: inputs, outputs, tool usage, retries, latencies and costs.
 
 #### Setup Guide
+
 1. See how to create and setup a Langfuse account (See only "Get API keys") [here](https://langfuse.com/docs/observability/get-started).
 
 2. Request to join a Organization from an Edutelligence maintainer.
 
 3. You will be added to the Project as **Member**.
-> ℹ️ **Note**
-> Project Members can *use* Langfuse and access existing API keys.
-> Only **Project Admins** can create new API keys.
-> If you cannot view API keys, ask the maintainer to generate them for you.
+
+    > ℹ️ **Note**
+    > Project Members can _use_ Langfuse and access existing API keys.
+    > Only **Project Admins** can create new API keys.
+    > If you cannot view API keys, ask the maintainer to generate them for you.
 
 4. Once the Project Admin provides the **Public Key** and **Secret Key**, store them securely.
-These keys authenticate your application when sending observability data to Langfuse.
+   These keys authenticate your application when sending observability data to Langfuse.
 
 5. Identify your Langfuse host URL.
-It appears in the Langfuse UI as: **https://\<host\>**.
+   It appears in the Langfuse UI as: **https://\<host\>**.
 
 Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is constructed as:
 **https://\<host\>/api/public/otel/v1/traces**
+
 - `/api/public/otel` → Langfuse OTLP receiver root
 - `/v1/traces` → Standard OTLP HTTP route
-> For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
+    > For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
 
 6. Generate the Basic Authentication token for Langfuse.
-Use Base64 encoding with the format: base64(public_key:secret_key)
+   Use Base64 encoding with the format: base64(public_key:secret_key)
 
 Example generation command:
+
 ```bash
 echo -n "<public_key>:<secret_key>" | base64
 ```
@@ -155,8 +179,8 @@ These values can be provided through **active Spring profile YAML** (e.g. `appli
 
 You will need to set the following properties:
 
-- `management.otlp.tracing.endpoint` → `https://<host>/api/public/otel/v1/traces`
-- `management.otlp.tracing.headers.Authorization` → `Basic <base64(public_key:secret_key)>`
+- `management.opentelemetry.tracing.export.otlp.endpoint` → `https://<host>/api/public/otel/v1/traces`
+- `management.opentelemetry.tracing.export.otlp.headers.Authorization` → `Basic <base64(public_key:secret_key)>`
 
 To avoid committing secrets, prefer supplying these values via environment variables and referencing them in YAML.
 
@@ -166,30 +190,28 @@ To avoid committing secrets, prefer supplying these values via environment varia
 
 ```yaml
 management:
-  # Set true to display contextual name in @Observed on Langfuse
-  observations:
-    annotations:
-      enabled: true
-  # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
-  langfuse:
-    enabled: true
-  tracing:
-    sampling:
-      probability: 1.0
-  otlp:
+    # Set true to display contextual name in @Observed on Langfuse
+    observations:
+        annotations:
+            enabled: true
+    # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+    langfuse:
+        enabled: true
     tracing:
-      # LangFuse accepts OTLP over HTTP at the traces path only
-      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-      endpoint: https://example.com
-      transport: http
-      headers:
-        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-        Authorization: "Basic <base64(public_key:secret_key)>"
-      # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-      # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
-      # so disabling the default exporter will NOT stop LLM trace export.
-      export:
-        enabled: false
+        sampling:
+            probability: 1.0
+        export:
+            # Disable the default exporter, not the custom Langfuse exporter.
+            otlp:
+                enabled: false
+    opentelemetry:
+        tracing:
+            export:
+                otlp:
+                    endpoint: https://example.com/api/public/otel/v1/traces
+                    headers:
+                        # Provide this through an environment variable, not a committed secret.
+                        Authorization: 'Basic <base64(public_key:secret_key)>'
 ```
 
 ## Verifying the integration
@@ -202,3 +224,342 @@ management:
 
 - **Cost control:** Define usage policies and rate limits with your provider. Hyperion requests can process the full problem statement, so costs scale with exercise size.
 - **Data protection:** Model providers receive exercise content. Obtain consent and align with institutional policies before enabling Hyperion in production.
+
+## Whole-exercise generation workers
+
+> This core-coordination layer does not yet include the deployable worker-only
+> profile or the Java Gradle generation workload. Use the following deployment
+> settings only after the dependent worker layer is installed.
+
+Whole-exercise generation uses a separate worker process and the selected
+`DistributedDataProvider`. It does not execute generated code in the core JVM or
+on ordinary LocalCI build agents. Deploy the worker with the normal Artemis WAR and
+`aiworker` profile as described in [AI Worker operations](/admin/aiworker).
+A reachable worker without an installed generation workload advertises no capacity.
+
+Enable the core integration only on nodes with the `core`, `localci`, and
+`localvc` profiles:
+
+```yaml
+artemis:
+    hyperion:
+        enabled: true
+        exercise-generation:
+            enabled: true
+    aiworker:
+        enabled: true
+        ids: [worker-1]
+```
+
+Core and worker must use the same distributed-data provider. With Hazelcast, the
+worker connects as a client through Eureka; with Redis/Valkey, it connects to the
+same store as core. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
+starting a supervisor process is not evidence that generation is available.
+
+Generation accepts only unreleased Java Gradle exercises (`PLAIN_GRADLE` or
+`GRADLE_GRADLE`; both share the Gradle test harness) without auxiliary
+repositories, sequential test runs, or static code analysis. Maven projects are
+not supported. The worker receives a frozen, bounded repository snapshot, not credentials or repository paths. Core validates returned artifacts
+against that snapshot before persisting them, and checks repository heads and
+exercise metadata again before writing.
+
+Use identical generation settings on generation-capable core nodes. The
+exercise-mutation guard also runs on `core` and `localvc` writer nodes where
+Hyperion is disabled; it does not load a model or connect to the worker transport.
+Every writer must run this version of Artemis and use the same distributed data
+provider. Do not mix guarded and older, unguarded nodes while generation is enabled.
+
+Coordination follows the selected provider rather than assuming every store is a
+Hazelcast cluster:
+
+- **Hazelcast:** writer nodes must be data members, not standalone LocalVC clients.
+  Configure `jhipster.cache.hazelcast.expected-data-member-count` consistently.
+  Admission requires all configured data members; recovery requires a strict
+  majority. Keep the generation maps' split-brain protection enabled.
+- **Redis / Valkey:** all writers must use the same authoritative store and
+  distributed-data namespace. Each Redisson client receives a unique process
+  incarnation in its connection name; the configured client name remains the
+  display name in monitoring. Reusing a display name after restart does not reuse
+  ownership. Coordination requires a complete `CLIENT LIST` response containing
+  the calling process. Grant the existing Artemis Redis account permission to
+  inspect clients; unavailable, denied, or incomplete lookups reject new writes.
+  Connected Artemis clients are **not** Redis data members, so their count is not
+  checked against the Hazelcast member-count setting.
+
+Neither connection absence nor a timeout proves an old JVM stopped writing Git or
+the database. Non-cancellable slots do not expire or become automatically
+recoverable when an owner disconnects. The operator recovery procedure below is
+mandatory for both providers.
+
+The store is coordination infrastructure, not a disposable cache: use persistent,
+non-evicting storage and do not flush it while any writer is running. Redis
+asynchronous replication can lose acknowledged writes during failover; client
+membership checks do not prevent that. Do not treat these checks as certification
+of automatic Redis failover. Drain and stop all Artemis writers before replacing
+or restoring a store, reconcile interrupted saves, and run the deployment canary
+before reopening authoring.
+
+### Authoring history and version restoration
+
+Programming Create, Adapt, and Variant share the worker lifecycle. Variant
+preparation copies a protected source to a separately reserved destination;
+quiz generation remains separate. Programming exam authoring is available only
+before student exams or test runs exist. Assignment and authoring use the same
+exercise guards and exam-row coordination.
+
+The `hyperion_authoring_run` table records owner/source/destination identity,
+terminal outcome, and links to existing before/after exercise versions. It does
+not store prompts, model content, or duplicate version snapshots. Back up these
+rows together with exercise versions and repositories. Deleting a source or
+owner does not erase a destination's mutation fence; deleting the destination
+removes its journal. Missing referenced versions make automatic undo unavailable.
+
+Owner-scoped history is paged at `GET /api/hyperion/authoring-runs`. Exact run
+inspection and restoration use
+`/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}`
+and its `/revert` POST operation. Current course authorization is rechecked.
+Detailed replay still expires; durable outcomes survive without fabricated usage.
+An interrupted restoration also has a durable `restore_started_at` marker. After
+all distributed data members restart, a core node reloads pending restoration
+guards in bounded pages before exercise writers are admitted. Until this finishes,
+mutation requests return `503 generationRecoveryInitializing`. This recovery
+initialization runs even when AI generation is disabled; LocalVC-only writers
+wait for a core node to initialize the cluster. Deploy compatible code on every
+exercise-writer node before accepting traffic.
+
+Only a complete restore consumes the obligation automatically. The audited
+operator recovery operation clears it after exact-token reconciliation. A database
+failure during that operation restores the slot before another writer can claim it.
+The additional nullable-column migration preserves existing records; it cannot
+infer unrecorded partial restores from older binaries, so reconcile those before
+upgrading.
+
+Restoration uses captured test metadata and rebuilds task bindings from the saved
+statement. It does not require the previous draft to compile or pass a build.
+Tests introduced by the undone run become inactive rather than being deleted,
+so historical result feedback remains intact. Newly generated output still has
+to pass verification before it can be saved.
+
+Guarded restoration checks the selected run, repository heads, grading and
+placement metadata. It does not rewind other exercises or delete a variant.
+
+### Concurrent worker slots
+
+A worker process can handle several exercises concurrently. Set
+`artemis.aiworker.max-concurrent-executions=4` on the worker to offer four
+slots (default `1`, maximum `16`). Each execution has its own sandbox, state,
+lease and cancellation identity. A single exercise still permits only one active
+run: generation and adaptation must not race to replace its repositories.
+
+Core nodes reserve slots atomically through the distributed data provider. The
+same worker transport supports one core node or several core nodes. Set
+`artemis.hyperion.generation.max-concurrent-jobs-per-core-node` to accommodate the
+intended local concurrency; it defaults to `2`. Worker slots do not override
+per-user token admission quotas or individual run budgets. A full worker rejects
+additional admission rather than accumulating an unbounded queue.
+
+Budget RAM for all simultaneously active sandboxes plus the worker JVM and host
+services. Sandbox CPU, RAM and PID limits remain per execution. Slots are a bounded
+concurrency setting, not automatic host scaling. Keep generation outside the core
+JVM: a single-host installation can run a separate isolated worker, while a
+multi-host installation uses the same selected distributed-data provider. The worker
+requires neither database access nor Hazelcast cluster membership; it connects as a client.
+Deploy matching core and worker protocol versions together after draining runs.
+Protocol version 4 uses the shared AI Worker envelope and explicit workload schema/profile;
+core and worker must be upgraded together after draining.
+
+### Toolchains and deployment placement
+
+The standalone process uses the normal Artemis entry point with the `aiworker` profile. Its execution infrastructure has no Hyperion
+imports. Hyperion supplies `HyperionWorkloadService`, which validates and decodes its
+bounded assignment, selects a qualified toolchain and returns typed generation evidence.
+The generic transport does not interpret briefs, tests, quality findings or exercise IDs.
+
+Configure `artemis.aiworker.workload=hyperion-generation`, `workload-version=1` and
+`profile=java-gradle`, with the qualified offline sandbox image. Only Java/Gradle is
+qualified; naming another profile does not add a language implementation. Core admission
+and returned evidence must agree on the workload schema, profile, image and execution.
+See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
+
+| Environment | Worker placement                                           | Operational requirement                                                                                                                                                         |
+| ----------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Staging     | Dedicated generation VM or host                            | Separate distributed-data and model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                             |
+| Production  | Dedicated generation VM or host                            | Start with one slot, monitor actual resource use, and increase only within host and provider limits. Keep generation off exam-critical hosts.                                   |
+| Test server | Dedicated generation VM, which may share physical hardware | Use a separate Docker daemon inside the VM. Sharing the core or LocalCI Docker socket is not an isolation boundary. Leave generation disabled if no isolated host is available. |
+
+The supervisor's Docker socket is host-level authority even when the supervisor
+container is unprivileged. Provision outbound access only to the selected distributed-data provider, Eureka when Hazelcast is used, the approved model provider, image registry and approved telemetry endpoint.
+Deny access to databases, repository/NFS services, core management interfaces and
+cloud metadata. Generated-code containers retain network isolation and receive
+neither provider credentials nor the Docker socket.
+
+Before enabling admission, preload the immutable sandbox image, configure distributed-data
+access and per-worker permissions, and confirm the administrator view
+reports the intended toolchain and capacity. Then run a controlled generation,
+verify solution/starter grading and persistence, cancel a second run, and verify
+undo. Test an interrupted worker and exact-run recovery in staging before
+production. A heartbeat alone verifies neither provider access nor generation.
+
+For upgrades, stop new admission at the deployment boundary, wait for active runs
+and persistence to finish, back up database and repository state, then update core
+writers and workers as one compatible set. Disabling the feature or stopping a
+worker is not a drain mechanism. Re-enable admission only after capacity and the
+controlled workflow pass. Retain the prior application and sandbox digests for
+rollback; do not roll back only one side of the protocol.
+
+### Inspect runs and worker capacity
+
+Open **Administration → AI generations** to see active generation/adaptation
+runs, their owners and start times, assigned workers and slots, and free versus
+total capacity. Worker diagnostics include heartbeat times, sandbox image digests,
+and execution identities. The page refreshes every 15 seconds while visible;
+**Refresh** requests an immediate snapshot. A snapshot never reserves capacity.
+
+**Cancel run** asks for an audit reason and targets only the selected run.
+Other runs on the worker continue. While cancellation is pending, the action is
+disabled with an explanation. Once persistence starts, cancellation is disabled:
+interrupting repository writes is unsafe. A stale selection returns a conflict,
+not an instruction to cancel a replacement run. Failed cancellation keeps the
+entered reason so the operator can refresh and assess the current state.
+
+Administrator-only APIs expose the same metadata and controls:
+
+- `GET /api/hyperion/admin/workers` (404 when generation is disabled).
+- `GET /api/hyperion/admin/exercises/generations` (active runs only).
+- `DELETE /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}?reason=...`
+  (202 when accepted, 409 if no longer cancellable).
+
+| State            | Meaning                                                                  |
+| ---------------- | ------------------------------------------------------------------------ |
+| Offline          | No unexpired heartbeat is available. A core reservation can still exist. |
+| Not ready        | The worker has not advertised usable capacity.                           |
+| Available        | At least one slot is free; other slots can already be running.           |
+| Reserved by core | Slots have been reserved but no active execution is reported yet.        |
+| Running          | The worker reports active executions and no free slot.                   |
+
+This view contains no prompts, generated artifacts, or credentials. It cannot
+execute commands, terminate a worker, or release an exercise mutation slot.
+Ordinary LocalCI monitoring continues to report ordinary build agents separately.
+
+The **Configured workers** count includes offline identities. **Free / total
+slots** includes only workers with a current heartbeat; an offline row displays
+an unknown capacity, not a usable zero-slot worker. **Toolchain** identifies the
+advertised language/build adapter. Free capacity is not necessarily compatible
+with every exercise. **Technical details** contains every active execution with
+its one-based slot number, the core reservation, worker instance and sandbox
+image digest. These identifiers support incident diagnosis, not host control.
+
+### Save, cancellation, and recovery
+
+Cancellation before persistence changes no exercise repositories or metadata.
+Read-only retained artifacts and job transcripts are temporary inspection data,
+not saved exercises. A worker disconnect cannot authorize a replacement to save
+under the old execution identity. Inspect incomplete accounting as unknown usage,
+not as zero usage.
+
+A rate-limit rejection (HTTP 429) or a request that never left the worker can be
+retried with a bounded backoff of up to five retries over about five minutes.
+Keep SDK retries disabled when exact accounting is required. A server or gateway
+failure (HTTP 5xx), HTTP 408, or a read timeout after sending the request leaves
+usage unknown: the model may have run before the error was returned. Hyperion
+does not automatically replay these calls and marks accounting incomplete.
+A previously verified candidate can still be saved with incomplete accounting;
+an error response must never be treated as proof of zero usage.
+
+Once persistence begins, cancellation and ordinary edits are blocked. Shutdown
+allows the non-cancellable phase to drain; keep the process termination grace
+period longer than `artemis.hyperion.generation.shutdown-drain-timeout` (default
+11 minutes). An uncertain save is reported as `PARTIAL` and requires manual
+repository and database reconciliation rather than automatic undo.
+
+If a core process dies while holding a non-cancellable slot, confirm that its JVM
+is stopped before recovery. External-edit slot diagnostics and recovery remain
+available when generation is disabled. Recover generation and revert slots on a
+generation-enabled core node so their job state is reconciled too:
+
+1. Confirm that the owning JVM is stopped, not merely disconnected from the cluster.
+2. Reconcile the exercise's repository heads and metadata before allowing new edits.
+3. As an administrator, read `GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot`.
+4. Release that exact token with `DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`, supplying a nonblank incident reason of at most 500 characters.
+
+Recovery records an audit attempt before releasing anything, refuses a live owner,
+and requires a complete coordination view. Hazelcast additionally requires a
+majority of the expected data members: a two-member Hazelcast deployment cannot
+recover after losing one member. A stale token never releases a replacement
+slot. Releasing a slot does not repair an interrupted save.
+
+The diagnostic reports the slot `kind`. `GENERATION`, `REVERT`, and `EXTERNAL_MUTATION`
+are in-flight writers and follow the steps above. `REVERT_RECOVERY` is the guard an
+interrupted undo leaves behind after it has already stopped: no process is writing,
+so recovery does not require the owner to be absent. Reconcile the repositories
+first, or let the instructor retry **Undo**, and release the guard only once the
+exercise is consistent again.
+
+The LocalCI build that synchronizes saved tests is restricted to network `none`
+and receives no exercise-configured environment variables. Its persisted build
+job ID carries the `hyperion-sync-` prefix so retries retain the same restrictions.
+Provision the matching offline Gradle toolchain and dependencies on those build
+agents; retries do not fall back to a network-enabled build.
+
+### Module flags, profiles, and process boundaries
+
+Hyperion uses the same startup module condition as Iris and Athena, not an
+administrator-switchable runtime feature toggle. Core configuration and the
+`activeModuleFeatures` reported to the client use the same condition:
+
+| Control                                                                          | Effect                                                                                                                          |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `artemis.hyperion.enabled=false`                                                 | Disables Hyperion, including generation.                                                                                        |
+| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans are required.                                              |
+| Both properties true and profiles `core,localci,localvc`                         | Enables generation coordination and advertises its module feature. A compatible worker and provider configuration are required. |
+| Missing any required profile                                                     | Generation remains disabled even when both properties are true.                                                                 |
+| No ready worker or no free slot                                                  | Enabled but unavailable; capacity errors do not turn off the module flag.                                                       |
+
+The standalone worker uses the normal Artemis WAR with the `aiworker` profile,
+not a core profile. Its component scan contains only worker code, and it starts without an
+HTTP server. Provision access to the selected distributed-data provider, an immutable sandbox
+image and positive resource limits. An
+unconfigured worker fails startup; a transport-only worker without a generation
+engine does not advertise usable capacity. Core module flags do not stop a
+worker process. Drain active runs before changing profiles, disabling
+coordination, or replacing either artifact.
+
+Mutation protection on writer nodes is intentionally separate from generation
+activation. Disabling Hyperion must not remove guards that protect an exercise
+another eligible core is authoring. Replay and ownership state are bounded
+operational state, not a durable SQL job journal. A full deployment restart does
+not promise automatic continuation or resampling of interrupted runs.
+
+### Build-agent and worker deployment boundaries
+
+| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                                       |
+| ------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                                         |
+| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                                         |
+| Hyperion generation worker            | Normal Artemis WAR      | No core or database services, Hazelcast membership, or incoming web server. It uses the distributed-data provider as a client. Adding server profile names does not turn it into a core or LocalCI build agent. |
+
+The generation worker uses chat models only; its bundled configuration excludes
+OpenAI embedding, image, speech, transcription, and moderation auto-configuration.
+Keep those exclusions when supplying external Spring configuration. Use the core
+artifact for core services rather than widening the worker's component scan.
+
+A single-host installation still runs core and the generation worker as separate
+processes. The worker requires its own isolated Docker execution environment;
+sharing a host does not authorize sharing core credentials, repository mounts,
+or a privileged Docker daemon. LocalCI and generation capacity are managed
+separately, even when core also runs the `buildagent` profile.
+
+### Participation copies and interrupted undo
+
+A programming participation reserves the exercise until its repository copy completes.
+Several student copies may run concurrently, but generation, adaptation, undo, and ordinary
+exercise mutations cannot overlap any of them. Reservations do not expire while a copy is
+running. After a writer node crashes, recover the shared reservation only after confirming
+that **all** recorded copy owners and their repository operations have stopped; the exact-token
+recovery endpoint also requires all those owners to be absent, a complete coordination view, and (for Hazelcast) a data-member majority.
+
+An undo that restores only some repositories keeps the exercise guarded. The instructor can
+retry **Undo** against the retained baseline; another undo, generation, or ordinary edit cannot
+run concurrently. A missing or expired baseline during this recovery does not unlock an
+inconsistent exercise. If a retry cannot finish, reconcile the repositories and release the
+`REVERT_RECOVERY` slot through the audited operator recovery path described above.
