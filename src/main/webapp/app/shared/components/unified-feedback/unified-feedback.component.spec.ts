@@ -140,7 +140,7 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredReference()).toBe('Explicit Ref');
     });
 
-    it('should repeat the reference as a tooltip unless the consumer turns it off', () => {
+    it('should repeat the reference as a tooltip unless the consumer turns it off and it fits', () => {
         fixture.componentRef.setInput('reference', 'Lines 7-11');
         fixture.detectChanges();
         const chip = () => fixture.debugElement.query(By.css('.unified-feedback-reference-text')).injector.get(TumAetUiTooltipDirective);
@@ -149,6 +149,22 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('referenceTooltip', false);
         fixture.detectChanges();
         expect(chip().content()).toBe('');
+
+        // A narrow card cuts the reference off, so the tooltip repeats it after all
+        component.referenceTruncated.set(true);
+        fixture.detectChanges();
+        expect(chip().content()).toBe('Lines 7-11');
+    });
+
+    it('should repeat a read-only title as a tooltip only once it is cut off', () => {
+        fixture.componentRef.setInput('title', 'Loop never ends');
+        fixture.detectChanges();
+        const title = () => fixture.debugElement.query(By.css('.unified-feedback-title')).injector.get(TumAetUiTooltipDirective);
+        expect(title().content()).toBe('');
+
+        component.titleTruncated.set(true);
+        fixture.detectChanges();
+        expect(title().content()).toBe('Loop never ends');
     });
 
     it('should infer reference from assessmentsNames mapping', () => {
@@ -930,7 +946,8 @@ describe('UnifiedFeedbackComponent', () => {
     });
 
     describe('linked criterion chip', () => {
-        const linkedFeedback = () => ({ credits: 2, text: 'Visibility', gradingInstruction: { id: 7, instructionDescription: 'Uses modifiers', feedback: 'Fixed rubric text', credits: 2 } }) as any;
+        const linkedFeedback = () =>
+            ({ credits: 2, text: 'Visibility', gradingInstruction: { id: 7, instructionDescription: 'Uses modifiers', feedback: 'Fixed rubric text', credits: 2 } }) as any;
         const chip = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="linked-criterion"]');
 
         beforeEach(() => {
@@ -947,6 +964,48 @@ describe('UnifiedFeedbackComponent', () => {
             expect(chip()?.textContent).toContain('Encapsulation');
             expect(chip()?.querySelector('.unified-feedback-criterion-suffix')?.textContent).toContain('artemisApp.assessment.linkedCriterionSuffix');
             expect(fixture.nativeElement.textContent).not.toContain('Fixed rubric text');
+        });
+
+        it('should show the grading scale of the linked instruction in its own segment of the chip', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', { ...linkedFeedback(), gradingInstruction: { ...linkedFeedback().gradingInstruction, gradingScale: ' Partially correct ' } });
+            fixture.detectChanges();
+
+            expect(component.linkedGradingScale()).toBe('Partially correct');
+            const scale = chip()?.querySelector('.unified-feedback-criterion-scale');
+            expect(scale?.textContent).toBe('Partially correct');
+            expect(scale?.previousElementSibling?.classList).toContain('unified-feedback-criterion-content');
+        });
+
+        it('should not show a grading scale the instructor left empty', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', { ...linkedFeedback(), gradingInstruction: { ...linkedFeedback().gradingInstruction, gradingScale: '  ' } });
+            fixture.detectChanges();
+
+            expect(component.linkedGradingScale()).toBeUndefined();
+            expect(chip()?.querySelector('.unified-feedback-criterion-scale')).toBeNull();
+        });
+
+        it('should show no tooltip while the criterion name and grading scale fit', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(component.linkedCriterionTooltip()).toBe('');
+        });
+
+        it('should repeat the chip in full in the tooltip once it cuts the criterion name or grading scale off', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            component.linkedCriterionTruncated.set(true);
+            expect(component.linkedCriterionTooltip()).toBe('artemisApp.assessment.linkedCriterion Encapsulation artemisApp.assessment.linkedCriterionSuffix');
+
+            fixture.componentRef.setInput('feedback', { ...linkedFeedback(), gradingInstruction: { ...linkedFeedback().gradingInstruction, gradingScale: 'Correct' } });
+            expect(component.linkedCriterionTooltip()).toBe('artemisApp.assessment.linkedCriterion Encapsulation artemisApp.assessment.linkedCriterionSuffix | Correct');
+            // The instruction's description stays out of the tooltip
+            expect(component.linkedCriterionTooltip()).not.toContain('Uses modifiers');
         });
 
         it('should fall back to a generic name when the criterion is unknown', () => {

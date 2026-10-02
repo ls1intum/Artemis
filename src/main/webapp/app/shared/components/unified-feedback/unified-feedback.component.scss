@@ -79,9 +79,17 @@
     opacity: 0.6;
 }
 
-.unified-feedback-criterion-label {
-    flex-shrink: 0;
-    opacity: 0.7;
+// The grading scale sits in its own segment behind the criterion, so any wording reads on its own. A long one is cut off
+// like the criterion's name, but never takes more than half the chip, so the name stays readable next to it.
+.unified-feedback-criterion-scale {
+    align-self: stretch;
+    min-width: 0;
+    max-width: 50%;
+    padding: 1px 6px;
+    border-left: 1px solid var(--border-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: 500;
 }
 
@@ -93,7 +101,7 @@
     font-weight: 600;
 }
 
-// Frames the criterion's name like the "Linked to" label in front of it, and stays visible when a long name is cut off
+// Follows the criterion's name and stays visible when a long name is cut off
 .unified-feedback-criterion-suffix {
     flex-shrink: 0;
     opacity: 0.7;
@@ -399,7 +407,6 @@
         background: color-mix(in srgb, var(--body-color) 8%, transparent);
     }
 }
-
 
 .unified-feedback-detail-row {
     display: flex;

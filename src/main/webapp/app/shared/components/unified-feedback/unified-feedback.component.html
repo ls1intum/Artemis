@@ -6,18 +6,23 @@
                     @if (referenceType()) {
                         <span class="unified-feedback-reference-label">{{ referenceType() }}</span>
                     }
-                    <span class="unified-feedback-reference-text" [tumAetUiTooltip]="referenceTooltip() ? inferredReference()! : ''">{{ inferredReference() }}</span>
+                    <span #referenceText class="unified-feedback-reference-text" [tumAetUiTooltip]="referenceTooltip() || referenceTruncated() ? inferredReference()! : ''">{{
+                        inferredReference()
+                    }}</span>
                 }
                 @if (linkedCriterionTitle()) {
                     <span class="unified-feedback-criterion" data-testid="linked-criterion">
                         <span class="unified-feedback-criterion-content" [tumAetUiTooltip]="linkedCriterionTooltip()">
                             <fa-icon class="unified-feedback-criterion-icon" [icon]="faLink" />
-                            <span class="unified-feedback-criterion-label">{{ 'artemisApp.assessment.linkedCriterion' | artemisTranslate }}</span>
-                            <span class="unified-feedback-criterion-title">{{ linkedCriterionTitle() }}</span>
+                            <span class="sr-only">{{ 'artemisApp.assessment.linkedCriterion' | artemisTranslate }}</span>
+                            <span #criterionTitle class="unified-feedback-criterion-title">{{ linkedCriterionTitle() }}</span>
                             @if (isLinkedCriterionKnown()) {
                                 <span class="unified-feedback-criterion-suffix">{{ 'artemisApp.assessment.linkedCriterionSuffix' | artemisTranslate }}</span>
                             }
                         </span>
+                        @if (linkedGradingScale()) {
+                            <span #gradingScaleSegment class="unified-feedback-criterion-scale" [tumAetUiTooltip]="linkedCriterionTooltip()">{{ linkedGradingScale() }}</span>
+                        }
                         @if (editable() && !readOnly()) {
                             <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This wrapper only isolates the nested control from the feedback row. -->
                             <span class="unified-feedback-criterion-remove" (click)="$event.stopPropagation()">
@@ -56,7 +61,7 @@
                             [disabled]="readOnly()"
                         ></textarea>
                     } @else if (inferredTitle()) {
-                        <span class="unified-feedback-title" [tumAetUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
+                        <span #titleText class="unified-feedback-title" [tumAetUiTooltip]="titleTruncated() ? inferredTitle()! : ''">{{ inferredTitle() }}</span>
                     }
                 </div>
                 <div class="unified-feedback-header-right">

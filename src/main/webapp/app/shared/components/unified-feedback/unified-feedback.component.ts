@@ -1,4 +1,20 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, effect, inject, input, model, output, untracked, viewChild } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    ElementRef,
+    afterNextRender,
+    afterRenderEffect,
+    computed,
+    effect,
+    inject,
+    input,
+    model,
+    output,
+    signal,
+    untracked,
+    viewChild,
+    WritableSignal,
+} from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -98,6 +114,11 @@ export class UnifiedFeedbackComponent {
             this.destroyRef.onDestroy(() => resizeObserver.disconnect());
         });
 
+        // The title and the reference and criterion chips repeat themselves in a tooltip once a narrow card cuts them off
+        this.observeTruncation(() => [this.titleText()?.nativeElement], this.titleTruncated);
+        this.observeTruncation(() => [this.referenceText()?.nativeElement], this.referenceTruncated);
+        this.observeTruncation(() => [this.criterionTitle()?.nativeElement, this.gradingScaleSegment()?.nativeElement], this.linkedCriterionTruncated);
+
         // The points choose the default title, and they can change from outside the points field (e.g. a dropped
         // grading instruction), so a default title follows every points change, not only the field's own handlers.
         // Those handlers still refresh it themselves: this effect only runs on the next change detection, while
@@ -117,8 +138,8 @@ export class UnifiedFeedbackComponent {
     // Plain label shown before the reference chip (e.g. "Attribute"), matching how Apollon's own
     // feedback popup separates the element's type from its highlighted name chip.
     referenceType = input<string | undefined>(undefined);
-    // Whether the reference chip repeats its text as a tooltip, which only helps when a long reference (e.g. a modeling
-    // element name) is cut off. A short one, such as the "Lines 7-11" of programming inline feedback, turns it off.
+    // Whether the reference chip always repeats its text as a tooltip, e.g. for a modeling element name. A short reference,
+    // such as the "Lines 7-11" of programming inline feedback, turns it off; it is still repeated once the chip cuts it off.
     referenceTooltip = input<boolean>(true);
     feedback = input<Feedback | undefined>(undefined);
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
@@ -146,6 +167,16 @@ export class UnifiedFeedbackComponent {
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
     private readonly creditsInput = viewChild<ElementRef<HTMLInputElement>>('creditsInput');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
+    private readonly titleText = viewChild<ElementRef<HTMLElement>>('titleText');
+    /** Whether a read-only feedback cuts off its title, which its tooltip then repeats in full. */
+    readonly titleTruncated = signal(false);
+    private readonly referenceText = viewChild<ElementRef<HTMLElement>>('referenceText');
+    /** Whether the reference chip cuts off the reference, which its tooltip then repeats in full. */
+    readonly referenceTruncated = signal(false);
+    private readonly criterionTitle = viewChild<ElementRef<HTMLElement>>('criterionTitle');
+    private readonly gradingScaleSegment = viewChild<ElementRef<HTMLElement>>('gradingScaleSegment');
+    /** Whether the criterion chip cuts off the criterion's name or its grading scale, which its tooltip then repeats in full. */
+    readonly linkedCriterionTruncated = signal(false);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'unified-feedback--success' },
@@ -266,6 +297,23 @@ export class UnifiedFeedbackComponent {
     readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
     readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
     /**
+     * Keeps `truncated` telling whether any of the segments is cut off by its ellipsis. The segments come and go with
+     * the feedback (e.g. a dropped grading instruction), so the observer follows them rather than being set up once.
+     */
+    private observeTruncation(segments: () => (HTMLElement | undefined)[], truncated: WritableSignal<boolean>): void {
+        effect((onCleanup) => {
+            const elements = segments().filter((element): element is HTMLElement => !!element);
+            if (!elements.length) {
+                truncated.set(false);
+                return;
+            }
+            const resizeObserver = new ResizeObserver(() => truncated.set(elements.some((element) => element.scrollWidth > element.clientWidth)));
+            elements.forEach((element) => resizeObserver.observe(element));
+            onCleanup(() => resizeObserver.disconnect());
+        });
+    }
+
+    /**
      * The title of the criterion the feedback is linked to, shown as a chip beside its reference.
      * A plain method, not a computed: consumers (drag-and-drop rubric assignment, the rubric dropdown) mutate
      * `feedback().gradingInstruction` in place rather than replacing the feedback object, so a computed signal
@@ -289,10 +337,26 @@ export class UnifiedFeedbackComponent {
         return !!instruction && !!this.gradingInstructionSelectionService.criterionTitleOf(instruction);
     }
 
-    /** Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call. */
+    /**
+     * The linked instruction's grading scale, e.g. "Partially correct", shown in its own segment of the criterion chip. Instructors may leave it empty.
+     * Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call.
+     */
+    linkedGradingScale(): string | undefined {
+        return this.feedback()?.gradingInstruction?.gradingScale?.trim() || undefined;
+    }
+
+    /**
+     * The chip's full text, e.g. "Linked to Documentation Criterion | Correct", shown only once the chip cuts the criterion's name or grading scale off.
+     * Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call.
+     */
     linkedCriterionTooltip(): string {
-        const description = this.feedback()?.gradingInstruction?.instructionDescription ?? '';
-        return this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + description;
+        if (!this.linkedCriterionTruncated()) {
+            return '';
+        }
+        const label = this.artemisTranslatePipe.transform('artemisApp.assessment.linkedCriterion');
+        const suffix = this.isLinkedCriterionKnown() ? ` ${this.artemisTranslatePipe.transform('artemisApp.assessment.linkedCriterionSuffix')}` : '';
+        const gradingScale = this.linkedGradingScale();
+        return `${label} ${this.linkedCriterionTitle() ?? ''}${suffix}${gradingScale ? ` | ${gradingScale}` : ''}`;
     }
 
     /**
