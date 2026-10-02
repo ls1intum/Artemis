@@ -1,3 +1,4 @@
+import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -54,6 +55,8 @@ export class IrisCitationTextComponent {
         'iris-citation--faq': faCircleQuestion, // FAQ citations
         'iris-citation--source': faCircleExclamation, // Unknown source citations
     };
+
+    private versionCheck?: Subscription;
 
     readonly text = input.required<string>();
     readonly citationInfo = input<IrisCitationMetaDTO[]>([]);
@@ -332,6 +335,7 @@ export class IrisCitationTextComponent {
      * written before versions existed carry no pinned version and navigate straight away.
      */
     private navigateToCitation(element: HTMLElement): void {
+        this.versionCheck?.unsubscribe();
         const courseId = element.getAttribute('data-course-id');
         const lectureId = element.getAttribute('data-lecture-id');
         const unitId = element.getAttribute('data-unit-id');
@@ -340,6 +344,7 @@ export class IrisCitationTextComponent {
             return;
         }
 
+        const navigation = this.materialVersionService.beginNavigation();
         const pinnedVersion = element.getAttribute('data-pinned-version');
         const pinnedKindAttribute = element.getAttribute('data-pinned-kind');
         if (!pinnedVersion || !pinnedKindAttribute) {
@@ -347,16 +352,24 @@ export class IrisCitationTextComponent {
             return;
         }
         const pinnedKind: IrisCitationVersion['kind'] = pinnedKindAttribute === 'video' ? 'video' : 'attachment';
+        if (Number(pinnedVersion) <= 0) {
+            this.alertService.warning(CITATION_UNVERIFIED_WARNING_KEY);
+            this.navigateToLectureUnit(element, courseId, lectureId, unitId, false);
+            return;
+        }
 
-        this.materialVersionService
+        this.versionCheck = this.materialVersionService
             .getMaterialVersions(Number(unitId))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (versions) => {
+                    if (!this.materialVersionService.isCurrentNavigation(navigation)) {
+                        return;
+                    }
                     // Which kind of material this citation is about was decided when the marker was stamped, so it is read here rather than derived again.
                     const currentVersion = pinnedKind === 'video' ? versions.videoVersion : versions.attachmentVersion;
                     if (currentVersion !== undefined && currentVersion !== null) {
-                        const isUnchanged = String(currentVersion) === pinnedVersion;
+                        const isUnchanged = Number(pinnedVersion) > 0 && String(currentVersion) === pinnedVersion;
                         if (!isUnchanged) {
                             this.alertService.warning(CITATION_STALE_WARNING_KEY);
                         }
@@ -376,6 +389,9 @@ export class IrisCitationTextComponent {
                     this.navigateToLectureUnit(element, courseId, lectureId, unitId, false);
                 },
                 error: (response: HttpErrorResponse) => {
+                    if (!this.materialVersionService.isCurrentNavigation(navigation)) {
+                        return;
+                    }
                     // An unreachable unit is an answer, not a failed check, and the lecture page words it better once it knows which units it has. Anything else means
                     // the check was lost: the link is kept, but not the exact position, because a page number that could not be verified may well be the wrong one.
                     if (!UNIT_UNREACHABLE_STATUSES.includes(response.status)) {

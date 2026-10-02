@@ -55,8 +55,8 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
         return lectureUnitRepository.findAllByIdsWithLecture(ids);
     }
 
-    public List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByIds(Collection<Long> ids) {
-        return lectureUnitRepository.findIngestedVersionsByIds(ids);
+    public List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByCourseId(long courseId) {
+        return lectureUnitRepository.findIngestedVersionsByCourseId(courseId);
     }
 
     public LectureUnit save(LectureUnit lectureUnit) {

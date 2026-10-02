@@ -210,9 +210,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
     private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
             String sessionTitle) {
         // Intermediate messages are persisted and, once the session is reloaded, get their citation metadata resolved just like final ones - so their citations become
-        // clickable and have to be pinned too. The extra lookup only happens for a message that actually contains a lecture citation; stampCitationVersions returns
+        // clickable and have to be pinned too. The run snapshot pins citations before they are persisted; stampCitationVersions returns
         // immediately otherwise, which keeps the frequent citation-free intermediate updates off the database.
-        var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result())).orElse(statusUpdate.result());
+        var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
 
         var message = new IrisMessage();
         for (var content : parseResultContents(result)) {
@@ -239,7 +239,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
             // Pin every citation to the version of the material it was generated from, before the text is persisted. Once stored, the marker keeps that version forever,
             // so a later re-upload of the PDF or a re-transcribed video can be detected when the citation is clicked.
-            var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result())).orElse(statusUpdate.result());
+            var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
 
             var message = new IrisMessage();
             for (var content : parseResultContents(result)) {

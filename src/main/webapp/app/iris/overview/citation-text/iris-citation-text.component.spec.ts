@@ -6,7 +6,7 @@ import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
 import { escapeHtml, formatCitationLabel, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
@@ -310,6 +310,40 @@ describe('IrisCitationTextComponent', () => {
             citation.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             return citation;
         };
+
+        it('treats an unknown launch revision as unverified without using its coordinates', () => {
+            clickCitation('[cite:L:42:7:::Key:Summary:va0]', [meta()]);
+            expect(getMaterialVersions).not.toHaveBeenCalled();
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+        });
+
+        it('cancels an earlier citation check when another citation is clicked', () => {
+            const first = new Subject<{ attachmentVersion: number }>();
+            getMaterialVersions.mockReturnValueOnce(first).mockReturnValueOnce(of({ attachmentVersion: 3 }));
+            // Click twice on the same component so the second target supersedes its pending first request.
+            const el = render('[cite:L:42:7:::One:Summary:va3] separate text [cite:L:42:8:::Two:Summary:va3]', [meta()]);
+            const citations = el.querySelectorAll('.iris-citation');
+            citations[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            citations[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            first.next({ attachmentVersion: 3 });
+            expect(navigate).toHaveBeenCalledTimes(1);
+            expect(navigate).toHaveBeenLastCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '8' } });
+        });
+
+        it('does not let a delayed citation in another message replace the latest navigation', () => {
+            const pending = new Subject<{ attachmentVersion: number }>();
+            getMaterialVersions.mockReturnValueOnce(pending).mockReturnValueOnce(of({ attachmentVersion: 3 }));
+            clickCitation('[cite:L:42:7:::First:Summary:va3]', [meta()]);
+            const second = TestBed.createComponent(IrisCitationTextComponent);
+            second.componentRef.setInput('text', '[cite:L:42:8:::Second:Summary:va3]');
+            second.componentRef.setInput('citationInfo', [meta()]);
+            second.detectChanges();
+            second.nativeElement.querySelector('.iris-citation').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            pending.next({ attachmentVersion: 3 });
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '8' } });
+            second.destroy();
+        });
 
         it('jumps to the exact page when the slides still have the pinned version', () => {
             getMaterialVersions.mockReturnValue(of({ attachmentVersion: 3 }));

@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -683,8 +684,17 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     void findIngestedVersions_reportsWhatIrisHasIngested() {
         var unit = citedUnitFixture(ProcessingPhase.DONE);
 
-        var ingested = lectureUnitRepository.findIngestedVersionsByIds(List.of(unit.getId()));
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
 
+        var otherCourse = courseUtilService.createCourse();
+        var otherLecture = new Lecture();
+        otherLecture.setTitle("Other course lecture");
+        otherLecture.setCourse(otherCourse);
+        otherLecture = lectureRepository.save(otherLecture);
+        var foreignUnit = lectureUtilService.createAttachmentVideoUnit(otherLecture, false);
+        assertThat(lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId())).extracting(LectureUnitIngestedVersionsDTO::lectureUnitId)
+                .doesNotContain(foreignUnit.getId());
         assertThat(ingested).singleElement().satisfies(versions -> {
             assertThat(versions.lectureUnitId()).isEqualTo(unit.getId());
             assertThat(versions.attachmentVersion()).isEqualTo(3);
@@ -697,7 +707,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     void findIngestedVersions_reportsNothingWhileUnitIsBeingReprocessed() {
         var unit = citedUnitFixture(ProcessingPhase.INGESTING);
 
-        var ingested = lectureUnitRepository.findIngestedVersionsByIds(List.of(unit.getId()));
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
 
         // While reprocessing, the vector database still serves the previous revision, so there is nothing trustworthy to pin
         assertThat(ingested).singleElement().satisfies(versions -> {
@@ -712,7 +723,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         var unit = citedUnitFixture(ProcessingPhase.DONE);
         lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
 
-        var ingested = lectureUnitRepository.findIngestedVersionsByIds(List.of(unit.getId()));
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
 
         // Without a transcription there are no timestamps left to pin, while the slides keep their version
         assertThat(ingested).singleElement().satisfies(versions -> {
@@ -729,7 +741,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
         lectureTranscriptionRepository.save(transcription);
 
-        var ingested = lectureUnitRepository.findIngestedVersionsByIds(List.of(unit.getId()));
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
 
         assertThat(ingested).singleElement().satisfies(versions -> {
             assertThat(versions.videoVersion()).isNull();

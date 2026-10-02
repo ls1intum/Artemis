@@ -105,6 +105,8 @@ export class IrisChatService implements OnDestroy {
 
     rateLimitInfo?: IrisRateLimitInformation;
 
+    private markerVersionSubscription?: Subscription;
+
     private rateLimitSubscription: Subscription;
     private acceptSubscription?: Subscription;
     private chatSessionSubscription?: Subscription;
@@ -845,6 +847,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected close(): void {
+        this.markerVersionSubscription?.unsubscribe();
         if (this.sessionId) {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
             this.websocketSessionSubscription?.unsubscribe();
@@ -1146,28 +1149,38 @@ export class IrisChatService implements OnDestroy {
      * @param pointOut the navigation target (the caller should set forceOpen to reopen a closed view)
      */
     public navigateToPointOut(pointOut: IrisPointOut): void {
-        this.navigateToVersionedPointOut(pointOut, true);
+        this.markerVersionSubscription?.unsubscribe();
+        this.navigateToVersionedPointOut(pointOut, true, this.materialVersionService.beginNavigation());
     }
 
     /** Checks a pinned point-out against the unit's current material before allowing its exact position to be used. */
-    private navigateToVersionedPointOut(pointOut: IrisPointOut, markerClick: boolean): void {
+    private navigateToVersionedPointOut(pointOut: IrisPointOut, markerClick: boolean, navigation?: number): void {
         const pinnedVersion = pointOut.pinnedVersion;
         if (!pinnedVersion) {
-            this.navigateToPointOutUnchecked(pointOut);
+            this.applyVerifiedPointOut(pointOut, markerClick);
             return;
         }
-        this.materialVersionService.getMaterialVersions(pointOut.lectureUnitId).subscribe({
+        const check = this.materialVersionService.getMaterialVersions(pointOut.lectureUnitId).subscribe({
             next: (versions) => {
+                if (navigation != undefined && !this.materialVersionService.isCurrentNavigation(navigation)) {
+                    return;
+                }
+                if (!markerClick && (pointOut.expiresAt == undefined || pointOut.expiresAt <= Date.now())) {
+                    this.acknowledgeRejectedPointOut(pointOut);
+                    return;
+                }
                 const currentVersion = pinnedVersion.kind === 'video' ? versions.videoVersion : versions.attachmentVersion;
-                if (currentVersion != undefined && currentVersion === pinnedVersion.version) {
-                    this.navigateToPointOutUnchecked(this.keepVerifiedCoordinates(pointOut));
+                if (pinnedVersion.version > 0 && currentVersion != undefined && currentVersion === pinnedVersion.version) {
+                    this.applyVerifiedPointOut(this.keepVerifiedCoordinates(pointOut), markerClick);
                     return;
                 }
                 if (!markerClick) {
                     this.acknowledgeRejectedPointOut(pointOut);
                     return;
                 }
-                if (currentVersion != undefined) {
+                if (pinnedVersion.version <= 0) {
+                    this.alertService.warning('artemisApp.iris.pointOut.outdated.unverified');
+                } else if (currentVersion != undefined) {
                     this.alertService.warning('artemisApp.iris.pointOut.outdated.stale');
                 } else if (pinnedVersion.kind === 'video' && versions.hasVideo) {
                     this.alertService.warning('artemisApp.iris.pointOut.outdated.unverified');
@@ -1177,6 +1190,9 @@ export class IrisChatService implements OnDestroy {
                 this.navigateToPointOutUnit(pointOut);
             },
             error: (response: HttpErrorResponse) => {
+                if (navigation != undefined && !this.materialVersionService.isCurrentNavigation(navigation)) {
+                    return;
+                }
                 if (!markerClick) {
                     this.acknowledgeRejectedPointOut(pointOut);
                     return;
@@ -1187,6 +1203,18 @@ export class IrisChatService implements OnDestroy {
                 this.navigateToPointOutUnit(pointOut);
             },
         });
+        if (markerClick) {
+            this.markerVersionSubscription = check;
+        }
+    }
+
+    /** Live commands only address the current view; only a history click may route to another lecture. */
+    private applyVerifiedPointOut(pointOut: IrisPointOut, markerClick: boolean): void {
+        if (markerClick) {
+            this.navigateToPointOutUnchecked(pointOut);
+        } else {
+            this.pointOutSubject.next(pointOut);
+        }
     }
 
     /** Keeps only positions covered by the material version that was checked. */
@@ -1224,12 +1252,7 @@ export class IrisChatService implements OnDestroy {
 
     /** Opens the pointed-out unit without reusing a page or timestamp that could belong to older material. */
     private navigateToPointOutUnit(pointOut: IrisPointOut): void {
-        const courseId = this.getCourseId();
-        if (pointOut.lectureId != undefined && courseId) {
-            void this.router.navigate(['/courses', courseId, 'lectures', pointOut.lectureId], {
-                queryParams: { unit: pointOut.lectureUnitId, combined: true },
-            });
-        }
+        this.navigateToPointOutUnchecked(cloneWith(pointOut, { page: undefined, displayPage: undefined, timestamp: undefined, forceOpen: true }));
     }
 
     /** Releases a pipeline whose live point-out could not be verified. */

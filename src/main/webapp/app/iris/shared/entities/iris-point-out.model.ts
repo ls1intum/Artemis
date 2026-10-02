@@ -41,6 +41,7 @@ export interface IrisPointOut {
 /** Material version pinned into a point-out by the server. */
 export interface IrisPointOutVersion {
     kind: 'attachment' | 'video';
+    /** Zero means the run could not verify the material revision. Real revisions start at 1. */
     version: number;
 }
 
@@ -85,7 +86,7 @@ export function parsePointOut(parameters: Record<string, unknown> | undefined): 
         if (materialType !== 'attachment' && materialType !== 'video') {
             return undefined;
         }
-        if (typeof materialVersion !== 'number' || !Number.isSafeInteger(materialVersion) || materialVersion <= 0) {
+        if (typeof materialVersion !== 'number' || !Number.isSafeInteger(materialVersion) || materialVersion < 0) {
             return undefined;
         }
         pinnedVersion = { kind: materialType, version: materialVersion };

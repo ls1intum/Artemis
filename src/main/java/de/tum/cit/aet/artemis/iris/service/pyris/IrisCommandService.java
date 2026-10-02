@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandRequestWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandResultDTO;
@@ -39,7 +40,6 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 
 /**
  * Executes commands that Iris performs on the client mid-pipeline (before its answer). A command is pushed to the user's browser over WebSocket and this service blocks until the
@@ -96,11 +96,13 @@ public class IrisCommandService {
 
     private final JsonMapper objectMapper;
 
+    private final IrisLectureMaterialVersionService materialVersionService;
+
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     public IrisCommandService(IrisCommandCoordinationService coordinationService, DistributedDataProvider distributedDataProvider, IrisWebsocketService irisWebsocketService,
             IrisChatWebsocketService irisChatWebsocketService, IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository, UserRepository userRepository,
-            JsonMapper objectMapper, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+            JsonMapper objectMapper, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, IrisLectureMaterialVersionService materialVersionService) {
         this.coordinationService = coordinationService;
         this.distributedDataProvider = distributedDataProvider;
         this.irisWebsocketService = irisWebsocketService;
@@ -109,6 +111,7 @@ public class IrisCommandService {
         this.irisSessionRepository = irisSessionRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.materialVersionService = materialVersionService;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
@@ -151,7 +154,7 @@ public class IrisCommandService {
         if (lectureUnit == null) {
             return PyrisCommandResultDTO.notApplied();
         }
-        var versionedCommand = stampPointOutVersion(command, lectureUnitId);
+        var versionedCommand = stampPointOutVersion(command, lectureUnitId, job.jobId());
         var session = irisSessionRepository.findByIdElseThrow(job.sessionId());
         if (!dispatchToClient(session, versionedCommand, targetClientId)) {
             return PyrisCommandResultDTO.notApplied();
@@ -172,33 +175,19 @@ public class IrisCommandService {
      * Pins a point-out to the version of the material Iris generated it from.
      * <p>
      * A timestamp makes the point-out a video reference, even when Pyris also supplies the slide shown at that time; otherwise a page makes it a slide reference. This is the
-     * same distinction used for lecture citations. The version comes from the material that finished ingestion, not from the command's untrusted parameter bag. During
-     * reprocessing the repository deliberately reports no version because the vector database may still serve the previous revision; in that case the command stays
-     * unversioned and retains the compatibility behaviour of point-outs written before version pinning existed.
+     * same distinction used for lecture citations. The run snapshot supplies the version, never the latest database state or the command's untrusted parameter bag.
+     * Missing versions are explicitly unverified (0), so a new command cannot bypass verification through legacy behaviour.
      */
-    private PyrisCommandDTO stampPointOutVersion(PyrisCommandDTO command, long lectureUnitId) {
+    private PyrisCommandDTO stampPointOutVersion(PyrisCommandDTO command, long lectureUnitId, String jobId) {
         var parameters = new LinkedHashMap<>(command.parameters());
         parameters.remove(MATERIAL_TYPE_PARAMETER);
         parameters.remove(MATERIAL_VERSION_PARAMETER);
 
-        LectureUnitIngestedVersionsDTO ingestedVersions;
-        try {
-            ingestedVersions = lectureUnitRepositoryApi.orElseThrow().findIngestedVersionsByIds(List.of(lectureUnitId)).stream().findFirst().orElse(null);
-        }
-        catch (RuntimeException e) {
-            log.warn("Could not load the ingested version for point-out lecture unit {}", lectureUnitId, e);
-            return new PyrisCommandDTO(command.type(), parameters);
-        }
-        if (ingestedVersions == null) {
-            return new PyrisCommandDTO(command.type(), parameters);
-        }
-
+        var ingestedVersions = materialVersionService.getSnapshot(jobId).get(lectureUnitId);
         boolean pointsToVideo = parameters.containsKey("timestamp");
-        Integer version = pointsToVideo ? ingestedVersions.videoVersion() : ingestedVersions.attachmentVersion();
-        if (version != null) {
-            parameters.put(MATERIAL_TYPE_PARAMETER, objectMapper.getNodeFactory().stringNode(pointsToVideo ? VIDEO_MATERIAL_TYPE : ATTACHMENT_MATERIAL_TYPE));
-            parameters.put(MATERIAL_VERSION_PARAMETER, objectMapper.getNodeFactory().numberNode(version));
-        }
+        Integer version = ingestedVersions == null ? null : pointsToVideo ? ingestedVersions.videoVersion() : ingestedVersions.attachmentVersion();
+        parameters.put(MATERIAL_TYPE_PARAMETER, objectMapper.getNodeFactory().stringNode(pointsToVideo ? VIDEO_MATERIAL_TYPE : ATTACHMENT_MATERIAL_TYPE));
+        parameters.put(MATERIAL_VERSION_PARAMETER, objectMapper.getNodeFactory().numberNode(version == null || version <= 0 ? 0 : version));
         return new PyrisCommandDTO(command.type(), parameters);
     }
 

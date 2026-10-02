@@ -24,6 +24,17 @@ export interface LectureUnitMaterialVersions {
 export class IrisMaterialVersionService {
     private readonly http = inject(HttpClient);
 
+    private latestNavigation = 0;
+
+    /** Starts a user-requested navigation across all citation messages and point-out markers. */
+    beginNavigation(): number {
+        return ++this.latestNavigation;
+    }
+
+    isCurrentNavigation(navigation: number): boolean {
+        return navigation === this.latestNavigation;
+    }
+
     getMaterialVersions(lectureUnitId: number): Observable<LectureUnitMaterialVersions> {
         return this.http.get<LectureUnitMaterialVersions>(`api/lecture/lecture-units/${lectureUnitId}/material-versions`);
     }

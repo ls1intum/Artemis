@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -38,7 +37,7 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
  * indistinguishable from a summary that happens to end in a number, and reading such a summary as a version would let a citation of changed material pass as current. A
  * field that has to start with {@code va} or {@code vt} cannot be produced by a number at the end of a sentence.
  * <p>
- * The version field is appended by {@link #stampCitationVersions(String)} before the assistant message is persisted, and pins the citation to the version of the material
+ * The version field is appended by {@link #stampCitationVersions(String, String)} before the assistant message is persisted, and pins the citation to the version of the material
  * it was generated from. When a citation is clicked, the client fetches the versions the unit currently offers and compares them against the pinned one. Markers without
  * the field (written before this feature existed) keep behaving exactly as before.
  */
@@ -74,28 +73,30 @@ public class IrisCitationService {
 
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisCitationService(Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, IrisSessionRepository irisSessionRepository) {
+    private final IrisLectureMaterialVersionService materialVersionService;
+
+    public IrisCitationService(Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, IrisSessionRepository irisSessionRepository,
+            IrisLectureMaterialVersionService materialVersionService) {
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.irisSessionRepository = irisSessionRepository;
+        this.materialVersionService = materialVersionService;
     }
 
     /**
      * Pins every lecture citation in the supplied text to the version of the material it was generated from.
      * <p>
-     * Citations that are already stamped, reference an unresolvable lecture unit, or point at material Iris has not finished ingesting are left untouched: without a
-     * trustworthy version it is better to keep the citation unverified than to pin it to the wrong one.
+     * New citations use the snapshot taken before this run. Missing versions and citations copied with a version suffix are stamped with version 0 (unverified).
+     * Legacy messages already in history retain their original behaviour.
      *
-     * @param text the raw assistant answer; may be {@code null} or blank
+     * @param text  the raw assistant answer; may be {@code null} or blank
+     * @param jobId the run whose material snapshot applies
      * @return the text with pinned-version fields appended, or the unchanged text when there is nothing to stamp
      */
-    public String stampCitationVersions(String text) {
-        if (text == null || text.isBlank() || lectureUnitRepositoryApi.isEmpty()) {
+    public String stampCitationVersions(String text, String jobId) {
+        if (text == null || text.isBlank()) {
             return text;
         }
-        var ingestedVersions = loadIngestedVersions(extractEntityIds(text));
-        if (ingestedVersions.isEmpty()) {
-            return text;
-        }
+        var ingestedVersions = materialVersionService.getSnapshot(jobId);
         // Built manually instead of via Matcher#replaceAll, because keywords and summaries are LLM-generated and may contain "$" or "\", which would be interpreted as
         // group references in a replacement string.
         var matcher = STAMPABLE_CITATION_PATTERN.matcher(text);
@@ -186,32 +187,14 @@ public class IrisCitationService {
         session.setCitationInfo(resolveCitationInfoFromMessages(messages));
     }
 
-    private Map<Long, LectureUnitIngestedVersionsDTO> loadIngestedVersions(Set<Long> entityIds) {
-        if (entityIds.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
-            return Map.of();
-        }
-        try {
-            return lectureUnitRepositoryApi.get().findIngestedVersionsByIds(entityIds).stream()
-                    .collect(Collectors.toMap(LectureUnitIngestedVersionsDTO::lectureUnitId, Function.identity(), (first, second) -> first));
-        }
-        catch (RuntimeException e) {
-            return Map.of();
-        }
-    }
-
     private String stampSingleCitation(MatchResult match, Map<Long, LectureUnitIngestedVersionsDTO> ingestedVersions) {
         String rest = match.group("rest");
-        if (isAlreadyStamped(rest)) {
-            return match.group();
+        boolean copiedVersion = isAlreadyStamped(rest);
+        if (copiedVersion) {
+            rest = rest.substring(0, rest.lastIndexOf(':'));
         }
         Long entityId = parseEntityId(match.group("entityId"));
-        if (entityId == null) {
-            return match.group();
-        }
-        var ingested = ingestedVersions.get(entityId);
-        if (ingested == null) {
-            return match.group();
-        }
+        var ingested = entityId == null ? null : ingestedVersions.get(entityId);
         String page = match.group("page");
         String start = match.group("start");
         String end = match.group("end");
@@ -219,8 +202,8 @@ public class IrisCitationService {
         // at. Deciding by the start time alone is what the client already does when it turns the citation into a link, so pinning follows the very position the click
         // navigates to. An end time without a start time therefore counts as a slide citation, exactly as it is rendered.
         boolean isVideoCitation = !start.isBlank();
-        String versionField = isVideoCitation ? formatVersionField(VIDEO_VERSION_TAG, ingested.videoVersion())
-                : page.isBlank() ? "" : formatVersionField(ATTACHMENT_VERSION_TAG, ingested.attachmentVersion());
+        String versionField = isVideoCitation ? formatVersionField(VIDEO_VERSION_TAG, copiedVersion || ingested == null ? null : ingested.videoVersion())
+                : page.isBlank() ? "" : formatVersionField(ATTACHMENT_VERSION_TAG, copiedVersion || ingested == null ? null : ingested.attachmentVersion());
         if (versionField.isEmpty()) {
             return match.group();
         }
@@ -230,7 +213,7 @@ public class IrisCitationService {
     /**
      * Whether the given {@code keyword:summary} part already carries the trailing version field.
      * <p>
-     * Keeps stamping idempotent.
+     * Pyris rebuilds fresh citations from retrieval IDs without a version suffix; a suffix in incoming text cannot be trusted.
      *
      * @param rest everything between the end timestamp and the closing bracket
      * @return {@code true} when the last field is a version field
@@ -244,7 +227,7 @@ public class IrisCitationService {
     }
 
     private static String formatVersionField(String tag, @Nullable Integer version) {
-        return version == null ? "" : tag + version;
+        return tag + (version == null || version <= 0 ? 0 : version);
     }
 
     private Set<Long> extractEntityIds(String text) {

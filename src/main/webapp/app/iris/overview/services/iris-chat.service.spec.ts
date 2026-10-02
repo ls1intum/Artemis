@@ -702,6 +702,73 @@ describe('IrisChatService', () => {
         });
     });
 
+    it('reopens the same lecture unit on every stale marker click without reusing coordinates', () => {
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        vi.spyOn(materialVersionService, 'getMaterialVersions').mockReturnValue(of({ attachmentVersion: 4 }));
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+        const marker = { lectureUnitId: 7, lectureId: 27, page: 2, timestamp: 42, pinnedVersion: { kind: 'attachment' as const, version: 3 }, forceOpen: true };
+        service.navigateToPointOut(marker);
+        service.navigateToPointOut(marker);
+        expect(emitted).toHaveBeenCalledTimes(2);
+        expect(emitted).toHaveBeenLastCalledWith(expect.objectContaining({ lectureUnitId: 7, forceOpen: true, page: undefined, displayPage: undefined, timestamp: undefined }));
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('ignores a delayed marker check after a newer marker click', () => {
+        const first = new Subject<{ attachmentVersion: number }>();
+        vi.spyOn(materialVersionService, 'getMaterialVersions')
+            .mockReturnValueOnce(first)
+            .mockReturnValueOnce(of({ attachmentVersion: 3 }));
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, pinnedVersion: { kind: 'attachment', version: 3 } });
+        service.navigateToPointOut({ lectureUnitId: 8, lectureId: 28, page: 4, pinnedVersion: { kind: 'attachment', version: 3 } });
+        first.next({ attachmentVersion: 3 });
+        expect(routerMock.navigate).toHaveBeenCalledExactlyOnceWith(['/courses', courseId, 'lectures', 28], { queryParams: { unit: 8, combined: true, page: 4 } });
+    });
+
+    it('never routes a live command and refuses a check that completes after its deadline', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1_000);
+        const commands = new Subject<IrisCommand>();
+        const delayed = new Subject<{ attachmentVersion: number }>();
+        const ack = vi.spyOn(wsMock, 'sendCommandAck');
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commands);
+        vi.spyOn(materialVersionService, 'getMaterialVersions')
+            .mockReturnValueOnce(of({ attachmentVersion: 3 }))
+            .mockReturnValueOnce(delayed)
+            .mockReturnValueOnce(of({ attachmentVersion: 3 }))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commands.next({ type: 'pointOut', parameters: { lectureUnitId: 7, lectureId: 27, page: 2 }, correlationId: 'legacy', expiresAt: 5_000 });
+        const parameters = { lectureUnitId: 7, lectureId: 27, page: 2, materialType: 'attachment', materialVersion: 3 };
+        commands.next({ type: 'pointOut', parameters, correlationId: 'current', expiresAt: 5_000 });
+        commands.next({ type: 'pointOut', parameters, correlationId: 'expired', expiresAt: 5_000 });
+        vi.spyOn(Date, 'now').mockReturnValue(6_000);
+        delayed.next({ attachmentVersion: 3 });
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+        vi.spyOn(Date, 'now').mockReturnValue(1_000);
+        commands.next({ type: 'pointOut', parameters: { lectureUnitId: 7, page: 2, materialType: 'attachment', materialVersion: 0 }, correlationId: 'unknown', expiresAt: 5_000 });
+        commands.next({ type: 'pointOut', parameters, correlationId: 'unavailable', expiresAt: 5_000 });
+        expect(ack).toHaveBeenCalledWith({ correlationId: 'unknown', applied: false });
+        expect(ack).toHaveBeenCalledWith({ correlationId: 'unavailable', applied: false });
+        expect(emitted).toHaveBeenCalledTimes(2);
+        expect(ack).toHaveBeenCalledWith({ correlationId: 'expired', applied: false });
+    });
+
+    it('treats version zero as unverified and only opens the unit', () => {
+        vi.spyOn(materialVersionService, 'getMaterialVersions').mockReturnValue(of({ attachmentVersion: 3 }));
+        const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, pinnedVersion: { kind: 'attachment', version: 0 } });
+        expect(warning).toHaveBeenCalledWith('artemisApp.iris.pointOut.outdated.unverified');
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true } });
+    });
+
     it('should drop an unverified PDF page from routed and in-place video point-outs', () => {
         const getMaterialVersions = vi.spyOn(materialVersionService, 'getMaterialVersions');
         getMaterialVersions.mockReturnValue(of({ videoVersion: 7, hasVideo: true, attachmentVersion: 4 }));

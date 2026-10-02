@@ -108,8 +108,8 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
      * The versions are only reported once processing reached {@link ProcessingPhase#DONE}: while a unit is being reprocessed, the vector database still serves the previous
      * revision, so the live versions would not describe the material a citation or point-out was actually generated from.
      *
-     * @param ids the IDs of the lecture units to load
-     * @return one entry per lecture unit found; units whose ID is not found are simply absent from the result
+     * @param courseId the course whose material is available to the chat run
+     * @return one entry per lecture unit in this course
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO(
@@ -120,9 +120,9 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
                 LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = lu.id
                 LEFT JOIN LectureTranscription t ON t.lectureUnit.id = lu.id
                     AND t.transcriptionStatus = TranscriptionStatus.COMPLETED
-            WHERE lu.id IN :ids
+            WHERE lu.lecture.course.id = :courseId
             """)
-    List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByIds(@Param("ids") Collection<Long> ids);
+    List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByCourseId(@Param("courseId") long courseId);
 
     /**
      * Loads the versions of the material a lecture unit currently offers.
