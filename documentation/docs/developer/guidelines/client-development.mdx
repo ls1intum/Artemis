@@ -710,8 +710,7 @@ private commitCourse(): void {
 
 `CourseUpdateComponent`, `GradingComponent`, `ExamParticipationComponent` and the `quizExercise` signal in
 `QuizExerciseValidationDirective` all use this. Where the state is not signal-backed, build the replacement object
-explicitly, field by field — `MetisService.rebuildPostReference` is the example — rather than reaching for a shallow
-copy.
+explicitly, field by field — `Post.withSameValues` is the example — rather than reaching for a shallow copy.
 
 Two things worth knowing when you do clone:
 
@@ -1174,6 +1173,34 @@ Moving the call into a service therefore silences the rule without solving the p
 guard or resolver itself.
 
 ## Advanced Topics
+
+### Checking access before a request
+
+`AccountService` is the one place in the client that knows who the user is and what the server lets them do. It holds
+the authorities and course roles of the signed-in user, and the rules the server applies on top of them, such as the
+passkey sign-in that administrator features can require. Ask it before sending a request that needs more than a
+signed-in user, and do not rebuild its decisions in a component or another service.
+
+A request the server refuses answers with 403, and the global error handling then shows the alert **You are not
+authorized to access this page.** on whatever page is open. For a request the user started, that is the right answer.
+For one the client sends on its own, on sign-in, when a page opens, or for a navbar element, the user sees an error
+about something they never asked for.
+
+- **Check before a request that runs without a user action.** Call the `AccountService` method that answers what the
+  server endpoint requires, and skip the request when the answer is no. The variant job tray, for example, calls
+  `hasEditorAccess()` before it loads `GET /api/hyperion/variant-jobs`, an `@EnforceAtLeastEditor` endpoint.
+- **Use the high-level methods, not the raw authorities.** An authority list such as `IS_AT_LEAST_EDITOR` includes the
+  administrator authorities, and the administrator authority alone is not what the server checks: on a server that
+  requires a passkey for administrator features, an administrator who signed in with a password has no editor access
+  until they sign in with an approved passkey. `hasEditorAccess()` knows this, while
+  `hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)` does not. Do not combine authorities, module features and passkey state
+  yourself either.
+- **Add a method when none fits.** If no method answers what an endpoint requires, add one to `AccountService` and to
+  `MockAccountService` in `src/test/javascript/spec/helpers/mocks/service/mock-account.service.ts`. The rule then lives
+  in one place and its tests belong to `account.service.spec.ts`, while the specs of its callers only stub the answer.
+
+The check in the client only avoids requests that are bound to fail. The server still enforces access on every
+endpoint, so a missing client check never grants access, and a client check never replaces the one on the server.
 
 ### WebSocket Subscriptions
 

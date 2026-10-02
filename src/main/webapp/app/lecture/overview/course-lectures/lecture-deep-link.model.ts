@@ -1,5 +1,6 @@
 import { Params } from '@angular/router';
 
+/** A lecture target whose object identity distinguishes repeated requests to the same position. */
 export interface LectureDeepLink {
     readonly unitId: number;
     readonly timestamp?: number;
@@ -9,10 +10,12 @@ export interface LectureDeepLink {
 
 export const LECTURE_DEEP_LINK_NAVIGATION_STATE = { lectureDeepLink: true } as const;
 
+/** Distinguishes an explicit citation/search request from unrelated query-parameter changes. */
 export function isLectureDeepLinkNavigationState(state: unknown): boolean {
     return !!state && typeof state === 'object' && (state as Record<string, unknown>)['lectureDeepLink'] === true;
 }
 
+/** Creates a fresh request, rejecting invalid units and omitting invalid media positions. */
 export function lectureDeepLink(unitId: number, timestamp?: number, page?: number, combined = false): LectureDeepLink | undefined {
     if (!Number.isInteger(unitId) || unitId <= 0) {
         return undefined;
@@ -26,10 +29,14 @@ export function lectureDeepLink(unitId: number, timestamp?: number, page?: numbe
     };
 }
 
+/** Parses route/search parameters, treating blank timestamps as absent while preserving zero. */
 export function parseLectureDeepLink(params: Params): LectureDeepLink | undefined {
-    return lectureDeepLink(Number(params['unit']), Number(params['timestamp']), Number(params['page']), params['combined'] === true || params['combined'] === 'true');
+    const timestamp = params['timestamp'];
+    const parsedTimestamp = typeof timestamp === 'number' || (typeof timestamp === 'string' && timestamp.trim() !== '') ? Number(timestamp) : undefined;
+    return lectureDeepLink(Number(params['unit']), parsedTimestamp, Number(params['page']), params['combined'] === true || params['combined'] === 'true');
 }
 
+/** Serializes a validated request without adding absent media positions to the URL. */
 export function lectureDeepLinkQueryParams(deepLink: LectureDeepLink): Params {
     const params: Params = { unit: deepLink.unitId };
     if (deepLink.timestamp !== undefined) {
@@ -45,6 +52,7 @@ export function lectureDeepLinkQueryParams(deepLink: LectureDeepLink): Params {
     return params;
 }
 
+/** Normalizes a valid lecture target while retaining unrelated query parameters. */
 export function normalizeLectureDeepLinkQueryParams(params: Params): Params {
     const deepLink = parseLectureDeepLink(params);
     if (!deepLink) {

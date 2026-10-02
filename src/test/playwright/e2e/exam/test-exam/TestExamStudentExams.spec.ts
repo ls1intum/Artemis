@@ -66,17 +66,17 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
 
             await expect(studentExamManagement.getStudentExamRows()).toHaveCount(3);
 
-            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Progress', 'Submitted');
-            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Progress', 'Started');
-            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Progress', 'Not started');
+            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'progress', 'Submitted');
+            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'progress', 'Started');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'progress', 'Not started');
 
-            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Used working time', '0s');
+            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'workingTime', '0s');
         });
 
         test('Search for a student in exams', async ({ page, studentExamManagement }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/students`);
             // Wait for the data table to load before searching
-            await page.locator('p-table').first().waitFor({ state: 'visible' });
+            await page.getByTestId('exam-students-table').waitFor({ state: 'visible' });
             await studentExamManagement.getStudentExamRows().first().waitFor({ state: 'visible' });
 
             let searchText = studentOne.username + ', ' + studentTwo.username;

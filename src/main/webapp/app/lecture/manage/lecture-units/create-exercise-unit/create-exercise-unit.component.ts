@@ -10,17 +10,25 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
-import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
-    styleUrls: ['./create-exercise-unit.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective],
+    styleUrl: './create-exercise-unit.component.scss',
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        ArtemisDatePipe,
+    ],
 })
 export class CreateExerciseUnitComponent implements OnInit {
     private readonly activatedRoute = inject(ActivatedRoute);
@@ -31,7 +39,6 @@ export class CreateExerciseUnitComponent implements OnInit {
     private readonly exerciseUnitService = inject(ExerciseUnitService);
 
     protected readonly faTimes = faTimes;
-    protected readonly faSort = faSort;
 
     lectureId = input<number | undefined>(undefined);
     courseId = input<number | undefined>(undefined);
@@ -45,11 +52,14 @@ export class CreateExerciseUnitComponent implements OnInit {
     private resolvedLectureId = signal<number | undefined>(undefined);
     private resolvedCourseId = signal<number | undefined>(undefined);
 
-    predicate = 'type';
-    reverse = false;
+    readonly predicate = signal('type');
+    /** Starts descending, which lists the exercises in the order this page always had. */
+    readonly ascending = signal(false);
     isLoading = signal(false);
 
     exercisesAvailableForUnitCreation = signal<Exercise[]>([]);
+    /** Whether the course has exercises at all, which tells an empty list apart from one whose exercises are all content already. */
+    readonly hasCourseExercises = signal(false);
     exercisesToCreateUnitFor = signal<Exercise[]>([]);
 
     ngOnInit(): void {
@@ -73,6 +83,7 @@ export class CreateExerciseUnitComponent implements OnInit {
             .subscribe({
                 next: ([courseResult, exerciseUnitResult]) => {
                     const allExercisesOfCourse = courseResult?.body?.exercises ? courseResult?.body?.exercises : [];
+                    this.hasCourseExercises.set(allExercisesOfCourse.length > 0);
                     const idsOfExercisesAlreadyConnectedToUnit = exerciseUnitResult?.body
                         ? exerciseUnitResult?.body?.map((exerciseUnit: ExerciseUnit) => exerciseUnit.exercise?.id)
                         : [];
@@ -105,9 +116,15 @@ export class CreateExerciseUnitComponent implements OnInit {
             });
     }
 
+    onSortChange(event: TumAetUiTableSortEvent): void {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order > 0);
+        this.sortRows();
+    }
+
     sortRows() {
         const sorted = [...this.exercisesAvailableForUnitCreation()];
-        this.sortService.sortByProperty(sorted, this.predicate, this.reverse);
+        this.sortService.sortByProperty(sorted, this.predicate(), this.ascending());
         this.exercisesAvailableForUnitCreation.set(sorted);
     }
 

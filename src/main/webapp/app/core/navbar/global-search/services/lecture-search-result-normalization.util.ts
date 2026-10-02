@@ -2,10 +2,11 @@ import { LectureSearchResult } from 'app/core/navbar/global-search/models/lectur
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { normalizeLectureDeepLinkQueryParams } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
+/** Validates a search result's lecture target without mutating the received result. */
 export function normalizeLectureSearchResultQueryParams(result: LectureSearchResult): LectureSearchResult {
     return cloneWith(result, {
         lectureUnit: cloneWith(result.lectureUnit, {
-            queryParams: normalizeLectureDeepLinkQueryParams(result.lectureUnit.queryParams),
+            queryParams: normalizeLectureDeepLinkQueryParams(result.lectureUnit.queryParams ?? {}),
         }),
     });
 }

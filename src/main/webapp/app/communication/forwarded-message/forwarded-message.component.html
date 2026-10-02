@@ -4,20 +4,24 @@
         <div class="forwarded-message-content">
             <span class="forwarded-message-channel fs-x-small d-flex align-items-center">
                 <fa-icon [icon]="faShare" class="item-icon" style="margin-right: 0.3rem" />
-                <span [jhiTranslate]="'artemisApp.metis.forward.' + (hasOriginalPostBeenDeleted() ? 'forwardedFromUnknown' : 'forwardedFrom')"></span>&nbsp;{{ sourceName() }}
+                <span [jhiTranslate]="'artemisApp.communication.forward.' + (hasOriginalPostBeenDeleted() ? 'forwardedFromUnknown' : 'forwardedFrom')"></span>&nbsp;{{
+                    sourceName()
+                }}
                 @if (viewButtonVisible()) {
                     <button
                         type="button"
                         class="btn btn-link p-0"
                         style="width: fit-content; font-size: 0.7rem; margin-left: 0.2rem"
                         (click)="onTriggerNavigateToPost()"
-                        jhiTranslate="artemisApp.metis.forward.viewConversation"
+                        jhiTranslate="artemisApp.communication.forward.viewConversation"
                     ></button>
                 }
             </span>
             @if (hasOriginalPostBeenDeleted()) {
                 <div class="forwarded-message-missing-container">
-                    <span class="forwarded-message-missing-label"> <span [jhiTranslate]="'artemisApp.metis.forward.forwardedMessageDeleted'"></span> {{ sourceName() }} </span>
+                    <span class="forwarded-message-missing-label">
+                        <span [jhiTranslate]="'artemisApp.communication.forward.forwardedMessageDeleted'"></span> {{ sourceName() }}
+                    </span>
                 </div>
             } @else {
                 <div class="forwarded-message-header">
@@ -52,12 +56,16 @@
                         [isEdited]="!!originalPostDetails()!.updatedDate"
                         [posting]="originalPostDetails()!"
                         [isReply]="false"
-                        [isSubscribeToMetis]="false"
+                        [subscribesToPosts]="false"
                     />
                 </div>
                 @if (isContentLong()) {
                     <button type="button" class="btn btn-link p-0" style="width: fit-content; font-size: 0.7rem" (click)="toggleShowFullForwardedMessage()">
-                        {{ showFullForwardedMessage() ? ('artemisApp.metis.forward.showLess' | artemisTranslate) : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
+                        {{
+                            showFullForwardedMessage()
+                                ? ('artemisApp.communication.forward.showLess' | artemisTranslate)
+                                : ('artemisApp.communication.forward.showMore' | artemisTranslate)
+                        }}
                     </button>
                 }
             }

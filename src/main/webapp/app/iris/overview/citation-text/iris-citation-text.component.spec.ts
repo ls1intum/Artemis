@@ -182,6 +182,31 @@ describe('IrisCitationTextComponent', () => {
                 }),
             );
         });
+
+        it.each(['', ' ', '\t'])('ignores a blank citation timestamp (%j)', (timestamp) => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+            const el = render('[cite:L:7:3:::Key:]', citationInfo);
+            const citation = el.querySelector('.iris-citation--clickable') as HTMLElement;
+            citation.setAttribute('data-timestamp', timestamp);
+            citation.click();
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], {
+                queryParams: { unit: 7, page: 3 },
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
+        });
+
+        it('preserves a citation timestamp of zero', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation('[cite:L:7::0::Key:]');
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], {
+                queryParams: { unit: 7, timestamp: 0 },
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
+        });
     });
 
     it('adjusts tooltip shift based on overflow', () => {

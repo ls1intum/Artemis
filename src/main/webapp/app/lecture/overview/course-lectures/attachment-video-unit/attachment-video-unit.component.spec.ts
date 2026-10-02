@@ -939,7 +939,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.isFullscreen()).toBe(false);
         });
 
-        it('targetCombinedView: opens the combined view once content is there, and only once', () => {
+        it('opens the combined view once per deep-link request when content becomes available', () => {
             // A point-out marker clicked from elsewhere in the app arrives as a deep link, and has to end up in the
             // same view as clicking it on this page does. The content is still being resolved when the unit is first
             // built, so the opening waits for it — but must not overrule the student closing the view again.
@@ -968,9 +968,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(openFullscreen).toHaveBeenCalledOnce();
 
-            // Once the deep-link request clears, a later request for the same component instance may open it again.
-            fixture.componentRef.setInput('deepLink', undefined);
-            fixture.detectChanges();
+            // A fresh request with the same values must reopen the view without clearing the old target first.
             fixture.componentRef.setInput('deepLink', { unitId: 1, combined: true });
             fixture.detectChanges();
 
@@ -1151,7 +1149,90 @@ describe('AttachmentVideoUnitComponent', () => {
         });
     });
 
+    describe('combined-view context', () => {
+        const setContext = (page?: number, timestamp?: number, played = false) => {
+            const isCollapsed = signal(false);
+            Object.defineProperty(component, 'lectureUnitCard', {
+                value: () => ({ isCollapsed }),
+                configurable: true,
+            });
+            Object.defineProperty(component, 'contextProvider', {
+                value: () => ({ getCurrentPdfPage: () => page, getCurrentVideoTimestamp: () => timestamp, hasVideoBeenPlayed: () => played }),
+                configurable: true,
+            });
+            return isCollapsed;
+        };
+
+        it('nests the visible slide and played video positions in one combined-view context', () => {
+            setContext(4, 30, true);
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([
+                { type: 'combinedView', slides: { type: 'slides', lectureUnitId: 1, page: 4 }, video: { type: 'video', lectureUnitId: 1, timestamp: 30 } },
+            ]);
+        });
+
+        it('omits the video context until playback starts', () => {
+            setContext(4, 30);
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([
+                { type: 'combinedView', slides: { type: 'slides', lectureUnitId: 1, page: 4 }, video: undefined },
+            ]);
+        });
+
+        it('includes a played video at timestamp zero even without slides', () => {
+            setContext(undefined, 0, true);
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([
+                { type: 'combinedView', slides: undefined, video: { type: 'video', lectureUnitId: 1, timestamp: 0 } },
+            ]);
+        });
+
+        it('omits a context with no media position', () => {
+            setContext();
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([]);
+        });
+
+        it('omits the context while the unit is collapsed', () => {
+            const isCollapsed = setContext(4, 30, true);
+            isCollapsed.set(true);
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([]);
+        });
+
+        it('omits the context when the unit has no id', () => {
+            setContext(4, 30, true);
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, id: undefined });
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([]);
+        });
+    });
+
     describe('Deep linking', () => {
+        it.each(['videoPlayer', 'youtubePlayer'] as const)('re-seeks an existing %s for each identical timestamp request without starting playback', (player) => {
+            const seekTo = vi.fn().mockReturnValue(true);
+            Object.defineProperty(component, player, {
+                value: () => ({ seekTo }),
+                writable: true,
+                configurable: true,
+            });
+            if (player === 'youtubePlayer') {
+                component.playlistUrl.set(undefined);
+            } else {
+                component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+                component.transcriptSegments.set([{ startTime: 0, endTime: 60, text: 'Slide', slideNumber: 1 }]);
+            }
+
+            fixture.componentRef.setInput('deepLink', { unitId: 1, timestamp: 30 });
+            fixture.detectChanges();
+            fixture.componentRef.setInput('deepLink', { unitId: 1, timestamp: 30 });
+            fixture.detectChanges();
+
+            expect(seekTo).toHaveBeenCalledTimes(2);
+            expect(seekTo).toHaveBeenNthCalledWith(1, 30, false);
+            expect(seekTo).toHaveBeenNthCalledWith(2, 30, false);
+        });
+
         it('executes the same jump again, so a repeated citation click is not swallowed', () => {
             const goToPage = vi.fn().mockReturnValue(true);
             Object.defineProperty(component, 'pdfViewer', {

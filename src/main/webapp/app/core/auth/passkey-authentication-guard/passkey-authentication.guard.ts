@@ -1,25 +1,11 @@
 import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Service()
 export class PasskeyAuthenticationGuard implements CanActivate {
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
-    private readonly profileService = inject(ProfileService);
-
-    shouldEnforcePasskeyForAdminFeatures() {
-        const isPasskeyDisabled = !this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
-        if (isPasskeyDisabled) {
-            return false;
-        }
-
-        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-        const isPasskeyRequiredForAdminFeatures = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
-        return isPasskeyRequiredForAdminFeatures;
-    }
 
     /**
      * Prevents a flickering when directly accessing e.g. an admin route directly via URL (e.g. bookmark).
@@ -42,7 +28,7 @@ export class PasskeyAuthenticationGuard implements CanActivate {
      * the passkey-required page that carries the attempted URL as returnUrl
      */
     async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<true | UrlTree> {
-        if (!this.shouldEnforcePasskeyForAdminFeatures()) {
+        if (!this.accountService.isPasskeyRequiredForAdministratorFeatures()) {
             return true;
         }
 

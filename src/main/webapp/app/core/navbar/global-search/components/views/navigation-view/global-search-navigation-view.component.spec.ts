@@ -137,6 +137,27 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('navigateToResult', () => {
+            it('navigates to a course without lecture deep-link state', () => {
+                component['navigateToResult']({ type: 'course', id: '10', metadata: { courseId: 10 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10]);
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
+            it('preserves the discussion target when navigating to a post', () => {
+                component['navigateToResult']({ type: 'post', id: '5', metadata: { courseId: 10, channelId: 20 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 20, focusPostId: '5' } });
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
+            it('preserves the discussion target when navigating to a reply', () => {
+                component['navigateToResult']({ type: 'answer_post', id: '6', metadata: { courseId: 10, channelId: 20, postId: 5 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 20, messageId: 5, focusReplyId: '6' } });
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
             it('should close overlay if courseId is missing', () => {
                 component['navigateToResult']({ type: 'exercise', id: '1' } as GlobalSearchResult);
                 expect(overlay.close).toHaveBeenCalled();

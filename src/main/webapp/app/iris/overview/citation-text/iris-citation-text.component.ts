@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
-import { LECTURE_DEEP_LINK_NAVIGATION_STATE, lectureDeepLink, lectureDeepLinkQueryParams } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE, lectureDeepLinkQueryParams, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { IrisCitationParsed } from './iris-citation-text.model';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
@@ -306,7 +306,7 @@ export class IrisCitationTextComponent {
             return;
         }
 
-        const deepLink = lectureDeepLink(Number(unitId), timestamp ? Number(timestamp) : undefined, page ? Number(page) : undefined);
+        const deepLink = parseLectureDeepLink({ unit: unitId, timestamp, page });
         if (deepLink) {
             void this.router.navigate(['/courses', courseId, 'lectures', lectureId], {
                 queryParams: lectureDeepLinkQueryParams(deepLink),

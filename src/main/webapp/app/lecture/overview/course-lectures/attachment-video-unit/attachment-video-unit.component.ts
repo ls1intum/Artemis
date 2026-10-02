@@ -191,11 +191,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly syncDisabledByPointOutState = signal<{ page: number; time: string } | undefined>(undefined);
     readonly syncDisabledByPointOut = this.syncDisabledByPointOutState.asReadonly();
 
-    readonly validatedPdfPage = computed(() => {
-        const page = this.matchedDeepLink()?.page;
-        return page && Number.isInteger(page) && page > 0 ? page : undefined;
-    });
-
     readonly targetTimestamp = computed(() => this.matchedDeepLink()?.timestamp);
     readonly targetPdfPage = computed(() => this.matchedDeepLink()?.page);
 

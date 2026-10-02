@@ -8,19 +8,15 @@
                 "title": "Vorlesungsinhalte"
             },
             "unitCreationCard": {
-                "title": "Neuen Inhalt hinzufügen",
+                "title": "Einen Inhalt hinzufügen:",
                 "text": "Text",
                 "exercise": "Übung",
-                "video": "Video",
-                "online": "Online",
-                "attachmentVideo": "Datei/Video"
+                "online": "Online-Ressource",
+                "attachmentVideo": "Datei oder Video"
             },
             "releaseDate": "Veröffentlichungsdatum",
             "details": {
-                "title": "Eigenschaften",
-                "releaseDateNotSet": "Kein Veröffentlichungsdatum gesetzt!",
-                "releaseDateSet": "Veröffentlichungsdatum: ",
-                "attachmentVersion": "Dateiversion: "
+                "title": "Eigenschaften"
             },
             "completedTooltip": "Klicke hier, um diesen Inhalt als unerledigt zu markieren",
             "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren",
@@ -28,7 +24,26 @@
             "closeFullscreen": "Vollbild schließen",
             "fullscreenView": "Vollbildansicht von {{ title }}",
             "irisSidebarLabel": "Iris KI-Assistent Chat",
-            "lectureUnit": "Vorlesungsinhalt"
+            "lectureUnit": "Vorlesungsinhalt",
+            "management": {
+                "list": "Inhalte der Vorlesung",
+                "actions": "Aktionen für {{ name }}",
+                "empty": "Die Vorlesung hat noch keine Inhalte. Füge unten den ersten hinzu.",
+                "visible": "Für Studierende sichtbar",
+                "visibleSince": "Sichtbar seit {{ date }}",
+                "visibleFrom": "Verborgen bis {{ date }}",
+                "version": "Version {{ version }}",
+                "type": {
+                    "pdf": "PDF",
+                    "file": "Datei",
+                    "video": "Video",
+                    "fileAndVideo": "Datei und Video",
+                    "text": "Text",
+                    "exercise": "Übung",
+                    "online": "Online-Ressource"
+                },
+                "editing": "In Bearbeitung"
+            }
         },
         "textUnit": {
             "created": "Neuer Textinhalt erstellt",
@@ -75,7 +90,8 @@
                 "sourcePlaceHolder": "Gib eine URL zu einem externen Onlineangebot ein.",
                 "sourceRequiredValidationError": "Link ist ein Pflichtfeld",
                 "sourceURLValidationError": "Keine valide URL",
-                "urlHelperPlaceholder": "Name und Beschreibung werden von den Metadaten des Links geladen"
+                "urlHelperPlaceholder": "Name und Beschreibung werden von den Metadaten des Links geladen",
+                "urlHelperKeepHint": "Ein leerer Name oder eine leere Beschreibung wird aus den Metadaten des Links übernommen."
             },
             "editOnlineUnit": {
                 "title": "Online-Inhalt bearbeiten"
@@ -124,17 +140,10 @@
                 }
             },
             "createAttachmentVideoUnits": {
-                "informativeText": {
-                    "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Inhaltsüberschriften) und unterteilt das PDF in mehrere Dateien.",
-                    "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jedem Inhaltsabschnitt.",
-                    "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die Inhalte übermittelt werden."
-                },
                 "noFile": "Es gibt keine Datei für die automatische Verarbeitung. Bitte gehe einen Schritt zurück und versuche es erneut.",
-                "noUnitDetected": "Es wurde kein Inhalt erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jeden Inhalt hinzu!",
+                "noUnitDetected": "Dieses PDF enthält keine Folie mit dem Wort „Outline“ oder „Gliederung“, daher konnte Artemis keine Inhalte vorschlagen. Lege die Inhalte und ihre Folien mit „Inhalt hinzufügen“ an.",
                 "pageTitle": "Inhalte verarbeiten",
                 "addUnit": "Inhalt hinzufügen",
-                "processUnits": "Inhalte festlegen",
-                "processAutomatically": "Automatische Inhaltsverarbeitung",
                 "removeSlides": "Entferne Folien",
                 "removeSlidesInfo": {
                     "firstLine": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt.",
@@ -157,14 +166,24 @@
                 },
                 "split": {
                     "empty": "",
-                    "unit": "Vorlesungsinhalte",
-                    "unitName": "Inhaltsname",
+                    "unitName": "Name des Inhalts",
                     "releaseDate": "Veröffentlichungsdatum",
-                    "startPage": "Startseite",
-                    "endPage": "Letzte Seite"
+                    "startPage": "Erste Folie",
+                    "endPage": "Letzte Folie",
+                    "title": "PDF in Inhalte aufteilen",
+                    "summary": "Artemis hat {{ count }} Abschnitte in {{ slides }} Folien gefunden.",
+                    "summarySingle": "Artemis hat 1 Abschnitt in {{ slides }} Folien gefunden.",
+                    "hint": "Jede Zeile wird ein Inhalt mit ihren Folien. Prüfe die Namen und Folienbereiche, bevor du die Inhalte erstellst.",
+                    "slides": "Folien",
+                    "summaryNone": "Artemis hat in {{ slides }} Folien keine Abschnitte gefunden.",
+                    "detectionHint": "Artemis beginnt bei jeder Folie, die das Wort „Outline“ oder „Gliederung“ genau so geschrieben enthält, einen neuen Abschnitt und schlägt einen Namen aus dem Text dieser Folie vor. Das funktioniert mit PDFs aus jedem Programm, etwa PowerPoint, Keynote oder LaTeX, solange sich ihr Text markieren lässt. Prüfe die vorgeschlagenen Namen und Folien."
                 },
-                "lectureFileToolTip": "Bitte auswählen, um die automatische Trennung von Vorlesungsinhalten zu aktivieren.",
-                "processTimeInfo": "Die Verarbeitung der Vorlesungsinhalte kann einige Sekunden dauern. Habe bitte etwas Geduld."
+                "processTimeInfo": "Die Verarbeitung der Vorlesungsinhalte kann einige Sekunden dauern. Habe bitte etwas Geduld.",
+                "removeSource": "Den ursprünglichen PDF-Inhalt „{{ name }}“ nach dem Aufteilen entfernen",
+                "removeSourceHint": "Die Abschlüsse der Studierenden und die Kompetenzverknüpfungen des Inhalts werden mit ihm gelöscht.",
+                "create": "{{ count }} Inhalte erstellen",
+                "createSingle": "1 Inhalt erstellen",
+                "createEmpty": "Inhalte erstellen"
             },
             "createAttachmentVideoUnit": {
                 "title": "Datei-/Video-Inhalt erstellen",
@@ -197,12 +216,24 @@
                 "sourcePlaceHolder": "Gib eine URL zu einem einbettbarem Video ein.",
                 "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
                 "sourceURLValidationError": "Keine valide URL",
-                "urlVideoHelper": "Umwandlung in einbettbares Format ",
-                "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
-                "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL",
+                "urlVideoHelper": "Link zur Videoseite",
+                "urlHelperPlaceholder": "Füge den Link der Seite ein, die das Video zeigt, zum Beispiel auf YouTube oder TUM-Live. „Als Video-URL verwenden“ macht daraus die Video-URL oben.",
+                "urlHelperValidationError": "Artemis kann aus diesem Link keine Video-URL machen.",
                 "videoTranscription": "Video Transkription",
                 "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein.",
-                "transcriptionHint": "Videos aus unterstützten Quellen werden nach dem Speichern automatisch transkribiert. Den Fortschritt der Transkription kannst du auf der Vorlesungsverwaltungsseite verfolgen."
+                "transcriptionHint": "Videos aus unterstützten Quellen werden nach dem Speichern automatisch transkribiert. Den Fortschritt der Transkription kannst du auf der Vorlesungsverwaltungsseite verfolgen.",
+                "useAsVideoSource": "Als Video-URL verwenden",
+                "notifyStudents": "Studierende über die neue Version benachrichtigen",
+                "uploadVersion": "Version {{ version }} hochladen",
+                "uploadHint": "Artemis teilt danach die Folien und verarbeitet den Inhalt erneut.",
+                "saveVideoSource": "Video-URL speichern",
+                "discardVideoSource": "Aktuelle URL behalten",
+                "videoSourceHint": "Artemis transkribiert das Video danach und verarbeitet es erneut.",
+                "discardNewFile": "Datei verwerfen",
+                "notifyStudentsNewFile": "Studierende über die neue Datei benachrichtigen",
+                "uploadFile": "Datei hochladen",
+                "uploadFileHint": "Artemis teilt danach die Folien und verarbeitet den Inhalt.",
+                "discardNewVideoSource": "URL verwerfen"
             },
             "editAttachmentVideoUnit": {
                 "title": "Datei-/Video-Inhalt bearbeiten"
@@ -268,7 +299,10 @@
             "createExerciseUnit": {
                 "title": "Übungsinhalt",
                 "headline": "Verbinde eine Übung mit der Vorlesung",
-                "description": "Wähle alle Übungen zur Verbindung mit der Vorlesung aus."
+                "description": "Wähle alle Übungen zur Verbindung mit der Vorlesung aus.",
+                "select": "Auswählen",
+                "noExercises": "Alle Übungen des Kurses sind bereits Inhalte dieser Vorlesung.",
+                "noCourseExercises": "Der Kurs hat noch keine Übungen."
             },
             "delete": {
                 "question": "Willst du wirklich die Verknüpfung mit der Übung <strong>{{ title }}</strong> entfernen? Die Übung bleibt erhalten! Du kannst diese Aktion nicht rückgängig machen!",

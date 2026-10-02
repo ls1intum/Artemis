@@ -96,13 +96,18 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
             testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
         });
 
-        test('Deletes a test run', async ({ login, examTestRun }) => {
+        test('Deletes a test run', async ({ login, page, examTestRun }) => {
             await login(instructor);
             await examTestRun.openTestRunPage(course, exam);
             await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
             await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
-            await examTestRun.deleteTestRun(testRun.id!);
+            const response = await examTestRun.deleteTestRun(testRun.id!);
+            expect(response.status()).toBe(200);
             await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
+            // The server no longer lists it either, while the test exam itself is untouched.
+            const remaining = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/test-runs`);
+            expect(((await remaining.json()) as { id: number }[]).map((run) => run.id)).not.toContain(testRun.id);
+            expect((await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}`)).status()).toBe(200);
         });
     });
 
