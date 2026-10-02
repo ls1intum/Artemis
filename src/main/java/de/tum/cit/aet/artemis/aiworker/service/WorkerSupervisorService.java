@@ -93,11 +93,9 @@ public class WorkerSupervisorService implements AutoCloseable {
 
     private final Map<UUID, WorkerEventDTO> pendingTerminals = new LinkedHashMap<>();
 
-    private final Map<UUID, WorkerEventDTO> pendingCheckpoints = new LinkedHashMap<>();
-
     private final Map<UUID, WorkerEventDTO> pendingRejections = new LinkedHashMap<>();
 
-    private final Deque<WorkerEventDTO> pendingAccounting = new ArrayDeque<>();
+    private final Deque<WorkerEventDTO> pendingEvents = new ArrayDeque<>();
 
     private final Set<UUID> publishingPending = new HashSet<>();
 
@@ -254,15 +252,10 @@ public class WorkerSupervisorService implements AutoCloseable {
         ExecutionIdentityDTO identity = execution.assignment.identity();
         TerminalResult terminal;
         try {
-            publishBestEffort(event(WorkerEventType.STARTED, identity, "Starting execution on the isolated worker.", null));
+            retainEvent(event(WorkerEventType.STARTED, identity, "Starting execution on the isolated worker.", null));
             ExecutionObserver progress = (message, payload, reliable) -> {
                 WorkerEventDTO update = event(reliable ? WorkerEventType.ACCOUNTING : WorkerEventType.PROGRESS, identity, bounded(message), payload);
-                if (reliable) {
-                    retainAccounting(update);
-                }
-                else {
-                    publishBestEffort(update);
-                }
+                retainEvent(update);
             };
             String result = policy.execute(execution.assignment, () -> execution.cancelled.get() || execution.finishRequested.get(), progress,
                     checkpoint -> retainCheckpoint(identity, checkpoint));
@@ -326,12 +319,13 @@ public class WorkerSupervisorService implements AutoCloseable {
         publishBestEffort(event(WorkerEventType.HEARTBEAT, currentIdentity(), null, null));
     }
 
-    private void retainAccounting(WorkerEventDTO update) {
+    private void retainEvent(WorkerEventDTO update) {
+        codec.encode(update);
         synchronized (this) {
-            if (pendingAccounting.size() >= 4_096) {
-                throw new IllegalStateException("Worker accounting delivery backlog is full");
+            if (pendingEvents.size() >= 4_096) {
+                throw new IllegalStateException("Worker event delivery backlog is full");
             }
-            pendingAccounting.addLast(update);
+            pendingEvents.addLast(update);
         }
         flushTerminal();
     }
@@ -341,30 +335,25 @@ public class WorkerSupervisorService implements AutoCloseable {
             throw new IllegalArgumentException("Workload returned invalid checkpoint output");
         }
         WorkerEventDTO update = event(WorkerEventType.CHECKPOINT, identity, null, checkpoint);
-        codec.encode(update);
-        synchronized (this) {
-            pendingCheckpoints.put(identity.executionId(), update);
-        }
-        flushTerminal();
+        retainEvent(update);
     }
 
     private void flushTerminal() {
         flushPending(pendingRejections);
-        flushAccounting();
-        flushPending(pendingCheckpoints);
+        flushEvents();
         flushPending(pendingTerminals);
     }
 
-    private void flushAccounting() {
+    private void flushEvents() {
         List<WorkerEventDTO> snapshot;
         synchronized (this) {
-            snapshot = List.copyOf(pendingAccounting);
+            snapshot = List.copyOf(pendingEvents);
         }
         for (WorkerEventDTO event : snapshot) {
             UUID executionId = event.identity().executionId();
             synchronized (this) {
                 if (publishingPending.contains(executionId)
-                        || pendingAccounting.stream().filter(update -> update.identity().executionId().equals(executionId)).findFirst().orElse(null) != event) {
+                        || pendingEvents.stream().filter(update -> update.identity().executionId().equals(executionId)).findFirst().orElse(null) != event) {
                     continue;
                 }
                 publishingPending.add(executionId);
@@ -376,7 +365,7 @@ public class WorkerSupervisorService implements AutoCloseable {
             finally {
                 synchronized (this) {
                     if (published) {
-                        pendingAccounting.remove(event);
+                        pendingEvents.remove(event);
                     }
                     publishingPending.remove(executionId);
                 }
@@ -393,8 +382,7 @@ public class WorkerSupervisorService implements AutoCloseable {
             UUID executionId = event.identity().executionId();
             synchronized (this) {
                 if (pending.get(executionId) != event || publishingPending.contains(executionId)
-                        || pendingAccounting.stream().anyMatch(update -> update.identity().executionId().equals(executionId))
-                        || pending == pendingTerminals && pendingCheckpoints.containsKey(executionId)) {
+                        || pendingEvents.stream().anyMatch(update -> update.identity().executionId().equals(executionId))) {
                     continue;
                 }
                 publishingPending.add(executionId);
