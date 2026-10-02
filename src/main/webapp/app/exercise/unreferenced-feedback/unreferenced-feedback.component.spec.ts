@@ -1,3 +1,4 @@
+import { Course } from 'app/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -56,6 +57,18 @@ describe('UnreferencedFeedbackComponent', () => {
 
         comp.validateFeedback();
         expect(comp.assessmentsAreValid).toBe(true);
+    });
+
+    it('should round the points summary like the course, or to two decimals without one', () => {
+        // 100 points split across 13 equally weighted tests leave a fraction with every digit
+        const feedback = new Feedback();
+        feedback.credits = 100 / 13;
+        comp.unreferencedFeedback = [feedback];
+        fixture.componentRef.setInput('maxPoints', 100);
+        expect(comp.pointsSummary()).toEqual({ awarded: 7.69, deducted: 0, total: 7.69 });
+
+        fixture.componentRef.setInput('course', { accuracyOfScores: 1 } as Course);
+        expect(comp.pointsSummary()).toEqual({ awarded: 7.7, deducted: 0, total: 7.7 });
     });
 
     it('should add unreferenced feedback', () => {

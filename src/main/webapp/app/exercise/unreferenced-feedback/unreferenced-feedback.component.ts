@@ -8,6 +8,8 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Course } from 'app/course/shared/entities/course.model';
+import { round, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
@@ -43,6 +45,8 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * assessment save path does.
      */
     readonly maxPoints = input<number>();
+    /** The course whose accuracy of scores the points summary is shown with; without it, the summary shows two decimals. */
+    readonly course = input<Course>();
     /**
      * Complete assessment feedback (referenced + unreferenced + automatic, where applicable). When provided, the
      * totals follow the structured-grading usageCount rules and include every score-contributing item.
@@ -97,11 +101,14 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
 
     /**
      * Awarded / deducted / final points for the assessment, using the same structured-grading usage and
-     * positive/max-point capping as the assessment save path.
+     * positive/max-point capping as the assessment save path. They are rounded like the rest of the course's scores:
+     * automatic test points, e.g. 100 points split across 13 tests, are fractions that would otherwise show every digit.
      */
     readonly pointsSummary = computed(() => {
         const { awarded, deducted, total } = this.assessmentScore();
-        return { awarded, deducted, total };
+        const course = this.course();
+        const roundPoints = (points: number) => (course ? roundValueSpecifiedByCourseSettings(points, course) : round(points, 2));
+        return { awarded: roundPoints(awarded), deducted: roundPoints(deducted), total: roundPoints(total) };
     });
 
     constructor() {

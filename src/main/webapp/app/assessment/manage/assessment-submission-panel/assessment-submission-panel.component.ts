@@ -1,10 +1,9 @@
 import { Component, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { AssessmentScore } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AssessmentScoreTagsComponent } from 'app/assessment/manage/assessment-score-tags/assessment-score-tags.component';
 
 /**
  * The submission panel of an assessment workspace, framed like the workspace's instructions and general feedback & notes
@@ -15,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-assessment-submission-panel',
     templateUrl: './assessment-submission-panel.component.html',
     styleUrls: ['./assessment-submission-panel.component.scss'],
-    imports: [FaIconComponent, TumAetUiTagComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, AssessmentScoreTagsComponent],
 })
 export class AssessmentSubmissionPanelComponent {
     readonly score = input.required<AssessmentScore>();
