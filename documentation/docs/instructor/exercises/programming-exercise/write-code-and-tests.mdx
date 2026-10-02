@@ -249,11 +249,11 @@ Write test cases in the Test repository using language-specific frameworks:
 
 | No. | Language   | Package Manager | Build System   | Testing Framework                                                                        |
 |-----|------------|-----------------|----------------|------------------------------------------------------------------------------------------|
-| 1   | Java       | Maven / Gradle  | Maven / Gradle | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares)       |
+| 1   | Java       | Maven / Gradle  | Maven / Gradle | [JUnit 5](https://junit.org/junit5/) with [Ares 2](https://github.com/ls1intum/Ares2)    |
 | 2   | Python     | pip             | pip            | [pytest](https://docs.pytest.org/)                                                       |
 | 3   | C          | -               | Makefile       | Python scripts / [FACT](https://fact.readthedocs.io/)                                    |
 | 4   | Haskell    | Stack           | Stack          | [Tasty](https://hackage.haskell.org/package/tasty)                                       |
-| 5   | Kotlin     | Maven           | Maven          | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares)       |
+| 5   | Kotlin     | Maven           | Maven          | [JUnit 5](https://junit.org/junit5/) with [Ares 2](https://github.com/ls1intum/Ares2)    |
 | 6   | VHDL       | -               | Makefile       | Python scripts                                                                           |
 | 7   | Assembler  | -               | Makefile       | Python scripts                                                                           |
 | 8   | Swift      | SwiftPM         | SwiftPM        | [XCTest](https://developer.apple.com/documentation/xctest)                               |
@@ -283,17 +283,20 @@ Check the build plan results:
 
 ## Testing with Ares
 
-Ares is a JUnit 5 extension for easy and secure Java testing on Artemis.
+Ares 2 is a JUnit extension for easy and secure Java testing on Artemis.
+The Java and Kotlin test templates use Ares 2 and contain a security policy file (`SecurityPolicy.yaml`, in the root of the test repository) that is referenced by the `@Policy` annotation of the test classes.
+Add every new test class to `theFollowingClassesAreTestClasses` in this policy and allow additional resources (e.g. package imports of libraries used in the exercise) in `theFollowingResourceAccessesArePermitted`.
+Exercises that were created before the introduction of Ares 2 keep working with Ares 1 (`artemis-java-test-sandbox`), but their Docker image does not contain the dependencies of Ares 1 anymore.
 
 Main features:
 
-- Security manager to prevent students from crashing tests or cheating
+- Policy-based sandboxing (static analysis and runtime enforcement) to prevent students from crashing tests or cheating
 - More robust tests and builds with limits on time, threads, and I/O
 - Support for public and hidden Artemis tests with custom due dates
 - Utilities for improved feedback (multiline error messages, exception location hints)
 - Utilities to test exercises using System.out and System.in
 
-**For more information see** [Ares GitHub](https://github.com/ls1intum/Ares)
+**For more information see** [Ares 2 GitHub](https://github.com/ls1intum/Ares2) and the [Ares 2 documentation](https://ls1intum.github.io/Ares2/)
 
 ## Best Practices for Writing Test Cases
 
