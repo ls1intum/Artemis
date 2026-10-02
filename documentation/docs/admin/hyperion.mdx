@@ -295,50 +295,6 @@ of automatic Redis failover. Drain and stop all Artemis writers before replacing
 or restoring a store, reconcile interrupted saves, and run the deployment canary
 before reopening authoring.
 
-### Authoring history and version restoration
-
-Programming Create, Adapt, and Variant share the worker lifecycle. Variant
-preparation copies a protected source to a separately reserved destination;
-quiz generation remains separate. Programming exam authoring is available only
-before student exams or test runs exist. Assignment and authoring use the same
-exercise guards and exam-row coordination.
-
-The `hyperion_authoring_run` table records owner/source/destination identity,
-terminal outcome, and links to existing before/after exercise versions. It does
-not store prompts, model content, or duplicate version snapshots. Back up these
-rows together with exercise versions and repositories. Deleting a source or
-owner does not erase a destination's mutation fence; deleting the destination
-removes its journal. Missing referenced versions make automatic undo unavailable.
-
-Owner-scoped history is paged at `GET /api/hyperion/authoring-runs`. Exact run
-inspection and restoration use
-`/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}`
-and its `/revert` POST operation. Current course authorization is rechecked.
-Detailed replay still expires; durable outcomes survive without fabricated usage.
-An interrupted restoration also has a durable `restore_started_at` marker. After
-all distributed data members restart, a core node reloads pending restoration
-guards in bounded pages before exercise writers are admitted. Until this finishes,
-mutation requests return `503 generationRecoveryInitializing`. This recovery
-initialization runs even when AI generation is disabled; LocalVC-only writers
-wait for a core node to initialize the cluster. Deploy compatible code on every
-exercise-writer node before accepting traffic.
-
-Only a complete restore consumes the obligation automatically. The audited
-operator recovery operation clears it after exact-token reconciliation. A database
-failure during that operation restores the slot before another writer can claim it.
-The additional nullable-column migration preserves existing records; it cannot
-infer unrecorded partial restores from older binaries, so reconcile those before
-upgrading.
-
-Restoration uses captured test metadata and rebuilds task bindings from the saved
-statement. It does not require the previous draft to compile or pass a build.
-Tests introduced by the undone run become inactive rather than being deleted,
-so historical result feedback remains intact. Newly generated output still has
-to pass verification before it can be saved.
-
-Guarded restoration checks the selected run, repository heads, grading and
-placement metadata. It does not rewind other exercises or delete a variant.
-
 ### Concurrent worker slots
 
 A worker process can handle several exercises concurrently. Set
@@ -427,13 +383,13 @@ Administrator-only APIs expose the same metadata and controls:
 - `DELETE /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}?reason=...`
   (202 when accepted, 409 if no longer cancellable).
 
-| State            | Meaning                                                                  |
-| ---------------- | ------------------------------------------------------------------------ |
-| Offline          | No unexpired heartbeat is available. A core reservation can still exist. |
-| Not ready        | The worker has not advertised usable capacity.                           |
-| Available        | At least one slot is free; other slots can already be running.           |
-| Reserved by core | Slots have been reserved but no active execution is reported yet.        |
-| Running          | The worker reports active executions and no free slot.                   |
+| State | Meaning |
+| --- | --- |
+| Offline | No unexpired heartbeat is available. A core reservation can still exist. |
+| Not ready | The worker has not advertised usable capacity. |
+| Available | At least one slot is free; other slots can already be running. |
+| Reserved by core | Slots have been reserved but no active execution is reported yet. |
+| Running | The worker reports active executions and no free slot. |
 
 This view contains no prompts, generated artifacts, or credentials. It cannot
 execute commands, terminate a worker, or release an exercise mutation slot.

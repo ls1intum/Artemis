@@ -16,6 +16,10 @@ export class MockProgrammingExerciseGradingService implements IProgrammingExerci
         return this.testCaseSubject as Observable<ProgrammingExerciseTestCase[]>;
     }
 
+    refreshTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined> {
+        return this.testCaseSubject;
+    }
+
     initSubject(initialValue: ProgrammingExerciseTestCase[]) {
         if (this.testCaseSubject) {
             this.testCaseSubject.complete();

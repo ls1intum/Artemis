@@ -10,7 +10,7 @@ export interface TumAetUiButtonVariantOptions {
 }
 
 const BASE =
-    'tumaet-ui-btn tumaet:inline-flex tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:gap-2 tumaet:rounded-md tumaet:border tumaet:font-normal tumaet:transition-colors tumaet:focus-visible:outline-none tumaet:disabled:opacity-60 tumaet:disabled:pointer-events-none';
+    'tumaet-ui-btn tumaet:inline-flex tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:gap-2 tumaet:rounded-md tumaet:border tumaet:font-normal tumaet:transition-colors tumaet:focus-visible:outline-none tumaet:disabled:opacity-60 tumaet:disabled:pointer-events-none tumaet:aria-disabled:opacity-60 tumaet:aria-disabled:cursor-default';
 
 const SOLID: Record<TumAetUiButtonSeverity, string> = {
     primary: 'tumaet:bg-primary tumaet:text-primary-contrast tumaet:border-primary',

@@ -157,6 +157,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
     selectedFileChange = output<string | undefined>();
     commitStateChange = output<CommitState>();
     onError = output<string>();
+    repositoryFilesLoaded = output<void>();
 
     readonly isLoadingFiles = signal(false);
     isProblemStatementSelected = computed(() => this.selectedFile() === PROBLEM_STATEMENT_IDENTIFIER);
@@ -302,6 +303,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
                 tap((filesWithInfoAboutChange) => {
                     this.repositoryFilesWithInformationAboutChange.set(filesWithInfoAboutChange);
                     this.setupTreeview();
+                    this.repositoryFilesLoaded.emit();
                 }),
                 finalize(() => {
                     // Guarantee that the loading indicator is cleared even if an upstream error or cancellation happens.

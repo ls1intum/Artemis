@@ -32,6 +32,9 @@ const MESSAGE_SEVERITY: Record<TumAetUiMessageSeverity, string> = {
 export class TumAetUiMessageComponent {
     readonly severity = input<TumAetUiMessageSeverity>('info');
 
+    /** Disable when a surrounding live announcer already reports this message. */
+    readonly announce = input(true, { transform: booleanAttribute });
+
     readonly text = input<string>();
 
     readonly icon = input<IconProp>();
@@ -46,7 +49,7 @@ export class TumAetUiMessageComponent {
 
     protected readonly faXmark = faXmark;
 
-    protected readonly messageRole = computed(() => (this.severity() === 'error' ? 'alert' : 'status'));
+    protected readonly messageRole = computed(() => (this.announce() ? (this.severity() === 'error' ? 'alert' : 'status') : null));
 
     protected readonly hostClasses = computed(() => `${MESSAGE_BASE} ${MESSAGE_SEVERITY[this.severity()]}`.trim());
 }

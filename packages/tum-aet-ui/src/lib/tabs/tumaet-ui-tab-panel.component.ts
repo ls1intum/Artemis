@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, booleanAttribute, computed, inject, input } from '@angular/core';
 import { TabContent, TabPanel } from '@angular/aria/tabs';
 import { TumAetUiTabsService, tabKey } from './tumaet-ui-tabs.service';
 
@@ -18,10 +18,11 @@ import { TumAetUiTabsService, tabKey } from './tumaet-ui-tabs.service';
             #panel="ngTabPanel"
             class="tumaet-ui-tab-panel-content tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus"
             [value]="key()"
+            [preserveContent]="preserveContent()"
             [hidden]="!panel.visible() || !active()"
         >
             <ng-template ngTabContent>
-                @if (active()) {
+                @if (active() || preserveContent()) {
                     <ng-content />
                 }
             </ng-template>
@@ -29,6 +30,9 @@ import { TumAetUiTabsService, tabKey } from './tumaet-ui-tabs.service';
     `,
     host: {
         class: 'tumaet-ui-tab-panel tumaet:block',
+        '[hidden]': '!active()',
+        '[attr.inert]': 'active() ? null : ""',
+        '[attr.data-state]': "active() ? 'active' : 'inactive'",
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -38,6 +42,8 @@ export class TumAetUiTabPanelComponent implements OnInit, OnDestroy {
 
     /** Value that associates this panel with a tab. */
     readonly value = input.required<number | string>();
+    /** Keep inactive content in the DOM. */
+    readonly preserveContent = input(false, { transform: booleanAttribute });
 
     protected readonly key = computed(() => tabKey(this.value()));
     protected readonly active = computed(() => this.tabsService.active() === this.value());

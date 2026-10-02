@@ -107,6 +107,17 @@ describe('CodeEditorBuildOutputComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should omit its header when hosted in a shared bottom-panel header', () => {
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [] } as Participation);
+        fixture.componentRef.setInput('showHeader', false);
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+
+        fixture.detectChanges();
+
+        expect(debugElement.query(By.css('.card-header, .card-second-header'))).toBeNull();
+        expect(debugElement.query(By.css('[data-testid="cardBuildOutput"]'))).not.toBeNull();
+    });
+
     it('announces the owning grid collapse state after keyboard activation', () => {
         fixture.componentRef.setInput('participation', {});
         fixture.detectChanges();

@@ -461,9 +461,11 @@ describe('CodeEditorFileBrowserComponent', () => {
         };
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
+        const filesLoadedSpy = vi.spyOn(comp.repositoryFilesLoaded, 'emit');
         fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
         expect(comp.isLoadingFiles()).toBe(false);
+        expect(filesLoadedSpy).toHaveBeenCalledOnce();
         expect(comp.repositoryFiles()).toEqual({
             ...allowedFiles,
             [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,

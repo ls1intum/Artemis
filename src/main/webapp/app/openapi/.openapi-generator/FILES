@@ -1,3 +1,4 @@
+api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
@@ -120,3 +121,6 @@ model/tutorial-group-schedule.ts
 model/tutorial-group-session.ts
 model/tutorial-group-student-import-data.ts
 model/tutorial-group-student.ts
+model/worker-execution.ts
+model/worker-status.ts
+model/workload-capability.ts

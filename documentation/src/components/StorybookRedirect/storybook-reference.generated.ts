@@ -16,10 +16,14 @@ export function storybookStoryFromHash(hash: string): string {
             return 'actions-button-directive--docs';
         case 'actions-button-group':
             return 'actions-button-group--docs';
+        case 'actions-disabled-reason':
+            return 'actions-disabled-reason--docs';
         case 'data-display-card':
             return 'data-display-card--docs';
         case 'data-display-chip':
             return 'data-display-chip--docs';
+        case 'data-display-empty':
+            return 'data-display-empty--docs';
         case 'data-display-empty-state':
             return 'data-display-empty-state--docs';
         case 'data-display-list':
@@ -30,6 +34,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'data-display-paginator--docs';
         case 'data-display-panel':
             return 'data-display-panel--docs';
+        case 'data-display-prose':
+            return 'data-display-prose--docs';
         case 'data-display-table':
             return 'data-display-table--docs';
         case 'data-display-tag':
@@ -48,6 +54,12 @@ export function storybookStoryFromHash(hash: string): string {
             return 'feedback-progress-bar--docs';
         case 'feedback-progress-spinner':
             return 'feedback-progress-spinner--docs';
+        case 'feedback-skeleton':
+            return 'feedback-skeleton--docs';
+        case 'feedback-status-dot':
+            return 'feedback-status-dot--docs';
+        case 'feedback-stepper':
+            return 'feedback-stepper--docs';
         case 'forms-autocomplete':
             return 'forms-autocomplete--docs';
         case 'forms-checkbox':

@@ -24,7 +24,6 @@ export type ReviewCommentWidgetManagerConfig = {
     onApplyInlineFix?: (payload: { thread: CommentThread; inlineFix: InlineCodeChange }) => void;
     onNavigateToLocation?: (location: ReviewThreadLocation) => void;
     showLocationWarning: () => boolean;
-    showFeedbackAction: (thread: CommentThread) => boolean;
 };
 
 enum InlineFixApplyResult {
@@ -75,6 +74,10 @@ export class ReviewCommentWidgetManager {
         this.draftWidgetRefs.forEach((ref) => {
             ref.setInput('canSubmit', canSubmit);
         });
+    }
+
+    hasDrafts(): boolean {
+        return this.draftLinesByFile.size > 0;
     }
 
     /**
@@ -287,7 +290,6 @@ export class ReviewCommentWidgetManager {
     private setThreadWidgetInputs(widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>, thread: CommentThread, showLocationWarning: boolean): void {
         widgetRef.setInput('thread', thread);
         widgetRef.setInput('showLocationWarning', showLocationWarning);
-        widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
     }
 
     /**
