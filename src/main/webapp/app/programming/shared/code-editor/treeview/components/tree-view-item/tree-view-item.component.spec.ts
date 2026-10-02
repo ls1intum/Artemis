@@ -132,13 +132,16 @@ describe('TreeviewItemComponent', () => {
                 await fixture.whenStable();
             });
 
+            afterEach(() => {
+                checkedChangeSpy.mockRestore();
+            });
+
             it('should un-check "Child 1" & "Child 2"', () => {
                 expect(childrenCheckboxes.map((element) => element.nativeElement.checked)).toEqual([false, false]);
             });
 
             it('should raise event checkedChange', () => {
-                expect(checkedChangeSpy).toHaveBeenCalledTimes(2);
-                expect(checkedChangeSpy).toHaveBeenCalledWith(false);
+                expect(checkedChangeSpy).toHaveBeenCalledOnce();
                 expect(checkedChangeSpy).toHaveBeenCalledWith(false);
             });
         });

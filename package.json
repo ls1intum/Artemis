@@ -8,7 +8,7 @@
         "email": "krusche@tum.de",
         "url": "https://aet.cit.tum.de/krusche"
     },
-    "packageManager": "pnpm@12.5.1",
+    "packageManager": "pnpm@12.8.1",
     "dependencies": {
         "@angular/aria": "catalog:",
         "@angular/cdk": "catalog:",
@@ -34,7 +34,7 @@
         "@ng-bootstrap/ng-bootstrap": "21.0.0",
         "@ngx-translate/core": "18.0.0",
         "@primeuix/themes": "2.0.3",
-        "@sentry/angular": "10.75.0",
+        "@sentry/angular": "11.1.0",
         "@stomp/rx-stomp": "2.4.0",
         "@stomp/stompjs": "7.3.0",
         "@tumaet/apollon": "5.3.0",
@@ -128,7 +128,7 @@
     },
     "engines": {
         "node": ">=24.20.0",
-        "pnpm": ">=12.5.1"
+        "pnpm": ">=12.8.1"
     },
     "scripts": {
         "build": "pnpm run webapp:prod --",
