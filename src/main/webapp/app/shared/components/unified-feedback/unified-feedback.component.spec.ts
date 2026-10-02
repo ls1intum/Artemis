@@ -923,6 +923,35 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.gradingInstructionText()).toBe('Consider adding visibility modifiers (+, -).');
     });
 
+    it("should tell the tutor that the student reads the criterion's text with the description of a tutor's feedback", () => {
+        fixture.componentRef.setInput('feedback', { credits: 1, text: 'Visibility', gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 } } as any);
+
+        expect(component.rubricHint()).toBe('artemisApp.assessment.feedbackHint');
+    });
+
+    it('should tell the tutor that the student reads only the description of an AI suggestion', () => {
+        fixture.componentRef.setInput('feedback', {
+            credits: 1,
+            text: 'FeedbackSuggestion:accepted:Visibility',
+            gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 },
+        } as any);
+        component.feedbackDetail.set('Consider adding visibility modifiers to your attributes.');
+
+        expect(component.rubricHint()).toBe('artemisApp.assessment.feedbackHintAiSuggestion');
+    });
+
+    it("should tell the tutor that the student reads the criterion's text once the description of an AI suggestion is empty", () => {
+        // Without a description of its own, the AI suggestion shows the criterion's text instead (see getFeedbackBodyText).
+        fixture.componentRef.setInput('feedback', {
+            credits: 1,
+            text: 'FeedbackSuggestion:adapted:Visibility',
+            gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 },
+        } as any);
+        component.feedbackDetail.set('');
+
+        expect(component.rubricHint()).toBe('artemisApp.assessment.feedbackHint');
+    });
+
     it('should show the grading instruction label and lock the points input when a grading instruction is attached', async () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);

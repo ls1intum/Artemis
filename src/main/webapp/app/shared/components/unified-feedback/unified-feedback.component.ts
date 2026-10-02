@@ -259,7 +259,15 @@ export class UnifiedFeedbackComponent {
         return this.editable() && detailRequired && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
     }
 
-    readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
+    /**
+     * Plain method, not computed: see {@link gradingInstructionText}. Says what the student reads (see getFeedbackBodyText): an AI
+     * suggestion with a description shows only that description, any other feedback the criterion's text and its description.
+     */
+    rubricHint(): string {
+        const feedback = this.feedback();
+        const showsOnlyDescription = !!feedback && Feedback.isAIFeedback(feedback) && !!this.feedbackDetail();
+        return this.artemisTranslatePipe.transform(showsOnlyDescription ? 'artemisApp.assessment.feedbackHintAiSuggestion' : 'artemisApp.assessment.feedbackHint');
+    }
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
     readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));

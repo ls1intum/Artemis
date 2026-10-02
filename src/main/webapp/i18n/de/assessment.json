@@ -8,7 +8,8 @@
             "additionalFeedback": "Zusätzliches Feedback",
             "generalFeedback": "Allgemeines Feedback",
             "feedback": "Feedback",
-            "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
+            "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden, die seine Punkte festlegt. Studierende sehen den Feedbacktext der Anweisung zusammen mit deiner Beschreibung.",
+            "feedbackHintAiSuggestion": "Dieser AI-Vorschlag ist mit einer Bewertungsanweisung verbunden, die seine Punkte festlegt. Studierende sehen nur die Beschreibung des Vorschlags, nicht den Feedbacktext der Anweisung.",
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {

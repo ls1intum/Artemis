@@ -95,6 +95,20 @@ describe('Feedback', () => {
         });
     });
 
+    describe('isAIFeedback', () => {
+        it('should recognise graded AI suggestions in every state and non-graded AI feedback', () => {
+            expect(Feedback.isAIFeedback({ text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Title` } as Feedback)).toBe(true);
+            expect(Feedback.isAIFeedback({ text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title` } as Feedback)).toBe(true);
+            expect(Feedback.isAIFeedback({ text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Title` } as Feedback)).toBe(true);
+            expect(Feedback.isAIFeedback({ text: 'NonGradedFeedbackSuggestion:Title' } as Feedback)).toBe(true);
+        });
+
+        it("should not recognise a tutor's feedback", () => {
+            expect(Feedback.isAIFeedback({ text: 'Visibility' } as Feedback)).toBe(false);
+            expect(Feedback.isAIFeedback({} as Feedback)).toBe(false);
+        });
+    });
+
     describe('getFeedbackBodyText', () => {
         const gradingInstruction = { feedback: 'Consider adding visibility modifiers (+, -).' } as GradingInstruction;
 

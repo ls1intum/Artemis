@@ -8,7 +8,8 @@
             "additionalFeedback": "Additional feedback",
             "generalFeedback": "General feedback",
             "feedback": "Feedback",
-            "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
+            "feedbackHint": "This feedback is linked to an assessment instruction, which sets its points. The student sees the instruction's feedback text together with your description.",
+            "feedbackHintAiSuggestion": "This AI suggestion is linked to an assessment instruction, which sets its points. The student sees only the suggestion's description, not the instruction's feedback text.",
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
