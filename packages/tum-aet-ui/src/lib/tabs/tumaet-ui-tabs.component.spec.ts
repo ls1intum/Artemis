@@ -181,6 +181,41 @@ describe('TumAetUiTabs family', () => {
         expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
     });
 
+    it('shows a scroll button at each end that cuts off tabs, and scrolls the list on with it', async () => {
+        const list = element.querySelector('tumaet-ui-tab-list') as HTMLElement;
+        const scrollButton = (end: 'start' | 'end') => element.querySelector(`.tumaet-ui-tab-scroll-${end}`) as HTMLButtonElement | null;
+        expect(scrollButton('start')).toBeNull();
+        expect(scrollButton('end')).toBeNull();
+
+        // jsdom lays nothing out, so the list's widths are faked: 100px of 300px visible, scrolled 50px in
+        Object.defineProperty(list, 'clientWidth', { configurable: true, value: 100 });
+        Object.defineProperty(list, 'scrollWidth', { configurable: true, value: 300 });
+        list.scrollLeft = 50;
+        list.scrollBy = vi.fn();
+        list.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(scrollButton('start')).not.toBeNull();
+        expect(scrollButton('end')).not.toBeNull();
+        // The buttons only move the list; the keyboard reaches every tab with the arrow keys
+        expect(scrollButton('end')!.getAttribute('tabindex')).toBe('-1');
+        expect(scrollButton('end')!.getAttribute('aria-hidden')).toBe('true');
+
+        scrollButton('end')!.click();
+        expect(list.scrollBy).toHaveBeenCalledWith({ left: 75, behavior: 'smooth' });
+        scrollButton('start')!.click();
+        expect(list.scrollBy).toHaveBeenCalledWith({ left: -75, behavior: 'smooth' });
+
+        // Scrolled to the end, only the button at the start remains
+        list.scrollLeft = 200;
+        list.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(scrollButton('start')).not.toBeNull();
+        expect(scrollButton('end')).toBeNull();
+    });
+
     it('reverses horizontal arrow navigation in right-to-left layouts', async () => {
         TestBed.inject(Directionality).valueSignal.set('rtl');
 

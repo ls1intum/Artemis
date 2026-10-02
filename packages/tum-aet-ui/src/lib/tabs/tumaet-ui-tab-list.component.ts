@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, afterRenderEffect, computed, contentChildren, effect, inject, signal, untracked } from '@angular/core';
 import { TabList } from '@angular/aria/tabs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiTabComponent } from './tumaet-ui-tab.component';
 import { TumAetUiTabsService, tabKey, tabValue } from './tumaet-ui-tabs.service';
 
 /**
- * Scrollable tab list with an animated selection indicator.
+ * Scrollable tab list with an animated selection indicator. Tabs that do not fit scroll, and a button at either cut-off
+ * end scrolls the list on by most of its width.
  *
  * An Angular Aria tab list: it owns the `tablist` role and the keyboard model. The arrow keys move between tabs, following
  * the text direction and wrapping at either end, Home and End jump to the first and last tab, and focusing a tab selects
@@ -15,10 +18,12 @@ import { TumAetUiTabsService, tabKey, tabValue } from './tumaet-ui-tabs.service'
     selector: 'tumaet-ui-tab-list',
     templateUrl: './tumaet-ui-tab-list.component.html',
     styleUrl: './tumaet-ui-tab-list.component.scss',
+    imports: [FaIconComponent],
     hostDirectives: [TabList],
     host: {
         class: 'tumaet-ui-tab-list tumaet:relative tumaet:flex tumaet:w-full tumaet:min-w-0 tumaet:max-w-full tumaet:overflow-x-auto tumaet:border-b tumaet:border-border',
         '(focusin)': 'revealFocusedTab($event)',
+        '(scroll)': 'updateScrollButtons()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -35,6 +40,13 @@ export class TumAetUiTabListComponent implements OnDestroy {
     protected readonly indicatorPosition = signal({ offset: 0, width: 0, animate: false });
     protected readonly indicatorTransform = computed(() => `translateX(${this.indicatorPosition().offset}px)`);
     private indicatorReady = false;
+    /** Whether tabs are cut off before the visible part of the list, which a button at its start then scrolls to. */
+    protected readonly canScrollStart = signal(false);
+    /** Whether tabs are cut off after the visible part of the list, which a button at its end then scrolls to. */
+    protected readonly canScrollEnd = signal(false);
+    private readonly rightToLeft = signal(false);
+    protected readonly scrollStartIcon = computed(() => (this.rightToLeft() ? faChevronRight : faChevronLeft));
+    protected readonly scrollEndIcon = computed(() => (this.rightToLeft() ? faChevronLeft : faChevronRight));
 
     constructor() {
         // The bound value drives aria's selection.
@@ -64,6 +76,8 @@ export class TumAetUiTabListComponent implements OnDestroy {
         afterRenderEffect(() => {
             const tabs = this.renderedTabs();
             this.updateIndicator(tabs.find((tab) => tab.selected()));
+            // The scroll buttons follow the layout observer, which also reports once as it starts: a signal written here,
+            // after rendering, would not show the buttons until something else rendered the list again
             this.observeLayout(tabs);
         });
     }
@@ -81,6 +95,25 @@ export class TumAetUiTabListComponent implements OnDestroy {
         tab?.element.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     }
 
+    /** Scrolls the list towards its start or end by most of its width, keeping a little of the previous view for context. */
+    protected scrollTabs(towards: 'start' | 'end'): void {
+        const list = this.elementRef.nativeElement;
+        // scrollLeft runs from 0 towards negative values in right-to-left layouts, so the end lies to the left there
+        const towardsLeft = (towards === 'start') !== this.rightToLeft();
+        const step = list.clientWidth * 0.75;
+        list.scrollBy?.({ left: towardsLeft ? -step : step, behavior: 'smooth' });
+    }
+
+    protected updateScrollButtons(): void {
+        const list = this.elementRef.nativeElement;
+        this.rightToLeft.set(getComputedStyle(list).direction === 'rtl');
+        const scrolled = Math.abs(list.scrollLeft);
+        const overflow = list.scrollWidth - list.clientWidth;
+        // A pixel of tolerance, as zoomed layouts report fractional widths that never quite reach the end
+        this.canScrollStart.set(scrolled > 1);
+        this.canScrollEnd.set(overflow - scrolled > 1);
+    }
+
     private updateIndicator(active: TumAetUiTabComponent | undefined): void {
         const width = active?.element.offsetWidth ?? 0;
         this.indicatorPosition.set({
@@ -96,7 +129,10 @@ export class TumAetUiTabListComponent implements OnDestroy {
             return;
         }
         this.resizeObserver?.disconnect();
-        this.resizeObserver = new ResizeObserver(() => this.updateIndicator(this.renderedTabs().find((tab) => tab.selected())));
+        this.resizeObserver = new ResizeObserver(() => {
+            this.updateIndicator(this.renderedTabs().find((tab) => tab.selected()));
+            this.updateScrollButtons();
+        });
         this.resizeObserver.observe(this.elementRef.nativeElement);
         tabs.forEach((tab) => this.resizeObserver!.observe(tab.element));
     }
