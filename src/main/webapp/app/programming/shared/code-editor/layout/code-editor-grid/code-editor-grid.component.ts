@@ -22,6 +22,11 @@ export class CodeEditorGridComponent {
     readonly instructionsElement = viewChild.required<ElementRef>('instructions');
 
     readonly isTutorAssessment = input(false);
+    /**
+     * Whether the grid lays out a tutor's assessment workspace, filling the page like the text and modeling assessments.
+     * Pages that only show a tutor's feedback, such as a student's assessed submission, set {@link isTutorAssessment} alone.
+     */
+    readonly assessmentWorkspace = input(false);
     readonly showEditorNavbar = input(true);
     readonly showEditorSidebarRight = input(true);
     readonly onResize = output<ResizeType>();
@@ -109,7 +114,7 @@ export class CodeEditorGridComponent {
             heightMain: Math.max(this.resizableMinHeightMain, Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom))),
             heightBottom: Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain))),
             widthLeft: Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
-            widthRight: this.isTutorAssessment()
+            widthRight: this.assessmentWorkspace()
                 ? availableWidth * CodeEditorGridComponent.ASSESSMENT_INSTRUCTIONS_MAX_SHARE
                 : Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
         });

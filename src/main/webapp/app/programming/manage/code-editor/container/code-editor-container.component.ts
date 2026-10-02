@@ -96,6 +96,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     buildable = input<boolean>(true);
     showEditorInstructions = input<boolean>(true);
     isTutorAssessment = input<boolean>(false);
+    /**
+     * Whether the editor lays out a tutor's assessment workspace: it fills the page, and the instructions share their column
+     * with the feedback panel projected through `[editorSidebarPanel]`. Only the assessment page sets it; pages that show a
+     * tutor's feedback read-only set {@link isTutorAssessment} alone and keep the editor's own layout.
+     */
+    readonly assessmentWorkspace = input<boolean>(false);
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
     /**

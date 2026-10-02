@@ -1,4 +1,10 @@
-<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()" [showEditorNavbar]="showNavbar()" [showEditorSidebarRight]="showEditorInstructions()">
+<jhi-code-editor-grid
+    #grid
+    [isTutorAssessment]="isTutorAssessment()"
+    [assessmentWorkspace]="assessmentWorkspace()"
+    [showEditorNavbar]="showNavbar()"
+    [showEditorSidebarRight]="showEditorInstructions()"
+>
     <div editorNavbar class="d-flex flex-wrap align-items-center">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
@@ -91,7 +97,7 @@
         />
     </ng-container>
     <ng-container editorSidebarRight>
-        @if (isTutorAssessment()) {
+        @if (assessmentWorkspace()) {
             <!-- In an assessment the instructions share their column with the page's feedback panel below them, as in the
                  text and modeling assessments. They do not collapse, which would take the panel along. -->
             <div class="code-editor-assessment-sidebar">
@@ -116,7 +122,7 @@
             [class.d-none]="!showEditorInstructions()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
             [isAssessmentMode]="isTutorAssessment()"
-            [disableCollapse]="isTutorAssessment()"
+            [disableCollapse]="assessmentWorkspace()"
         >
             <ng-content select="[editorSidebar]" />
         </jhi-code-editor-instructions>

@@ -1,4 +1,4 @@
-<div class="editor-wrapper" #editorWrapper [class.assessment-wrapper]="isTutorAssessment()">
+<div class="editor-wrapper" #editorWrapper [class.assessment-wrapper]="isTutorAssessment()" [class.assessment-workspace]="assessmentWorkspace()">
     <!-- Top bar -->
     <nav class="editor-statusbar" [hidden]="!showEditorNavbar()">
         <ng-content select="[editorNavbar]" />
