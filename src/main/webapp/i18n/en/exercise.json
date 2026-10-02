@@ -113,6 +113,7 @@
             "descriptionHint": "Tutor-only notes on when to apply this scale level. Students do not see this.",
             "feedbackHint": "The text students see after assessment. Explains this performance level to them.",
             "gradingScalePlaceholder": "e.g. Good",
+            "criterionTitlePlaceholder": "Criterion Title",
             "descriptionPlaceholder": "When should a tutor apply this level?",
             "feedbackPlaceholder": "What should the student read?",
             "dragDropInstruction": "Drag & Drop the assessment instruction to feedback element",

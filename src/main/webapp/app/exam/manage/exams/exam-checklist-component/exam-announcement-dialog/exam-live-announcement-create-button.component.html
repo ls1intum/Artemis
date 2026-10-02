@@ -1,4 +1,7 @@
-<button type="button" data-testid="announcement-create-button" class="btn btn-md btn-warning" [disabled]="!announcementCreationAllowed()" (click)="openDialog($event)">
+<button tumAetUiButton type="button" severity="warn" data-testid="announcement-create-button" [disabled]="!announcementCreationAllowed()" (click)="openDialog($event)">
     <fa-icon [icon]="faBullhorn" />
-    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.announcementCreate.button"></span>
+    <span class="hidden md:inline" jhiTranslate="artemisApp.examManagement.announcementCreate.button"></span>
 </button>
+@if (dialogVisible()) {
+    <jhi-exam-live-announcement-create-modal [(visible)]="dialogVisible" [courseId]="exam().course!.id!" [examId]="exam().id!" />
+}

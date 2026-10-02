@@ -374,6 +374,22 @@ describe('ExamScoresComponent', () => {
         examScoreDTO.exerciseGroups[0].title = 'group';
     });
 
+    it('should sort the student results by the column chosen in the table header', () => {
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: structuredClone(examScoreDTO) })));
+        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
+        fixture.detectChanges();
+
+        comp.onSortChange({ field: 'login', order: 1 });
+        const ascendingLogins = comp.studentResults().map((studentResult) => studentResult.login);
+        expect(comp.predicate()).toBe('login');
+        expect(comp.ascending()).toBe(true);
+        expect(ascendingLogins).toEqual([...ascendingLogins].sort());
+
+        comp.onSortChange({ field: 'login', order: -1 });
+        expect(comp.ascending()).toBe(false);
+        expect(comp.studentResults().map((studentResult) => studentResult.login)).toEqual([...ascendingLogins].reverse());
+    });
+
     it('histogram should have correct entries', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));

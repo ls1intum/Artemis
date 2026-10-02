@@ -220,7 +220,7 @@ describe('ExamRoomsComponent', () => {
     it('should enable upload button on valid file selection', () => {
         fixture.detectChanges();
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
-        const fileSelectLabel = fixture.debugElement.nativeElement.querySelector('label[for="roomDataFileSelect"]');
+        const fileSelectLabel = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelectButton');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
         const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
 
