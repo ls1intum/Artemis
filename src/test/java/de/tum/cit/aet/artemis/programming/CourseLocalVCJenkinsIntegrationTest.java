@@ -154,6 +154,42 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithUnsupportedTimeZone() throws Exception {
+        courseTestService.testCreateCourseWithUnsupportedTimeZone();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithTimeZoneMissingFromBrowserLists() throws Exception {
+        courseTestService.testCreateCourseWithTimeZoneMissingFromBrowserLists();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseWithUnsupportedTimeZone() throws Exception {
+        courseTestService.testUpdateCourseWithUnsupportedTimeZone();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseKeepingAnUnsupportedTimeZone() throws Exception {
+        courseTestService.testUpdateCourseKeepingAnUnsupportedTimeZone();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSupportedTimeZones() throws Exception {
+        courseTestService.testGetSupportedTimeZones();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSupportedTimeZonesAsStudentIsForbidden() throws Exception {
+        courseTestService.testGetSupportedTimeZonesAsStudentIsForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         courseTestService.testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains();
     }

@@ -9,7 +9,7 @@ import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/foundation/co
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
-import { NgClass } from '@angular/common';
+import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
@@ -17,8 +17,17 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 @Component({
     selector: 'jhi-exam-exercise-import',
     templateUrl: './exam-exercise-import.component.html',
-    styleUrls: ['./exam-exercise-import.component.scss'],
-    imports: [TranslateDirective, HelpIconComponent, FormsModule, NgClass, FaIconComponent, DifficultyBadgeComponent],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FormsModule,
+        FaIconComponent,
+        DifficultyBadgeComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+    ],
 })
 export class ExamExerciseImportComponent implements OnInit {
     private profileService = inject(ProfileService);

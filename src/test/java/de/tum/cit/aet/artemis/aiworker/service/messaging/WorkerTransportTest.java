@@ -2,7 +2,11 @@ package de.tum.cit.aet.artemis.aiworker.service.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -39,7 +43,7 @@ class WorkerTransportTest {
         DistributedMap<String, String> commands = mock(DistributedMap.class);
         DistributedMap<String, String> events = mock(DistributedMap.class);
         when(scopedProvider.<String, String>getExpiringMap("aiworker-commands-worker-1", java.time.Duration.ofMinutes(2))).thenReturn(commands);
-        when(scopedProvider.<String, String>getExpiringMap("aiworker-events-worker-1", java.time.Duration.ofHours(4))).thenReturn(events);
+        when(scopedProvider.<String, String>getMap("aiworker-events-worker-1")).thenReturn(events);
         when(commands.keySet()).thenReturn(Set.of());
         when(events.keySet()).thenReturn(Set.of());
         WorkerTransport scoped = new WorkerTransport(scopedProvider, new WorkerMessageCodecApi());
@@ -52,7 +56,7 @@ class WorkerTransportTest {
         verify(commands).keySet();
         verify(events).keySet();
         verify(scopedProvider).getExpiringMap("aiworker-commands-worker-1", java.time.Duration.ofMinutes(2));
-        verify(scopedProvider).getExpiringMap("aiworker-events-worker-1", java.time.Duration.ofHours(4));
+        verify(scopedProvider).getMap("aiworker-events-worker-1");
     }
 
     @Test
@@ -62,7 +66,7 @@ class WorkerTransportTest {
         verifyNoInteractions(unavailableProvider);
     }
 
-    private final LocalDataProviderService provider = new LocalDataProviderService();
+    private final LocalDataProviderService provider = spy(new LocalDataProviderService());
 
     private final WorkerTransport worker = new WorkerTransport(provider, new WorkerMessageCodecApi());
 
@@ -81,6 +85,11 @@ class WorkerTransportTest {
             throw new IllegalStateException("core stopped before applying the event");
         })).isInstanceOf(IllegalStateException.class);
 
+        assertThat(provider.getMap("aiworker-events-worker-1").size()).isEqualTo(1);
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isFalse();
+        verify(provider, never()).getExpiringMap(eq("aiworker-events-worker-1"), any());
+        verify(provider, never()).getExpiringMap(eq("aiworker-event-chunks"), any());
+        assertThat(provider.getExpiringMap("aiworker-event-acknowledgements", java.time.Duration.ofHours(4)).isEmpty()).isTrue();
         AtomicInteger applied = new AtomicInteger();
         core.receive(identity, result -> {
             assertThat(result).isEqualTo(event);
@@ -89,15 +98,33 @@ class WorkerTransportTest {
         worker.publish(event);
         core.receive(identity, _ -> applied.incrementAndGet());
         assertThat(applied).hasValue(1);
+        assertThat(provider.getMap("aiworker-events-worker-1").isEmpty()).isTrue();
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isTrue();
+        assertThat(provider.getExpiringMap("aiworker-event-acknowledgements", java.time.Duration.ofHours(4)).size()).isEqualTo(1);
     }
 
     @Test
     void largeEventIsSplitAndCheckedBeforeApply() {
         String payload = "x".repeat(1024 * 1024 + 7);
         worker.publish(event(WorkerEventType.CHECKPOINT, payload, 2));
-        assertThat(provider.<String, String>getExpiringMap("aiworker-event-chunks", java.time.Duration.ofHours(4)).size()).isGreaterThan(1);
+        assertThat(provider.<String, String>getMap("aiworker-event-chunks").size()).isGreaterThan(1);
         core.receive(identity, result -> assertThat(result.payload()).isEqualTo(payload));
-        assertThat(provider.<String, String>getExpiringMap("aiworker-event-chunks", java.time.Duration.ofHours(4)).isEmpty()).isTrue();
+        assertThat(provider.<String, String>getMap("aiworker-event-chunks").isEmpty()).isTrue();
+    }
+
+    @Test
+    void acknowledgedEventFinishesInterruptedCleanupWithoutApplyingAgain() {
+        worker.publish(event(WorkerEventType.FINISHED, "done", 1));
+        DistributedMap<String, String> inbox = provider.getMap("aiworker-events-worker-1");
+        String key = inbox.keySet().iterator().next();
+        provider.<String, String>getExpiringMap("aiworker-event-acknowledgements", java.time.Duration.ofHours(4)).put(key, "A:" + inbox.get(key).substring(2));
+        provider.getMap("aiworker-event-chunks").remove(key + ":0");
+
+        assertThat(core.receive(identity, _ -> {
+            throw new AssertionError("Acknowledged events must not be applied again");
+        })).isTrue();
+        assertThat(inbox.isEmpty()).isTrue();
+        assertThat(provider.getMap("aiworker-event-chunks").isEmpty()).isTrue();
     }
 
     @Test

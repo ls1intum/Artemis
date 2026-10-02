@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -159,8 +159,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var participants = assertParticipants(chat.getId(), 1, loginNameWithoutPrefix);
         // creator is automatically added as channel moderator
         assertThat(participants.stream().findFirst().orElseThrow().getIsModerator()).isTrue();
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginNameWithoutPrefix);
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, chat.getId(), loginNameWithoutPrefix);
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.CREATE);
 
         // cannot create channels with duplicate names
         expectCreateBadRequest(channelDTO);
@@ -358,8 +358,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         userUtilService.changeUser(testPrefix + "instructor2");
         request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE);
         resetWebsocketMock();
         // The channel name can not be modified if it matches another existing channel
         updateDTO.setName(channelForDuplicateCheck.getName());
@@ -372,8 +372,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         userUtilService.changeUser(testPrefix + "tutor1");
         request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE);
         // The channel name can not be modified if it matches another existing channel
         updateDTO.setName(channelForDuplicateCheck.getName());
         request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
@@ -400,8 +400,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         userUtilService.changeUser(testPrefix + "instructor2");
         request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, true);
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
@@ -704,9 +704,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of(testPrefix + "student1"),
                 HttpStatus.OK);
         assertUserAreNotConversationMembers(channel.getId(), "student1");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "student1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.DELETE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, channel.getId(), "instructor1");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.DELETE, channel.getId(), "student1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE, CommunicationCrudAction.DELETE);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
@@ -739,9 +739,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "student1"),
                 HttpStatus.OK);
         assertUsersAreConversationMembers(channel.getId(), "student1");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, channel.getId(), "student1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.CREATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, channel.getId(), "instructor1");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, channel.getId(), "student1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE, CommunicationCrudAction.CREATE);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
@@ -1106,8 +1106,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var postfix = shouldArchive ? "/archive" : "/unarchive";
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, HttpStatus.OK, new LinkedMultiValueMap<>());
         this.assertChannelProperties(channel.getId(), channel.getName(), channel.getTopic(), channel.getDescription(), isPublicChannel, shouldArchive);
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE);
         resetWebsocketMock();
     }
 
@@ -1129,14 +1129,14 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         else {
             assertUserAreNotConversationMembers(channel.getId(), "student1", "student2");
         }
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         if (shouldRegister) {
-            verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, channel.getId(), "student1", "student2");
-            verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.CREATE);
+            verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, channel.getId(), "student1", "student2");
+            verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE, CommunicationCrudAction.CREATE);
         }
         else {
-            verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "student1", "student2");
-            verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.DELETE);
+            verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.DELETE, channel.getId(), "student1", "student2");
+            verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE, CommunicationCrudAction.DELETE);
         }
         resetWebsocketMock();
     }
@@ -1161,8 +1161,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         else {
             assertUserAreNotChannelModerators(channel.getId(), "student1", "student2");
         }
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE);
         resetWebsocketMock();
     }
 

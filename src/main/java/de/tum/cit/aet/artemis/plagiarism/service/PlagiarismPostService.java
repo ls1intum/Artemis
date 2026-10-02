@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -135,7 +135,7 @@ public class PlagiarismPostService extends PostingService {
         Post updatedPost = postRepository.save(existingPost);
 
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
+        broadcastForPost(updatedPost, CommunicationCrudAction.UPDATE, course.getId(), null);
         return updatedPost;
     }
 
@@ -194,7 +194,7 @@ public class PlagiarismPostService extends PostingService {
         // delete
         postRepository.deleteById(postId);
         preparePostForBroadcast(post);
-        broadcastForPost(post, MetisCrudAction.DELETE, course.getId(), null);
+        broadcastForPost(post, CommunicationCrudAction.DELETE, course.getId(), null);
     }
 
     /**
@@ -202,7 +202,7 @@ public class PlagiarismPostService extends PostingService {
      */
     @Override
     public String getEntityName() {
-        return METIS_POST_ENTITY_NAME;
+        return POST_ENTITY_NAME;
     }
 
     /**

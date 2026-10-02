@@ -22,6 +22,33 @@
     font-size: var(--tumaet-ui-font-size-lg);
 }
 
+.tumaet-ui-message-dismiss {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin-inline-start: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 9999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    appearance: none;
+    transition: background-color 0.15s;
+
+    &:hover {
+        background: color-mix(in srgb, currentcolor 12%, transparent);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
+}
+
 @mixin message-state($background, $foreground) {
     background: color-mix(in srgb, var($background) 10%, var(--tumaet-ui-content-background));
     outline-color: color-mix(in srgb, var($background) 40%, var(--tumaet-ui-content-background));
