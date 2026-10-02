@@ -525,6 +525,19 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special Cases for Breadcrumbs', () => {
+        it('uses the translated TUM.Live label for the course connection route', () => {
+            router.setUrl('/course-management/1/gocast-binding');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.gocast.title',
+                translate: true,
+                uri: '/course-management/1/gocast-binding/',
+            } as MockBreadcrumb);
+        });
+
         it('submissions link to the scores, since there is no list of submissions only', () => {
             router.setUrl('/course-management/1/text-exercises/2/submissions');
 

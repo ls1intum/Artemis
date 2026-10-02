@@ -7,6 +7,7 @@ export class MockProfileService {
             programmingLanguageFeatures: [],
             activeProfiles: [],
             activeModuleFeatures: [],
+            gocastEnabled: false,
             testServer: false,
             git: {
                 branch: 'develop',
@@ -19,6 +20,8 @@ export class MockProfileService {
         }) as unknown as ProfileInfo;
 
     public isLLMDeploymentEnabled = (): boolean => false;
+
+    public isGocastEnabled = (): boolean => this.getProfileInfo().gocastEnabled ?? false;
 
     public isProfileActive = (profile: string): boolean => this.getProfileInfo().activeProfiles?.includes(profile) ?? false;
 

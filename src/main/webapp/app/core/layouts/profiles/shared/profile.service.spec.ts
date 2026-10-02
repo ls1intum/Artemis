@@ -101,6 +101,20 @@ describe('ProfileService', () => {
             });
         });
 
+        describe('isGocastEnabled', () => {
+            it('should expose the published Gocast availability', () => {
+                // @ts-ignore
+                service.profileInfo = { gocastEnabled: true };
+                expect(service.isGocastEnabled()).toBe(true);
+            });
+
+            it('should default to unavailable when the server does not publish Gocast availability', () => {
+                // @ts-ignore
+                service.profileInfo = {};
+                expect(service.isGocastEnabled()).toBe(false);
+            });
+        });
+
         describe('isDevelopment', () => {
             it('should return true when dev profile is active', () => {
                 // @ts-ignore

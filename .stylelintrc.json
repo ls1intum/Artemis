@@ -41,6 +41,7 @@
                 "src/main/webapp/app/shared-ui/date-time-picker/**/*.scss",
                 "src/main/webapp/app/atlas/shared/standardized-competencies/**/*.scss",
                 "src/main/webapp/app/localci/build-queue/**/*.scss",
+                "src/main/webapp/app/videosource/gocast/**/*.scss",
                 "src/main/webapp/app/shared-ui/user-import/**/*.scss",
                 "src/main/webapp/app/shared-ui/user-registration-modal/**/*.scss",
                 "src/main/webapp/app/shared-ui/confirm-entity-name/**/*.scss",

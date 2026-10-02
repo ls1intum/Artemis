@@ -127,6 +127,13 @@ describe('CourseManagementContainerComponent', () => {
     } as Course;
 
     beforeEach(async () => {
+        const storageMap = new Map<string, string>();
+        vi.stubGlobal('localStorage', {
+            getItem: vi.fn((key: string) => storageMap.get(key) ?? null),
+            setItem: vi.fn((key: string, value: string) => storageMap.set(key, value)),
+            removeItem: vi.fn((key: string) => storageMap.delete(key)),
+            clear: vi.fn(() => storageMap.clear()),
+        });
         route = {
             firstChild: {
                 params: of({ courseId: course1.id }) as Params,
@@ -158,10 +165,6 @@ describe('CourseManagementContainerComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CourseManagementContainerComponent);
-        component = fixture.componentInstance;
-
-        component.isShownViaLti.set(false);
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         courseAdminService = TestBed.inject(CourseAdminService);
@@ -174,9 +177,7 @@ describe('CourseManagementContainerComponent', () => {
         router = TestBed.inject(Router);
         websocketService = TestBed.inject(WebsocketService);
 
-        // Mock WebsocketService.subscribe to return an empty observable
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(EMPTY);
-
         findSpy = vi.spyOn(courseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
@@ -185,16 +186,11 @@ describe('CourseManagementContainerComponent', () => {
                 }),
             ),
         );
+        findCourseSpy = findSpy;
+        fixture = TestBed.createComponent(CourseManagementContainerComponent);
+        component = fixture.componentInstance;
+        component.isShownViaLti.set(false);
         courseConversationsService = fixture.debugElement.injector.get(CourseConversationsService);
-
-        findCourseSpy = vi.spyOn(courseService, 'find').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: course1,
-                    headers: new HttpHeaders(),
-                }),
-            ),
-        );
 
         getCourseSummarySpy = vi.spyOn(courseAdminService, 'getCourseSummary').mockReturnValue(
             of(
@@ -237,6 +233,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
             activeProfiles: [PROFILE_PROD],
+            gocastEnabled: true,
         } as unknown as ProfileInfo);
 
         vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
@@ -248,6 +245,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.restoreAllMocks();
         localStorageService?.clear();
         TestBed.inject(SessionStorageService).clear();
+        vi.unstubAllGlobals();
     });
 
     it('should call necessary methods on init', async () => {
@@ -310,6 +308,7 @@ describe('CourseManagementContainerComponent', () => {
         component.ltiEnabled = true;
         component.irisEnabled = true;
         component.tutorialGroupEnabled = true;
+        component.gocastEnabled = true;
         const sidebarItems = component.getSidebarItems();
 
         expect(sidebarItems.find((item) => item.title === 'Overview')).toBeTruthy();
@@ -326,7 +325,17 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Settings')).toBeTruthy();
+    });
+
+    it('should not include the TUM.Live sidebar item when the integration is unavailable', () => {
+        component.course.set(course1);
+        component.gocastEnabled = false;
+
+        const sidebarItems = component.getSidebarItems();
+
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeUndefined();
     });
     it('should not include Tutorials sidebar item when tutorial group module feature is disabled', () => {
         component.course.set({
@@ -354,6 +363,7 @@ describe('CourseManagementContainerComponent', () => {
         component.course.set(courseWithDisabledFeatures);
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeUndefined();
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
 

@@ -18,6 +18,7 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
+    faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 
@@ -122,6 +123,17 @@ describe('CourseSidebarItemService', () => {
     });
 
     describe('Individual item methods', () => {
+        it('getGocastBindingItem should return the instructor course connection item', () => {
+            expect(service.getGocastBindingItem(courseId)).toEqual({
+                routerLink: `${courseId}/gocast-binding`,
+                icon: faVideo,
+                title: 'TUM.Live',
+                translation: 'artemisApp.gocast.title',
+                testId: 'gocast-binding',
+                hidden: false,
+            });
+        });
+
         it('getTrainingItem should return correct item', () => {
             const item = service.getTrainingItem();
 

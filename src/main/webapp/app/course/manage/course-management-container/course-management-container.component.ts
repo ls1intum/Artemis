@@ -115,6 +115,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
     private learningPathsActive = signal(false);
+    gocastEnabled = false;
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
 
@@ -141,6 +142,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private async initializeCourseManagementContainerComponent(): Promise<void> {
+        this.gocastEnabled = this.profileService.isGocastEnabled();
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
@@ -346,6 +348,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (isInstructor) {
             if (this.localCIActive) {
                 sidebarItems.push(this.sidebarItemService.getBuildQueueItem(courseId));
+            }
+            if (this.gocastEnabled) {
+                sidebarItems.push(this.sidebarItemService.getGocastBindingItem(courseId));
             }
             if (this.ltiEnabled && currentCourse.onlineCourse) {
                 sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(courseId));
