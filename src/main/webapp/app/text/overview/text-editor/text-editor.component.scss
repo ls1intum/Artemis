@@ -3,16 +3,18 @@
 @import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import '../../../../content/scss/artemis-variables';
 
+// minmax(0, 1fr) rather than 1fr: a plain fr track never shrinks below its content's min-content width, so a long
+// single-line feedback title would keep the column wide and push the submission under the panel next to it.
 .text-editor-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
         'problem-statement'
         'team-info'
         'main';
 
     @media (min-width: map-get($grid-breakpoints, 'md')) {
-        grid-template-columns: 1fr min-content;
+        grid-template-columns: minmax(0, 1fr) min-content;
         grid-template-areas:
             'problem-statement team-info'
             'main              team-info';

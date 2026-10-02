@@ -98,6 +98,11 @@ export class ExerciseSplitPanelComponent {
     readonly quizPracticeInProgress = computed(() => this.exercise().type === ExerciseType.QUIZ && this.participationMode() === 'practice' && !this.quizPracticeAttemptFinished());
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
+    /**
+     * The text and modeling editors keep at least this share of the split, the canvas share of the assessment workspace,
+     * so the slider cannot squeeze them away. The right panel is not bounded: dragging it narrow collapses it.
+     */
+    readonly leftMinSizePercent = computed(() => (this.exercise().type === ExerciseType.TEXT || this.exercise().type === ExerciseType.MODELING ? 36 : 0));
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;

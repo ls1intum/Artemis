@@ -48,6 +48,11 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     readonly collapseSnapPercent = input(12);
     /** Removes the standard content gutter around the primary panel for full-bleed editors or canvases. */
     readonly flushLeftPanel = input(false);
+    /**
+     * Smallest width (percent) the left panel keeps, so dragging the slider cannot squeeze it away. The right panel
+     * needs no such bound, as dragging it narrow collapses it (see {@link collapseSnapPercent}). 0 leaves it unbounded.
+     */
+    readonly leftMinSizePercent = input(0);
 
     /**
      * Gutter size (px) of the splitter: the grey divider between the two panels, so it matches `--spacing-divider`,
@@ -119,6 +124,21 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             });
         });
 
+        // The splitter refuses every drag that leaves the left panel below its minimum, so a remembered split that is
+        // already below it (e.g. saved before the minimum applied) would freeze the slider. Widen it to the minimum.
+        effect(() => {
+            this.leftMinSizePercent();
+            untracked(() => {
+                const sizes = this.savedSizes();
+                if (sizes) {
+                    const clamped = this.withLeftMinSize(sizes);
+                    if (clamped !== sizes) {
+                        this.savedSizes.set(clamped);
+                    }
+                }
+            });
+        });
+
         // Apply the requested collapsed start state once, unless the user already
         // controlled the right panel in this component instance.
         effect(() => {
@@ -179,11 +199,17 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                 parsed[0] > 0 &&
                 parsed[1] > this.collapseSnapPercent()
             ) {
-                this.savedSizes.set(parsed);
+                this.savedSizes.set(this.withLeftMinSize(parsed));
             }
         } catch {
             // Malformed or unavailable storage (private mode / no window); the in-memory default applies.
         }
+    }
+
+    /** The split itself when its left panel keeps {@link leftMinSizePercent}, otherwise the split widened to it. */
+    private withLeftMinSize(sizes: number[]): number[] {
+        const leftMinSize = this.leftMinSizePercent();
+        return sizes[0] >= leftMinSize ? sizes : [leftMinSize, 100 - leftMinSize];
     }
 
     setActiveRight(value: string | number | undefined): void {

@@ -4,6 +4,7 @@
     class="flex-fill h-100 overflow-hidden"
     [useViewportWidthForCollapse]="true"
     [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()"
+    [leftMinSizePercent]="leftMinSizePercent()"
     storageKey="exercise-details-split"
 >
     @if (showEditorPanel()) {

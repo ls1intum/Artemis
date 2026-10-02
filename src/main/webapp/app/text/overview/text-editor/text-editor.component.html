@@ -63,7 +63,7 @@
                     } @else {
                         @if (!result()?.feedbacks?.length) {
                             <div class="row">
-                                <div class="col-md-12 col-lg-10 col-xl-8">
+                                <div class="col-12">
                                     <b [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
                                     <jhi-text-result [result]="result()" [course]="course()" />
@@ -73,7 +73,7 @@
                             </div>
                         } @else {
                             <div class="row">
-                                <div class="col-md-12 col-lg-10 col-xl-8">
+                                <div class="col-12">
                                     <b>
                                         {{
                                             isOwnerOfParticipation()
@@ -87,9 +87,9 @@
                                     <hr />
                                     <jhi-text-result [result]="result()" [course]="course()" />
                                 </div>
-                                <jhi-general-feedback class="col-xl-8" [feedbacks]="unreferencedFeedback" [course]="course()" />
+                                <jhi-general-feedback class="col-12" [feedbacks]="unreferencedFeedback" [course]="course()" />
                                 @if (isOwnerOfParticipation()) {
-                                    <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
+                                    <jhi-rating class="col-12 mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
                                 }
                             </div>
                         }
