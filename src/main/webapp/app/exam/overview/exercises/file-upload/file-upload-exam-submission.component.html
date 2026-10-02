@@ -23,7 +23,13 @@
                         <label for="fileUploadInput" class="mb-2 inline-block" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
                         <div class="flex items-center gap-2">
                             <div class="min-w-0 flex-1 truncate">
-                                <input #fileInput id="fileUploadInput" type="file" (change)="setFileSubmissionForExercise($event)" />
+                                <input
+                                    #fileInput
+                                    id="fileUploadInput"
+                                    type="file"
+                                    class="cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-3 file:py-2 file:text-base file:text-(--tumaet-ui-text-color) hover:file:bg-(--border-color)"
+                                    (change)="setFileSubmissionForExercise($event)"
+                                />
                             </div>
                             <button
                                 type="button"

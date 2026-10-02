@@ -21,15 +21,16 @@
             <jhi-exam-start-information [exam]="exam()" [studentExam]="studentExam()" [formattedStartText]="formattedGeneralInformation()" />
         </div>
         <div class="my-4 inline-flex items-center">
-            <div class="flex items-center gap-2 pl-1">
+            <div class="flex items-start gap-2 pl-1">
                 <tumaet-ui-checkbox
+                    class="mt-px"
                     inputId="confirmBox"
                     name="confirmBox"
                     [ngModel]="confirmed"
                     (ngModelChange)="confirmed = $event; updateConfirmation()"
                     [disabled]="waitingForExamStart()"
                 />
-                <label for="confirmBox" id="formatted-confirmation-text" class="cursor-pointer" [innerHTML]="formattedConfirmationText()"></label>
+                <label for="confirmBox" id="formatted-confirmation-text" class="cursor-pointer [&_p]:my-0!" [innerHTML]="formattedConfirmationText()"></label>
             </div>
             @if (!formattedConfirmationText()) {
                 <div>
@@ -39,7 +40,7 @@
         </div>
 
         <div class="mb-6 font-bold" jhiTranslate="artemisApp.exam.startConsentText"></div>
-        <div class="mb-6">
+        <div class="mb-8">
             <div class="w-fit">
                 <input
                     tumAetUiInput
@@ -53,18 +54,18 @@
                     [disabled]="waitingForExamStart()"
                 />
             </div>
-            <div id="your-name" class="font-light">
+            <div id="your-name" class="mt-2 font-light">
                 <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
             </div>
             <div class="w-3/5">
                 @if (inserted) {
                     @if (!confirmed) {
-                        <tumaet-ui-message severity="error" class="mt-1">
+                        <tumaet-ui-message severity="error" class="mt-2">
                             <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
                         </tumaet-ui-message>
                     }
                     @if (!nameIsCorrect) {
-                        <tumaet-ui-message severity="error" class="mt-1">
+                        <tumaet-ui-message severity="error" class="mt-2">
                             <span jhiTranslate="artemisApp.exam.falseName"></span>
                         </tumaet-ui-message>
                     }
@@ -131,9 +132,9 @@
             </div>
         }
         <div class="my-4 inline-flex items-center">
-            <div class="flex items-center gap-2">
-                <tumaet-ui-checkbox inputId="confirmBox" name="confirmBox" [ngModel]="confirmed" (ngModelChange)="confirmed = $event; updateConfirmation()" />
-                <label for="confirmBox" id="formatted-confirmation-text" class="cursor-pointer" [innerHTML]="formattedConfirmationText()"></label>
+            <div class="flex items-start gap-2">
+                <tumaet-ui-checkbox class="mt-px" inputId="confirmBox" name="confirmBox" [ngModel]="confirmed" (ngModelChange)="confirmed = $event; updateConfirmation()" />
+                <label for="confirmBox" id="formatted-confirmation-text" class="cursor-pointer [&_p]:my-0!" [innerHTML]="formattedConfirmationText()"></label>
             </div>
             @if (!formattedConfirmationText()) {
                 <div>
@@ -142,7 +143,7 @@
             }
         </div>
         <div class="mb-6 font-bold" jhiTranslate="artemisApp.exam.endConsentText"></div>
-        <div class="mb-6">
+        <div class="mb-8">
             <div class="w-fit">
                 <input
                     tumAetUiInput
@@ -156,18 +157,18 @@
                     [disabled]="waitingForExamStart()"
                 />
             </div>
-            <div id="your-name" class="font-light">
+            <div id="your-name" class="mt-2 font-light">
                 <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
             </div>
             <div class="w-3/5">
                 @if (inserted) {
                     @if (!confirmed) {
-                        <tumaet-ui-message severity="error" class="mt-1">
+                        <tumaet-ui-message severity="error" class="mt-2">
                             <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
                         </tumaet-ui-message>
                     }
                     @if (!nameIsCorrect) {
-                        <tumaet-ui-message severity="error" class="mt-1">
+                        <tumaet-ui-message severity="error" class="mt-2">
                             <span jhiTranslate="artemisApp.exam.falseName"></span>
                         </tumaet-ui-message>
                     }
