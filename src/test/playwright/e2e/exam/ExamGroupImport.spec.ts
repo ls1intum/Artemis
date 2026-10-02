@@ -55,6 +55,7 @@ test.describe('Exam exercise group import', { tag: '@slow' }, () => {
         expect((await imported).status()).toBeLessThan(300);
         await expect(page.getByText(/imported successfully/i).first()).toBeVisible({ timeout: 60_000 });
         await page.locator('[data-testid="exam-import-progress-dismiss"]').click();
+        await expect(page.getByRole('dialog'), 'the import dialog and the summary are closed after the summary is dismissed').toHaveCount(0);
 
         // The exam has its own group and a new one with a copy of the chosen exercise; the other exercise was left out.
         const groups = await examAPIRequests.getExerciseGroups(targetExam);

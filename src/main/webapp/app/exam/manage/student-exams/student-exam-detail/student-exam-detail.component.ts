@@ -8,8 +8,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Dialog } from 'primeng/dialog';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
@@ -29,19 +28,20 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 @Component({
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
-    styleUrls: ['./student-exam-detail.component.scss'],
     imports: [
         TranslateDirective,
         FormsModule,
         WorkingTimeControlComponent,
         FaIconComponent,
         TestExamWorkingTimeComponent,
-        NgbTooltip,
         RouterLink,
         StudentExamDetailTableRowComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        Dialog,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+        TumAetUiTableDirective,
+        TumAetUiTooltipDirective,
         CourseTitleBarTitleDirective,
     ],
 })

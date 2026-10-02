@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -433,9 +434,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         jenkinsRequestMockProvider.reset();
 
         // the empty commit is not necessary for this test
-        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
-        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
-        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
+        // A test run names its build plan after the practice-prefixed participant, so that it cannot collide with the
+        // plan of a graded participation of the same instructor and exercise.
+        String testRunPlanParticipant = "practice-" + instructor.getParticipantIdentifier();
+        mockConnectorRequestsForStartParticipation(programmingExercise, testRunPlanParticipant, Set.of(instructor), true);
+        mockConnectorRequestsForStartParticipation(programmingExercise, testRunPlanParticipant, Set.of(instructor), true);
+        mockConnectorRequestsForStartParticipation(programmingExercise, testRunPlanParticipant, Set.of(instructor), true);
 
         // create multiple test runs for the same user (i.e. instructor1), login again because "createTestRun" invokes a server method with changes the authorization
         createTestRun(exam2);
@@ -449,6 +453,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         jenkinsRequestMockProvider.reset();
         mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
+        // The test run participations name their build plan after the practice-prefixed participant, so deleting them
+        // deletes that plan rather than the one of the instructor's graded participation.
+        jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(),
+                programmingExercise.getProjectKey() + "-PRACTICE" + instructor.getParticipantIdentifier().toUpperCase(Locale.ROOT), false);
 
         request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
 
@@ -3434,6 +3442,74 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTestRunSetsUpItsOwnParticipationNextToAGradedOne() throws Exception {
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, true);
+        // A graded participation of the instructor, left over from an earlier attempt at the same exercise. The test run
+        // reads back only its own participations, so this one must not make the setup skip creating one: the exercise
+        // would then be conducted without a participation, and nothing the instructor submits could be saved.
+        Exercise exerciseWithGradedParticipation = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
+        StudentParticipation gradedParticipation = new StudentParticipation();
+        gradedParticipation.setParticipant(instructor);
+        gradedParticipation.setExercise(exerciseWithGradedParticipation);
+        gradedParticipation.setTestRun(false);
+        gradedParticipation.setInitializationState(InitializationState.INITIALIZED);
+        gradedParticipation.setInitializationDate(ZonedDateTime.now());
+        studentParticipationRepository.save(gradedParticipation);
+
+        StudentExam testRun = createTestRun(exam);
+
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exerciseWithGradedParticipation.getId(), instructor.getId(), true))
+                .as("the test run sets up its own participation even though a graded one already exists").isPresent();
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exerciseWithGradedParticipation.getId(), instructor.getId(), false))
+                .as("the graded participation is kept as it was rather than relabelled as a test run")
+                .hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(gradedParticipation.getId()));
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var conduction = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+        assertThat(conduction.getExercises()).filteredOn(exercise -> exercise.getId().equals(exerciseWithGradedParticipation.getId())).singleElement()
+                .as("the conduction serves the exercise with a participation to submit to").satisfies(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testPreparingExerciseStartSetsUpAGradedParticipationNextToATestRunOne() throws Exception {
+        // The other setup order: the test run exists first, and the graded participation is prepared afterwards. It must
+        // be insertable next to the test run's row rather than collide with it on the unique attempt, and it must not
+        // consume the test run's participation either.
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, true);
+        Exercise sharedExercise = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
+        createTestRun(exam);
+        var testRunParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(sharedExercise.getId(), instructor.getId(), true)
+                .orElseThrow();
+        int testRunSubmissionCount = testRunParticipation.getSubmissions().size();
+
+        // the same instructor is also a registered participant of the exam, with a student exam of their own
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setUser(instructor);
+        studentExam.setExercises(List.of(sharedExercise));
+        studentExam.setWorkingTime(exam.getWorkingTime());
+        studentExam.setSubmitted(false);
+        studentExamRepository.save(studentExam);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, exam.getCourse());
+
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(sharedExercise.getId(), instructor.getId(), false))
+                .as("the graded participation is set up next to the test run one").isPresent();
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(sharedExercise.getId(), instructor.getId(), true))
+                .as("the test run participation and its submissions are left untouched")
+                .hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(testRunParticipation.getId()))
+                .hasValueSatisfying(participation -> assertThat(participation.getSubmissions()).hasSize(testRunSubmissionCount));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTestExamTestRunConductionDoesNotCreateAdditionalParticipations() throws Exception {
         Exam testExam = examUtilService.addTestExam(course1);
         testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, true);
@@ -3444,14 +3520,21 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
                 .collect(Collectors.toSet());
         assertThat(participationIdsBeforeConduction).hasSize(testRun.getExercises().size());
+        // The conduction reads only the participations of the test run side, so the ones the test run created have to be stored on that side
+        assertThat(testRun.getExercises()).allSatisfy(
+                exercise -> assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), instructor.getId(), true))
+                        .as("the test run participation of exercise %s", exercise.getId()).isPresent());
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
+        var conduction = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
 
         Set<Long> participationIdsAfterConduction = testRun.getExercises().stream()
                 .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
                 .collect(Collectors.toSet());
         assertThat(participationIdsAfterConduction).isEqualTo(participationIdsBeforeConduction);
+        assertThat(conduction.getExercises()).as("every exercise is conducted with a participation to submit to")
+                .allSatisfy(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
 
     @Test

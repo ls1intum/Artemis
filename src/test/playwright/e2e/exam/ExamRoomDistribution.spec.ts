@@ -45,24 +45,33 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
 
     /** Opens the distribution dialog and selects the uploaded room. */
     async function openDistributionWithRoom(page: Page) {
-        await expect(page.locator('p-table tbody tr').first()).toBeVisible();
+        await expect(
+            page
+                .getByTestId('exam-students-table')
+                .locator('tbody tr')
+                .filter({ has: page.getByTestId('table-cell') })
+                .first(),
+        ).toBeVisible();
         await page.getByRole('button', { name: 'Logistics' }).click();
         // Opening the dialog loads the rooms the exam already uses and preselects them; picking a room before that answer is there would be overwritten by it.
         const roomsUsedLoaded = page.waitForResponse((response) => response.url().includes('/rooms-used'));
         await page.locator('[data-testid="exam-students-menu-item"]', { hasText: 'Distribute students' }).last().click();
         expect((await roomsUsedLoaded).status()).toBe(200);
-        // The dialog moves the focus to its first field once it is open; typing into the room search before that would lose the focus again.
-        await expect(page.getByRole('dialog').locator('#reserveFactor')).toBeFocused();
+        // The dialog takes the focus once it is open; typing into the room search before that would lose the focus again.
+        await expect(page.locator('cdk-dialog-container:focus-within')).toHaveCount(1);
         const search = page.getByPlaceholder('Search by room number, name, and/or building');
         await search.click();
         await search.pressSequentially('Bauer');
-        await page.locator('ngb-typeahead-window button').first().click();
+        await page.getByRole('option', { name: /Bauer/ }).first().click();
         return page.getByRole('dialog');
     }
 
     /** The seat and room of every student in the table, keyed by login. */
     async function seating(page: Page) {
-        const rows = page.locator('p-table tbody tr');
+        const rows = page
+            .getByTestId('exam-students-table')
+            .locator('tbody tr')
+            .filter({ has: page.getByTestId('table-cell') });
         const result: Record<string, { room: string; seat: string }> = {};
         for (const row of await rows.all()) {
             const cells = (await row.innerText())
@@ -78,8 +87,18 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
     }
 
     test('Distributing the students gives every student a seat of their own', async ({ page }) => {
-        await expect(page.locator('p-table tbody tr').first()).toBeVisible();
-        const numberOfStudents = await page.locator('p-table tbody tr').count();
+        await expect(
+            page
+                .getByTestId('exam-students-table')
+                .locator('tbody tr')
+                .filter({ has: page.getByTestId('table-cell') })
+                .first(),
+        ).toBeVisible();
+        const numberOfStudents = await page
+            .getByTestId('exam-students-table')
+            .locator('tbody tr')
+            .filter({ has: page.getByTestId('table-cell') })
+            .count();
         expect(numberOfStudents).toBeGreaterThanOrEqual(4);
 
         const dialog = await openDistributionWithRoom(page);
@@ -88,7 +107,13 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
         expect((await distributed).status()).toBe(200);
 
         // Everybody sits in the room, and no two students share a seat.
-        await expect(page.locator('p-table tbody tr').filter({ hasText: roomNumber })).toHaveCount(numberOfStudents);
+        await expect(
+            page
+                .getByTestId('exam-students-table')
+                .locator('tbody tr')
+                .filter({ has: page.getByTestId('table-cell') })
+                .filter({ hasText: roomNumber }),
+        ).toHaveCount(numberOfStudents);
         const seats = await seating(page);
         expect(Object.keys(seats)).toHaveLength(numberOfStudents);
         for (const { room, seat } of Object.values(seats)) {
@@ -106,18 +131,26 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
     test('A single student can be moved to another seat', async ({ page }) => {
         const dialog = await openDistributionWithRoom(page);
         await dialog.getByRole('button', { name: 'Distribute' }).click();
-        await expect(page.locator('p-table tbody tr').filter({ hasText: roomNumber }).first()).toBeVisible();
+        await expect(
+            page
+                .getByTestId('exam-students-table')
+                .locator('tbody tr')
+                .filter({ has: page.getByTestId('table-cell') })
+                .filter({ hasText: roomNumber })
+                .first(),
+        ).toBeVisible();
         const before = await seating(page);
 
         // Student One moves to the seat in row 5, seat 5.
-        const studentRow = page.locator('p-table tbody tr', { hasText: new RegExp(`${studentOne.username}(?!\\d)`) });
+        const studentRow = page.getByTestId('exam-students-table').locator('tbody tr', { hasText: new RegExp(`${studentOne.username}(?!\\d)`) });
         await studentRow.getByTestId('reseat-student-button').click();
         const reseating = page.getByRole('dialog');
         await expect(reseating).toContainText(studentOne.username);
         const seatSearch = reseating.getByPlaceholder('Leave empty to automatically find a seat');
         await seatSearch.click();
         await seatSearch.fill('5, 5');
-        await page.locator('ngb-typeahead-window button').first().click();
+        // The list is filtered while typing; choosing before it has been filtered would pick another seat.
+        await page.getByRole('option', { name: /5, 5/ }).first().click();
         const reseated = page.waitForResponse((response) => response.url().includes('reseat-student'));
         await reseating.locator('#finish-button').click();
         expect((await reseated).status()).toBe(200);
@@ -191,8 +224,18 @@ test.describe('Exam room distribution', { tag: '@slow' }, () => {
     });
 
     test('The dialog reports how many of the registered students the room can seat', async ({ page }) => {
-        await expect(page.locator('p-table tbody tr').first()).toBeVisible();
-        const numberOfStudents = await page.locator('p-table tbody tr').count();
+        await expect(
+            page
+                .getByTestId('exam-students-table')
+                .locator('tbody tr')
+                .filter({ has: page.getByTestId('table-cell') })
+                .first(),
+        ).toBeVisible();
+        const numberOfStudents = await page
+            .getByTestId('exam-students-table')
+            .locator('tbody tr')
+            .filter({ has: page.getByTestId('table-cell') })
+            .count();
         const dialog = await openDistributionWithRoom(page);
         await expect(dialog).toContainText(`You can seat all ${numberOfStudents} students.`);
         // Reserving nearly all seats leaves fewer seats than students.
