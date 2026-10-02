@@ -57,9 +57,17 @@ and write shared coordination data, so isolate the worker host and protect its
 credentials.
 Generated-code containers still have network `none` and never receive provider
 credentials. A provider outage stops new admission and delivery; do not treat a
-missing heartbeat as proof that a job completed. Worker commands and events have
-bounded time-to-live, and failed command admission is retained for bounded retry.
+missing heartbeat as proof that a job completed. Commands expire after two minutes;
+failed command admission has bounded retry. Unacknowledged execution events and
+their chunks do not expire. They remain until the core callback succeeds.
+Acknowledgement tombstones expire after four hours. The event inbox limits
+outstanding payloads to 256 MiB per worker; a full inbox stops publication rather
+than deleting evidence. Restore delivery before capacity is exhausted.
 Monitor the provider's memory, persistence and connection health.
+
+Do not mix worker and core transport versions during this change. Drain active
+jobs before upgrading both processes; an old process can still write expiring
+events or read acknowledgement records from the previous storage layout.
 
 ## Core configuration
 
