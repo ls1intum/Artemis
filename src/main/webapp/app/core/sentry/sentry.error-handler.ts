@@ -10,6 +10,9 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 // (e.g. "Dedupe") back to `string` so a mixed integration array stays assignable.
 type Integration = Omit<ReturnType<typeof dedupeIntegration>, 'name'> & { name: string };
 
+// Header and query parameter names that can identify a user or the network path; the same list Sentry 10 applied by default.
+const SENTRY_DENIED_HEADER_PATTERNS = ['forwarded', '-ip', 'remote-', 'via', '-user'];
+
 @Service()
 export class SentryErrorHandler extends ErrorHandler {
     private localStorageService = inject(LocalStorageService);
@@ -46,7 +49,22 @@ export class SentryErrorHandler extends ErrorHandler {
             release: VERSION,
             environment: this.environment,
             integrations: integrations,
-            sendDefaultPii: false,
+            // Sentry 11 replaced `sendDefaultPii` with `dataCollection` and collects more when it is unset, so the
+            // restrictive baseline of Sentry 10 (the former `sendDefaultPii: false`) has to be spelled out.
+            dataCollection: {
+                userInfo: false,
+                cookies: false,
+                httpHeaders: {
+                    request: { deny: SENTRY_DENIED_HEADER_PATTERNS },
+                    response: { deny: SENTRY_DENIED_HEADER_PATTERNS },
+                },
+                httpBodies: [],
+                urlQueryParams: { deny: SENTRY_DENIED_HEADER_PATTERNS },
+                genAI: { inputs: false, outputs: false },
+                databaseQueryData: false,
+                queues: false,
+                graphQL: { document: false, variables: false },
+            },
             tracesSampler: (samplingContext) => {
                 const { name, inheritOrSampleWith } = samplingContext;
 
