@@ -49,7 +49,7 @@ describe('HyperionRunHeaderComponent', () => {
         expect(started).toHaveBeenCalledTimes(2);
     });
 
-    it('keeps the start buttons visible but soft-disabled with the reason while a run is blocked', () => {
+    it('keeps the start buttons visible but disabled with the reason while a run is blocked', () => {
         const started = vi.fn();
         fixture.componentInstance.startRequested.subscribe(started);
         fixture.componentRef.setInput('startAvailable', true);
@@ -60,9 +60,13 @@ describe('HyperionRunHeaderComponent', () => {
         const start = button('hyperion-run-start');
         const runAgain = button('hyperion-run-run-again');
         expect(fixture.componentInstance['startBlockedReasonText']()).toBe('artemisApp.hyperion.generation.blocker.released');
-        expect(start.getAttribute('aria-disabled')).toBe('true');
-        expect(start.hasAttribute('disabled')).toBe(false);
-        expect(runAgain.getAttribute('aria-disabled')).toBe('true');
+        expect(start.hasAttribute('disabled')).toBe(true);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.hyperion.generation.blocker.released');
+        const blocker = fixture.nativeElement.querySelector('[data-testid="hyperion-run-start-blocker"]');
+        expect(blocker.closest('tumaet-ui-card')).not.toBeNull();
+        expect(start.getAttribute('aria-describedby')).toBe('hyperion-run-start-blocker');
+        expect(runAgain.getAttribute('aria-describedby')).toBe('hyperion-run-start-blocker');
+        expect(runAgain.hasAttribute('disabled')).toBe(true);
         start.click();
         runAgain.click();
 

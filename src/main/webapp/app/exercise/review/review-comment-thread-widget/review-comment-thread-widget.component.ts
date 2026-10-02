@@ -1,3 +1,4 @@
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -7,9 +8,9 @@ import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faScrewdriverWrench, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { TumAetUiDisabledReasonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
@@ -42,7 +43,7 @@ interface RelatedThreadLocation {
         ArtemisDatePipe,
         FaIconComponent,
         MonacoDiffEditorComponent,
-        TumAetUiDisabledReasonDirective,
+        TumAetUiButtonDirective,
     ],
     providers: [ConfirmationService],
 })
@@ -66,7 +67,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly faChevronDown = faChevronDown;
-    protected readonly faScrewdriverWrench = faScrewdriverWrench;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
     readonly showThreadBody = signal(true);
     readonly languageVersion = signal(0);
     readonly editingCommentId = signal<number | undefined>(undefined);
@@ -90,19 +91,16 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             displayText: this.formatReviewCommentText(comment),
         }));
     });
+    readonly adaptBlockedReason = computed(() => this.reviewCommentService.adaptationBlockedReason());
     readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
     /**
      * Whether this thread can feed an AI adaptation: the editor offers adaptation (see {@link ExerciseReviewCommentService.connectAdaptation}) and the thread sits in
      * a repository the adaptation writes to. Auxiliary repositories are outside what it changes.
      */
     readonly showFeedbackAction = computed(() => this.reviewCommentService.adaptationOffered() && this.thread().targetType !== CommentThreadLocationType.AUXILIARY_REPO);
-    /** Why the "Adapt with feedback" shortcut is disabled right now (translation key), or `undefined` while it can run. */
-    readonly adaptBlockedReason = computed(() => this.reviewCommentService.adaptationBlockedReason());
     readonly firstComment = computed(() => this.orderedComments()[0]);
     readonly firstConsistencyIssueContent = computed(() => consistencyIssueContentOf(this.firstComment()));
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
-    /** Whether to offer the per-thread "Adapt with feedback" shortcut: an open thread on an editor that offers adaptation. Blocked state disables it with a reason. */
-    readonly canAdaptExercise = computed(() => this.showFeedbackAction() && !this.thread().resolved && !this.thread().outdated);
     readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
     readonly canResolveGroup = computed(() => {
@@ -259,12 +257,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /** Adapts the exercise from this thread: it joins the shared feedback selection and the owning editor opens the adapt dialog. */
-    requestAdapt(): void {
-        if (!this.canAdaptExercise()) {
-            return;
-        }
-        this.reviewCommentService.requestAdaptation(this.thread().id);
-    }
 
     /**
      * Resolves all threads in the current thread group.

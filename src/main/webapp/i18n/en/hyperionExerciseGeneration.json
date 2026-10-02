@@ -96,11 +96,12 @@
                     "cancelling": "Cancelling",
                     "saved": "Draft saved",
                     "needsReview": "Draft saved — needs your review",
-                    "partial": "Partly saved",
+                    "partial": "Recovery required",
                     "failed": "Generation failed",
                     "cancelled": "Cancelled",
                     "notStarted": "No run yet",
-                    "unknown": "Status unavailable"
+                    "unknown": "Status unavailable",
+                    "reverted": "Restored"
                 },
                 "run": {
                     "newRunHint": "Enter the brief or feedback for this new run. Previous instructions and selected review comments are not carried over.",
@@ -154,6 +155,11 @@
                     "savedHint": "Saved to the exercise. Open the code editor to review and edit the result.",
                     "loading": "Loading the retained draft…",
                     "specTitle": "Exercise design",
+                    "specHint": "This design guides authoring. Students do not see it.",
+                    "variantSpecTitle": "Variant design",
+                    "variantSpecHint": "This design guides the new variant. Compare it with the source exercise before release; students do not see it.",
+                    "variantSpecPending": "No variant design yet",
+                    "variantSpecPendingHint": "Artemis is planning changes to the source exercise.",
                     "specPending": "No exercise design yet",
                     "specPendingHint": "Artemis is still deciding what to build.",
                     "statementTitle": "Problem statement",
@@ -208,7 +214,7 @@
                 },
                 "outcome": {
                     "savedTitle": "Draft saved to your exercise",
-                    "savedBody": "The sample solution passes all {{testCount}} tests and the starter code fails them, as it should. Review the problem statement and the tests before you release the exercise.",
+                    "savedBody": "The verified exercise draft has been saved. Review the problem statement and the tests before you release the exercise.",
                     "reviewTitle": "Draft saved — please review it",
                     "reviewBody": "Artemis saved the draft, but not every check came back clean. Open the code editor, fix what the findings point at, then release.",
                     "partialTitle": "Only part of the draft was saved",
@@ -278,37 +284,23 @@
                     "requiresEditor": "You need editor rights in this course to change the exercise with AI.",
                     "unsupportedLanguage": "AI authoring supports Java exercises only.",
                     "unsupportedProjectType": "This Java exercise builds with Maven or another tool. AI authoring only verifies Gradle builds; the build tool cannot be changed after creation, so create a Gradle exercise to use it.",
-                    "examExercise": "AI authoring is not available for exam exercises.",
                     "staticCodeAnalysis": "Disable static code analysis in the exercise settings first. The AI verifier does not model its penalties.",
                     "sequentialTestRuns": "Disable sequential test runs in the exercise settings first. The AI verifier runs all tests in one pass.",
                     "auxiliaryRepositories": "Remove the auxiliary repositories first. AI authoring writes only the template, solution, and test repositories.",
-                    "released": "This exercise is already released. Move its release date into the future first; AI authoring only changes exercises students cannot see yet.",
+                    "released": "AI authoring is available only before release. Set a future release date in the exercise settings.",
                     "studentParticipations": "Students have already started this exercise. AI authoring only changes exercises without participations.",
                     "problemStatementBusy": "Wait for the current problem statement refinement to finish.",
                     "consistencyCheckBusy": "Wait for the current consistency check to finish.",
-                    "repositorySetupBusy": "Wait until the repository operation has finished."
+                    "repositorySetupBusy": "Wait until the repository operation has finished.",
+                    "capabilitiesUnavailable": "Checking whether this exercise can be changed. If this persists, reload the page.",
+                    "preparationOnly": "AI authoring is available only during preparation, before student exams or test runs are assigned."
                 }
             },
             "jobs": {
-                "label": "AI generation",
-                "ariaLabel": "AI generation runs",
-                "title": "AI generation runs",
-                "empty": "No generation runs yet.",
-                "emptyHint": "A run appears here as soon as you start one from an exercise.",
                 "dismiss": "Dismiss this run",
-                "summaryRunning": "AI running: {{count}}",
+                "summaryRunning": "{{count}} running",
                 "summaryAttention": "{{count}} to check",
                 "summaryFinished": "{{count}} finished",
-                "runningMinutes": "running for {{minutes}} min",
-                "runningUnderMinute": "just started",
-                "ranMinutes": "ran for {{minutes}} min",
-                "ranUnderMinute": "ran for under a minute",
-                "state": {
-                    "idle": "Nothing running",
-                    "running": "Generating",
-                    "attention": "Needs your attention",
-                    "success": "Finished"
-                },
                 "loadFailed": "The generation runs could not be loaded.",
                 "retry": "Try again"
             },
@@ -365,7 +357,7 @@
                     "notSaved": "Not saved",
                     "cancelled": "Not saved — cancelled",
                     "failed": "Not saved — failed",
-                    "partial": "Not fully saved — manual review required"
+                    "partial": "Recovery required — do not release this exercise"
                 },
                 "terminalStatus": {
                     "DONE": "Generation finished",
@@ -394,10 +386,11 @@
             "workers": {
                 "unknownCapacity": "Capacity is unknown until a current worker heartbeat is available.",
                 "toolchain": "Toolchain",
-                "title": "Generations",
+                "title": "AI Generation",
                 "refresh": "Refresh",
-                "description": "Inspect active Hyperion authoring and cancel an exact run. Worker health and capacity are listed under AI Workers.",
-                "loadFailed": "Worker status could not be refreshed. Previously loaded entries may be stale. Generation may also be disabled on this node.",
+                "description": "Monitor active exercise generation, available capacity, and worker health in one place.",
+                "liveUpdatesPaused": "Live updates are paused. Refresh to check the current state; updates will resume when the connection returns.",
+                "loadFailed": "Generation status could not be refreshed. Previously loaded runs may be stale.",
                 "summary": "{{available}} of {{total}} configured workers available",
                 "worker": "Worker",
                 "status": "State",
@@ -441,12 +434,41 @@
                 "cancelReason": "Reason (recorded in the administrator audit log)",
                 "cancelFailed": "Cancellation was not accepted. The run may have finished or started saving. Refresh the overview; your reason is retained.",
                 "keepRunning": "Keep running",
-                "workerSlot": "Worker / slot",
+                "workerSlot": "Worker",
                 "kind": "Run",
-                "openRun": "open run",
                 "mode": {
                     "GENERATE": "Generate",
                     "ADAPT": "Adapt"
+                }
+            },
+            "activity": {
+                "title": "AI activity",
+                "subtitle": "Your authoring runs, together. Closing this panel does not stop them.",
+                "history": "Dismissed ({{ count }})",
+                "dismissedHint": "All runs are dismissed. Open the history to find them again.",
+                "recoveryRequired": "This run needs recovery. Open its details before continuing to edit.",
+                "cancelAuthoring": "Stop this authoring run? Already saved changes are not undone by cancellation.",
+                "kind": {
+                    "create": "Create exercise",
+                    "adapt": "Adapt exercise",
+                    "variant": "Create variant",
+                    "quizVariant": "Quiz variant"
+                },
+                "loadMore": "Load older runs",
+                "stage": {
+                    "prepare": "Prepare",
+                    "design": "Author",
+                    "revise": "Adapt",
+                    "build": "Verify",
+                    "review": "Review",
+                    "save": "Save"
+                },
+                "variantStage": {
+                    "analyze": "Analyze",
+                    "plan": "Plan",
+                    "write": "Write",
+                    "verify": "Verify",
+                    "save": "Save"
                 }
             }
         }

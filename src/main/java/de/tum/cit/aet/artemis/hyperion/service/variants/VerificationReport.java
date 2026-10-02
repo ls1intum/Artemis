@@ -17,6 +17,9 @@ import java.util.stream.Collectors;
  */
 public record VerificationReport(boolean passed, List<VerificationFinding> findings) implements Serializable {
 
+    /** Section marker retained when rendering diagnostic output from historical jobs. */
+    public static final String BUILD_LOGS_SECTION = "\n\nBuild logs:\n";
+
     /**
      * The verification gates, in the fixed order they run (cheapest / most objective first).
      */
@@ -58,9 +61,7 @@ public record VerificationReport(boolean passed, List<VerificationFinding> findi
         private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
         /**
-         * Long enough to keep the actual failure line (which sits at the end of a build log — see
-         * {@code VariantBuildVerificationService.extractBuildLogs}, which keeps only the tail for the same
-         * reason) while bounding how much of a long log this fingerprint depends on.
+         * Keeps the final diagnostic while bounding how much of a long report this fingerprint depends on.
          */
         private static final int SIGNATURE_TAIL_LENGTH = 400;
 

@@ -46,7 +46,7 @@ class GenericTypeTest {
             JSONObject entry = oracle.getJSONObject(i);
             if (entry.has("genericApi")) {
                 String name = entry.getJSONObject("class").getString("name");
-                tests.add(DynamicTest.dynamicTest("testGenericApi[" + name + "]", () -> check(entry)));
+                tests.add(DynamicTest.dynamicTest("testClass[GenericApi:" + name + "]", () -> check(entry)));
             }
         }
         return tests;

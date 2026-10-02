@@ -26,6 +26,7 @@ class ModuleFeatureInfoContributorTest {
         Constants.ATLASML_ENABLED_PROPERTY_NAME,
         Constants.ATLASLLM_ENABLED_PROPERTY_NAME,
         Constants.HYPERION_ENABLED_PROPERTY_NAME,
+        Constants.AIWORKER_ENABLED_PROPERTY_NAME,
         Constants.DEIMOS_ENABLED_PROPERTY_NAME,
         Constants.EXAM_ENABLED_PROPERTY_NAME,
         Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
@@ -53,6 +54,7 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_ATLASLLM,
         Constants.MODULE_FEATURE_HYPERION,
         Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+        Constants.MODULE_FEATURE_AIWORKER,
         Constants.MODULE_FEATURE_DEIMOS,
         Constants.MODULE_FEATURE_EXAM,
         Constants.MODULE_FEATURE_PLAGIARISM,
@@ -108,6 +110,37 @@ class ModuleFeatureInfoContributorTest {
         var expectedFeatures = new java.util.ArrayList<>(moduleFeatures);
         expectedFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
         assertThat(actualAsStrings).containsExactlyInAnyOrderElementsOf(expectedFeatures);
+    }
+
+    @Test
+    void testAiWorkerIsReportedWithoutHyperion() {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, false);
+        }
+        mockProperty(Constants.AIWORKER_ENABLED_PROPERTY_NAME, true);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, false);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+
+        Info.Builder builder = new Info.Builder();
+        new ModuleFeatureInfoContributor(mockEnv).contribute(builder);
+
+        assertThat(((List<?>) builder.build().get(ACTIVE_MODULE_FEATURES)).stream().map(Object::toString)).containsExactly(Constants.MODULE_FEATURE_AIWORKER);
+    }
+
+    @Test
+    void testGenerationReportsAiWorkerWithoutSeparateOptIn() {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, false);
+        }
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+
+        Info.Builder builder = new Info.Builder();
+        new ModuleFeatureInfoContributor(mockEnv).contribute(builder);
+
+        assertThat(((List<?>) builder.build().get(ACTIVE_MODULE_FEATURES)).stream().map(Object::toString)).containsExactlyInAnyOrder(Constants.MODULE_FEATURE_HYPERION,
+                Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, Constants.MODULE_FEATURE_AIWORKER);
     }
 
     private void testContribution(boolean propertyEnabled, boolean passkeyAdminRequired, List<String> expectedReportFeatures) {

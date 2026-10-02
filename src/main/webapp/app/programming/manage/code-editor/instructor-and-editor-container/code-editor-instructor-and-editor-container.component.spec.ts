@@ -1,3 +1,4 @@
+import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,7 +13,7 @@ vi.mock('y-monaco', () => {
 });
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Provider, Signal, WritableSignal, signal } from '@angular/core';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -35,17 +36,17 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistency-check-response';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 
 import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { ExerciseReviewCommentService, ReviewAdaptationAvailability, ReviewAdaptationRequest } from 'app/exercise/review/exercise-review-comment.service';
+import { ExerciseReviewCommentService, ReviewAdaptationAvailability } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -147,6 +148,10 @@ function createMockExercise(overrides: Partial<ProgrammingExercise> = {}): Progr
 
 function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
     return [
+        {
+            provide: HyperionExerciseGenerationApi,
+            useValue: { getGenerationCapabilities: () => of({ supported: true, canGenerate: true, canAdapt: true, canCreateVariant: true }) },
+        },
         { provide: AlertService, useClass: MockAlertService },
         { provide: ProfileService, useClass: MockProfileService },
         { provide: Router, useClass: MockRouter },
@@ -210,7 +215,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         getSelectedFeedbackThreadIdsForRepository: ReturnType<typeof vi.fn>;
         threads: WritableSignal<any[]>;
         connectAdaptation: ReturnType<typeof vi.fn>;
-        adaptationRequests: Observable<ReviewAdaptationRequest>;
     };
 
     const mockIssues: ConsistencyIssue[] = [
@@ -356,7 +360,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             getSelectedFeedbackThreadIdsForRepository: vi.fn(() => []),
             threads: signal([]),
             connectAdaptation: vi.fn(),
-            adaptationRequests: new Subject<ReviewAdaptationRequest>().asObservable(),
         };
         reviewCommentService.reloadThreads.mockImplementation((onLoaded?: () => void) => onLoaded?.());
 
@@ -1323,7 +1326,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
     });
 });
 
-describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback', () => {
+describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let generationService: { generate: ReturnType<typeof vi.fn> };
@@ -1342,12 +1345,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         selectedFeedbackThreadIds: WritableSignal<number[]>;
         clearSelectedFeedback: ReturnType<typeof vi.fn>;
         connectAdaptation: ReturnType<typeof vi.fn>;
-        adaptationRequests: Observable<ReviewAdaptationRequest>;
-        requestAdaptation: (threadId: number) => void;
     };
     /** What the container connected; the mock mirrors the real service's guard so a thread request honours it. */
     let adaptation: ReviewAdaptationAvailability | undefined;
-    let adaptationRequests: Subject<ReviewAdaptationRequest>;
 
     const consistencyThread = (id: number) => ({
         id,
@@ -1386,7 +1386,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     beforeEach(async () => {
         selectedIds = signal<number[]>([]);
         adaptation = undefined;
-        adaptationRequests = new Subject<ReviewAdaptationRequest>();
         reviewCommentService = {
             setExercise: vi.fn(),
             reloadThreads: vi.fn((onLoaded?: () => void) => onLoaded?.()),
@@ -1400,15 +1399,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             selectedFeedbackThreadIds: selectedIds,
             clearSelectedFeedback: vi.fn(() => selectedIds.set([])),
             connectAdaptation: vi.fn((availability: ReviewAdaptationAvailability) => (adaptation = availability)),
-            adaptationRequests: adaptationRequests.asObservable(),
-            requestAdaptation: vi.fn((threadId: number) => {
-                if (!adaptation?.offered() || adaptation.blockedReason()) {
-                    return;
-                }
-                const wasAlreadySelected = selectedIds().includes(threadId);
-                (reviewCommentService.selectThreadAsFeedback as (threadId: number) => void)(threadId);
-                adaptationRequests.next({ threadId, wasAlreadySelected });
-            }),
         };
         generationService = { generate: vi.fn(() => of({ jobId: 'job-adapt-1' })) };
         confirm = vi.fn((options) => options.accept?.());
@@ -1434,6 +1424,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             }),
         );
 
+        TestBed.tick();
         attachToJob = vi.fn();
         openEditorBottomPanel = vi.fn();
         setCodeEditorContainer(comp, { ...createDefaultContainerStub(), openEditorBottomPanel });
@@ -1473,32 +1464,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).canAdaptNow()).toBe(true);
     });
 
-    it('a thread request selects the thread once, opens the dialog, then dispatches an ADAPT run and attaches it', () => {
-        reviewCommentService.threads.set([consistencyThread(9)]);
-
-        reviewCommentService.requestAdaptation(9);
-        expect(reviewCommentService.selectThreadAsFeedback).toHaveBeenCalledExactlyOnceWith(9);
-        expect(comp.adaptDialogVisible()).toBe(true);
-
-        confirmAdaptDialog('also rename the method');
-
-        expect(comp.adaptDialogVisible()).toBe(false);
-        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
-            mode: 'ADAPT',
-            prompt: 'also rename the method',
-            selectedFeedbackThreadIds: [9],
-        });
-        expect(reviewCommentService.clearSelectedFeedback).toHaveBeenCalledOnce();
-        expect(selectedIds()).toEqual([]);
-        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
-        expect(TestBed.inject(HyperionJobRegistryService).track).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-adapt-1', exerciseId: 42, mode: 'ADAPT' }));
-        expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/course-management', 1, 'programming-exercises', 42, 'generation']);
-    });
-
     it.each([ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_GRADLE])('supports Java generation for project type %s', (projectType) => {
         // Mutating the exercise in place mirrors production, where the object identity is kept and the change is
         // published through the always-notifying exercise signal.
         comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: projectType as ProjectType | undefined }));
+        TestBed.tick();
 
         expect((comp as any).adaptBlockedReason()).toBeUndefined();
         expect((comp as any).canAdaptNow()).toBe(true);
@@ -1517,12 +1487,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     ])('blocks Java generation for unsupported project type %s', (projectType) => {
         comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));
 
-        expect((comp as any).adaptOffered()).toBe(true);
+        expect((comp as any).adaptOffered()).toBe(false);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
         expect((comp as any).canAdaptNow()).toBe(false);
-        const onCancel = vi.fn();
-        (comp as any).openAdaptDialog(onCancel);
-        expect(onCancel).toHaveBeenCalledOnce();
+        (comp as any).openAdaptDialog();
         expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
     });
@@ -1530,20 +1498,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     it('names the missing editor role first, before any exercise blocker', () => {
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: false, releaseDate: undefined }));
 
-        expect((comp as any).adaptOffered()).toBe(true);
+        expect((comp as any).adaptOffered()).toBe(false);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
         expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
-    });
-
-    it('does not select a thread for a user below the editor role', () => {
-        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: false, releaseDate: dayjs().add(1, 'day') }));
-        reviewCommentService.threads.set([consistencyThread(9)]);
-
-        reviewCommentService.requestAdaptation(9);
-
-        expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
-        expect(comp.adaptDialogVisible()).toBe(false);
     });
 
     it('reports the run state as the adapt blocker once the exercise itself qualifies', () => {
@@ -1552,7 +1510,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
         expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
-        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        expect((comp as any).progressLink()).toBeDefined();
+        expect(TestBed.inject(Router).createUrlTree).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:latest' }, queryParamsHandling: 'merge' });
         // The run already shows as the progress link's status dot, so the menu trigger does not spin for it as well.
         expect((comp as any).aiActionsBusy()).toBe(false);
     });
@@ -1571,7 +1530,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).generationRefreshFailed.set(true);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.reloadRequired');
-        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        expect((comp as any).progressLink()).toBeDefined();
+        expect(TestBed.inject(Router).createUrlTree).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:latest' }, queryParamsHandling: 'merge' });
     });
 
     it('reports the busy consistency check as the consistency blocker only', () => {
@@ -1601,7 +1561,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
         expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
-        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        expect((comp as any).progressLink()).toBeDefined();
+        expect(TestBed.inject(Router).createUrlTree).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:latest' }, queryParamsHandling: 'merge' });
         expect((comp as any).aiActionsBusy()).toBe(false);
         expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
     });
@@ -1633,7 +1594,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     it.each([
         ['status is loading', { statusLoading: true, statusLoadFailed: false }],
         ['status loading failed', { statusLoading: false, statusLoadFailed: true }],
-    ])('disables and guards Adapt with feedback while generation %s', (_description, status) => {
+    ])('disables and guards Adapt exercise while generation %s', (_description, status) => {
         (comp as any).generationActivity = {
             attachToJob,
             running: () => false,
@@ -1644,7 +1605,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
         expect((comp as any).canAdaptNow()).toBe(false);
 
-        reviewCommentService.requestAdaptation(9);
         (comp as any).openAdaptDialog();
 
         expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
@@ -1998,41 +1958,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(attachToJob).not.toHaveBeenCalled();
     });
 
-    it('a thread request rolls back a new preview selection when the dialog is dismissed', () => {
-        reviewCommentService.threads.set([consistencyThread(9)]);
-
-        reviewCommentService.requestAdaptation(9);
-        dismissAdaptDialog();
-
-        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledExactlyOnceWith(9);
-        expect(selectedIds()).toEqual([]);
-        expect(generationService.generate).not.toHaveBeenCalled();
-    });
-
-    it('a thread request keeps a selection that existed before the dialog when it is dismissed', () => {
-        reviewCommentService.threads.set([consistencyThread(9)]);
-        selectedIds.set([9]);
-
-        adaptationRequests.next({ threadId: 9, wasAlreadySelected: true });
-        expect(comp.adaptDialogVisible()).toBe(true);
-        dismissAdaptDialog();
-
-        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
-        expect(selectedIds()).toEqual([9]);
-    });
-
-    it('keeps the preview selection when the adapt dialog is closed programmatically rather than dismissed', () => {
-        reviewCommentService.threads.set([consistencyThread(9)]);
-        reviewCommentService.requestAdaptation(9);
-
-        (comp as any).invalidateHyperionLifecycleState();
-        (comp as any).onAdaptDialogHidden();
-
-        expect(comp.adaptDialogVisible()).toBe(false);
-        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
-        expect(selectedIds()).toEqual([9]);
-    });
-
     it('closes the adapt dialog on destruction and ignores a late confirmation', () => {
         (comp as any).openAdaptDialog();
         fixture.destroy();
@@ -2158,6 +2083,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         // A draft without a release date is what an instructor authors on; it stays adaptable.
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined }));
+        TestBed.tick();
         expect((comp as any).generationSupported()).toBe(true);
         expect((comp as any).adaptBlockedReason()).toBeUndefined();
 

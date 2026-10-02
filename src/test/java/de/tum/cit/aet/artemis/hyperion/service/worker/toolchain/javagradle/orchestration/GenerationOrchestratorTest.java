@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
@@ -154,8 +155,7 @@ class GenerationOrchestratorTest {
 
     private GenerationOrchestrator newService(boolean stagedGenerationEnabled) {
         return new GenerationOrchestrator(sandbox, workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic, 100, 6,
-                stagedGenerationRunner, stagedGenerationEnabled, stageCheckService, new AgentTranscriptWriter(""),
-                new de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry());
+                stagedGenerationRunner, stagedGenerationEnabled, stageCheckService, new AgentTranscriptWriter(""), new ApprovedSpecRegistry());
     }
 
     private static AgentLoopRunner.AgentLoopSession loopSession(AgentLoopResult result) {
@@ -1397,8 +1397,7 @@ class GenerationOrchestratorTest {
     /** The semantic repair budget also derives the attempt cap ({@link GenerationAttemptLoop#MAX_MECHANICAL_ATTEMPTS} + budget + 1). */
     private GenerationOrchestrator serviceWithRepairBudget(int maxSemanticRepairs) {
         return new GenerationOrchestrator(sandbox, workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic, 100, maxSemanticRepairs,
-                stagedGenerationRunner, false, stageCheckService, new AgentTranscriptWriter(""),
-                new de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry());
+                stagedGenerationRunner, false, stageCheckService, new AgentTranscriptWriter(""), new ApprovedSpecRegistry());
     }
 
     @Test

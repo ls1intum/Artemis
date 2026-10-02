@@ -43,7 +43,7 @@ public record ExerciseSnapshotDTO(
         String problemStatement, String gradingInstructions, Set<String> categories, TeamAssignmentConfigSnapshotDTO teamAssignmentConfig, Boolean presentationScoreEnabled,
         Boolean secondCorrectionEnabled, Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig,
         ProgrammingExerciseSnapshotDTO programmingData, TextExerciseSnapshotDTO textData, ModelingExerciseSnapshotDTO modelingData, QuizExerciseSnapshotDTO quizData,
-        FileUploadExerciseSnapshotDTO fileUploadData
+        FileUploadExerciseSnapshotDTO fileUploadData, Long variantGroupId
 
 ) implements Serializable {
 
@@ -75,7 +75,8 @@ public record ExerciseSnapshotDTO(
                 toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(), competencyLinks,
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(), exercise.getGradingInstructions(),
                 categories, TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
-                gradingCriteria, plagiarismDetectionConfig, programmingData, textData, modelingData, quizData, fileUploadData);
+                gradingCriteria, plagiarismDetectionConfig, programmingData, textData, modelingData, quizData, fileUploadData,
+                exercise.getExerciseVariantGroup() == null ? null : exercise.getExerciseVariantGroup().getId());
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

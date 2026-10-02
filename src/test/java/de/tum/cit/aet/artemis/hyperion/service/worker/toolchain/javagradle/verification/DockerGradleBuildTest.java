@@ -25,6 +25,7 @@ import com.github.dockerjava.api.DockerClient;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.aiworker.config.DockerConfiguration;
+import de.tum.cit.aet.artemis.aiworker.config.WorkerSandboxConfiguration;
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
@@ -58,7 +59,7 @@ class DockerGradleBuildTest {
         docker = new DockerConfiguration().dockerClient();
         var settings = new WorkerSettings("gradle-test-" + UUID.randomUUID(), System.getenv("HYPERION_GRADLE_TEST_IMAGE"), "runc", 2L * 1024 * 1024 * 1024, 200_000, 256,
                 Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofMinutes(2), 1, "hyperion-generation", "java-gradle");
-        sandbox = new DockerSandboxService(docker, new de.tum.cit.aet.artemis.aiworker.config.WorkerSandboxConfiguration().sandboxPolicy(settings));
+        sandbox = new DockerSandboxService(docker, new WorkerSandboxConfiguration().sandboxPolicy(settings));
     }
 
     @AfterEach
@@ -89,7 +90,7 @@ class DockerGradleBuildTest {
                 ```
                 """);
         SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, exercise);
-        assertThat(seeded.testNames()).contains("testGenericApi[Box]");
+        assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
         String path = "solution/src/de/tum/cit/aet/reference/Box.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
                 package de.tum.cit.aet.reference;
@@ -102,7 +103,7 @@ class DockerGradleBuildTest {
                 """), Map.of()));
         var correct = build(session, "solution");
         assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
-        assertThat(correct.testNames()).contains("testGenericApi[Box]");
+        assertThat(correct.testNames()).contains("testClass[GenericApi:Box]");
 
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
                 package de.tum.cit.aet.reference;
@@ -115,7 +116,7 @@ class DockerGradleBuildTest {
                 """), Map.of()));
         var erased = build(session, "solution");
         assertThat(erased.exitCode()).isNotZero();
-        assertThat(erased.testFailedNames()).contains("testGenericApi[Box]");
+        assertThat(erased.testFailedNames()).contains("testClass[GenericApi:Box]");
         assertThat(erased.testFailedNames()).doesNotContain("testMethods[Box]", "testConstructors[Box]");
 
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
@@ -129,7 +130,7 @@ class DockerGradleBuildTest {
                 """), Map.of()));
         var shadowed = build(session, "solution");
         assertThat(shadowed.exitCode()).isNotZero();
-        assertThat(shadowed.testFailedNames()).contains("testGenericApi[Box]");
+        assertThat(shadowed.testFailedNames()).contains("testClass[GenericApi:Box]");
         assertThat(shadowed.testFailedNames()).doesNotContain("testMethods[Box]", "testConstructors[Box]");
     }
 

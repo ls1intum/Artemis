@@ -12,6 +12,13 @@ function change(
 }
 
 describe('artifactFiles', () => {
+    it('shows SPEC.md only as the exercise design, not as a repository file', () => {
+        const files = artifactFiles([change('other', 'SPEC.md', { turn: 3 }), change('other', 'problem-statement.md', { turn: 2 })]);
+
+        expect(files.map((file) => file.name)).toEqual(['problem-statement.md']);
+        expect(files[0].mostRecent).toBe(true);
+    });
+
     it('strips the repository prefix so the repository heading is not repeated in every row', () => {
         const [entry] = artifactFiles([change('solution', 'solution/src/de/tum/Loan.java')]);
 

@@ -39,20 +39,20 @@ describe('HyperionMarkdownComponent', () => {
             expect(host.querySelector('pre')).toBeNull();
         });
 
-        it('hands the rendered document to tumaet-ui-prose, which owns the typography', () => {
+        it('keeps generated-document typography inside Hyperion', () => {
             const host = render('# Heading');
 
-            const prose = host.querySelector('.tumaet-ui-prose');
+            const prose = host.querySelector('.hyperion-markdown-body');
             expect(prose).not.toBeNull();
             expect(prose!.getAttribute('data-slot')).toBe('prose');
             expect(prose!.querySelector('h1')).not.toBeNull();
         });
 
         it('makes the prose element the direct parent of every block, which is what its rhythm rules need', () => {
-            // `.tumaet-ui-prose > * + *` and `.tumaet-ui-prose > * + h2` set the entire vertical rhythm. One wrapper element
+            // `.hyperion-markdown-body > * + *` and `.hyperion-markdown-body > * + h2` set the entire vertical rhythm. One wrapper element
             // between the class and the document silently removes the spacing from every heading, paragraph and list,
             // so the relationship is asserted rather than assumed.
-            const prose = render('# Heading\n\nA paragraph.\n\n- item').querySelector('.tumaet-ui-prose')!;
+            const prose = render('# Heading\n\nA paragraph.\n\n- item').querySelector('.hyperion-markdown-body')!;
 
             expect([...prose.children].map((child) => child.tagName)).toEqual(['H1', 'P', 'UL']);
         });
@@ -62,7 +62,7 @@ describe('HyperionMarkdownComponent', () => {
             fixture.componentRef.setInput('density', 'compact');
             fixture.detectChanges();
 
-            expect((fixture.nativeElement as HTMLElement).querySelector('.tumaet-ui-prose')?.getAttribute('data-density')).toBe('compact');
+            expect((fixture.nativeElement as HTMLElement).querySelector('.hyperion-markdown-body')?.getAttribute('data-density')).toBe('compact');
         });
 
         it('renders every block a generated document actually uses', () => {
@@ -97,8 +97,8 @@ describe('HyperionMarkdownComponent', () => {
         });
 
         it('renders nothing at all for absent or empty markdown, leaving the empty state to the caller', () => {
-            expect(render(undefined).querySelector('.tumaet-ui-prose')?.textContent?.trim()).toBe('');
-            expect(render('').querySelector('.tumaet-ui-prose')?.textContent?.trim()).toBe('');
+            expect(render(undefined).querySelector('.hyperion-markdown-body')?.textContent?.trim()).toBe('');
+            expect(render('').querySelector('.hyperion-markdown-body')?.textContent?.trim()).toBe('');
         });
 
         it('re-renders when the source document changes', () => {
@@ -112,10 +112,7 @@ describe('HyperionMarkdownComponent', () => {
     });
 
     describe('sanitisation of untrusted model output', () => {
-        /**
-         * markdown-it runs with `html: true`, so raw HTML in the source is passed straight through to the sanitiser.
-         * These payloads therefore reach DOMPurify exactly as written, which is what makes the assertions meaningful.
-         */
+        /** Raw HTML is escaped before DOMPurify sees it; Markdown links and generated markup still need sanitisation. */
         const PAYLOADS: [name: string, markdown: string][] = [
             ['a script element', '<script>window.__xss = true;</script>'],
             ['a script element after prose', 'Normal text.\n\n<script>window.__xss = true;</script>'],
@@ -159,8 +156,6 @@ describe('HyperionMarkdownComponent', () => {
         });
 
         it('strips the form controls the shared sanitiser would otherwise permit, keeping their text', () => {
-            // Verified against `htmlForMarkdown()` directly: DOMPurify's default profile permits these, which for a
-            // human-authored post is defensible and for a document a model wrote is a credential prompt.
             expect(htmlForMarkdown('<form action="https://evil.example/"><input name="password"><button>Sign in</button></form>')).toContain('<form');
 
             const host = render('<form action="https://evil.example/"><input name="password"><button>Sign in</button></form>');
@@ -169,6 +164,20 @@ describe('HyperionMarkdownComponent', () => {
             expect(host.querySelector('input')).toBeNull();
             expect(host.querySelector('button')).toBeNull();
             expect(host.textContent).toContain('Sign in');
+        });
+
+        it('does not load passive remote resources from generated markdown or raw HTML', () => {
+            const host = render('![tracking pixel](https://example.invalid/pixel)\n\n<video src="https://example.invalid/video"></video>');
+
+            expect(host.querySelector('img, video, audio, source, track')).toBeNull();
+            expect(host.querySelector('[src], [srcset], [poster]')).toBeNull();
+        });
+
+        it('does not apply raw HTML or CSS from a generated document', () => {
+            const host = render('<div style="background-image:url(https://example.invalid/pixel)">Text</div>');
+
+            expect(host.querySelector('div[style]')).toBeNull();
+            expect(host.textContent).toContain('Text');
         });
 
         it('removes nested stylesheets that could change the surrounding application', () => {

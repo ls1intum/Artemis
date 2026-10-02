@@ -49,28 +49,27 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     /**
-     * Locks only the exam row, avoiding nullable joins in a PostgreSQL FOR UPDATE query.
+     * Locks one exam row before exercise selection or an exercise-group move.
      *
-     * @param examId exam to lock
-     * @return locked exam, or empty if deleted
+     * @param examId the exam to lock
+     * @return the locked exam, if it still exists
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT exam FROM Exam exam WHERE exam.id = :examId")
     Optional<Exam> findForAssignmentWithLock(@Param("examId") long examId);
 
     /**
-     * Serializes selection and insertion of student exams, including the missing-user check.
-     * The callback performs assignment and short coordination operations; remote repository copies happen after this transaction.
+     * Keeps the lock until selection or movement commits.
      *
-     * @param examId     exam whose assignment is serialized
-     * @param assignment operation consuming the freshly loaded exercise graph
-     * @return the assignment result after the transaction commits
-     * @param <T> result type
+     * @param examId    the exam to lock
+     * @param operation selection or movement to run under the lock
+     * @return the operation result
+     * @param <T> the result type
      */
     @Transactional
-    default <T> T withExerciseSelectionLock(long examId, Function<Exam, T> assignment) {
+    default <T> T withExerciseSelectionLock(long examId, Function<Exam, T> operation) {
         getValueElseThrow(findForAssignmentWithLock(examId), examId);
-        return assignment.apply(findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId));
+        return operation.apply(findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId));
     }
 
     /**

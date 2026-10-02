@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import de.tum.cit.aet.artemis.aiworker.api.AiWorkerApi;
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerMessagingConfiguration;
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerProperties;
+import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerMessageCodec;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerClientService;
 
@@ -30,8 +31,7 @@ class HyperionWorkerActivationTest {
         runner.withPropertyValues("artemis.hyperion.enabled=" + hyperion, "artemis.hyperion.exercise-generation.enabled=" + generation)
                 .withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.split("\\|"))).run(context -> {
                     assertThat(context).hasNotFailed().doesNotHaveBean(HyperionWorkerMessagingConfiguration.class).doesNotHaveBean(AiWorkerProperties.class)
-                            .doesNotHaveBean(GenerationWorkerClientService.class).doesNotHaveBean(WorkerMessageCodec.class)
-                            .doesNotHaveBean(de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport.class);
+                            .doesNotHaveBean(GenerationWorkerClientService.class).doesNotHaveBean(WorkerMessageCodec.class).doesNotHaveBean(WorkerTransport.class);
                 });
     }
 
@@ -52,8 +52,7 @@ class HyperionWorkerActivationTest {
         runner.withInitializer(new ConfigDataApplicationContextInitializer())
                 .withPropertyValues("spring.config.location=" + locations, "spring.profiles.active=" + (combined ? "buildagent,core,localci,localvc" : "buildagent"))
                 .run(context -> {
-                    assertThat(context).hasNotFailed().doesNotHaveBean(GenerationWorkerClientService.class)
-                            .doesNotHaveBean(de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport.class);
+                    assertThat(context).hasNotFailed().doesNotHaveBean(GenerationWorkerClientService.class).doesNotHaveBean(WorkerTransport.class);
                     assertThat(context.getEnvironment().getProperty("artemis.hyperion.enabled", Boolean.class)).isFalse();
                     String[] exclusions = org.springframework.boot.context.properties.bind.Binder.get(context.getEnvironment()).bind("spring.autoconfigure.exclude", String[].class)
                             .orElseThrow(IllegalStateException::new);

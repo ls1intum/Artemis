@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 /** Exact-token transitions between an executing undo and its quiescent, fail-closed recovery state. */
 final class GenerationRevertSlots {
 
-    private static final String RECOVERY_PREFIX = "revert-recovery-";
+    static final String RECOVERY_PREFIX = "revert-recovery-";
 
     static final String RETRY_PREFIX = "revert-retry-";
 
@@ -29,7 +29,7 @@ final class GenerationRevertSlots {
             validateTopology.run();
             JobInfo existing = jobMap.get(key);
             boolean recovering = existing != null && existing.jobId().startsWith(RECOVERY_PREFIX);
-            String token = (recovering ? RETRY_PREFIX : "revert-") + UUID.randomUUID();
+            String token = (recovering ? RETRY_PREFIX : GenerationJobService.REVERT_JOB_PREFIX) + UUID.randomUUID();
             Instant now = Instant.now();
             JobInfo replacement = new JobInfo(token, user.getLogin(), exerciseId, now, null, localNodeId, now, false, null);
             if (recovering) {

@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.PromptTemplates;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
@@ -358,9 +359,8 @@ public class SpecFidelityCritic {
         return witnessAuthor.authorContractWitnesses(specificationContract, testSources, solutionSources, designTemplateStatuses(specificationContract), usageSink, cancelled);
     }
 
-    public ReferenceWitnessReview adjudicateReferenceWitnesses(String specificationContract, String solutionSources,
-            List<de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome> outcomes, @Nullable Consumer<ChatResponse> usageSink,
-            BooleanSupplier cancelled) {
+    public ReferenceWitnessReview adjudicateReferenceWitnesses(String specificationContract, String solutionSources, List<ContractWitnessOutcome> outcomes,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         return referenceWitnessCritic.adjudicate(specificationContract, solutionSources, designTemplateStatuses(specificationContract), outcomes, usageSink, cancelled);
     }
 

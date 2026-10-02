@@ -1,11 +1,13 @@
 <section aria-labelledby="hyperion-artifacts-title" data-testid="hyperion-artifacts">
     <h2 id="hyperion-artifacts-title" class="hyperion-artifacts-title mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generation.artifacts.title"></h2>
     <p class="mt-0 mb-3 text-sm text-muted-color" [jhiTranslate]="hintKey()"></p>
-    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
+    <tumaet-ui-tabs [value]="selectedTab()" (valueChange)="onTabChange($event)">
         <tumaet-ui-tab-list>
-            <tumaet-ui-tab value="spec" data-testid="hyperion-artifacts-tab-spec">
-                <span jhiTranslate="artemisApp.hyperion.generation.artifacts.specTitle"></span>
-            </tumaet-ui-tab>
+            @if (showDesign()) {
+                <tumaet-ui-tab value="spec" data-testid="hyperion-artifacts-tab-spec">
+                    <span [jhiTranslate]="specTitleKey()"></span>
+                </tumaet-ui-tab>
+            }
             <tumaet-ui-tab value="files" data-testid="hyperion-artifacts-tab-files">
                 <span class="flex items-baseline gap-2">
                     <span jhiTranslate="artemisApp.hyperion.generation.artifacts.filesTitle"></span>
@@ -15,14 +17,17 @@
                 </span>
             </tumaet-ui-tab>
         </tumaet-ui-tab-list>
-        <tumaet-ui-tab-panels [padded]="false">
-            <tumaet-ui-tab-panel value="spec" class="block pt-3" preserveContent>
-                @if (hasSpec()) {
-                    <jhi-hyperion-markdown [markdown]="specDocument()" data-testid="hyperion-artifacts-spec" />
-                } @else {
-                    <jhi-hyperion-empty [titleKey]="specEmptyTitleKey()" [descriptionKey]="specEmptyHintKey()" data-testid="hyperion-artifacts-spec-empty" />
-                }
-            </tumaet-ui-tab-panel>
+        <tumaet-ui-tab-panels class="p-0!">
+            @if (showDesign()) {
+                <tumaet-ui-tab-panel value="spec" class="block pt-3" preserveContent>
+                    @if (hasSpec()) {
+                        <p class="mt-0 mb-3 text-sm text-muted-color" [jhiTranslate]="specHintKey()"></p>
+                        <jhi-hyperion-markdown [markdown]="specDocument()" data-testid="hyperion-artifacts-spec" />
+                    } @else {
+                        <jhi-hyperion-empty [titleKey]="specEmptyTitleKey()" [descriptionKey]="specEmptyHintKey()" data-testid="hyperion-artifacts-spec-empty" />
+                    }
+                </tumaet-ui-tab-panel>
+            }
             <tumaet-ui-tab-panel value="files" class="block pt-3" preserveContent>
                 <jhi-hyperion-file-change-list [files]="artifacts()" [running]="running()" [emptyTitleKey]="filesEmptyTitleKey()" [emptyDescriptionKey]="filesEmptyHintKey()" />
             </tumaet-ui-tab-panel>

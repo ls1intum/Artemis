@@ -22,8 +22,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 /**
  * Verifies the guard that decides whether an exam exercise may be moved between exercise groups.
  * <p>
- * The guarded update rejects existing assignments and runs under the same exam selection lock as new assignments.
- * These integration tests exercise the database predicate through the real service.
+ * The guard is a {@code NOT EXISTS} clause inside the update statement rather than a check preceding it, so it cannot
+ * be interleaved: there is no state in which a student exam commits between the check and the write. That property is
+ * invisible from the service, which only sees a boolean, so it is covered here.
  */
 class ExerciseGroupMoveTest extends AbstractSpringIntegrationIndependentTest {
 

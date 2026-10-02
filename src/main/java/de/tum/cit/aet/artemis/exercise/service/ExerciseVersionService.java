@@ -482,6 +482,7 @@ public class ExerciseVersionService {
      */
     private Set<String> collectChangedFields(ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot) {
         Set<String> changedFields = new HashSet<>();
+        addIfChanged(changedFields, "variantGroupId", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::variantGroupId);
         addIfChanged(changedFields, "title", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::title);
         addIfChanged(changedFields, "shortName", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::shortName);
         addIfChanged(changedFields, "channelName", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::channelName);

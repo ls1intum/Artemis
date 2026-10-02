@@ -16,14 +16,7 @@ export function supportsHyperionExerciseGeneration(language: ProgrammingLanguage
  * exercise is comes before what has happened to it. Each value is a suffix of {@link HYPERION_GENERATION_BLOCKER_KEY}.
  */
 export type HyperionGenerationBlocker =
-    | 'unsupportedLanguage'
-    | 'unsupportedProjectType'
-    | 'examExercise'
-    | 'staticCodeAnalysis'
-    | 'sequentialTestRuns'
-    | 'auxiliaryRepositories'
-    | 'released'
-    | 'studentParticipations';
+    'unsupportedLanguage' | 'unsupportedProjectType' | 'staticCodeAnalysis' | 'sequentialTestRuns' | 'auxiliaryRepositories' | 'released' | 'studentParticipations';
 
 export const HYPERION_GENERATION_BLOCKER_KEY = 'artemisApp.hyperion.generation.blocker.';
 
@@ -40,9 +33,6 @@ export function hyperionGenerationBlocker(exercise: ProgrammingExercise, now: nu
     }
     if (!supportsHyperionExerciseGeneration(exercise.programmingLanguage, exercise.projectType)) {
         return 'unsupportedProjectType';
-    }
-    if (exercise.exerciseGroup) {
-        return 'examExercise';
     }
     if (exercise.staticCodeAnalysisEnabled) {
         return 'staticCodeAnalysis';

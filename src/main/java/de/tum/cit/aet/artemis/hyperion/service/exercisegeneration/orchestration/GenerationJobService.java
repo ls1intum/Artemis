@@ -31,9 +31,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
@@ -51,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Coordinates distributed generation slots, cancellation, and reconnect state. */
@@ -67,7 +66,7 @@ public class GenerationJobService {
 
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
 
-    private static final String REVERT_JOB_PREFIX = "revert-";
+    static final String REVERT_JOB_PREFIX = "revert-";
 
     static final String EXTERNAL_MUTATION_JOB_PREFIX = "external-mutation-";
 
@@ -83,7 +82,7 @@ public class GenerationJobService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final LLMTokenUsageService llmTokenUsageService;
+    private final GenerationTokenUsageService llmTokenUsageService;
 
     private final HyperionGenerationBudgetService generationBudgetService;
 
@@ -114,7 +113,7 @@ public class GenerationJobService {
     private GenerationJobReaper reaper;
 
     @Autowired
-    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             HyperionGenerationBudgetService generationBudgetService, HyperionAgentProperties agentProperties, HyperionEffortProfileService effortProfiles,
             @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
             @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl, @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries) {
@@ -124,21 +123,21 @@ public class GenerationJobService {
                 cancellationExecutor, expectedDataMemberCount, terminalReplayTtl, providerMaxRetries == 0, effortProfiles.longestMaxJobDuration());
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 terminalReplayTtl, true);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 terminalReplayTtl, exactProviderUsage, maxJobDuration);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration) {
         this.longestConfiguredJobDuration = longestConfiguredJobDuration;
@@ -154,29 +153,29 @@ public class GenerationJobService {
         this.exactProviderUsage = exactProviderUsage;
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
-    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, 1,
                 DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             Duration staleJobTimeout, Duration maxJobDuration) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration, Runnable::run);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, Runnable::run);
     }
@@ -203,7 +202,7 @@ public class GenerationJobService {
      * @return the usage sink
      */
     public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId, @Nullable String generationJobId,
-            @Nullable Consumer<LLMRequest> liveUsageSink) {
+            @Nullable Consumer<GenerationUsage> liveUsageSink) {
         return chatResponse -> {
             boolean recorded = llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                     builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId), request -> {
@@ -254,9 +253,10 @@ public class GenerationJobService {
         Duration longestJobDuration = longestConfiguredJobDuration == null || longestConfiguredJobDuration.compareTo(maxJobDuration) < 0 ? maxJobDuration
                 : longestConfiguredJobDuration;
         HyperionGenerationTimeouts.validateStaleJobTimeout(staleJobTimeout, longestJobDuration);
+        HyperionGenerationTimeouts.validateTerminalReplayTtl(terminalReplayTtl, longestJobDuration);
         jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
         cancellationMap = distributedDataProvider.getExpiringMap(CANCEL_MAP_NAME, longestJobDuration);
-        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl);
+        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl, longestJobDuration);
         cancelHooks.subscribe();
         localNodeId = distributedDataProvider.getLocalNodeId();
         reaper = new GenerationJobReaper(this, distributedDataProvider, jobMap, cancellationMap, replayStore, generationBudgetService, staleJobTimeout, maxJobDuration);
@@ -294,13 +294,60 @@ public class GenerationJobService {
      */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief,
             @Nullable HyperionGenerationSettings settings, @Nullable ExerciseGenerationInputDTO input) {
+        return startJob(user, exercise, userPrompt, mode, budgetReservationId, sourceBrief, settings, input, null, eventPublisher::publishEvent);
+    }
+
+    /**
+     * Reserves the destination before its database transaction commits, without starting remote work.
+     * The caller must dispatch after commit or abandon this exact job after rollback.
+     *
+     * @param user                requesting editor
+     * @param exercise            new destination
+     * @param userPrompt          resolved transformation
+     * @param budgetReservationId reserved provider budget
+     * @param settings            resolved effort
+     * @param input               owner-visible input
+     * @param preparation         source-copy context
+     * @return deferred start event
+     */
+    public GenerationStartedEvent prepareVariantJob(User user, ProgrammingExercise exercise, String userPrompt, String budgetReservationId, HyperionGenerationSettings settings,
+            ExerciseGenerationInputDTO input, GenerationVariantPreparation preparation) {
+        var event = new java.util.concurrent.atomic.AtomicReference<GenerationStartedEvent>();
+        startJob(user, exercise, userPrompt, GenerationMode.ADAPT, budgetReservationId, null, settings, input, preparation, event::set);
+        return event.get();
+    }
+
+    /**
+     * Dispatches a committed destination. Rejection is a visible failed run, not an untracked orphan draft.
+     *
+     * @param event reserved start event, dispatched once after database commit
+     * @return whether the executor accepted responsibility for the run
+     */
+    public boolean dispatchPreparedJob(GenerationStartedEvent event) {
+        try {
+            eventPublisher.publishEvent(event);
+            return true;
+        }
+        catch (RuntimeException failure) {
+            log.warn("Could not dispatch prepared generation job {}", event.jobId(), failure);
+            recordEvent(event.exercise().getId(), event.jobId(), ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                    "The authoring executor could not start. The unused destination draft remains available for inspection or deletion."), true);
+            clearJob(event.exercise().getId(), event.jobId());
+            recordDispatchFailure(event.jobId());
+            return false;
+        }
+    }
+
+    private String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief,
+            @Nullable HyperionGenerationSettings settings, @Nullable ExerciseGenerationInputDTO input, @Nullable GenerationVariantPreparation preparation,
+            Consumer<GenerationStartedEvent> dispatch) {
         String jobId = UUID.randomUUID().toString();
         String key = key(exercise.getId());
         Instant startedAt = Instant.now();
         Instant deadlineAt = startedAt.plus(settings == null ? maxJobDuration : settings.maxJobDuration());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId, mode, exercise.getTitle(),
-                course == null ? null : course.getId());
+        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, preparation == null, budgetReservationId, mode,
+                exercise.getTitle(), course == null ? null : course.getId());
         claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
         GenerationJobReplayStore.StartedReplay startedReplay = null;
         boolean publicStatePublished = false;
@@ -311,8 +358,10 @@ public class GenerationJobService {
             }
             publishExerciseState(exercise.getId(), jobId, true);
             publicStatePublished = true;
-            eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt,
-                    budgetReservationId, sourceBrief, settings));
+            var event = new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt, budgetReservationId,
+                    sourceBrief, settings, preparation);
+            eventPublisher.publishEvent(new GenerationAdmittedEvent(event));
+            dispatch.accept(event);
         }
         catch (RejectedExecutionException e) {
             rollbackUnpublishedStart(exercise.getId(), key, newJob, startedReplay);
@@ -361,6 +410,15 @@ public class GenerationJobService {
         }
     }
 
+    private void recordDispatchFailure(String jobId) {
+        try {
+            eventPublisher.publishEvent(new GenerationDispatchFailedEvent(jobId));
+        }
+        catch (RuntimeException failure) {
+            log.error("Could not record dispatch failure for authoring run {}", jobId, failure);
+        }
+    }
+
     private void rollbackUnpublishedStart(long exerciseId, String key, JobInfo newJob, GenerationJobReplayStore.@Nullable StartedReplay startedReplay) {
         lockJobSlot(key);
         try {
@@ -372,6 +430,7 @@ public class GenerationJobService {
         finally {
             unlockJobSlot(key);
         }
+        recordDispatchFailure(newJob.jobId());
     }
 
     private void claimSlot(String key, JobInfo newJob, String conflictMessage, String errorKey) {
@@ -679,11 +738,7 @@ public class GenerationJobService {
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
-            JobInfo job = jobMap.get(key);
-            if (job == null || job.cancellable()) {
-                return Optional.empty();
-            }
-            return Optional.of(new WedgedSlotInfo(exerciseId, job.jobId(), slotKind(job), job.ownerNodeId(), job.startedAt(), !reaper.ownerMemberIsPresent(job)));
+            return GenerationJobRecovery.info(exerciseId, jobMap.get(key), reaper);
         }
         finally {
             unlockJobSlot(key);
@@ -710,33 +765,11 @@ public class GenerationJobService {
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
-            topology.verifyMajority();
-            JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(token) || job.cancellable()) {
-                return false;
-            }
-            // A retained partial undo is quiescent by construction, so the owner-absence fence that protects in-flight writers does not apply to it.
-            if (reaper.ownerMemberIsPresent(job) && !GenerationRevertSlots.isPending(job)) {
-                return false;
-            }
-            if (isGenerationJob(job)) {
-                return reaper.stopActiveJob(key, job, Instant.now());
-            }
-            return jobMap.remove(key, job);
+            return GenerationJobRecovery.recover(jobMap, key, token, topology, reaper);
         }
         finally {
             unlockJobSlot(key);
         }
-    }
-
-    private static WedgedSlotKind slotKind(JobInfo job) {
-        if (job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX)) {
-            return WedgedSlotKind.EXTERNAL_MUTATION;
-        }
-        if (GenerationRevertSlots.isPending(job)) {
-            return WedgedSlotKind.REVERT_RECOVERY;
-        }
-        return job.jobId().startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
     }
 
     /**
@@ -757,6 +790,25 @@ public class GenerationJobService {
             if (job != null && job.jobId().equals(token)) {
                 jobMap.remove(key, job);
             }
+        }
+        finally {
+            unlockJobSlot(key);
+        }
+    }
+
+    /**
+     * Makes an initialized variant cancellable only after repository creation has stopped mutating its destination.
+     *
+     * @param exerciseId initialized destination
+     * @param jobId      exact current job
+     * @return false when ownership was lost
+     */
+    public boolean allowCancellationAfterPreparation(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        lockJobSlot(key);
+        try {
+            JobInfo current = jobMap.get(key);
+            return current != null && current.jobId().equals(jobId) && localNodeId.equals(current.ownerNodeId()) && jobMap.replace(key, current, current.withCancellable(true));
         }
         finally {
             unlockJobSlot(key);

@@ -18,7 +18,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
-import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/create-variant-modal/create-variant-with-ai-button.component';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',

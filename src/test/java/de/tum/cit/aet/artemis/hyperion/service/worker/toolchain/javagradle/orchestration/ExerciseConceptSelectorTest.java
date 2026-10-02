@@ -25,10 +25,12 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
+import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.WorkerUsageRecorder;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 
 class ExerciseConceptSelectorTest {
@@ -227,12 +229,12 @@ class ExerciseConceptSelectorTest {
         SpecFidelityCritic critic = mock(SpecFidelityCritic.class);
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("No candidate passed.")));
-        var events = new java.util.ArrayList<de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate>();
-        var usage = new de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.WorkerUsageRecorder(100_000, 0.5, true, events::add);
+        var events = new java.util.ArrayList<ProviderUsageUpdate>();
+        var usage = new WorkerUsageRecorder(100_000, 0.5, true, events::add);
         var selection = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, usage, null);
         assertThat(selection.accepted()).isFalse();
         assertThat(usage.snapshot().agentTurns()).isEqualTo(selection.turns()).isPositive();
-        assertThat(events.stream().filter(event -> event.kind() == de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Kind.TURN).count()).isEqualTo(selection.turns());
+        assertThat(events.stream().filter(event -> event.kind() == ProviderUsageUpdate.Kind.TURN).count()).isEqualTo(selection.turns());
     }
 
     private static final class NoOpProviderFailureCooldown implements ProviderFailureCooldown {

@@ -14,23 +14,16 @@ import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentCaptor;
-
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
-import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationVersionRecoveryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -38,15 +31,17 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Covers {@link ExerciseGenerationRevertService}'s capture-and-revert invariants against an isolated embedded Hazelcast instance, with git and persistence mocked so the
- * reset-to-captured-SHA behaviour runs without a real repository.
+ * Tests repository reset and retry behavior against canonical recovery pairs, with Git and persistence mocked.
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExerciseGenerationRevertServiceTest {
 
     private static final String DEFAULT_BRANCH = "main";
 
-    private HazelcastInstance hazelcastInstance;
+    private GenerationVersionRecoveryService recovery;
+
+    private GenerationRestoreMetadataService metadata;
+
+    private GenerationRestoreTestCasesService testCases;
 
     private GitService gitService;
 
@@ -72,27 +67,20 @@ class ExerciseGenerationRevertServiceTest {
 
     private Repository testsRepo;
 
-    @BeforeAll
-    void startHazelcast() {
-        Config config = new Config();
-        config.setClusterName("hyperion-revert-service-test-" + System.nanoTime());
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
-        hazelcastInstance = Hazelcast.newHazelcastInstance(config);
-    }
-
     @BeforeEach
     void setUp() throws Exception {
-        hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
+        recovery = mock(GenerationVersionRecoveryService.class);
+        metadata = mock(GenerationRestoreMetadataService.class);
+        testCases = mock(GenerationRestoreTestCasesService.class);
+        when(testCases.canRestore(org.mockito.ArgumentMatchers.anyLong(), any())).thenReturn(true);
+        when(metadata.canRestore(org.mockito.ArgumentMatchers.anyLong(), any())).thenReturn(true);
         gitService = mock(GitService.class);
         persistenceService = mock(GenerationPersistenceService.class);
         tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-adaptation-revert-test"));
         when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(true);
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(true);
-        revertService = new ExerciseGenerationRevertService(new HazelcastDistributedDataProviderService(hazelcastInstance), gitService, persistenceService, tempFileUtilService,
-                DEFAULT_BRANCH);
-        revertService.init();
+        revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, gitService, persistenceService, tempFileUtilService, DEFAULT_BRANCH);
 
         templateUri = mock(LocalVCRepositoryUri.class);
         solutionUri = mock(LocalVCRepositoryUri.class);
@@ -120,9 +108,15 @@ class ExerciseGenerationRevertServiceTest {
         user.setLogin("instructor");
     }
 
-    @AfterAll
-    void stopHazelcast() {
-        hazelcastInstance.shutdown();
+    @Test
+    void restoresCanonicalMetadataWithoutRequiringThePreviousDraftToBuild() {
+        recordBaseline("job-empty-draft", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+        var result = revertService.revert(exercise, user, () -> true).orElseThrow();
+        assertThat(result.fullyReverted()).isTrue();
+        verify(persistenceService, never()).prepareTestsBuildSignal(any(), any());
+        verify(persistenceService, never()).triggerTestsBuild(any(), any());
+        verify(testCases).restore(eq(77L), any(), any());
+        verify(recovery).consumed(any());
     }
 
     @Test
@@ -157,55 +151,35 @@ class ExerciseGenerationRevertServiceTest {
     }
 
     @Test
+    void noRepositoryCanChangeWithoutADurableRestorationObligation() throws Exception {
+        recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+        org.mockito.Mockito.doThrow(new IllegalStateException("journal unavailable")).when(recovery).started(any());
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> revertService.revert(exercise, user, () -> true)).isInstanceOf(IllegalStateException.class);
+        verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(Path.class), any());
+        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
+    }
+
+    @Test
+    void canonicalTestMetadataConflictIsACleanRefusalBeforeAnyRepositoryWrite() throws Exception {
+        recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+        when(testCases.canRestore(org.mockito.ArgumentMatchers.anyLong(), any())).thenReturn(false);
+
+        assertThat(revertService.revert(exercise, user, () -> true)).hasValueSatisfying(result -> {
+            assertThat(result.fullyReverted()).isFalse();
+            assertThat(result.mutationAttempted()).isFalse();
+        });
+
+        verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(Path.class), any());
+        verify(testCases, never()).restore(org.mockito.ArgumentMatchers.anyLong(), any(), any());
+        verify(recovery, never()).consumed(any());
+    }
+
+    @Test
     void recordBaseline_retainsTheRunModeForStatusRecovery() {
         boolean recorded = recordBaseline("job-generate", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
 
         assertThat(recorded).isTrue();
         assertThat(revertService.findRevertibleRun(77L)).contains(new ExerciseGenerationRevertService.RevertibleRun("job-generate", GenerationMode.GENERATE));
-    }
-
-    @Test
-    void recordBaseline_whenPostRunHeadCaptureFails_recordsNoPartialBaseline() throws Exception {
-        Map<RepositoryType, String> templateAndSolution = new EnumMap<>(RepositoryType.class);
-        templateAndSolution.put(RepositoryType.TEMPLATE, "sha-template");
-        templateAndSolution.put(RepositoryType.SOLUTION, "sha-solution");
-        boolean recorded = recordBaseline("job-1", GenerationMode.ADAPT, templateAndSolution, Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement", "Old Title");
-
-        assertThat(recorded).isFalse();
-        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
-        assertThat(revertService.revert(exercise, user, () -> true)).isEmpty();
-        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
-    }
-
-    @Test
-    void recordBaseline_whenNewBaselineCannotBeRecorded_removesOlderBaseline() {
-        recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
-
-        recordBaseline("job-2", GenerationMode.ADAPT, preRunHeads(), Map.of(), "adapted statement", "Adapted Title");
-
-        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
-    }
-
-    @Test
-    void invalidateBaseline_removesAPreviouslyRecordedBaseline_soAnOlderRunCanNoLongerBeReverted() throws Exception {
-        recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
-        assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
-
-        revertService.invalidateBaseline(77L);
-
-        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
-        assertThat(revertService.revert(exercise, user, () -> true)).isEmpty();
-        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-    }
-
-    @Test
-    void invalidateBaseline_isIdempotentWhenNoBaselineIsRecorded() {
-        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
-
-        revertService.invalidateBaseline(77L);
-
-        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
     }
 
     @Test
@@ -303,8 +277,6 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void revert_whenARepositoryFails_keepsBaselineForRetry() throws Exception {
-        GenerationPersistenceService.TestsBuildSignal signal = new GenerationPersistenceService.TestsBuildSignal(11L, "sha-tests", 17L);
-        when(persistenceService.prepareTestsBuildSignal(exercise, "sha-tests")).thenReturn(signal);
         when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template", "sha-template");
         when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution");
         when(gitService.getLastCommitHash(testsUri, DEFAULT_BRANCH)).thenReturn("adapted-tests", "sha-tests");
@@ -321,9 +293,9 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(retry).isPresent();
         verify(gitService, times(1)).resetToCommitAndForcePush(templateRepo, "sha-template", "adapted-template", DEFAULT_BRANCH);
         verify(gitService, times(1)).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
-        verify(persistenceService, never()).triggerTestsBuild(exercise, signal);
-        verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(signal), eq("old statement"), eq("Old Title"), eq("adapted statement"),
-                eq("Adapted Title"), anyMap(), any(), any(), any());
+        verify(persistenceService, never()).triggerTestsBuild(eq(exercise), any());
+        verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"),
+                anyMap(), any(), any(), any());
     }
 
     @Test
@@ -418,9 +390,13 @@ class ExerciseGenerationRevertServiceTest {
         when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         recordBaseline("job-1", GenerationMode.GENERATE, Map.of(RepositoryType.TEMPLATE, "sha-template", RepositoryType.SOLUTION, "sha-solution"),
                 Map.of(RepositoryType.TEMPLATE, "adapted-template", RepositoryType.SOLUTION, "adapted-solution"), "old statement", "Old Title");
-        AtomicInteger ownershipChecks = new AtomicInteger();
+        AtomicBoolean owned = new AtomicBoolean(true);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            owned.set(false);
+            return null;
+        }).when(gitService).resetToCommitAndForcePush(templateRepo, "sha-template", "adapted-template", DEFAULT_BRANCH);
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> ownershipChecks.getAndIncrement() == 0);
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, owned::get);
 
         assertThat(result).hasValueSatisfying(value -> {
             assertThat(value.fullyReverted()).isFalse();
@@ -445,8 +421,15 @@ class ExerciseGenerationRevertServiceTest {
 
     private boolean recordBaseline(String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
             String problemStatementBeforeRun, String titleBeforeRun, String repositoryBranch) {
-        return revertService.recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatementBeforeRun, titleBeforeRun, exercise.getProblemStatement(),
+        var baseline = new ExerciseGenerationBaseline(jobId, mode, preRunHeads, postRunHeads, problemStatementBeforeRun, titleBeforeRun, exercise.getProblemStatement(),
                 exercise.getTitle(), repositoryBranch, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY);
+        var pair = new GenerationVersionRecoveryService.Recovery(jobId, 82L, null, null, baseline);
+        when(recovery.find(exercise.getId())).thenReturn(Optional.of(pair));
+        org.mockito.Mockito.doAnswer(invocation -> {
+            when(recovery.find(exercise.getId())).thenReturn(Optional.empty());
+            return null;
+        }).when(recovery).consumed(pair);
+        return true;
     }
 
     private static Map<RepositoryType, String> postRunHeads() {

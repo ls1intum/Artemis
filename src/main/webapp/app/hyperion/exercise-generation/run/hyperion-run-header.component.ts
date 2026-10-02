@@ -1,3 +1,5 @@
+import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
+import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-status.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -7,8 +9,7 @@ import {
     TumAetUiCardComponent,
     TumAetUiConfirmDialogComponent,
     TumAetUiConfirmationService,
-    TumAetUiStatusDotComponent,
-    TumAetUiStatusDotState,
+    TumAetUiMessageComponent,
 } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -54,18 +55,20 @@ interface RunFact {
         TumAetUiButtonDirective,
         TumAetUiCardComponent,
         TumAetUiConfirmDialogComponent,
-        TumAetUiStatusDotComponent,
+        TumAetUiMessageComponent,
+        HyperionStatusComponent,
     ],
 })
 export class HyperionRunHeaderComponent {
     private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
 
+    readonly variant = input(false);
     readonly adapting = input(false);
     readonly exerciseTitle = input<string | undefined>();
     /** Translation keys for the meta line, e.g. Java · Gradle · Medium. Never raw enum values. */
     readonly metaLabelKeys = input<readonly string[]>([]);
-    readonly statusState = input.required<TumAetUiStatusDotState>();
+    readonly statusState = input.required<HyperionStatusState>();
     readonly statusLabelKey = input.required<string>();
     /** ISO timestamp of the run's STARTED event; without one there is nothing to count from. */
     readonly startedAt = input<string | undefined>();

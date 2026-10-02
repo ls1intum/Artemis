@@ -188,6 +188,22 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig,
             @NonNull ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) {
+        ProgrammingExercise prepared = prepareImport(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
+        return completeImport(sourceExercise, prepared, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+    }
+
+    /**
+     * Creates the database portion of an import, without copying repositories or triggering builds.
+     * Callers that expose asynchronous preparation must protect the returned draft before committing it.
+     *
+     * @param sourceExercise    source with the import associations initialized
+     * @param sourceBuildConfig stored source configuration
+     * @param newExercise       destination metadata
+     * @param newBuildConfig    optional destination configuration
+     * @return persisted destination with its import associations
+     */
+    public ProgrammingExercise prepareImport(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig, ProgrammingExercise newExercise,
+            @Nullable ProgrammingExerciseBuildConfig newBuildConfig) {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newExercise.setShortName(NON_ALPHANUMERIC.matcher(newExercise.getShortName()).replaceAll(""));
         newExercise.generateAndSetProjectKey();
@@ -203,6 +219,20 @@ public class ProgrammingExerciseImportService {
                 programmingExerciseRepository.save(newExercise);
             }
         }
+        return newExercise;
+    }
+
+    /**
+     * Finishes a previously prepared import. The caller protects the source and destination throughout repository copying.
+     *
+     * @param sourceExercise                      source with import associations initialized
+     * @param newExercise                         prepared destination
+     * @param recreateBuildPlans                  create new plans rather than copying them
+     * @param setTestCaseVisibilityToAfterDueDate override copied visibility when requested
+     * @return the imported destination
+     */
+    public ProgrammingExercise completeImport(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate) {
         programmingExerciseImportBasicService.importRepositories(sourceExercise, newExercise);
 
         if (setTestCaseVisibilityToAfterDueDate) {

@@ -15,10 +15,11 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
+import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
@@ -45,7 +46,12 @@ describe('ExamExerciseRowButtonsComponent', () => {
     const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
     const quizExercise = { id: 345, type: ExerciseType.QUIZ } as QuizExercise;
     const fileUploadExercise = { id: 456, type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
-    const programmingExercise = { id: 963, type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+    const programmingExercise = {
+        id: 963,
+        type: ExerciseType.PROGRAMMING,
+        programmingLanguage: ProgrammingLanguage.JAVA,
+        projectType: ProjectType.PLAIN_GRADLE,
+    } as ProgrammingExercise;
     const quizResponse = { body: { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise };
 
     let deleteTextExerciseStub: ReturnType<typeof vi.spyOn>;
@@ -72,6 +78,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(ExerciseService),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: GenerationCapabilityRequestsService, useValue: { describe: () => of({ canCreateVariant: true }) } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
             ],
@@ -148,6 +155,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
         const idsFor = (exercise: Exercise, roles: { editor?: boolean; instructor?: boolean } = {}): string[] => {
             fixture.componentRef.setInput('course', courseWith(roles));
             setExerciseInput(fixture, exercise);
+            TestBed.tick();
             return component.mainActions().map((action) => action.id);
         };
 
@@ -168,11 +176,14 @@ describe('ExamExerciseRowButtonsComponent', () => {
         it('offers the AI variant action for programming exercises only when Hyperion is enabled', () => {
             expect(idsFor(programmingExercise, { editor: true })).not.toContain('create-variant-ai');
 
-            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
             fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
             component = fixture.componentInstance;
             fixture.componentRef.setInput('exam', exam);
             fixture.componentRef.setInput('exerciseGroupId', 5);
+            TestBed.tick();
             expect(idsFor(programmingExercise, { editor: true })).toContain('create-variant-ai');
             component.mainActions().find((action) => action.id === 'create-variant-ai')!.onClick!();
             expect(component.aiVariantModalVisible()).toBe(true);

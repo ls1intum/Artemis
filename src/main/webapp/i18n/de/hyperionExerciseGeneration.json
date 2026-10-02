@@ -96,11 +96,12 @@
                     "cancelling": "Wird abgebrochen",
                     "saved": "Entwurf gespeichert",
                     "needsReview": "Entwurf gespeichert — bitte prüfen",
-                    "partial": "Teilweise gespeichert",
+                    "partial": "Wiederherstellung erforderlich",
                     "failed": "Generierung fehlgeschlagen",
                     "cancelled": "Abgebrochen",
                     "notStarted": "Noch kein Durchlauf",
-                    "unknown": "Status nicht verfügbar"
+                    "unknown": "Status nicht verfügbar",
+                    "reverted": "Wiederhergestellt"
                 },
                 "run": {
                     "newRunHint": "Gib die Aufgabenbeschreibung oder das Feedback für diesen neuen Lauf ein. Frühere Anweisungen und ausgewählte Review-Kommentare werden nicht übernommen.",
@@ -154,6 +155,11 @@
                     "savedHint": "In der Aufgabe gespeichert. Öffne den Code-Editor, um das Ergebnis zu prüfen und zu bearbeiten.",
                     "loading": "Der aufbewahrte Entwurf wird geladen…",
                     "specTitle": "Aufgabenentwurf",
+                    "specHint": "Dieser Entwurf leitet die Erstellung. Studierende sehen ihn nicht.",
+                    "variantSpecTitle": "Variantenentwurf",
+                    "variantSpecHint": "Dieser Entwurf leitet die neue Variante. Vergleiche sie vor der Freigabe mit der Ausgangsaufgabe. Studierende sehen den Entwurf nicht.",
+                    "variantSpecPending": "Noch kein Variantenentwurf",
+                    "variantSpecPendingHint": "Artemis plant die Änderungen an der Ausgangsaufgabe.",
                     "specPending": "Noch kein Aufgabenentwurf",
                     "specPendingHint": "Artemis entscheidet noch, was gebaut werden soll.",
                     "statementTitle": "Aufgabenstellung",
@@ -208,7 +214,7 @@
                 },
                 "outcome": {
                     "savedTitle": "Entwurf in deiner Aufgabe gespeichert",
-                    "savedBody": "Die Musterlösung besteht alle {{testCount}} Tests, und der Startcode scheitert daran, wie vorgesehen. Prüfe Aufgabenstellung und Tests, bevor du die Aufgabe freigibst.",
+                    "savedBody": "Der überprüfte Aufgabenentwurf wurde gespeichert. Prüfe Aufgabenstellung und Tests, bevor du die Aufgabe freigibst.",
                     "reviewTitle": "Entwurf gespeichert — bitte prüfen",
                     "reviewBody": "Artemis hat den Entwurf gespeichert, aber nicht jede Prüfung war sauber. Öffne den Code-Editor, behebe die gemeldeten Punkte und gib die Aufgabe dann frei.",
                     "partialTitle": "Nur ein Teil des Entwurfs wurde gespeichert",
@@ -278,37 +284,23 @@
                     "requiresEditor": "Du brauchst Editor-Rechte in diesem Kurs, um die Aufgabe mit KI zu ändern.",
                     "unsupportedLanguage": "KI-Erstellung unterstützt nur Java-Aufgaben.",
                     "unsupportedProjectType": "Diese Java-Aufgabe wird mit Maven oder einem anderen Werkzeug gebaut. KI-Erstellung prüft nur Gradle-Builds; das Build-Werkzeug lässt sich nach dem Anlegen nicht ändern, lege dafür eine Gradle-Aufgabe an.",
-                    "examExercise": "KI-Erstellung ist für Prüfungsaufgaben nicht verfügbar.",
                     "staticCodeAnalysis": "Deaktiviere zuerst die statische Codeanalyse in den Aufgabeneinstellungen. Die KI-Prüfung bildet deren Abzüge nicht ab.",
                     "sequentialTestRuns": "Deaktiviere zuerst sequenzielle Testläufe in den Aufgabeneinstellungen. Die KI-Prüfung führt alle Tests in einem Durchlauf aus.",
                     "auxiliaryRepositories": "Entferne zuerst die zusätzlichen Repositories. KI-Erstellung schreibt nur in Vorlage, Lösung und Tests.",
-                    "released": "Diese Aufgabe ist bereits veröffentlicht. Verschiebe zuerst das Veröffentlichungsdatum in die Zukunft; KI-Erstellung ändert nur Aufgaben, die Studierende noch nicht sehen können.",
+                    "released": "Die KI-Bearbeitung ist nur vor der Freigabe verfügbar. Lege in den Aufgabeneinstellungen ein zukünftiges Freigabedatum fest.",
                     "studentParticipations": "Studierende haben diese Aufgabe bereits begonnen. KI-Erstellung ändert nur Aufgaben ohne Teilnahmen.",
                     "problemStatementBusy": "Warte, bis die laufende Verfeinerung der Aufgabenstellung abgeschlossen ist.",
                     "consistencyCheckBusy": "Warte, bis die laufende Konsistenzprüfung abgeschlossen ist.",
-                    "repositorySetupBusy": "Warte, bis der Repository-Vorgang abgeschlossen ist."
+                    "repositorySetupBusy": "Warte, bis der Repository-Vorgang abgeschlossen ist.",
+                    "capabilitiesUnavailable": "Es wird geprüft, ob diese Aufgabe geändert werden kann. Lade die Seite neu, falls dies anhält.",
+                    "preparationOnly": "KI-Aufgabenerstellung ist nur während der Vorbereitung verfügbar, bevor Prüfungen oder Testläufe zugewiesen werden."
                 }
             },
             "jobs": {
-                "label": "KI-Generierung",
-                "ariaLabel": "KI-Generierungsläufe",
-                "title": "KI-Generierungsläufe",
-                "empty": "Bisher keine Generierungsläufe.",
-                "emptyHint": "Ein Lauf erscheint hier, sobald du ihn aus einer Aufgabe startest.",
                 "dismiss": "Diesen Lauf ausblenden",
-                "summaryRunning": "KI aktiv: {{count}}",
+                "summaryRunning": "{{count}} aktiv",
                 "summaryAttention": "{{count}} zu prüfen",
                 "summaryFinished": "{{count}} fertig",
-                "runningMinutes": "läuft seit {{minutes}} Min.",
-                "runningUnderMinute": "gerade gestartet",
-                "ranMinutes": "lief {{minutes}} Min.",
-                "ranUnderMinute": "lief weniger als eine Minute",
-                "state": {
-                    "idle": "Nichts in Arbeit",
-                    "running": "Generierung läuft",
-                    "attention": "Braucht deine Aufmerksamkeit",
-                    "success": "Fertig"
-                },
                 "loadFailed": "Die Generierungsläufe konnten nicht geladen werden.",
                 "retry": "Erneut versuchen"
             },
@@ -365,7 +357,7 @@
                     "notSaved": "Nicht gespeichert",
                     "cancelled": "Nicht gespeichert — abgebrochen",
                     "failed": "Nicht gespeichert — fehlgeschlagen",
-                    "partial": "Nicht vollständig gespeichert — manuelle Prüfung erforderlich"
+                    "partial": "Wiederherstellung erforderlich — Aufgabe nicht freigeben"
                 },
                 "terminalStatus": {
                     "DONE": "Generierung abgeschlossen",
@@ -394,10 +386,11 @@
             "workers": {
                 "unknownCapacity": "Die Kapazität ist erst mit einem aktuellen Heartbeat des Workers bekannt.",
                 "toolchain": "Toolchain",
-                "title": "Generierungen",
+                "title": "KI-Generierung",
                 "refresh": "Aktualisieren",
-                "description": "Aktive Hyperion-Generierungen prüfen und gezielt abbrechen. Worker-Zustand und Kapazität werden unter KI-Worker angezeigt.",
-                "loadFailed": "Der Worker-Status konnte nicht aktualisiert werden. Vorher geladene Einträge können veraltet sein. Die Generierung kann auf diesem Knoten auch deaktiviert sein.",
+                "description": "Aktive Übungsgenerierungen, verfügbare Kapazität und Worker-Status auf einen Blick.",
+                "liveUpdatesPaused": "Live-Aktualisierungen sind unterbrochen. Aktualisiere die Ansicht, um den aktuellen Stand zu prüfen. Nach Wiederherstellung der Verbindung laufen die Aktualisierungen weiter.",
+                "loadFailed": "Der Generierungsstatus konnte nicht aktualisiert werden. Vorher geladene Läufe können veraltet sein.",
                 "summary": "{{available}} von {{total}} konfigurierten Workern verfügbar",
                 "worker": "Worker",
                 "status": "Status",
@@ -441,12 +434,41 @@
                 "cancelReason": "Grund (wird im Admin-Protokoll erfasst)",
                 "cancelFailed": "Der Abbruch wurde nicht angenommen. Der Lauf ist möglicherweise beendet oder speichert bereits. Aktualisiere die Übersicht; dein Grund bleibt erhalten.",
                 "keepRunning": "Weiterlaufen lassen",
-                "workerSlot": "Worker / Slot",
+                "workerSlot": "Worker",
                 "kind": "Lauf",
-                "openRun": "Lauf öffnen",
                 "mode": {
                     "GENERATE": "Erstellen",
                     "ADAPT": "Anpassen"
+                }
+            },
+            "activity": {
+                "title": "KI-Aktivität",
+                "subtitle": "Deine Erstellungsaufträge im Überblick. Das Schließen stoppt sie nicht.",
+                "history": "Ausgeblendet ({{ count }})",
+                "dismissedHint": "Alle Aufträge sind ausgeblendet. Du findest sie im Verlauf wieder.",
+                "recoveryRequired": "Dieser Auftrag benötigt eine Wiederherstellung. Öffne die Details, bevor du weiterbearbeitest.",
+                "cancelAuthoring": "Diesen Erstellungsauftrag stoppen? Bereits gespeicherte Änderungen werden dadurch nicht rückgängig gemacht.",
+                "kind": {
+                    "create": "Aufgabe erstellen",
+                    "adapt": "Aufgabe anpassen",
+                    "variant": "Variante erstellen",
+                    "quizVariant": "Quizvariante"
+                },
+                "loadMore": "Ältere Durchläufe laden",
+                "stage": {
+                    "prepare": "Vorbereiten",
+                    "design": "Erstellen",
+                    "revise": "Anpassen",
+                    "build": "Prüfen",
+                    "review": "Bewerten",
+                    "save": "Speichern"
+                },
+                "variantStage": {
+                    "analyze": "Analyse",
+                    "plan": "Planung",
+                    "write": "Erstellen",
+                    "verify": "Prüfen",
+                    "save": "Speichern"
                 }
             }
         }

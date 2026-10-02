@@ -29,8 +29,8 @@ public class ExerciseGroupService {
      * Moves an exam exercise into a different exercise group of the same exam.
      * <p>
      * Blocked once a student exam exists: generation has already picked one exercise per group, so a later move would
-     * desync those selections and the exam's point totals. The update runs under the same exam-row lock as selection and assignment, so an in-flight
-     * selection cannot later commit a student exam built from the previous grouping.
+     * desync those selections and the exam's point totals. The exam-row lock serializes this update with student-exam
+     * selection. The update statement also rejects student exams that already exist.
      * <p>
      * Callers must have validated access to the exam and that both the exercise and the target group belong to it.
      *
