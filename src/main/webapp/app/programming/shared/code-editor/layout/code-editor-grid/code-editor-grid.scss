@@ -321,12 +321,108 @@
 }
 
 /* ==========================================================================
+   Assessment: the build output beside the feedback panel
+   ========================================================================== */
+
+/* The assessment fills the page's height like the text and modeling assessments, so the page itself never scrolls: the
+   editor takes what the bottom row leaves, and the bottom row starts at 40%, as the feedback panel beside the build
+   output lists the general feedback. Each panel scrolls on its own. */
+.programming-assessment-page__editor > jhi-code-editor-grid {
+    display: block;
+    height: 100%;
+}
+
+.editor-wrapper.assessment-wrapper {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+
+    /* The grip between the editor and the bottom row is the only gap between them, as wide as the gaps between the
+       columns, instead of adding the wrapper's row gap and the editor's margin to it */
+    row-gap: 0;
+
+    .editor-main {
+        display: flex;
+        min-height: 0;
+        height: auto;
+        flex: 1 1 0;
+        flex-direction: column;
+        margin-bottom: 0;
+
+        > .rg-main-bottom {
+            display: flex;
+            height: 12px;
+            align-items: center;
+        }
+    }
+
+    .editor-main__content {
+        min-height: 0;
+        height: auto;
+        flex: 1 1 0;
+    }
+
+    .editor-bottom {
+        height: 40%;
+        flex: 0 0 auto;
+
+        /* The row's children inherit its height, which would resolve 40% again against the row itself */
+        > * {
+            height: 100%;
+        }
+    }
+}
+
+.code-editor-assessment-bottom {
+    display: flex;
+    min-height: 0;
+
+    /* The build output takes half the row until its divider is dragged, and always leaves room for the panel */
+    &__output {
+        display: flex;
+        flex: 0 1 auto;
+        width: 50%;
+        min-width: 0;
+        max-width: calc(100% - 320px);
+        height: 100%;
+        overflow: auto;
+
+        /* The build output card takes its height from its host (height: inherit), so the host needs one */
+        > jhi-code-editor-build-output {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 100%;
+        }
+    }
+
+    &__side {
+        display: flex;
+        flex: 1 1 0;
+        min-width: 0;
+        flex-direction: column;
+    }
+
+    /* Collapsed, the build output narrows to its header and leaves the row to the panel */
+    &--output-collapsed .code-editor-assessment-bottom__output {
+        /* !important: a dragged divider leaves an inline width on the column */
+        width: auto !important;
+        flex: none;
+
+        .card-body {
+            display: none;
+        }
+    }
+}
+
+/* ==========================================================================
    Resizable drag elements
    ========================================================================== */
 
 /* stylelint-disable no-descending-specificity -- These selectors are used in different contexts */
 .rg-main-bottom,
 .rg-bottom-bottom,
+.rg-bottom-split,
 .rg-sidebar-left,
 .rg-sidebar-right {
     align-self: center;
@@ -347,6 +443,7 @@
     cursor: row-resize;
 }
 
+.rg-bottom-split,
 .rg-sidebar-left,
 .rg-sidebar-right {
     cursor: col-resize;

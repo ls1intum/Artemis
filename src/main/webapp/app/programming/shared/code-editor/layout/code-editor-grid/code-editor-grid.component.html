@@ -3,11 +3,13 @@
     <nav class="editor-statusbar" [hidden]="!showEditorNavbar()">
         <ng-content select="[editorNavbar]" />
     </nav>
+    <!-- In an assessment the editor fills the height the bottom row leaves, so the grip between them resizes the bottom row. -->
     <div
         class="editor-main"
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-main-bottom' }"
         [resizableConstraints]="{ minHeight: resizableMinHeightMain, maxHeight: maxConstraints().heightMain }"
+        [resizableEnabled]="!isTutorAssessment()"
         (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
     >
         <div class="editor-main__content">
@@ -66,20 +68,16 @@
         #buildOutput
         class="editor-bottom collapsable"
         jhiResizable
-        [resizableEdges]="{ bottom: '.rg-bottom-bottom' }"
+        [resizableEdges]="isTutorAssessment() ? { top: '.rg-main-bottom' } : { bottom: '.rg-bottom-bottom' }"
+        [resizableHandleOutsideHost]="isTutorAssessment()"
         [resizableConstraints]="{ minHeight: resizableMinHeightBottom, maxHeight: maxConstraints().heightBottom }"
         [resizableEnabled]="!buildOutputIsCollapsed()"
         (resizeEnd)="onPanelResized(ResizeType.BOTTOM)"
     >
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
         <!-- Required for resizing; don't remove empty span -->
-        @if (!buildOutputIsCollapsed()) {
+        @if (!buildOutputIsCollapsed() && !isTutorAssessment()) {
             <fa-icon [icon]="faGripLines" data-testid="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
         }
     </div>
-    @if (isTutorAssessment()) {
-        <div>
-            <ng-content select="[editorBottom]" />
-        </div>
-    }
 </div>

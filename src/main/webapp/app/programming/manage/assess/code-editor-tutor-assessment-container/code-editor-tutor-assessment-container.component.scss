@@ -1,0 +1,72 @@
+// The page fills the viewport like the text and modeling assessments: the code editor grid splits it into the editor and
+// the row of the build output and the feedback panel, and each of them scrolls on its own instead of the whole page.
+:host {
+    display: block;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+// The score tags lead the title bar's actions, spaced like them
+.programming-assessment-score {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.programming-assessment-page {
+    height: 100%;
+    min-height: 0;
+
+    &__layout.assessment-container {
+        display: flex;
+        flex-flow: column nowrap;
+        height: 100%;
+        min-height: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+
+    &__editor {
+        display: block;
+        min-width: 0;
+        min-height: 0;
+        flex: 1;
+    }
+}
+
+// The general feedback, notes and complaint panel beside the build output. It is framed like the build output card next to
+// it, and only its content scrolls, so the tabs stay in reach.
+.programming-assessment-details {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-content-background);
+
+    &__header {
+        // The tabs scroll on the header's surface, the same as the build output header beside it
+        --tumaet-ui-tab-scroll-background: var(--code-editor-panel-header-background);
+
+        display: flex;
+        min-height: 42px;
+        flex: none;
+        align-items: center;
+        padding: 0 0.5rem;
+        border-bottom: 1px solid var(--code-editor-panel-header-border);
+        background-color: var(--code-editor-panel-header-background);
+    }
+
+    &__content {
+        min-height: 0;
+        flex: 1 1 auto;
+        padding: 0.75rem;
+        overflow-y: auto;
+    }
+}

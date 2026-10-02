@@ -100,22 +100,40 @@
         </jhi-code-editor-instructions>
     </ng-container>
     <ng-container editorBottomArea>
-        @if (buildable()) {
-            <jhi-code-editor-build-output
-                [participation]="participation()"
-                [secondaryHeader]="!showNavbar()"
-                [collapsed]="grid.buildOutputIsCollapsed()"
-                (onAnnotations)="onAnnotations($event)"
-                (onError)="onError($event)"
-                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
-            />
-        }
-    </ng-container>
-    <ng-container editorBottom>
         @if (isTutorAssessment()) {
-            <div>
-                <ng-content select="[editorBottom]" />
+            <!-- In an assessment the build output shares its row with the feedback panel the page projects beside it. -->
+            <div class="code-editor-assessment-bottom" [class.code-editor-assessment-bottom--output-collapsed]="buildOutputCollapsed()">
+                @if (buildable()) {
+                    <div
+                        class="code-editor-assessment-bottom__output"
+                        jhiResizable
+                        [resizableEdges]="{ right: '.rg-bottom-split' }"
+                        [resizableHandleOutsideHost]="true"
+                        [resizableConstraints]="{ minWidth: 240 }"
+                        [resizableEnabled]="!buildOutputCollapsed()"
+                    >
+                        <ng-container [ngTemplateOutlet]="buildOutputTemplate" />
+                    </div>
+                    @if (!buildOutputCollapsed()) {
+                        <fa-icon [icon]="faGripLinesVertical" class="rg-bottom-split" />
+                    }
+                }
+                <div class="code-editor-assessment-bottom__side">
+                    <ng-content select="[editorBottomSide]" />
+                </div>
             </div>
+        } @else if (buildable()) {
+            <ng-container [ngTemplateOutlet]="buildOutputTemplate" />
         }
     </ng-container>
+    <ng-template #buildOutputTemplate>
+        <jhi-code-editor-build-output
+            [participation]="participation()"
+            [secondaryHeader]="!showNavbar()"
+            [collapsed]="buildOutputCollapsed()"
+            (onAnnotations)="onAnnotations($event)"
+            (onError)="onError($event)"
+            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
+        />
+    </ng-template>
 </jhi-code-editor-grid>

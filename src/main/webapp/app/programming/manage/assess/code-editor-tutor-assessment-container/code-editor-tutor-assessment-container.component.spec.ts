@@ -1,3 +1,4 @@
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -1101,6 +1102,26 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
         expect(banner).not.toBeNull();
+    });
+
+    it('should score all feedback for the title bar, capping the automatic tests at the exercise points', () => {
+        comp.exercise.set({ maxPoints: 10, bonusPoints: 0 } as ProgrammingExercise);
+        comp.automaticFeedback.set([{ type: FeedbackType.AUTOMATIC, credits: 12 } as Feedback]);
+        comp.unreferencedFeedback.set([{ type: FeedbackType.MANUAL_UNREFERENCED, credits: -2 } as Feedback]);
+        comp.referencedFeedback.set([]);
+
+        expect(comp.assessmentScore()).toEqual({ awarded: 10, deducted: -2, total: 8 });
+    });
+
+    it('should keep the private note of the panel beside the build output on the result and mark its tab', () => {
+        const result = new Result();
+        comp.manualResult.set(result);
+        expect(comp.hasTutorNote()).toBe(false);
+
+        comp.onAssessmentNoteChange({ note: 'Check the edge cases again' } as AssessmentNote);
+
+        expect(result.assessmentNote?.note).toBe('Check the edge cases again');
+        expect(comp.hasTutorNote()).toBe(true);
     });
 
     describe('when assessment is not possible yet', () => {
