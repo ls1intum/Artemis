@@ -193,8 +193,8 @@ describe('CreateExerciseUnitComponent', () => {
         exercise.id = 1;
         const response = new Subject<HttpResponse<ExerciseUnit>>();
         createStub.mockReturnValue(response);
-        const createdSpy = vi.fn();
-        createExerciseUnitComponent.onExerciseUnitCreated.subscribe(createdSpy);
+        // Angular drops the listeners of a destroyed output, so only the emit itself shows whether the form still reports the items.
+        const emitSpy = vi.spyOn(createExerciseUnitComponent.onExerciseUnitCreated, 'emit');
         createExerciseUnitComponentFixture.componentRef.setInput('shouldNavigateOnSubmit', false);
         createExerciseUnitComponentFixture.componentRef.setInput('lectureId', 1);
         createExerciseUnitComponent.exercisesToCreateUnitFor.set([exercise]);
@@ -204,7 +204,7 @@ describe('CreateExerciseUnitComponent', () => {
         response.next(new HttpResponse({ body: new ExerciseUnit(), status: 201 }));
         response.complete();
 
-        expect(createdSpy).not.toHaveBeenCalled();
+        expect(emitSpy).not.toHaveBeenCalled();
     });
 
     describe('choosing exercises', () => {
