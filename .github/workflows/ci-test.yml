@@ -15,6 +15,10 @@ on:
         description: 'When true, run every test. When false, only run tests in modules affected by changes vs base_branch.'
         required: true
         type: boolean
+      run_sandbox_tests:
+        description: 'Whether the AI Worker sandbox or Hyperion code changed and needs real Docker tests.'
+        required: true
+        type: boolean
       is_internal_pr:
         description: 'True only for PRs from branches inside ls1intum/Artemis (external services like Codacy skip on fork PRs).'
         required: true
@@ -37,6 +41,55 @@ env:
   java: 25
 
 jobs:
+  sandbox-tests:
+    name: AI Worker Sandbox Tests
+    if: inputs.run_sandbox_tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+      - name: Build the offline sandbox image
+        run: |
+          docker build -f docker/hyperion/gradle-sandbox.Dockerfile -t aiworker-sandbox-test .
+          image=$(docker image inspect aiworker-sandbox-test --format '{{.Id}}')
+          echo "AI_WORKER_TEST_IMAGE=$image" >> "$GITHUB_ENV"
+          echo "HYPERION_GRADLE_TEST_IMAGE=$image" >> "$GITHUB_ENV"
+      - name: Test Docker isolation and offline Gradle builds
+        run: ./gradlew test --tests '*DockerSandboxIsolationTest' --tests '*DockerGradleBuildTest' -x webapp
+      - name: Verify both image-gated suites ran
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          for name in ('DockerSandboxIsolationTest', 'DockerGradleBuildTest'):
+              reports = list(Path('build/test-results/test').glob(f'TEST-*.{name}.xml'))
+              if len(reports) != 1:
+                  raise SystemExit(f'Expected one test report for {name}, found {len(reports)}')
+              suite = ElementTree.parse(reports[0]).getroot()
+              if int(suite.get('tests', '0')) == 0 or int(suite.get('skipped', '0')) != 0:
+                  raise SystemExit(f'{name} did not run every image-gated test')
+          PY
+      - name: Test Report
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+        if: ${{ !cancelled() }}
+        with:
+          name: AI Worker Sandbox Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+
   # Decides how the server suite is cut up. A full run is split into one shard per test bucket; a
   # module-affected run stays a single shard, because its selection cuts across buckets.
   server-test-shards:

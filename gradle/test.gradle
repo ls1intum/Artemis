@@ -36,7 +36,6 @@ tasks.withType(Test).configureEach {
     // timezone (SET TIME ZONE 'UTC'), this ensures consistent timestamp handling across H2
     // and PostgreSQL.
     jvmArgs += "-Duser.timezone=UTC"
-
     // Pass weaviate server version to integration tests
     systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
     // Lets FeatureUsageAnnotationTest rewrite the generated feature usage catalogue document on demand:

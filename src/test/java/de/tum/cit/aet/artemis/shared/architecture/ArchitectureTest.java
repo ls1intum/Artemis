@@ -256,7 +256,23 @@ class ArchitectureTest extends AbstractArchitectureTest {
             // the branch expression configured on the exercise
             "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.isBranchNameAllowedForRepository(org.eclipse.jgit.lib.Repository, java.lang.String)",
             // the exceptions to filter, which the caller passes in
-            "de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.prepareJVMResultMessageMatcher(java.util.List)");
+            "de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.prepareJVMResultMessageMatcher(java.util.List)",
+            // Hyperion probes build expressions from the generated names and contracts of each exercise.
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitnessAuthor.declaresMethod(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitnessAuthor.specificationDeclaresRule(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitnessAuthor.usesSuiteLocalHelper(java.lang.String, java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutantAuthor.completeJavaSource(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutantAuthor.declaresTestMethod(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutantAuthor.specificationDeclaresRule(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic.compile(java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedStructuralContract.canonicalTypeName(java.lang.String, java.util.Set, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedStructuralContract.templateDependencies(java.util.Set, java.util.Set)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessProbe.collidesWithExistingTest(de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness, java.util.Map)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasAnnotation(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasBoundedStrictTimeout(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasTrustedAnnotation(java.lang.String, java.util.Set, java.lang.String, java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.sourceDeclaresType(java.lang.String, java.lang.String)",
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantExecution.declaresMethod(java.util.Map, java.lang.String)");
 
     /**
      * Complements the {@code callMethod} rules in {@link #testRegularExpressionsAreCompiledOnce()} for

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
@@ -24,7 +25,8 @@ public class RedisDistributedDataCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         final Collection<String> activeProfiles = Arrays.asList(context.getEnvironment().getActiveProfiles());
-        boolean nodeNeedsProvider = activeProfiles.contains(PROFILE_CORE) || activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT);
+        boolean nodeNeedsProvider = activeProfiles.contains(PROFILE_CORE) || activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)
+                || activeProfiles.contains(PROFILE_AIWORKER);
         return nodeNeedsProvider && DistributedDataProviderResolver.isProvider(context.getEnvironment(), REDIS);
     }
 }
