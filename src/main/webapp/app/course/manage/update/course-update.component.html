@@ -147,8 +147,20 @@
                     </div>
                 </div>
 
-                <tumaet-ui-form-field [label]="'artemisApp.course.description' | artemisTranslate" controlId="field_description">
+                <tumaet-ui-form-field [label]="'artemisApp.course.description' | artemisTranslate" controlId="field_description" [invalid]="showError('description')">
                     <textarea id="field_description" tumAetUiTextarea class="w-full" rows="2" formControlName="description"></textarea>
+                    <div
+                        class="text-sm mt-1"
+                        [class]="descriptionLength() > COURSE_DESCRIPTION_LIMIT ? 'text-state-danger' : 'text-muted-color'"
+                        data-testid="course-description-counter"
+                    >
+                        {{ descriptionLength() }} / {{ COURSE_DESCRIPTION_LIMIT }}
+                    </div>
+                    <ng-container tumAetUiFormFieldError>
+                        @if (courseForm.get('description')?.hasError('maxlength')) {
+                            <span jhiTranslate="artemisApp.course.form.description.maxlength"></span>
+                        }
+                    </ng-container>
                 </tumaet-ui-form-field>
 
                 <!-- The semester comes first because choosing it fills in the start and end date below. -->
