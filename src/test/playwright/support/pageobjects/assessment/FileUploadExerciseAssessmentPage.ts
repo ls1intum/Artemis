@@ -1,4 +1,6 @@
+import { Response } from '@playwright/test';
 import { BASE_API, ExerciseType } from '../../constants';
+import { annotateRecovery } from '../../utils';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 /**
@@ -13,19 +15,23 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
         await this.page.locator('[data-testid="e2e-download-file"]').click();
     }
 
+    /**
+     * Submits the assessment and returns the response of the server, which callers assert on.
+     * On a multi-node cluster the very first submit occasionally fails with a 5xx while the feedbacks of the result are still being
+     * invalidated across the nodes; such a failure is retried once, and the retry is recorded in the report.
+     */
     async submitFeedback() {
-        // Wait for the assessment PUT to complete and verify the server accepted it.
-        // Without this the next test (student view) races the cache and may see "No graded result".
-        // Retry once on multi-node 5xx flakes (Hazelcast Result.feedbacks invalidation lag).
+        let response: Response | undefined;
         for (let attempt = 0; attempt < 2; attempt++) {
             const responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/file-upload-submissions/*/feedback*`);
             await this.page.locator('#submit').click();
-            const response = await responsePromise;
+            response = await responsePromise;
             if (response.status() < 400 || attempt === 1) {
-                return;
+                break;
             }
-            await this.page.waitForTimeout(1500);
+            annotateRecovery(`submitFeedback: the server answered ${response.status()} to the first submit of the file upload assessment; submitting again`);
         }
+        return response!;
     }
 
     override async rejectComplaint(response: string, examMode: boolean, complaintExerciseTitle?: string) {

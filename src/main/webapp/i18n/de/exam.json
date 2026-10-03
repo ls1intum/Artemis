@@ -49,6 +49,7 @@
                     "number": "Raumnummer",
                     "name": "Name",
                     "building": "Gebäude",
+                    "registeredStudentsUnknown": "Die Anzahl der registrierten Studierenden liegt noch nicht vor oder konnte nicht geladen werden. Du kannst die Studierenden verteilen, sobald sie bekannt ist; falls diese Meldung bleibt, schließe den Dialog und öffne ihn erneut.",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
@@ -660,10 +661,6 @@
                     "DidNotAttend": "Nicht teilgenommen",
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
                     "AttendanceChecked": "Anwesenheitsprüfung bestanden"
-                },
-                "filterGroup": {
-                    "progress": "Fortschritt",
-                    "attendance": "Anwesenheit"
                 },
                 "menu": {
                     "manageStudents": "Studierende",
