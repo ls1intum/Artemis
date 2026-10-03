@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -59,6 +60,11 @@ describe('CourseIngestionCoverageTableComponent', () => {
             imports: [CourseIngestionCoverageTableComponent],
             providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
         });
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation('en', {
+            artemisApp: { courseIngestionDashboard: { matrix: { refreshError: 'Failed to refresh course coverage. Please try again.' } } },
+        });
+        translateService.use('en');
         service = TestBed.inject(CourseIngestionDashboardService);
         liveSpy = vi.spyOn(service, 'getLiveCoveragePage').mockReturnValue(pageOf(rows));
         storedSpy = vi.spyOn(service, 'getStoredCoverage').mockReturnValue(pageOf(rows));
@@ -193,6 +199,29 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(refreshSpy).toHaveBeenCalledOnce();
         pending.next();
         expect(component.refreshing()).toBe(false);
+    });
+
+    it('keeps the existing rows and renders refresh feedback when a bodyless 503 prevents recomputation', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        refreshSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503, error: null })));
+        component['onRefresh']();
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(component.refreshing()).toBe(false);
+        expect(component.rows()).toEqual(rows);
+        expect(element.querySelector('[data-testid="coverage-refresh-error"]')?.textContent).toContain('Failed to refresh course coverage. Please try again.');
+        expect(element.querySelectorAll('table tbody tr')).toHaveLength(2);
+
+        refreshSpy.mockReturnValue(of(undefined));
+        component['onRefresh']();
+        fixture.detectChanges();
+
+        expect(element.querySelector('[data-testid="coverage-refresh-error"]')).toBeNull();
+        expect(element.querySelectorAll('table tbody tr')).toHaveLength(2);
     });
 
     it('debounces the search input before reloading', () => {

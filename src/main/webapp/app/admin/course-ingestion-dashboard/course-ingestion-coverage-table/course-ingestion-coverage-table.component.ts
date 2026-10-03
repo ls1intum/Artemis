@@ -117,6 +117,7 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     readonly loading = signal(true);
     readonly error = signal(false);
     readonly refreshing = signal(false);
+    readonly refreshError = signal(false);
     readonly lastUpdated = signal<string | undefined>(undefined);
 
     /**
@@ -285,9 +286,13 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.refreshing.set(false);
+                    this.refreshError.set(false);
                     this.load();
                 },
-                error: () => this.refreshing.set(false),
+                error: () => {
+                    this.refreshing.set(false);
+                    this.refreshError.set(true);
+                },
             });
     }
 

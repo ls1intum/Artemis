@@ -35,6 +35,7 @@
                 "lastUpdatedLabel": "Zuletzt aktualisiert",
                 "refresh": "Daten aktualisieren",
                 "refreshHint": "Berechnet die Abdeckung über alle Kurse neu; kann eine Weile dauern und Weaviate belasten.",
+                "refreshError": "Die Aktualisierung der Kursabdeckung ist fehlgeschlagen. Bitte versuche es erneut.",
                 "search": "Kurse suchen",
                 "sortBy": "Sortieren nach",
                 "filterByStatus": "Nach Status filtern",

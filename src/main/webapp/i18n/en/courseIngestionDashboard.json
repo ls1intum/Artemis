@@ -35,6 +35,7 @@
                 "lastUpdatedLabel": "Last updated",
                 "refresh": "Refresh data",
                 "refreshHint": "Recomputes coverage across all courses; may take a while and load Weaviate.",
+                "refreshError": "Failed to refresh course coverage. Please try again.",
                 "search": "Search courses",
                 "sortBy": "Sort by",
                 "filterByStatus": "Filter by status",

@@ -48,6 +48,12 @@
         </div>
     </div>
 
+    @if (refreshError()) {
+        <tumaet-ui-message severity="error" class="w-full" aria-live="assertive" data-testid="coverage-refresh-error">{{
+            'artemisApp.courseIngestionDashboard.matrix.refreshError' | artemisTranslate
+        }}</tumaet-ui-message>
+    }
+
     @if (loading()) {
         <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
     }
