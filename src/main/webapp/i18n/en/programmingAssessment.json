@@ -16,7 +16,8 @@
             "codeIssueNotApplied": "This issue does not deduct the maximum number of possible points, since similar code issues already deduct enough points. If this was the only issue, it would deduct {{points}} points.",
             "invalidAssessments": "Your assessments are not valid!",
             "line": "Line {{ line }}",
-            "lineRange": "Lines {{ from }}–{{ to }}"
+            "lineRange": "Lines {{ from }}–{{ to }}",
+            "loadFeedbackSuggestionsFailed": "Retrieving AI generated feedback suggestions failed."
         }
     }
 }

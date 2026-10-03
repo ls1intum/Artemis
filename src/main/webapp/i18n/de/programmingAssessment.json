@@ -16,7 +16,8 @@
             "codeIssueNotApplied": "Dieses Issue zieht nicht die maximale Punktzahl ab, da bereits andere ähnliche Issues genug Punkte abziehen. Wenn dies das einzige Issue wäre, würde es {{points}} Punkte abziehen.",
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
             "line": "Zeile {{ line }}",
-            "lineRange": "Zeilen {{ from }}–{{ to }}"
+            "lineRange": "Zeilen {{ from }}–{{ to }}",
+            "loadFeedbackSuggestionsFailed": "Laden der KI-Feedback-Vorschläge ist fehlgeschlagen."
         }
     }
 }

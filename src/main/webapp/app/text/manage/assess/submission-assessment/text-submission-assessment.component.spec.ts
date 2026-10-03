@@ -728,6 +728,25 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.textBlockRefs[0].feedback?.text).toEqual(feedbackSuggestionTextBlockRef.feedback!.text);
     });
 
+    it('should cancel a pending feedback-suggestions request when the component is reused for a new submission', async () => {
+        component.textBlockRefs = [];
+        component.unreferencedFeedback.set([]);
+        const subject = new Subject<(TextBlockRef | Feedback)[]>();
+        vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(subject.asObservable());
+
+        component.loadFeedbackSuggestions();
+        // The component is reused for a new assessment before the stale request resolves.
+        component['resetComponent']();
+
+        const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
+        subject.next([feedbackSuggestionTextBlockRef]);
+        subject.complete();
+        await fixture.whenStable();
+
+        // The stale response must not leak into the reused component's state.
+        expect(component.textBlockRefs).toHaveLength(0);
+    });
+
     it.each([
         // No existing blocks
         { input: [], output: [] },

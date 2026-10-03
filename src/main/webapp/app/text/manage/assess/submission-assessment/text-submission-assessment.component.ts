@@ -196,6 +196,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * All properties MUST be set to a default value (e.g. null) to prevent data corruption by state leaking into following new assessments.
      */
     private resetComponent(): void {
+        // Cancel a still-pending feedback-suggestion request for the previous submission: the component is reused
+        // for the next one, and its eventual response/error must not apply to the assessment now being shown.
+        this.feedbackSuggestionsObservable?.unsubscribe();
+
         this.participation = undefined;
         this.submission = undefined;
         this.exercise = undefined;
@@ -526,6 +530,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                     // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it
                     // and this request; refresh so the opt-in hint reacts instead of leaving this silently failed.
                     this.aiExperienceOptInService.refreshAiExperience().subscribe();
+                } else {
+                    this.alertService.error('artemisApp.textAssessment.error.loadFeedbackSuggestionsFailed');
                 }
             },
         });
