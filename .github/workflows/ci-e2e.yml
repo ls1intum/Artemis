@@ -152,6 +152,7 @@ jobs:
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
       - name: E2E Teardown
+        id: teardown
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
@@ -163,7 +164,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-test-report
         with:
-          artifact-name: 'JUnit Test Results Phase 1'
+          artifact-name: ${{ steps.teardown.outputs.junit-artifact-name }}
           download-path: phase1-test-results
           check-name: 'Phase 1: E2E Test Report'
           commit-sha: ${{ inputs.commit_sha }}
@@ -341,6 +342,7 @@ jobs:
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
       - name: E2E Teardown
+        id: teardown
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
@@ -352,7 +354,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-test-report
         with:
-          artifact-name: 'JUnit Test Results Phase 2'
+          artifact-name: ${{ steps.teardown.outputs.junit-artifact-name }}
           download-path: phase2-test-results
           check-name: 'Phase 2: E2E Test Report'
           commit-sha: ${{ inputs.commit_sha }}
@@ -531,6 +533,7 @@ jobs:
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
       - name: E2E Teardown
+        id: teardown
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
@@ -540,7 +543,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/download-artifact@v8
         with:
-          name: JUnit Test Results
+          name: ${{ steps.teardown.outputs.junit-artifact-name }}
           path: all-test-results
 
       - name: All Tests Report (PR)
@@ -691,6 +694,7 @@ jobs:
         run: .ci/E2E-tests/execute.sh multi-node playwright
 
       - name: E2E Teardown
+        id: teardown
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
@@ -700,7 +704,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/download-artifact@v8
         with:
-          name: JUnit Test Results
+          name: ${{ steps.teardown.outputs.junit-artifact-name }}
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
