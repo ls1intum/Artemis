@@ -204,6 +204,8 @@ public class OnlineUnitResource {
 
     private static final int MAX_DOMAIN_LENGTH = 253;
 
+    private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("[\\r\\n]");
+
     /** A single DNS label: 1 to 63 letters, digits or hyphens, neither starting nor ending with a hyphen. */
     private static final Pattern DOMAIN_LABEL_PATTERN = Pattern.compile("[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?");
 
@@ -258,7 +260,7 @@ public class OnlineUnitResource {
             throw new BadRequestException("The specified link does not contain a valid domain");
         }
 
-        log.info("Requesting online resource at {}", url.toString().replaceAll("[\\r\\n]", "_"));
+        log.info("Requesting online resource at {}", LINE_BREAK_PATTERN.matcher(url.toString()).replaceAll("_"));
 
         try {
             // Request the document, limited to 3 seconds and 500 KB (enough for most websites)

@@ -386,11 +386,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * Like {@link #getCourseViaExerciseGroupOrCourseMember()}, for callers that work on a fully loaded exercise
-     * (never a masked exam graph) and therefore require a course.
+     * Like {@link #getCourseViaExerciseGroupOrCourseMember()}, for fully loaded exercises that require a course.
      *
-     * @return Course of the exercise
-     * @throws IllegalStateException if the course cannot be resolved
+     * @return Course of the exercise, never null
      */
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMemberElseThrow() {

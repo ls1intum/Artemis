@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -32,8 +31,9 @@ public class ModelingSubmissionExportService extends SubmissionExportService {
     @Override
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
         if (((ModelingSubmission) submission).getModel() == null) {
-            // create empty file if submission is empty, an existing file stays untouched
-            Files.write(file.toPath(), new byte[0], StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            if (!file.exists()) {
+                Files.createFile(file.toPath()); // create empty file if submission is empty
+            }
         }
         else {
             try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
