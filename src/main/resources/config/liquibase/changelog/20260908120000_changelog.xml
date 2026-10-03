@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Track the content fingerprint of lecture unit ingestion.
+
+        content_fingerprint is the fingerprint of the source content (PDF bytes and video source) computed when a job
+        is dispatched to Iris and sent along with the request; Iris stamps it verbatim into the vector store.
+        confirmed_fingerprint records the fingerprint of the last run whose terminal success callback arrived. A unit
+        is verifiably up to date exactly when both match the fingerprint of its current content, which lets a lost
+        callback be resolved by reading the stamp back from the index instead of re-running the whole pipeline.
+        Both are nullable: rows ingested before this change have no fingerprint until their next dispatch.
+    -->
+    <changeSet id="20260908120000-1" author="artemis">
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="content_fingerprint" type="VARCHAR(80)"/>
+            <column name="confirmed_fingerprint" type="VARCHAR(80)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Worker lease for lecture unit processing.
+
+        An in-flight run is no longer a stored fact but a lease: the Pyris worker that claimed the job
+        renews last_heartbeat_at on a fixed short interval that is decoupled from the pipeline's actual
+        progress, and locked_by records the boot id of the worker process holding the lease. Liveness is
+        then answerable from the row alone at read time (lease fresh = running, lease lapsed = lost), so
+        neither the scheduler nor the UI ever has to infer it from the absence of progress callbacks.
+
+        Both columns are nullable: rows dispatched through the legacy push path (or by an older Iris that
+        does not send worker heartbeats) simply have no lease and keep the previous timeout-based stuck
+        detection. No data migration.
+    -->
+    <changeSet id="20260910050000-1" author="artemis">
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="last_heartbeat_at" type="timestamp(3)"/>
+            <column name="locked_by" type="VARCHAR(64)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

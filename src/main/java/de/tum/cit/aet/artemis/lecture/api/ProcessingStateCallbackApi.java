@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
 import de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService;
 
 /**
@@ -41,13 +43,69 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
     /**
      * Handle a heartbeat from a running Iris pipeline.
      * Updates {@code lastUpdated} on the processing state so stuck detection
-     * can use "time since last callback" instead of "time since phase started".
+     * can use "time since last callback" instead of "time since phase started",
+     * and records the optionally reported stage and progress in the stage ledger.
      *
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token for validation
+     * @param stageName     name of the stage the run is currently in; may be null (older Iris versions)
+     * @param stageProgress progress counter within the stage; may be null
+     * @param stageTotal    total work items of the stage; may be null
      */
-    public void handleHeartbeat(long lectureUnitId, String jobToken) {
-        processingStateCallbackService.handleHeartbeat(lectureUnitId, jobToken);
+    public void handleHeartbeat(long lectureUnitId, String jobToken, String stageName, Integer stageProgress, Integer stageTotal) {
+        processingStateCallbackService.handleHeartbeat(lectureUnitId, jobToken, stageName, stageProgress, stageTotal);
+    }
+
+    /**
+     * Claim up to {@code maxJobs} pending IDLE jobs for a pulling Pyris worker.
+     *
+     * @param workerBootId boot id of the claiming worker process
+     * @param maxJobs      how many jobs the worker can take right now
+     * @return the claimed units as scalar descriptions for the iris module to prepare and activate
+     */
+    public List<ClaimedIngestionUnitDTO> claimUnitsForWorker(String workerBootId, int maxJobs) {
+        return processingStateCallbackService.claimUnitsForWorker(workerBootId, maxJobs);
+    }
+
+    /**
+     * Activate a worker claim: transition into the target phase, record job token and fingerprint,
+     * and open the worker lease.
+     *
+     * @param lectureUnitId      the claimed unit
+     * @param jobToken           the registered Pyris job token
+     * @param targetPhase        the in-flight phase determined at claim time
+     * @param contentFingerprint the fingerprint computed at claim time
+     * @param workerBootId       boot id of the worker executing the run
+     * @param claimToken         identity of the claim being activated, from {@link ClaimedIngestionUnitDTO#claimToken()}
+     * @return true if the unit still held this exact claim and was activated; false if the claim was already
+     *         released, re-claimed, or activated by another call, in which case nothing was changed
+     */
+    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId, String claimToken) {
+        return processingStateCallbackService.activateClaimedJob(lectureUnitId, jobToken, targetPhase, contentFingerprint, workerBootId, claimToken);
+    }
+
+    /**
+     * Mark a claimed unit SKIPPED because preparation found it not processable, but only while it
+     * still holds exactly the claim that decided it was not processable.
+     *
+     * @param lectureUnitId the claimed unit
+     * @param claimToken    identity of the claim, from {@link ClaimedIngestionUnitDTO#claimToken()}
+     * @return true if the unit still held this claim and was marked SKIPPED; false if the claim was
+     *         already released, re-claimed, or activated, in which case nothing was changed
+     */
+    public boolean markClaimedUnitSkipped(long lectureUnitId, String claimToken) {
+        return processingStateCallbackService.markClaimedUnitSkipped(lectureUnitId, claimToken);
+    }
+
+    /**
+     * Renew the worker lease of every listed run.
+     *
+     * @param workerBootId    boot id of the heartbeating worker process
+     * @param activeJobTokens the job tokens of every run the worker is currently executing
+     * @return the subset of tokens that no longer belong to an in-flight run
+     */
+    public List<String> renewWorkerLeases(String workerBootId, List<String> activeJobTokens) {
+        return processingStateCallbackService.renewWorkerLeases(workerBootId, activeJobTokens);
     }
 
     /**
