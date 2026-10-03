@@ -35,6 +35,7 @@ import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -635,6 +636,41 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
             assertThat(feedback.getId()).isNegative();
             assertThat(feedback.getDetailText()).isEqualTo("lock failure message");
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionKeepsAutomaticFeedbackAfterRequestedAiFeedback() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        submission.setParticipation(programmingExerciseStudentParticipation);
+        submission = submissionRepository.save(submission);
+
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(3), submission);
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "lockAfterAiTest");
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "test failure before the AI feedback");
+
+        // the student requested AI feedback after the tests ran, so it is the latest result of the submission
+        Result athenaResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now().minusHours(2), submission);
+        var aiFeedback = new Feedback();
+        aiFeedback.setType(FeedbackType.AUTOMATIC);
+        aiFeedback.setText("NonGradedFeedbackSuggestion:File Main.java at line 3");
+        aiFeedback.setDetailText("AI hint the student read");
+        aiFeedback.setCredits(2.0);
+        participationUtilService.addFeedbackToResult(aiFeedback, athenaResult);
+
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock";
+        var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+
+        Result draft = storedSubmission.getLatestResult();
+        assertThat(draft).isNotNull();
+        assertThat(draft.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        // the tutor starts from the test feedback, and the AI feedback is not part of the assessment
+        assertThat(draft.getFeedbacks()).anySatisfy(feedback -> assertThat(feedback.getDetailText()).isEqualTo("test failure before the AI feedback"));
+        assertThat(draft.getFeedbacks()).noneSatisfy(feedback -> assertThat(feedback.getDetailText()).isEqualTo("AI hint the student read"));
     }
 
     @Test

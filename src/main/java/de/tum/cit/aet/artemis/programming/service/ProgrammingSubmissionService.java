@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -470,15 +471,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public Result lockSubmission(Submission submission, int correctionRound) {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Optional<Result> optionalExistingResult;
-        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
-            optionalExistingResult = Optional.of(submission.getLatestResult());
-        }
-        else if (correctionRound == 0 && submission.getLatestResult() == null) {
+        if (correctionRound == 0) {
+            // AI feedback a student requested after the tests ran is the latest result then, but it is not part of the assessment:
+            // the test feedback to start from is on the latest result before it.
+            Result latestResult = submission.getNonAthenaResults().stream().max(Comparator.comparing(Result::getId)).orElse(null);
             // Older programming Exercises have only one result in each submission. One submission for the automatic result, another one for the manual one.
-            // When the assessment of such a submission is cancelled, this leaves behind a programming-submission without any results.
-            // We still want to be able to assess the result-less submission again, so we need to avoid the below else branch, and the following out of bounds Exception.
+            // When the assessment of such a submission is cancelled, this leaves behind a programming-submission without any results, which starts empty.
             // New automatic results can be easily created by using the "trigger all" feature
-            optionalExistingResult = Optional.empty();
+            optionalExistingResult = latestResult != null && AssessmentType.AUTOMATIC == latestResult.getAssessmentType() ? Optional.of(latestResult) : Optional.empty();
         }
         else {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));

@@ -2,8 +2,8 @@
     <p-message class="feedback-item mb-4 block" [severity]="messageSeverity(feedbackItem()!.color)" [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }">
         <div class="w-full">
             <div class="flex justify-between gap-8">
-                <h4 class="feedback-item__category mb-0 text-base font-bold">{{ feedbackItem()!.name }} {{ feedbackItem()!.title && '· ' + feedbackItem()!.title }}</h4>
-                @if (feedbackItem()!.credits) {
+                <h4 class="feedback-item__category mb-0 text-base font-bold">{{ headerText(feedbackItem()!) }}</h4>
+                @if (feedbackItem()!.credits && !feedbackItem()!.hideCredits) {
                     <span class="feedback-item__credits font-bold">
                         {{ roundValueSpecifiedByCourseSettings(feedbackItem()!.credits, course()) }}P
                         @if (feedbackItem()!.type === 'Subsequent') {

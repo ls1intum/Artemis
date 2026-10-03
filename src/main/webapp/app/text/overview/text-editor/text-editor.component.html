@@ -1,4 +1,4 @@
-<div [id]="'exercise-' + textExercise()?.id">
+<div [class.h-full]="showsAssessedSubmission" [id]="'exercise-' + textExercise()?.id">
     <!--resizable container-->
     @if (textExercise()) {
         <jhi-resizeable-container
@@ -8,7 +8,13 @@
             [showRightPanel]="examMode()"
         >
             <!--region Left Panel-->
-            <div left-body class="text-editor-grid ps-2 pb-2 w-100">
+            <div
+                left-body
+                class="text-editor-grid w-100"
+                [class.ps-2]="!showsAssessedSubmission"
+                [class.pb-2]="!showsAssessedSubmission"
+                [class.text-editor-grid--fill]="showsAssessedSubmission"
+            >
                 @if (textExercise()?.teamMode && isActive) {
                     <div class="grid-area-team-info pb-4 ps-md-2">
                         <jhi-team-participate-info-box
@@ -20,24 +26,27 @@
                     </div>
                 }
                 <div class="grid-area-main">
-                    <div>
-                        <span
-                            class="badge bg-primary mb-2"
-                            data-testid="word-count"
-                            [hidden]="submission() && !submission().submitted && isExamSummary()"
-                            jhiTranslate="artemisApp.textExercise.wordCount"
-                            [translateValues]="{ count: wordCount }"
-                        >
-                        </span>
-                        <span
-                            class="badge bg-primary mb-2"
-                            data-testid="character-count"
-                            [hidden]="submission() && !submission().submitted && isExamSummary()"
-                            jhiTranslate="artemisApp.textExercise.characterCount"
-                            [translateValues]="{ count: characterCount }"
-                        >
-                        </span>
-                    </div>
+                    <!-- An assessed submission shows its counts in the header of its panel instead -->
+                    @if (!showsAssessedSubmission) {
+                        <div>
+                            <span
+                                class="badge bg-primary mb-2"
+                                data-testid="word-count"
+                                [hidden]="submission() && !submission().submitted && isExamSummary()"
+                                jhiTranslate="artemisApp.textExercise.wordCount"
+                                [translateValues]="{ count: wordCount }"
+                            >
+                            </span>
+                            <span
+                                class="badge bg-primary mb-2"
+                                data-testid="character-count"
+                                [hidden]="submission() && !submission().submitted && isExamSummary()"
+                                jhiTranslate="artemisApp.textExercise.characterCount"
+                                [translateValues]="{ count: characterCount }"
+                            >
+                            </span>
+                        </div>
+                    }
                     @if (!((result() && (!isAutomaticResult || isExamSummary())) || isReadOnlyWithShowResult())) {
                         <textarea
                             id="text-editor"
@@ -63,7 +72,7 @@
                     } @else {
                         @if (!result()?.feedbacks?.length) {
                             <div class="row">
-                                <div class="col-md-12 col-lg-10 col-xl-8">
+                                <div class="col-12">
                                     <b [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
                                     <jhi-text-result [result]="result()" [course]="course()" />
@@ -72,46 +81,27 @@
                                 </div>
                             </div>
                         } @else {
-                            <div class="row">
-                                <div class="col-md-12 col-lg-10 col-xl-8">
-                                    <b>
-                                        {{
-                                            isOwnerOfParticipation()
-                                                ? ('artemisApp.textExercise.assessedSubmission' | artemisTranslate)
-                                                : ('artemisApp.textExercise.assessedSubmissionInstructor' | artemisTranslate)
-                                        }}:
-                                    </b>
-                                    @if (isAthenaAIResult(result())) {
-                                        <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
-                                    }
-                                    <hr />
-                                    <jhi-text-result [result]="result()" [course]="course()" />
-                                    <hr />
-                                </div>
-                                @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                                    <div id="additional-feedback" class="col-xl-8">
-                                        @for (feedback of unreferencedFeedback; track feedback.id) {
-                                            <jhi-unified-feedback
-                                                [feedback]="feedback"
-                                                [feedbackContent]="buildFeedbackTextForReview(feedback)"
-                                                [points]="feedback.credits || 0"
-                                                [scoreAccuracy]="course()?.accuracyOfScores"
-                                            />
-                                        }
-                                    </div>
+                            <!-- Framed like the submission panel of the assessment page, with the counts in its header. The points
+                                 stay where the student already reads them: the exercise header and the exercise details. -->
+                            <jhi-assessment-submission-panel
+                                titleKey="artemisApp.assessment.assessmentOfSubmission"
+                                [flush]="!isExamSummary()"
+                                data-testid="text-assessed-submission"
+                            >
+                                <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="word-count">
+                                    <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
+                                </tumaet-ui-tag>
+                                <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="character-count">
+                                    <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount }"></span>
+                                </tumaet-ui-tag>
+                                <jhi-text-result [result]="result()" [course]="course()" />
+                                <jhi-general-feedback [feedbacks]="unreferencedFeedback" [course]="course()" [separated]="true" [columns]="true" />
+                                <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
+                                @if (isOwnerOfParticipation() && isExamSummary()) {
+                                    <jhi-rating class="d-block mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
                                 }
-                                @if (isOwnerOfParticipation()) {
-                                    <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
-                                }
-                            </div>
+                            </jhi-assessment-submission-panel>
                         }
-                    }
-                    @if (textExercise() && result() && participation() && !examMode() && !isAutomaticResult) {
-                        <jhi-complaint-student-view
-                            [exercise]="textExercise()"
-                            [result]="resultWithComplaint() ? resultWithComplaint() : result()"
-                            [participation]="participation()"
-                        />
                     }
                 </div>
             </div>

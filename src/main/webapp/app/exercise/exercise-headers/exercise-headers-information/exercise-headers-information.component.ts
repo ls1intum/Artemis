@@ -10,6 +10,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { isPreliminaryProgrammingAIFeedback } from 'app/exercise/result/result.utils';
 import { InformationBox, InformationBoxComponent, InformationBoxLayout } from 'app/shared-ui/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
@@ -185,7 +186,8 @@ export class ExerciseHeadersInformationComponent {
 
     /** The latest result, used by all result-derived boxes when no previous result is selected in the history dropdown. */
     private readonly latestResult = computed<Result | undefined>(() => {
-        const results = this.sortedHistoryResults();
+        // Preliminary AI feedback on a programming submission is not graded, so the points come from the test results.
+        const results = this.sortedHistoryResults().filter((result) => !isPreliminaryProgrammingAIFeedback(result, this.exercise().type));
         // Practice results are unrated, so in practice mode use the latest result regardless of the rated flag.
         return this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
     });
@@ -507,12 +509,9 @@ export class ExerciseHeadersInformationComponent {
         return this.athenaEnabled() && this.resolvedCourse()?.athenaFormativeFeedbackEnabled && this.isFeedbackRequestEligibleExerciseType() ? this.getAiFeedbackItem() : undefined;
     }
 
-    /** Mirrors the exercise-type/assessment-type eligibility used to show the feedback-request action itself, so the quota box isn't shown for exercise types (e.g. file-upload, quiz) that don't support feedback requests. */
+    /** Mirrors the exercise-type eligibility used to show the feedback-request action itself, so the quota box isn't shown for exercise types (e.g. file-upload, quiz) that don't support feedback requests. */
     isFeedbackRequestEligibleExerciseType(): boolean {
         const exercise = this.exercise();
-        if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
-            return false;
-        }
         return exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING;
     }
 

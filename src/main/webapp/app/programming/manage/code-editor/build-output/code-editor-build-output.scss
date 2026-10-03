@@ -5,6 +5,16 @@ Build-output
 .build-output {
     height: inherit;
 
+    /* Spaces the title from its icon in every language, which the translation used to do with a non-breaking space */
+    .card-title > fa-icon {
+        margin-right: 0.35rem;
+    }
+
+    /* In a tab of the assessment's feedback panel, which frames it already */
+    &--embedded {
+        border: 0 !important;
+    }
+
     &__content {
         font-family: Menlo, Monaco, 'Courier New', monospace;
         font-size: 11px;

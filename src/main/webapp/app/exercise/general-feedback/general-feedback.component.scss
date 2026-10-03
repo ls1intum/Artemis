@@ -1,0 +1,66 @@
+@use 'src/main/webapp/content/scss/artemis-mixins' as mixins;
+
+// Inside the modeling assessment panel, which Apollon hosts, the heading takes Apollon's muted color so it matches the
+// "On the diagram" heading above it; everywhere else Apollon's tokens are undefined and the Artemis role applies.
+.general-feedback__title {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0 0 0.375rem;
+    color: var(--apollon-secondary, var(--text-body-secondary));
+    font-size: 0.8125rem;
+    font-weight: 600;
+
+    // Set apart from the content above it, e.g. the feedback on the diagram in the modeling assessment panel
+    :host(:not(:first-child)) & {
+        margin-top: 0.875rem;
+    }
+}
+
+// The rule takes over the spacing from the content above, so the heading's own top margin is dropped. It is the same
+// rule as above the rating in the exercise details; Apollon defines its tokens globally, so they are no fallback here.
+.general-feedback--separated {
+    margin-top: 0.75rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid var(--border-color);
+
+    .general-feedback__title {
+        margin-top: 0;
+    }
+}
+
+// The same pill as the count on the general feedback tab of the programming exercise and on the file browser's files
+.general-feedback__count {
+    @include mixins.count-pill;
+}
+
+.general-feedback__list {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+    gap: 0.75rem;
+    list-style: none;
+
+    // The list's gap already spaces the cards, so a card's own bottom margin (meant for a plain stack) is dropped.
+    ::ng-deep .unified-feedback {
+        margin-bottom: 0;
+    }
+}
+
+// As many columns as fit, each at least as wide as a card's minimum; auto-fit drops the empty ones, so a single card still
+// takes the full width. The cards of a row take its full height, so the rows line up however long each card's text is.
+.general-feedback__list--columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+
+    > li > jhi-unified-feedback {
+        display: block;
+        height: 100%;
+    }
+
+    ::ng-deep .unified-feedback {
+        max-width: none;
+        height: 100%;
+    }
+}

@@ -374,7 +374,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             id: 3,
             type: ExerciseType.PROGRAMMING,
             course: { athenaFormativeFeedbackEnabled: true },
-            assessmentType: AssessmentType.SEMI_AUTOMATIC,
+            // automatically assessed: the button only depends on the course's formative feedback setting
+            assessmentType: AssessmentType.AUTOMATIC,
             allowOfflineIde: true,
             studentParticipations: [gradedParticipation],
         } as ProgrammingExercise;

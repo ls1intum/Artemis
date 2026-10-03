@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideTranslateService } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeedbackNodeComponent } from 'app/exercise/feedback/node/feedback-node.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
@@ -24,6 +24,39 @@ describe('FeedbackNodeComponent', () => {
         fixture.detectChanges();
 
         expect(component.feedbackItem()).toBeDefined();
+    });
+
+    describe('headerText', () => {
+        beforeEach(() => {
+            vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key: string | string[], params?: Record<string, unknown>) =>
+                key === 'artemisApp.result.detail.codeIssue.line' ? `at line ${params!.line}` : `at lines ${params!.from}-${params!.to}`,
+            );
+        });
+
+        const item = (overrides: Partial<FeedbackItem>): FeedbackItem => Object.assign(new FeedbackItem(), { name: 'Reviewer', ...overrides });
+
+        it('should name the category, title and line of a feedback on one line', () => {
+            expect(component.headerText(item({ title: 'Missing null check', codeReference: { filePath: 'src/Foo.java', line: 7 } }))).toBe(
+                'Reviewer · Missing null check · src/Foo.java at line 7',
+            );
+        });
+
+        it('should name the line range of a feedback on several lines', () => {
+            expect(component.headerText(item({ title: 'Duplicated logic', codeReference: { filePath: 'src/Foo.java', line: 7, lineEnd: 11 } }))).toBe(
+                'Reviewer · Duplicated logic · src/Foo.java at lines 7-11',
+            );
+        });
+
+        it('should not repeat the location of a legacy title that already names it', () => {
+            expect(component.headerText(item({ title: 'File src/Foo.java at line 7', codeReference: { filePath: 'src/Foo.java', line: 7 } }))).toBe(
+                'Reviewer · File src/Foo.java at line 7',
+            );
+        });
+
+        it('should leave out what a feedback does not have', () => {
+            expect(component.headerText(item({ title: 'General remark' }))).toBe('Reviewer · General remark');
+            expect(component.headerText(item({ codeReference: { filePath: 'src/Foo.java', line: 7 } }))).toBe('Reviewer · src/Foo.java at line 7');
+        });
     });
 
     it('should set specific node type correctly for feedback group', () => {
@@ -114,5 +147,23 @@ describe('FeedbackNodeComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelectorAll('.feedback-item__code-reference-line--referenced')).toHaveLength(3);
+    });
+
+    describe('credits', () => {
+        const itemWithCredits = (hideCredits?: boolean): FeedbackItem => ({ name: 'Feedback', type: 'Reviewer', credits: 2.5, hideCredits, feedbackReference: {} }) as FeedbackItem;
+
+        it('should show the credits of a feedback item', () => {
+            fixture.componentRef.setInput('feedbackItemNode', itemWithCredits());
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('.feedback-item__credits')?.textContent).toContain('2.5P');
+        });
+
+        it('should not show hidden credits of a feedback item', () => {
+            fixture.componentRef.setInput('feedbackItemNode', itemWithCredits(true));
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('.feedback-item__credits')).toBeNull();
+        });
     });
 });

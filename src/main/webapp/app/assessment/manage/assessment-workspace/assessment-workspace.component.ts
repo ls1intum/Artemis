@@ -24,6 +24,8 @@ export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
 
     readonly detailsLabelKey = input('artemisApp.assessment.feedbackAndNotes');
     readonly showDetails = input(true);
+    /** Whether the page fills the details header itself through `[assessmentWorkspaceDetailsHeader]`, e.g. with tabs. */
+    readonly customDetailsHeader = input(false);
     readonly storageKey = input.required<string>();
 
     protected readonly sidebarStorageKey = computed(() => `${this.storageKey()}-support`);

@@ -41,11 +41,8 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
@@ -173,12 +170,9 @@ describe('TextSubmissionAssessmentComponent', () => {
                 MockComponent(TextBlockAssessmentCardComponent),
                 MockComponent(TextBlockFeedbackEditorComponent),
                 MockComponent(ManualTextblockSelectionComponent),
-                MockComponent(GradingInstructionLinkIconComponent),
                 MockComponent(ConfirmIconComponent),
                 MockComponent(AssessmentLayoutComponent),
-                MockComponent(ScoreDisplayComponent),
                 MockComponent(AssessmentInstructionsComponent),
-                MockComponent(ResizeableContainerComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
@@ -352,7 +346,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         // Call validateFeedback which updates the total score
         component.validateFeedback();
 
-        expect(component.totalScore()).toBe(42);
+        expect(component.scoreSummary().total).toBe(42);
     });
 
     it('should save the assessment with correct parameters', async () => {

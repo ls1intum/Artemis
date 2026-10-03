@@ -7,7 +7,6 @@ import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -26,7 +25,6 @@ export class TextBlockAssessmentCardComponent {
     selected = input<boolean>(false);
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
-    criteria = input<GradingCriterion[]>();
 
     didSelect = output<OptionalTextBlockRef>();
     didChange = output<TextBlockRef>();

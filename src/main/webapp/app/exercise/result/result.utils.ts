@@ -146,6 +146,18 @@ export function isAthenaAIResult(result: Result): boolean {
     return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
 }
 
+/**
+ * Checks whether the result is preliminary AI feedback on a programming submission. Such a result is not graded: its score only
+ * copies a test result of the same submission, so its score and points are not shown and it takes no part in comparing scores.
+ *
+ * @param result the result to check
+ * @param exerciseType the type of the exercise the result belongs to
+ * @return true if the result is Athena AI feedback on a programming exercise
+ */
+export function isPreliminaryProgrammingAIFeedback(result: Result, exerciseType: ExerciseType | undefined): boolean {
+    return exerciseType === ExerciseType.PROGRAMMING && isAthenaAIResult(result);
+}
+
 const getAthenaFeedbackTemplateStatus = (result: Result | undefined): ResultTemplateStatus | undefined => {
     if (!result || !isAthenaAIResult(result)) {
         return undefined;

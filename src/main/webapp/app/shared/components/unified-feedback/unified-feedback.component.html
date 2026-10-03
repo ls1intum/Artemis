@@ -1,8 +1,42 @@
 <div class="unified-feedback" [ngClass]="inferredAlertClass()">
     <div class="unified-feedback-content">
-        @if (inferredReference() && showReference()) {
+        @if ((inferredReference() && showReference()) || linkedCriterionTitle()) {
             <div class="unified-feedback-reference">
-                <span class="unified-feedback-reference-text" [tumAetUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
+                @if (inferredReference() && showReference()) {
+                    @if (referenceType()) {
+                        <span class="unified-feedback-reference-label">{{ referenceType() }}</span>
+                    }
+                    <span #referenceText class="unified-feedback-reference-text" [tumAetUiTooltip]="referenceTooltip() || referenceTruncated() ? inferredReference()! : ''">{{
+                        inferredReference()
+                    }}</span>
+                }
+                @if (linkedCriterionTitle()) {
+                    <span class="unified-feedback-criterion" data-testid="linked-criterion">
+                        <span class="unified-feedback-criterion-content" [tumAetUiTooltip]="linkedCriterionTooltip()">
+                            <fa-icon class="unified-feedback-criterion-icon" [icon]="faLink" />
+                            <span class="sr-only">{{ 'artemisApp.assessment.linkedCriterion' | artemisTranslate }}</span>
+                            <span #criterionTitle class="unified-feedback-criterion-title">{{ linkedCriterionTitle() }}</span>
+                            @if (isLinkedCriterionKnown()) {
+                                <span class="unified-feedback-criterion-suffix">{{ 'artemisApp.assessment.linkedCriterionSuffix' | artemisTranslate }}</span>
+                            }
+                        </span>
+                        @if (linkedGradingScale()) {
+                            <span #gradingScaleSegment class="unified-feedback-criterion-scale" [tumAetUiTooltip]="linkedCriterionTooltip()">{{ linkedGradingScale() }}</span>
+                        }
+                        @if (editable() && !readOnly()) {
+                            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This wrapper only isolates the nested control from the feedback row. -->
+                            <span class="unified-feedback-criterion-remove" (click)="$event.stopPropagation()">
+                                <jhi-confirm-icon
+                                    [initialIcon]="faTimes"
+                                    [confirmIcon]="faLinkSlash"
+                                    [initialTooltip]="'artemisApp.assessment.removeCriterionLink' | artemisTranslate"
+                                    [confirmTooltip]="'artemisApp.assessment.messages.removeAssessmentInstructionLink' | artemisTranslate"
+                                    (confirmEvent)="removeGradingInstructionLink()"
+                                />
+                            </span>
+                        }
+                    </span>
+                }
             </div>
         }
 
@@ -12,20 +46,22 @@
                     <span class="unified-feedback-icon-badge">
                         <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     </span>
-                    @if (editable() && titleEditable()) {
+                    @if (editable()) {
                         <textarea
                             #titleTextarea
                             class="unified-feedback-title-input"
                             rows="1"
+                            [maxlength]="TITLE_MAX_LENGTH"
                             [ngModel]="displayTitle()"
                             (ngModelChange)="onTitleInput($event)"
                             (input)="onTitleTextareaInput()"
+                            (blur)="applyDefaultTitleIfEmpty()"
                             [placeholder]="defaultTitlePlaceholder()"
                             [attr.aria-label]="defaultTitlePlaceholder()"
                             [disabled]="readOnly()"
                         ></textarea>
                     } @else if (inferredTitle()) {
-                        <span class="unified-feedback-title" [tumAetUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
+                        <span #titleText class="unified-feedback-title" [tumAetUiTooltip]="titleTruncated() ? inferredTitle()! : ''">{{ inferredTitle() }}</span>
                     }
                 </div>
                 <div class="unified-feedback-header-right">
@@ -35,7 +71,7 @@
                                 type="button"
                                 class="unified-feedback-points-step"
                                 [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
-                                [disabled]="stepCreditsDisabled()"
+                                [disabled]="stepCreditsDisabled() || (feedbackCredits() ?? 0) <= CREDITS_MIN"
                                 (mousedown)="stashRawCredits(creditsInput.value)"
                                 (click)="stepCredits(-CREDITS_STEP)"
                             >
@@ -56,7 +92,7 @@
                                 type="button"
                                 class="unified-feedback-points-step"
                                 [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
-                                [disabled]="stepCreditsDisabled()"
+                                [disabled]="stepCreditsDisabled() || (feedbackCredits() ?? 0) >= CREDITS_MAX"
                                 (mousedown)="stashRawCredits(creditsInput.value)"
                                 (click)="stepCredits(CREDITS_STEP)"
                             >
@@ -65,9 +101,6 @@
                         </div>
                         <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This toolbar only isolates its nested controls from the feedback row. -->
                         <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()">
-                            @if (feedback()?.gradingInstruction) {
-                                <jhi-grading-instruction-link-icon [feedback]="feedback()!" />
-                            }
                             @if (!readOnly()) {
                                 @if (canDismissWithoutConfirm()) {
                                     <button
@@ -101,12 +134,6 @@
             </div>
 
             @if (editable()) {
-                @if (gradingInstructionText()) {
-                    <div class="unified-feedback-rubric-label">
-                        <span>{{ gradingInstructionText() }}</span>
-                        <fa-icon [icon]="faQuestionCircle" [tumAetUiTooltip]="rubricHint()" />
-                    </div>
-                }
                 <div class="unified-feedback-detail-row">
                     <ng-content select="[unifiedFeedbackExtraControls]" />
                     <textarea
@@ -114,6 +141,7 @@
                         class="unified-feedback-detail-input"
                         [class.unified-feedback-detail-input-missing]="isDetailMissing()"
                         rows="2"
+                        [maxlength]="DETAIL_MAX_LENGTH"
                         [ngModel]="feedbackDetail() ?? ''"
                         (ngModelChange)="onDetailChange($event)"
                         (input)="onDetailInput()"
@@ -122,6 +150,7 @@
                         [attr.aria-label]="feedbackDetailAriaLabel()"
                     ></textarea>
                 </div>
+                <div class="unified-feedback-detail-counter">{{ detailLength() }}/{{ DETAIL_MAX_LENGTH }}</div>
                 @if (correctionStatusLabel()) {
                     <div class="unified-feedback-correction-status">
                         <span

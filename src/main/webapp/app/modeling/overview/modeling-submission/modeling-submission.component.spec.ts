@@ -8,7 +8,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, RouterModule } from '@angular/router';
 import { type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -39,7 +38,6 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { User } from 'app/account/user/user.model';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
@@ -115,10 +113,10 @@ describe('ModelingSubmissionComponent', () => {
 
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, RatingComponent, ComplaintsStudentViewComponent],
+                imports: [ModelingEditorComponent, RatingComponent],
             },
             add: {
-                imports: [StubModelingEditorComponent, MockComponent(RatingComponent), MockComponent(ComplaintsStudentViewComponent)],
+                imports: [StubModelingEditorComponent, MockComponent(RatingComponent)],
             },
         });
 
@@ -159,7 +157,6 @@ describe('ModelingSubmissionComponent', () => {
                 MockComponent(ModelingAssessmentComponent),
                 MockComponent(UnifiedFeedbackComponent),
                 MockComponent(RatingComponent),
-                MockComponent(ComplaintsStudentViewComponent),
             ],
             providers: [
                 MockProvider(ChangeDetectorRef),
@@ -709,7 +706,8 @@ describe('ModelingSubmissionComponent', () => {
 
         feedback.gradingInstruction = gradingInstruction;
         textToBeDisplayed = comp.buildFeedbackTextForReview(feedback);
-        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.text);
+        // linked to a grading instruction, the text is the title, so the body is the instruction's feedback alone
+        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback);
     });
 
     it('should deactivate return true when there are unsaved changes', () => {
@@ -894,40 +892,32 @@ describe('ModelingSubmissionComponent', () => {
         });
     });
     describe('feedback presentation', () => {
-        it.each([
-            { credits: 5, tone: 'positive', signed: true, pluralKey: 'many', icon: faCheck },
-            { credits: 1, tone: 'positive', signed: true, pluralKey: 'one', icon: faCheck },
-            { credits: -2.5, tone: 'negative', signed: false, pluralKey: 'many', icon: faXmark },
-            { credits: -1, tone: 'negative', signed: false, pluralKey: 'one', icon: faXmark },
-            { credits: 0, tone: 'zero', signed: false, pluralKey: 'many', icon: faTriangleExclamation },
-            { credits: undefined, tone: 'zero', signed: false, pluralKey: 'many', icon: faTriangleExclamation },
-        ])('describes feedback worth $credits credits as $tone', ({ credits, tone, signed, pluralKey, icon }) => {
-            createModelingSubmissionComponent();
-            const translate = vi.spyOn(TestBed.inject(TranslateService), 'instant');
-            const feedback = { credits } as Feedback;
-
-            expect(comp['feedbackTone'](feedback)).toBe(tone);
-            expect(comp['feedbackToneIcon'](feedback)).toBe(icon);
-
-            const rendered = comp['feedbackPoints'](feedback);
-            expect(translate).toHaveBeenCalledWith(`artemisApp.assessment.detail.points.${pluralKey}`, { points: (credits ?? 0).toLocaleString('en') });
-            expect(rendered.startsWith('+')).toBe(signed);
-        });
-
-        it('should name the element by its type, soften the Apollon owner separator, and stay silent without one', () => {
+        it('should name the element, soften the Apollon owner separator, and stay silent without one', () => {
             createModelingSubmissionComponent();
             comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
 
-            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('attribute Course › + title: String');
+            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('Course › + title: String');
             comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: 'class' } });
-            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('class TestClass');
-            comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: '' } });
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('TestClass');
             comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
             expect(comp['feedbackElementName']({} as Feedback)).toBeUndefined();
             expect(comp['feedbackElementName']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();
             comp.assessmentsNames.set({ ref1: { name: '', type: 'attribute' } });
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBeUndefined();
+        });
+
+        it('should label the element type the same way Apollon does, and stay silent without one', () => {
+            createModelingSubmissionComponent();
+            comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
+
+            expect(comp['feedbackElementType']({ referenceId: 'ref1' } as Feedback)).toBe('Attribute');
+            comp.assessmentsNames.set({ ref1: { name: 'Course::+ getTitle()', type: 'method' } });
+            expect(comp['feedbackElementType']({ referenceId: 'ref1' } as Feedback)).toBe('Method');
+            comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: 'Class' } });
+            expect(comp['feedbackElementType']({ referenceId: 'ref1' } as Feedback)).toBe('Class');
+            comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: '' } });
+            expect(comp['feedbackElementType']({ referenceId: 'ref1' } as Feedback)).toBeUndefined();
+            expect(comp['feedbackElementType']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();
         });
     });
 
@@ -1011,22 +1001,6 @@ describe('ModelingSubmissionComponent', () => {
             await vi.waitFor(() => expect(captureException).toHaveBeenCalled());
 
             expect(comp['apollonCollaborationUser']()).toBeUndefined();
-        });
-    });
-
-    describe('complaint section', () => {
-        it.each([
-            { result: true, examMode: false, feedbackView: false, expected: true },
-            { result: false, examMode: false, feedbackView: false, expected: false },
-            { result: true, examMode: true, feedbackView: false, expected: false },
-            { result: true, examMode: false, feedbackView: true, expected: false },
-        ])('shows the complaint section: $expected (result=$result, exam=$examMode, feedbackView=$feedbackView)', ({ result, examMode, feedbackView, expected }) => {
-            createModelingSubmissionComponent();
-            comp.result.set(result ? ({ id: 1 } as Result) : undefined);
-            comp.examMode.set(examMode);
-            comp.isFeedbackView.set(feedbackView);
-
-            expect(comp['showComplaintSection']()).toBe(expected);
         });
     });
 

@@ -1,17 +1,29 @@
 <section class="assessment-note">
-    <header class="assessment-note__header">
-        <h3 id="assessment-note-label" jhiTranslate="artemisApp.assessment.detail.assessmentNote"></h3>
-        <p id="assessment-note-description" jhiTranslate="artemisApp.assessment.detail.assessmentNoteInfo"></p>
+    <!-- Headed like the general feedback list: the title on the leading edge, over a dividing line. Where a tab already names
+         the note, the title is only read out, since it labels the text box. -->
+    <header class="assessment-note__header" [class.sr-only]="!showTitle()">
+        <h4 id="assessment-note-label" class="assessment-note__title" jhiTranslate="artemisApp.assessment.detail.assessmentNote"></h4>
     </header>
-    <textarea
-        tumAetUiTextarea
-        class="assessment-note__textarea"
-        rows="3"
-        (input)="onAssessmentNoteInput($event)"
-        [value]="assessmentNote()?.note ?? ''"
-        name="assessment_note"
-        id="assessment_note"
-        aria-labelledby="assessment-note-label"
-        aria-describedby="assessment-note-description"
-    ></textarea>
+    <!-- Framed like a feedback card, so the note reads as the same kind of entry as the general feedback. -->
+    <div class="assessment-note__card">
+        <div class="assessment-note__card-header">
+            <p id="assessment-note-description" class="assessment-note__description" jhiTranslate="artemisApp.assessment.detail.assessmentNoteInfo"></p>
+        </div>
+        <div>
+            <textarea
+                #noteTextarea
+                tumAetUiTextarea
+                class="assessment-note__textarea"
+                rows="3"
+                [attr.maxlength]="NOTE_MAX_LENGTH"
+                (input)="onAssessmentNoteInput($event)"
+                [value]="assessmentNote()?.note ?? ''"
+                name="assessment_note"
+                id="assessment_note"
+                aria-labelledby="assessment-note-label"
+                aria-describedby="assessment-note-description"
+            ></textarea>
+            <div class="assessment-note__counter" data-testid="assessment-note-counter">{{ noteLength() }}/{{ NOTE_MAX_LENGTH }}</div>
+        </div>
+    </div>
 </section>

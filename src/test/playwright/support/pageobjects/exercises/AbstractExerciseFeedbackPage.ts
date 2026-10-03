@@ -9,7 +9,7 @@ export abstract class AbstractExerciseFeedback {
     protected readonly page: Page;
 
     readonly RESULT_SELECTOR = '#result';
-    readonly ADDITIONAL_FEEDBACK_SELECTOR = '#additional-feedback';
+    readonly ADDITIONAL_FEEDBACK_SELECTOR = '[data-testid="general-feedback"]';
 
     constructor(page: Page) {
         this.page = page;

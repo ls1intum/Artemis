@@ -794,7 +794,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         const handleFeedbackSpy = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
         component.onFeedbackChanged(feedbacks);
         expect(component.referencedFeedback).toHaveLength(1);
-        expect(component.totalScore()).toBe(3);
+        expect(component.scoreSummary().total).toBe(3);
         expect(handleFeedbackSpy).toHaveBeenCalled();
     });
 

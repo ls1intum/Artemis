@@ -8,13 +8,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -153,9 +152,8 @@ describe('ModelingSubmissionComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
-                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(GeneralFeedbackComponent),
                 MockComponent(RatingComponent),
-                MockComponent(ComplaintsStudentViewComponent),
             ],
             providers: [
                 MockProvider(ChangeDetectorRef),
@@ -460,7 +458,8 @@ describe('ModelingSubmissionComponent', () => {
 
         feedback.gradingInstruction = gradingInstruction;
         textToBeDisplayed = comp.buildFeedbackTextForReview(feedback);
-        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.text);
+        // linked to a grading instruction, the text is the title, so the body is the instruction's feedback alone
+        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback);
     });
 
     it('should deactivate return true when there are unsaved changes', () => {

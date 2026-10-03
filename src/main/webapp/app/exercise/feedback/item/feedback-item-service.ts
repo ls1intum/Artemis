@@ -1,5 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, getFeedbackBodyText } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -65,13 +65,11 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
      * @param showTestDetails
      */
     private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
-        const gradingInstruction = feedback.gradingInstruction!;
-
         return {
             type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
-            text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
+            text: getFeedbackBodyText(feedback),
             positive: feedback.positive,
             credits: feedback.credits,
             feedbackReference: feedback,

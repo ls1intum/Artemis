@@ -97,7 +97,6 @@
             "exampleSolutionPublicationDateRequiresExampleSolution": "Füge eine Beispiellösung hinzu oder entferne ihr Veröffentlichungsdatum.",
             "assessmentCriterion": "Bewertungskriterium",
             "assessmentInstructions": "Bewertungsanweisungen",
-            "assessmentInstruction": "Bewertungsanweisung: ",
             "structuredAssessmentInstructions": "Strukturierte Bewertungsanweisungen",
             "addAssessmentCriterion": "Bewertungskriterium hinzufügen",
             "deleteAssessmentCriterion": "Bewertungskriterium löschen",

@@ -113,6 +113,7 @@
         "exerciseNotDefined": "The exercise is not defined.",
         "exerciseIdMismatch": "The exercise IDs do not match.",
         "feedbackIdMismatch": "The assessment contains feedback of another result.",
+        "feedbackCreditsOutOfBounds": "The points of a feedback must be between -100 and 100.",
         "resultParticipationMismatch": "The result is not a manual result of this participation.",
         "textBlockSubmissionMismatch": "The assessment contains a text block of another submission.",
         "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
@@ -154,8 +155,7 @@
             "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
             "athenaNotEnabled": "Feedback requests for text and modeling exercises are unavailable.",
             "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true).",
-            "notEnabled": "AI feedback requests are not enabled for this course.",
-            "manualAssessmentRequired": "Feedback requests for programming exercises require manual assessment to be enabled."
+            "notEnabled": "AI feedback requests are not enabled for this course."
         },
         "athenaGradingFeedbackNotEnabled": "Athena grading feedback is not enabled for this course.",
         "teamExercise": {

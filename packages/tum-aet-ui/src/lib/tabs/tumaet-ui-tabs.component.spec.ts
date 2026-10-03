@@ -181,6 +181,41 @@ describe('TumAetUiTabs family', () => {
         expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
     });
 
+    it('shows a scroll button at each end that cuts off tabs, and scrolls the list on with it', async () => {
+        const list = element.querySelector('tumaet-ui-tab-list') as HTMLElement;
+        const scrollButton = (end: 'start' | 'end') => element.querySelector(`.tumaet-ui-tab-scroll-${end}`) as HTMLButtonElement | null;
+        expect(scrollButton('start')).toBeNull();
+        expect(scrollButton('end')).toBeNull();
+
+        // jsdom lays nothing out, so the list's widths are faked: 100px of 300px visible, scrolled 50px in
+        Object.defineProperty(list, 'clientWidth', { configurable: true, value: 100 });
+        Object.defineProperty(list, 'scrollWidth', { configurable: true, value: 300 });
+        list.scrollLeft = 50;
+        list.scrollBy = vi.fn();
+        list.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(scrollButton('start')).not.toBeNull();
+        expect(scrollButton('end')).not.toBeNull();
+        // The buttons only move the list; the keyboard reaches every tab with the arrow keys
+        expect(scrollButton('end')!.getAttribute('tabindex')).toBe('-1');
+        expect(scrollButton('end')!.getAttribute('aria-hidden')).toBe('true');
+
+        scrollButton('end')!.click();
+        expect(list.scrollBy).toHaveBeenCalledWith({ left: 75, behavior: 'smooth' });
+        scrollButton('start')!.click();
+        expect(list.scrollBy).toHaveBeenCalledWith({ left: -75, behavior: 'smooth' });
+
+        // Scrolled to the end, only the button at the start remains
+        list.scrollLeft = 200;
+        list.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(scrollButton('start')).not.toBeNull();
+        expect(scrollButton('end')).toBeNull();
+    });
+
     it('reverses horizontal arrow navigation in right-to-left layouts', async () => {
         TestBed.inject(Directionality).valueSignal.set('rtl');
 
@@ -509,5 +544,35 @@ describe('TumAetUiTabs family (tabs declared with @for / @if)', () => {
         await settle();
         expect(host.value()).toBe('security');
         expect(errors).toEqual([]);
+    });
+});
+
+@Component({
+    template: `
+        <tumaet-ui-tabs [value]="1" size="small" selectedColor="text" surface="muted">
+            <tumaet-ui-tab-list aria-label="Compact">
+                <tumaet-ui-tab [value]="1">One</tumaet-ui-tab>
+                <tumaet-ui-tab [value]="2">Two</tumaet-ui-tab>
+            </tumaet-ui-tab-list>
+        </tumaet-ui-tabs>
+    `,
+    imports: TABS_IMPORTS,
+})
+class CompactTabsHostComponent {}
+
+describe('TumAetUiTabs family (appearance)', () => {
+    it('shares the size, selected color and surface of the container with its tab list and tabs', async () => {
+        await TestBed.configureTestingModule({ imports: [CompactTabsHostComponent] }).compileComponents();
+        const fixture = TestBed.createComponent(CompactTabsHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const element = fixture.nativeElement as HTMLElement;
+        const [selected, other] = Array.from(element.querySelectorAll('tumaet-ui-tab'));
+
+        expect(selected.classList).toContain('tumaet-ui-tab-small');
+        expect(selected.classList).toContain('tumaet:text-text-hover');
+        expect(selected.classList).not.toContain('tumaet:text-accent');
+        expect(other.classList).toContain('tumaet:text-muted');
+        expect(element.querySelector('tumaet-ui-tab-list')!.classList).toContain('tumaet-ui-tab-list-muted');
     });
 });

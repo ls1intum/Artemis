@@ -19,6 +19,11 @@ export interface FeedbackItemCodeReferenceLine {
 export class FeedbackItem implements FeedbackNode {
     name!: string; // always provided when a FeedbackItem is built (see FeedbackItemService.createFeedbackItem)
     credits: number | undefined;
+    /**
+     * Whether the credits are not shown and not counted in the group total, e.g. for AI feedback on a programming submission,
+     * which is not graded. The credits still decide the group and colour of the item.
+     */
+    hideCredits?: boolean;
     maxCredits?: number;
     type!: FeedbackItemType; // always provided when a FeedbackItem is built (see FeedbackItemService.createFeedbackItem)
     title?: string; // this is typically feedback.text

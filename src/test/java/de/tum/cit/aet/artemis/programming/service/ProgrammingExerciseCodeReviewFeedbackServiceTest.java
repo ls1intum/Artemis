@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCodeReviewFeedbackService.NON_GRADED_FEEDBACK_SUGGESTION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
@@ -171,7 +172,11 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     }
 
     private static ProgrammingFeedbackDTO suggestion(String filePath, String description, Integer lineStart, Integer lineEnd, double credits) {
-        return new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, "title", description, credits, null, filePath, lineStart, lineEnd);
+        return suggestion("title", filePath, description, lineStart, lineEnd, credits);
+    }
+
+    private static ProgrammingFeedbackDTO suggestion(String title, String filePath, String description, Integer lineStart, Integer lineEnd, double credits) {
+        return new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, title, description, credits, null, filePath, lineStart, lineEnd);
     }
 
     private List<Feedback> generatedFeedbacks(ProgrammingExerciseCodeReviewFeedbackService service) throws Exception {
@@ -182,32 +187,72 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     }
 
     @Test
-    void generatingFeedback_namesTheFileAndTheLineRangeASuggestionAppliesTo() throws Exception {
-        // The student has to be able to find the place the suggestion is about; the reference is what the editor anchors on.
+    void generatingFeedback_referencesTheLineRangeASuggestionAppliesTo_andKeepsAthenasTitle() throws Exception {
+        // The student has to be able to find the place the suggestion is about; the reference is what the editor anchors on
+        // and what the feedback panel shows as a code excerpt, so the title is free to be Athena's own.
         var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
         withAnEmptyResultForTheLatestSubmission();
         when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
-                .thenReturn(List.of(suggestion("src/Main.java", "extract this", 10, 20, 0.0)));
+                .thenReturn(List.of(suggestion("Extract a helper method", "src/Main.java", "extract this", 10, 20, 0.0)));
 
         var feedbacks = generatedFeedbacks(service);
 
         assertThat(feedbacks).hasSize(1);
-        assertThat(feedbacks.getFirst().getText()).contains("src/Main.java").contains("lines 10-20");
+        assertThat(feedbacks.getFirst().getText()).isEqualTo(NON_GRADED_FEEDBACK_SUGGESTION + "Extract a helper method");
         assertThat(feedbacks.getFirst().getReference()).isEqualTo("file:src/Main.java_line:10-20");
         assertThat(feedbacks.getFirst().getDetailText()).isEqualTo("extract this");
     }
 
     @Test
-    void generatingFeedback_forASuggestionAboutASingleLine_namesThatLine() throws Exception {
+    void generatingFeedback_forASuggestionAboutASingleLine_referencesThatLine() throws Exception {
         var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
         withAnEmptyResultForTheLatestSubmission();
         when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
-                .thenReturn(List.of(suggestion("src/Main.java", "rename this", 10, null, 0.0)));
+                .thenReturn(List.of(suggestion("Rename this variable", "src/Main.java", "rename this", 10, null, 0.0)));
 
         var feedbacks = generatedFeedbacks(service);
 
-        assertThat(feedbacks.getFirst().getText()).contains("at line 10");
+        assertThat(feedbacks.getFirst().getText()).isEqualTo(NON_GRADED_FEEDBACK_SUGGESTION + "Rename this variable");
         assertThat(feedbacks.getFirst().getReference()).isEqualTo("file:src/Main.java_line:10");
+    }
+
+    @Test
+    void generatingFeedback_forASuggestionWithoutATitle_namesTheFileAndLine() throws Exception {
+        var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
+        withAnEmptyResultForTheLatestSubmission();
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion("  ", "src/Main.java", "extract this", 10, 20, 0.0)));
+
+        var feedbacks = generatedFeedbacks(service);
+
+        // Athena numbers lines from 0 like the reference does, but a title names them the way the student reads them.
+        assertThat(feedbacks.getFirst().getText()).isEqualTo(NON_GRADED_FEEDBACK_SUGGESTION + "File src/Main.java at lines 11-21");
+        assertThat(feedbacks.getFirst().getReference()).isEqualTo("file:src/Main.java_line:10-20");
+    }
+
+    @Test
+    void generatingFeedback_forASuggestionAboutTheFirstLine_referencesThatLine() throws Exception {
+        var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
+        withAnEmptyResultForTheLatestSubmission();
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion("", "src/Main.java", "add a package declaration", 0, null, 0.0)));
+
+        var feedbacks = generatedFeedbacks(service);
+
+        assertThat(feedbacks.getFirst().getText()).isEqualTo(NON_GRADED_FEEDBACK_SUGGESTION + "File src/Main.java at line 1");
+        assertThat(feedbacks.getFirst().getReference()).isEqualTo("file:src/Main.java_line:0");
+    }
+
+    @Test
+    void generatingFeedback_withAnOverlongTitle_fitsTheFeedbackTextColumn() throws Exception {
+        var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
+        withAnEmptyResultForTheLatestSubmission();
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion("x".repeat(600), "src/Main.java", "extract this", 10, null, 0.0)));
+
+        var feedbacks = generatedFeedbacks(service);
+
+        assertThat(feedbacks.getFirst().getText()).startsWith(NON_GRADED_FEEDBACK_SUGGESTION).hasSize(500);
     }
 
     @Test

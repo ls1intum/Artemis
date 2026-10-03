@@ -22,8 +22,9 @@
         </div>
     </nav>
 }
-<div [id]="'exercise-' + exercise()?.id">
+<div class="programming-assessment-page" [id]="'exercise-' + exercise()?.id">
     <jhi-assessment-layout
+        class="programming-assessment-page__layout"
         [isLoading]="loadingParticipation()"
         [saveBusy]="saveBusy()"
         [submitBusy]="submitBusy()"
@@ -42,6 +43,8 @@
         [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
         [correctionRound]="correctionRound()"
         [isProgrammingExercise]="true"
+        [showAssessmentNote]="false"
+        [showComplaintSection]="false"
         (save)="save()"
         (onSubmit)="submit()"
         (onCancel)="cancel()"
@@ -66,12 +69,15 @@
     <ng-template #assessment>
         @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
             <jhi-code-editor-container
+                class="programming-assessment-page__editor"
                 [isProblemStatementVisible]="false"
                 [editable]="false"
                 [participation]="participation()"
                 [referencedFeedback]="referencedFeedbackForBadges()"
                 [showEditorInstructions]="showEditorInstructions"
                 [isTutorAssessment]="true"
+                [assessmentWorkspace]="true"
+                [buildable]="false"
                 [highlightFileChanges]="true"
                 [readOnlyManualFeedback]="readOnly()"
                 [highlightDifferences]="highlightDifferences"
@@ -82,7 +88,68 @@
                 <div editorTitle *ngTemplateOutlet="editorTitle"></div>
                 <div editorToolbar *ngTemplateOutlet="editorToolbar"></div>
                 <ng-container editorSidebar *ngTemplateOutlet="editorSidebar" />
-                <div class="mt-3" *ngTemplateOutlet="editorBottom" editorBottom></div>
+                <!-- Below the instructions: the build output, the general feedback, the private note and the student's complaint,
+                     as in the text and modeling assessments. All tabs stay rendered: the general feedback list must stay registered
+                     for the instruction checkboxes, and the build output marks compilation errors and code analysis issues in the
+                     editor. -->
+                <section editorSidebarPanel class="programming-assessment-details">
+                    <div class="programming-assessment-details__header">
+                        <jhi-assessment-details-header
+                            [(activeTab)]="detailsTab"
+                            [feedbackCount]="unreferencedFeedback().length"
+                            [hasNote]="hasTutorNote()"
+                            [showBuildOutput]="true"
+                            surface="content"
+                            [disabled]="readOnly() || !manualResult()?.id"
+                            [complaintType]="complaint()?.complaintType"
+                            [complaintAwaitsResponse]="complaint()?.accepted === undefined"
+                            (addGeneralFeedback)="addGeneralFeedback()"
+                        />
+                    </div>
+                    <div class="programming-assessment-details__content">
+                        <div class="programming-assessment-details__build-output" [hidden]="detailsTab() !== 'buildOutput'">
+                            <jhi-code-editor-build-output
+                                [participation]="participation()!"
+                                [showHeader]="false"
+                                (onAnnotations)="codeEditorContainer()?.onAnnotations($event)"
+                                (onError)="codeEditorContainer()?.onError($event)"
+                            />
+                        </div>
+                        <div [hidden]="detailsTab() !== 'feedback'">
+                            @if (manualResult()?.id; as resultId) {
+                                <jhi-unreferenced-feedback
+                                    [(feedbacks)]="unreferencedFeedback"
+                                    (feedbacksChange)="validateUpdatedFeedback($event)"
+                                    [readOnly]="readOnly()"
+                                    [showAddButton]="false"
+                                    [showHeader]="false"
+                                    [highlightDifferences]="highlightDifferences"
+                                    [resultId]="resultId"
+                                    [gradingCriteria]="exercise()?.gradingCriteria ?? []"
+                                    [allFeedbacks]="allAssessmentFeedbacks()"
+                                    [maxPoints]="getTotalMaxPoints(exercise())"
+                                    [capAutomaticTestSubtotal]="true"
+                                />
+                            }
+                        </div>
+                        <div [hidden]="detailsTab() !== 'notes'">
+                            <jhi-assessment-note [assessmentNote]="manualResult()?.assessmentNote" [showTitle]="false" (onAssessmentNoteChange)="onAssessmentNoteChange($event)" />
+                        </div>
+                        @if (complaint(); as complaint) {
+                            <div [hidden]="detailsTab() !== 'complaint'">
+                                <jhi-complaints-for-tutor-form
+                                    [complaint]="complaint"
+                                    [stacked]="true"
+                                    [exercise]="exercise()"
+                                    [isAssessor]="isAssessor()"
+                                    [submission]="submission()"
+                                    [isTestRun]="isTestRun()"
+                                    (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+                                />
+                            </div>
+                        }
+                    </div>
+                </section>
             </jhi-code-editor-container>
         }
         <!--        </ng-container>-->
@@ -90,10 +157,6 @@
         <ng-template #editorTitle>
             <span>
                 <span>{{ exercise()?.title }}</span>
-                <span
-                    [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-                    [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
-                ></span>
                 <span>
                     @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
@@ -102,6 +165,10 @@
             </span>
         </ng-template>
         <ng-template #editorToolbar>
+            <!-- The awarded, deducted and final points, as in the header of the text and modeling submissions -->
+            <span class="programming-assessment-score">
+                <jhi-assessment-score-tags [score]="assessmentScore()" [maxPoints]="getTotalMaxPoints(exercise())" [course]="getCourseFromExercise(exercise())" />
+            </span>
             @if (isAtLeastEditor() && !isTestRun()) {
                 <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink()" target="_blank" rel="noopener noreferrer">
                     <fa-icon [icon]="faExternalLink" />
@@ -135,23 +202,6 @@
                     [gradingCriteria]="exercise().gradingCriteria"
                 />
             }
-        </ng-template>
-        <ng-template #editorBottom>
-            <div class="mt-3">
-                @if (manualResult()?.id; as resultId) {
-                    <jhi-unreferenced-feedback
-                        [(feedbacks)]="unreferencedFeedback"
-                        (feedbacksChange)="validateUpdatedFeedback($event)"
-                        [readOnly]="readOnly()"
-                        [highlightDifferences]="highlightDifferences"
-                        [resultId]="resultId"
-                        [gradingCriteria]="exercise()?.gradingCriteria ?? []"
-                        [allFeedbacks]="allAssessmentFeedbacks()"
-                        [maxPoints]="getTotalMaxPoints(exercise())"
-                        [capAutomaticTestSubtotal]="true"
-                    />
-                }
-            </div>
         </ng-template>
     </ng-template>
 

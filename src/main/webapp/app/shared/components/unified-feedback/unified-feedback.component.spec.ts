@@ -11,9 +11,12 @@ import {
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { By } from '@angular/platform-browser';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
-import { faExclamationTriangle, faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faInfo, faMinus } from '@fortawesome/free-solid-svg-icons';
 
 const CREDITS_STEP = 0.5;
 
@@ -137,6 +140,33 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredReference()).toBe('Explicit Ref');
     });
 
+    it('should repeat the reference as a tooltip unless the consumer turns it off and it fits', () => {
+        fixture.componentRef.setInput('reference', 'Lines 7-11');
+        fixture.detectChanges();
+        const chip = () => fixture.debugElement.query(By.css('.unified-feedback-reference-text')).injector.get(TumAetUiTooltipDirective);
+        expect(chip().content()).toBe('Lines 7-11');
+
+        fixture.componentRef.setInput('referenceTooltip', false);
+        fixture.detectChanges();
+        expect(chip().content()).toBe('');
+
+        // A narrow card cuts the reference off, so the tooltip repeats it after all
+        component.referenceTruncated.set(true);
+        fixture.detectChanges();
+        expect(chip().content()).toBe('Lines 7-11');
+    });
+
+    it('should repeat a read-only title as a tooltip only once it is cut off', () => {
+        fixture.componentRef.setInput('title', 'Loop never ends');
+        fixture.detectChanges();
+        const title = () => fixture.debugElement.query(By.css('.unified-feedback-title')).injector.get(TumAetUiTooltipDirective);
+        expect(title().content()).toBe('');
+
+        component.titleTruncated.set(true);
+        fixture.detectChanges();
+        expect(title().content()).toBe('Loop never ends');
+    });
+
     it('should infer reference from assessmentsNames mapping', () => {
         fixture.componentRef.setInput('reference', undefined);
         fixture.componentRef.setInput('feedback', { referenceId: 7 } as any);
@@ -217,6 +247,14 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredTitle()).toBe('Missing null check');
     });
 
+    it('should show the default title for a suggestion whose title the assessor cleared', () => {
+        fixture.componentRef.setInput('title', undefined);
+        fixture.componentRef.setInput('feedback', { text: FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, detailText: 'Good start.' } as Feedback);
+        fixture.componentRef.setInput('points', 2.5);
+        fixture.detectChanges();
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.positive');
+    });
+
     it('should strip the internal identifier from a non-graded feedback suggestion title', () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('feedback', {
@@ -285,10 +323,10 @@ describe('UnifiedFeedbackComponent', () => {
         expect(root.classList.contains('unified-feedback--info')).toBeTruthy();
     });
 
-    it('should expose the faExclamationTriangle icon for needs_revision (0 points), matching the Apollon legend', () => {
+    it('should expose the faInfo icon for needs_revision (0 points), matching the Apollon legend', () => {
         fixture.componentRef.setInput('type', 'needs_revision');
         fixture.detectChanges();
-        expect(component.inferredIcon()).toBe(faExclamationTriangle);
+        expect(component.inferredIcon()).toBe(faInfo);
     });
 
     it('should expose unified-feedback--neutral for not_attempted', () => {
@@ -335,6 +373,55 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('FeedbackSuggestion:adapted:Null check is missing');
     });
 
+    it('should save a cleared suggestion title as the default title once the title field is left', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
+        component.feedbackCredits.set(0);
+        fixture.detectChanges();
+
+        component.onTitleInput('');
+        expect(component.feedbackTitle()).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
+
+        component.applyDefaultTitleIfEmpty();
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}artemisApp.feedback.type.feedback`);
+    });
+
+    it('should keep a default suggestion title in line with the points until the assessor types a title', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
+        component.feedbackCredits.set(0);
+        fixture.detectChanges();
+        component.applyDefaultTitleIfEmpty();
+
+        component.onCreditsChange(2.5);
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}artemisApp.feedback.type.positive`);
+
+        component.onTitleInput('Good interface');
+        component.onCreditsChange(-1);
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Good interface`);
+    });
+
+    it('should fill the empty title of a regular feedback once it gets a description', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(undefined);
+        component.feedbackCredits.set(0);
+        fixture.detectChanges();
+
+        component.onDetailChange('The loop never terminates.');
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.feedback');
+    });
+
+    it('should never write a title while the feedback is read-only', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('readOnly', true);
+        component.feedbackTitle.set(undefined);
+        fixture.detectChanges();
+
+        component.applyDefaultTitleIfEmpty();
+        component.applyDefaultTitleIfEmpty();
+        expect(component.feedbackTitle()).toBeUndefined();
+    });
+
     it('should mark an accepted suggestion as adapted when only the description is edited', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
@@ -355,6 +442,36 @@ describe('UnifiedFeedbackComponent', () => {
 
         expect(component.feedbackCredits()).toBe(2);
         expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it('should mark an accepted suggestion as adapted when its grading instruction is removed', () => {
+        const feedback = {
+            credits: 2,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
+            gradingInstruction: { id: 3, feedback: 'Fixed rubric text', credits: 2 },
+        } as any;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', feedback);
+        component.feedbackTitle.set(feedback.text);
+        fixture.detectChanges();
+
+        component.removeGradingInstructionLink();
+
+        expect(feedback.gradingInstruction).toBeUndefined();
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it("should leave a tutor's own feedback title unchanged when its grading instruction is removed", () => {
+        const feedback = { credits: 2, text: 'Missing null check', gradingInstruction: { id: 3, feedback: 'Fixed rubric text', credits: 2 } } as any;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', feedback);
+        component.feedbackTitle.set('Missing null check');
+        fixture.detectChanges();
+
+        component.removeGradingInstructionLink();
+
+        expect(feedback.gradingInstruction).toBeUndefined();
+        expect(component.feedbackTitle()).toBe('Missing null check');
     });
 
     it('should not touch a non-suggestion title when editing', () => {
@@ -402,6 +519,50 @@ describe('UnifiedFeedbackComponent', () => {
 
         component.onCreditsChange(-0.3);
         expect(component.feedbackCredits()).toBe(-0.5);
+    });
+
+    it('should clamp credits to the range from -100 to 100', () => {
+        fixture.componentRef.setInput('editable', true);
+
+        component.onCreditsChange(99999);
+        expect(component.feedbackCredits()).toBe(100);
+
+        component.onCreditsChange(-99999);
+        expect(component.feedbackCredits()).toBe(-100);
+
+        component.feedbackCredits.set(100);
+        component.stepCredits(CREDITS_STEP);
+        expect(component.feedbackCredits()).toBe(100);
+
+        component.feedbackCredits.set(-100);
+        component.stepCredits(-CREDITS_STEP);
+        expect(component.feedbackCredits()).toBe(-100);
+    });
+
+    it('should clamp credits beyond the bounds while typing, but leave in-range values until change', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('.unified-feedback-points-input');
+
+        // Typing one more digit after 100: the credits are already at the bound, so only the field changes.
+        component.feedbackCredits.set(100);
+        await fixture.whenStable();
+        input.value = '1000';
+        input.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+        expect(component.feedbackCredits()).toBe(100);
+        expect(input.value).toBe('100');
+        // The bounds are enforced by clamping, not by a form validator, so the field is never flagged invalid.
+        expect(input.classList).not.toContain('ng-invalid');
+
+        component.onCreditsInput('-500');
+        expect(component.feedbackCredits()).toBe(-100);
+        expect(input.value).toBe('-100');
+
+        component.feedbackCredits.set(2);
+        component.onCreditsInput('1.3');
+        expect(component.feedbackCredits()).toBe(2);
     });
 
     it('should not step the credits when read-only or linked to a grading instruction', () => {
@@ -689,33 +850,216 @@ describe('UnifiedFeedbackComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should show the title input by default when editable, keeping existing consumers unchanged', async () => {
+    it('should show the title input when editable', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackTitle.set('Encapsulation broken');
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(component.titleEditable()).toBe(true);
         expect(fixture.nativeElement.querySelector('.unified-feedback-title-input')).toBeTruthy();
         expect(fixture.nativeElement.querySelector('.unified-feedback-title')).toBeNull();
     });
 
-    it('should render the read-only title instead of the title input when titleEditable is false', async () => {
+    it('should cap the title input at 100 characters, matching Apollon', async () => {
         fixture.componentRef.setInput('editable', true);
-        fixture.componentRef.setInput('titleEditable', false);
-        fixture.componentRef.setInput('title', 'File Sort.java at line 4');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const titleInput = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
+        expect(titleInput.maxLength).toBe(100);
+    });
+
+    it('should cap the description input at 500 characters and show how many are used', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackDetail.set('Missing an interface');
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('.unified-feedback-title-input')).toBeNull();
-        const title = fixture.nativeElement.querySelector('.unified-feedback-title');
-        expect(title).toBeTruthy();
-        expect(title.textContent).toContain('File Sort.java at line 4');
+        const detailInput = fixture.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement;
+        expect(detailInput.maxLength).toBe(500);
+        expect(fixture.nativeElement.querySelector('.unified-feedback-detail-counter').textContent.trim()).toBe('20/500');
     });
 
-    it('should show the grading instruction label and lock the points input when a grading instruction is attached', async () => {
+    it('should fill a regular feedback title left empty, following later points changes', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(undefined);
+        component.feedbackCredits.set(-1);
+        fixture.detectChanges();
+
+        component.applyDefaultTitleIfEmpty();
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
+
+        // e.g. a dropped grading instruction sets the points from outside the points field
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.positive');
+    });
+
+    it('should keep a stored default title following the points, e.g. once a new inline feedback is re-rendered', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set('artemisApp.feedback.type.feedback');
+        component.feedbackCredits.set(0);
+        fixture.detectChanges();
+
+        component.onCreditsChange(-0.5);
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
+    });
+
+    it('should not rewrite an untouched suggestion whose own title matches a default title', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}artemisApp.feedback.type.feedback`);
+        component.feedbackCredits.set(3);
+        fixture.detectChanges();
+
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}artemisApp.feedback.type.feedback`);
+    });
+
+    it('should flag a missing description on a referenced feedback only when the consumer requires one', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { reference: 'file:src/Main.java_line:3' } as Feedback);
+        component.feedbackDetail.set(undefined);
+        fixture.detectChanges();
+        expect(component.isDetailMissing()).toBe(false);
+
+        fixture.componentRef.setInput('detailRequired', true);
+        fixture.detectChanges();
+        expect(component.isDetailMissing()).toBe(true);
+
+        component.feedbackDetail.set('The loop never terminates.');
+        expect(component.isDetailMissing()).toBe(false);
+    });
+
+    it('should let a consumer fill an untouched empty title on commit', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(undefined);
+        component.feedbackCredits.set(0);
+        fixture.detectChanges();
+
+        component.applyDefaultTitleIfEmpty();
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.feedback');
+
+        component.feedbackTitle.set('Loop never ends');
+        component.applyDefaultTitleIfEmpty();
+        expect(component.feedbackTitle()).toBe('Loop never ends');
+    });
+
+    describe('linked criterion chip', () => {
+        const linkedFeedback = () =>
+            ({ credits: 2, text: 'Visibility', gradingInstruction: { id: 7, instructionDescription: 'Uses modifiers', feedback: 'Fixed rubric text', credits: 2 } }) as any;
+        const chip = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="linked-criterion"]');
+
+        beforeEach(() => {
+            const criterion = { title: 'Encapsulation', structuredGradingInstructions: [{ id: 7 }] } as GradingCriterion;
+            TestBed.inject(GradingInstructionSelectionService).setCriteria([criterion]);
+        });
+
+        it('should name the criterion of the linked instruction instead of showing its text', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(component.linkedCriterionTitle()).toBe('Encapsulation');
+            expect(chip()?.textContent).toContain('Encapsulation');
+            expect(chip()?.querySelector('.unified-feedback-criterion-suffix')?.textContent).toContain('artemisApp.assessment.linkedCriterionSuffix');
+            expect(fixture.nativeElement.textContent).not.toContain('Fixed rubric text');
+        });
+
+        it('should show the grading scale of the linked instruction in its own segment of the chip', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', { ...linkedFeedback(), gradingInstruction: { ...linkedFeedback().gradingInstruction, gradingScale: ' Partially correct ' } });
+            fixture.detectChanges();
+
+            expect(component.linkedGradingScale()).toBe('Partially correct');
+            const scale = chip()?.querySelector('.unified-feedback-criterion-scale');
+            expect(scale?.textContent).toBe('Partially correct');
+            expect(scale?.previousElementSibling?.classList).toContain('unified-feedback-criterion-content');
+        });
+
+        it('should not show a grading scale the instructor left empty', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', { ...linkedFeedback(), gradingInstruction: { ...linkedFeedback().gradingInstruction, gradingScale: '  ' } });
+            fixture.detectChanges();
+
+            expect(component.linkedGradingScale()).toBeUndefined();
+            expect(chip()?.querySelector('.unified-feedback-criterion-scale')).toBeNull();
+        });
+
+        it('should show no tooltip while the criterion name and grading scale fit', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(component.linkedCriterionTooltip()).toBe('');
+        });
+
+        it('should repeat the chip in full in the tooltip once it cuts the criterion name or grading scale off', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            component.linkedCriterionTruncated.set(true);
+            expect(component.linkedCriterionTooltip()).toBe('artemisApp.assessment.linkedCriterion Encapsulation artemisApp.assessment.linkedCriterionSuffix');
+
+            fixture.componentRef.setInput('feedback', { ...linkedFeedback(), gradingInstruction: { ...linkedFeedback().gradingInstruction, gradingScale: 'Correct' } });
+            expect(component.linkedCriterionTooltip()).toBe('artemisApp.assessment.linkedCriterion Encapsulation artemisApp.assessment.linkedCriterionSuffix | Correct');
+            // The instruction's description stays out of the tooltip
+            expect(component.linkedCriterionTooltip()).not.toContain('Uses modifiers');
+        });
+
+        it('should fall back to a generic name when the criterion is unknown', () => {
+            TestBed.inject(GradingInstructionSelectionService).setCriteria([]);
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(component.linkedCriterionTitle()).toBe('artemisApp.assessment.linkedCriterionFallback');
+            // The fallback already reads "Assessment Criterion", so it is not followed by the suffix again
+            expect(chip()?.querySelector('.unified-feedback-criterion-suffix')).toBeNull();
+        });
+
+        it('should not show the chip to a student', () => {
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(component.linkedCriterionTitle()).toBeUndefined();
+            expect(chip()).toBeNull();
+        });
+
+        it('should show the chip on a read-only feedback of an assessor when asked to', () => {
+            fixture.componentRef.setInput('showLinkedCriterion', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            expect(chip()?.textContent).toContain('Encapsulation');
+            expect(chip()?.querySelector('jhi-confirm-icon')).toBeNull();
+        });
+
+        it('should offer to remove the link only while the feedback can be edited', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+            expect(chip()?.querySelector('jhi-confirm-icon')).not.toBeNull();
+
+            fixture.componentRef.setInput('readOnly', true);
+            fixture.detectChanges();
+            expect(chip()?.querySelector('jhi-confirm-icon')).toBeNull();
+        });
+
+        it('should hide the chip once the link is removed', () => {
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('feedback', linkedFeedback());
+            fixture.detectChanges();
+
+            component.removeGradingInstructionLink();
+            fixture.detectChanges();
+
+            expect(chip()).toBeNull();
+        });
+    });
+
+    it('should show the linked criterion and lock the points input when a grading instruction is attached', async () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);
         component.feedbackCredits.set(2);
@@ -723,17 +1067,17 @@ describe('UnifiedFeedbackComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const label = fixture.nativeElement.querySelector('.unified-feedback-rubric-label');
+        const chip = fixture.nativeElement.querySelector('[data-testid="linked-criterion"]');
         const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
         const steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
 
-        expect(label?.textContent).toContain('Fixed rubric text');
+        expect(chip).not.toBeNull();
         expect(pointsInput.disabled).toBe(true);
         expect(steps[0].disabled).toBe(true);
         expect(steps[1].disabled).toBe(true);
     });
 
-    it('should disable the steppers and show the rubric label after a grading instruction is assigned in place post-render (regression test for the stale-computed rubric-state bug)', () => {
+    it('should disable the steppers and show the linked criterion after a grading instruction is assigned in place post-render (regression test for the stale-computed rubric-state bug)', () => {
         fixture.componentRef.setInput('editable', true);
         const feedback = { credits: 0 } as Feedback;
         fixture.componentRef.setInput('feedback', feedback);
@@ -743,7 +1087,7 @@ describe('UnifiedFeedbackComponent', () => {
         let steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
         expect(steps[0].disabled).toBe(false);
         expect(steps[1].disabled).toBe(false);
-        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="linked-criterion"]')).toBeNull();
 
         // Mirrors StructuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent and
         // UnreferencedFeedbackDetailComponent.updateFeedbackOnDrop: the grading instruction is assigned onto the
@@ -756,7 +1100,7 @@ describe('UnifiedFeedbackComponent', () => {
         steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
         expect(steps[0].disabled).toBe(true);
         expect(steps[1].disabled).toBe(true);
-        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')?.textContent).toContain('Fixed rubric text');
+        expect(fixture.nativeElement.querySelector('[data-testid="linked-criterion"]')).not.toBeNull();
     });
 
     it('should not render a footer when the feedback is not a suggestion', () => {

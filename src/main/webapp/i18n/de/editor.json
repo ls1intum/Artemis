@@ -30,6 +30,8 @@
             "submit": "Absenden",
             "submitDescription": "Staged, committed, pushed, kompiliert und testet Deine Änderungen.",
             "buildOutput": "Build Ergebnisse",
+            "buildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback",
+            "toggleBuildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback ein- oder ausblenden",
             "building": "Build und Tests werden ausgeführt...",
             "queued": "In Warteschlange...",
             "toolTip": "Abgaben werden zuerst in die Warteschlange gestellt und dann verarbeitet. Die geschätzte Zeit für jeden Schritt wird angezeigt. Bitte beachte, dass dies nur eine Schätzung ist und variieren kann.",

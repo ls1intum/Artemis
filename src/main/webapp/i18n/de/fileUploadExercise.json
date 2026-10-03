@@ -28,7 +28,6 @@
             "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten.",
             "submitDueDateMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten. Da du die Einreichungsfrist verpasst hast wird deine Bewertung nicht gezählt.",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
-            "assessedSubmission": "Deine Bewertung",
             "supportedFileExtensions": "Unterstützte Dateiendung: "
         }
     }

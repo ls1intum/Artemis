@@ -10,6 +10,7 @@ import {
     getUnreferencedFeedback,
     isBuildFailedAndResultIsAutomatic,
     isOnlyCompilationTested,
+    isPreliminaryProgrammingAIFeedback,
     isStudentParticipation,
     resultIsPreliminary,
 } from 'app/exercise/result/result.utils';
@@ -449,6 +450,24 @@ describe('ResultUtils', () => {
             breakCircularResultBackReferences(baseResult);
 
             expect(baseResult.feedbacks[0].result).toBeUndefined();
+        });
+    });
+
+    describe('isPreliminaryProgrammingAIFeedback', () => {
+        const aiFeedback = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result;
+
+        it('should recognise AI feedback on a programming exercise', () => {
+            expect(isPreliminaryProgrammingAIFeedback(aiFeedback, ExerciseType.PROGRAMMING)).toBe(true);
+        });
+
+        it('should not count AI feedback on other exercise types, whose AI feedback is scored', () => {
+            expect(isPreliminaryProgrammingAIFeedback(aiFeedback, ExerciseType.TEXT)).toBe(false);
+            expect(isPreliminaryProgrammingAIFeedback(aiFeedback, ExerciseType.MODELING)).toBe(false);
+            expect(isPreliminaryProgrammingAIFeedback(aiFeedback, undefined)).toBe(false);
+        });
+
+        it('should not count test results of a programming exercise', () => {
+            expect(isPreliminaryProgrammingAIFeedback({ id: 2, assessmentType: AssessmentType.AUTOMATIC } as Result, ExerciseType.PROGRAMMING)).toBe(false);
         });
     });
 });

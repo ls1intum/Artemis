@@ -321,12 +321,166 @@
 }
 
 /* ==========================================================================
+   Filling its host: the student's code editor in the exercise's split panel
+   ========================================================================== */
+
+/* The grid takes the full height of its host instead of fixed panel heights, so the page around it does not scroll: the
+   file browser and the editor take the upper part and the bottom area takes the rest, each scrolling on its own. The grip
+   between them moves the split; it sets the upper part's height and the bottom area follows. */
+.code-editor-container--fill,
+.code-editor-grid--fill {
+    display: block;
+    height: 100%;
+    min-height: 0;
+}
+
+.editor-wrapper.editor-wrapper--fill {
+    display: flex;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    flex-direction: column;
+    row-gap: 0;
+
+    > .editor-statusbar {
+        flex: none;
+    }
+
+    .editor-main {
+        display: flex;
+        height: 65%;
+        min-height: 0;
+        flex: 0 0 auto;
+        flex-direction: column;
+        margin-bottom: 0;
+    }
+
+    .editor-main__content {
+        height: auto;
+        min-height: 0;
+        flex: 1 1 0;
+    }
+
+    .editor-main > .rg-main-bottom {
+        flex: none;
+    }
+
+    .editor-bottom {
+        height: auto;
+        max-height: none;
+        min-height: 0;
+        flex: 1 1 0;
+        overflow: hidden;
+
+        > * {
+            height: 100%;
+        }
+    }
+
+    /* A collapsed bottom area keeps only its header, and the editor takes the space it leaves */
+    &.editor-wrapper--bottom-collapsed {
+        .editor-main {
+            flex-grow: 1;
+        }
+
+        .editor-bottom {
+            flex: 0 0 auto;
+        }
+    }
+}
+
+/* ==========================================================================
+   Assessment: laid out like the text and modeling assessments
+   ========================================================================== */
+
+/* The assessment fills the page's height, so the page itself never scrolls: the file browser and the editor run to the
+   bottom, and the instructions share their column with the feedback panel below them, which shows the build output as a
+   tab. Each panel scrolls on its own. */
+.programming-assessment-page__editor > jhi-code-editor-grid {
+    display: block;
+    height: 100%;
+}
+
+.editor-wrapper.assessment-workspace {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    row-gap: 0;
+
+    .editor-main {
+        display: flex;
+        min-height: 0;
+        height: auto;
+        flex: 1 1 0;
+        flex-direction: column;
+        margin-bottom: 0;
+    }
+
+    .editor-main__content {
+        min-height: 0;
+        height: auto;
+        flex: 1 1 0;
+    }
+
+    /* Sized like the workspace's [65, 35] split with minimums of 36% and 24%: the instructions column starts at 35% of the
+       width and may be dragged to between 24% and 64%, leaving the file browser and the editor at least 36% */
+    .editor-sidebar-right {
+        width: 35%;
+        min-width: 24%;
+        max-width: 64%;
+
+        /* Its share is bounded already; the file browser and the editor give way instead */
+        flex-shrink: 0;
+    }
+
+    /* The build output is a tab of the feedback panel, so neither its row nor the grip above it is shown */
+    .editor-bottom,
+    .editor-main > .rg-main-bottom {
+        display: none;
+    }
+}
+
+/* The instructions on top, the feedback panel below, split like the workspace of the text and modeling assessments */
+.code-editor-assessment-sidebar {
+    display: flex;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+
+    > jhi-code-editor-instructions {
+        min-height: 24%;
+        flex: 1 1 0;
+    }
+
+    /* Like the workspace's [52, 48] split with a 24% minimum each: dragging keeps both the instructions and the panel at
+       least a quarter of the column */
+    &__panel {
+        min-height: 24%;
+        height: 48%;
+        max-height: 76%;
+
+        /* Gives way to the instructions' minimum, which the grip between them would otherwise push below a quarter */
+        flex: 0 1 auto;
+    }
+
+    /* Easier to grab, and no text gets selected while dragging */
+    > .rg-sidebar-split {
+        padding: 2px 0;
+        touch-action: none;
+        user-select: none;
+    }
+}
+
+/* ==========================================================================
    Resizable drag elements
    ========================================================================== */
 
 /* stylelint-disable no-descending-specificity -- These selectors are used in different contexts */
 .rg-main-bottom,
 .rg-bottom-bottom,
+.rg-sidebar-split,
 .rg-sidebar-left,
 .rg-sidebar-right {
     align-self: center;
@@ -343,7 +497,8 @@
 
 /* stylelint-enable no-descending-specificity */
 
-.rg-main-bottom {
+.rg-main-bottom,
+.rg-sidebar-split {
     cursor: row-resize;
 }
 

@@ -63,6 +63,8 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorMonacoComponent implements OnDestroy {
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
+    static readonly CLASS_FEEDBACK_RANGE_MARGIN = 'monaco-feedback-range-margin';
+    private static readonly FEEDBACK_RANGE_HIGHLIGHT_PREFIX = 'feedback-range-';
     static readonly CLASS_REVIEW_COMMENT_HOVER_BUTTON = 'monaco-add-review-comment-button';
     static readonly FILE_TIMEOUT = 10000;
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
@@ -108,6 +110,11 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
+    /**
+     * The last line (0-based) of each new, unsaved feedback that references more than its start line, keyed by its
+     * start line in {@link newFeedbackLines}. Written together with that signal, so the template reads it in step.
+     */
+    private readonly newFeedbackLineEnds = new Map<number, number>();
     readonly binaryFileSelected = signal<boolean>(false);
     readonly imagePreviewUrl = signal<string | undefined>(undefined);
     readonly imagePreviewError = signal<boolean>(false);
@@ -142,7 +149,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     annotationsArray: Array<Annotation> = [];
     private addFeedbackKeydownListener?: Disposable;
     private renderScheduled = false;
-    private renderFocusLine?: number;
+    private renderFocus?: { line: number; feedback?: Feedback; selector: string };
     private reviewRenderScheduled = false;
     private reviewRenderAnimationFrameId?: number;
     private pendingReviewRenderFile?: string;
@@ -287,7 +294,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 return;
             }
             this.setBuildAnnotations(this.annotationsArray);
-            this.newFeedbackLines.set([]);
+            this.clearNewFeedback();
             this.renderFeedbackWidgets();
             // changeModel() disposes line-decoration hover buttons; re-apply for the active mode.
             this.updateEditorInteractionMode();
@@ -301,7 +308,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
 
         if (feedbacksChanged) {
-            this.newFeedbackLines.set([]);
+            this.clearNewFeedback();
             this.renderFeedbackWidgets();
         }
 
@@ -522,16 +529,43 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     }
 
     /**
-     * Adds a new feedback widget to the specified line and renders it. The text field will be focused automatically.
-     * @param lineNumber The line (as shown in the editor) to render the widget in.
+     * Opens a new feedback on the given line. A line can hold several feedbacks, but only one new, unsaved one at a
+     * time. When the tutor selected several lines that include the clicked one, the feedback references that range.
+     * The widget of the new feedback is rendered and its text field focused.
+     * @param lineNumber The (1-based) line whose add button was clicked.
      */
     addNewFeedback(lineNumber: number): void {
-        // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
-        if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
-            this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
-            this.renderFeedbackWidgets(lineNumberZeroBased);
+        const range = this.getSelectedLineRange(lineNumber);
+        const startLine = range ? range.start - 1 : lineNumberZeroBased;
+        // An unsaved feedback on the clicked line or on the start of the selection keeps its own range.
+        if (this.newFeedbackLines().includes(lineNumberZeroBased) || this.newFeedbackLines().includes(startLine)) {
+            return;
         }
+        if (range) {
+            this.newFeedbackLineEnds.set(startLine, range.end - 1);
+        }
+        this.newFeedbackLines.set([...this.newFeedbackLines(), startLine]);
+        this.renderFeedbackWidgets(startLine);
+    }
+
+    /**
+     * The (1-based) lines of the editor selection, if it spans several lines and includes the given line. A selection
+     * dragged to the start of the following line does not include that line.
+     */
+    private getSelectedLineRange(lineNumber: number): { start: number; end: number } | undefined {
+        const selection = this.editor().getSelection();
+        if (!selection) {
+            return undefined;
+        }
+        const start = selection.startLineNumber;
+        const end = selection.endColumn === 1 && selection.endLineNumber > start ? selection.endLineNumber - 1 : selection.endLineNumber;
+        return end > start && lineNumber >= start && lineNumber <= end ? { start, end } : undefined;
+    }
+
+    /** The last line (0-based) of the new, unsaved feedback starting at the given line, if it spans several lines. */
+    newFeedbackLineEnd(line: number): number | undefined {
+        return this.newFeedbackLineEnds.get(line);
     }
 
     /**
@@ -546,17 +580,23 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     updateFeedback(feedback: Feedback) {
         const line = Feedback.getReferenceLine(feedback);
-        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f.reference === feedback.reference);
+        // Several feedbacks can share a reference (the same line), so a stored feedback is found by identity - manual
+        // feedback is edited in place - or, for an edited copy of automatic feedback, by its id.
+        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f === feedback || (feedback.id !== undefined && f.id === feedback.id));
         if (existingFeedbackIndex !== -1) {
             // Existing feedback -> update content only, no widget re-render needed.
             const feedbackArray = [...this.feedbackInternal()];
             feedbackArray[existingFeedbackIndex] = feedback;
             this.feedbackInternal.set(feedbackArray);
         } else {
-            // New feedback -> save as actual feedback and refocus its detail field once the widget is rebuilt.
+            // New feedback -> save as actual feedback; its widget is rebuilt, so the field being typed in is refocused.
+            const activeElement = document.activeElement;
+            const focusSelector = activeElement?.classList.contains('unified-feedback-title-input') ? '.unified-feedback-title-input' : '.unified-feedback-detail-input';
             this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
-            this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
-            this.renderFeedbackWidgets(line);
+            if (line !== undefined) {
+                this.removeNewFeedbackLine(line);
+            }
+            this.renderFeedbackWidgets(line, feedback, focusSelector);
         }
         this.onUpdateFeedback.emit(this.feedbackInternal());
     }
@@ -568,9 +608,19 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     cancelFeedback(line: number) {
         // We only have to remove new feedback.
         if (this.newFeedbackLines().includes(line)) {
-            this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
+            this.removeNewFeedbackLine(line);
             this.renderFeedbackWidgets();
         }
+    }
+
+    private removeNewFeedbackLine(line: number): void {
+        this.newFeedbackLineEnds.delete(line);
+        this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
+    }
+
+    private clearNewFeedback(): void {
+        this.newFeedbackLineEnds.clear();
+        this.newFeedbackLines.set([]);
     }
 
     /**
@@ -586,11 +636,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     /**
      * Renders the current state of feedback in the editor.
      * @param lineOfWidgetToFocus The line number of the widget whose text area should be focused.
+     * @param feedbackToFocus The stored feedback whose widget to focus, as several can share the line; omitted for a new one.
+     * @param focusSelector The field to focus in that widget, the description by default.
      * @protected
      */
-    protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
+    protected renderFeedbackWidgets(lineOfWidgetToFocus?: number, feedbackToFocus?: Feedback, focusSelector = '.unified-feedback-detail-input') {
         if (lineOfWidgetToFocus !== undefined) {
-            this.renderFocusLine = lineOfWidgetToFocus;
+            this.renderFocus = { line: lineOfWidgetToFocus, feedback: feedbackToFocus, selector: focusSelector };
         }
         if (this.renderScheduled) {
             return;
@@ -603,22 +655,43 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             () => {
                 this.renderScheduled = false;
                 this.editor().disposeWidgetsByPrefix('feedback-');
-                for (const feedback of this.filterFeedbackForSelectedFile(this.feedbackInternal())) {
-                    this.addLineWidgetWithFeedback(feedback);
-                }
+                this.editor().disposeLineHighlightsByPrefix(CodeEditorMonacoComponent.FEEDBACK_RANGE_HIGHLIGHT_PREFIX);
+                const feedbacks = this.filterFeedbackForSelectedFile(this.feedbackInternal());
+                feedbacks.forEach((feedback, index) => this.addLineWidgetWithFeedback(feedback, index));
 
                 // New, unsaved feedback has no associated object yet.
                 for (const line of this.newFeedbackLines()) {
                     const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-                    this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+                    // Above its first line, like stored feedback (0-based `line` is the 1-based Monaco line above it)
+                    this.editor().addLineWidget(line, 'feedback-new-' + line, feedbackNode);
                 }
 
-                const focusLine = this.renderFocusLine;
-                this.renderFocusLine = undefined;
-                if (focusLine !== undefined) {
-                    // The inline feedback editor renders its description field through jhi-unified-feedback, which
-                    // identifies the textarea by class rather than by a (non-reusable) id.
-                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.focus();
+                // Mark the lines each feedback refers to, a single one or a range, as its widget sits above them. Only the
+                // margin is marked, so the highlight of changed lines stays readable; a range is also named as text.
+                const ranges = [
+                    ...feedbacks.map((feedback) => Feedback.getReferenceLineRange(feedback)),
+                    ...this.newFeedbackLines().map((line) => ({ start: line, end: this.newFeedbackLineEnd(line) ?? line })),
+                ];
+                ranges.forEach((range, index) => {
+                    if (range) {
+                        this.editor().highlightLines(
+                            range.start + 1,
+                            range.end + 1,
+                            undefined,
+                            CodeEditorMonacoComponent.CLASS_FEEDBACK_RANGE_MARGIN,
+                            `${CodeEditorMonacoComponent.FEEDBACK_RANGE_HIGHLIGHT_PREFIX}${index}`,
+                        );
+                    }
+                });
+
+                const focus = this.renderFocus;
+                this.renderFocus = undefined;
+                if (focus) {
+                    // The inline feedback editor renders its fields through jhi-unified-feedback, which identifies the
+                    // textareas by class rather than by a (non-reusable) id.
+                    const field = this.getInlineFeedbackNode(focus.line, focus.feedback)?.querySelector<HTMLTextAreaElement>(focus.selector);
+                    field?.focus();
+                    field?.setSelectionRange(field.value.length, field.value.length);
                 }
             },
             { injector: this.injector },
@@ -879,9 +952,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     /**
      * Retrieves the feedback node currently rendered at the specified line and throws an error if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
+     * @param feedback The stored feedback whose node to retrieve; omitted for the new, unsaved feedback of a line.
      */
-    getInlineFeedbackNodeOrElseThrow(line: number): HTMLElement {
-        const element = this.getInlineFeedbackNode(line);
+    getInlineFeedbackNodeOrElseThrow(line: number, feedback?: Feedback): HTMLElement {
+        const element = this.getInlineFeedbackNode(line, feedback);
         if (!element) {
             throw new Error('No feedback node found at line ' + line);
         }
@@ -890,22 +964,32 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     /**
      * Retrieves the feedback node currently rendered at the specified line, or undefined if it is not available.
+     * Several feedbacks can reference the same line and each is rendered by its own node, so a stored feedback is
+     * matched by identity rather than by line; matching by line would hand every feedback of a line the same node,
+     * leaving the others' widgets as empty gaps.
      * @param line The line (0-based) for which to retrieve the feedback node.
+     * @param feedback The stored feedback whose node to retrieve; omitted for the new, unsaved feedback of a line.
      */
-    getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
+    getInlineFeedbackNode(line: number, feedback?: Feedback): HTMLElement | undefined {
+        const components = this.inlineFeedbackComponents();
+        const component = feedback
+            ? components.find((comp) => comp.feedback() === feedback)
+            : (components.find((comp) => comp.codeLine() === line && !comp.feedback()) ?? components.find((comp) => comp.codeLine() === line));
+        return component?.elementRef?.nativeElement;
     }
 
-    private addLineWidgetWithFeedback(feedback: Feedback): void {
-        const line = Feedback.getReferenceLine(feedback);
-        if (line === undefined) {
+    private addLineWidgetWithFeedback(feedback: Feedback, index: number): void {
+        const range = Feedback.getReferenceLineRange(feedback);
+        if (!range) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
-        // TODO: In the future, there may be more than one feedback node per line. The ID should be unique.
-        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-        // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
-        const oneBasedLine = line + 1;
-        this.editor().addLineWidget(oneBasedLine, 'feedback-' + feedback.id + '-line-' + oneBasedLine, feedbackNode);
+        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(range.start, feedback);
+        // A feedback sits above the first line it refers to, so the lines of one spanning several stay together below it.
+        // Feedback lines are 0-based while Monaco's are 1-based, so the Monaco line above the first line is `range.start`.
+        const afterLine = range.start;
+        // Monaco stacks the widgets of one line in the order they are added. The index keeps the widget ids unique, also for
+        // feedback that is not saved yet and therefore has no id.
+        this.editor().addLineWidget(afterLine, `feedback-${index}-line-${afterLine}`, feedbackNode);
     }
 
     /**

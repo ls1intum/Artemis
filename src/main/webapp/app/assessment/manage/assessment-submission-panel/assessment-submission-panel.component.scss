@@ -1,0 +1,71 @@
+:host {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+// Framed like the workspace's instructions and general feedback & notes sections next to it
+.assessment-submission-panel {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background: var(--module-bg);
+}
+
+// Less vertical padding than the workspace's section headers, so the 28px tags still fit their 2.5rem height and the
+// header lines up with the instructions header beside it
+.assessment-submission-panel__header {
+    display: flex;
+    min-height: 2.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--hover-slightly-darker-body-bg);
+    color: var(--body-color);
+
+    h2 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 650;
+        line-height: 1.3;
+    }
+}
+
+// The tags sit at the end of the header and wrap below the title when the panel is narrow
+.assessment-submission-panel__meta {
+    display: flex;
+    margin-left: auto;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.assessment-submission-panel__content {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+
+    &--scroll {
+        display: block;
+        padding: 0.75rem;
+        overflow: auto;
+        overscroll-behavior: contain;
+    }
+}
+
+// On a surface that frames it already, the surface's border and corners are the panel's
+.assessment-submission-panel--flush {
+    border: 0;
+    border-radius: 0;
+}

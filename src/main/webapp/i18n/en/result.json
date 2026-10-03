@@ -47,7 +47,7 @@
                 "programmingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
                 "short": "{{ relativeScore }}%",
                 "automaticAIFeedbackSuccessful": "Feedback",
-                "automaticAIFeedbackFailed": "Feedback",
+                "automaticAIFeedbackFailed": "AI feedback request failed!",
                 "automaticAIFeedbackInProgress": "AI Feedback request is being processed",
                 "automaticAIFeedbackTimedOut": "Feedback timed out.",
                 "automaticAIFeedbackSuccessfulTooltip": "AI-based feedback can include mistakes. Consider checking important information.",
@@ -135,7 +135,8 @@
                 "goalReached": "Goal reached! Excellent work.",
                 "niceProgress": "Nice progress! You're getting closer.",
                 "scoreDrop": "Oops, your score dropped. Try a different path!",
-                "stuck": "Stuck? Try a new approach."
+                "stuck": "Stuck? Try a new approach.",
+                "aiFeedbackReceived": "AI feedback on your code is ready."
             }
         }
     }

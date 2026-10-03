@@ -1,4 +1,5 @@
 <jhi-assessment-layout
+    class="text-assessment-page__layout"
     [isLoading]="isLoading()"
     [saveBusy]="saveBusy()"
     [submitBusy]="submitBusy()"
@@ -12,6 +13,8 @@
     [complaint]="complaint()"
     [exercise]="exercise"
     [submission]="submission"
+    [showAssessmentNote]="false"
+    [showComplaintSection]="false"
     [isTestRun]="isTestRun()"
     [exerciseDashboardLink]="exerciseDashboardLink()"
     [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
@@ -34,44 +37,80 @@
         [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
     />
     @if (submission) {
-        <div class="row">
-            <jhi-resizeable-container class="col-12">
-                <!--region Left Panel-->
-                <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore()" [course]="course()" />
-                <jhi-text-assessment-area
-                    left-body
-                    [submission]="submission!"
-                    [(textBlockRefs)]="textBlockRefs"
-                    [readOnly]="readOnly"
-                    [highlightDifferences]="highlightDifferences()"
-                    (textBlockRefsChange)="validateFeedback()"
-                    (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
-                    [criteria]="exercise!.gradingCriteria"
-                />
-                <!--endregion-->
-                <!--region Right Panel-->
-                <fa-icon right-header [icon]="farListAlt" />&nbsp;
-                <span right-header jhiTranslate="artemisApp.textAssessment.instructions"></span>
-                <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
-                <jhi-assessment-instructions id="instructions-card" right-body [exercise]="exercise!" class="markdown-preview" />
-                <!--endregion-->
-            </jhi-resizeable-container>
-        </div>
-        <div class="row mt-3">
-            @if (result() && result()!.id) {
-                <jhi-unreferenced-feedback
-                    [feedbacks]="unreferencedFeedback()"
-                    (feedbacksChange)="unreferencedFeedback.set($event)"
-                    [highlightDifferences]="highlightDifferences()"
-                    (feedbacksChange)="validateFeedback($event)"
-                    [readOnly]="readOnly"
-                    [resultId]="result()!.id!"
-                    [gradingCriteria]="exercise?.gradingCriteria ?? []"
-                    [allFeedbacks]="allAssessmentFeedbacks()"
-                    [maxPoints]="getTotalMaxPoints(exercise)"
-                />
-            }
-        </div>
+        <jhi-assessment-workspace class="text-assessment-page__workspace" storageKey="text-submission-assessment-split" [customDetailsHeader]="true">
+            <div assessmentWorkspaceCanvas class="text-assessment-page__canvas">
+                <jhi-assessment-submission-panel [score]="scoreSummary()" [maxPoints]="getTotalMaxPoints(exercise)">
+                    <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="text-assessment-word-count">
+                        <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
+                    </tumaet-ui-tag>
+                    <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="text-assessment-character-count">
+                        <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount() }"></span>
+                    </tumaet-ui-tag>
+                    <jhi-text-assessment-area
+                        [submission]="submission!"
+                        [(textBlockRefs)]="textBlockRefs"
+                        [readOnly]="readOnly"
+                        [highlightDifferences]="highlightDifferences()"
+                        [showCounts]="false"
+                        (textBlockRefsChange)="validateFeedback()"
+                        (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
+                    />
+                </jhi-assessment-submission-panel>
+            </div>
+
+            <div assessmentWorkspaceInstructions>
+                <div class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
+                <jhi-assessment-instructions id="instructions-card" [exercise]="exercise!" [embeddedInEditorChrome]="true" class="markdown-preview" />
+            </div>
+
+            <jhi-assessment-details-header
+                assessmentWorkspaceDetailsHeader
+                [(activeTab)]="detailsTab"
+                [feedbackCount]="unreferencedFeedback().length"
+                [hasNote]="hasTutorNote()"
+                [complaintType]="complaint()?.complaintType"
+                [complaintAwaitsResponse]="complaint()?.accepted === undefined"
+                [disabled]="readOnly || !result()?.id"
+                (addGeneralFeedback)="addGeneralFeedback()"
+            />
+
+            <div assessmentWorkspaceDetails class="text-assessment-page__details">
+                <!-- Both tabs stay rendered: the general feedback list must stay registered for the instruction checkboxes. -->
+                <div [hidden]="detailsTab() !== 'feedback'">
+                    @if (result() && result()!.id) {
+                        <jhi-unreferenced-feedback
+                            [feedbacks]="unreferencedFeedback()"
+                            (feedbacksChange)="unreferencedFeedback.set($event)"
+                            [highlightDifferences]="highlightDifferences()"
+                            (feedbacksChange)="validateFeedback($event)"
+                            [readOnly]="readOnly"
+                            [showAddButton]="false"
+                            [showHeader]="false"
+                            [resultId]="result()!.id!"
+                            [gradingCriteria]="exercise?.gradingCriteria ?? []"
+                            [allFeedbacks]="allAssessmentFeedbacks()"
+                            [maxPoints]="getTotalMaxPoints(exercise)"
+                        />
+                    }
+                </div>
+                <div [hidden]="detailsTab() !== 'notes'">
+                    <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" [showTitle]="false" (onAssessmentNoteChange)="onAssessmentNoteChange($event)" />
+                </div>
+                @if (complaint(); as complaint) {
+                    <div [hidden]="detailsTab() !== 'complaint'">
+                        <jhi-complaints-for-tutor-form
+                            [complaint]="complaint"
+                            [stacked]="true"
+                            [exercise]="exercise"
+                            [isAssessor]="isAssessor()"
+                            [submission]="submission"
+                            [isTestRun]="isTestRun()"
+                            (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
+                        />
+                    </div>
+                }
+            </div>
+        </jhi-assessment-workspace>
     } @else {
         @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
             <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />

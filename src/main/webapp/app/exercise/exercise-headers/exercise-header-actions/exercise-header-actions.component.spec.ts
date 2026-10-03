@@ -190,13 +190,13 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
         });
 
-        it('should not show the popover for a programming exercise without manual assessment enabled', () => {
+        it('should show the popover for an automatically assessed programming exercise', () => {
             const exercise = manualAssessmentProgrammingExercise();
             exercise.assessmentType = AssessmentType.AUTOMATIC;
 
             createComponent(withCourse(exercise, true));
 
-            expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
+            expect(fixture.componentInstance.showFeedbackPopover()).toBe(true);
         });
     });
 

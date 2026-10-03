@@ -314,6 +314,21 @@ describe('FeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).not.toBeNull();
     });
 
+    it('should not chart the points of AI feedback on a programming exercise', () => {
+        // The AI feedback is not graded, so its points are not shown anywhere in the panel.
+        const { feedbacks } = generateFeedbacksAndExpectedItems();
+        fixture.componentRef.setInput('showScoreChart', true);
+        comp.result().assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        comp.result().feedbacks = feedbacks;
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        expect(comp.exerciseType()).toBe(ExerciseType.PROGRAMMING);
+        expect(comp.scoreChartVisible()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).toBeNull();
+    });
+
     it('marks a preliminary result as preliminary when the participation carries no exercise', () => {
         // the list endpoints do not ship `participation.exercise`, so the tag has to read the exercise the popup resolved
         exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
@@ -343,7 +358,7 @@ describe('FeedbackComponent', () => {
             makeFeedback({
                 text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
                 detailText: 'The returned value is wrong.',
-                reference: 'file:src/main/java/Example.java_line:3',
+                reference: 'file:src/main/java/Example.java_line:2',
             }),
         ];
 
@@ -370,6 +385,25 @@ describe('FeedbackComponent', () => {
         });
     });
 
+    it('should hand the feedback list new nodes once the source code arrives, keeping which groups are open', () => {
+        // FeedbackNodeComponent reads its node once on init, so the loaded lines only render in freshly created nodes.
+        const repositoryFiles = new Subject<Map<string, string>>();
+        vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(repositoryFiles);
+        comp.result().feedbacks = [
+            makeFeedback({ text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`, detailText: 'Wrong.', reference: 'file:src/main/java/Example.java_line:2' }),
+        ];
+        comp.ngOnInit();
+        const groupBeforeLoading = comp.feedbackItemNodes()![0] as FeedbackGroup;
+        groupBeforeLoading.open = false;
+
+        repositoryFiles.next(new Map([['src/main/java/Example.java', ['1', '2', '3'].join('\n')]]));
+
+        const groupAfterLoading = comp.feedbackItemNodes()![0] as FeedbackGroup;
+        expect(groupAfterLoading).not.toBe(groupBeforeLoading);
+        expect(groupAfterLoading.open).toBe(false);
+        expect(groupAfterLoading.members[0].codeReference?.lines).toHaveLength(3);
+    });
+
     it('should request each referenced file only once', () => {
         const getFilesSpy = vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(of(new Map()));
         comp.result().feedbacks = [
@@ -392,7 +426,7 @@ describe('FeedbackComponent', () => {
             makeFeedback({
                 text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
                 detailText: 'The returned value is wrong.',
-                reference: 'file:src/main/java/Example.java_line:3-5',
+                reference: 'file:src/main/java/Example.java_line:2-4',
             }),
         ];
 
@@ -419,7 +453,7 @@ describe('FeedbackComponent', () => {
             makeFeedback({
                 text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
                 detailText: 'The returned value is wrong.',
-                reference: 'file:src/main/java/Example.java_line:3-1000000',
+                reference: 'file:src/main/java/Example.java_line:2-1000000',
             }),
         ];
 
@@ -437,7 +471,7 @@ describe('FeedbackComponent', () => {
             makeFeedback({
                 text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
                 detailText: 'The returned value is wrong.',
-                reference: 'file:src/main/java/Example.java_line:2',
+                reference: 'file:src/main/java/Example.java_line:1',
             }),
         ];
 

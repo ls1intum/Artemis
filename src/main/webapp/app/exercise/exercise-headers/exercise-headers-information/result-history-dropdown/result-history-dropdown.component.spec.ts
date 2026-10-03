@@ -265,6 +265,44 @@ describe('ResultHistoryDropdownComponent', () => {
 
             expect(component.getResultFeedbackMessage(result)).toBe('AI feedback generation timed out.');
         });
+
+        it('should show an AI feedback message instead of score progress for completed AI feedback on a programming exercise', () => {
+            const testResult = createResult(1, 50);
+            const aiFeedback = { id: 2, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+            fixture.componentRef.setInput('sortedHistoryResults', [aiFeedback, testResult]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(aiFeedback)).toBe('artemisApp.result.progressString.aiFeedbackReceived');
+        });
+
+        it('should show the AI feedback message rather than the build failure for AI feedback on a failed build', () => {
+            // The AI feedback still has something to say about code that does not compile; the failed build has its own row.
+            const participation: Participation = { id: 1, type: 'student' } as unknown as Participation;
+            const programmingSub = { buildFailed: true, participation } as unknown as ProgrammingSubmission;
+            const aiFeedback = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, submission: programmingSub } as unknown as Result;
+
+            expect(component.getResultFeedbackMessage(aiFeedback)).toBe('artemisApp.result.progressString.aiFeedbackReceived');
+        });
+
+        it('should compare a programming test result with the previous test result, skipping AI feedback in between', () => {
+            // The AI feedback copies a score that may be 0; comparing against it would report progress that did not happen.
+            const earlierTestResult = createResult(1, 50);
+            const aiFeedback = { id: 2, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+            const laterTestResult = createResult(3, 50);
+            fixture.componentRef.setInput('sortedHistoryResults', [laterTestResult, aiFeedback, earlierTestResult]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(laterTestResult)).toBe('artemisApp.result.progressString.stuck');
+        });
+
+        it('should treat a programming test result preceded only by AI feedback as the first result', () => {
+            const aiFeedback = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+            const testResult = createResult(2, 50);
+            fixture.componentRef.setInput('sortedHistoryResults', [testResult, aiFeedback]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(testResult)).toBe('artemisApp.result.progressString.niceProgress');
+        });
     });
 
     describe('AI feedback indicator', () => {
@@ -404,10 +442,18 @@ describe('ResultHistoryDropdownComponent', () => {
             expect(component.shouldShowResultMetadata(result)).toBe(false);
         });
 
-        it('should show score and metadata for completed Athena results', () => {
+        it('should show score and metadata for completed Athena results of non-programming exercises', () => {
+            fixture.componentRef.setInput('exercise', { ...defaultExercise, type: ExerciseType.TEXT });
             const result = { id: 1, score: 75, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
 
             expect(component.shouldShowResultScore(result)).toBe(true);
+            expect(component.shouldShowResultMetadata(result)).toBe(true);
+        });
+
+        it('should hide the score but keep the metadata for completed AI feedback on a programming exercise', () => {
+            const result = { id: 1, score: 75, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+
+            expect(component.shouldShowResultScore(result)).toBe(false);
             expect(component.shouldShowResultMetadata(result)).toBe(true);
         });
 

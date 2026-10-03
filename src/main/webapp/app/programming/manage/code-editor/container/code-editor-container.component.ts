@@ -1,4 +1,10 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChevronDown, faCommentDots, faGripLines, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -48,6 +54,7 @@ export enum CollapsableCodeEditorElement {
     templateUrl: './code-editor-container.component.html',
     styleUrls: ['./code-editor-container.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: { '[class.code-editor-container--fill]': 'fillHeight()' },
     imports: [
         CodeEditorGridComponent,
         CodeEditorActionsComponent,
@@ -56,6 +63,13 @@ export enum CollapsableCodeEditorElement {
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
         KeysPipe,
+        FaIconComponent,
+        ResizableDirective,
+        NgTemplateOutlet,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
@@ -67,6 +81,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
+    protected readonly faGripLines = faGripLines;
+    protected readonly faTerminal = faTerminal;
+    protected readonly faCommentDots = faCommentDots;
+    protected readonly faChevronDown = faChevronDown;
     // grid is the root layout element and is always rendered, so it is required and safe to dereference.
     readonly grid = viewChild.required(CodeEditorGridComponent);
     // fileBrowser, actions, buildOutput and monacoEditor are optional viewChildren:
@@ -88,6 +106,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     buildable = input<boolean>(true);
     showEditorInstructions = input<boolean>(true);
     isTutorAssessment = input<boolean>(false);
+    /**
+     * Whether the editor lays out a tutor's assessment workspace: it fills the page, and the instructions share their column
+     * with the feedback panel projected through `[editorSidebarPanel]`. Only the assessment page sets it; pages that show a
+     * tutor's feedback read-only set {@link isTutorAssessment} alone and keep the editor's own layout.
+     */
+    readonly assessmentWorkspace = input<boolean>(false);
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
     /**
@@ -110,6 +134,15 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
+    /**
+     * How many general feedback the page projects through `[editorBottomFeedback]`. With any, the build output shares its
+     * panel with them as tabs, as in the programming assessment; without, the build output keeps its own header.
+     */
+    readonly generalFeedbackCount = input(0);
+    /** Whether the editor fills the height of its host, as in the exercise's split panel; see the grid's `fillHeight`. */
+    readonly fillHeight = input(false);
+    /** The open tab of the build output panel when it also holds the general feedback, which the student came to read. */
+    readonly bottomPanelTab = signal<'buildOutput' | 'feedback'>('feedback');
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -441,6 +474,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     highlightLines(startLine: number, endLine: number): void {
         this.monacoEditor()?.highlightLines(startLine, endLine);
+    }
+
+    selectBottomPanelTab(value: number | string | undefined): void {
+        if (value === 'buildOutput' || value === 'feedback') {
+            this.bottomPanelTab.set(value);
+        }
     }
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {

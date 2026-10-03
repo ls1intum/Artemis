@@ -1,0 +1,35 @@
+@use 'src/main/webapp/content/scss/artemis-mixins' as mixins;
+
+:host {
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+.assessment-details-header {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+// The tabs are the kit's small ones, so they fit the 2.5rem panel header like the instructions header beside it
+.assessment-details-header__tabs {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.assessment-details-header__count {
+    @include mixins.count-pill;
+}
+
+.assessment-details-header__marker {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.assessment-details-header__add {
+    flex-shrink: 0;
+}
