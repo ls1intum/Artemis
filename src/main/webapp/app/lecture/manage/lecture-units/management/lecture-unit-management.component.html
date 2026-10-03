@@ -156,10 +156,10 @@
                                     </a>
                                 }
                                 @if (isEditing) {
-                                    <!-- The item saves itself while it is edited; Save saves at once and closes it. -->
-                                    <button tumAetUiButton type="button" size="small" data-testid="lecture-unit-save" (click)="onSaveEditingClicked.emit(lectureUnit)">
-                                        <fa-icon [icon]="faSave" />
-                                        <span jhiTranslate="entity.action.save"></span>
+                                    <!-- The item saves itself while it is edited; Done sends what still waits and closes it once it is saved. -->
+                                    <button tumAetUiButton type="button" size="small" data-testid="lecture-unit-done" (click)="onDoneEditingClicked.emit(lectureUnit)">
+                                        <fa-icon [icon]="faCheck" />
+                                        <span jhiTranslate="artemisApp.lecture.unitEditor.done"></span>
                                     </button>
                                 } @else if (editButtonAvailable(lectureUnit)) {
                                     @let editLabel = 'entity.action.edit' | artemisTranslate;

@@ -2,6 +2,9 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Content deleted",
+            "deepLink": {
+                "unitGone": "The linked lecture content no longer exists, so only the lecture is opened."
+            },
             "retryProcessing": "Retry processing",
             "processingRetryStarted": "Processing retry started",
             "home": {
@@ -161,8 +164,8 @@
                 }
             },
             "createAttachmentVideoUnits": {
-                "noFile": "There is no file for automatic processing. Please go back and try again.",
-                "noUnitDetected": "No content was detected and could not split automatically. Please add information for each content section!",
+                "noFile": "There is no file to split. Start the split again from the lecture editor.",
+                "noUnitDetected": "This PDF has no slide with the word “Outline” or “Gliederung”, so Artemis could not propose items. Add the items and their slides with “Add item”.",
                 "pageTitle": "Process content",
                 "addUnit": "Add item",
                 "removeSlides": "Remove slides",
@@ -196,7 +199,8 @@
                     "summarySingle": "Artemis found 1 section in {{ slides }} slides.",
                     "hint": "Each row becomes one content item with its slides. Check the names and slide ranges before you create the items.",
                     "slides": "Slides",
-                    "summaryNone": "Artemis found no sections in {{ slides }} slides."
+                    "summaryNone": "Artemis found no sections in {{ slides }} slides.",
+                    "detectionHint": "Artemis starts a new section at every slide that contains the word “Outline” or “Gliederung”, spelled exactly like this, and proposes a name from the text of that slide. This works for PDFs from any program, such as PowerPoint, Keynote or LaTeX, as long as their text can be selected. Check the proposed names and slides."
                 },
                 "processTimeInfo": "The processing of lecture content can take a few seconds. Please be patient.",
                 "removeSource": "Remove the original PDF item “{{ name }}” after splitting",
@@ -244,16 +248,15 @@
                 "transcriptionHint": "Videos from supported sources are automatically transcribed after saving. You can track the transcription progress on the lecture management page.",
                 "useAsVideoSource": "Use as video URL",
                 "notifyStudents": "Notify students about the new version",
-                "uploadVersion": "Upload version {{ version }}",
-                "uploadHint": "Artemis then splits the slides and processes the content again.",
                 "saveVideoSource": "Save video URL",
                 "discardVideoSource": "Keep current URL",
                 "videoSourceHint": "Artemis then transcribes the video and processes it again.",
                 "discardNewFile": "Discard file",
                 "notifyStudentsNewFile": "Notify students about the new file",
-                "uploadFile": "Upload file",
-                "uploadFileHint": "Artemis then splits the slides and processes the content.",
-                "discardNewVideoSource": "Discard URL"
+                "discardNewVideoSource": "Discard URL",
+                "uploading": "Uploading…",
+                "replaceFileHint": "A file you choose is uploaded right away as version {{ version }}, and Artemis processes it again. Slides hidden in the current file are shown again.",
+                "newFileHint": "A file you choose is uploaded right away, and Artemis processes it."
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit File/Video Content"

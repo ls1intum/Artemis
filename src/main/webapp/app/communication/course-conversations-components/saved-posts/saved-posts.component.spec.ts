@@ -124,7 +124,7 @@ describe('SavedPostsComponent', () => {
             component['changeSavedPostStatus'](mockPosting, newStatus);
 
             expect(savedPostService.changeSavedPostStatus).toHaveBeenCalledWith(mockPosting, SavedPostStatus.ARCHIVED);
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.metis.post.changeSavedStatusError');
+            expect(alertService.error).toHaveBeenCalledWith('artemisApp.communication.post.changeSavedStatusError');
         });
     });
 
@@ -142,7 +142,7 @@ describe('SavedPostsComponent', () => {
             component['removeSavedPost'](mockPosting);
 
             expect(savedPostService.removeSavedPost).toHaveBeenCalledWith(mockPosting);
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.metis.post.removeBookmarkError');
+            expect(alertService.error).toHaveBeenCalledWith('artemisApp.communication.post.removeBookmarkError');
         });
     });
 

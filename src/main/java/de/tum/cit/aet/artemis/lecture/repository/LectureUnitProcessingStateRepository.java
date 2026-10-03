@@ -487,10 +487,14 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * token-and-phase guard as {@link #applyHeartbeat}, and the same field set {@link
      * de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#transitionTo} applies, so a
      * checkpoint racing a terminal callback cannot revive a run the terminal callback already finished.
+     * The transcription version and its content hash are written in the same statement, so a checkpoint
+     * that lost ownership advances neither.
      *
-     * @param id    the processing state to update
-     * @param token the job token the checkpoint carried
-     * @param now   recorded as the new {@code startedAt} and {@code lastUpdated}
+     * @param id                       the processing state to update
+     * @param token                    the job token the checkpoint carried
+     * @param now                      recorded as the new {@code startedAt} and {@code lastUpdated}
+     * @param transcriptionVersion     the transcription version after this checkpoint
+     * @param transcriptionContentHash the content hash of the transcription this checkpoint carries
      * @return 1 when applied, 0 when the run is no longer in flight under this token
      */
     @Modifying
@@ -499,12 +503,14 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             UPDATE LectureUnitProcessingState ps
             SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING, ps.startedAt = :now, ps.lastUpdated = :now,
                 ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.claimToken = NULL, ps.retryCount = 0,
-                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.transcriptionVersion = :transcriptionVersion, ps.transcriptionContentHash = :transcriptionContentHash
             WHERE ps.id = :id
             AND ps.ingestionJobToken = :token
             AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING
             """)
-    int transitionToIngestingIfTranscribing(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
+    int transitionToIngestingIfTranscribing(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now,
+            @Param("transcriptionVersion") Integer transcriptionVersion, @Param("transcriptionContentHash") String transcriptionContentHash);
 
     /**
      * Reclaim one lapsed-lease run atomically: reset it to IDLE, but only while it is still exactly the

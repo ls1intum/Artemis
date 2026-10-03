@@ -68,13 +68,13 @@
                                         <span>
                                             {{
                                                 showPinnedMessages()
-                                                    ? ('artemisApp.metis.showing' | artemisTranslate) +
+                                                    ? ('artemisApp.communication.showing' | artemisTranslate) +
                                                       (pinnedMessageCount() === 1
-                                                          ? ('artemisApp.metis.singlePinned' | artemisTranslate)
-                                                          : ('artemisApp.metis.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() }))
+                                                          ? ('artemisApp.communication.singlePinned' | artemisTranslate)
+                                                          : ('artemisApp.communication.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() }))
                                                     : pinnedMessageCount() === 1
-                                                      ? ('artemisApp.metis.singlePinned' | artemisTranslate)
-                                                      : ('artemisApp.metis.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() })
+                                                      ? ('artemisApp.communication.singlePinned' | artemisTranslate)
+                                                      : ('artemisApp.communication.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() })
                                             }}
                                         </span>
                                     </button>

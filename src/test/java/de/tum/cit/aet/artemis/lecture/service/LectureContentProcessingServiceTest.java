@@ -504,7 +504,7 @@ class LectureContentProcessingServiceTest {
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(transcriptionRepository.insertIfTokenMatches(eq(testUnit.getId()), any(), any(), any(), eq(TEST_JOB_TOKEN))).thenReturn(1);
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
 
             // Enriched transcript: some slideNumber≠0
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
@@ -516,6 +516,45 @@ class LectureContentProcessingServiceTest {
             verify(transcriptionRepository).insertIfTokenMatches(eq(testUnit.getId()), eq("en"), any(), eq("COMPLETED"), eq(TEST_JOB_TOKEN));
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
             assertThat(testState.getRetryCount()).isZero(); // Reset for ingestion phase
+        }
+
+        /**
+         * A run always sends the raw segments before the enriched ones, and the raw segments carry the same speech without slide numbers — a different content hash. Were
+         * every checkpoint to advance the version, a retranscription that ends up with exactly the previous transcript would still move the version twice and mark every
+         * citation of that video stale, sending students to a "material has changed" warning for material that did not.
+         */
+        @Test
+        void shouldNotAdvanceTheVersionWhenARerunEndsWithTheSameTranscription() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            // A first, complete run: raw segments followed by the enriched ones
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            assertThat(testState.getTranscriptionVersion()).isEqualTo(1);
+
+            // The unit is transcribed again and Pyris produces exactly the same transcript
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            assertThat(testState.getTranscriptionVersion()).isEqualTo(1);
+            // The version reaches the database only through the guarded transition, once per enriched checkpoint, both times as 1
+            verify(processingStateRepository, times(2)).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), eq(1),
+                    eq(testState.getTranscriptionContentHash()));
         }
 
         @Test
@@ -530,7 +569,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(0);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(0);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
@@ -569,7 +608,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.insertIfTokenMatches(eq(testUnit.getId()), any(), any(), any(), eq(TEST_JOB_TOKEN))).thenReturn(0);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
@@ -612,7 +651,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
-            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.COMPLETED))).thenReturn(1);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
@@ -638,7 +677,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
-            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.updateContentIfExists(eq(99L), any(), any(), any())).thenReturn(0);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
@@ -1082,6 +1121,36 @@ class LectureContentProcessingServiceTest {
             verify(processingStateRepository).delete(testState);
             assertThat(result).isNotNull();
             assertThat(result.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        }
+
+        /**
+         * The retry replaces the failed row instead of reusing it. The transcription version has no other home to be recovered from — unlike the attachment version, which
+         * the attachment itself carries — so letting it start over would make an Iris citation pinned to version 1 look current after the next transcription, and send a
+         * student to a timestamp in material that has since changed.
+         */
+        @Test
+        void shouldCarryTheTranscriptionVersionOverToTheReplacementState() {
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testState.setTranscriptionVersion(3);
+            testState.setTranscriptionContentHash("abc123");
+
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            verify(processingStateRepository).delete(testState);
+            assertThat(result).isNotNull();
+            assertThat(result).isNotSameAs(testState);
+            // The counter has to continue from where the failed run left it, so the next transcription becomes 4 rather than 1 again
+            assertThat(result.getTranscriptionVersion()).isEqualTo(3);
+            assertThat(result.getTranscriptionContentHash()).isEqualTo("abc123");
         }
 
         @Test

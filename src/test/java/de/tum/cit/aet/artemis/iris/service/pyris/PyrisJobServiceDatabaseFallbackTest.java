@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
@@ -55,7 +56,7 @@ class PyrisJobServiceDatabaseFallbackTest {
         jobMap = mock(PyrisJobMap.class);
         when(distributedDataProvider.<String, PyrisJob>getExpiringMap(eq("pyris-job-map"), any())).thenReturn(jobMap);
         callbackApi = mock(LectureUnitProcessingStateRepositoryApi.class);
-        jobService = new PyrisJobService(distributedDataProvider, Optional.of(callbackApi), new IrisProactiveProperties());
+        jobService = new PyrisJobService(distributedDataProvider, Optional.of(callbackApi), new IrisProactiveProperties(), mock(IrisLectureMaterialVersionService.class));
 
         request = mock(HttpServletRequest.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer " + TOKEN);
@@ -105,7 +106,7 @@ class PyrisJobServiceDatabaseFallbackTest {
     void shouldRejectWithoutTheFallbackApiPresent() {
         DistributedDataProvider provider = mock(DistributedDataProvider.class);
         when(provider.<String, PyrisJob>getExpiringMap(eq("pyris-job-map"), any())).thenReturn(jobMap);
-        PyrisJobService withoutFallback = new PyrisJobService(provider, Optional.empty(), new IrisProactiveProperties());
+        PyrisJobService withoutFallback = new PyrisJobService(provider, Optional.empty(), new IrisProactiveProperties(), mock(IrisLectureMaterialVersionService.class));
         when(jobMap.get(TOKEN)).thenReturn(null);
 
         assertThatThrownBy(() -> withoutFallback.getAndAuthenticateJobFromHeaderElseThrow(request, LectureIngestionWebhookJob.class)).isInstanceOf(AccessForbiddenException.class);

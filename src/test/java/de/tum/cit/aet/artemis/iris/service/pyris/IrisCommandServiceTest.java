@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandAckDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandRequestWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandResultDTO;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 
 /**
  * Unit tests for {@link IrisCommandService#executeCommand}. Covers the point-out dispatch: the
@@ -109,6 +111,9 @@ class IrisCommandServiceTest {
     @Mock
     private LectureUnit lectureUnit;
 
+    @Mock
+    private IrisLectureMaterialVersionService materialVersionService;
+
     private IrisCommandService commandService;
 
     private ChatJob job;
@@ -116,7 +121,7 @@ class IrisCommandServiceTest {
     @BeforeEach
     void setUp() {
         commandService = new IrisCommandService(coordinationService, distributedDataProvider, irisWebsocketService, irisChatWebsocketService, irisMessageService,
-                irisSessionRepository, userRepository, JsonMapper.builder().build(), Optional.of(lectureUnitRepositoryApi));
+                irisSessionRepository, userRepository, JsonMapper.builder().build(), Optional.of(lectureUnitRepositoryApi), materialVersionService);
         job = new ChatJob("job-1", COURSE_ID, SESSION_ID, null, null, null, null);
     }
 
@@ -124,12 +129,19 @@ class IrisCommandServiceTest {
      * Builds a point-out command the way Pyris sends it: type plus a parameters map, omitting the parameters that are not set.
      */
     private static PyrisCommandDTO pointOutCommand(@Nullable Long lectureUnitId, @Nullable Integer page) {
+        return pointOutCommand(lectureUnitId, page, null);
+    }
+
+    private static PyrisCommandDTO pointOutCommand(@Nullable Long lectureUnitId, @Nullable Integer page, @Nullable Integer timestamp) {
         var parameters = new LinkedHashMap<String, JsonNode>();
         if (lectureUnitId != null) {
             parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(lectureUnitId));
         }
         if (page != null) {
             parameters.put("page", JsonNodeFactory.instance.numberNode(page));
+        }
+        if (timestamp != null) {
+            parameters.put("timestamp", JsonNodeFactory.instance.numberNode(timestamp));
         }
         return new PyrisCommandDTO("pointOut", parameters);
     }
@@ -200,6 +212,79 @@ class IrisCommandServiceTest {
         assertThat(marker.get("parameters").get("lectureUnitName").stringValue()).isEqualTo("Sorting");
         assertThat(marker.get("parameters").get("lectureId").asLong()).isEqualTo(LECTURE_ID);
         assertThat(marker.has("lectureUnitId")).isFalse();
+    }
+
+    @Test
+    void executeCommand_pinsSlidePointOutToTheIngestedAttachmentVersionInDispatchAndMarker() {
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        stubMarkerWriteLock();
+        when(materialVersionService.getSnapshot("job-1")).thenReturn(Map.of(LECTURE_UNIT_ID, new LectureUnitIngestedVersionsDTO(LECTURE_UNIT_ID, 3, 7)));
+        when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
+        var dispatched = ArgumentCaptor.forClass(Object.class);
+        var savedMarker = ArgumentCaptor.forClass(IrisMessage.class);
+        when(irisMessageService.saveMessage(savedMarker.capture(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
+
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
+        var request = (IrisCommandRequestWebsocketDTO) dispatched.getValue();
+        assertThat(request.parameters().get("materialType").stringValue()).isEqualTo("attachment");
+        assertThat(request.parameters().get("materialVersion").asInt()).isEqualTo(3);
+        var markerParameters = ((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getJsonNode().get("parameters");
+        assertThat(markerParameters.get("materialType").stringValue()).isEqualTo("attachment");
+        assertThat(markerParameters.get("materialVersion").asInt()).isEqualTo(3);
+    }
+
+    @Test
+    void executeCommand_pinsPointOutWithATimestampToTheIngestedVideoVersion() {
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        when(materialVersionService.getSnapshot("job-1")).thenReturn(Map.of(LECTURE_UNIT_ID, new LectureUnitIngestedVersionsDTO(LECTURE_UNIT_ID, 3, 7)));
+        when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
+        var dispatched = ArgumentCaptor.forClass(Object.class);
+
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3, 42), null);
+
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
+        var parameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
+        assertThat(parameters.get("materialType").stringValue()).isEqualTo("video");
+        assertThat(parameters.get("materialVersion").asInt()).isEqualTo(7);
+    }
+
+    @Test
+    void executeCommand_replacesUntrustedVersionParametersWithUnverifiedWithoutAnIngestedVersion() {
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        when(materialVersionService.getSnapshot("job-1")).thenReturn(Map.of(LECTURE_UNIT_ID, new LectureUnitIngestedVersionsDTO(LECTURE_UNIT_ID, null, null)));
+        when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
+        var parameters = new LinkedHashMap<>(pointOutCommand(LECTURE_UNIT_ID, 3).parameters());
+        parameters.put("materialType", JsonNodeFactory.instance.stringNode("video"));
+        parameters.put("materialVersion", JsonNodeFactory.instance.numberNode(99));
+        var dispatched = ArgumentCaptor.forClass(Object.class);
+
+        commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null);
+
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
+        var stampedParameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
+        assertThat(stampedParameters.get("materialType").stringValue()).isEqualTo("attachment");
+        assertThat(stampedParameters.get("materialVersion").asInt()).isZero();
+    }
+
+    @Test
+    void executeCommand_marksPointOutUnverifiedWhenSnapshotIsMissing() {
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        when(materialVersionService.getSnapshot("job-1")).thenReturn(Map.of());
+        when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
+        var dispatched = ArgumentCaptor.forClass(Object.class);
+
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
+
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
+        var parameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
+        assertThat(parameters.get("materialType").stringValue()).isEqualTo("attachment");
+        assertThat(parameters.get("materialVersion").asInt()).isZero();
     }
 
     @Test
@@ -322,7 +407,7 @@ class IrisCommandServiceTest {
 
         // No lecture module at all, so there are no units to point into.
         var serviceWithoutLectures = new IrisCommandService(coordinationService, distributedDataProvider, irisWebsocketService, irisChatWebsocketService, irisMessageService,
-                irisSessionRepository, userRepository, JsonMapper.builder().build(), Optional.empty());
+                irisSessionRepository, userRepository, JsonMapper.builder().build(), Optional.empty(), materialVersionService);
         assertThat(serviceWithoutLectures.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null).applied()).isFalse();
 
         verify(coordinationService, never()).register(anyString(), anyString(), anyBoolean());
