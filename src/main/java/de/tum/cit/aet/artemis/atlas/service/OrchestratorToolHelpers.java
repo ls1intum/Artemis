@@ -4,6 +4,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.model.ToolContext;
@@ -64,6 +67,8 @@ public final class OrchestratorToolHelpers {
      */
     static final int MAX_DESCRIPTION_LENGTH = 10_000;
 
+    private static final String MISSING_COURSE_CONTEXT_MESSAGE = "No course context available for this tool call.";
+
     private OrchestratorToolHelpers() {
     }
 
@@ -122,6 +127,121 @@ public final class OrchestratorToolHelpers {
     static boolean tryReserveWriteSlot(@Nullable ToolContext toolContext) {
         OrchestratorToolContextKeys.AppliedActionsBuffer buffer = appliedActionsBufferFromContext(toolContext);
         return buffer == null || buffer.tryReserveSlot(OrchestratorToolContextKeys.MAX_WRITE_CALLS);
+    }
+
+    /** Atomically reserves one nested worker round against the request-scoped delegation cap. */
+    static boolean tryReserveDelegationSlot(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.DELEGATION_COUNT_KEY);
+        if (!(value instanceof AtomicInteger counter)) {
+            return false;
+        }
+        while (true) {
+            int current = counter.get();
+            if (current >= OrchestratorToolContextKeys.MAX_DELEGATION_CALLS) {
+                return false;
+            }
+            if (counter.compareAndSet(current, current + 1)) {
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Records one successful course-scoped read when invoked inside a worker request. A successful read is also a
+     * completed read outcome, so it counts towards both the success-only and the any-outcome evidence counters.
+     *
+     * @param toolContext worker context in which the read is recorded
+     */
+    static void markWorkerRead(@Nullable ToolContext toolContext) {
+        incrementCounter(toolContext, OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY);
+        markWorkerReadOutcome(toolContext);
+    }
+
+    /** Records a completed read outcome (successful or not) without treating it as a successful read. */
+    private static void markWorkerReadOutcome(@Nullable ToolContext toolContext) {
+        incrementCounter(toolContext, OrchestratorToolContextKeys.WORKER_READ_OUTCOME_COUNT_KEY);
+    }
+
+    /**
+     * Records a failed read as a completed worker read outcome and serialises its error payload. The failure is
+     * terminal evidence for a {@code success=false} completion (the worker can report the specific blocker), but it
+     * never counts as a successful read, so it cannot back a {@code success=true} completion on its own.
+     *
+     * @param objectMapper the mapper
+     * @param message      the error message
+     * @param toolContext  worker context in which the read outcome is recorded
+     * @return the JSON error string
+     */
+    static String readErrorJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerReadOutcome(toolContext);
+        return errorJson(objectMapper, message);
+    }
+
+    private static void incrementCounter(@Nullable ToolContext toolContext, String key) {
+        if (contextValue(toolContext, key) instanceof AtomicInteger counter) {
+            counter.incrementAndGet();
+        }
+    }
+
+    /** Records a completed mutation outcome without treating it as a successful write. */
+    private static void markWorkerMutationOutcome(@Nullable ToolContext toolContext) {
+        incrementCounter(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY);
+    }
+
+    /** Serialises an explicit idempotent no-op and records it as worker completion evidence. */
+    static String mutationNoOpJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerMutationOutcome(toolContext);
+        return toJson(objectMapper, Map.of("status", "noop", "message", message));
+    }
+
+    /** Records that a worker mutation tool returned an error outcome. */
+    static void markWorkerMutationError(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY);
+        if (value instanceof AtomicBoolean mutationError) {
+            mutationError.set(true);
+        }
+    }
+
+    /** Returns whether any mutation tool in the current worker returned an error outcome. */
+    static boolean hasWorkerMutationError(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY);
+        return value instanceof AtomicBoolean mutationError && mutationError.get();
+    }
+
+    /** Records one worker tool invocation and returns its sequence position. */
+    static long markWorkerToolActivity(@Nullable ToolContext toolContext) {
+        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
+        AtomicLong completion = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        return sequence == null || completion == null ? 0L : sequence.incrementAndGet();
+    }
+
+    /** Records the sequence position of the accepted worker terminal call. */
+    static void markWorkerCompletion(@Nullable ToolContext toolContext, long completionSequence) {
+        AtomicLong marker = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        if (marker != null) {
+            marker.set(completionSequence);
+        }
+    }
+
+    /** Returns whether the accepted worker completion was the final tool invocation in the round. */
+    static boolean isWorkerCompletionTerminal(@Nullable ToolContext toolContext) {
+        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
+        AtomicLong completion = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        return sequence != null && completion != null && completion.get() > 0L && completion.get() == sequence.get();
+    }
+
+    @Nullable
+    private static Object contextValue(@Nullable ToolContext toolContext, String key) {
+        if (toolContext == null || toolContext.getContext() == null) {
+            return null;
+        }
+        return toolContext.getContext().get(key);
+    }
+
+    @Nullable
+    private static AtomicLong atomicLongFromContext(@Nullable ToolContext toolContext, String key) {
+        Object value = contextValue(toolContext, key);
+        return value instanceof AtomicLong marker ? marker : null;
     }
 
     /**
@@ -225,15 +345,16 @@ public final class OrchestratorToolHelpers {
      *
      * @param objectMapper  the mapper used to serialise the error payload
      * @param justification the justification supplied by the model
+     * @param toolContext   worker context in which mutation failures are recorded
      * @return a JSON error string, or {@code null} when valid
      */
     @Nullable
-    static String validateJustification(JsonMapper objectMapper, @Nullable String justification) {
+    static String validateJustification(JsonMapper objectMapper, @Nullable String justification, @Nullable ToolContext toolContext) {
         if (isBlank(justification)) {
-            return errorJson(objectMapper, "justification is required.");
+            return mutationErrorJson(objectMapper, "justification is required.", toolContext);
         }
         if (justification.length() > MAX_JUSTIFICATION_LENGTH) {
-            return errorJson(objectMapper, "justification must be at most " + MAX_JUSTIFICATION_LENGTH + " characters.");
+            return mutationErrorJson(objectMapper, "justification must be at most " + MAX_JUSTIFICATION_LENGTH + " characters.", toolContext);
         }
         return null;
     }
@@ -242,10 +363,11 @@ public final class OrchestratorToolHelpers {
      * Pre-serialized error returned when the write-quota cap is reached.
      *
      * @param objectMapper the mapper used to serialise the payload
+     * @param toolContext  worker context in which the failure is recorded
      * @return the JSON error string
      */
-    static String writeQuotaError(JsonMapper objectMapper) {
-        return errorJson(objectMapper, "Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ") reached for this run; finalize and return.");
+    static String writeQuotaError(JsonMapper objectMapper, @Nullable ToolContext toolContext) {
+        return mutationErrorJson(objectMapper, "Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ") reached for this run; finalize and return.", toolContext);
     }
 
     /**
@@ -255,7 +377,29 @@ public final class OrchestratorToolHelpers {
      * @return the JSON error string
      */
     static String missingCourseContextError(JsonMapper objectMapper) {
-        return errorJson(objectMapper, "No course context available for this tool call.");
+        return errorJson(objectMapper, MISSING_COURSE_CONTEXT_MESSAGE);
+    }
+
+    /**
+     * Pre-serialized missing-context error for read tools; records a failed worker read outcome.
+     *
+     * @param objectMapper the mapper used to serialise the payload
+     * @param toolContext  worker context in which the read outcome is recorded
+     * @return the JSON error string
+     */
+    static String missingCourseContextReadError(JsonMapper objectMapper, @Nullable ToolContext toolContext) {
+        return readErrorJson(objectMapper, MISSING_COURSE_CONTEXT_MESSAGE, toolContext);
+    }
+
+    /**
+     * Pre-serialized missing-context error for mutation tools.
+     *
+     * @param objectMapper the mapper used to serialise the payload
+     * @param toolContext  worker context in which the failure is recorded
+     * @return the JSON error string
+     */
+    static String missingCourseContextError(JsonMapper objectMapper, @Nullable ToolContext toolContext) {
+        return mutationErrorJson(objectMapper, MISSING_COURSE_CONTEXT_MESSAGE, toolContext);
     }
 
     /**
@@ -267,6 +411,20 @@ public final class OrchestratorToolHelpers {
      */
     static String errorJson(JsonMapper objectMapper, String message) {
         return toJson(objectMapper, Map.of("error", message));
+    }
+
+    /**
+     * Record a mutation failure and serialise its error payload.
+     *
+     * @param objectMapper the mapper
+     * @param message      the error message
+     * @param toolContext  worker context in which the failure is recorded
+     * @return the JSON error string
+     */
+    static String mutationErrorJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerMutationOutcome(toolContext);
+        markWorkerMutationError(toolContext);
+        return errorJson(objectMapper, message);
     }
 
     /**
