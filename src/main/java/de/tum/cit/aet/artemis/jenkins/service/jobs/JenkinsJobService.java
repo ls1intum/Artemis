@@ -149,6 +149,9 @@ public class JenkinsJobService {
 
         URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
         String folderXml = restTemplate.getForObject(uri, String.class);
+        if (folderXml == null) {
+            throw new IOException("Jenkins returned an empty config for folder " + folderName);
+        }
         return JenkinsXmlFileUtils.readFromString(folderXml);
     }
 

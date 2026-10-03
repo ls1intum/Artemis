@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
@@ -69,6 +70,9 @@ public class IrisTutorSuggestionSessionResource {
         var user = userRepository.getUserWithAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
         var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new EntityNotFoundException("Course of post", postId);
+        }
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -94,6 +98,9 @@ public class IrisTutorSuggestionSessionResource {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 
         var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new EntityNotFoundException("Course of post", postId);
+        }
         var user = userRepository.getUserWithAuthorities();
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

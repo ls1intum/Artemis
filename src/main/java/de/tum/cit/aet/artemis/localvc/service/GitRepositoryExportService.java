@@ -28,6 +28,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.git.InMemoryRepositoryBuilder;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -329,7 +330,7 @@ public class GitRepositoryExportService {
      * @return the name for the exported repository, without a file extension
      */
     public String getStudentRepositoryName(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean hideStudentName) {
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        String courseShortName = courseShortNameOf(exercise);
         String repositoryName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             repositoryName += "-student-submission.git";
@@ -341,6 +342,14 @@ public class GitRepositoryExportService {
         return participation.addPracticePrefixIfTestRun(repositoryName);
     }
 
+    private static String courseShortNameOf(ProgrammingExercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("The course of programming exercise " + exercise.getId() + " cannot be resolved");
+        }
+        return course.getShortName();
+    }
+
     /**
      * Generates a zipped repository name for a programming exercise and repository.
      *
@@ -349,7 +358,7 @@ public class GitRepositoryExportService {
      * @return the sanitized filename for the zipped repository
      */
     public String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        String courseShortName = courseShortNameOf(exercise);
         return FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 

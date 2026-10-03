@@ -277,7 +277,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
         // Loaded once and handed down, so both branches share this lookup instead of repeating it for their own
         // `enabled()` check. The per-course legacy switch belongs to the same lookup, so it is decided here too.
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
+        var course = studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            return;
+        }
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled() || !settings.legacyBuildTriggersEffective()) {
             return;
         }
@@ -528,7 +532,13 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private IrisChatSession findExerciseSessionOrCourseFallback(Exercise exercise, User user, IrisChatMode mode) {
         return irisChatSessionRepository.findLatestByEntityIdAndChatModeAndUserIdWithMessages(exercise.getId(), mode, user.getId(), Pageable.ofSize(1)).stream().findFirst()
-                .orElseGet(() -> findOrCreateEmptyCourseSession(exercise.getCourseViaExerciseGroupOrCourseMember(), user));
+                .orElseGet(() -> {
+                    var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+                    if (course == null) {
+                        throw new IllegalStateException("Course not found for exercise " + exercise.getId());
+                    }
+                    return findOrCreateEmptyCourseSession(course, user);
+                });
     }
 
     private IrisChatSession findLectureSessionOrCourseFallback(Lecture lecture, User user) {

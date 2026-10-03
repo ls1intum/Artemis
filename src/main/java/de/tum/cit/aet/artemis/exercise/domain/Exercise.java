@@ -386,10 +386,27 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
+     * Like {@link #getCourseViaExerciseGroupOrCourseMember()}, for callers that work on a fully loaded exercise
+     * (never a masked exam graph) and therefore require a course.
+     *
+     * @return Course of the exercise
+     * @throws IllegalStateException if the course cannot be resolved
+     */
+    @JsonIgnore
+    public Course getCourseViaExerciseGroupOrCourseMemberElseThrow() {
+        Course course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("The course of exercise " + getId() + " cannot be resolved");
+        }
+        return course;
+    }
+
+    /**
      * Utility method to get the exam. Get the exam over the exerciseGroup, if one was set, otherwise return null.
      *
      * @return exam, to which the exercise belongs
      */
+    @Nullable
     @JsonIgnore
     public Exam getExam() {
         if (isExamExercise()) {

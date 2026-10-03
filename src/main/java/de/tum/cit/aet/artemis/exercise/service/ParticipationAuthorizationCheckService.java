@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -183,6 +184,9 @@ public class ParticipationAuthorizationCheckService {
         // if the user is not the owner of the participation, the user can only see it in case they are
         // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
         final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new EntityNotFoundException("Course", "of participation " + participation.getId());
+        }
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 

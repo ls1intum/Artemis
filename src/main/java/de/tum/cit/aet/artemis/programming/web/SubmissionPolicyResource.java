@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -219,7 +220,7 @@ public class SubmissionPolicyResource {
                     "submissionPolicyToggleFailedPolicyNotExist");
         }
         submissionPolicy.setProgrammingExercise(exercise);
-        if (activate == submissionPolicy.isActive()) {
+        if (Objects.equals(activate, submissionPolicy.isActive())) {
             String errorKey = activate ? "submissionPolicyAlreadyEnabled" : "submissionPolicyAlreadyDisabled";
             String defaultMessage = activate ? "The submission policy could not be enabled, because it is already active."
                     : "The submission policy could not be disabled, because it is not active.";

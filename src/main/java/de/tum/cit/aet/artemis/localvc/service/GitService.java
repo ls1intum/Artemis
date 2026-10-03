@@ -147,6 +147,9 @@ public class GitService extends AbstractGitService {
      */
     public Repository getOrCheckoutRepositoryForJPlag(@NonNull ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
         var repoUri = participation.getVcsRepositoryUri();
+        if (repoUri == null) {
+            throw new IllegalStateException("Participation " + participation.getId() + " has no repository URI and cannot be checked out for JPlag");
+        }
         String repoFolderName = repoUri.folderNameForRepositoryUri();
 
         // Replace the exercise name in the repository folder name with the participation ID.

@@ -50,13 +50,13 @@ public class TumLiveService {
      */
     public Optional<String> getTumLivePlaylistLink(String videoUrl) {
         if (restClient == null) {
-            log.warn("TUM Live API client is not configured. Cannot fetch requested playlist URL for video: {}", videoUrl);
+            log.warn("TUM Live API client is not configured. Cannot fetch requested playlist URL.");
             return Optional.empty();
         }
 
         StreamInfo info = extractCourseSlugAndStreamId(videoUrl);
         if (info == null) {
-            log.warn("Could not extract courseSlug and streamId from URL: {}", videoUrl);
+            log.warn("Could not extract courseSlug and streamId from the given video URL.");
             return Optional.empty();
         }
 

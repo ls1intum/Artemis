@@ -190,8 +190,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
 
-        // try again: the post "silently" fails with a 200
-        var response = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, ReactionDTO.class, HttpStatus.OK);
+        // try again: the post "silently" fails with a 204
+        var response = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, ReactionDTO.class,
+                HttpStatus.NO_CONTENT);
         assertThat(response).isNull();
     }
 
@@ -229,8 +230,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
-        // Try again: the endpoint should "silently" fail with a 200 OK and no body
-        var response = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, ReactionDTO.class, HttpStatus.OK);
+        // Try again: the endpoint should "silently" fail with a 204 No Content and no body
+        var response = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, ReactionDTO.class,
+                HttpStatus.NO_CONTENT);
         assertThat(response).isNull();
     }
 
@@ -287,7 +289,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionDTO, createdReaction);
         ReactionDTO duplicateReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionDTO, ReactionDTO.class,
-                HttpStatus.OK);
+                HttpStatus.NO_CONTENT);
         assertThat(duplicateReaction).isNull();
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
     }

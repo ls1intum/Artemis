@@ -50,13 +50,14 @@ public class ProgrammingExerciseTaskService {
      * round brackets, whitespace or commas. Method parameters only exclude round brackets. After round brackets a test case may contain additional characters excluding round
      * brackets or commas.<br>
      * Therefore, allowed test names are among others {@code testName}, {@code testName()}, {@code testName(1234, 12)}, {@code testName(testValue)[1]}, {@code Test Name}.<br>
-     * For multiple testcases it's {@code testName,otherTestName()} or {@code testName,     otherTestName()}.<br>
+     * For multiple testcases it's {@code testName,otherTestName()} or {@code testName,     otherTestName()}. A task may list at most 1001 test cases, which bounds the regex
+     * repetition and prevents a stack overflow for very large inputs.<br>
      * <p>
      * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper`, `ProgrammingExerciseInstructionAnalysisService`, and `TaskCommand` in the client
      * If you change the regex, make sure to change it in all places!
      */
     private static final Pattern TASK_PATTERN = Pattern
-            .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
+            .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?){0,1000})?)\\)");
 
     /**
      * Regex to find PlantUML diagrams inside a problem statement.

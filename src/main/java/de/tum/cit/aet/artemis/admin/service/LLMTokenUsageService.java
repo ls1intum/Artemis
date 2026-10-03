@@ -39,11 +39,6 @@ public class LLMTokenUsageService {
 
     private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-?\\d{4}-\\d{2}-\\d{2}$");
 
-    /**
-     * Default value used when token-count metadata is missing ({@code null}).
-     */
-    private static final int DEFAULT_TOKEN_COUNT = 0;
-
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
     private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
@@ -183,9 +178,8 @@ public class LLMTokenUsageService {
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return;
             }
-            String model = metadata.getModel() != null ? metadata.getModel() : "";
-            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
-                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
+            // Spring AI is @NullMarked: model and token counts are never null
+            LLMRequest llmRequest = buildLLMRequest(metadata.getModel(), usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {

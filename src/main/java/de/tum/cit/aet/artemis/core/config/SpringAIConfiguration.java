@@ -85,12 +85,7 @@ public class SpringAIConfiguration {
         }
 
         for (ChatModel model : chatModels) {
-            if (model.getOptions() != null) {
-                log.info("Found Chat Model: {} with options: {}", model.getOptions().getModel(), model.getOptions());
-            }
-            else {
-                log.info("Found Chat Model: {} with no options", model);
-            }
+            log.info("Found Chat Model: {} with options: {}", model.getOptions().getModel(), model.getOptions());
         }
         ChatModel chatModel = chatModels.getFirst(); // Use the first available model
         ChatClient.Builder builder = ChatClient.builder(chatModel);

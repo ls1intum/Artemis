@@ -116,7 +116,11 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisTutorSuggestionSession session) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
-        builder.withCourse(post.getCoursePostingBelongsTo().getId());
+        var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("Course not found for session " + session.getId());
+        }
+        builder.withCourse(course.getId());
     }
 
     @Override
@@ -202,7 +206,11 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     @Override
     public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, post.getCoursePostingBelongsTo(), user);
+        var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("Course not found for session " + irisSession.getId());
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         if (irisSession.getUserId() != user.getId()) {
             throw new AccessForbiddenException("Iris Session", irisSession.getId());
         }

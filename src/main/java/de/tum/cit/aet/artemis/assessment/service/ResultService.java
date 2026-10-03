@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
@@ -605,6 +606,9 @@ public class ResultService {
                     "Participation", "400");
         }
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new EntityNotFoundException("No course found for result " + resultId);
+        }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
         return result;
     }
@@ -669,7 +673,9 @@ public class ResultService {
             }
             else {
                 LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-                feedback.setLongFeedbackText(Set.of(longFeedback));
+                if (longFeedback != null) {
+                    feedback.setLongFeedbackText(Set.of(longFeedback));
+                }
             }
         }
 

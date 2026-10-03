@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -344,9 +345,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             }
         }
 
-        String repositoryTypeOrUserName = participation.getVcsRepositoryUri().repositoryNameWithoutProjectKey();
+        LocalVCRepositoryUri vcsRepositoryUri = participation.getVcsRepositoryUri();
+        if (vcsRepositoryUri == null) {
+            throw new LocalCIException("The repository uri of participation " + participation.getId() + " is missing or invalid");
+        }
 
-        String repositoryName = participation.getVcsRepositoryUri().repositorySlug();
+        String repositoryTypeOrUserName = vcsRepositoryUri.repositoryNameWithoutProjectKey();
+
+        String repositoryName = vcsRepositoryUri.repositorySlug();
 
         RepositoryType repositoryType;
         // Only template, solution and user repositories are build
@@ -473,7 +479,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private int addPenaltyIfTestCourse(ProgrammingExercise programmingExercise, int priority) {
-        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember().isTestCourse()) {
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course != null && course.isTestCourse()) {
             return priority + TESTCOURSE_PRIORITY_PENALTY;
         }
         return priority;

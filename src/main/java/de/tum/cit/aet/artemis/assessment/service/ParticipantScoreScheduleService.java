@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -500,6 +501,14 @@ public class ParticipantScoreScheduleService {
         return ratedResultsOrdered;
     }
 
+    private static Course getCourseElseThrow(Exercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("Exercise " + exercise.getId() + " has no course");
+        }
+        return course;
+    }
+
     /**
      * @author Stefan Waldhauser
      */
@@ -511,8 +520,8 @@ public class ParticipantScoreScheduleService {
         }
         else {
             associatedParticipantScore.setLastScore(newLastResult.getScore());
-            associatedParticipantScore.setLastPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastResult.getScore() * 0.01 * exercise.getMaxPoints(),
-                    exercise.getCourseViaExerciseGroupOrCourseMember()));
+            associatedParticipantScore
+                    .setLastPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastResult.getScore() * 0.01 * exercise.getMaxPoints(), getCourseElseThrow(exercise)));
         }
     }
 
@@ -527,8 +536,8 @@ public class ParticipantScoreScheduleService {
         }
         else {
             associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
-            associatedParticipantScore.setLastRatedPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(),
-                    exercise.getCourseViaExerciseGroupOrCourseMember()));
+            associatedParticipantScore.setLastRatedPoints(
+                    RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(), getCourseElseThrow(exercise)));
         }
     }
 

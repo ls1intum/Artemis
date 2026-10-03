@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -32,9 +33,8 @@ public class TextSubmissionExportService extends SubmissionExportService {
     @Override
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
         if (((TextSubmission) submission).getText() == null) {
-            if (!file.exists()) {
-                file.createNewFile(); // create empty file if submission is empty
-            }
+            // create empty file if submission is empty; an existing file is left untouched
+            Files.write(file.toPath(), new byte[0], StandardOpenOption.CREATE);
         }
         else {
             try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {

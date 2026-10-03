@@ -324,7 +324,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 originalAnswerOptionItem.setText(answerOptionDTOItem.text());
                 originalAnswerOptionItem.setHint(answerOptionDTOItem.hint());
                 originalAnswerOptionItem.setExplanation(answerOptionDTOItem.explanation());
-                if (originalAnswerOptionItem.isIsCorrect() != answerOptionDTOItem.isCorrect()) {
+                if (!Objects.equals(originalAnswerOptionItem.isIsCorrect(), answerOptionDTOItem.isCorrect())) {
                     recalculationNecessary = true;
                     originalAnswerOptionItem.setIsCorrect(answerOptionDTOItem.isCorrect());
                 }
@@ -1097,7 +1097,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 quizBatch.setQuizExercise(quizExercise);
                 if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                     if (quizBatch.getStartTime() != null) {
-                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
                     }
                 }
                 else {

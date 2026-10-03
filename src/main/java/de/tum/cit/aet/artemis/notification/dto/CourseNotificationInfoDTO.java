@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseNotificationInfoDTO(Map<Short, String> notificationTypes, NotificationChannelOption[] channels, List<UserCourseNotificationSettingPresetDTO> presets) {
+public record CourseNotificationInfoDTO(Map<Short, String> notificationTypes, List<NotificationChannelOption> channels, List<UserCourseNotificationSettingPresetDTO> presets) {
 }

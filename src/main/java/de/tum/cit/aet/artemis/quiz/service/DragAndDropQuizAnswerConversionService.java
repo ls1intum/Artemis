@@ -194,10 +194,10 @@ public class DragAndDropQuizAnswerConversionService {
     private void markItemAsInvalid(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates) {
         graphics.setColor(Color.DARK_GRAY);
         // create a cross to signal that the drop location is invalid
-        Shape diagonalFromBottomToTop = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y + dropLocationCoordinates.height,
-                dropLocationCoordinates.x + dropLocationCoordinates.width, dropLocationCoordinates.y);
-        Shape diagonalFromTopToBottom = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y, dropLocationCoordinates.x + dropLocationCoordinates.width,
-                dropLocationCoordinates.y + dropLocationCoordinates.height);
+        Shape diagonalFromBottomToTop = new Line2D.Float(dropLocationCoordinates.x, (float) dropLocationCoordinates.y + dropLocationCoordinates.height,
+                (float) dropLocationCoordinates.x + dropLocationCoordinates.width, dropLocationCoordinates.y);
+        Shape diagonalFromTopToBottom = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y, (float) dropLocationCoordinates.x + dropLocationCoordinates.width,
+                (float) dropLocationCoordinates.y + dropLocationCoordinates.height);
         graphics.draw(diagonalFromBottomToTop);
         graphics.draw(diagonalFromTopToBottom);
     }

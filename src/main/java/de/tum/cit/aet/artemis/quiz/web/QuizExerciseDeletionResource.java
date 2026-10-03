@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -85,7 +86,11 @@ public class QuizExerciseDeletionResource {
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly and, for quizzes, deletes the drag-and-drop image files
         // (see ExerciseDeletionService#delete) across all deletion entry points.
-        exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new EntityNotFoundException("Course", "quiz exercise " + quizExerciseId);
+        }
+        exerciseService.logDeletion(quizExercise, course, user);
         exerciseDeletionService.delete(quizExerciseId, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 

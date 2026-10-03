@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -332,7 +333,11 @@ public class ExerciseDateService {
         if (latestIndividualExamEndDate == null) {
             return null;
         }
-        ZonedDateTime latestExamEndDate = latestIndividualExamEndDate.plusSeconds(Objects.requireNonNullElse(exercise.getExam().getGracePeriod(), 0));
+        Exam exam = exercise.getExam();
+        if (exam == null) {
+            throw new IllegalArgumentException("The exam of the exercise " + exercise.getId() + " is not available");
+        }
+        ZonedDateTime latestExamEndDate = latestIndividualExamEndDate.plusSeconds(Objects.requireNonNullElse(exam.getGracePeriod(), 0));
 
         ZonedDateTime assessmentPossibleFrom = latestExamEndDate;
         if (exercise instanceof ProgrammingExercise programmingExercise) {

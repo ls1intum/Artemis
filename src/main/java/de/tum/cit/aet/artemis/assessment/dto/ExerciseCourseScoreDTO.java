@@ -44,8 +44,12 @@ public record ExerciseCourseScoreDTO(long id, ExerciseType type, @NotNull Includ
         var variantGroup = exercise.getExerciseVariantGroup();
         Long variantGroupId = variantGroup != null ? variantGroup.getId() : null;
         Double variantGroupMaxPoints = variantGroup != null ? variantGroup.getMaxPoints() : null;
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("Exercise " + exercise.getId() + " has no course");
+        }
         return new ExerciseCourseScoreDTO(exercise.getId(), ExerciseType.getExerciseTypeFromClass(exercise.getClass()), exercise.getIncludedInOverallScore(),
                 exercise.getAssessmentType(), exercise.getDueDate(), exercise.getAssessmentDueDate(), buildAndTestStudentSubmissionsAfterDueDate, exercise.getMaxPoints(),
-                exercise.getBonusPoints(), exercise.getCourseViaExerciseGroupOrCourseMember().getId(), variantGroupId, variantGroupMaxPoints);
+                exercise.getBonusPoints(), course.getId(), variantGroupId, variantGroupMaxPoints);
     }
 }

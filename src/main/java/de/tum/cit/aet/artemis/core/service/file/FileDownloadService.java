@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -55,6 +56,24 @@ public class FileDownloadService {
      * @param contentRange optional content-range header value for partial responses
      */
     public record FileDownloadPayload(HttpStatus status, byte[] content, HttpHeaders headers, MediaType mediaType, Optional<String> contentRange) {
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof FileDownloadPayload(HttpStatus otherStatus, byte[] otherContent, HttpHeaders otherHeaders, MediaType otherMediaType, Optional<String> otherRange)
+                    && status == otherStatus && Arrays.equals(content, otherContent) && Objects.equals(headers, otherHeaders) && Objects.equals(mediaType, otherMediaType)
+                    && Objects.equals(contentRange, otherRange);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Objects.hash(status, headers, mediaType, contentRange) + Arrays.hashCode(content);
+        }
+
+        @Override
+        public String toString() {
+            return "FileDownloadPayload[status=" + status + ", content=" + Arrays.toString(content) + ", headers=" + headers + ", mediaType=" + mediaType + ", contentRange="
+                    + contentRange + "]";
+        }
     }
 
     /**

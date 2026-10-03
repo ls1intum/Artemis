@@ -683,7 +683,11 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         ZonedDateTime exerciseStartDate = participation.getExercise().getParticipationStartDate();
         if (exerciseStartDate != null) {
-            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null);
+            var course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+            if (course == null) {
+                throw new EntityNotFoundException("Course", "of participation " + participation.getId());
+            }
+            boolean isStudent = authCheckService.isOnlyStudentInCourse(course, null);
             boolean exerciseNotStarted = exerciseStartDate.isAfter(ZonedDateTime.now());
             if (isStudent && exerciseNotStarted) {
                 throw new AccessForbiddenException("Participation not yet started");
@@ -703,7 +707,11 @@ public class ProgrammingExerciseParticipationResource {
         if (participation.isTestRun()) {
             return false;
         }
-        if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
+        var programmingExercise = participation.getProgrammingExercise();
+        if (programmingExercise == null) {
+            throw new EntityNotFoundException("Participation " + participation.getId() + " does not have a programming exercise!");
+        }
+        if (programmingExercise.isExamExercise() && !programmingExercise.isTestExamExercise()) {
             var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
             var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
             User student = participation.getStudent()

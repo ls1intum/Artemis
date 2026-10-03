@@ -9,10 +9,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -158,6 +160,27 @@ public class ProgrammingExerciseRepositoryService {
 
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
             Resource[] staticCodeAnalysisResources, Path staticCodeAnalysisPrefix) {
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || other instanceof RepositoryResources that && Objects.equals(repository, that.repository) && Arrays.equals(resources, that.resources)
+                    && Objects.equals(prefix, that.prefix) && Arrays.equals(projectTypeResources, that.projectTypeResources)
+                    && Objects.equals(projectTypePrefix, that.projectTypePrefix) && Arrays.equals(staticCodeAnalysisResources, that.staticCodeAnalysisResources)
+                    && Objects.equals(staticCodeAnalysisPrefix, that.staticCodeAnalysisPrefix);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(repository, Arrays.hashCode(resources), prefix, Arrays.hashCode(projectTypeResources), projectTypePrefix,
+                    Arrays.hashCode(staticCodeAnalysisResources), staticCodeAnalysisPrefix);
+        }
+
+        @Override
+        public String toString() {
+            return "RepositoryResources[repository=" + repository + ", resources=" + Arrays.toString(resources) + ", prefix=" + prefix + ", projectTypeResources="
+                    + Arrays.toString(projectTypeResources) + ", projectTypePrefix=" + projectTypePrefix + ", staticCodeAnalysisResources="
+                    + Arrays.toString(staticCodeAnalysisResources) + ", staticCodeAnalysisPrefix=" + staticCodeAnalysisPrefix + "]";
+        }
     }
 
     /**
@@ -442,7 +465,11 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     private static Path getRepoAbsoluteLocalPath(@NonNull final Repository repository) {
-        return repository.getLocalPath().toAbsolutePath();
+        final Path localPath = repository.getLocalPath();
+        if (localPath == null) {
+            throw new IllegalStateException("The repository " + repository.getRemoteRepositoryUri() + " has no local path");
+        }
+        return localPath.toAbsolutePath();
     }
 
     /**

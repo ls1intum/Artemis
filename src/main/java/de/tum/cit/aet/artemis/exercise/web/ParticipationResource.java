@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -366,7 +368,11 @@ public class ParticipationResource {
         // 1) Don't allow student to start before the start and release date
         ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();
         if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
-            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            if (course == null) {
+                throw new EntityNotFoundException("Course", "of exercise " + exercise.getId());
+            }
+            if (authCheckService.isOnlyStudentInCourse(course, user)) {
                 throw new AccessForbiddenException("Students cannot start an exercise before the release date");
             }
         }
