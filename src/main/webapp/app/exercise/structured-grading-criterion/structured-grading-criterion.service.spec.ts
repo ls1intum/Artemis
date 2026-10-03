@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { DraggedGradingInstruction, StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -78,7 +78,7 @@ describe('Structured Grading Criteria Service', () => {
     });
 
     describe('dropping a grading instruction', () => {
-        const dropEventWith = (instruction: Partial<GradingInstruction>): Event =>
+        const dropEventWith = (instruction: Partial<DraggedGradingInstruction>): Event =>
             ({ preventDefault: () => {}, dataTransfer: { getData: () => JSON.stringify(instruction) } }) as unknown as DragEvent;
 
         const correct = { id: 1, credits: 2, feedback: 'Bubble Sort is implemented correctly.' };

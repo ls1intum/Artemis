@@ -6,7 +6,7 @@ import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/man
 import { AthenaCourseConfigStore } from 'app/course/manage/services/athena-course-config.state';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { MockProvider } from 'ng-mocks';
 
 describe('AthenaCourseConfigStore', () => {
