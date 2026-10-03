@@ -15,6 +15,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -47,6 +48,13 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             ORDER BY lecture.id ASC
             """)
     List<Long> findLectureIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(l.course.id, l.id)
+            FROM Lecture l
+            WHERE l.course.id IN :courseIds
+            """)
+    List<CourseEntityIdDTO> findLectureIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
             SELECT lecture

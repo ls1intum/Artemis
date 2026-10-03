@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -92,5 +93,9 @@ public class LectureRepositoryApi extends AbstractLectureApi {
 
     public Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(long courseId) {
         return lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+    }
+
+    public List<CourseEntityIdDTO> findLectureIdCourseIdPairsForCourses(Collection<Long> courseIds) {
+        return lectureRepository.findLectureIdCourseIdPairsForCourses(courseIds);
     }
 }

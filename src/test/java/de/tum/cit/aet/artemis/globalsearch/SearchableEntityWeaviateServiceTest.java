@@ -19,9 +19,14 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.context.ApplicationEventPublisher;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityContentHasher;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
@@ -38,11 +43,16 @@ import io.weaviate.client6.v1.internal.rest.RestTransport;
 
 class SearchableEntityWeaviateServiceTest {
 
+    private static SearchableEntityWeaviateService createService(WeaviateService weaviateService) {
+        return new SearchableEntityWeaviateService(weaviateService, mock(WeaviateOutboxRepository.class), mock(SearchableEntityResolver.class), JsonObjectMapper.get(),
+                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class));
+    }
+
     @Test
     void searchEntityCandidatesForAnswer_wrapsCollectionFailures() {
         var weaviateService = mock(WeaviateService.class);
         when(weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME)).thenThrow(new IllegalStateException("unavailable"));
-        var searchableEntityWeaviateService = new SearchableEntityWeaviateService(weaviateService);
+        var searchableEntityWeaviateService = createService(weaviateService);
 
         assertThatThrownBy(() -> searchableEntityWeaviateService.searchEntityCandidatesForAnswer("question", null, 10)).isInstanceOf(WeaviateException.class)
                 .hasMessageContaining("Failed to search entity candidates").hasCauseInstanceOf(IllegalStateException.class);
@@ -63,7 +73,7 @@ class SearchableEntityWeaviateServiceTest {
             CollectionHandle<Map<String, Object>> collection = new CollectionHandle<>(mock(RestTransport.class), mock(GrpcTransport.class),
                     CollectionDescriptor.ofMap(SearchableEntitySchema.COLLECTION_NAME), CollectionHandleDefaults.of(CollectionHandleDefaults.none()));
             when(weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME)).thenReturn(collection);
-            var searchableEntityWeaviateService = new SearchableEntityWeaviateService(weaviateService);
+            var searchableEntityWeaviateService = createService(weaviateService);
             Filter filter = Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(42L);
 
             var filteredCandidates = searchableEntityWeaviateService.searchEntityCandidatesForAnswer("semantic question", filter, 7);
