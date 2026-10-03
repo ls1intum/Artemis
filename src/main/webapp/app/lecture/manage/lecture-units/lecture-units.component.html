@@ -10,7 +10,7 @@
         [editingUnitId]="editingUnitId()"
         [editorTemplate]="unitEditor"
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
-        (onSaveEditingClicked)="saveAndCloseEditor()"
+        (onDoneEditingClicked)="saveAndCloseEditor()"
         (lectureUnitsChange)="onLectureUnitsChange($event)"
         [showCreationCard]="false"
         [showCompetencies]="true"
@@ -173,6 +173,7 @@
     @if (isExerciseUnitFormOpen()) {
         <jhi-create-exercise-unit
             [shouldNavigateOnSubmit]="false"
+            [trackRequest]="trackExerciseCreation"
             (onExerciseUnitCreated)="onExerciseUnitCreated()"
             [lectureId]="lecture().id"
             [courseId]="lecture().course?.id"

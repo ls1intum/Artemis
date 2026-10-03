@@ -6,6 +6,7 @@ import {
     OnDestroy,
     ViewEncapsulation,
     afterNextRender,
+    afterRenderEffect,
     computed,
     effect,
     inject,
@@ -351,7 +352,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // Apply a pending point-out target once the combined view is open and the viewer it needs has rendered, or
         // drop it once that viewer turns out not to be coming. Reading the viewChild signals here re-runs this effect
         // as they become available.
-        effect(() => {
+        // Opening the combined layout recreates its viewers. Apply only after rendering, when viewChild
+        // points at the active viewer rather than the inline viewer that is about to be destroyed.
+        afterRenderEffect(() => {
             const pointOut = this.pendingPointOut();
             // A marker click opens the combined view first, so isFullscreen() is still false on the initial
             // run here and the target simply stays pending until the view (and its viewer) is up.

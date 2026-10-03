@@ -1,8 +1,9 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faBan, faExclamationTriangle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleInfo, faExclamationTriangle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Location } from '@angular/common';
 import { onError } from 'app/foundation/util/global.utils';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -47,6 +48,13 @@ export interface SplitSourceUnit {
     name?: string;
 }
 
+/** What the page that opens this one passes in the navigation state. */
+interface SplitNavigationState {
+    file?: File;
+    sourceUnit?: SplitSourceUnit;
+    returnToEditor?: boolean;
+}
+
 @Component({
     selector: 'jhi-attachment-video-units',
     templateUrl: './attachment-video-units.component.html',
@@ -74,6 +82,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly location = inject(Location);
 
     lectureId!: number; // set in constructor from route params
     courseId!: number; // set in constructor from route params
@@ -83,6 +92,11 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     readonly numberOfPages = signal<number>(undefined!);
     /** How many sections Artemis found in the PDF, before the user changed the proposal. */
     readonly foundSections = signal(0);
+    /**
+     * Only a proposal that was loaded can lack sections; a failed load shows its own error instead. Rows the user removed from a proposal
+     * with sections do not mean that the PDF has none.
+     */
+    readonly showsNoSectionsHint = computed(() => !!this.numberOfPages() && this.foundSections() === 0 && this.units().length === 0);
     /** What Artemis found, which also says how many slides the ranges can use. */
     readonly summaryKey = computed(() => {
         const found = this.foundSections();
@@ -96,6 +110,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     faTimes = faTimes;
     faPlus = faPlus;
     faExclamationTriangle = faExclamationTriangle;
+    faCircleInfo = faCircleInfo;
 
     readonly invalidUnitTableMessage = signal<string | undefined>(undefined);
     //Comma-seperated keyphrases used to detect slides to be removed
@@ -103,15 +118,18 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     private search = new Subject<void>();
     readonly removedSlidesNumbers = signal<number[]>([]);
 
-    /** What the page that opened this one passed: the file, and from the lecture editor the PDF item it comes from. */
-    private readonly navigationState = this.router.currentNavigation()?.extras?.state;
-    file: File = this.navigationState?.file;
+    /**
+     * What the page that opened this one passed: the file, and from the lecture editor the PDF item it comes from. The browser keeps it in the
+     * history entry, so a reload of the page still has it when the router no longer passes it.
+     */
+    private readonly navigationState = (this.router.currentNavigation()?.extras?.state ?? this.location.getState()) as SplitNavigationState | undefined;
+    readonly file = this.navigationState?.file;
     /** The PDF item the file comes from; the lecture editor passes it only to instructors, who may delete content. */
     readonly sourceUnit: SplitSourceUnit | undefined = this.navigationState?.sourceUnit;
     /** Whether the PDF item is deleted once its sections exist as items, so the lecture does not hold the slides twice. */
     readonly removeSourceUnit = signal(true);
     readonly isRemovingSourceUnit = computed(() => !!this.sourceUnit && this.removeSourceUnit());
-    /** Set when the lecture editor opened this page, which is where the page leads back to. */
+    /** Set when the lecture editor opened this page, which is the previous entry in the history and where the page leads back to. */
     private readonly returnToEditor = this.navigationState?.returnToEditor === true;
     filename!: string; // set asynchronously after the slides upload completes, before subsequent reads
     //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentVideoUnitResource.java
@@ -134,9 +152,16 @@ export class AttachmentVideoUnitsComponent implements OnInit {
         this.isLoading.set(true);
         this.isProcessingMode = true;
 
-        if (!this.file) {
-            this.alertService.error(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noFile`));
-            this.isLoading.set(true);
+        const file = this.file;
+        if (!file) {
+            // Opened without a file, such as through a link: there is nothing to split, so the page leads to the lecture editor, where a split starts.
+            this.alertService.warning('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noFile');
+            this.isLoading.set(false);
+            if (this.returnToEditor) {
+                this.backToEditor();
+            } else {
+                void this.router.navigate(this.editorRoute(), { replaceUrl: true });
+            }
             return;
         }
 
@@ -144,7 +169,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
         const reUpload = setTimeout(
             () => {
                 this.attachmentVideoUnitService
-                    .uploadSlidesForProcessing(this.lectureId, this.file)
+                    .uploadSlidesForProcessing(this.lectureId, file)
                     .pipe(repeat({ delay: 1000 * 60 * this.MINUTES_UNTIL_DELETION }), takeUntilDestroyed(this.destroyRef))
                     .subscribe({
                         next: (res) => {
@@ -161,7 +186,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
         this.destroyRef.onDestroy(() => clearTimeout(reUpload));
 
         this.attachmentVideoUnitService
-            .uploadSlidesForProcessing(this.lectureId, this.file)
+            .uploadSlidesForProcessing(this.lectureId, file)
             .pipe(
                 switchMap((res) => {
                     if (res instanceof HttpErrorResponse) {
@@ -250,12 +275,19 @@ export class AttachmentVideoUnitsComponent implements OnInit {
 
     private leaveAfterCreation(): void {
         this.isLoading.set(false);
-        // The page replaces itself in the history, so Back does not open the finished split again.
         if (this.returnToEditor) {
-            void this.router.navigate(this.editorRoute(), { replaceUrl: true });
+            // The finished split stays in the history as the next entry; without its file, Forward leads back to the editor.
+            this.location.replaceState(this.location.path(), '', { returnToEditor: true });
+            this.backToEditor();
         } else {
+            // The page replaces itself in the history, so Back does not open the finished split again.
             void this.router.navigate(['../../'], { relativeTo: this.activatedRoute, replaceUrl: true });
         }
+    }
+
+    /** Goes back to the lecture editor that opened this page, so the editor is not in the history twice and its Close leaves at once. */
+    private backToEditor(): void {
+        this.location.back();
     }
 
     private editorRoute(): string[] {
@@ -280,7 +312,11 @@ export class AttachmentVideoUnitsComponent implements OnInit {
      * Goes back to the lecture editor when it opened this page, else to the lecture page
      */
     cancelSplit() {
-        void this.router.navigate(this.returnToEditor ? this.editorRoute() : ['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString()]);
+        if (this.returnToEditor) {
+            this.backToEditor();
+        } else {
+            void this.router.navigate(['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString()]);
+        }
     }
 
     addRow() {

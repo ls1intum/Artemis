@@ -147,16 +147,32 @@
             </div>
         }
         <div class="d-flex justify-content-end">
-            <jhi-confirm-button
-                title="artemisApp.attachment.pdfPreview.cancelButton"
-                confirmationText="artemisApp.attachment.pdfPreview.cancelEditingQuestion"
-                confirmationTitle="artemisApp.attachment.pdfPreview.confirmCancelEditing"
-                [translateText]="true"
-                [icon]="faCancel"
-                [btnType]="ButtonType.SECONDARY"
-                (onConfirm)="navigateToCourseManagement()"
-                class="mx-1"
-            />
+            <!-- Cancel asks first, because it drops changes; without changes there is nothing to confirm, and the page just goes back. -->
+            @if (hasChanges()) {
+                <jhi-confirm-button
+                    [title]="'artemisApp.attachment.pdfPreview.cancelButton'"
+                    confirmationText="artemisApp.attachment.pdfPreview.cancelEditingQuestion"
+                    confirmationTitle="artemisApp.attachment.pdfPreview.confirmCancelEditing"
+                    [translateText]="true"
+                    [icon]="faCancel"
+                    [btnType]="ButtonType.SECONDARY"
+                    [disabled]="isSaving()"
+                    (onConfirm)="navigateBack()"
+                    class="mx-1"
+                    data-testid="pdf-preview-cancel"
+                />
+            } @else {
+                <jhi-button
+                    [title]="'entity.action.back'"
+                    [icon]="faArrowLeft"
+                    [btnType]="ButtonType.SECONDARY"
+                    [shouldSubmit]="false"
+                    [disabled]="isSaving()"
+                    (onClick)="navigateBack()"
+                    class="mx-1"
+                    data-testid="pdf-preview-back"
+                />
+            }
             <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isSaving() || isPdfLoading() || totalPages() === 0 || !hasChanges()">
                 @if (isSaving()) {
                     <div class="spinner-border spinner-border-sm me-1" role="status">
