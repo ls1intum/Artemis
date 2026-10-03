@@ -29,7 +29,9 @@ import type { ShortAnswerMapping as GeneratedShortAnswerMapping } from 'app/open
  *
  * The generated models are plain interfaces, while components and question templates expect class instances: they
  * read prototype behaviour and rely on the client-side `tempID` that identifies an item before it has a server id.
- * Conversion therefore happens once, at the service boundary, rather than being spread over call sites.
+ * Each response is therefore converted once, where it is received: `QuizExerciseService` converts the exercise
+ * retrieval and authoring responses, and the components that call another generated quiz API directly (participation,
+ * submission, batch, lifecycle, training) convert theirs. Code past that point works only on class instances.
  */
 
 /** The generated model omits a nested object entirely when it is empty, so an absent list maps to an absent list. */
