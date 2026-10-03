@@ -76,7 +76,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
         test('Search for a student in exams', async ({ page, studentExamManagement }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/students`);
             // Wait for the data table to load before searching
-            await page.locator('p-table').first().waitFor({ state: 'visible' });
+            await page.getByTestId('exam-students-table').waitFor({ state: 'visible' });
             await studentExamManagement.getStudentExamRows().first().waitFor({ state: 'visible' });
 
             let searchText = studentOne.username + ', ' + studentTwo.username;

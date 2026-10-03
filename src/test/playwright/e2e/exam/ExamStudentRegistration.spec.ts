@@ -37,7 +37,7 @@ test.describe('Exam student registration', { tag: '@slow' }, () => {
     }
 
     async function removeStudent(page: Page, student: UserCredentials, options: { withParticipationsAndSubmission: boolean }) {
-        const row = page.locator('p-table tbody tr', { hasText: new RegExp(`${student.username}(?!\\d)`) });
+        const row = page.getByTestId('exam-students-table').locator('tbody tr', { hasText: new RegExp(`${student.username}(?!\\d)`) });
         await row.getByTestId('remove-student-button').click();
         const dialog = page.getByRole('dialog');
         if (options.withParticipationsAndSubmission) {
@@ -79,7 +79,7 @@ test.describe('Exam student registration', { tag: '@slow' }, () => {
         await expect(page.getByTestId('remove-student-button')).toHaveCount(3);
         await removeStudent(page, studentOne, { withParticipationsAndSubmission: false });
         await expect(page.getByTestId('remove-student-button')).toHaveCount(2);
-        await expect(page.locator('p-table tbody tr', { hasText: new RegExp(`${studentOne.username}(?!\\d)`) })).toHaveCount(0);
+        await expect(page.getByTestId('exam-students-table').locator('tbody tr', { hasText: new RegExp(`${studentOne.username}(?!\\d)`) })).toHaveCount(0);
 
         // The individual exam of the student is gone, the ones of the others are not, and the work of the student is still stored.
         await login(admin);
@@ -148,6 +148,6 @@ test.describe('Exam student registration', { tag: '@slow' }, () => {
         // Nothing is left to generate: the menu entry is disabled.
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students`);
         await page.getByRole('button', { name: 'Individual exams', exact: true }).click();
-        await expect(page.locator('[data-testid="exam-students-menu-entry"]', { hasText: 'Generate missing individual exams' })).toHaveAttribute('data-p-disabled', 'true');
+        await expect(page.locator('[data-testid="exam-students-menu-entry"]', { hasText: 'Generate missing individual exams' })).toHaveAttribute('aria-disabled', 'true');
     });
 });

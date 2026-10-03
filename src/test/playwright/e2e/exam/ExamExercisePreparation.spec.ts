@@ -31,7 +31,7 @@ test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
 
     async function openStatusPopover(page: Page) {
         await page.getByRole('button', { name: 'Individual exams status', exact: true }).click();
-        return page.locator('p-popover, .p-popover').filter({ hasText: 'Individual exams' }).last();
+        return page.getByRole('dialog', { name: 'Individual exams status' });
     }
 
     test('The preparation is tracked, reported in the student list and incomplete again when a student is added', async ({ page, login, examAPIRequests, exerciseAPIRequests }) => {
