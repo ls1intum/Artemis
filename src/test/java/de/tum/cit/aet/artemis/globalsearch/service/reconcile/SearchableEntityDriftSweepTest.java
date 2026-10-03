@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.service.reconcile;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -133,13 +132,17 @@ class SearchableEntityDriftSweepTest {
     @Test
     void testAFailedDeleteEnqueueDoesNotMarkTheRowVerified() {
         var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
-        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
+        var healthyState = ledgerRow(COURSE, 43L, "old content");
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state, healthyState));
         when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.empty());
+        when(resolver.resolve(COURSE, 43L)).thenReturn(Optional.of(Map.of("type", COURSE, "entity_id", 43L, "title", "Healthy course")));
         when(enqueueService.enqueueDelete(COURSE, 42L, WeaviateOutboxOrigin.RECONCILE_DRIFT)).thenThrow(new RuntimeException("outbox save failed"));
 
-        assertThatThrownBy(sweep::sweep).isInstanceOf(RuntimeException.class);
+        sweep.sweep();
 
-        verify(syncStateRepository, never()).markVerified(anyString(), anyLong(), any());
+        verify(syncStateRepository, never()).markVerified(eq(COURSE), eq(42L), any());
+        verify(enqueueService).enqueueUpsert(COURSE, 43L, WeaviateOutboxOrigin.RECONCILE_DRIFT);
+        verify(syncStateRepository).markVerified(eq(COURSE), eq(43L), any());
     }
 
     /**
@@ -148,13 +151,34 @@ class SearchableEntityDriftSweepTest {
     @Test
     void testAFailedUpsertEnqueueDoesNotMarkTheRowVerified() {
         var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
-        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
+        var healthyState = ledgerRow(COURSE, 43L, "old content");
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state, healthyState));
         when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.of(Map.of("type", COURSE, "entity_id", 42L, "title", "Advanced Algorithms")));
+        when(resolver.resolve(COURSE, 43L)).thenReturn(Optional.of(Map.of("type", COURSE, "entity_id", 43L, "title", "Healthy course")));
         when(enqueueService.enqueueUpsert(COURSE, 42L, WeaviateOutboxOrigin.RECONCILE_DRIFT)).thenThrow(new RuntimeException("outbox save failed"));
 
-        assertThatThrownBy(sweep::sweep).isInstanceOf(RuntimeException.class);
+        sweep.sweep();
 
-        verify(syncStateRepository, never()).markVerified(anyString(), anyLong(), any());
+        verify(syncStateRepository, never()).markVerified(eq(COURSE), eq(42L), any());
+        verify(enqueueService).enqueueUpsert(COURSE, 43L, WeaviateOutboxOrigin.RECONCILE_DRIFT);
+        verify(syncStateRepository).markVerified(eq(COURSE), eq(43L), any());
+    }
+
+    @Test
+    void testAFailedResolutionDoesNotPreventRepairingTheNextEntity() {
+        var failedState = ledgerRow(COURSE, 42L, "old content");
+        var healthyState = ledgerRow(COURSE, 43L, "old content");
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(failedState, healthyState));
+        when(resolver.resolve(COURSE, 42L)).thenThrow(new RuntimeException("entity mapping failed"));
+        when(resolver.resolve(COURSE, 43L)).thenReturn(Optional.of(Map.of("type", COURSE, "entity_id", 43L, "title", "Healthy course")));
+
+        sweep.sweep();
+
+        verify(syncStateRepository, never()).markVerified(eq(COURSE), eq(42L), any());
+        verify(enqueueService, never()).enqueueUpsert(COURSE, 42L, WeaviateOutboxOrigin.RECONCILE_DRIFT);
+        verify(enqueueService, never()).enqueueDelete(anyString(), anyLong(), any());
+        verify(enqueueService).enqueueUpsert(COURSE, 43L, WeaviateOutboxOrigin.RECONCILE_DRIFT);
+        verify(syncStateRepository).markVerified(eq(COURSE), eq(43L), any());
     }
 
     @Test

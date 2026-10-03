@@ -102,18 +102,24 @@ public class SearchableEntityDriftSweep {
                 log.debug("[drift {}] skipping {} {}: its module is disabled", runId, state.getEntityType(), state.getEntityId());
                 continue;
             }
-            switch (check(state, checkedAt)) {
-                case DRIFTED -> {
-                    drifted++;
-                    log.debug("[drift {}] {} {} no longer matches what was last written", runId, state.getEntityType(), state.getEntityId());
+            try {
+                switch (check(state, checkedAt)) {
+                    case DRIFTED -> {
+                        drifted++;
+                        log.debug("[drift {}] {} {} no longer matches what was last written", runId, state.getEntityType(), state.getEntityId());
+                    }
+                    case GONE -> {
+                        removed++;
+                        log.debug("[drift {}] {} {} is gone or no longer indexable", runId, state.getEntityType(), state.getEntityId());
+                    }
+                    case MATCHED, AWAITING_REPAIR -> {
+                        // Nothing to report: either the row is correct, or its repair is already queued.
+                    }
                 }
-                case GONE -> {
-                    removed++;
-                    log.debug("[drift {}] {} {} is gone or no longer indexable", runId, state.getEntityType(), state.getEntityId());
-                }
-                case MATCHED, AWAITING_REPAIR -> {
-                    // Nothing to report: either the row is correct, or its repair is already queued.
-                }
+            }
+            catch (Exception e) {
+                // Keep the failed row eligible for retry without blocking repairs for the rest of this batch.
+                log.warn("[drift {}] could not check {} {}; continuing with the remaining entities", runId, state.getEntityType(), state.getEntityId(), e);
             }
         }
 
