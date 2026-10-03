@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -70,6 +71,14 @@ public class ExamRepositoryApi extends AbstractExamApi {
 
     public List<Exam> findByCourseId(long courseId) {
         return examRepository.findByCourseId(courseId);
+    }
+
+    public List<CourseEntityIdDTO> findExamIdCourseIdPairsForCourses(Collection<Long> courseIds) {
+        return examRepository.findExamIdCourseIdPairsForCourses(courseIds);
+    }
+
+    public List<Exam> findAllById(Iterable<Long> examIds) {
+        return examRepository.findAllById(examIds);
     }
 
     public Set<Exam> findByCourseIdForUser(Long courseId, long userId, ZonedDateTime now) {

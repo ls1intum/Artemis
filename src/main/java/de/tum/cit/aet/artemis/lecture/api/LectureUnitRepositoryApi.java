@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -83,5 +84,17 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     public LectureUnit save(LectureUnit lectureUnit) {
         return lectureUnitRepository.save(lectureUnit);
+    }
+
+    public List<CourseEntityIdDTO> findIndexableUnitIdCourseIdPairsForCourses(Collection<Long> courseIds) {
+        return lectureUnitRepository.findIndexableUnitIdCourseIdPairsForCourses(courseIds);
+    }
+
+    public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithPdfAttachmentForCourses(Collection<Long> courseIds) {
+        return lectureUnitRepository.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(courseIds);
+    }
+
+    public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithVideoForCourses(Collection<Long> courseIds) {
+        return lectureUnitRepository.findUnitIdCourseIdPairsWithVideoForCourses(courseIds);
     }
 }
