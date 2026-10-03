@@ -27,6 +27,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -45,6 +47,7 @@ import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateR
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityContentHasher;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateOutboxDispatcher;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -75,6 +78,9 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Autowired
     private SearchableEntitySyncStateRepository syncStateRepository;
+
+    @Autowired
+    private WeaviateOutboxDispatcher weaviateOutboxDispatcher;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -143,11 +149,52 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
         assertCourseExistsInWeaviate(weaviateService, course);
 
+        // The database course still exists. A LIVE delete must remain unconditional because callers can enqueue it
+        // before their source deletion commits.
         searchableEntityWeaviateService.deleteEntityAsync(COURSE_TYPE, course.getId());
 
         assertCourseNotInWeaviate(weaviateService, course.getId());
         await().atMost(Duration.ofSeconds(30))
                 .untilAsserted(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row cleared on delete").isEmpty());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReconcileDelete_forAnAbsentSource_removesTheIndexedRow(WeaviateOutboxOrigin origin) throws Exception {
+        long absentCourseId = 9_991_000L + origin.ordinal();
+        seedRow(weaviateService, COURSE_TYPE, absentCourseId, new CourseSearchableEntityDTO(absentCourseId, "orphan", "ORPHAN", null).toPropertyMap());
+        assertThat(queryCourseProperties(weaviateService, absentCourseId)).isNotNull();
+
+        WeaviateOutboxEntry staleDelete = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(COURSE_TYPE, absentCourseId, origin));
+        weaviateOutboxDispatcher.drain();
+
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            assertThat(queryCourseProperties(weaviateService, absentCourseId)).as("an absent source remains a deletion").isNull();
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, absentCourseId)).isEmpty();
+            assertThat(outboxRepository.existsById(staleDelete.getId())).as("the confirmed reconcile row is acknowledged").isFalse();
+        });
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReconcileDeleteQueuedBeforeALaterLiveUpsert_keepsTheLaterLiveWrite(WeaviateOutboxOrigin origin) {
+        WeaviateOutboxEntry[] queuedDelete = new WeaviateOutboxEntry[1];
+        weaviateOutboxDispatcher.runWithDrainsPaused(() -> {
+            queuedDelete[0] = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(COURSE_TYPE, course.getId(), origin));
+            searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
+        });
+
+        weaviateOutboxDispatcher.drain();
+
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryCourseProperties(weaviateService, course.getId());
+            assertThat(properties).as("the later live upsert must remain indexed").isNotNull();
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.SOURCE_SEQ)).longValue()).isGreaterThan(queuedDelete[0].getId());
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).isPresent()
+                    .hasValueSatisfying(state -> assertThat(properties.get(SearchableEntitySchema.Properties.CONTENT_HASH)).isEqualTo(state.getContentHash()));
+        });
     }
 
     @Test

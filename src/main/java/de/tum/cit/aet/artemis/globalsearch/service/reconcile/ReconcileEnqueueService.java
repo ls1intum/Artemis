@@ -87,7 +87,9 @@ public class ReconcileEnqueueService {
     }
 
     /**
-     * Queues the removal of an entity's row, unless one is already queued for it.
+     * Queues a candidate removal of an entity's row, unless one is already queued for it. The dispatcher re-derives
+     * drift and orphan candidates at apply time, so a source that became indexable after this pass examined it is
+     * upserted instead of removed.
      *
      * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
      * @param entityId   the database id of the entity

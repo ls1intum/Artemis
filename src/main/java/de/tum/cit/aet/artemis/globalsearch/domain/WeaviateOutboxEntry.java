@@ -22,9 +22,16 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * with exponential backoff, keeping the row for a later retry.
  * <p>
  * {@link WeaviateOutboxOperation#UPSERT} and {@link WeaviateOutboxOperation#DELETE_ENTITY} rows carry only
- * {@link #entityType} and {@link #entityId}; an UPSERT re-derives the entity's current property map from the
- * database at dispatch time (see {@code SearchableEntityResolver}) instead of replaying a stored snapshot. The
- * bulk {@code DELETE_*} variants carry their parameters as JSON in {@link #params}.
+ * {@link #entityType} and {@link #entityId}; an UPSERT, and a DELETE_ENTITY queued by drift or orphan reconciliation,
+ * re-derives the entity's current property map from the database at dispatch time (see
+ * {@code SearchableEntityResolver}) instead of replaying a stored snapshot. LIVE DELETE_ENTITY rows remain
+ * unconditional because their callers may enqueue before removing the source. The bulk {@code DELETE_*} variants
+ * carry their parameters as JSON in {@link #params}.
+ * <p>
+ * Existing callers do not all commit their source change and outbox save in one transaction. A dispatch can therefore
+ * confirm an upsert before a separately queued LIVE deletion's source commit becomes visible. This class does not
+ * redesign that inherited gap: the later LIVE delete keeps its intent, and the missing/drift reconcile passes
+ * eventually re-derive the persisted source state to converge the index.
  */
 @Entity
 @Table(name = "weaviate_outbox")
@@ -94,7 +101,8 @@ public class WeaviateOutboxEntry extends DomainObject {
     }
 
     /**
-     * Builds a DELETE_ENTITY entry for a single entity, immediately eligible for dispatch.
+     * Builds a DELETE_ENTITY entry for a single entity, immediately eligible for dispatch. Drift and orphan
+     * reconciliation entries re-check the source at dispatch, whereas a LIVE entry remains an unconditional delete.
      *
      * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
      * @param entityId   the database id of the entity

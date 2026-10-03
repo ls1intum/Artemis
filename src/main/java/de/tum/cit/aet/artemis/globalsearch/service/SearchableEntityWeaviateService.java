@@ -468,7 +468,9 @@ public class SearchableEntityWeaviateService {
     }
 
     /**
-     * Queues the removal of a single entity's row, recording which path asked for it. See
+     * Queues the removal of a single entity's row, recording which path asked for it. Drift and orphan reconcile
+     * candidates are re-derived at dispatch, so this queue request writes a current indexable source instead when
+     * it has changed since the pass observed it. A LIVE request remains an unconditional delete. See
      * {@link #enqueueUpsert(String, Long, WeaviateOutboxOrigin)} for why the generic form exists.
      *
      * @param type     the {@code SearchableEntitySchema.TypeValues} discriminator
@@ -526,8 +528,10 @@ public class SearchableEntityWeaviateService {
      * An {@code UPSERT} does not replay the enqueue-time content: it re-derives the entity's current desired state
      * from the database ({@link SearchableEntityResolver}). A present, indexable entity is upserted and its content
      * hash returned; an entity that has since been deleted or hidden converges to a delete and returns
-     * {@link Optional#empty()}, so a stale or reordered upsert can never resurrect it. Delete operations always
-     * return empty.
+     * {@link Optional#empty()}, so a stale or reordered upsert can never resurrect it. A reconcile-origin
+     * {@code DELETE_ENTITY} is re-derived through the same path: a source that became indexable again is upserted,
+     * while one that remains absent or non-indexable is deleted. Live per-entity deletes and every bulk delete keep
+     * their unconditional deletion semantics, since their callers can enqueue before removing the source entity.
      *
      * @param entry the claimed outbox entry
      * @return the SHA-256 of the property map written for an upsert, or empty when the entry resolved to a delete
@@ -535,10 +539,7 @@ public class SearchableEntityWeaviateService {
     Optional<String> applyOutboxEntry(WeaviateOutboxEntry entry) {
         return switch (entry.getOperation()) {
             case UPSERT -> applyUpsert(entry);
-            case DELETE_ENTITY -> {
-                deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
-                yield Optional.empty();
-            }
+            case DELETE_ENTITY -> applyReconcileDeleteOrDelete(entry);
             case DELETE_POSTS_FOR_CHANNEL -> {
                 doDeletePostsForChannel(longParam(entry, "channelId"), entry.getId());
                 yield Optional.empty();
@@ -586,6 +587,20 @@ public class SearchableEntityWeaviateService {
             propertiesToWrite.put(SearchableEntitySchema.Properties.CONTENT_HASH, contentHash);
             upsertRow(entry.getEntityType(), entry.getEntityId(), propertiesToWrite);
             return Optional.of(contentHash);
+        }
+        deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
+        return Optional.empty();
+    }
+
+    /**
+     * A reconcile pass may observe an obsolete removal candidate while a live publication or unarchive already
+     * succeeded. Re-derive those two reconcile origins at dispatch so the stale row converges to the source of
+     * truth. A live delete intentionally remains unconditional because several request paths queue it before
+     * deleting the source entity.
+     */
+    private Optional<String> applyReconcileDeleteOrDelete(WeaviateOutboxEntry entry) {
+        if (entry.getOrigin() == WeaviateOutboxOrigin.RECONCILE_DRIFT || entry.getOrigin() == WeaviateOutboxOrigin.RECONCILE_ORPHAN) {
+            return applyUpsert(entry);
         }
         deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
         return Optional.empty();

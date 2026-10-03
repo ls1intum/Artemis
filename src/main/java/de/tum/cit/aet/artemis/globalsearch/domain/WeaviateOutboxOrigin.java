@@ -3,8 +3,9 @@ package de.tum.cit.aet.artemis.globalsearch.domain;
 /**
  * Why a {@link WeaviateOutboxEntry} exists: the path that enqueued it.
  * <p>
- * This is diagnostic, not dispatch ordering. The dispatcher drains strictly in enqueue order and treats every
- * origin identically, because the bulk-delete fence relies on apply order matching outbox id order.
+ * This is diagnostic, not dispatch ordering. The dispatcher drains strictly in enqueue order. Reconcile-origin
+ * {@code DELETE_ENTITY} rows re-derive the current source state at dispatch; live and bulk deletions retain their
+ * requested deletion semantics. The bulk-delete fence still relies on apply order matching outbox id order.
  * <p>
  * Recording it makes "where did this queued work come from" a {@code GROUP BY} over the outbox rather than a
  * log grep, and keeps a post-mortem answerable from the database after the logs have rotated away. It also

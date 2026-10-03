@@ -5,15 +5,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,9 +28,14 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.mockito.MockedStatic;
+import org.springframework.context.ApplicationEventPublisher;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -112,6 +121,70 @@ class WeaviateOutboxDispatcherTest {
         dispatcher.drain();
 
         verify(outboxRepository).delete(entry);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
+    void testDrainFailedReconcileDelete_keepsTheRowUnacknowledgedForRetry(WeaviateOutboxOrigin origin) {
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forDeleteEntity(COURSE, 1L, origin);
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        doThrow(new IllegalStateException("resolver unavailable")).when(searchableEntityWeaviateService).applyOutboxEntry(entry);
+
+        dispatcher.drain();
+
+        assertThat(entry.getAttempts()).isEqualTo(1);
+        verify(outboxRepository).save(entry);
+        verify(outboxRepository, never()).delete(entry);
+        verify(syncStateRepository, never()).save(any());
+        verify(syncStateRepository, never()).deleteByEntityTypeAndEntityId(anyString(), anyLong());
+    }
+
+    @Test
+    void testDrainMalformedBulkParamsLeavesTheRowForRetryInsteadOfAcknowledgingIt() {
+        SearchableEntityWeaviateService realService = new SearchableEntityWeaviateService(mock(WeaviateService.class), outboxRepository, mock(SearchableEntityResolver.class),
+                JsonObjectMapper.get(), new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class));
+        WeaviateOutboxDispatcher realDispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, realService, new WeaviateOutboxProperties(5, 100, 10, 300),
+                new WeaviateReconcileProperties(false, false, false, List.of(COURSE), 500, 100, 200, 1000, 5, 100, 100, 0.25));
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{not-json", WeaviateOutboxOrigin.LIVE);
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry), List.of());
+
+        realDispatcher.drain();
+
+        assertThat(entry.getAttempts()).isEqualTo(1);
+        verify(outboxRepository).save(entry);
+        verify(outboxRepository, never()).delete(entry);
+        verify(syncStateRepository, never()).save(any());
+        verify(syncStateRepository, never()).deleteByEntityTypeAndEntityId(anyString(), anyLong());
+    }
+
+    @Test
+    void testDrainHashProviderFailureKeepsTheUpsertForRetryWithoutWritingOrAcknowledging() {
+        WeaviateService weaviateService = mock(WeaviateService.class);
+        SearchableEntityResolver resolver = mock(SearchableEntityResolver.class);
+        SearchableEntityWeaviateService realService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, JsonObjectMapper.get(),
+                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class));
+        WeaviateOutboxDispatcher realDispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, realService, new WeaviateOutboxProperties(5, 100, 10, 300),
+                new WeaviateReconcileProperties(false, false, false, List.of(COURSE), 500, 100, 200, 1000, 5, 100, 100, 0.25));
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry), List.of());
+        when(resolver.resolve(COURSE, 1L)).thenReturn(Optional.of(Map.of(SearchableEntitySchema.Properties.TYPE, COURSE, SearchableEntitySchema.Properties.ENTITY_ID, 1L)));
+
+        try (MockedStatic<MessageDigest> messageDigest = mockStatic(MessageDigest.class, CALLS_REAL_METHODS)) {
+            messageDigest.when(() -> MessageDigest.getInstance("SHA-256")).thenThrow(new NoSuchAlgorithmException("provider unavailable"));
+
+            realDispatcher.drain();
+
+            messageDigest.verify(() -> MessageDigest.getInstance("SHA-256"));
+        }
+
+        assertThat(entry.getAttempts()).isEqualTo(1);
+        verify(outboxRepository).save(entry);
+        verify(outboxRepository, never()).delete(entry);
+        verify(outboxRepository, never()).deleteSupersededByEntity(anyString(), anyLong(), anyLong());
+        verify(syncStateRepository, never()).save(any());
+        verify(syncStateRepository, never()).deleteByEntityTypeAndEntityId(anyString(), anyLong());
+        verify(resolver).resolve(COURSE, 1L);
+        verify(weaviateService, never()).getCollection(any());
     }
 
     @Test

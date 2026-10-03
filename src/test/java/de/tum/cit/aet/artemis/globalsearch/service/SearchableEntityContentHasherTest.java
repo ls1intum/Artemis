@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -8,7 +12,11 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import tools.jackson.core.exc.StreamWriteException;
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 
 class SearchableEntityContentHasherTest {
 
@@ -69,5 +77,16 @@ class SearchableEntityContentHasherTest {
         assertThat(SearchableEntityContentHasher.isCurrentVersion("a".repeat(64))).isFalse();
         assertThat(SearchableEntityContentHasher.isCurrentVersion("v0:" + "a".repeat(64))).isFalse();
         assertThat(SearchableEntityContentHasher.isCurrentVersion(null)).isFalse();
+    }
+
+    @Test
+    void testHashSerializationFailurePreservesTheCauseInsteadOfProducingAUsableHash() {
+        JsonMapper failingMapper = mock(JsonMapper.class);
+        StreamWriteException failure = new StreamWriteException(null, "serialization unavailable");
+        when(failingMapper.writeValueAsString(any())).thenThrow(failure);
+        SearchableEntityContentHasher failingHasher = new SearchableEntityContentHasher(failingMapper);
+
+        assertThatThrownBy(() -> failingHasher.hash(Map.of("type", "course", "entity_id", 42L))).isInstanceOf(WeaviateException.class).hasMessageContaining("Failed to serialize")
+                .satisfies(exception -> assertThat(exception.getCause()).isSameAs(failure));
     }
 }

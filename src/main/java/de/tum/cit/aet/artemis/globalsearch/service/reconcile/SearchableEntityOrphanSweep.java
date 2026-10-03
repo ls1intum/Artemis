@@ -70,10 +70,10 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
  * others: each type in a scanned page is judged and acted on independently, and the cursor always advances
  * regardless of the outcome, so no type can block the rest of the collection from ever being looked at again.
  * <p>
- * Rows written while a scan is in flight need no separate fence. Removal is decided against the database as it is
- * now rather than against anything the scan read, so a row that changed underneath makes no difference to it. A
- * content comparison can go stale, but the worst it produces is a rewrite that was already queued, and queuing
- * refuses to duplicate work already waiting for an entity.
+ * Rows written while a scan is in flight need no separate fence. A removal is checked against the database before
+ * enqueueing and re-derived once more by the dispatcher, so a row that changed underneath converges to its current
+ * source state. A content comparison can go stale, but the worst it produces is a rewrite that was already queued,
+ * and queuing refuses to duplicate work already waiting for an entity.
  */
 @Lazy
 @Service
@@ -261,9 +261,9 @@ public class SearchableEntityOrphanSweep {
 
     /**
      * Removes rows the bulk eligibility check flagged as orphaned, but only the ones a direct, independent
-     * re-derivation of that specific row also finds gone. A delete is unconditional at dispatch time (unlike an
-     * upsert, which re-derives its own content), so this is the one place nothing downstream would catch a wrong
-     * one; the cross-check has to happen here, before enqueueing, or not at all.
+     * re-derivation of that specific row also finds gone. The dispatcher repeats that re-derivation for the queued
+     * reconcile delete, so a source that changes after this check is restored rather than removed. The cross-check
+     * remains a safety guard that prevents needless destructive work and limits the effect of an erroneous scan.
      */
     private long remove(String runId, String entityType, List<IndexedRow> orphans, long alreadyRemoved) {
         long removed = 0;
