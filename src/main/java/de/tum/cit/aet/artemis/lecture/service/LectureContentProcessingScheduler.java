@@ -403,6 +403,16 @@ public class LectureContentProcessingScheduler {
             return;
         }
 
+        // Re-check the predicate findStuckStates selected this row by: a heartbeat may have refreshed lastUpdated since the
+        // batch read without touching phase or token, and pinning that fresh value below would still fail a live run.
+        boolean silentSinceCutoff = (freshState.getLastHeartbeatAt() == null || freshState.getLastProgressAt() == null) && freshState.getLastUpdated() != null
+                && freshState.getLastUpdated().isBefore(cutoff);
+        boolean pastAbsoluteDeadline = freshState.getStartedAt() != null && freshState.getStartedAt().isBefore(absoluteCutoff);
+        if (!silentSinceCutoff && !pastAbsoluteDeadline) {
+            log.debug("State {} is no longer stuck since the batch read, skipping recovery", freshState.getId());
+            return;
+        }
+
         log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
         // A stuck INGESTING run may have completed with only its terminal callback lost. In that case

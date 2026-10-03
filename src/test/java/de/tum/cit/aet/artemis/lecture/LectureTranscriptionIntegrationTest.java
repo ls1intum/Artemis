@@ -142,18 +142,21 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * Verifies updateContentIfExists's bulk UPDATE against a real database: the {@code segments}
-     * column is {@code @JdbcTypeCode(SqlTypes.JSON)} with no existing bulk-update precedent
-     * elsewhere in this codebase, so this confirms the converter applies correctly in a JPQL SET
-     * clause bind, not just in the ordinary entity-save path every other test here exercises.
+     * Verifies updateContentIfTokenMatches against a real database: like the insert, it binds the {@code json}-typed
+     * {@code segments} column through an explicit {@code CAST(... AS json)}, and applies when the run still owns the unit.
      */
     @Test
-    void testUpdateContentIfExists_appliesWhenRowExists() {
-        var originalSegments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Original text", 1));
-        LectureTranscription saved = lectureTranscriptionRepository.save(new LectureTranscription("en", originalSegments, lectureUnit));
+    void testUpdateContentIfTokenMatches_appliesWhenTokenMatches() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
+        state.setIngestionJobToken("valid-token");
+        processingStateRepository.save(state);
+        LectureTranscription saved = lectureTranscriptionRepository
+                .save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Original text", 1)), lectureUnit));
 
         var updatedSegments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Updated text", 1), new LectureTranscriptionSegment(5.0, 10.0, "More updated text", 2));
-        int updated = lectureTranscriptionRepository.updateContentIfExists(saved.getId(), "de", updatedSegments, TranscriptionStatus.COMPLETED);
+        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(updatedSegments);
+        int updated = lectureTranscriptionRepository.updateContentIfTokenMatches(saved.getId(), lectureUnit.getId(), "de", segmentsJson, TranscriptionStatus.COMPLETED.name(),
+                "valid-token");
 
         assertThat(updated).isEqualTo(1);
         LectureTranscription reloaded = lectureTranscriptionRepository.findById(saved.getId()).orElseThrow();
@@ -165,17 +168,45 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * The race updateContentIfExists exists to close: a content-triggered requeue deletes the row
-     * between a checkpoint's read and its write. The conditional update must no-op, not resurrect it.
+     * The case an id-only guard misses: a lease reclaim or retry keeps the transcription row and starts a newer run on it,
+     * so the row still exists when a delayed checkpoint of the superseded run arrives. Its stale token must leave the
+     * newer run's transcript untouched.
      */
     @Test
-    void testUpdateContentIfExists_noOpsWhenRowWasDeleted() {
+    void testUpdateContentIfTokenMatches_noOpsForAStaleRunWhileTheRowIsKept() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
+        state.setIngestionJobToken("newer-run-token");
+        processingStateRepository.save(state);
+        LectureTranscription kept = lectureTranscriptionRepository
+                .save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Newer run text", 1)), lectureUnit));
+
+        String staleJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale run text", 1)));
+        int updated = lectureTranscriptionRepository.updateContentIfTokenMatches(kept.getId(), lectureUnit.getId(), "de", staleJson, TranscriptionStatus.COMPLETED.name(),
+                "superseded-run-token");
+
+        assertThat(updated).isZero();
+        LectureTranscription reloaded = lectureTranscriptionRepository.findById(kept.getId()).orElseThrow();
+        assertThat(reloaded.getLanguage()).isEqualTo("en");
+        assertThat(reloaded.getSegments().getFirst().text()).isEqualTo("Newer run text");
+    }
+
+    /**
+     * A content-triggered requeue deletes the row between a checkpoint's read and its write. The update must no-op, not
+     * resurrect it, even under the token that still matches.
+     */
+    @Test
+    void testUpdateContentIfTokenMatches_noOpsWhenRowWasDeleted() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
+        state.setIngestionJobToken("valid-token");
+        processingStateRepository.save(state);
         var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Original text", 1));
         LectureTranscription saved = lectureTranscriptionRepository.save(new LectureTranscription("en", segments, lectureUnit));
         Long deletedId = saved.getId();
         lectureTranscriptionRepository.delete(saved);
 
-        int updated = lectureTranscriptionRepository.updateContentIfExists(deletedId, "de", segments, TranscriptionStatus.COMPLETED);
+        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
+        int updated = lectureTranscriptionRepository.updateContentIfTokenMatches(deletedId, lectureUnit.getId(), "de", segmentsJson, TranscriptionStatus.COMPLETED.name(),
+                "valid-token");
 
         assertThat(updated).isZero();
         assertThat(lectureTranscriptionRepository.findById(deletedId)).isEmpty();

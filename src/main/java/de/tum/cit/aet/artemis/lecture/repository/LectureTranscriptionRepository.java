@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 
 /**
@@ -45,31 +44,37 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
     List<LectureTranscription> findByLectureId(@Param("lectureId") Long lectureId);
 
     /**
-     * Update an existing transcription's content, atomically: only while the row a checkpoint's
-     * earlier read found still exists.
+     * Update an existing transcription's content, atomically conditional on the run that produced it still owning
+     * the unit's processing state at the instant the update commits: the same guard as {@link #insertIfTokenMatches}.
      * <p>
-     * A content-triggered requeue (video changed) can delete this unit's transcription between that
-     * read and the write a checkpoint callback makes once it has proven ownership of its run (see
-     * {@code ProcessingStateCallbackService#saveTranscription}). Conditioning this write on the row's
-     * own id -- rather than relying on JPA's save/merge semantics for a since-deleted identity, which
-     * silently recreates the row -- is what turns that deletion into a no-op here instead of stale
-     * content reappearing under a new id.
+     * Keying on the row's id alone only covers a requeue that deleted the row. A lease reclaim or retry keeps the row
+     * and starts a newer run on it, so a delayed checkpoint of the superseded run would otherwise overwrite the newer
+     * run's transcript before its own stale token is rejected anywhere else. {@code FOR UPDATE} on the ownership
+     * subquery serializes this write with any transaction changing that token, as it does for the insert.
      *
      * @param id                  the transcription row a checkpoint's earlier read found
+     * @param lectureUnitId       the unit this transcription belongs to
      * @param language            the checkpoint's language
-     * @param segments            the checkpoint's segments
-     * @param transcriptionStatus the status to set
-     * @return 1 when applied, 0 when the row no longer exists
+     * @param segments            the checkpoint's segments, pre-serialized the same way the entity's own converter
+     *                                would (native queries bypass the ORM type layer)
+     * @param transcriptionStatus the status to set, as its enum name
+     * @param expectedToken       the token the checkpoint carried
+     * @return 1 when applied, 0 when the row no longer exists or the token had already changed
      */
     @Modifying
     @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureTranscription t
-            SET t.language = :language, t.segments = :segments, t.transcriptionStatus = :transcriptionStatus
-            WHERE t.id = :id
-            """)
-    int updateContentIfExists(@Param("id") Long id, @Param("language") String language, @Param("segments") List<LectureTranscriptionSegment> segments,
-            @Param("transcriptionStatus") TranscriptionStatus transcriptionStatus);
+    @Query(value = """
+            UPDATE lecture_transcription
+            SET language = :language, segments = CAST(:segments AS json), transcription_status = :transcriptionStatus
+            WHERE id = :id
+            AND EXISTS (
+                SELECT 1 FROM lecture_unit_processing_state
+                WHERE lecture_unit_id = :lectureUnitId AND ingestion_job_token = :expectedToken
+                FOR UPDATE
+            )
+            """, nativeQuery = true)
+    int updateContentIfTokenMatches(@Param("id") Long id, @Param("lectureUnitId") Long lectureUnitId, @Param("language") String language, @Param("segments") String segments,
+            @Param("transcriptionStatus") String transcriptionStatus, @Param("expectedToken") String expectedToken);
 
     /**
      * Insert a unit's first transcription row, atomically conditional on the run that produced it
@@ -77,7 +82,7 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
      * earlier read, and not merely at the instant its own statement began.
      * <p>
      * A first checkpoint has no existing row to guard an {@code UPDATE} on (see
-     * {@link #updateContentIfExists}), so a read-then-insert shape always leaves a gap between
+     * {@link #updateContentIfTokenMatches}), so a read-then-insert shape always leaves a gap between
      * checking the token and writing: a content-triggered requeue can invalidate the token and find
      * no row to delete in exactly that gap, and an unconditioned insert afterward would persist stale
      * content the fresh generation could mistake for its own. Folding the check into the {@code EXISTS}

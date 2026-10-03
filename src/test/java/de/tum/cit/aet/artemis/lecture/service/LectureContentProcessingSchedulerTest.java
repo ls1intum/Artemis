@@ -221,12 +221,39 @@ class LectureContentProcessingSchedulerTest {
     class StuckStateRecovery {
 
         @Test
+        void shouldNotFailAStuckRunThatAHeartbeatRefreshedSinceTheBatchRead() {
+            // The batch read found the run silent past the cutoff, but a heartbeat refreshed lastUpdated before the re-read,
+            // without touching phase or token. The re-read must re-check the stuck predicate instead of pinning the fresh value.
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken("token");
+            testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30));
+
+            LectureUnitProcessingState refreshed = new LectureUnitProcessingState(testUnit);
+            refreshed.setId(testState.getId());
+            refreshed.setPhase(ProcessingPhase.TRANSCRIBING);
+            refreshed.setIngestionJobToken("token");
+            refreshed.setStartedAt(testState.getStartedAt());
+            refreshed.setLastUpdated(ZonedDateTime.now());
+
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
+                    .thenReturn(List.of(testState));
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(refreshed));
+
+            scheduler.processScheduledRetries();
+
+            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
+        }
+
+        @Test
         void shouldRecoverTheOtherStuckRunsAndFinishThePassWhenOneRecoveryThrows() {
             // Two stuck runs; re-reading the first throws. The second is still recovered, and the pass continues.
             LectureUnitProcessingState broken = new LectureUnitProcessingState(testUnit);
             broken.setId(2L);
             broken.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
@@ -247,6 +274,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(1);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
@@ -322,6 +350,7 @@ class LectureContentProcessingSchedulerTest {
         void shouldFallBackToFailureWhenReconcileCannotResolveStuckIngestion() {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
@@ -340,6 +369,7 @@ class LectureContentProcessingSchedulerTest {
             // A TRANSCRIBING run cannot be complete on the Iris side, so the heal path must not apply
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))

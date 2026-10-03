@@ -681,13 +681,13 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
             when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
-            when(transcriptionRepository.updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.COMPLETED))).thenReturn(1);
+            when(transcriptionRepository.updateContentIfTokenMatches(eq(99L), eq(testUnit.getId()), eq("en"), any(), eq("COMPLETED"), eq(TEST_JOB_TOKEN))).thenReturn(1);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
             callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
-            verify(transcriptionRepository).updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
+            verify(transcriptionRepository).updateContentIfTokenMatches(eq(99L), eq(testUnit.getId()), eq("en"), any(), eq("COMPLETED"), eq(TEST_JOB_TOKEN));
             verify(transcriptionRepository, never()).save(any());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
         }
@@ -705,7 +705,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
-            when(transcriptionRepository.updateContentIfExists(eq(99L), any(), any(), any())).thenReturn(0);
+            when(transcriptionRepository.updateContentIfTokenMatches(eq(99L), any(), any(), any(), any(), any())).thenReturn(0);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
@@ -727,13 +727,13 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
             when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
-            when(transcriptionRepository.updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.PENDING))).thenReturn(1);
+            when(transcriptionRepository.updateContentIfTokenMatches(eq(99L), eq(testUnit.getId()), eq("en"), any(), eq("PENDING"), eq(TEST_JOB_TOKEN))).thenReturn(1);
 
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 
             callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
-            verify(transcriptionRepository).updateContentIfExists(eq(99L), eq("en"), any(), eq(TranscriptionStatus.PENDING));
+            verify(transcriptionRepository).updateContentIfTokenMatches(eq(99L), eq(testUnit.getId()), eq("en"), any(), eq("PENDING"), eq(TEST_JOB_TOKEN));
             verify(transcriptionRepository, never()).save(any());
         }
 
@@ -748,7 +748,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
             when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
-            when(transcriptionRepository.updateContentIfExists(eq(99L), any(), any(), any())).thenReturn(0);
+            when(transcriptionRepository.updateContentIfTokenMatches(eq(99L), any(), any(), any(), any(), any())).thenReturn(0);
 
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 

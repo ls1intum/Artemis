@@ -814,7 +814,7 @@ public class ProcessingStateCallbackService {
         if (checkpoint.isEnriched()) {
             // Transcript first, then TRANSCRIBING → INGESTING: if the write fails, the row is still TRANSCRIBING and Iris's
             // redelivery of this checkpoint replays both steps instead of being dropped as stale. The write guards ownership
-            // on its own (token-checked insert, id-checked update), and a refused write means ownership is gone, so no transition.
+            // on its own (insert and update are both token-checked), and a refused write means ownership is gone, so no transition.
             String jobToken = state.getIngestionJobToken();
             transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
             if (!persistTranscription(lectureUnitId, jobToken, existing, transcription)) {
@@ -848,25 +848,20 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Conditional update keyed on the row's own id when it existed. A first checkpoint has no id to
-     * guard an update on, so it inserts through {@link LectureTranscriptionRepository#insertIfTokenMatches},
-     * which folds the ownership check into the insert itself instead of a separate read before it.
+     * Write the checkpoint's transcription only while its run still owns the unit: both the insert of a first row and the
+     * update of an existing one fold the token check into the write itself (see
+     * {@link LectureTranscriptionRepository#insertIfTokenMatches}), so a superseded run can neither recreate a deleted row
+     * nor overwrite the transcript of the newer run that kept it.
      *
      * @return whether the transcription was written; false when ownership or the stored row was gone
      */
     private boolean persistTranscription(long lectureUnitId, String expectedToken, Optional<LectureTranscription> existing, LectureTranscription transcription) {
-        if (existing.isEmpty()) {
-            String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(transcription.getSegments());
-            if (transcriptionRepository.insertIfTokenMatches(lectureUnitId, transcription.getLanguage(), segmentsJson, transcription.getTranscriptionStatus().name(),
-                    expectedToken) == 0) {
-                log.debug("Skipping transcription insert for unit {}: ownership token changed since it was proven", lectureUnitId);
-                return false;
-            }
-            return true;
-        }
-        if (transcriptionRepository.updateContentIfExists(transcription.getId(), transcription.getLanguage(), transcription.getSegments(),
-                transcription.getTranscriptionStatus()) == 0) {
-            log.debug("Skipping transcription write for unit {}: the stored transcription was deleted since this checkpoint's earlier read", lectureUnitId);
+        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(transcription.getSegments());
+        String status = transcription.getTranscriptionStatus().name();
+        int written = existing.isEmpty() ? transcriptionRepository.insertIfTokenMatches(lectureUnitId, transcription.getLanguage(), segmentsJson, status, expectedToken)
+                : transcriptionRepository.updateContentIfTokenMatches(transcription.getId(), lectureUnitId, transcription.getLanguage(), segmentsJson, status, expectedToken);
+        if (written == 0) {
+            log.debug("Skipping transcription write for unit {}: the run no longer owns the unit or the stored row was deleted", lectureUnitId);
             return false;
         }
         return true;
