@@ -112,6 +112,7 @@
                             @for (dropLocation of dragAndDropQuestion().dropLocations; track dropLocation) {
                                 <div
                                     id="drop-location"
+                                    data-testid="drop-location"
                                     class="drop-location"
                                     [ngClass]="dropAllowed() ? 'drop-allowed' : ''"
                                     [style]="{

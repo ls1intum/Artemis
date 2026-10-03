@@ -141,7 +141,7 @@
             },
             "createAttachmentVideoUnits": {
                 "noFile": "There is no file for automatic processing. Please go back and try again.",
-                "noUnitDetected": "No content was detected and could not split automatically. Please add information for each content section!",
+                "noUnitDetected": "This PDF has no slide with the word “Outline” or “Gliederung”, so Artemis could not propose items. Add the items and their slides with “Add item”.",
                 "pageTitle": "Process content",
                 "addUnit": "Add item",
                 "removeSlides": "Remove slides",
@@ -175,7 +175,8 @@
                     "summarySingle": "Artemis found 1 section in {{ slides }} slides.",
                     "hint": "Each row becomes one content item with its slides. Check the names and slide ranges before you create the items.",
                     "slides": "Slides",
-                    "summaryNone": "Artemis found no sections in {{ slides }} slides."
+                    "summaryNone": "Artemis found no sections in {{ slides }} slides.",
+                    "detectionHint": "Artemis starts a new section at every slide that contains the word “Outline” or “Gliederung”, spelled exactly like this, and proposes a name from the text of that slide. This works for PDFs from any program, such as PowerPoint, Keynote or LaTeX, as long as their text can be selected. Check the proposed names and slides."
                 },
                 "processTimeInfo": "The processing of lecture content can take a few seconds. Please be patient.",
                 "removeSource": "Remove the original PDF item “{{ name }}” after splitting",

@@ -64,6 +64,7 @@ export class ExamDetailsPage {
     /**
      * Deletes this exam.
      * @param examTitle the exam title to confirm the deletion
+     * @returns the response of the delete request
      */
     async deleteExam(examTitle: string) {
         // The exam-detail page wraps all controls in `@if (exam)`, so the delete
@@ -77,7 +78,9 @@ export class ExamDetailsPage {
         await expect(deleteButton).toBeDisabled();
         await this.page.locator('#confirm-entity-name').fill(examTitle);
         await expect(deleteButton).not.toBeDisabled();
+        const responsePromise = this.page.waitForResponse((response) => response.request().method() === 'DELETE' && /\/api\/exam\/courses\/\d+\/exams\/\d+$/.test(response.url()));
         await deleteButton.click();
+        return await responsePromise;
     }
 }
 

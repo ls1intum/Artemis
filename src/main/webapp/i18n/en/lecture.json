@@ -141,7 +141,7 @@
             },
             "splitPdf": {
                 "title": "Split a lecture PDF into several items",
-                "description": "Artemis finds the outline slide and proposes one item per section. You review the proposal before anything is created.",
+                "description": "For PDFs whose slides repeat their outline before each section: Artemis proposes one item per section, each starting at a slide with the word “Outline” or “Gliederung”. You review the proposal before anything is created.",
                 "unit": "PDF to split",
                 "unitPlaceholder": "Select a PDF",
                 "start": "Split into sections",
