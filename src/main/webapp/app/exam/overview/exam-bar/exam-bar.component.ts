@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,12 +10,13 @@ import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-bar',
-    imports: [CommonModule, ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule, TranslateDirective],
+    imports: [ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule, TranslateDirective, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './exam-bar.component.html',
-    styleUrl: './exam-bar.component.scss',
 })
 export class ExamBarComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);

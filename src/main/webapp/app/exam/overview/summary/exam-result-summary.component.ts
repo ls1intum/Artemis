@@ -30,9 +30,8 @@ import { ExamGeneralInformationComponent } from '../general-information/exam-gen
 import { ExamResultOverviewComponent } from './result-overview/exam-result-overview.component';
 import { CollapsibleCardComponent } from './collapsible-card/collapsible-card.component';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
-import { NgClass } from '@angular/common';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
@@ -69,7 +68,7 @@ type StateBeforeResetting = {
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
-    styleUrls: ['./exam-summary-card.scss', '../../../quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
+    styleUrl: 'exam-result-summary.component.scss',
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -77,10 +76,11 @@ type StateBeforeResetting = {
         ExamResultOverviewComponent,
         CollapsibleCardComponent,
         ExamResultSummaryExerciseCardHeaderComponent,
-        NgClass,
         RouterLink,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
-        NgbTooltip,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         ExampleSolutionComponent,
         TextExamSummaryComponent,
         ModelingExamSummaryComponent,
