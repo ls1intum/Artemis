@@ -21,6 +21,9 @@
             </plugin>
         </plugins>
         <sourceDirectory>${project.basedir}/..${studentWorkingDirectory}</sourceDirectory>
+        <!-- Ares looks for the compiled student code in the target directory of its working directory, which is the test repository
+             root (see the surefire configuration above). Without this, it does not recognize the student classes and enforces nothing. -->
+        <outputDirectory>${project.basedir}/../target/classes</outputDirectory>
         <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
         <testResources>
             <testResource>

@@ -9,6 +9,9 @@
     <artifactId>${exerciseNamePomXml}-Tests</artifactId>
     <build>
         <sourceDirectory>${project.basedir}/..${studentWorkingDirectory}</sourceDirectory>
+        <!-- Ares looks for the compiled student code in the target directory of its working directory, which is the test repository
+             root (see the surefire configuration below). Without this, it finds no classes and silently skips its static analysis. -->
+        <outputDirectory>${project.basedir}/../target/classes</outputDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
