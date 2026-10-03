@@ -286,7 +286,8 @@ Check the build plan results:
 Ares 2 is a JUnit extension for easy and secure Java testing on Artemis.
 The Java and Kotlin test templates use Ares 2 and contain a security policy file (`SecurityPolicy.yaml`, in the root of the test repository) that is referenced by the `@Policy` annotation of the test classes.
 Add every new test class to `theFollowingClassesAreTestClasses` in this policy and allow additional resources (e.g. package imports of libraries used in the exercise) in `theFollowingResourceAccessesArePermitted`.
-Exercises that were created before the introduction of Ares 2 keep working with Ares 1 (`artemis-java-test-sandbox`), but their Docker image does not contain the dependencies of Ares 1 anymore.
+Exercises that were created before the introduction of Ares 2 keep their stored Docker image and keep working with Ares 1 (`artemis-java-test-sandbox`).
+The new default Docker image for Java and Kotlin (`ls1tum/artemis-maven-template:java25-1`) does not contain the dependencies of Ares 1 anymore, and Ares 1 does not run on Java 25, because it relies on the Java security manager.
 
 Main features:
 
