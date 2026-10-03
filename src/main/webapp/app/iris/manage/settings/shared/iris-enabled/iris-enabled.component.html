@@ -1,6 +1,6 @@
 <div class="iris-controls">
     <jhi-enabled-toggle [enabled]="isEnabled()" [ariaLabel]="'artemisApp.iris.settings.enableLabel' | artemisTranslate" (enabledChange)="setEnabled($event)" />
-    <a class="iris-configure-link" [routerLink]="settingsRoute()">
+    <a tumAetUiButton severity="secondary" variant="outlined" [routerLink]="settingsRoute()">
         <span jhiTranslate="artemisApp.iris.settings.configure"></span>
         <fa-icon [icon]="faArrowRight" />
     </a>

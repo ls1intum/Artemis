@@ -239,17 +239,46 @@
             },
             "athenaConfig": {
                 "title": "Athena KI-Feedback",
+                "enabledLabel": "Athena aktivieren",
+                "configure": "Konfigurieren",
+                "learnMore": "Mehr erfahren",
                 "formativeFeedbackEnabled": {
                     "label": "Formative Feedbackanfragen",
-                    "tooltip": "Wenn aktiviert, können Studierende vor dem Abgabedatum vorläufiges KI-Feedback von Athena anfordern.",
+                    "enabledLabel": "Formative Feedbackanfragen sind aktiviert",
+                    "disabledLabel": "Formative Feedbackanfragen sind deaktiviert",
                     "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihren Abgaben anfordern.",
                     "disabledHint": "Studierende können in diesem Kurs kein vorläufiges KI-Feedback anfordern."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Feedbackvorschläge zur Bewertung",
-                    "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Abgaben von Text-, Programmier- und Modellierungsaufgaben vor.",
+                    "enabledLabel": "Feedbackvorschläge zur Bewertung sind aktiviert",
+                    "disabledLabel": "Feedbackvorschläge zur Bewertung sind deaktiviert",
                     "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",
                     "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge von Athena."
+                },
+                "settingsPage": {
+                    "title": "Athena-Einstellungen",
+                    "sidebarTitle": "Athena"
+                },
+                "aboutAthenaModal": {
+                    "close": "Schließen",
+                    "meetAthena": "Athena kennenlernen",
+                    "subtitle": "KI-Feedback für deine Tutor:innen und Studierenden",
+                    "description": "Athena entwirft Feedback für Text-, Programmier- und Modellierungsabgaben, unterstützt Tutor:innen bei der schnelleren Bewertung und gibt Studierenden vor der Abgabefrist eine erste Rückmeldung zu ihrer Arbeit.",
+                    "whatAthenaCanDo": "Was Athena kann",
+                    "gradingFeedbackTitle": "Feedbackvorschläge zur Bewertung",
+                    "gradingFeedbackDesc": "Athena entwirft Feedbackvorschläge, während Tutor:innen Text-, Programmier- und Modellierungsabgaben bewerten.",
+                    "formativeFeedbackTitle": "Formative Feedbackanfragen",
+                    "formativeFeedbackDesc": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihrer eigenen Abgabe anfordern.",
+                    "exerciseTypesTitle": "Funktioniert bei allen Aufgabentypen",
+                    "exerciseTypesDesc": "Feedbackvorschläge zur Bewertung gibt es für Text-, Programmier- und Modellierungsaufgaben. Formative Feedbackanfragen ebenfalls, Programmieraufgaben müssen dafür aber halbautomatisch bewertet werden.",
+                    "whatToExpect": "Was dich erwartet",
+                    "suggestionsNotGradesTitle": "Vorschläge, keine endgültigen Bewertungen",
+                    "suggestionsNotGradesDesc": "Tutor:innen übernehmen, bearbeiten oder verwerfen jeden Feedbackvorschlag, bevor sie eine Bewertung abschicken. Formatives Feedback enthält eine vorläufige Punktzahl, die nie in die Note der Studierenden eingeht.",
+                    "requestLimitTitle": "Eine begrenzte Anzahl an Anfragen",
+                    "requestLimitDesc": "Pro Aufgabenteilnahme erhalten Studierende nur eine begrenzte Anzahl an KI-Feedbackergebnissen; fehlgeschlagene Anfragen zählen nicht.",
+                    "configurablePerFeatureTitle": "Pro Funktion konfigurierbar",
+                    "configurablePerFeatureDesc": "Feedbackvorschläge zur Bewertung und formative Feedbackanfragen können auf der Einstellungsseite unabhängig voneinander geschaltet werden."
                 }
             },
             "autoOrchestration": {
