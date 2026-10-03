@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentPresenceDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageSetLoader.ExpectedSets;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageSetLoader.PresentSets;
 
@@ -63,9 +65,23 @@ public class IngestionBrowserService {
         PresentSets present = setLoader.loadPresent(courseIds);
         coverageRecomputeService.storeCourseCoverage(course, expected, present);
 
-        return new CourseBrowserDataDTO(browserReadService.listIndexedEntitiesForCourse(courseId), contentPresence(courseId, present),
-                gapService.missingEntities(courseId, expected, present), gapService.contentGaps(courseId, expected, present),
-                CoverageRecomputeService.typeCountsForCourse(courseId, expected, present));
+        List<IndexedEntityDTO> entities = browserReadService.listIndexedEntitiesForCourse(courseId).stream().map(entity -> new IndexedEntityDTO(entity.type(), entity.entityId(),
+                entity.title(), entity.lectureId(), entity.ingestedAt(), isExpectedMetadataEntity(courseId, entity, expected))).toList();
+        return new CourseBrowserDataDTO(entities, contentPresence(courseId, present), gapService.missingEntities(courseId, expected, present),
+                gapService.contentGaps(courseId, expected, present), CoverageRecomputeService.typeCountsForCourse(courseId, expected, present));
+    }
+
+    private static boolean isExpectedMetadataEntity(long courseId, IndexedEntityDTO entity, ExpectedSets expected) {
+        return switch (entity.type()) {
+            case SearchableEntitySchema.TypeValues.EXERCISE -> expected.exercises().getOrDefault(courseId, Set.of()).contains(entity.entityId());
+            case SearchableEntitySchema.TypeValues.LECTURE -> expected.lectures().getOrDefault(courseId, Set.of()).contains(entity.entityId());
+            case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> expected.lectureUnits().getOrDefault(courseId, Set.of()).contains(entity.entityId());
+            case SearchableEntitySchema.TypeValues.EXAM -> expected.exams().getOrDefault(courseId, Set.of()).contains(entity.entityId());
+            case SearchableEntitySchema.TypeValues.FAQ -> expected.faqs().getOrDefault(courseId, Set.of()).contains(entity.entityId());
+            case SearchableEntitySchema.TypeValues.CHANNEL -> expected.channels().getOrDefault(courseId, Set.of()).contains(entity.entityId());
+            case SearchableEntitySchema.TypeValues.COURSE -> entity.entityId() == courseId;
+            default -> false;
+        };
     }
 
     /**

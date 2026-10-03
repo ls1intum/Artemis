@@ -104,6 +104,7 @@
                     "position": "#{{ position }}"
                 },
                 "notIndexed": "nicht indexiert",
+                "orphaned": "verwaist",
                 "content_slides": "Folien",
                 "content_transcript": "Transkript",
                 "content_unit_summary": "Einheit-Zusammenfassung",

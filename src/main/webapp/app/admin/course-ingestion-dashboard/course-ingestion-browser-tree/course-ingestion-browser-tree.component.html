@@ -70,6 +70,12 @@
                                         jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIndexed"
                                         data-testid="lecture-not-indexed"
                                     ></span>
+                                } @else if (!lecture.expected) {
+                                    <span
+                                        class="text-xs text-state-danger shrink-0"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.orphaned"
+                                        [attr.data-testid]="'lecture-orphaned:' + lecture.lectureId"
+                                    ></span>
                                 }
                                 <span
                                     class="font-mono text-xs text-muted-color shrink-0"
@@ -126,6 +132,12 @@
                                                         class="text-xs text-state-danger shrink-0"
                                                         jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIndexed"
                                                         [attr.data-testid]="'unit-not-indexed:' + unit.unitId"
+                                                    ></span>
+                                                } @else if (!unit.expected) {
+                                                    <span
+                                                        class="text-xs text-state-danger shrink-0"
+                                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.orphaned"
+                                                        [attr.data-testid]="'unit-orphaned:' + unit.unitId"
                                                     ></span>
                                                 }
                                                 <span

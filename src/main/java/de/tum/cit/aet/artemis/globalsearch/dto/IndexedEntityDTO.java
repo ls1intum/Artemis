@@ -17,7 +17,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param title      the stored title, or {@code null} if the row has none
  * @param lectureId  the parent lecture, set on lecture units and {@code null} otherwise; the tree nests units by it
  * @param ingestedAt when Weaviate created the object, or {@code null} if the creation time could not be read
+ * @param expected   whether the database still expects this metadata identity; {@code false} labels a retained row as orphaned
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedEntityDTO(String type, long entityId, String title, Long lectureId, Instant ingestedAt) {
+public record IndexedEntityDTO(String type, long entityId, String title, Long lectureId, Instant ingestedAt, boolean expected) {
 }

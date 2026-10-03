@@ -122,6 +122,10 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
     @BeforeEach
     void setUp() throws Exception {
         coverageRepository.deleteAll();
+        // These maps are deliberately provider-backed state, not database freshness. Clear the feature-specific test
+        // keys so one test's successful full projection cannot certify the next test's empty projection.
+        distributedDataProvider.<String, Boolean>getExpiringMap("ingestion-coverage-successful-full-recompute", Duration.ofMinutes(15)).clear();
+        distributedDataProvider.<String, Boolean>getExpiringMap("ingestion-coverage-failed-recompute", Duration.ofSeconds(30)).clear();
         recreateIrisContentCollections(weaviateClient);
 
         ZonedDateTime past = ZonedDateTime.now().minusDays(1);
@@ -290,13 +294,13 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         assertThat(locked.await(5, TimeUnit.SECONDS)).isTrue();
 
         // Another thread (node) holds the lock, so a triggered recompute must skip rather than run.
-        assertThat(coverageRecomputeService.runUnderLock(false, Duration.ofSeconds(1))).isFalse();
+        assertThat(coverageRecomputeService.runUnderLock(false, false, Duration.ofSeconds(1))).isEqualTo(CoverageRecomputeService.RecomputeOutcome.LOCK_TIMEOUT);
 
         release.countDown();
         holder.join(5000);
 
         // With the lock free, it runs.
-        assertThat(coverageRecomputeService.runUnderLock(false, Duration.ofSeconds(1))).isTrue();
+        assertThat(coverageRecomputeService.runUnderLock(false, false, Duration.ofSeconds(1))).isEqualTo(CoverageRecomputeService.RecomputeOutcome.RECOMPUTED);
     }
 
     @Test
@@ -305,7 +309,7 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         // data before the change the admin is refreshing for.
         Thread holder = holdRecomputeLockElsewhere(2000);
 
-        assertThat(coverageRecomputeService.forceRecompute()).isTrue();
+        assertThat(coverageRecomputeService.forceRecompute()).isEqualTo(CoverageRecomputeService.RecomputeOutcome.RECOMPUTED);
         holder.join(5000);
     }
 
@@ -323,7 +327,7 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
     @Test
     void aFreshReadDoesNotWaitForTheLock() throws Exception {
-        coverageRecomputeService.recomputeAllCourses();
+        assertThat(coverageRecomputeService.forceRecompute()).isEqualTo(CoverageRecomputeService.RecomputeOutcome.RECOMPUTED);
         Thread holder = holdRecomputeLockElsewhere(2000);
 
         long start = System.nanoTime();
@@ -331,6 +335,15 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
         assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(1));
         holder.join(5000);
+    }
+
+    @Test
+    void successfulFullRecomputeMarkerIsSharedThroughTheProvider() {
+        assertThat(coverageRecomputeService.forceRecompute()).isEqualTo(CoverageRecomputeService.RecomputeOutcome.RECOMPUTED);
+
+        // This must not inspect the projection table. The provider-backed marker is what lets another application node
+        // recognize a successful full recompute while a browser-only course write remains insufficient.
+        assertThat(coverageRecomputeService.triggerRecomputeIfStale()).isEqualTo(CoverageRecomputeService.RecomputeOutcome.FRESH);
     }
 
     /** Holds the recompute lock on a different thread, standing in for another node, and returns once it is held. */

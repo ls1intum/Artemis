@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, model, signal, untracked } from '@angular/core';
 import {
     IconDefinition,
     faAlignLeft,
@@ -70,7 +70,9 @@ interface UnitNode extends TreeNode {
     content: ContentNode[];
     /** False when the index holds no `SearchableEntities` row for the unit, even though the database still has it. */
     indexed: boolean;
-    /** False when the unit is not indexed, or content it should have was never ingested. */
+    /** False when the indexed row is no longer expected by the database. */
+    expected: boolean;
+    /** False when the unit is missing metadata, orphaned, or content it should have was never ingested. */
     complete: boolean;
 }
 
@@ -89,6 +91,7 @@ interface LectureNode extends TreeNode {
     lectureId: number;
     title: string;
     indexed: boolean;
+    expected: boolean;
     units: UnitNode[];
     /** False when the lecture is not indexed itself, or any of its units is missing content. */
     complete: boolean;
@@ -166,9 +169,13 @@ export class CourseIngestionBrowserTreeComponent {
         const unitsWithGaps = new Set(this.contentGaps().map((gap) => gap.lectureUnitId));
 
         const lectureTitles = new Map<number, string>();
+        const expectedLectureIds = new Set<number>();
         for (const entity of entities) {
             if (entity.type === 'lecture') {
                 lectureTitles.set(entity.entityId, entity.title ?? '');
+                if (entity.expected === true) {
+                    expectedLectureIds.add(entity.entityId);
+                }
             }
         }
         // A lecture that is not indexed still needs a name for the node its indexed units are nested under. The
@@ -192,7 +199,7 @@ export class CourseIngestionBrowserTreeComponent {
         // A unit missing from the index is not complete, whatever its content looks like. Reading completeness off the
         // content alone let a unit whose own row was never written sit green under a green lecture, so a collapsed tree
         // showed nothing wrong on the branch holding the gap.
-        const unitNode = (unitId: number, title: string, indexed: boolean): UnitNode => {
+        const unitNode = (unitId: number, title: string, indexed: boolean, expected: boolean): UnitNode => {
             const selection: BrowserSelection = { kind: 'unit', unitId };
             return {
                 key: selectionKey(selection),
@@ -201,7 +208,8 @@ export class CourseIngestionBrowserTreeComponent {
                 title,
                 content: contentNodesFor(unitId),
                 indexed,
-                complete: indexed && !unitsWithGaps.has(unitId),
+                expected,
+                complete: indexed && expected && !unitsWithGaps.has(unitId),
             };
         };
 
@@ -212,7 +220,7 @@ export class CourseIngestionBrowserTreeComponent {
             if (entity.type !== 'lecture_unit' || entity.lectureId === undefined) {
                 continue;
             }
-            addUnit(entity.lectureId, unitNode(entity.entityId, entity.title ?? '', true));
+            addUnit(entity.lectureId, unitNode(entity.entityId, entity.title ?? '', true, entity.expected === true));
         }
 
         // A unit the database still has but the index does not belongs under its lecture like any other: only its
@@ -224,7 +232,7 @@ export class CourseIngestionBrowserTreeComponent {
             if (missing.type !== 'lecture_unit' || missing.lectureId === undefined || unitIdsFromTheIndex.has(missing.entityId)) {
                 continue;
             }
-            const unit = unitNode(missing.entityId, missing.title ?? '', false);
+            const unit = unitNode(missing.entityId, missing.title ?? '', false, true);
             if (unit.content.length > 0) {
                 addUnit(missing.lectureId, unit);
             }
@@ -243,10 +251,11 @@ export class CourseIngestionBrowserTreeComponent {
                     lectureId,
                     title: lectureTitles.get(lectureId) ?? missingLectureTitles.get(lectureId) ?? '',
                     indexed: lectureTitles.has(lectureId),
+                    expected: expectedLectureIds.has(lectureId),
                     units,
                     // A lecture is only as complete as what sits under it, so an unindexed lecture or any unit missing
                     // content marks the whole branch, which is what makes a collapsed tree worth scanning.
-                    complete: lectureTitles.has(lectureId) && units.every((unit) => unit.complete),
+                    complete: lectureTitles.has(lectureId) && expectedLectureIds.has(lectureId) && units.every((unit) => unit.complete),
                 };
             })
             .sort((a, b) => a.title.localeCompare(b.title));
@@ -318,7 +327,9 @@ export class CourseIngestionBrowserTreeComponent {
             if (keysToOpen.length === 0) {
                 return;
             }
-            const expanded = new Set(this.expandedKeys());
+            // A manual collapse changes only expansion. Keep that read untracked so the effect reruns for a real
+            // selection or tree-data change, including a selection that arrived before its data did.
+            const expanded = new Set(untracked(() => this.expandedKeys()));
             const sizeBefore = expanded.size;
             keysToOpen.forEach((key) => expanded.add(key));
             if (expanded.size !== sizeBefore) {

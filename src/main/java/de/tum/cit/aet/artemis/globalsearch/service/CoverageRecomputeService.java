@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -74,6 +76,17 @@ public class CoverageRecomputeService {
 
     private static final String LOCK_NAME = "ingestion-coverage-recompute";
 
+    private static final String SUCCESS_MAP_NAME = "ingestion-coverage-successful-full-recompute";
+
+    private static final String FAILED_MAP_NAME = "ingestion-coverage-failed-recompute";
+
+    private static final String PROJECTION_KEY = "projection";
+
+    /** Name assigned by the ingestion-coverage Liquibase changeset to its sole course row uniqueness constraint. */
+    private static final String COURSE_ID_UNIQUE_CONSTRAINT = "ux_ingestion_coverage_course_id";
+
+    private static final Duration FAILED_ATTEMPT_BACKOFF = Duration.ofSeconds(30);
+
     /**
      * How long a caller waits for a recompute that is already running. A refresh waits because that recompute may have
      * read the data before the change the admin is refreshing for; a stale read waits because giving up served it the
@@ -89,6 +102,14 @@ public class CoverageRecomputeService {
 
     private final DistributedDataProvider distributedDataProvider;
 
+    private DistributedMap<String, Boolean> successfulFullRecomputes;
+
+    private DistributedMap<String, Boolean> failedRecomputes;
+
+    public enum RecomputeOutcome {
+        FRESH, RECOMPUTED, FAILED, LOCK_TIMEOUT
+    }
+
     public CoverageRecomputeService(IngestionCoverageSetLoader setLoader, CourseRepository courseRepository, IngestionCoverageRepository coverageRepository,
             DistributedDataProvider distributedDataProvider) {
         this.setLoader = setLoader;
@@ -101,33 +122,42 @@ public class CoverageRecomputeService {
      * If the stored projection is older than {@link #FRESHNESS_WINDOW} (or missing), recomputes it under the cluster lock
      * before returning, so the caller reads the result; if another recompute is already running, waits for it instead.
      * Cheap to call on every dashboard open: fresh data returns at once without touching the lock.
+     *
+     * @return whether the projection was already fresh, was recomputed, failed, or could not acquire the lock
      */
-    public void triggerRecomputeIfStale() {
-        runUnderLock(true, LOCK_WAIT);
+    public RecomputeOutcome triggerRecomputeIfStale() {
+        return runUnderLock(true, false, LOCK_WAIT);
     }
 
     /**
      * Recomputes the whole projection under the cluster lock, ignoring freshness, and returns once it is done. Backs the
      * refresh button. Waits up to {@link #LOCK_WAIT} for a recompute that is already running, then runs its own.
      *
-     * @return {@code true} if the recompute ran, {@code false} if the lock was not acquired or the recompute failed
+     * @return the explicit outcome of the refresh attempt
      */
-    public boolean forceRecompute() {
-        return runUnderLock(false, LOCK_WAIT);
+    public RecomputeOutcome forceRecompute() {
+        // A requested refresh means the administrator does not accept the previously certified projection any more.
+        // Remove that certificate before taking the lock so a concurrent stored read cannot call stale rows fresh.
+        successfulFullRecomputes().remove(PROJECTION_KEY);
+        return runUnderLock(false, true, LOCK_WAIT);
     }
 
     /**
      * Acquires the cluster lock and recomputes (optionally only if the projection is stale). Package-private and
      * returning whether a recompute actually ran so tests can drive it synchronously and assert the lease behavior.
      *
-     * @param onlyIfStale when {@code true}, recompute only if the stored projection is older than the freshness window
-     * @param lockWait    how long to wait for a recompute already running elsewhere
-     * @return {@code true} if a recompute ran, {@code false} if it was skipped (lock held by another node, or fresh)
+     * @param onlyIfStale         when {@code true}, recompute only if no successful full-recompute marker remains
+     * @param bypassFailedBackoff whether an explicit refresh may retry despite a recent failed attempt
+     * @param lockWait            how long to wait for a recompute already running elsewhere
+     * @return the explicit outcome of the trigger
      */
-    boolean runUnderLock(boolean onlyIfStale, Duration lockWait) {
+    RecomputeOutcome runUnderLock(boolean onlyIfStale, boolean bypassFailedBackoff, Duration lockWait) {
         // Checked before the lock too, so reading fresh data never waits behind a recompute someone else started.
-        if (onlyIfStale && !isStale()) {
-            return false;
+        if (onlyIfStale && hasSuccessfulFullRecompute()) {
+            return RecomputeOutcome.FRESH;
+        }
+        if (!bypassFailedBackoff && hasFailedRecentRecompute()) {
+            return RecomputeOutcome.FAILED;
         }
         DistributedLock lock = distributedDataProvider.getLock(LOCK_NAME);
         boolean locked = false;
@@ -135,18 +165,27 @@ public class CoverageRecomputeService {
             locked = lock.tryLock(lockWait);
             if (!locked) {
                 log.warn("Coverage recompute skipped: another recompute held the lock for longer than {}", lockWait);
-                return false;
+                return RecomputeOutcome.LOCK_TIMEOUT;
             }
-            // Re-check freshness inside the lock so a queued trigger does not redo work a just-finished recompute did.
-            if (onlyIfStale && !isStale()) {
-                return false;
+            // Both distributed markers must be checked under the lock as another node could have finished or failed
+            // while this caller waited. Per-course browser writes never set the success marker.
+            if (onlyIfStale && hasSuccessfulFullRecompute()) {
+                return RecomputeOutcome.FRESH;
+            }
+            if (!bypassFailedBackoff && hasFailedRecentRecompute()) {
+                return RecomputeOutcome.FAILED;
             }
             recomputeAllCourses();
-            return true;
+            successfulFullRecomputes().put(PROJECTION_KEY, Boolean.TRUE);
+            failedRecomputes().remove(PROJECTION_KEY);
+            return RecomputeOutcome.RECOMPUTED;
         }
         catch (Exception e) {
             log.error("Coverage recompute failed", e);
-            return false;
+            // A failed forced refresh must never leave an old projection certified as complete.
+            successfulFullRecomputes().remove(PROJECTION_KEY);
+            failedRecomputes().put(PROJECTION_KEY, Boolean.TRUE);
+            return RecomputeOutcome.FAILED;
         }
         finally {
             if (locked) {
@@ -155,14 +194,32 @@ public class CoverageRecomputeService {
         }
     }
 
-    private boolean isStale() {
-        Instant threshold = Instant.now().minus(FRESHNESS_WINDOW);
-        return coverageRepository.findTopByOrderByComputedAtAsc().map(oldest -> oldest.getComputedAt().toInstant().isBefore(threshold)).orElse(true);
+    private DistributedMap<String, Boolean> successfulFullRecomputes() {
+        if (successfulFullRecomputes == null) {
+            successfulFullRecomputes = distributedDataProvider.getExpiringMap(SUCCESS_MAP_NAME, FRESHNESS_WINDOW);
+        }
+        return successfulFullRecomputes;
+    }
+
+    private DistributedMap<String, Boolean> failedRecomputes() {
+        if (failedRecomputes == null) {
+            failedRecomputes = distributedDataProvider.getExpiringMap(FAILED_MAP_NAME, FAILED_ATTEMPT_BACKOFF);
+        }
+        return failedRecomputes;
+    }
+
+    private boolean hasSuccessfulFullRecompute() {
+        return successfulFullRecomputes().containsKey(PROJECTION_KEY);
+    }
+
+    private boolean hasFailedRecentRecompute() {
+        return failedRecomputes().containsKey(PROJECTION_KEY);
     }
 
     /**
-     * Recomputes the projection for every course in the database and removes rows for courses that no longer exist. A
-     * single course that fails to map does not abort the run - its row is left untouched and the rest proceed.
+     * Recomputes the projection for every course in the database and removes rows for courses that no longer exist. Any
+     * course that fails to map aborts the run: returning a partial projection as current would make filters and
+     * cross-course sorting silently omit that course.
      * Package-private so tests can drive one recompute synchronously without the lock or the async boundary.
      */
     void recomputeAllCourses() {
@@ -186,10 +243,11 @@ public class CoverageRecomputeService {
         for (Course course : courses) {
             try {
                 IngestionCoverageEntry entry = buildEntry(course, expected, present, existingByCourseId, computedAt);
-                upsert(entry);
+                upsertResolvingConcurrentFirstInsert(course, expected, present, computedAt, entry);
             }
-            catch (Exception e) {
-                log.warn("Skipping coverage for course {} that could not be computed: {}", course.getId(), e.getMessage());
+            catch (Exception exception) {
+                log.warn("Coverage recompute failed for course {}", course.getId(), exception);
+                throw exception;
             }
         }
 
@@ -210,13 +268,8 @@ public class CoverageRecomputeService {
      */
     public void storeCourseCoverage(Course course, ExpectedSets expected, PresentSets present) {
         Map<Long, IngestionCoverageEntry> existing = coverageRepository.findByCourseId(course.getId()).map(entry -> Map.of(course.getId(), entry)).orElse(Map.of());
-        try {
-            upsert(buildEntry(course, expected, present, existing, Instant.now()));
-        }
-        catch (DataIntegrityViolationException exception) {
-            // A full recompute inserted this course's first row in the meantime, from reads just as recent as these.
-            log.debug("Coverage row for course {} was written concurrently: {}", course.getId(), exception.getMessage());
-        }
+        Instant computedAt = Instant.now();
+        upsertResolvingConcurrentFirstInsert(course, expected, present, computedAt, buildEntry(course, expected, present, existing, computedAt));
     }
 
     /**
@@ -416,6 +469,42 @@ public class CoverageRecomputeService {
 
     private void upsert(IngestionCoverageEntry entry) {
         coverageRepository.save(entry);
+    }
+
+    /**
+     * A browser write and a full recompute do not share the global lock. If both insert a course's first projection row,
+     * retry only the known {@code course_id} uniqueness race with the row that won the insert; all other integrity
+     * failures still fail the recompute.
+     */
+    private void upsertResolvingConcurrentFirstInsert(Course course, ExpectedSets expected, PresentSets present, Instant computedAt, IngestionCoverageEntry entry) {
+        try {
+            upsert(entry);
+        }
+        catch (DataIntegrityViolationException exception) {
+            if (!isCourseIdUniquenessViolation(exception)) {
+                throw exception;
+            }
+            IngestionCoverageEntry concurrentEntry = coverageRepository.findByCourseId(course.getId()).orElseThrow(() -> exception);
+            upsert(buildEntry(course, expected, present, Map.of(course.getId(), concurrentEntry), computedAt));
+        }
+    }
+
+    private static boolean isCourseIdUniquenessViolation(DataIntegrityViolationException exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException violation && violation.getKind() == ConstraintViolationException.ConstraintKind.UNIQUE
+                    && constraintNameMatchesCourseIdUniqueConstraint(violation.getConstraintName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * PostgreSQL returns the bare constraint name while MySQL qualifies it with the table name. The database's parsed
+     * constraint name is stable across driver message formats, unlike text such as "duplicate" or "course_id".
+     */
+    private static boolean constraintNameMatchesCourseIdUniqueConstraint(String constraintName) {
+        return constraintName != null && COURSE_ID_UNIQUE_CONSTRAINT.equalsIgnoreCase(constraintName.substring(constraintName.lastIndexOf('.') + 1));
     }
 
     // ----- Helpers -----

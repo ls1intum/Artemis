@@ -134,7 +134,10 @@ public class IngestionCoverageResource {
     @GetMapping("coverage")
     public ResponseEntity<List<IngestionCoverageDTO>> getStoredCoverage(@RequestParam(required = false) IngestionCoverageStatus status,
             @RequestParam(required = false) Boolean active, @RequestParam(required = false) String search, Pageable pageable) {
-        coverageRecomputeService.triggerRecomputeIfStale();
+        CoverageRecomputeService.RecomputeOutcome outcome = coverageRecomputeService.triggerRecomputeIfStale();
+        if (outcome == CoverageRecomputeService.RecomputeOutcome.FAILED || outcome == CoverageRecomputeService.RecomputeOutcome.LOCK_TIMEOUT) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
         Page<IngestionCoverageDTO> page = coverageRecomputeService.readStoredCoverage(status, active, search, pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -167,7 +170,8 @@ public class IngestionCoverageResource {
      */
     @PostMapping("coverage/refresh")
     public ResponseEntity<Void> refreshCoverage() {
-        return coverageRecomputeService.forceRecompute() ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        return coverageRecomputeService.forceRecompute() == CoverageRecomputeService.RecomputeOutcome.RECOMPUTED ? ResponseEntity.ok().build()
+                : ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 
     private static IndexedCollectionCountDTO toCountDto(String collection, OptionalLong count) {

@@ -46,4 +46,11 @@ class IngestionContentReadFailureTest {
     void overviewStillReportsTheCollectionAsUnavailable() {
         assertThat(coverageReadService.countExternalCollection(IngestionCoverageWeaviateReadService.LECTURES_COLLECTION)).isEmpty();
     }
+
+    @Test
+    void prefixedOverviewReportsAnUnreadableCollectionAsUnavailable() {
+        when(weaviateService.getCollection("SearchableEntities")).thenThrow(new WeaviateException("Weaviate is unreachable", new IOException("connection refused")));
+
+        assertThat(coverageReadService.countPrefixedCollection("SearchableEntities")).isEmpty();
+    }
 }

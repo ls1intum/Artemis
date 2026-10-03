@@ -94,6 +94,8 @@ export interface IndexedEntity {
     title?: string;
     /** The parent lecture, set on lecture units; the tree nests units by it. */
     lectureId?: number;
+    /** Whether the database still expects this metadata identity. Missing values are treated as not expected. */
+    expected?: boolean;
     /** When Weaviate created the object (ISO string), absent if it could not be read. */
     ingestedAt?: string;
 }

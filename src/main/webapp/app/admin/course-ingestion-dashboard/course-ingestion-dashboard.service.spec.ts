@@ -5,7 +5,13 @@ import { provideHttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { IndexOverview, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import {
+    CourseBrowserData,
+    IndexOverview,
+    IndexedContentObject,
+    IndexedEntityRecord,
+    IngestionCoverage,
+} from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 describe('CourseIngestionDashboardService', () => {
     let service: CourseIngestionDashboardService;
@@ -38,6 +44,14 @@ describe('CourseIngestionDashboardService', () => {
             typeCounts: [{ type: 'exercise', expected: 10, indexed: 3, missing: 7, orphaned: 0 }],
         },
     ];
+
+    const mockBrowserData: CourseBrowserData = {
+        entities: [{ type: 'lecture_unit', entityId: 21, title: 'Unit', lectureId: 20, expected: true }],
+        contentPresence: [{ key: 'slides', unitIds: [21] }],
+        missingEntities: [],
+        contentGaps: [],
+        typeCounts: [{ type: 'lecture_unit', expected: 1, indexed: 1, missing: 0, orphaned: 0 }],
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -122,6 +136,17 @@ describe('CourseIngestionDashboardService', () => {
         httpMock.verify();
     });
 
+    it('should default missing stored coverage response fields to an empty page', async () => {
+        const resultPromise = firstValueFrom(service.getStoredCoverage({ sort: '' }));
+
+        const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
+        expect(req.request.params.has('sort')).toBe(false);
+        req.flush(null);
+
+        await expect(resultPromise).resolves.toEqual({ content: [], totalElements: 0 });
+        httpMock.verify();
+    });
+
     it('should not send an empty search param on the live coverage page', async () => {
         const resultPromise = firstValueFrom(service.getLiveCoveragePage({ search: '', page: 0, size: 20 }));
 
@@ -142,6 +167,45 @@ describe('CourseIngestionDashboardService', () => {
         req.flush(null);
 
         await resultPromise;
+        httpMock.verify();
+    });
+
+    it('should surface a failed coverage refresh to the dashboard error UI', async () => {
+        const resultPromise = firstValueFrom(service.refreshCoverage());
+
+        const req = httpMock.expectOne(`${baseUrl}/coverage/refresh`);
+        req.flush({ title: 'Coverage unavailable' }, { status: 503, statusText: 'Service Unavailable' });
+
+        await expect(resultPromise).rejects.toMatchObject({ status: 503 });
+        httpMock.verify();
+    });
+
+    it('should GET the complete browser payload for the requested course', async () => {
+        const resultPromise = firstValueFrom(service.getCourseBrowserData(1));
+
+        const req = httpMock.expectOne(`${baseUrl}/courses/1/browser`);
+        expect(req.request.method).toBe('GET');
+        req.flush(mockBrowserData);
+
+        await expect(resultPromise).resolves.toEqual(mockBrowserData);
+        httpMock.verify();
+    });
+
+    it('should request indexed records and unit content with their selected fields', async () => {
+        const recordsPromise = firstValueFrom(service.getIndexedEntityRecords(1, 'lecture_unit'));
+        const recordsRequest = httpMock.expectOne((r) => r.url === `${baseUrl}/courses/1/entities` && r.method === 'GET');
+        expect(recordsRequest.request.params.get('type')).toBe('lecture_unit');
+        const records: IndexedEntityRecord[] = [{ type: 'lecture_unit', entityId: 21, title: 'Unit', properties: { course_id: 1 } }];
+        recordsRequest.flush(records);
+
+        const contentPromise = firstValueFrom(service.getUnitContent(1, 21, 'slides'));
+        const contentRequest = httpMock.expectOne((r) => r.url === `${baseUrl}/courses/1/units/21/content` && r.method === 'GET');
+        expect(contentRequest.request.params.get('key')).toBe('slides');
+        const content: IndexedContentObject[] = [{ ingestedAt: '2026-08-05T10:00:00Z', properties: { unit_id: 21 } }];
+        contentRequest.flush(content);
+
+        await expect(recordsPromise).resolves.toEqual(records);
+        await expect(contentPromise).resolves.toEqual(content);
         httpMock.verify();
     });
 });

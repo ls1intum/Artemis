@@ -14,7 +14,9 @@ import static org.awaitility.Awaitility.await;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -116,6 +118,19 @@ class IngestionBrowserWeaviateReadServiceTest extends AbstractProgrammingIntegra
             assertThat(lecture.title()).isEqualTo("Week 1");
             // A lecture has no parent lecture; the field is only set on units.
             assertThat(lecture.lectureId()).isNull();
+        });
+    }
+
+    @Test
+    void skipsMalformedMetadataRowsInsteadOfDrawingAnUnplaceableTreeNode() throws Exception {
+        Map<String, Object> malformed = new HashMap<>();
+        malformed.put(SearchableEntitySchema.Properties.COURSE_ID, COURSE_A);
+        malformed.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE);
+        weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data.insert(malformed);
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            assertThat(browserReadService.listIndexedEntitiesForCourse(COURSE_A)).isEmpty();
+            assertThat(browserReadService.listIndexedEntityRecords(COURSE_A, SearchableEntitySchema.TypeValues.LECTURE)).isEmpty();
         });
     }
 

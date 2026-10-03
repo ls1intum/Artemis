@@ -145,7 +145,7 @@ public class IngestionBrowserWeaviateReadService {
                     continue;
                 }
                 entities.add(new IndexedEntityDTO(type, entityId, asString(properties.get(SearchableEntitySchema.Properties.TITLE)),
-                        asLong(properties.get(SearchableEntitySchema.Properties.LECTURE_ID)), creationTime(object)));
+                        asLong(properties.get(SearchableEntitySchema.Properties.LECTURE_ID)), creationTime(object), false));
             }
             return entities;
         }

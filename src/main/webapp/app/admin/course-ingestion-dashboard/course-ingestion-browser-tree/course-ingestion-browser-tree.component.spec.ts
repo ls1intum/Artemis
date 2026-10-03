@@ -14,6 +14,7 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         entityId,
         title,
         lectureId,
+        expected: true,
         ingestedAt: '2026-08-26T09:00:00Z',
     });
 

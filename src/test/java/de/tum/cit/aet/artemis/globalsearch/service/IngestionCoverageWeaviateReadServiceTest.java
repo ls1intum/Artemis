@@ -24,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import io.weaviate.client6.v1.api.WeaviateClient;
+import io.weaviate.client6.v1.api.collections.aggregate.GroupedBy;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -156,6 +157,38 @@ class IngestionCoverageWeaviateReadServiceTest extends AbstractProgrammingIntegr
     void absentContentCollectionYieldsEmptyNotError() {
         Map<Long, ?> result = coverageReadService.readPresentContentUnitIds("NonExistentCoverageCollection", List.of(COURSE_A, COURSE_B));
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void countsReadableExternalCollectionsAndIgnoresMalformedMetadataRows() throws Exception {
+        insertContent(weaviateService, IngestionCoverageWeaviateReadService.LECTURES_COLLECTION, COURSE_A, 10L, null);
+        Map<String, Object> malformedMetadata = Map.of(SearchableEntitySchema.Properties.COURSE_ID, COURSE_A, SearchableEntitySchema.Properties.TYPE,
+                SearchableEntitySchema.TypeValues.EXERCISE);
+        weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data.insert(malformedMetadata);
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            assertThat(coverageReadService.countExternalCollection(IngestionCoverageWeaviateReadService.LECTURES_COLLECTION)).hasValue(1L);
+            assertThat(coverageReadService.readPresentMetadata(List.of(COURSE_A)).presentIdsByCourseAndType()).doesNotContainKey(COURSE_A);
+        });
+    }
+
+    @Test
+    void emptyCourseInputsDoNotReadMetadataOrContentCollections() {
+        assertThat(coverageReadService.readPresentMetadata(List.of()).presentIdsByCourseAndType()).isEmpty();
+        assertThat(coverageReadService.readPresentContentUnitIds("NonExistentCoverageCollection", List.of())).isEmpty();
+        assertThat(coverageReadService.countExternalCollection("NonExistentCoverageCollection")).isEmpty();
+    }
+
+    @Test
+    void acceptsNumericGroupIdsReturnedAsTextAndIgnoresMalformedValues() {
+        assertThat(readGroupedId(new GroupedBy<>("course_id", 7L))).isEqualTo(7L);
+        assertThat(readGroupedId(new GroupedBy<>("course_id", "8"))).isEqualTo(8L);
+        assertThat(readGroupedId(new GroupedBy<>("course_id", "not-a-number"))).isNull();
+        assertThat(readGroupedId(new GroupedBy<>("course_id", true))).isNull();
+    }
+
+    private static Long readGroupedId(GroupedBy<?> groupedBy) {
+        return ReflectionTestUtils.invokeMethod(IngestionCoverageWeaviateReadService.class, "readGroupLong", groupedBy);
     }
 
     private void clearMetadataForTestCourses() throws Exception {

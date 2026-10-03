@@ -7,6 +7,8 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -24,7 +27,9 @@ import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityRecordDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.MissingEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserWeaviateReadService;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageSetLoader.ExpectedSets;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 
@@ -129,6 +134,22 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
         CourseBrowserDataDTO data = request.get(BASE + "courses/" + courseId + "/browser", HttpStatus.OK, CourseBrowserDataDTO.class);
         assertThat(data.entities()).extracting(IndexedEntityDTO::type, IndexedEntityDTO::entityId, IndexedEntityDTO::title)
                 .contains(tuple(SearchableEntitySchema.TypeValues.COURSE, courseId, course.getTitle()));
+        assertThat(data.entities()).filteredOn(entity -> entity.type().equals(SearchableEntitySchema.TypeValues.COURSE) && entity.entityId() == courseId)
+                .allSatisfy(entity -> assertThat(entity.expected()).isTrue());
+    }
+
+    @Test
+    void mapsEveryExpectedMetadataTypeIndependentlyOfIrisContentEligibility() {
+        long courseId = course.getId();
+        ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(), Map.of(courseId, Set.of(10L)), Map.of(courseId, Set.of(11L)), Map.of(courseId, Set.of(12L)),
+                Map.of(), Map.of());
+
+        assertThat(isExpected(courseId, indexedEntity(SearchableEntitySchema.TypeValues.EXAM, 10L), expected)).isTrue();
+        assertThat(isExpected(courseId, indexedEntity(SearchableEntitySchema.TypeValues.FAQ, 11L), expected)).isTrue();
+        assertThat(isExpected(courseId, indexedEntity(SearchableEntitySchema.TypeValues.CHANNEL, 12L), expected)).isTrue();
+        assertThat(isExpected(courseId, indexedEntity(SearchableEntitySchema.TypeValues.COURSE, courseId), expected)).isTrue();
+        assertThat(isExpected(courseId, indexedEntity(SearchableEntitySchema.TypeValues.FAQ, 99L), expected)).isFalse();
+        assertThat(isExpected(courseId, indexedEntity(SearchableEntitySchema.TypeValues.POST, 99L), expected)).isFalse();
     }
 
     @Test
@@ -149,6 +170,14 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
         CourseBrowserDataDTO data = request.get(BASE + "courses/" + courseId + "/browser", HttpStatus.OK, CourseBrowserDataDTO.class);
         assertThat(data.contentPresence()).isNotNull();
         assertThat(data.contentGaps()).isNotNull();
+    }
+
+    private static IndexedEntityDTO indexedEntity(String type, long entityId) {
+        return new IndexedEntityDTO(type, entityId, null, null, null, false);
+    }
+
+    private static boolean isExpected(long courseId, IndexedEntityDTO entity, ExpectedSets expected) {
+        return ReflectionTestUtils.invokeMethod(IngestionBrowserService.class, "isExpectedMetadataEntity", courseId, entity, expected);
     }
 
 }
