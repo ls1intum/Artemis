@@ -93,7 +93,7 @@ class ProcessingStateCallbackServiceClassificationTest {
     void firstTranscriptionStartsAtVersionOne() {
         var state = processingState();
 
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello")));
 
         assertThat(state.getTranscriptionVersion()).isEqualTo(1);
         assertThat(state.getTranscriptionContentHash()).isNotBlank();
@@ -104,9 +104,9 @@ class ProcessingStateCallbackServiceClassificationTest {
         var state = processingState();
         var segments = List.of(segment(0, 10, "Hello"), segment(10, 20, "World"));
 
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, segments);
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, segments);
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.copyOf(segments));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, segments);
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, segments);
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.copyOf(segments));
 
         assertThat(state.getTranscriptionVersion()).isEqualTo(1);
     }
@@ -115,8 +115,8 @@ class ProcessingStateCallbackServiceClassificationTest {
     void changedSegmentsIncrementTheVersion() {
         var state = processingState();
 
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello")));
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello there")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello there")));
 
         assertThat(state.getTranscriptionVersion()).isEqualTo(2);
     }
@@ -125,8 +125,8 @@ class ProcessingStateCallbackServiceClassificationTest {
     void shiftedTimestampsIncrementTheVersionEvenWhenTheTextIsIdentical() {
         var state = processingState();
 
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello")));
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(2, 12, "Hello")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(2, 12, "Hello")));
 
         assertThat(state.getTranscriptionVersion()).isEqualTo(2);
     }
@@ -140,8 +140,8 @@ class ProcessingStateCallbackServiceClassificationTest {
     void segmentsWhoseTextSpellsOutTheFieldSeparatorsStillCountAsChanged() {
         var state = processingState();
 
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello\n0.0|10.0|1|World")));
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello"), segment(0, 10, "World")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello\n0.0|10.0|1|World")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello"), segment(0, 10, "World")));
 
         assertThat(state.getTranscriptionVersion()).isEqualTo(2);
     }
@@ -150,8 +150,8 @@ class ProcessingStateCallbackServiceClassificationTest {
     void textDifferingOnlyInLineBreaksCountsAsChanged() {
         var state = processingState();
 
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello\nthere")));
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello there")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello\nthere")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello there")));
 
         assertThat(state.getTranscriptionVersion()).isEqualTo(2);
     }
@@ -160,8 +160,8 @@ class ProcessingStateCallbackServiceClassificationTest {
     void shiftingTextAcrossTheSegmentBoundaryCountsAsChanged() {
         var state = processingState();
 
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello"), segment(10, 20, "there")));
-        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hellothere"), segment(10, 20, "")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello"), segment(10, 20, "there")));
+        LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hellothere"), segment(10, 20, "")));
 
         assertThat(state.getTranscriptionVersion()).isEqualTo(2);
     }
