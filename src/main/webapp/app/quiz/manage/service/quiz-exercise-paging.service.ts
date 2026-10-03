@@ -4,7 +4,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { QuizExerciseRetrievalApi } from 'app/openapi/api/quiz-exercise-retrieval-api';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { toQuizExerciseFromSearchRow } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 
 @Service()
 export class QuizExercisePagingService extends PagingService<QuizExercise> {
@@ -30,10 +30,7 @@ export class QuizExercisePagingService extends PagingService<QuizExercise> {
             )
             .pipe(
                 map((page) => ({
-                    resultsOnPage: (page.resultsOnPage ?? []).map((row) => {
-                        const quizExercise: QuizExercise = hydrate(new QuizExercise(undefined, undefined), row);
-                        return quizExercise;
-                    }),
+                    resultsOnPage: (page.resultsOnPage ?? []).map(toQuizExerciseFromSearchRow),
                     numberOfPages: page.numberOfPages ?? 0,
                 })),
             );

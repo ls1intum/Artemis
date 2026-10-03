@@ -1,5 +1,5 @@
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -39,14 +39,15 @@ export function toQuizExerciseReEvaluate(quizExercise: QuizExercise): QuizExerci
         includedInOverallScore: quizExercise.includedInOverallScore ?? IncludedInOverallScore.INCLUDED_COMPLETELY,
         randomizeQuestionOrder: quizExercise.randomizeQuestionOrder ?? true,
         quizQuestions: (quizExercise.quizQuestions ?? []).map((question) => {
-            if (question.type === 'multiple-choice') {
-                return convertMultipleChoiceQuestionToReEvaluateDTO(question);
-            } else if (question.type === 'drag-and-drop') {
-                return convertDragAndDropQuestionToReEvaluateDTO(question);
-            } else if (question.type === 'short-answer') {
-                return convertShortAnswerQuestionToReEvaluateDTO(question as ShortAnswerQuestion);
-            } else {
-                throw new Error(`Unknown question type: ${question.constructor.name}`);
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE:
+                    return convertMultipleChoiceQuestionToReEvaluateDTO(question);
+                case QuizQuestionType.DRAG_AND_DROP:
+                    return convertDragAndDropQuestionToReEvaluateDTO(question);
+                case QuizQuestionType.SHORT_ANSWER:
+                    return convertShortAnswerQuestionToReEvaluateDTO(question as ShortAnswerQuestion);
+                default:
+                    throw new Error(`Unsupported quiz question type: ${question.type}`);
             }
         }),
     };
@@ -63,7 +64,7 @@ function convertMultipleChoiceQuestionToReEvaluateDTO(question: MultipleChoiceQu
         id: question.id!,
         title: question.title ?? '',
         scoringType: question.scoringType ?? ScoringType.ALL_OR_NOTHING,
-        randomizeOrder: question.randomizeOrder ?? false,
+        randomizeOrder: question.randomizeOrder ?? true,
         invalid: question.invalid ?? false,
         text: question.text ?? '',
         hint: question.hint,
@@ -102,7 +103,7 @@ function convertDragAndDropQuestionToReEvaluateDTO(question: DragAndDropQuestion
         hint: question.hint,
         explanation: question.explanation,
         scoringType: question.scoringType ?? ScoringType.PROPORTIONAL_WITH_PENALTY,
-        randomizeOrder: question.randomizeOrder ?? false,
+        randomizeOrder: question.randomizeOrder ?? true,
         invalid: question.invalid ?? false,
         dropLocations: (question.dropLocations ?? []).map(convertDropLocationToReEvaluateDTO),
         dragItems: (question.dragItems ?? []).map(convertDragItemToReEvaluateDTO),
@@ -160,7 +161,7 @@ function convertShortAnswerQuestionToReEvaluateDTO(question: ShortAnswerQuestion
         title: question.title ?? '',
         text: question.text ?? '',
         scoringType: question.scoringType ?? ScoringType.PROPORTIONAL_WITHOUT_PENALTY,
-        randomizeOrder: question.randomizeOrder ?? false,
+        randomizeOrder: question.randomizeOrder ?? true,
         invalid: question.invalid ?? false,
         similarityValue: question.similarityValue,
         matchLetterCase: question.matchLetterCase,

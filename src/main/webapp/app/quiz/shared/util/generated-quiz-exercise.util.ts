@@ -22,6 +22,7 @@ import type { QuizBatch as GeneratedQuizBatch } from 'app/openapi/model/quiz-bat
 import { QuizBatchWithPassword } from 'app/openapi/model/quiz-batch-with-password';
 import { QuizExerciseDetails } from 'app/openapi/model/quiz-exercise-details';
 import { QuizExerciseForCourse } from 'app/openapi/model/quiz-exercise-for-course';
+import { QuizExerciseForSearch } from 'app/openapi/model/quiz-exercise-for-search';
 import { QuizExerciseForStudentResponse } from 'app/openapi/model/quiz-exercise-for-student-response';
 import type { ExerciseVariantGroupReference as GeneratedExerciseVariantGroupReference } from 'app/openapi/model/exercise-variant-group-reference';
 import { ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -34,7 +35,8 @@ import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatist
  * Bridges the generated models of the quiz retrieval and participation endpoints and the quiz class graph.
  *
  * The quiz views are built on the class graph: they read prototype behaviour, dayjs dates, and the client-side
- * helper fields the classes declare. Conversion therefore happens once, at the service boundary.
+ * helper fields the classes declare. Each response is therefore converted once, where it is received, with the
+ * functions below; generated-quiz-question.util.ts describes where that happens.
  *
  * Only the dates the class graph reads as dayjs are converted. Course dates are left as the server sent them,
  * matching what the hand-written services did before the generated client replaced them.
@@ -90,6 +92,9 @@ export function toQuizExercise(exercise: GeneratedQuizExercise): QuizExercise {
     // The class types several enums that the generated model types as string literals, so the intersection hydrate()
     // returns collapses to never. Annotating the target keeps the class view of the data.
     const quizExercise: QuizExercise = hydrate(new QuizExercise(undefined, undefined), exercise);
+    // The constructor defaults isEditable to false. Take the server's value instead, including its absence: the create
+    // and update endpoints omit the field, and callers then compute editability themselves.
+    quizExercise.isEditable = 'isEditable' in exercise ? exercise.isEditable : undefined;
     quizExercise.releaseDate = convertDateStringFromServer(exercise.releaseDate);
     quizExercise.startDate = convertDateStringFromServer(exercise.startDate);
     quizExercise.dueDate = convertDateStringFromServer(exercise.dueDate);
@@ -116,6 +121,19 @@ export function toQuizExerciseFromListRow(exercise: QuizExerciseForCourse): Quiz
     quizExercise.startDate = convertDateStringFromServer(exercise.startDate);
     quizExercise.dueDate = convertDateStringFromServer(exercise.dueDate);
     quizExercise.quizBatches = exercise.quizBatches?.map(toQuizBatch);
+    return quizExercise;
+}
+
+/**
+ * Converts a row of the quiz exercise import search into a {@link QuizExercise} instance.
+ *
+ * The search sends only what the import table shows: title, type and the owning course or exam group, without dates.
+ *
+ * @param exercise the generated search row
+ * @returns a class instance
+ */
+export function toQuizExerciseFromSearchRow(exercise: QuizExerciseForSearch): QuizExercise {
+    const quizExercise: QuizExercise = hydrate(new QuizExercise(undefined, undefined), exercise);
     return quizExercise;
 }
 

@@ -2,15 +2,8 @@ import type dayjs from 'dayjs/esm';
 import type { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import type { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import type { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { type QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import type { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import type { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import type { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import type { QuizExerciseCreate } from 'app/openapi/model/quiz-exercise-create';
-import type { QuizQuestionCreate } from 'app/openapi/model/quiz-question-create';
-import type { MultipleChoiceQuestionCreate } from 'app/openapi/model/multiple-choice-question-create';
-import type { DragAndDropQuestionCreate } from 'app/openapi/model/drag-and-drop-question-create';
-import type { ShortAnswerQuestionCreate } from 'app/openapi/model/short-answer-question-create';
+import { toQuizQuestionRequest } from 'app/quiz/shared/util/quiz-question-request.util';
 import type { CompetencyLink } from 'app/openapi/model/competency-link';
 
 /*
@@ -66,108 +59,6 @@ export function toNamedFiles(files: Map<string, Blob>): File[] {
     return Array.from(files, ([fileName, file]) => new File([file], fileName, { type: file.type }));
 }
 
-function toMultipleChoiceQuestionCreate(question: MultipleChoiceQuestion): MultipleChoiceQuestionCreate {
-    return {
-        type: 'multiple-choice',
-        title: question.title ?? '',
-        text: question.text,
-        hint: question.hint,
-        explanation: question.explanation,
-        points: question.points ?? 0,
-        scoringType: question.scoringType ?? ScoringType.ALL_OR_NOTHING,
-        randomizeOrder: question.randomizeOrder,
-        answerOptions: (question.answerOptions ?? []).map((option) => ({
-            text: option.text ?? '',
-            hint: option.hint,
-            explanation: option.explanation,
-            isCorrect: option.isCorrect ?? false,
-        })),
-        singleChoice: question.singleChoice ?? false,
-    };
-}
-
-function toDragAndDropQuestionCreate(question: DragAndDropQuestion): DragAndDropQuestionCreate {
-    return {
-        type: 'drag-and-drop',
-        title: question.title ?? '',
-        text: question.text,
-        hint: question.hint,
-        explanation: question.explanation,
-        points: question.points ?? 0,
-        scoringType: question.scoringType ?? ScoringType.ALL_OR_NOTHING,
-        randomizeOrder: question.randomizeOrder,
-        backgroundFilePath: question.backgroundFilePath,
-        dropLocations: (question.dropLocations ?? []).map((dropLocation) => ({
-            tempID: dropLocation.tempID ?? 0,
-            posX: dropLocation.posX ?? 0,
-            posY: dropLocation.posY ?? 0,
-            width: dropLocation.width ?? 0,
-            height: dropLocation.height ?? 0,
-        })),
-        dragItems: (question.dragItems ?? []).map((dragItem) => ({
-            tempID: dragItem.tempID ?? 0,
-            text: dragItem.text,
-            pictureFilePath: dragItem.pictureFilePath,
-        })),
-        correctMappings: (question.correctMappings ?? []).map((mapping) => ({
-            dragItemTempId: mapping.dragItem?.tempID ?? 0,
-            dropLocationTempId: mapping.dropLocation?.tempID ?? 0,
-        })),
-    };
-}
-
-function toShortAnswerQuestionCreate(question: ShortAnswerQuestion): ShortAnswerQuestionCreate {
-    return {
-        type: 'short-answer',
-        title: question.title ?? '',
-        text: question.text,
-        hint: question.hint,
-        explanation: question.explanation,
-        points: question.points ?? 0,
-        // The server requires a scoring type. A question imported from a file may lack one, so fall back to the default
-        // the editor assigns to a new short-answer question.
-        scoringType: question.scoringType ?? ScoringType.PROPORTIONAL_WITHOUT_PENALTY,
-        randomizeOrder: question.randomizeOrder,
-        spots: (question.spots ?? []).map((spot) => ({
-            tempID: spot.tempID ?? 0,
-            spotNr: spot.spotNr ?? 0,
-            width: spot.width ?? 0,
-        })),
-        solutions: (question.solutions ?? []).map((solution) => ({
-            tempID: solution.tempID ?? 0,
-            text: solution.text ?? '',
-        })),
-        correctMappings: (question.correctMappings ?? []).map((mapping) => ({
-            solutionTempId: mapping.solution?.tempID ?? 0,
-            spotTempId: mapping.spot?.tempID ?? 0,
-        })),
-        similarityValue: question.similarityValue ?? 85,
-        matchLetterCase: question.matchLetterCase ?? false,
-    };
-}
-
-/**
- * Converts a question into the request model of the creation endpoints.
- *
- * New questions have no ids yet, so every reference between their parts travels as a client-side temporary id.
- *
- * @param question the question to create
- * @returns the request model of the question
- * @throws Error if the question carries no recognised type
- */
-export function toQuizQuestionCreate(question: QuizQuestion): QuizQuestionCreate {
-    switch (question.type) {
-        case QuizQuestionType.MULTIPLE_CHOICE:
-            return toMultipleChoiceQuestionCreate(question);
-        case QuizQuestionType.DRAG_AND_DROP:
-            return toDragAndDropQuestionCreate(question);
-        case QuizQuestionType.SHORT_ANSWER:
-            return toShortAnswerQuestionCreate(question as ShortAnswerQuestion);
-        default:
-            throw new Error(`Unsupported quiz question type: ${question.type}`);
-    }
-}
-
 /**
  * Converts a quiz exercise into the request model of the creation endpoints.
  *
@@ -187,9 +78,10 @@ export function toQuizExerciseCreate(exercise: QuizExercise): QuizExerciseCreate
         categories: toCategoryStrings(exercise.categories),
         channelName: exercise.channelName,
         randomizeQuestionOrder: exercise.randomizeQuestionOrder ?? true,
-        quizMode: exercise.quizMode ?? 'INDIVIDUAL',
+        quizMode: exercise.quizMode ?? 'SYNCHRONIZED',
         duration: exercise.duration ?? 0,
         quizBatches: exercise.quizBatches?.map((batch) => ({ startTime: toDateString(batch.startTime)! })),
-        quizQuestions: (exercise.quizQuestions ?? []).map(toQuizQuestionCreate),
+        // New parts have no ids yet; references between them travel as client-side temporary ids.
+        quizQuestions: (exercise.quizQuestions ?? []).map((question) => toQuizQuestionRequest(question, () => undefined)),
     };
 }
