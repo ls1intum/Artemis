@@ -628,7 +628,7 @@ public class ProgrammingExercise extends Exercise {
      * <p>
      * Results are kept only if they:
      * - have a completed assessment, AND
-     * - are either automatic OR the assessment due date has passed.
+     * - are either automatic (including Athena) OR the assessment due date has passed.
      *
      * @param participation the participation containing submissions to filter
      */
@@ -637,7 +637,8 @@ public class ProgrammingExercise extends Exercise {
         participation.getSubmissions().forEach(submission -> {
             Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
-                results.removeIf(result -> !(result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this))));
+                results.removeIf(
+                        result -> !(result.isAssessmentComplete() && (result.isAutomatic() || result.isAthenaBased() || ExerciseDateService.isAfterAssessmentDueDate(this))));
             }
         });
     }
