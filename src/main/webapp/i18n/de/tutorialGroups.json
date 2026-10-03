@@ -212,7 +212,8 @@
                     "teachingPeriodNotAfterFirstSessionEnd": "Das Ende der Tutoriumsperiode muss nach dem Ende der ersten Session liegen.",
                     "tutorRequired": "Bitte wähle ein Tutor.",
                     "locationRequired": "Bitte wähle einen Ort.",
-                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen."
+                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "noChanges": "Ändere etwas, bevor du speicherst."
                 },
                 "networkError": {
                     "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",

@@ -212,7 +212,8 @@
                     "teachingPeriodNotAfterFirstSessionEnd": "The end of the teaching period must be after the first session's end.",
                     "tutorRequired": "Please choose a tutor.",
                     "locationRequired": "Please choose a location.",
-                    "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces."
+                    "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "noChanges": "Make a change before saving."
                 },
                 "networkError": {
                     "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
