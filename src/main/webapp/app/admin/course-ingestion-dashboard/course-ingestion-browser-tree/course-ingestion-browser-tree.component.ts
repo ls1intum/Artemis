@@ -236,8 +236,10 @@ export class CourseIngestionBrowserTreeComponent {
         // A unit the database still has but the index does not belongs under its lecture like any other: only its
         // metadata is absent, which the scoreboard already counts, while its content is real. Leaving it out was what
         // made that content look like the leftovers of a unit nobody has any more. A unit with nothing stored is left
-        // out, the same way a lecture with nothing under it gets no node.
+        // out, the same way a lecture with nothing under it gets no node, but its lecture still counts the gap: otherwise
+        // a lecture whose only problem is a unit that was never ingested at all would read as complete.
         const unitIdsFromTheIndex = new Set(entities.filter((entity) => entity.type === 'lecture_unit').map((entity) => entity.entityId));
+        const lecturesWithOmittedGaps = new Set<number>();
         for (const missing of this.missingEntities()) {
             if (missing.type !== 'lecture_unit' || missing.lectureId === undefined || unitIdsFromTheIndex.has(missing.entityId)) {
                 continue;
@@ -245,6 +247,8 @@ export class CourseIngestionBrowserTreeComponent {
             const unit = unitNode(missing.entityId, missing.title ?? '', false, true);
             if (unit.content.length > 0) {
                 addUnit(missing.lectureId, unit);
+            } else {
+                lecturesWithOmittedGaps.add(missing.lectureId);
             }
         }
 
@@ -263,9 +267,10 @@ export class CourseIngestionBrowserTreeComponent {
                     indexed: lectureTitles.has(lectureId),
                     expected: expectedLectureIds.has(lectureId),
                     units,
-                    // A lecture is only as complete as what sits under it, so an unindexed lecture or any unit missing
-                    // content marks the whole branch, which is what makes a collapsed tree worth scanning.
-                    complete: lectureTitles.has(lectureId) && expectedLectureIds.has(lectureId) && units.every((unit) => unit.complete),
+                    // A lecture is only as complete as what sits under it, so an unindexed lecture, any unit missing
+                    // content, or a missing unit without a node marks the whole branch, which is what makes a collapsed
+                    // tree worth scanning.
+                    complete: lectureTitles.has(lectureId) && expectedLectureIds.has(lectureId) && !lecturesWithOmittedGaps.has(lectureId) && units.every((unit) => unit.complete),
                 };
             })
             .sort((a, b) => a.title.localeCompare(b.title));

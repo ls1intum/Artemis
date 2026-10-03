@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.globalsearch.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -13,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -46,6 +50,9 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private DistributedDataProvider distributedDataProvider;
+
     private Course course;
 
     static boolean isWeaviateEnabled() {
@@ -59,6 +66,20 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         course = courseUtilService.createCourse();
         course.setTitle(TEST_PREFIX + "-course-" + course.getId());
         course = courseRepository.save(course);
+        // Certify the projection as freshly recomputed, so a stored-coverage read returns the rows a test seeds instead
+        // of recomputing them from the database first.
+        successfulFullRecomputes().put("projection", Boolean.TRUE);
+    }
+
+    @AfterEach
+    void clearRecomputeMarkers() {
+        // The markers live in the shared distributed store, so leaving one behind would change what other classes read.
+        successfulFullRecomputes().clear();
+        distributedDataProvider.<String, Boolean>getExpiringMap("ingestion-coverage-failed-recompute", Duration.ofSeconds(30)).clear();
+    }
+
+    private DistributedMap<String, Boolean> successfulFullRecomputes() {
+        return distributedDataProvider.getExpiringMap("ingestion-coverage-successful-full-recompute", Duration.ofMinutes(15));
     }
 
     @Test
@@ -91,10 +112,10 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         // assertion below would fail purely on how many courses other tests happened to create.
         List<IngestionCoverageDTO> coverage = request.getList(BASE + "coverage?size=2000", HttpStatus.OK, IngestionCoverageDTO.class);
 
-        assertThat(coverage).anySatisfy(dto -> {
-            assertThat(dto.courseId()).isEqualTo(course.getId());
-            assertThat(dto.status()).isNotNull();
-            assertThat(dto.typeCounts()).isNotEmpty();
+        // The seeded counts come back unchanged: the course has no exercises, so a recompute would have replaced them.
+        assertThat(coverage).filteredOn(dto -> dto.courseId() == course.getId()).singleElement().satisfies(dto -> {
+            assertThat(dto.status()).isEqualTo(IngestionCoverageStatus.INCOMPLETE);
+            assertThat(dto.typeCounts()).containsExactly(new IngestionTypeCountDTO("exercise", 5, 4, 1, 0));
         });
     }
 
@@ -112,6 +133,8 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
             assertThat(dto.status()).isEqualTo(IngestionCoverageStatus.INCOMPLETE);
         });
         assertThat(filtered).extracting(IngestionCoverageDTO::courseId).contains(course.getId());
+        assertThat(filtered).filteredOn(dto -> dto.courseId() == course.getId()).singleElement()
+                .satisfies(dto -> assertThat(dto.typeCounts()).containsExactly(new IngestionTypeCountDTO("exercise", 5, 4, 1, 0)));
 
         // A term no course carries returns nothing rather than falling back to the unsearched page.
         assertThat(request.getList(BASE + "coverage?size=2000&status=INCOMPLETE&search=nosuchcoursetitle", HttpStatus.OK, IngestionCoverageDTO.class)).isEmpty();
@@ -198,8 +221,8 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     }
 
     /**
-     * A projection row for the test course, computed now. The fresh timestamp keeps the endpoint's stale-while-revalidate
-     * trigger a no-op, so the stored-coverage tests read back exactly what they wrote.
+     * A projection row for the test course. The success marker set in {@link #setUp()} keeps the endpoint's
+     * stale-while-revalidate trigger a no-op, so the stored-coverage tests read back exactly what they wrote.
      */
     private IngestionCoverageEntry storedEntry(IngestionCoverageStatus status) {
         IngestionCoverageEntry entry = new IngestionCoverageEntry();

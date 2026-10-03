@@ -115,18 +115,19 @@
                         } @else {
                             @for (record of pagedRecords(); track record.entityId) {
                                 @let rowKey = 'record:' + record.entityId;
+                                @let expanded = expandedRows().has(rowKey);
                                 <div class="mb-2 border border-solid rounded">
                                     <button
                                         type="button"
                                         class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
-                                        [attr.aria-expanded]="isExpanded(rowKey)"
+                                        [attr.aria-expanded]="expanded"
                                         (click)="toggleRow(rowKey)"
                                         [attr.data-testid]="'detail-record-' + record.entityId"
                                     >
-                                        <fa-icon [icon]="isExpanded(rowKey) ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
+                                        <fa-icon [icon]="expanded ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
                                         <span class="flex-1 truncate">{{ record.title || '#' + record.entityId }}</span>
                                     </button>
-                                    @if (isExpanded(rowKey)) {
+                                    @if (expanded) {
                                         <div class="px-2 pb-2">
                                             <jhi-course-ingestion-stored-fields [properties]="record.properties" />
                                         </div>
@@ -196,18 +197,19 @@
                         } @else {
                             @for (entry of pagedContent(); track entry.key) {
                                 @let rowKey = 'content:' + entry.key;
+                                @let expanded = expandedRows().has(rowKey);
                                 <div class="mb-2 border border-solid rounded">
                                     <button
                                         type="button"
                                         class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
-                                        [attr.aria-expanded]="isExpanded(rowKey)"
+                                        [attr.aria-expanded]="expanded"
                                         (click)="toggleRow(rowKey)"
                                         [attr.data-testid]="'detail-content-row'"
                                     >
-                                        <fa-icon [icon]="isExpanded(rowKey) ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
+                                        <fa-icon [icon]="expanded ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
                                         <span class="flex-1 truncate">{{ entry.label }}</span>
                                     </button>
-                                    @if (isExpanded(rowKey)) {
+                                    @if (expanded) {
                                         <div class="px-2 pb-2">
                                             <jhi-course-ingestion-stored-fields [properties]="entry.object.properties" />
                                         </div>

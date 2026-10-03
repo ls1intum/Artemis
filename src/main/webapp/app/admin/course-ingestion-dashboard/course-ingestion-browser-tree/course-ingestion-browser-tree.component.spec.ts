@@ -185,11 +185,16 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         expect(query('unit-not-indexed:11')).toBeFalsy();
     });
 
-    it('should leave a unit the database still has out of the tree when nothing is stored for it', () => {
-        // Its metadata gap is already counted in the scoreboard, and there is nothing under it to open.
+    it('should leave a unit the database still has out of the tree when nothing is stored for it, but mark its lecture', () => {
+        // Lecture 20 is complete until one of its units turns out to be missing from the index entirely.
+        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-success');
+
+        // Its metadata gap is already counted in the scoreboard, and there is nothing under it to open. The lecture
+        // must still show the gap, or a collapsed tree hides a unit that never reached Iris at all.
         fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 31, title: 'Nothing stored', lectureId: 20 }]);
         fixture.detectChanges();
 
+        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-danger');
         click('tree-toggle-lecture:20');
         expect(query('tree-node-unit:31')).toBeFalsy();
     });

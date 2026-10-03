@@ -284,7 +284,7 @@ export class CourseIngestionBrowserDetailComponent {
     }
 
     /** Which stored records are expanded, by their row key. Reset whenever a new selection loads. */
-    private readonly expandedRows = signal<ReadonlySet<string>>(new Set());
+    protected readonly expandedRows = signal<ReadonlySet<string>>(new Set());
 
     /**
      * The in-flight records/content request, if any. loadRecords and loadContentObjects are mutually exclusive per
@@ -308,10 +308,6 @@ export class CourseIngestionBrowserDetailComponent {
             return this.translateService.instant('artemisApp.courseIngestionDashboard.browser.contentLabel.segment', { seconds: segmentStart });
         }
         return this.translateService.instant('artemisApp.courseIngestionDashboard.browser.contentLabel.position', { position: index + 1 });
-    }
-
-    protected isExpanded(key: string): boolean {
-        return this.expandedRows().has(key);
     }
 
     protected onRecordsPageChange(page: number): void {
