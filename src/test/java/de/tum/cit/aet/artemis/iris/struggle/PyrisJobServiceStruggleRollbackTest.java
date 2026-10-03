@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DelegatingDistrib
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
@@ -101,7 +102,7 @@ class PyrisJobServiceStruggleRollbackTest {
         when(distributedDataProvider.<String, PyrisJob>getExpiringMap(eq("pyris-job-map"), any())).thenReturn(jobs);
         when(distributedDataProvider.<String, String>getExpiringMap(eq("struggle-inflight-map"), any())).thenReturn(failingInFlight);
 
-        var service = new PyrisJobService(distributedDataProvider, new IrisProactiveProperties());
+        var service = new PyrisJobService(distributedDataProvider, new IrisProactiveProperties(), mock(IrisLectureMaterialVersionService.class));
         ReflectionTestUtils.setField(service, "jobTimeout", 300);
         ReflectionTestUtils.setField(service, "serverUrl", "http://localhost:8080");
         ReflectionTestUtils.setField(service, "instanceId", "test-node");

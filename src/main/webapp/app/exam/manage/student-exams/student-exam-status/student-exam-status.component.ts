@@ -1,7 +1,9 @@
 import { Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Tag } from 'primeng/tag';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCheck, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 /**
  * Status indicator for student exams
@@ -10,9 +12,13 @@ import { Tag } from 'primeng/tag';
 @Component({
     selector: 'jhi-student-exam-status',
     templateUrl: './student-exam-status.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, Tag],
+    imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent, TumAetUiTagComponent],
 })
 export class StudentExamStatusComponent {
     hasStudentsWithoutExam = input.required<boolean>();
     isTestExam = input.required<boolean>();
+
+    protected readonly faInfoCircle = faInfoCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faCheck = faCheck;
 }
