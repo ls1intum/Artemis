@@ -141,6 +141,15 @@ if ! [[ "$PORT_RELEASE_TIMEOUT" =~ ^[0-9]+$ ]]; then
     PORT_RELEASE_TIMEOUT=30
 fi
 
+# How long to wait for the server to report ready, from `./gradlew bootRun` to the readiness probe going green. On a
+# machine that has not built the server yet this covers the Gradle distribution download, dependency resolution and a
+# full compile on top of the Spring Boot start, and CI runners can need much more than a warm laptop; CI raises it.
+SERVER_READY_TIMEOUT="${SERVER_READY_TIMEOUT:-300}"
+if ! [[ "$SERVER_READY_TIMEOUT" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Ignoring SERVER_READY_TIMEOUT='${SERVER_READY_TIMEOUT}': expected a positive integer number of seconds. Using 300."
+    SERVER_READY_TIMEOUT=300
+fi
+
 check_port_available() {
     local port=$1
     local service_name=$2
@@ -533,7 +542,7 @@ fi
 if [ "$NEED_WAIT_SERVER" = true ]; then
     echo ""
     echo "Waiting for server to be ready (this may take a few minutes on first run)..."
-    TIMEOUT=300
+    TIMEOUT="$SERVER_READY_TIMEOUT"
     ELAPSED=0
     # Gate on the readiness probe, not the aggregate /management/health: the aggregate also
     # includes external connectors (e.g. the Hermes push relay), so an outage there would keep
