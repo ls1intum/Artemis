@@ -31,7 +31,6 @@ import {
     faLink,
     faPencilAlt,
     faRepeat,
-    faSave,
     faScroll,
     faSpinner,
     faTrash,
@@ -90,7 +89,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faEyeSlash = faEyeSlash;
     protected readonly faFlag = faFlag;
     protected readonly faGripVertical = faGripVertical;
-    protected readonly faSave = faSave;
+    protected readonly faCheck = faCheck;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
@@ -106,8 +105,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     readonly editingUnitId = input<number | undefined>(undefined);
     /** The form of the unit that is edited in place, shown right below it. */
     readonly editorTemplate = input<TemplateRef<{ $implicit: LectureUnit }>>();
-    /** Emits when Save of the unit that is edited in place is pressed. */
-    readonly onSaveEditingClicked = output<LectureUnit>();
+    /** Emits when Done of the unit that is edited in place is pressed. */
+    readonly onDoneEditingClicked = output<LectureUnit>();
     private readonly editButtons = viewChildren('editButton', { read: ElementRef<HTMLButtonElement> });
 
     lectureUnits = signal<LectureUnit[]>([]);

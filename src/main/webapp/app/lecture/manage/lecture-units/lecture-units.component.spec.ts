@@ -586,16 +586,22 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(createStub).not.toHaveBeenCalled();
     });
 
-    it('should update units upon exercise unit creation', async () => {
+    it('should close the exercise form once its items are created and reload the list when their requests completed', async () => {
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
-
         const updateSpy = vi.spyOn(unitManagementComponentMock, 'loadData');
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.EXERCISE);
+        wizardUnitComponentFixture.detectChanges();
+        const exerciseForm: CreateExerciseUnitComponent = wizardUnitComponentFixture.debugElement.query(By.directive(CreateExerciseUnitComponent)).componentInstance;
+        const request = new Subject<void>();
+        exerciseForm.trackRequest()(request).subscribe();
 
+        // The form reports the items before its requests are counted as done, as its finalize runs first.
         wizardUnitComponent.onExerciseUnitCreated();
-        await wizardUnitComponentFixture.whenStable();
+        request.complete();
 
-        expect(updateSpy).toHaveBeenCalledTimes(1);
+        expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBe(false);
+        expect(updateSpy).toHaveBeenCalledOnce();
         updateSpy.mockRestore();
     });
 
@@ -812,6 +818,56 @@ describe('LectureUpdateUnitsComponent', () => {
             // After completion
             await wizardUnitComponentFixture.whenStable();
             expect(wizardUnitComponent.isUploadingPdfs()).toBe(false);
+        });
+        it('should count PDFs that are uploaded as content that is still being saved', () => {
+            const upload = new Subject<HttpResponse<AttachmentVideoUnit>>();
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(upload);
+            wizardUnitComponentFixture.detectChanges();
+
+            wizardUnitComponent.onPdfFilesDropped([new File(['content'], 'test.pdf', { type: 'application/pdf' })]);
+            expect(wizardUnitComponent.isSavingContent()).toBe(true);
+
+            upload.error(new HttpErrorResponse({ status: 500 }));
+            expect(wizardUnitComponent.isSavingContent()).toBe(false);
+        });
+    });
+
+    describe('creating an item', () => {
+        it('should count new items as content that is still being saved until every request completed or failed', () => {
+            const textUnitService = TestBed.inject(TextUnitService);
+            const first = new Subject<HttpResponse<TextUnit>>();
+            const second = new Subject<HttpResponse<TextUnit>>();
+            vi.spyOn(textUnitService, 'create').mockReturnValueOnce(first).mockReturnValueOnce(second);
+            wizardUnitComponentFixture.detectChanges();
+
+            wizardUnitComponent.createTextUnit({ name: 'Reading' });
+            wizardUnitComponent.createTextUnit({ name: 'Reading' });
+            expect(wizardUnitComponent.isCreatingUnit()).toBe(true);
+            expect(wizardUnitComponent.isSavingContent()).toBe(true);
+
+            first.next(new HttpResponse({ body: new TextUnit(), status: 201 }));
+            first.complete();
+            expect(wizardUnitComponent.isCreatingUnit()).toBe(true);
+
+            second.error(new HttpErrorResponse({ status: 400 }));
+            expect(wizardUnitComponent.isCreatingUnit()).toBe(false);
+            expect(wizardUnitComponent.isSavingContent()).toBe(false);
+        });
+
+        it('should count a new file item as content that is still being saved while it is uploaded', () => {
+            const upload = new Subject<HttpResponse<AttachmentVideoUnit>>();
+            vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(upload);
+            wizardUnitComponentFixture.detectChanges();
+
+            wizardUnitComponent.createAttachmentVideoUnit({
+                formProperties: { name: 'Slides' },
+                fileProperties: { file: new File(['%PDF'], 'slides.pdf', { type: 'application/pdf' }), fileName: 'slides.pdf' },
+            });
+            expect(wizardUnitComponent.isSavingContent()).toBe(true);
+
+            upload.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 201 }));
+            upload.complete();
+            expect(wizardUnitComponent.isSavingContent()).toBe(false);
         });
     });
     describe('splitting a lecture PDF', () => {
@@ -1133,7 +1189,7 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.lecture.unitEditor.failedAfterLeaving');
         });
 
-        it('should keep the form open when it becomes invalid while Save waits for a save', () => {
+        it('should keep the form open when it becomes invalid while Done waits for a save', () => {
             const response = new Subject<HttpResponse<TextUnit>>();
             vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1220,6 +1276,20 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(flushPendingEdits).toHaveBeenCalledTimes(2);
         });
 
+        it('should keep an item open that the user opened while a new item was created', () => {
+            const created = new Subject<HttpResponse<TextUnit>>();
+            vi.spyOn(textUnitService, 'create').mockReturnValue(created);
+            wizardUnitComponent.onCreateLectureUnit(LectureUnitType.TEXT);
+            wizardUnitComponent.createTextUnit({ name: 'New reading' });
+
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            created.next(new HttpResponse({ body: new TextUnit(), status: 201 }));
+            created.complete();
+
+            expect(wizardUnitComponent.isEditingLectureUnit()).toBe(true);
+            expect(wizardUnitComponent.editingUnitId()).toBe(3);
+        });
+
         it('should not count the running save of a deleted item for the item opened next', () => {
             const response = new Subject<HttpResponse<TextUnit>>();
             vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
@@ -1246,7 +1316,7 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.editingUnitId()).toBe(3);
         });
 
-        it('should not save a form that cannot be saved and keep it open on Save', () => {
+        it('should not save a form that cannot be saved and keep it open on Done', () => {
             const updateSpy = vi.spyOn(textUnitService, 'update');
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
@@ -1260,7 +1330,7 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.editingUnitId()).toBe(3);
         });
 
-        it('should save at once and close the form on Save', () => {
+        it('should save at once and close the form on Done', () => {
             const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
@@ -1350,6 +1420,125 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(sentUnit.description).toBe('Start here');
             expect(sentUnit.source).toBe('https://artemis.tum.de');
             expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        });
+
+        describe('content that is still being saved', () => {
+            it('should count a change while it waits for the pause and while it is sent, but not once it is saved', () => {
+                const response = new Subject<HttpResponse<TextUnit>>();
+                vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+                wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+                expect(wizardUnitComponent.isSavingContent()).toBe(false);
+
+                wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+                expect(wizardUnitComponent.isSavingContent()).toBe(true);
+                expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
+
+                vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
+                expect(wizardUnitComponent.isSavingContent()).toBe(true);
+
+                response.next(new HttpResponse({ status: 200 }));
+                response.complete();
+                expect(wizardUnitComponent.isSavingContent()).toBe(false);
+                expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
+            });
+
+            it('should count a failed change as unsaved, not as being saved, until it is sent again', () => {
+                const retry = new Subject<HttpResponse<TextUnit>>();
+                vi.spyOn(textUnitService, 'update')
+                    .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The name is too long' } })))
+                    .mockReturnValueOnce(retry);
+                wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+
+                wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+                expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+                expect(wizardUnitComponent.isSavingContent()).toBe(false);
+
+                wizardUnitComponent.retryAutosave();
+                expect(wizardUnitComponent.isSavingContent()).toBe(true);
+            });
+
+            it('should send a change that waits for the pause and report text of the markdown editor before leaving is decided', () => {
+                const flushPendingEdits = vi.fn();
+                wizardUnitComponent.textUnitForm = signal({ flushPendingEdits } as unknown as TextUnitFormComponent).asReadonly() as Signal<TextUnitFormComponent | undefined>;
+                const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+                wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+
+                wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+                wizardUnitComponent.flushBufferedEdits();
+
+                expect(flushPendingEdits).toHaveBeenCalledOnce();
+                expect(updateSpy).toHaveBeenCalledOnce();
+                expect(wizardUnitComponent.isSavingContent()).toBe(false);
+            });
+
+            it('should not send a failed change again before leaving is decided', () => {
+                const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+                wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+                wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+
+                wizardUnitComponent.flushBufferedEdits();
+
+                expect(updateSpy).toHaveBeenCalledOnce();
+                expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+            });
+        });
+
+        it('should count exercise items that are being created as content that is still being saved, and show them, also after their form closed', () => {
+            const loadDataSpy = vi.spyOn(unitManagementComponentMock, 'loadData');
+            wizardUnitComponent.onCreateLectureUnit(LectureUnitType.EXERCISE);
+            wizardUnitComponentFixture.detectChanges();
+            const exerciseForm: CreateExerciseUnitComponent = wizardUnitComponentFixture.debugElement.query(By.directive(CreateExerciseUnitComponent)).componentInstance;
+            const request = new Subject<void>();
+
+            exerciseForm.trackRequest()(request).subscribe();
+            expect(wizardUnitComponent.isSavingContent()).toBe(true);
+            wizardUnitComponent.onCloseLectureUnitForms();
+            wizardUnitComponentFixture.detectChanges();
+            expect(wizardUnitComponent.isSavingContent()).toBe(true);
+
+            expect(loadDataSpy).not.toHaveBeenCalled();
+            request.complete();
+            expect(wizardUnitComponent.isSavingContent()).toBe(false);
+            // The form is gone, so the list is reloaded by the page that followed the requests.
+            expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not send a failed change again when the user leaves its field, but on Retry', () => {
+            const updateSpy = vi
+                .spyOn(textUnitService, 'update')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503, error: { title: 'Service unavailable' } })))
+                .mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+            expect(updateSpy).toHaveBeenCalledOnce();
+
+            // Leaving the name field comes before the click that leaves the page; the form may report the same text again.
+            wizardUnitComponent.onEditorFocusOut();
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+            vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+            expect(wizardUnitComponent.isSavingContent()).toBe(false);
+
+            wizardUnitComponent.retryAutosave();
+            expect(updateSpy).toHaveBeenCalledTimes(2);
+            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+        });
+
+        it('should send a newer change after a failed save when the user leaves its field', () => {
+            const updateSpy = vi
+                .spyOn(textUnitService, 'update')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503, error: { title: 'Service unavailable' } })))
+                .mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list for week 2'));
+            wizardUnitComponent.onEditorFocusOut();
+
+            expect(updateSpy).toHaveBeenCalledTimes(2);
+            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list for week 2');
         });
 
         describe('file and video items', () => {
@@ -1581,7 +1770,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 expect(wizardUnitComponent.savingConfirmed()).toBeUndefined();
             });
 
-            it('should keep the item open with a hint while a new file or video URL was neither confirmed nor discarded', () => {
+            it('should keep the item open with a hint while a new video URL was neither confirmed nor discarded', () => {
                 formMock.hasUnconfirmedContent.mockReturnValue(true);
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: false, valid: true });
 
@@ -1595,7 +1784,45 @@ describe('LectureUpdateUnitsComponent', () => {
                 expect(updateSpy).toHaveBeenCalledOnce();
             });
 
-            it('should ask before a new file or video link that was not confirmed is left', () => {
+            it('should hold a file that waits behind a change of the details that failed for Retry, not count it as being saved', () => {
+                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                updateSpy.mockReset();
+                updateSpy.mockReturnValueOnce(running).mockReturnValue(of(new HttpResponse({ body: savedFileUnit(), status: 200 })));
+                const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
+
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'Week 1' }, newFile));
+                running.error(new HttpErrorResponse({ status: 400, error: { title: 'The description is too long' } }));
+
+                expect(updateSpy).toHaveBeenCalledOnce();
+                expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+                // Leaving does not claim that the file is still being saved.
+                expect(wizardUnitComponent.isSavingContent()).toBe(false);
+
+                wizardUnitComponent.retryAutosave();
+                expect(updateSpy.mock.calls[1][2].get('file')).toBeInstanceOf(File);
+            });
+
+            it('should keep the item open on Done when another video URL was typed while the confirmed one was saved', () => {
+                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                updateSpy.mockReset();
+                updateSpy.mockReturnValue(running);
+                wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/first' }));
+
+                wizardUnitComponent.saveAndCloseEditor();
+                expect(wizardUnitComponent.editingUnitId()).toBe(5);
+                formMock.hasUnconfirmedContent.mockReturnValue(true);
+                const savedUnit = savedFileUnit();
+                savedUnit.videoSource = 'https://live.rbg.tum.de/w/first';
+                running.next(new HttpResponse({ body: savedUnit, status: 200 }));
+                running.complete();
+
+                expect(formMock.takeOverSavedVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/first');
+                expect(wizardUnitComponent.editingUnitId()).toBe(5);
+                expect(wizardUnitComponent.showsUnconfirmedContentHint()).toBe(true);
+            });
+
+            it('should ask before a new video URL that was not confirmed is left', () => {
                 formMock.hasUnconfirmedContent.mockReturnValue(true);
                 wizardUnitComponent.startEditLectureUnit(savedFileUnit());
 
@@ -1621,6 +1848,45 @@ describe('LectureUpdateUnitsComponent', () => {
                 });
                 expect(formMock.takeOverSavedVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/new');
                 expect(formMock.takeOverSavedFile).not.toHaveBeenCalled();
+            });
+            it('should count a failed upload and a running change of the details at once', () => {
+                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const detailsSave = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                updateSpy.mockReset();
+                updateSpy
+                    .mockReturnValueOnce(running)
+                    .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The file is too big' } })))
+                    .mockReturnValueOnce(detailsSave);
+                const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
+
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'Week 1' }, newFile));
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1 and 2' }, newFile), immediate: true, valid: true });
+                running.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                running.complete();
+
+                expect(updateSpy).toHaveBeenCalledTimes(3);
+                expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+                expect(wizardUnitComponent.isSavingContent()).toBe(true);
+
+                detailsSave.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                detailsSave.complete();
+                expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+                expect(wizardUnitComponent.isSavingContent()).toBe(false);
+            });
+
+            it('should upload a file chosen while the details cannot be saved with the details saved last', async () => {
+                const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
+
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ name: '' }), immediate: true, valid: false });
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ name: '' }, newFile));
+
+                expect(updateSpy).toHaveBeenCalledOnce();
+                expect(updateSpy.mock.calls[0][2].get('file')).toBeInstanceOf(File);
+                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[0][2])).resolves.toMatchObject({
+                    name: 'Slides',
+                    attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD,
+                });
             });
         });
     });
