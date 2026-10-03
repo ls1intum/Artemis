@@ -300,7 +300,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter') return;
+        if (event.key !== 'Enter' || event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+            return;
+        }
         const idx = this.selectedIndex();
         if (idx < 0) return;
 
