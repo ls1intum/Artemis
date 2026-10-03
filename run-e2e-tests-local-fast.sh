@@ -145,8 +145,9 @@ fi
 # machine that has not built the server yet this covers the Gradle distribution download, dependency resolution and a
 # full compile on top of the Spring Boot start, and CI runners can need much more than a warm laptop; CI raises it.
 SERVER_READY_TIMEOUT="${SERVER_READY_TIMEOUT:-300}"
-if ! [[ "$SERVER_READY_TIMEOUT" =~ ^[1-9][0-9]*$ ]]; then
-    echo "Ignoring SERVER_READY_TIMEOUT='${SERVER_READY_TIMEOUT}': expected a positive integer number of seconds. Using 300."
+# At most six digits, so the value stays far inside what the arithmetic comparison in the wait loop can handle.
+if ! [[ "$SERVER_READY_TIMEOUT" =~ ^[1-9][0-9]{0,5}$ ]]; then
+    echo "Ignoring SERVER_READY_TIMEOUT='${SERVER_READY_TIMEOUT}': expected a positive integer number of seconds below 1000000. Using 300."
     SERVER_READY_TIMEOUT=300
 fi
 
