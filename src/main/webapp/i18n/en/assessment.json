@@ -9,10 +9,24 @@
             "feedback": "Feedback",
             "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
             "feedbackCommentPlaceholder": "You can enter feedback here...",
+            "feedbackHeaderPlaceholder": "Optional title...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
-                "suggested": "AI Feedback Suggestion",
-                "adapted": "Adapted AI Feedback Suggestion"
+                "default": "Suggestion",
+                "suggested": "Open Suggestion",
+                "accepted": "Accepted Suggestion",
+                "adapted": "Adapted Suggestion"
+            },
+            "suggestionTitle": {
+                "default": "This is an automatically generated feedback suggestion.",
+                "suggested": "This automatically generated feedback suggestion is not included in the final assessment unless you explicitly accept it.",
+                "accepted": "Automatically generated accepted suggestion",
+                "adapted": "Automatically generated suggestion, manually adapted"
+            },
+            "suggestionPendingDialog": {
+                "title": "Pending Feedback Suggestions",
+                "description": "There are pending feedback suggestions available. They will be discarded when submitting. Do you really want to submit?",
+                "discardAndSubmit": "Discard suggestions & submit"
             },
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {
@@ -50,18 +64,30 @@
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
                 "tutorComment": "Tutor Comment:",
+                "tutorCommentLabel": "Tutor comment",
+                "feedbackSuggestion": "Feedback Suggestion:",
+                "accept": "Accept",
+                "discard": "Discard",
                 "points": {
                     "one": "{{points}} Point",
                     "many": "{{points}} Points"
                 },
                 "otherFeedback": "Other feedback",
+                "feedbackSuggestions": "Feedback suggestions",
                 "baseAward": "Base award",
                 "deductions": "Deductions",
                 "finalScore": "Final",
                 "pointsShort": "{{points}} pts",
                 "pointsOfShort": "{{points}} / {{maxPoints}} pts",
+                "criteria": "Instruction",
+                "instruction": "Instruction",
+                "feedbackHeader": "Title",
                 "decreasePoints": "Decrease points",
-                "increasePoints": "Increase points"
+                "increasePoints": "Increase points",
+                "feedbackUsage": {
+                    "limited": "You have used this feedback {{used}} out of {{limit}} allowed times.",
+                    "unlimited": "You have used this feedback {{used}} times. This feedback has no usage limit."
+                }
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {
@@ -73,7 +99,8 @@
                 "saveFailed": "Saving your assessment failed!",
                 "updateAfterComplaintSuccessful": "The assessment was updated successfully.",
                 "updateAfterComplaintFailed": "Updating the assessment failed.",
-                "removeAssessmentInstructionLink": "Do you want to remove the link to the assessment instruction?"
+                "removeAssessmentInstructionLink": "Do you want to remove the link to the assessment instruction?",
+                "incompleteFeedback": "Enter feedback text for every feedback item before saving or submitting."
             },
             "dashboard": {
                 "warning": "Warning: The submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -370,13 +372,18 @@ public class ExerciseSharingService {
             return Optional.empty();
         }
 
-        String decodedToken = new String(Base64.getUrlDecoder().decode(b64Token), StandardCharsets.UTF_8);
-        Path zipPath = Path.of(repoDownloadClonePath, decodedToken + ".zip");
-        if (!Files.isRegularFile(zipPath)) {
+        try {
+            String decodedToken = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(b64Token))).toString();
+            Path baseDir = Path.of(repoDownloadClonePath).normalize();
+            Path zipPath = baseDir.resolve(decodedToken + ".zip").normalize();
+            if (zipPath.startsWith(baseDir) && Files.isRegularFile(zipPath)) {
+                return Optional.of(zipPath);
+            }
+        }
+        catch (CharacterCodingException | IllegalArgumentException e) {
             return Optional.empty();
         }
-        // Integrity is ensured via HMAC validation; decodedToken is a safe relative path segment
-        return Optional.of(zipPath);
+        return Optional.empty();
     }
 
     /**

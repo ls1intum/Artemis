@@ -8,7 +8,7 @@
                     "addCredits": "[credits] Punkte",
                     "addInstruction": "[instruction] Bewertungsanweisungen",
                     "addFeedback": "[feedback] Feedback",
-                    "addGradingScale": "[gradingScale] Bewertungsmaßstab",
+                    "addGradingScale": "[gradingScale] Skala",
                     "addCountUsage": "[count] Anzahl Verwendung",
                     "addCriterion": "[criterion] Bewertungskriterium"
                 }

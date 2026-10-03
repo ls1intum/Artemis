@@ -2,17 +2,19 @@
     <jhi-code-editor-header [showTabSizeSelector]="false" [fileName]="selectedFile()" [isLoading]="loadingCount() > 0" [secondary]="secondaryHeader()" />
     <div class="card-body card-body-monaco">
         @if (selectedFile()) {
-            @for (feedback of feedbackForSelectedFile(); track feedback.id + feedback.reference!) {
+            @for (entry of feedbackForSelectedFile(); track entry.key) {
+                @let feedback = entry.feedback;
                 <!-- actual, stored feedback -->
                 <jhi-code-editor-tutor-assessment-inline-feedback
                     class="monaco-hidden-element"
                     [selectedFile]="selectedFile()!"
-                    [codeLine]="getFeedbackLine(feedback)"
+                    [codeLine]="feedback.line"
                     [feedback]="feedback"
                     [readOnly]="readOnlyManualFeedback()"
                     [highlightDifferences]="highlightDifferences()"
                     [course]="course()"
-                    (onUpdateFeedback)="updateFeedback($event)"
+                    [gradingCriteria]="gradingCriteria()"
+                    (onUpdateFeedback)="updateFeedback($event, feedback)"
                     (onDeleteFeedback)="deleteFeedback($event)"
                     (onCancelFeedback)="cancelFeedback($event)"
                 />
@@ -27,9 +29,21 @@
                     [highlightDifferences]="highlightDifferences()"
                     [readOnly]="readOnlyManualFeedback()"
                     [course]="course()"
+                    [gradingCriteria]="gradingCriteria()"
                     (onUpdateFeedback)="updateFeedback($event)"
                     (onDeleteFeedback)="deleteFeedback($event)"
                     (onCancelFeedback)="cancelFeedback($event)"
+                    (onPendingFeedbackChange)="setPendingFeedback(line, $event)"
+                />
+            }
+            <!-- feedback suggestions -->
+            @for (suggestion of feedbackSuggestionsForSelectedFile(); track $index) {
+                <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
+                    [codeLine]="suggestion.line"
+                    [feedback]="suggestion"
+                    [course]="course()"
+                    (onAcceptSuggestion)="acceptSuggestion($event)"
+                    (onDiscardSuggestion)="discardSuggestion($event)"
                 />
             }
         }

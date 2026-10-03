@@ -4,7 +4,7 @@ import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-
 export class GradingScaleAction extends TextEditorDomainAction {
     static readonly ID = 'grading-scale.action';
     static readonly IDENTIFIER = '[gradingScale]';
-    static readonly TEXT = 'Add instruction grading scale here (only visible for tutors)';
+    static readonly TEXT = 'e.g. Good (short level, tutors only)';
 
     constructor() {
         super(GradingScaleAction.ID, 'artemisApp.assessmentInstructions.instructions.editor.addScale', undefined, undefined, true);

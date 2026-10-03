@@ -189,6 +189,50 @@ describe('TumAetUiCheckboxComponent controlled pattern', () => {
 });
 
 @Component({
+    // The host rejects the user's toggle by writing the previous checked value back.
+    template: `<tumaet-ui-checkbox #checkbox [checked]="applied()" (changed)="rejectToggle(checkbox)" />`,
+    imports: [TumAetUiCheckboxComponent],
+})
+class RejectingHostComponent {
+    readonly applied = signal(true);
+    rejectToggle(checkbox: TumAetUiCheckboxComponent): void {
+        checkbox.checked.set(this.applied());
+    }
+}
+
+describe('TumAetUiCheckboxComponent (host rejects the toggle)', () => {
+    it('keeps the rendered state on the host value so the next click still toggles away from it', async () => {
+        await TestBed.configureTestingModule({
+            imports: [RejectingHostComponent, FontAwesomeTestingModule],
+        }).compileComponents();
+        const fixture = TestBed.createComponent(RejectingHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const checkbox = fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent));
+        const input = checkbox.query(By.css('input[type="checkbox"]')).nativeElement as HTMLInputElement;
+        const events: TumAetUiCheckboxChangeEvent[] = [];
+        (checkbox.componentInstance as TumAetUiCheckboxComponent).changed.subscribe((event: TumAetUiCheckboxChangeEvent) => events.push(event));
+        expect(input.checked).toBe(true);
+
+        input.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(events.map((event) => event.checked)).toEqual([false]);
+        expect((checkbox.componentInstance as TumAetUiCheckboxComponent).checked()).toBe(true);
+        expect(input.checked).toBe(true);
+        expect(checkbox.query(By.css('.tumaet-ui-checkbox-icon'))).not.toBeNull();
+
+        input.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(events.map((event) => event.checked)).toEqual([false, false]);
+    });
+});
+
+@Component({
     template: `<tumaet-ui-checkbox [formControl]="control" />`,
     imports: [TumAetUiCheckboxComponent, ReactiveFormsModule],
 })

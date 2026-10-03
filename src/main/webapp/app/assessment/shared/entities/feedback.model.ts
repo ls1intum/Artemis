@@ -154,13 +154,15 @@ export class Feedback implements BaseEntity {
         return FeedbackSuggestionType.SUGGESTED;
     }
 
-    /**
-     * Strips the internal `FeedbackSuggestion:(suggested|accepted|adapted):` marker off a feedback's `text`, if
-     * present. That marker exists only to tag the suggestion state in the database `text` column without a schema
-     * change; it must never reach a tutor or a student as literal text.
-     */
+    private static readonly FEEDBACK_SUGGESTION_PREFIXES = [
+        FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+        FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+        NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+        FEEDBACK_SUGGESTION_IDENTIFIER,
+    ] as const;
+
     public static stripSuggestionPrefix(text: string): string {
-        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+        for (const prefix of Feedback.FEEDBACK_SUGGESTION_PREFIXES) {
             if (text.startsWith(prefix)) {
                 return text.slice(prefix.length);
             }
@@ -168,17 +170,33 @@ export class Feedback implements BaseEntity {
         return text;
     }
 
-    /**
-     * Rewrites an accepted feedback suggestion's `text` prefix to adapted, leaving everything else unchanged. A
-     * suggestion transitions to adapted the moment it is edited in any way; every other state (already adapted,
-     * not a suggestion, or the unreachable bare "suggested") is returned as-is. This is a one-way, sticky
-     * transition - it never reverts even if the edit is undone later.
-     */
     public static markAdaptedIfAcceptedSuggestion(text: string): string {
         if (!text.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
             return text;
         }
         return `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}${text.slice(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER.length)}`;
+    }
+
+    public static getFeedbackSuggestionPrefix(text: string): string | undefined {
+        for (const prefix of Feedback.FEEDBACK_SUGGESTION_PREFIXES) {
+            if (text.startsWith(prefix)) {
+                return prefix;
+            }
+        }
+        return undefined;
+    }
+
+    /** Tutor-facing title stored in {@link text}, without suggestion prefixes. Linked grading instructions own the title. */
+    public static getDisplayTitle(feedback: Feedback): string | undefined {
+        if (feedback.gradingInstruction || !feedback.text) {
+            return undefined;
+        }
+        const prefix = Feedback.getFeedbackSuggestionPrefix(feedback.text);
+        if (prefix) {
+            const title = feedback.text.slice(prefix.length);
+            return title || undefined;
+        }
+        return feedback.text;
     }
 
     public static hasDetailText(that: Feedback): boolean {
@@ -191,13 +209,12 @@ export class Feedback implements BaseEntity {
     }
 
     /**
-     * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
-     * feedbacks before they are saved.
+     * Checks for equality of two feedbacks. IDs may be undefined before saving; the reference distinguishes code lines.
      * @param f1 The feedback that is compared to f2
      * @param f2 The feedback that is compared to f1
      */
     public static areIdentical(f1: Feedback, f2: Feedback) {
-        return f1.id === f2.id && f1.text === f2.text && f1.detailText === f2.detailText;
+        return f1.id === f2.id && f1.reference === f2.reference && f1.text === f2.text && f1.detailText === f2.detailText;
     }
 
     /**

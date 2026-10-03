@@ -9,7 +9,8 @@
             "updated": "Updated Feedback with identifier {{ param }}",
             "deleted": "Deleted Feedback with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete the feedback{{ text }}?"
+                "question": "Are you sure you want to delete the feedback{{ text }}?",
+                "allInstances": "Are you sure you want to delete all instances of this feedback?"
             },
             "detail": {
                 "title": "Feedback"

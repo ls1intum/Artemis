@@ -51,9 +51,9 @@ describe('MonacoEditorActionGradingInstructionsIntegration', () => {
     const expectedInstructionTextWithoutCriterion =
         '\n[instruction]' +
         '\n\t[credits] 0' +
-        '\n\t[gradingScale] Add instruction grading scale here (only visible for tutors)' +
-        '\n\t[description] Add grading instruction here (only visible for tutors)' +
-        '\n\t[feedback] Add feedback for students here (visible for students)' +
+        '\n\t[gradingScale] e.g. Good (short level, tutors only)' +
+        '\n\t[description] When should a tutor apply this scale level? (tutors only)' +
+        '\n\t[feedback] What should the student read? (visible for students)' +
         '\n\t[maxCountInScore] 0';
 
     const generalInstructionText = 'These are some general instructions for the tutors.';
