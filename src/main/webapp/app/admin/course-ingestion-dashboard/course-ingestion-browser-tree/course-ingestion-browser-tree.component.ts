@@ -61,6 +61,7 @@ interface TreeNode {
 /** One content collection under a lecture unit. */
 interface ContentNode extends TreeNode {
     contentKey: string;
+    orphaned: boolean;
 }
 
 /** One lecture unit in the tree, with the content collections that actually hold something for it. */
@@ -165,8 +166,12 @@ export class CourseIngestionBrowserTreeComponent {
     /** The Lecture to Unit to collection tree, assembled from the indexed entities and the content presence sets. */
     protected readonly lectures = computed<LectureNode[]>(() => {
         const entities = this.entities();
-        const unitIdsByContentKey = this.contentPresence().map((presence) => ({ key: presence.key, unitIds: new Set(presence.unitIds) }));
-        const unitsWithGaps = new Set(this.contentGaps().map((gap) => gap.lectureUnitId));
+        const unitIdsByContentKey = this.contentPresence().map((presence) => ({
+            key: presence.key,
+            unitIds: new Set(presence.unitIds),
+            orphanedUnitIds: new Set(presence.orphanedUnitIds ?? []),
+        }));
+        const unitsWithGaps = new Set([...this.contentGaps().map((gap) => gap.lectureUnitId), ...unitIdsByContentKey.flatMap((content) => [...content.orphanedUnitIds])]);
 
         const lectureTitles = new Map<number, string>();
         const expectedLectureIds = new Set<number>();
@@ -193,7 +198,12 @@ export class CourseIngestionBrowserTreeComponent {
                 .filter((content) => content.unitIds.has(unitId))
                 .map((content) => {
                     const contentSelection: BrowserSelection = { kind: 'collection', unitId, key: content.key };
-                    return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: content.key };
+                    return {
+                        key: selectionKey(contentSelection),
+                        selection: contentSelection,
+                        contentKey: content.key,
+                        orphaned: content.orphanedUnitIds.has(unitId),
+                    };
                 });
 
         // A unit missing from the index is not complete, whatever its content looks like. Reading completeness off the
@@ -294,7 +304,7 @@ export class CourseIngestionBrowserTreeComponent {
                     .filter((entry) => entry.unitIds.includes(unitId))
                     .map((entry) => {
                         const contentSelection: BrowserSelection = { kind: 'collection', unitId, key: entry.key };
-                        return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: entry.key };
+                        return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: entry.key, orphaned: true };
                     }),
             };
         });

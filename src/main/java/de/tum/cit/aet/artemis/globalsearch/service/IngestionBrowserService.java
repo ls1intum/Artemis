@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -67,7 +68,7 @@ public class IngestionBrowserService {
 
         List<IndexedEntityDTO> entities = browserReadService.listIndexedEntitiesForCourse(courseId).stream().map(entity -> new IndexedEntityDTO(entity.type(), entity.entityId(),
                 entity.title(), entity.lectureId(), entity.ingestedAt(), isExpectedMetadataEntity(courseId, entity, expected))).toList();
-        return new CourseBrowserDataDTO(entities, contentPresence(courseId, present), gapService.missingEntities(courseId, expected, present),
+        return new CourseBrowserDataDTO(entities, contentPresence(courseId, expected, present), gapService.missingEntities(courseId, expected, present),
                 gapService.contentGaps(courseId, expected, present), CoverageRecomputeService.typeCountsForCourse(courseId, expected, present));
     }
 
@@ -89,16 +90,21 @@ public class IngestionBrowserService {
      * from, keeping the browser's own content keys out of the shared loader. Collections holding nothing for the course
      * are left out, so a unit only ever gets a node for a collection that has something in it.
      */
-    private static List<IndexedContentPresenceDTO> contentPresence(long courseId, PresentSets present) {
+    private static List<IndexedContentPresenceDTO> contentPresence(long courseId, ExpectedSets expected, PresentSets present) {
         Map<String, Map<Long, Set<Long>>> byKey = Map.of(IngestionBrowserWeaviateReadService.KEY_SLIDES, present.slides(), IngestionBrowserWeaviateReadService.KEY_TRANSCRIPT,
                 present.transcript(), IngestionBrowserWeaviateReadService.KEY_UNIT_SUMMARY, present.unitSummaries(), IngestionBrowserWeaviateReadService.KEY_SEGMENTS,
                 present.segmentSummaries());
+        Map<String, Map<Long, Set<Long>>> expectedByKey = Map.of(IngestionBrowserWeaviateReadService.KEY_SLIDES, expected.pdfUnits(),
+                IngestionBrowserWeaviateReadService.KEY_TRANSCRIPT, expected.videoUnits(), IngestionBrowserWeaviateReadService.KEY_UNIT_SUMMARY, expected.lectureUnits(),
+                IngestionBrowserWeaviateReadService.KEY_SEGMENTS, expected.lectureUnits());
 
         List<IndexedContentPresenceDTO> presence = new ArrayList<>();
         for (String key : IngestionBrowserWeaviateReadService.contentKeys()) {
             Set<Long> unitIds = byKey.get(key).get(courseId);
             if (unitIds != null && !unitIds.isEmpty()) {
-                presence.add(new IndexedContentPresenceDTO(key, unitIds));
+                Set<Long> expectedUnitIds = expectedByKey.get(key).getOrDefault(courseId, Set.of());
+                Set<Long> orphanedUnitIds = unitIds.stream().filter(unitId -> !expectedUnitIds.contains(unitId)).collect(Collectors.toUnmodifiableSet());
+                presence.add(new IndexedContentPresenceDTO(key, unitIds, orphanedUnitIds));
             }
         }
         return presence;

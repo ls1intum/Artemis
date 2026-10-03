@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURES_COLLECTION;
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION;
+import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION;
+import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION;
 import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.dropIrisContentCollections;
 import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertContent;
 import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertMetadata;
@@ -187,6 +189,35 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
         insertContent(weaviateService, LECTURE_TRANSCRIPTIONS_COLLECTION, course.getId(), videoUnit.getId(), null);
 
         await().atMost(TIMEOUT).untilAsserted(() -> assertThat(browserService.loadCourseBrowserData(course).contentGaps()).isEmpty());
+    }
+
+    @Test
+    void keepsExpectedUnitMetadataButMarksRetainedSlidesOrphanedAfterItsPdfSourceWasRemoved() throws Exception {
+        pdfUnit.setAttachment(null);
+        attachmentVideoUnitRepository.save(pdfUnit);
+        insertContent(weaviateService, LECTURE_TRANSCRIPTIONS_COLLECTION, course.getId(), videoUnit.getId(), null);
+        insertContent(weaviateService, LECTURE_UNITS_COLLECTION, course.getId(), pdfUnit.getId(), null);
+        insertContent(weaviateService, LECTURE_UNIT_SEGMENTS_COLLECTION, course.getId(), pdfUnit.getId(), null);
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            var data = browserService.loadCourseBrowserData(course);
+
+            assertThat(data.entities()).filteredOn(entity -> entity.type().equals(SearchableEntitySchema.TypeValues.LECTURE_UNIT) && entity.entityId() == pdfUnit.getId())
+                    .singleElement().satisfies(entity -> assertThat(entity.expected()).isTrue());
+            assertThat(data.contentGaps()).isEmpty();
+            assertThat(data.contentPresence()).filteredOn(presence -> presence.key().equals(IngestionBrowserWeaviateReadService.KEY_SLIDES)).singleElement()
+                    .satisfies(presence -> assertThat(presence.orphanedUnitIds()).containsExactly(pdfUnit.getId()));
+            assertThat(data.contentPresence()).filteredOn(presence -> presence.key().equals(IngestionBrowserWeaviateReadService.KEY_TRANSCRIPT)).singleElement()
+                    .satisfies(presence -> assertThat(presence.orphanedUnitIds()).isEmpty());
+            assertThat(data.contentPresence()).filteredOn(presence -> presence.key().equals(IngestionBrowserWeaviateReadService.KEY_UNIT_SUMMARY)).singleElement()
+                    .satisfies(presence -> assertThat(presence.orphanedUnitIds()).isEmpty());
+            assertThat(data.contentPresence()).filteredOn(presence -> presence.key().equals(IngestionBrowserWeaviateReadService.KEY_SEGMENTS)).singleElement()
+                    .satisfies(presence -> assertThat(presence.orphanedUnitIds()).isEmpty());
+            assertThat(data.typeCounts()).filteredOn(count -> count.type().equals(CoverageRecomputeService.TYPE_SLIDES)).singleElement()
+                    .satisfies(count -> assertThat(count)
+                            .extracting(IngestionTypeCountDTO::expected, IngestionTypeCountDTO::indexed, IngestionTypeCountDTO::missing, IngestionTypeCountDTO::orphaned)
+                            .containsExactly(0L, 1L, 0L, 1L));
+        });
     }
 
     @Test

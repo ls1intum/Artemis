@@ -170,6 +170,13 @@
                                                                 class="flex-1 truncate"
                                                                 [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + content.contentKey"
                                                             ></span>
+                                                            @if (content.orphaned) {
+                                                                <span
+                                                                    class="text-xs text-state-danger shrink-0"
+                                                                    jhiTranslate="artemisApp.courseIngestionDashboard.browser.orphaned"
+                                                                    [attr.data-testid]="'content-orphaned:' + content.key"
+                                                                ></span>
+                                                            }
                                                         </button>
                                                     </li>
                                                 }
@@ -233,6 +240,11 @@
                                         >
                                             <fa-icon [icon]="contentIcons[content.contentKey]" class="text-muted-color text-xs" />
                                             <span class="flex-1 truncate" [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + content.contentKey"></span>
+                                            <span
+                                                class="text-xs text-state-danger shrink-0"
+                                                jhiTranslate="artemisApp.courseIngestionDashboard.browser.orphaned"
+                                                [attr.data-testid]="'content-orphaned:' + content.key"
+                                            ></span>
                                         </button>
                                     </li>
                                 }

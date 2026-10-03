@@ -109,6 +109,8 @@ export interface IndexedContentPresence {
     key: string;
     /** The ids of the lecture units holding at least one object in the backing collection. */
     unitIds: number[];
+    /** Present collection content that no longer matches this collection's indexing rule. Omitted by older servers and when empty. */
+    orphanedUnitIds?: number[];
 }
 
 /**

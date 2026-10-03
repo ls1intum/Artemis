@@ -262,4 +262,39 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         expect(query('tree-dot-lecture:21')?.className).toContain('text-state-danger');
         expect(query('tree-dot-lecture:20')?.className).toContain('text-state-success');
     });
+
+    it('should mark retained orphaned content without mislabelling the still-valid unit metadata', () => {
+        // The PDF source disappeared after slides were indexed. The unit metadata remains expected, but its slides must
+        // make the unit and collapsed lecture incomplete and remain selectable for inspection.
+        fixture.componentRef.setInput('contentPresence', [
+            { key: 'slides', unitIds: [11], orphanedUnitIds: [11] },
+            { key: 'unit_summary', unitIds: [10], orphanedUnitIds: [] },
+        ]);
+        fixture.componentRef.setInput('contentGaps', []);
+        fixture.detectChanges();
+
+        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-danger');
+        click('tree-toggle-lecture:20');
+        expect(query('tree-dot-unit:11')?.className).toContain('text-state-danger');
+        expect(query('unit-orphaned:11')).toBeFalsy();
+
+        click('tree-toggle-unit:11');
+        expect(query('content-orphaned:coll:11:slides')).toBeTruthy();
+        click('tree-node-coll:11:slides');
+        expect(component.selection()).toEqual({ kind: 'collection', unitId: 11, key: 'slides' });
+    });
+
+    it('should treat omitted and empty orphaned-unit ids as compatible healthy content', () => {
+        fixture.componentRef.setInput('contentGaps', []);
+        fixture.componentRef.setInput('contentPresence', [{ key: 'unit_summary', unitIds: [11] }]);
+        fixture.detectChanges();
+        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-success');
+
+        fixture.componentRef.setInput('contentPresence', [{ key: 'unit_summary', unitIds: [11], orphanedUnitIds: [] }]);
+        fixture.detectChanges();
+        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-success');
+        click('tree-toggle-lecture:20');
+        click('tree-toggle-unit:11');
+        expect(query('content-orphaned:coll:11:unit_summary')).toBeFalsy();
+    });
 });
