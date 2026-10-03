@@ -1,0 +1,337 @@
+import { describe, expect, it } from 'vitest';
+import { parseCitationNumbers, renderCitationMarkers } from './iris-citation-markers.util';
+
+describe('renderCitationMarkers', () => {
+    it('converts a single marker into a citation chip element', () => {
+        const result = renderCitationMarkers('The quiz is worth 4 points.[2]', 3);
+        expect(result.html).toBe('The quiz is worth 4 points.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('renders a run of consecutive markers as one chip per source', () => {
+        // One hover target and one link per source: a combined chip could neither say what source 3
+        // alone supports nor open anything but the first of them.
+        const result = renderCitationMarkers('Composition beats inheritance.[1][3]', 3);
+        expect(result.html).toBe(
+            'Composition beats inheritance.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup><sup class="iris-cite" data-n="3" role="link" tabindex="0">3</sup>',
+        );
+        expect([...result.citedNumbers]).toEqual([1, 3]);
+    });
+
+    it('gives every chip in a run exactly one source number', () => {
+        const result = renderCitationMarkers('Claim.[1][2][3]', 3);
+        const numbers = [...(result.html ?? '').matchAll(/data-n="([^"]*)"/g)].map((match) => match[1]);
+        expect(numbers).toEqual(['1', '2', '3']);
+    });
+
+    it('deduplicates repeated numbers inside a run', () => {
+        const result = renderCitationMarkers('Claim.[1][1]', 3);
+        expect(result.html).toBe('Claim.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+    });
+
+    it('drops out-of-range markers and removes a run left empty', () => {
+        const result = renderCitationMarkers('Wrong.[9] Right.[2]', 3);
+        expect(result.html).toBe('Wrong. Right.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('keeps separate runs as separate chips', () => {
+        const result = renderCitationMarkers('A.[1] B.[1]', 3);
+        expect(result.html).toBe('A.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup> B.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+    });
+
+    it('passes a markerless answer through untouched', () => {
+        const result = renderCitationMarkers('Plain answer with [brackets] but no numbers.', 3);
+        expect(result.html).toBe('Plain answer with [brackets] but no numbers.');
+        expect(result.citedNumbers.size).toBe(0);
+    });
+
+    it('passes undefined through untouched', () => {
+        const result = renderCitationMarkers(undefined, 3);
+        expect(result.html).toBeUndefined();
+        expect(result.citedNumbers.size).toBe(0);
+    });
+
+    it('strips nothing when there are no sources to index into', () => {
+        const result = renderCitationMarkers('Claim.[1]', 0);
+        expect(result.html).toBe('Claim.[1]');
+        expect(result.citedNumbers.size).toBe(0);
+    });
+
+    it('leaves a bracketed index inside an inline code span untouched', () => {
+        const result = renderCitationMarkers('Access the first element with `list[0]`.[2]', 2);
+        expect(result.html).toBe('Access the first element with `list[0]`.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('leaves a bracketed index inside a double-backtick span untouched', () => {
+        // CommonMark lets a code span use a longer backtick run so its content can contain a literal
+        // backtick; a regex that only recognizes single backticks would stop at that interior backtick
+        // and leak the rest, including the bracketed index, as citable prose.
+        const result = renderCitationMarkers('Escape a backtick with ``list[0] contains a ` character``.[2]', 2);
+        expect(result.html).toBe('Escape a backtick with ``list[0] contains a ` character``.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('does not close a one-backtick span on the tail of an internal two-backtick run', () => {
+        // CommonMark's closing delimiter must be a COMPLETE run of the same length as the opener: a
+        // 2-backtick run inside a 1-backtick span cannot close it, so the whole `a``values[1]` stays one
+        // span. A closer check that only looks at the character AFTER the backreference (not before) would
+        // wrongly treat the second of those two internal backticks as a standalone 1-backtick closer,
+        // ending the span early and leaking values[1] as citable prose.
+        const result = renderCitationMarkers('See `a``values[1]` here.[2]', 2);
+        expect(result.html).toBe('See `a``values[1]` here.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('does not retry an unmatched multi-backtick opener as a shorter one', () => {
+        // CommonMark: an opening backtick run with no LATER run of the exact same length anywhere is
+        // literal text, full stop — the parser never re-reads part of that same failed run as a fresh,
+        // shorter opener. A greedy `(`+)` capture that backtracks to a shorter prefix once the full-length
+        // closer is never found would wrongly treat the tail of this failed 2-backtick run plus a later,
+        // unrelated stray backtick as a matching 1-backtick span, hiding the real citation as "code".
+        const result = renderCitationMarkers('Use ``Claim.[1]` after.[2]', 2);
+        expect(result.html).toBe(
+            'Use ``Claim.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>` after.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>',
+        );
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('leaves a bracketed index inside a code span that wraps onto the next line untouched', () => {
+        // CommonMark folds a line break inside a code span to a space at render time, so a span can
+        // legitimately cross one newline within the same paragraph; excluding newlines entirely would
+        // stop at the break and leak the rest, including the bracketed index, as citable prose.
+        const answer = 'Access it with `list[0]\ncontains the first item`.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toBe('Access it with `list[0]\ncontains the first item`.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('leaves a bracketed index inside an indented code block untouched', () => {
+        const answer = ['See below.[1]', '', '    const x = values[1];', '    return x;', '', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('    const x = values[1];\n    return x;');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('protects an indented code block at the very start of the answer', () => {
+        const answer = ['    values[1] = 2;', '', 'Explained above.[1]'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('    values[1] = 2;');
+        expect(result.html).toContain('Explained above.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+    });
+
+    it('protects an indented code block that uses a tab instead of four spaces', () => {
+        // A tab advances to the next 4-column stop on its own, so CommonMark counts it as satisfying
+        // the indentation requirement the same as 4 literal spaces; a character-count check would miss it.
+        const answer = ['See below.[1]', '', '\tconst x = values[1];', '', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('\tconst x = values[1];');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+    });
+
+    it('recognizes a whitespace-only line as the blank line before an indented block', () => {
+        // A line containing only trailing spaces is still a blank line in CommonMark; requiring a bare
+        // "\n\n" would miss the block that follows one and leak its content, including values[1], as prose.
+        const answer = 'See below.[1]\n   \n    const x = values[1];\n\nDone.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('    const x = values[1];');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+    });
+
+    it('does not let an unclosed backtick swallow a later paragraph as code', () => {
+        // A code span's content may cross one line break but must not cross a blank line: CommonMark
+        // inline parsing never spans a paragraph boundary either way, and without this bound one stray
+        // unclosed backtick could silently eat every following paragraph's citations as "code".
+        const answer = 'A stray backtick ` appears here.[1]\n\nA new paragraph follows.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toBe(
+            'A stray backtick ` appears here.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>\n\nA new paragraph follows.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>',
+        );
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('leaves a tilde-fenced code block untouched', () => {
+        const answer = ['See the loop below.[1]', '~~~python', 'for i in range(3):', '    print(items[i])', '~~~', 'Iteration order matches the list.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('~~~python\nfor i in range(3):\n    print(items[i])\n~~~');
+        expect(result.html).toContain('See the loop below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Iteration order matches the list.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('leaves a bracketed index inside a four-backtick fence untouched', () => {
+        // A fence needs a longer delimiter than 3 backticks precisely when its own content contains a
+        // triple-backtick span; the delimiter-length backreference must track that, not assume exactly 3.
+        const answer = ['See below.[1]', '````python', 'print(items[0])  # ```not a fence```', '````', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('````python\nprint(items[0])  # ```not a fence```\n````');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('does not close a fence early on a delimiter embedded mid-line inside its own content', () => {
+        // A closing fence must be a legal closing-fence LINE (the delimiter alone, give or take
+        // whitespace) — not merely the same characters appearing anywhere later in the content. A quoted
+        // string literal containing the fence delimiter must not end the block early and leak the rest,
+        // including a real bracketed expression on a later line, as citable prose.
+        const answer = ['See below.[1]', '```python', 'const marker = "```";', 'const x = values[1];', '```', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```python\nconst marker = "```";\nconst x = values[1];\n```');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('does not close a tilde fence early on a delimiter embedded mid-line inside its own content', () => {
+        const answer = ['See below.[1]', '~~~python', 'const marker = "~~~";', 'const x = values[1];', '~~~', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('~~~python\nconst marker = "~~~";\nconst x = values[1];\n~~~');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('closes a tilde fence on a longer closing run than the opening', () => {
+        // CommonMark permits a closing run with AT LEAST as many characters as the opening — a ~~~
+        // block can legally close with ~~~~. An exact-length-only backreference would leave it
+        // unclosed, falling through and exposing values[1] inside it as citable prose.
+        const answer = ['See below.[1]', '~~~python', 'const x = values[1];', '~~~~', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('~~~python\nconst x = values[1];\n~~~~');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('closes a backtick fence on a longer closing run than the opening', () => {
+        const answer = ['See below.[1]', '```python', 'items[0] = "```"', '````', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```python\nitems[0] = "```"\n````');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('protects a backtick fence with no closing line through the end of the answer', () => {
+        // CommonMark treats end-of-document as an implicit close for an unterminated fence. This matters
+        // because the answer streams in sentence by sentence: a partial draft can legitimately have
+        // emitted an opening fence but not its closer yet, and the code inside it must stay protected.
+        const answer = ['See below.[1]', '```python', 'const x = values[1];'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('```python\nconst x = values[1];');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
+    it('protects a tilde fence with no closing line through the end of the answer', () => {
+        const answer = ['See below.[1]', '~~~python', 'const x = values[1];'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('~~~python\nconst x = values[1];');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
+    it('treats a mid-line triple-backtick run as an inline span, not an unanchored fence', () => {
+        // A fence opener is only legal at the start of a line. A triple-backtick inline span used
+        // mid-sentence must fall through to the exact-length inline-span alternative instead — an
+        // unanchored fence alternative would treat it as an unterminated fence opener (its own closer
+        // is mid-line too, so no legal closing FENCE LINE ever follows) and, via the EOF fallback
+        // above, swallow everything after it, including the real [2] citation.
+        const answer = 'Use ```values[1]``` here.[2]';
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```values[1]```');
+        expect(result.html).toContain('here.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('opens an indented tilde fence up to 3 leading spaces in', () => {
+        // CommonMark allows a fence opener up to 3 columns in (4+ makes it an indented code block
+        // instead). An anchor that only recognized a fence starting at column 0 would miss this one
+        // entirely, letting values[1] inside it fall through as citable prose.
+        const answer = ['See below.[1]', '   ~~~python', '   const x = values[1];', '   ~~~', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('   ~~~python\n   const x = values[1];\n   ~~~');
+        expect(result.html).toContain('See below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('treats a line-start triple-backtick run with a backtick in its info string as an inline span, not a fence', () => {
+        // CommonMark: a backtick fence's info string may not itself contain a backtick. Without that
+        // check, this line-start run is misread as a fence opener whose closer is mid-line — no legal
+        // closing FENCE LINE ever follows it, so the EOF fallback would swallow the real [2] citation.
+        const answer = ['```values[1]``` more text.', 'Done.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```values[1]```');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('still opens a fence at the very start of the answer', () => {
+        const answer = ['```python', 'const x = values[1];', '```', 'Done.[1]'].join('\n');
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toContain('```python\nconst x = values[1];\n```');
+        expect(result.html).toContain('Done.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
+    it('leaves a fenced code block untouched, including a real citation-shaped marker after it', () => {
+        const answer = ['See the loop below.[1]', '```python', 'for i in range(3):', '    print(items[i])', '```', 'Iteration order matches the list.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('```python\nfor i in range(3):\n    print(items[i])\n```');
+        expect(result.html).toContain('See the loop below.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect(result.html).toContain('Iteration order matches the list.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([1, 2]);
+    });
+
+    it('leaves a bracketed index inside inline math untouched', () => {
+        const result = renderCitationMarkers('The value is $x[1]$ here.[2]', 2);
+        expect(result.html).toBe('The value is $x[1]$ here.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('leaves a bracketed index inside display math untouched', () => {
+        const answer = ['$$', 'x[1] = y', '$$', 'See more.[2]'].join('\n');
+        const result = renderCitationMarkers(answer, 2);
+        expect(result.html).toContain('$$\nx[1] = y\n$$');
+        expect(result.html).toContain('See more.<sup class="iris-cite" data-n="2" role="link" tabindex="0">2</sup>');
+        expect([...result.citedNumbers]).toEqual([2]);
+    });
+
+    it('does not treat a stray unpaired dollar sign as math and hide citations after it', () => {
+        // "$5 and $10" has no valid inline-math closer (the second $ sits right after a space), so it
+        // must not be protected — and, critically, must not swallow the real citation that follows it.
+        const result = renderCitationMarkers('This costs $5 and $10.[1]', 1);
+        expect(result.html).toBe('This costs $5 and $10.<sup class="iris-cite" data-n="1" role="link" tabindex="0">1</sup>');
+        expect([...result.citedNumbers]).toEqual([1]);
+    });
+
+    it('protects a display math block with no closing line through the end of the answer', () => {
+        // Mirrors the fence EOF fallback: a streamed partial can legitimately contain an opening $$
+        // whose closer has not arrived yet, and the in-progress formula must stay protected.
+        const answer = 'Consider $$x[1] = y';
+        const result = renderCitationMarkers(answer, 1);
+        expect(result.html).toBe('Consider $$x[1] = y');
+        expect(result.citedNumbers.size).toBe(0);
+    });
+});
+
+describe('parseCitationNumbers', () => {
+    it('parses the space-separated data attribute', () => {
+        expect(parseCitationNumbers('1 3')).toEqual([1, 3]);
+    });
+
+    it('ignores garbage values', () => {
+        expect(parseCitationNumbers('1 x 0 -2')).toEqual([1]);
+    });
+
+    it('returns empty for a missing attribute', () => {
+        expect(parseCitationNumbers(undefined)).toEqual([]);
+    });
+});
