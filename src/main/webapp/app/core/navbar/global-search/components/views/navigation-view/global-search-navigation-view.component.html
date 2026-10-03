@@ -1,6 +1,6 @@
 <!-- Iris inline answer card -->
 @if (irisEnabled()) {
-    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" />
+    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" [courseIds]="courseIds()" [excludeCourseIds]="excludeCourseIds()" />
 }
 
 <!-- Error state -->
@@ -13,7 +13,7 @@
 <!-- Results list when searching or filter is active -->
 @if (showResults() && !isLoading() && !searchError()) {
     @if (results().length > 0) {
-        <div class="search-results-list" [class.mt-3]="irisEnabled()">
+        <div class="search-results-list" [class.mt-3]="irisOccupiesSpace()">
             @for (result of results(); track result.id; let i = $index) {
                 <div #selectableItem>
                     <jhi-global-search-result-item
@@ -26,7 +26,7 @@
             }
         </div>
     } @else {
-        <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisEnabled()">
+        <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisOccupiesSpace()">
             @if (isContentSearchPrompt()) {
                 <p>{{ 'global.search.contentSearchPrompt' | artemisTranslate }}</p>
             } @else if (isTooShortQuery()) {
@@ -41,7 +41,7 @@
     }
 } @else if (isLoading()) {
     <!-- Skeleton loading placeholders -->
-    <div class="search-results-list" [class.mt-3]="irisEnabled()">
+    <div class="search-results-list" [class.mt-3]="irisOccupiesSpace()">
         @for (_ of skeletonItems; track $index) {
             <div class="skeleton-result-item p-3" aria-hidden="true">
                 <div class="d-flex align-items-start gap-3">

@@ -13,6 +13,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerClaimResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerHeartbeatRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerHeartbeatResponseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
 /**
@@ -22,6 +24,9 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * <li>Inbound status update reads {@code error.code}.</li>
  * <li>Inbound ingestion status reads optional {@code displayPageNumbers} from its dedicated field.</li>
  * <li>Inbound status update silently ignores camelCase {@code errorCode} (unknown field), matching Spring Boot's default mapper config.</li>
+ * <li>Inbound global search status update reads the optional {@code stage}/{@code stageSources} fields, and
+ * tolerates their absence (an older Pyris that never sends them) without error.</li>
+ * <li>Inbound global search status update reads the optional {@code citationSourceTypes} field the same way.</li>
  * </ul>
  */
 class WireFormatContractTest {
@@ -99,5 +104,42 @@ class WireFormatContractTest {
         String json = mapper.writeValueAsString(new PyrisWorkerClaimResponseDTO(java.util.List.of()));
         // NON_EMPTY drops the empty list entirely — the worker treats a missing "jobs" as none.
         assertThat(mapper.readTree(json).has("jobs")).isFalse();
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateReadsStage() throws Exception {
+        String json = "{\"runState\":\"RUNNING\",\"stage\":\"searching\"}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.runState()).isEqualTo(PyrisRunState.RUNNING);
+        assertThat(dto.stage()).isEqualTo("searching");
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateToleratesAMissingStageFromAnOlderPyris() throws Exception {
+        String json = "{\"runState\":\"RUNNING\"}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.stage()).isNull();
+        assertThat(dto.stageSources()).isNull();
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateReadsStageSources() throws Exception {
+        String json = "{\"runState\":\"RUNNING\",\"stage\":\"generating\",\"stageSources\":[\"Advanced Algorithms\",\"Software Engineering\"]}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.stageSources()).containsExactly("Advanced Algorithms", "Software Engineering");
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateReadsCitationSourceTypes() throws Exception {
+        String json = "{\"runState\":\"FINISHED\",\"answer\":\"About the course.[1] About the slide.[2]\",\"citationSourceTypes\":[\"entity\",\"lecture\"]}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.citationSourceTypes()).containsExactly("entity", "lecture");
+    }
+
+    @Test
+    void inboundGlobalSearchStatusUpdateToleratesAMissingCitationSourceTypesFromAnOlderPyris() throws Exception {
+        String json = "{\"runState\":\"FINISHED\",\"answer\":\"answer\"}";
+        var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
+        assertThat(dto.citationSourceTypes()).isNull();
     }
 }

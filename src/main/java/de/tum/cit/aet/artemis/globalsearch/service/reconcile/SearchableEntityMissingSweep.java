@@ -1,0 +1,172 @@
+package de.tum.cit.aet.artemis.globalsearch.service.reconcile;
+
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
+import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
+import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntityReconcileState;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService;
+
+/**
+ * Queues a write for every entity the index has never confirmed holding.
+ * <p>
+ * An entity with no ledger row was never successfully written: it predates the outbox, or its change was lost
+ * before reaching it. A ledger row alone is not enough to call an entity settled, though: it proves a write once
+ * succeeded, not that the row survived afterward, so every candidate the ledger claims is synced is verified
+ * against the index itself before being trusted. Catching that gap is this pass's job specifically, not the drift
+ * sweep's: drift only ever compares the database against the same ledger, never against Weaviate, so a row lost
+ * from the index with its ledger entry left intact looks unchanged to it.
+ * <p>
+ * The first run against an empty ledger reports the entire corpus as missing, which is correct rather than a
+ * problem to design around: nothing written before the ledger existed can be assumed good. It is queued a page at
+ * a time, throttled by the outbox depth limit, and drains over days without anyone noticing.
+ */
+@Lazy
+@Service
+@Conditional(WeaviateEnabled.class)
+public class SearchableEntityMissingSweep {
+
+    private static final Logger log = LoggerFactory.getLogger(SearchableEntityMissingSweep.class);
+
+    private final SearchableEntityIdEnumerator idEnumerator;
+
+    private final SearchableEntitySyncStateRepository syncStateRepository;
+
+    private final SearchableEntityReconcileStateRepository reconcileStateRepository;
+
+    private final ReconcileEnqueueService enqueueService;
+
+    private final WeaviateReconcileProperties reconcileProperties;
+
+    private final SearchableEntityIndexScanService indexScanService;
+
+    public SearchableEntityMissingSweep(SearchableEntityIdEnumerator idEnumerator, SearchableEntitySyncStateRepository syncStateRepository,
+            SearchableEntityReconcileStateRepository reconcileStateRepository, ReconcileEnqueueService enqueueService, WeaviateReconcileProperties reconcileProperties,
+            SearchableEntityIndexScanService indexScanService) {
+        this.idEnumerator = idEnumerator;
+        this.syncStateRepository = syncStateRepository;
+        this.reconcileStateRepository = reconcileStateRepository;
+        this.enqueueService = enqueueService;
+        this.reconcileProperties = reconcileProperties;
+        this.indexScanService = indexScanService;
+    }
+
+    /**
+     * Examines one page of ids and queues whatever the ledger has no record of, then saves where it got to.
+     * <p>
+     * One page per tick is the whole budget. That keeps the cost of this pass a constant the operator chooses,
+     * rather than something that grows with the size of the corpus.
+     */
+    public void sweep() {
+        String runId = ReconcileRunId.next();
+        List<String> types = reconcileProperties.entityTypes();
+        if (types.isEmpty()) {
+            return;
+        }
+        if (!enqueueService.canEnqueue()) {
+            return;
+        }
+
+        SearchableEntityReconcileState state = reconcileStateRepository.findByPass(ReconcilePass.MISSING)
+                .orElseGet(() -> new SearchableEntityReconcileState(ReconcilePass.MISSING));
+        String currentType = resolveCurrentType(state, types);
+        // Read after resolving, since falling back to another type also discards the watermark.
+        long afterId = state.getPositionEntityId() == null ? 0L : state.getPositionEntityId();
+
+        Optional<List<Long>> page = idEnumerator.nextIndexableIds(currentType, afterId, reconcileProperties.missingBatchSize());
+        if (page.isEmpty()) {
+            // The module owning this type is disabled, so nothing is known about it. Skipping is the only safe
+            // reading: concluding "nothing exists" here would queue a repair for every indexed row of this type.
+            log.debug("[missing {}] skipping {}: its module is disabled", runId, currentType);
+            advanceToNextType(runId, state, currentType, types);
+            reconcileStateRepository.save(state);
+            return;
+        }
+
+        List<Long> candidateIds = page.get();
+        if (candidateIds.isEmpty()) {
+            advanceToNextType(runId, state, currentType, types);
+            reconcileStateRepository.save(state);
+            return;
+        }
+
+        Set<Long> alreadySynced = syncStateRepository.findSyncedEntityIds(currentType, candidateIds);
+        // A ledger row proves a write once succeeded, not that the row survived: verify the ledger's claim against
+        // the index itself, rather than trusting it outright, so an externally lost row (a restore from an older
+        // Weaviate snapshot, for instance) does not stay missing forever. Only the claimed-synced ids are worth the
+        // round trip; anything absent from the ledger is already known to need enqueuing.
+        List<Long> claimedSynced = candidateIds.stream().filter(alreadySynced::contains).toList();
+        Set<Long> actuallyIndexed = claimedSynced.isEmpty() ? Set.of() : indexScanService.existingEntityIds(currentType, claimedSynced);
+
+        long enqueued = 0;
+        for (Long entityId : candidateIds) {
+            boolean settled = alreadySynced.contains(entityId) && actuallyIndexed.contains(entityId);
+            if (!settled && enqueueService.enqueueUpsert(currentType, entityId, WeaviateOutboxOrigin.RECONCILE_MISSING)) {
+                enqueued++;
+            }
+        }
+
+        state.setPositionEntityType(currentType);
+        state.setPositionEntityId(candidateIds.getLast());
+        state.recordProgress(candidateIds.size(), enqueued, 0);
+        reconcileStateRepository.save(state);
+
+        log.debug("[missing {}] checked {} {} ids after {}, queued {}", runId, candidateIds.size(), currentType, afterId, enqueued);
+        if (enqueued > 0) {
+            log.info("[missing {}] queued {} of {} {} entities the index had no record of", runId, enqueued, candidateIds.size(), currentType);
+        }
+    }
+
+    /**
+     * Picks up where the pass left off, falling back to the first configured type when there is nothing to resume
+     * or when the stored type is no longer configured.
+     * <p>
+     * Falling back also discards the watermark, because it counts ids within one type: carrying it across would
+     * start the next type partway through and silently skip everything below it for a whole cycle.
+     */
+    private String resolveCurrentType(SearchableEntityReconcileState state, List<String> types) {
+        String storedType = state.getPositionEntityType();
+        if (storedType == null || !types.contains(storedType)) {
+            String firstType = types.getFirst();
+            state.setPositionEntityType(firstType);
+            state.setPositionEntityId(null);
+            return firstType;
+        }
+        return storedType;
+    }
+
+    /**
+     * Moves to the next configured type, or wraps around and starts a fresh cycle after the last one.
+     */
+    private void advanceToNextType(String runId, SearchableEntityReconcileState state, String currentType, List<String> types) {
+        int nextIndex = types.indexOf(currentType) + 1;
+        if (nextIndex < types.size()) {
+            state.setPositionEntityType(types.get(nextIndex));
+            state.setPositionEntityId(null);
+            return;
+        }
+        logCycleSummary(runId, state);
+        state.startNewCycle();
+        state.setPositionEntityType(types.getFirst());
+    }
+
+    private void logCycleSummary(String runId, SearchableEntityReconcileState state) {
+        ZonedDateTime cycleStartedAt = state.getCycleStartedAt();
+        String elapsed = cycleStartedAt == null ? "unknown" : Duration.between(cycleStartedAt, ZonedDateTime.now()).toString();
+        log.info("[missing {}] completed a cycle: {} entities checked, {} queued, elapsed {}", runId, state.getEntitiesChecked(), state.getRepairsEnqueued(), elapsed);
+    }
+}
