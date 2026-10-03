@@ -224,11 +224,9 @@
                     "fileUpload": "Datei-Upload",
                     "quiz": "Quiz"
                 },
-                "metis": {
-                    "post": "Beitrag",
-                    "answerPost": "Antwort"
-                },
                 "messages": {
+                    "post": "Beitrag",
+                    "answerPost": "Antwort",
                     "conversation": "Konversation",
                     "conversationParticipant": "Unterhaltungsdetails"
                 }
@@ -419,7 +417,10 @@
             "invalidTime": "Bitte eine gültige Uhrzeit eingeben.",
             "openTime": "Uhr öffnen",
             "timeDialog": "Uhrzeit wählen",
-            "timePlaceholder": "HH:mm"
+            "timePlaceholder": "HH:mm",
+            "dateDialog": "Datum auswählen",
+            "invalidDate": "Bitte ein gültiges Datum eingeben.",
+            "datePlaceholder": "DD.MM.YYYY"
         },
         "imageCropper": {
             "sourceImage": "Bild zum Zuschneiden"
@@ -431,6 +432,7 @@
         "controlCenter": "Kontrollzentrum",
         "action": {
             "add": "Hinzufügen",
+            "create": "Erstellen",
             "addblob": "Blob hinzufügen",
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
@@ -474,6 +476,7 @@
             "retry": "Erneut versuchen",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
+            "dismiss": "Ausblenden",
             "done": "Fertig",
             "finish": "Abschließen",
             "import": "Import",
