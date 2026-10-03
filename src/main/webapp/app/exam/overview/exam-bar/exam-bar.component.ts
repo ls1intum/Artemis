@@ -10,11 +10,12 @@ import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-bar',
-    imports: [ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule, TranslateDirective, TumAetUiButtonDirective],
+    imports: [ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule, TranslateDirective, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './exam-bar.component.html',
 })
 export class ExamBarComponent implements AfterViewInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -64,6 +64,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
 
     readonly exam = signal<Exam>(undefined!);
+    /** One observable per exam, so that the delete dialog does not get a new input on every change detection pass. */
+    readonly examDeletionSummary = computed(() => this.fetchExamDeletionSummary());
     formattedStartText?: SafeHtml;
     formattedConfirmationStartText?: SafeHtml;
     formattedEndText?: SafeHtml;
@@ -234,7 +236,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         };
     }
 
-    fetchExamDeletionSummary(): Observable<EntitySummary> {
+    private fetchExamDeletionSummary(): Observable<EntitySummary> {
         return this.examManagementService.getDeletionSummary(this.exam().course!.id!, this.exam().id!).pipe(
             map((response) => {
                 const summary = response.body;

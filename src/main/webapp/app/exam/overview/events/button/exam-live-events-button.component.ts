@@ -5,17 +5,10 @@ import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-ang
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
+import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/overview/events/exam-live-events.constants';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/overlay/exam-live-events-overlay.component';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
-export const USER_DISPLAY_RELEVANT_EVENTS = [
-    ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
-    ExamLiveEventType.WORKING_TIME_UPDATE,
-    ExamLiveEventType.EXAM_ATTENDANCE_CHECK,
-    ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
-];
-export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, ExamLiveEventType.WORKING_TIME_UPDATE, ExamLiveEventType.PROBLEM_STATEMENT_UPDATE];
 
 @Component({
     selector: 'jhi-exam-live-events-button',

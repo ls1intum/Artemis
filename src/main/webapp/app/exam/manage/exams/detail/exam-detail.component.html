@@ -72,7 +72,7 @@
                     [(visible)]="deleteDialogVisible"
                     [entityTitle]="exam()?.title || ''"
                     entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
-                    [fetchEntitySummary]="fetchExamDeletionSummary()"
+                    [fetchEntitySummary]="examDeletionSummary()"
                     deleteQuestion="artemisApp.examManagement.delete.question"
                     deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
                     [dialogError]="dialogError$"

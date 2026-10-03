@@ -22,6 +22,7 @@
                             [labelName]="internalItem.item.labelStringKey"
                             [shouldDisplayTimeZoneWarning]="false"
                             [hideValidationMessage]="true"
+                            [ariaDescribedBy]="internalItem.isInvalid || internalItem.hasWarning ? internalItem.inputId + '-info' : undefined"
                             [ariaRequired]="true"
                             [value]="internalItem.date"
                             [invalid]="internalItem.isInvalid"
@@ -33,6 +34,7 @@
                     @if (internalItem.isInvalid || internalItem.hasWarning) {
                         @let tooltip = internalItem.tooltipStringKey ? (internalItem.tooltipStringKey | artemisTranslate) : '';
                         <span
+                            [id]="internalItem.inputId + '-info'"
                             class="mb-2.5 w-4"
                             [class]="internalItem.hasWarning && !internalItem.isInvalid ? 'text-state-warning' : 'text-state-danger'"
                             tabindex="0"

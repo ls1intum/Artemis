@@ -24,7 +24,7 @@
                         size="small"
                         data-testid="hand-in-early"
                         class="ml-2!"
-                        aria-label="Hand In Early"
+                        [attr.aria-label]="'artemisApp.examParticipation.handInEarly' | artemisTranslate"
                         (click)="handInEarly()"
                     >
                         <span>
