@@ -5,9 +5,16 @@ import org.gradle.api.tasks.testing.Test
 
 def aresReservedPackageBoundaryVersion = '2'
 def aresReservedPackagePatterns = [
-        'java/**', 'javax/**', 'sun/**', 'jdk/**', 'com/sun/**',
-        'de/tum/cit/ase/ares/api/**', 'net/bytebuddy/**', 'org/aspectj/**',
-        'com/ibm/wala/**', 'com/tngtech/archunit/**', 'anonymous/toolclasses/**', 'metatest/**'
+        // The JDK
+        'java/**', 'javax/**', 'jdk/**', 'sun/**', 'com/sun/**',
+        // Ares and the libraries it brings to the test runtime. Student classes in these packages would shadow the real
+        // ones (e.g. an Assertions class that never fails) and forge the grading.
+        'anonymous/toolclasses/**', 'ch/qos/logback/**', 'com/fasterxml/**', 'com/github/javaparser/**', 'com/google/**',
+        'com/ibm/wala/**', 'com/intellij/**', 'com/opencsv/**', 'com/tngtech/archunit/**', 'de/tum/cit/ase/ares/**',
+        'javassist/**', 'junit/**', 'metatest/**', 'net/bytebuddy/**', 'net/jqwik/**', 'org/apache/**', 'org/apfloat/**',
+        'org/apiguardian/**', 'org/aspectj/**', 'org/assertj/**', 'org/checkerframework/**', 'org/eclipse/**', 'org/gradle/**',
+        'org/hamcrest/**', 'org/jacoco/**', 'org/jgrapht/**', 'org/jheaps/**', 'org/json/**', 'org/jspecify/**', 'org/junit/**',
+        'org/mockito/**', 'org/objenesis/**', 'org/opentest4j/**', 'org/slf4j/**', 'org/yaml/**', 'worker/org/gradle/**'
 ]
 
 tasks.register('verifyAresReservedPackagesV2') {

@@ -173,19 +173,52 @@
                             <target>
                                 <resourcecount property="ares.reserved.package.count">
                                     <fileset dir="${project.build.outputDirectory}">
+                                        <!-- The JDK -->
                                         <include name="java/**"/>
                                         <include name="javax/**"/>
-                                        <include name="sun/**"/>
                                         <include name="jdk/**"/>
+                                        <include name="sun/**"/>
                                         <include name="com/sun/**"/>
-                                        <include name="de/tum/cit/ase/ares/api/**"/>
-                                        <include name="net/bytebuddy/**"/>
-                                        <include name="org/aspectj/**"/>
-                                        <include name="com/ibm/wala/**"/>
-                                        <include name="com/tngtech/archunit/**"/>
+                                        <!-- Ares and the libraries it brings to the test runtime. Student classes in these packages would shadow
+                                             the real ones (e.g. an Assertions class that never fails) and forge the grading. -->
                                         <include name="anonymous/toolclasses/**"/>
-                                        <include name="metatest/**"/>
+                                        <include name="ch/qos/logback/**"/>
+                                        <include name="com/fasterxml/**"/>
+                                        <include name="com/github/javaparser/**"/>
+                                        <include name="com/google/**"/>
+                                        <include name="com/ibm/wala/**"/>
+                                        <include name="com/intellij/**"/>
+                                        <include name="com/opencsv/**"/>
+                                        <include name="com/tngtech/archunit/**"/>
+                                        <include name="de/tum/cit/ase/ares/**"/>
+                                        <include name="javassist/**"/>
+                                        <include name="junit/**"/>
                                         <include name="kotlin/**"/>
+                                        <include name="metatest/**"/>
+                                        <include name="net/bytebuddy/**"/>
+                                        <include name="net/jqwik/**"/>
+                                        <include name="org/apache/**"/>
+                                        <include name="org/apfloat/**"/>
+                                        <include name="org/apiguardian/**"/>
+                                        <include name="org/aspectj/**"/>
+                                        <include name="org/assertj/**"/>
+                                        <include name="org/checkerframework/**"/>
+                                        <include name="org/eclipse/**"/>
+                                        <include name="org/gradle/**"/>
+                                        <include name="org/hamcrest/**"/>
+                                        <include name="org/jacoco/**"/>
+                                        <include name="org/jetbrains/**"/>
+                                        <include name="org/jgrapht/**"/>
+                                        <include name="org/jheaps/**"/>
+                                        <include name="org/json/**"/>
+                                        <include name="org/jspecify/**"/>
+                                        <include name="org/junit/**"/>
+                                        <include name="org/mockito/**"/>
+                                        <include name="org/objenesis/**"/>
+                                        <include name="org/opentest4j/**"/>
+                                        <include name="org/slf4j/**"/>
+                                        <include name="org/yaml/**"/>
+                                        <include name="worker/org/gradle/**"/>
                                     </fileset>
                                 </resourcecount>
                                 <fail message="Ares reserved-package validation 2 rejected student output. No bypass flag is supported.">
