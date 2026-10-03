@@ -16,7 +16,8 @@ import { IrisChat } from '../../support/pageobjects/iris/IrisChat';
  *
  * The onboarding tour is not handled here: it opens an unpredictable time after the chat appears, so there is no
  * moment at which it is safe to conclude it will not. The tests sign in with the tour already completed instead
- * (see loginWithoutIrisTour), and the last assertion fails with a clear message should that ever stop working.
+ * (see loginWithoutIrisTour). The last assertion is only a snapshot, not a wait: it names the cause when the tour is
+ * already open, which is how a click blocked by its backdrop would otherwise look like an unrelated timeout.
  */
 async function openIrisChat(page: Page): Promise<void> {
     await expect(page.locator('jhi-course-chatbot')).toBeVisible({ timeout: 30_000 });

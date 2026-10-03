@@ -128,8 +128,8 @@ export class IrisChat {
         await expect(input).toBeVisible();
         await input.fill(text);
         // The textarea is usable before the chat session has loaded, but the send button stays disabled until then, because a
-        // message sent without a session is dropped. Waiting here makes that wait explicit, and a session that never loads
-        // fail as exactly that rather than as an assistant reply that never arrives 60 seconds later.
+        // message sent without a session cannot be delivered. Waiting here makes that wait explicit, so a session that never
+        // loads fails as exactly that rather than as an assistant reply that never arrives 60 seconds later.
         await expect(this.getSendButton()).toBeEnabled({ timeout: 30_000 });
         await this.getSendButton().click();
     }

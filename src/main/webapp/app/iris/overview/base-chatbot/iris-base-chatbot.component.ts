@@ -310,8 +310,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.awaitingAnswer(),
     );
-    // Without a session there is nothing to send to: the chat service rejects the message, yet onSend() has already
-    // cleared the textarea, so a message sent while the session is still loading would be lost.
+    // Without a session there is nothing to send to: the chat service rejects the message, so sending while the session
+    // is still loading would only lose what the user typed.
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled() || this.currentSessionId() === undefined);
     readonly canShowSuggestions = computed(
         () =>
