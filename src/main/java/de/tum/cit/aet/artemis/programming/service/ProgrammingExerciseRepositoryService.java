@@ -465,11 +465,8 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     private static Path getRepoAbsoluteLocalPath(@NonNull final Repository repository) {
-        final Path localPath = repository.getLocalPath();
-        if (localPath == null) {
-            throw new IllegalStateException("The repository " + repository.getRemoteRepositoryUri() + " has no local path");
-        }
-        return localPath.toAbsolutePath();
+        return Optional.ofNullable(repository.getLocalPath())
+                .orElseThrow(() -> new IllegalStateException("The repository " + repository.getRemoteRepositoryUri() + " has no local path")).toAbsolutePath();
     }
 
     /**

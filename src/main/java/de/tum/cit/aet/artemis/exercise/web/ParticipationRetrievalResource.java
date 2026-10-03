@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -138,10 +137,21 @@ public class ParticipationRetrievalResource {
     }
 
     private Course findCourseFromParticipation(StudentParticipation participation) {
-        return Optional.ofNullable(participation.getExercise()).map(Exercise::getCourseViaExerciseGroupOrCourseMember)
-                .or(() -> Optional.ofNullable(studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise())
-                        .map(Exercise::getCourseViaExerciseGroupOrCourseMember))
-                .orElseThrow(() -> new EntityNotFoundException("Course", "of participation " + participation.getId()));
+        Course course = null;
+        Exercise exercise = participation.getExercise();
+        if (exercise != null) {
+            course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        }
+        if (course == null) {
+            Exercise loadedExercise = studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise();
+            if (loadedExercise != null) {
+                course = loadedExercise.getCourseViaExerciseGroupOrCourseMember();
+            }
+        }
+        if (course == null) {
+            throw new EntityNotFoundException("Course", "of participation " + participation.getId());
+        }
+        return course;
     }
 
     /**

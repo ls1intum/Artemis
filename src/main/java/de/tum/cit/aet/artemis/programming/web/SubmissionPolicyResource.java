@@ -194,7 +194,7 @@ public class SubmissionPolicyResource {
      */
     @PutMapping("programming-exercises/{exerciseId}/submission-policy")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> toggleSubmissionPolicy(@PathVariable Long exerciseId, @RequestParam Boolean activate) {
+    public ResponseEntity<Void> toggleSubmissionPolicy(@PathVariable Long exerciseId, @RequestParam boolean activate) {
         log.debug("REST request to toggle the submission policy for programming exercise {}", exerciseId);
         HttpHeaders responseHeaders;
 
@@ -213,7 +213,7 @@ public class SubmissionPolicyResource {
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
 
-    private static SubmissionPolicy getSubmissionPolicy(Boolean activate, ProgrammingExercise exercise) {
+    private static SubmissionPolicy getSubmissionPolicy(boolean activate, ProgrammingExercise exercise) {
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
             throw new BadRequestAlertException("The submission policy could not be toggled, because the programming exercise does not have a submission policy.", ENTITY_NAME,

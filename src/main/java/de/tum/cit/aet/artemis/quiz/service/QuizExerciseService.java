@@ -762,6 +762,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public void handleDndBackgroundForCreation(DragAndDropQuestion question, Map<String, MultipartFile> fileMap) throws IOException {
         String path = question.getBackgroundFilePath();
+        if (path == null) {
+            throw new IllegalStateException("The drag and drop question " + question.getId() + " has no background image");
+        }
         FilePathType type = FilePathType.DRAG_AND_DROP_BACKGROUND;
         Path basePath = FilePathConverter.getDragAndDropBackgroundFilePath();
 
@@ -793,8 +796,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         dragAndDropQuestion.assignMissingComponentIds();
 
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
-            if (dragItem.getPictureFilePath() != null) {
-                String path = dragItem.getPictureFilePath();
+            String path = dragItem.getPictureFilePath();
+            if (path != null) {
                 Path oldPath = new FileSystemLocation.DragItem(path).path();
                 if (Files.exists(oldPath)) {
                     Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
@@ -1124,11 +1127,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                if (!Files.exists(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path())) {
+                String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
+                if (backgroundFilePath != null && !Files.exists(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path())) {
                     saveDndQuestionBackground(dragAndDropQuestion, fileMap);
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                    if (dragItem.getPictureFilePath() != null && !Files.exists(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path())) {
+                    String pictureFilePath = dragItem.getPictureFilePath();
+                    if (pictureFilePath != null && !Files.exists(new FileSystemLocation.DragItem(pictureFilePath).path())) {
                         saveDndDragItemPicture(dragItem, fileMap);
                     }
                 }

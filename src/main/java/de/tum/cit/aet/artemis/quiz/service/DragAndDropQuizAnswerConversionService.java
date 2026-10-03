@@ -55,6 +55,9 @@ public class DragAndDropQuizAnswerConversionService {
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir, boolean showResult) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
+        if (backgroundFilePath == null) {
+            throw new IllegalStateException("The drag and drop question " + question.getId() + " has no background image");
+        }
         BufferedImage backgroundImage = ImageIO.read(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path().toFile());
 
         generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer, showResult);
@@ -135,7 +138,11 @@ public class DragAndDropQuizAnswerConversionService {
     }
 
     private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, DragAndDropMapping mapping) throws IOException {
-        BufferedImage dragItem = ImageIO.read(new FileSystemLocation.DragItem(mapping.getDragItem().getPictureFilePath()).path().toFile());
+        String pictureFilePath = mapping.getDragItem().getPictureFilePath();
+        if (pictureFilePath == null) {
+            throw new IllegalStateException("The drag item " + mapping.getDragItem().getId() + " has no picture");
+        }
+        BufferedImage dragItem = ImageIO.read(new FileSystemLocation.DragItem(pictureFilePath).path().toFile());
         Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
                 new Dimension(dropLocationCoordinates.width, dropLocationCoordinates.height));
         graphics.drawImage(dragItem, dropLocationCoordinates.x, dropLocationCoordinates.y, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);
