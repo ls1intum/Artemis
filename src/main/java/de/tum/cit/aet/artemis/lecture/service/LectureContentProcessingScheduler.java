@@ -202,6 +202,9 @@ public class LectureContentProcessingScheduler {
         recoverStuckPhase(ProcessingPhase.TRANSCRIBING, noCallbackTimeoutMinutes);
         recoverStuckPhase(ProcessingPhase.INGESTING, noCallbackTimeoutMinutes);
 
+        // Then resume content changes interrupted after the run's token was invalidated; nothing above can match them
+        resumeInterruptedContentChanges();
+
         // Then release dispatch claims whose owner never finished dispatching them, e.g. a node killed by a rolling
         // deploy between taking the claim and writing the phase. Nothing else selects those rows, so without this the
         // unit waits forever; see releaseAbandonedIdleClaims.
@@ -209,6 +212,35 @@ public class LectureContentProcessingScheduler {
 
         // Then, dispatch any IDLE jobs waiting in the queue (backup trigger)
         callbackService.dispatchPendingJobs();
+    }
+
+    /**
+     * Resume content changes that stopped between invalidating the in-flight run's token and requeueing the unit, see
+     * {@link LectureUnitProcessingStateRepository#findInFlightRunsWithoutToken}. The content markers are only written by
+     * that final requeue, so re-running the content-change path detects the same change again, redoes the transcript and
+     * Iris cleanup, and requeues. It is forced, so a unit whose content was changed back meanwhile is still re-ingested
+     * rather than left in flight. Each row is isolated like the other recovery loops.
+     */
+    private void resumeInterruptedContentChanges() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(noCallbackTimeoutMinutes);
+        List<LectureUnitProcessingState> stranded = processingStateRepository.findInFlightRunsWithoutToken(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING),
+                cutoff);
+        for (LectureUnitProcessingState state : stranded) {
+            try {
+                if (state.getLectureUnit() == null) {
+                    continue;
+                }
+                long unitId = state.getLectureUnit().getId();
+                attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).ifPresent(unit -> {
+                    log.warn("interrupted-content-change unit={} phase={} — the run's token was invalidated but the unit was never requeued, resuming the cleanup", unitId,
+                            state.getPhase());
+                    processingService.triggerProcessingForMetadataChange(unit);
+                });
+            }
+            catch (RuntimeException e) {
+                log.error("Resuming the interrupted content change of processing state {} failed, skipping it this pass: {}", state.getId(), e.getMessage());
+            }
+        }
     }
 
     /**

@@ -1252,6 +1252,39 @@ class LectureContentProcessingServiceTest {
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         }
 
+        /**
+         * The token invalidation commits on its own. If the cleanup right after it throws, the row is left in flight with no
+         * token and is never requeued; the content markers were not written either, so resuming the content change (what
+         * the scheduler's sweep does) detects the same change again, finishes the cleanup and requeues the unit.
+         */
+        @Test
+        void shouldFinishAContentChangeOnResumeAfterTheCleanupFailedRightAfterInvalidation() {
+            testState.setId(52L);
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription oldVideoTranscript = new LectureTranscription();
+            oldVideoTranscript.setId(98L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+            when(processingStateRepository.invalidateTokenIfMatches(eq(52L), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(oldVideoTranscript));
+            doThrow(new CannotAcquireLockException("lock wait timeout")).doNothing().when(transcriptionRepository).delete(oldVideoTranscript);
+
+            assertThatThrownBy(() -> service.triggerProcessing(testUnit)).isInstanceOf(CannotAcquireLockException.class);
+            verify(processingStateRepository).invalidateTokenIfMatches(eq(52L), eq(TEST_JOB_TOKEN), any());
+            verify(processingStateRepository, never()).requeueForContentChange(anyLong(), any(), any(), any(), any());
+
+            // The row as the failed attempt left it in the database: still in flight, token gone, markers unchanged
+            testState.setIngestionJobToken(null);
+
+            service.triggerProcessingForMetadataChange(testUnit);
+
+            verify(transcriptionRepository, times(2)).delete(oldVideoTranscript);
+            verify(processingStateRepository).requeueForContentChange(eq(52L), any(), any(), any(), any());
+        }
+
         @Test
         void shouldNotInvalidateTokenWhenNoRunIsInFlight() {
             // The common case: content changes on a DONE unit with no active token to invalidate.

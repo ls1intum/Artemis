@@ -221,6 +221,23 @@ class LectureContentProcessingSchedulerTest {
     class StuckStateRecovery {
 
         @Test
+        void shouldResumeAContentChangeInterruptedAfterTheTokenWasInvalidated() {
+            // A content change invalidated the run's token and then stopped before requeueing it, leaving the row in flight
+            // with no token. Every token-matching recovery skips it, so the sweep must hand it back to the content-change path.
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(null);
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30));
+            when(processingStateRepository.findInFlightRunsWithoutToken(eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)), any(ZonedDateTime.class)))
+                    .thenReturn(List.of(testState));
+            when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(testUnit.getId())).thenReturn(Optional.of(testUnit));
+
+            scheduler.processScheduledRetries();
+
+            verify(processingService).triggerProcessingForMetadataChange(testUnit);
+            verify(callbackService).dispatchPendingJobs();
+        }
+
+        @Test
         void shouldNotFailAStuckRunThatAHeartbeatRefreshedSinceTheBatchRead() {
             // The batch read found the run silent past the cutoff, but a heartbeat refreshed lastUpdated before the re-read,
             // without touching phase or token. The re-read must re-check the stuck predicate instead of pinning the fresh value.

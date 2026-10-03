@@ -277,6 +277,23 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
+        void shouldHandAChangedVideoToTheContentChangePathInsteadOfRequeueing() {
+            // The video changed without the update path firing, and the previous video's completed transcript is still
+            // stored. A plain requeue would dispatch straight to INGESTING with that transcript; the content-change path
+            // deletes it first.
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint("v1:old-fingerprint");
+            givenCensus(censusEntry(unit.getId(), "v1:old-fingerprint", 1));
+            when(processingService.hasVideoSourceChanged(unit, state)).thenReturn(true);
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            verify(processingService).triggerProcessingAsBacklog(unit);
+            verify(reconcileStateRepository, never()).requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
         void shouldRequeueWhenContentChangedSinceConfirmation() {
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint("v1:old-fingerprint");

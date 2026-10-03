@@ -491,6 +491,33 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
     }
 
     /**
+     * The shape only an interrupted content change leaves behind: the token invalidation committed, but the requeue that
+     * would take the row out of flight never did. The sweep's query must find it, and must not pick up a healthy run that
+     * still holds its token.
+     */
+    @Test
+    void testInterruptedContentChangeIsFoundAndAHealthyRunIsNot() {
+        ZonedDateTime longAgo = ZonedDateTime.now().minusMinutes(30);
+        LectureUnitProcessingState stranded = new LectureUnitProcessingState(unit);
+        stranded.setPhase(ProcessingPhase.INGESTING);
+        stranded.setIngestionJobToken("content-change-token");
+        processingStateRepository.save(stranded);
+        assertThat(processingStateRepository.invalidateTokenIfMatches(stranded.getId(), "content-change-token", longAgo)).isEqualTo(1);
+
+        LectureUnitProcessingState healthy = new LectureUnitProcessingState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(unit.getLecture()));
+        healthy.setPhase(ProcessingPhase.INGESTING);
+        healthy.setIngestionJobToken("live-token");
+        healthy.setLastUpdated(longAgo);
+        processingStateRepository.save(healthy);
+
+        List<Long> found = processingStateRepository
+                .findInFlightRunsWithoutToken(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING), ZonedDateTime.now().minusMinutes(20)).stream()
+                .map(LectureUnitProcessingState::getId).toList();
+
+        assertThat(found).contains(stranded.getId()).doesNotContain(healthy.getId());
+    }
+
+    /**
      * Two heartbeats of one run can overlap when a request is slow enough for Iris to time out and move on. Whether a
      * reported counter is progress depends on the stored one, so the comparison has to run against the committed row:
      * the older heartbeat must block on the newer one's row lock and then see 41, rather than write its stale 40 back

@@ -95,6 +95,24 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     List<LectureUnitProcessingState> findRunsWithLapsedLease(@Param("phases") List<ProcessingPhase> phases, @Param("leaseCutoff") ZonedDateTime leaseCutoff);
 
     /**
+     * Find in-flight runs whose job token is gone. Only an interrupted content change leaves this shape:
+     * {@link #invalidateTokenIfMatches} commits on its own, before the cleanup and the requeue that would move the row
+     * out of the in-flight phases. If either fails or the node stops in between, nothing else can recover the row, since
+     * every other recovery statement matches {@code ingestionJobToken = :token}, which a NULL token never satisfies.
+     *
+     * @param phases the in-flight phases to check
+     * @param cutoff rows last touched before this are considered interrupted rather than mid-cleanup
+     * @return the stranded runs
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            WHERE ps.phase IN :phases
+            AND ps.ingestionJobToken IS NULL
+            AND ps.lastUpdated < :cutoff
+            """)
+    List<LectureUnitProcessingState> findInFlightRunsWithoutToken(@Param("phases") List<ProcessingPhase> phases, @Param("cutoff") ZonedDateTime cutoff);
+
+    /**
      * Find the processing state currently carrying the given ingestion job token. Backs worker lease
      * renewal: each heartbeat lists the tokens of the runs the worker is executing.
      *

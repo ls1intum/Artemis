@@ -326,6 +326,14 @@ public class LectureIngestionReconcileService {
         // concurrent completion that re-confirmed the unit between the batch read and the write.
         String observedFingerprint = state.getConfirmedFingerprint();
         if (observedFingerprint == null || !observedFingerprint.equals(currentFingerprint)) {
+            if (processingService.hasVideoSourceChanged(unit, state)) {
+                // The video changed without the update path firing, so the stored transcript belongs to the previous
+                // video. A plain requeue would dispatch straight to INGESTING with it; the content-change path deletes it
+                // and cleans up Iris before requeueing, exactly as an edit of the unit would.
+                log.info("Reconcile: video source of unit {} changed without the update path, handing it to the content-change path", unit.getId());
+                processingService.triggerProcessingAsBacklog(unit);
+                return 1;
+            }
             // Legacy row that predates verification, or the content changed without the update path firing.
             return requeueForReconcile(state, observedFingerprint, "no confirmed fingerprint for the current content", ReconcileIntent.plain()) ? 1 : 0;
         }
