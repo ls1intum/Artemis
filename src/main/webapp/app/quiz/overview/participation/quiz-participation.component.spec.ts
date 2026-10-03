@@ -191,11 +191,7 @@ describe('QuizParticipationComponent - live mode', () => {
                     },
                 },
             ],
-        })
-            .overrideComponent(QuizParticipationComponent, {
-                set: { providers: [] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         quizParticipationApi = TestBed.inject(QuizParticipationApi);
         const participation: StudentParticipation = { exercise: { ...quizExercise } };
@@ -884,11 +880,7 @@ describe('QuizParticipationComponent - preview mode', () => {
                     },
                 },
             ],
-        })
-            .overrideComponent(QuizParticipationComponent, {
-                set: { providers: [] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         exerciseService = TestBed.inject(QuizExerciseService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -926,7 +918,7 @@ describe('QuizParticipationComponent - preview mode', () => {
 
         component.submitExercise();
 
-        httpMock.expectOne({ method: 'POST' }).flush({
+        httpMock.expectOne({ method: 'POST', url: `/api/quiz/exercises/${quizExercise.id}/submissions/preview` }).flush({
             submissionDate: now,
             submitted: true,
             submission: { submittedAnswers: [], participation: { exercise: quizExercise } },
@@ -975,11 +967,7 @@ describe('QuizParticipationComponent - practice mode', () => {
                     },
                 },
             ],
-        })
-            .overrideComponent(QuizParticipationComponent, {
-                set: { providers: [] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         exerciseService = TestBed.inject(QuizExerciseService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -1018,7 +1006,7 @@ describe('QuizParticipationComponent - practice mode', () => {
 
         component.submitExercise();
 
-        httpMock.expectOne({ method: 'POST' }).flush({
+        httpMock.expectOne({ method: 'POST', url: `/api/quiz/exercises/${quizExerciseForPractice.id}/submissions/practice` }).flush({
             submissionDate: now,
             submitted: true,
             submission: { submittedAnswers: [], participation: { exercise: quizExerciseForPractice } },
@@ -1146,11 +1134,7 @@ describe('QuizParticipationComponent - solution mode', () => {
                     },
                 },
             ],
-        })
-            .overrideComponent(QuizParticipationComponent, {
-                set: { providers: [] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         exerciseService = TestBed.inject(QuizExerciseService);
         resultForSolutionServiceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExerciseForPractice));
@@ -1228,11 +1212,7 @@ describe('QuizParticipationComponent - relativeTimeText', () => {
                     },
                 },
             ],
-        })
-            .overrideComponent(QuizParticipationComponent, {
-                set: { providers: [] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
         vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
@@ -1313,11 +1293,7 @@ describe('QuizParticipationComponent - applySelection', () => {
                     },
                 },
             ],
-        })
-            .overrideComponent(QuizParticipationComponent, {
-                set: { providers: [] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
         vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
@@ -1403,11 +1379,7 @@ describe('QuizParticipationComponent - showResult', () => {
                     },
                 },
             ],
-        })
-            .overrideComponent(QuizParticipationComponent, {
-                set: { providers: [] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
         vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
@@ -1508,11 +1480,7 @@ describe('QuizParticipationComponent - onSaveError', () => {
                     },
                 },
             ],
-        })
-            .overrideComponent(QuizParticipationComponent, {
-                set: { providers: [] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
         vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));

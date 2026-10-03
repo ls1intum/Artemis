@@ -22,6 +22,7 @@ import { QuizStatisticsOverview } from 'app/openapi/model/quiz-statistics-overvi
 import { QuizPointStatistics } from 'app/openapi/model/quiz-point-statistics';
 import { QuizQuestionStatisticResponse } from 'app/openapi/model/quiz-question-statistic-response';
 import { ResultAfterEvaluationWithSubmission } from 'app/openapi/model/result-after-evaluation-with-submission';
+import { QuizExerciseDetails } from 'app/openapi/model/quiz-exercise-details';
 
 const RELEASE = '2026-09-01T08:00:00Z';
 const START = '2026-09-02T09:00:00Z';
@@ -72,6 +73,19 @@ describe('toQuizExercise', () => {
         expect(converted.quizQuestions).toBeUndefined();
         expect(converted.course).toBeUndefined();
         expect(converted.exerciseVariantGroup).toBeUndefined();
+    });
+
+    it('should leave editability undetermined when the server omits it, so callers compute it', () => {
+        const converted = toQuizExercise({ id: 1, title: 'Saved' });
+
+        expect(converted.isEditable).toBeUndefined();
+    });
+
+    it('should keep the editability the server sends', () => {
+        const details: QuizExerciseDetails = { id: 1, title: 'Not editable', isEditable: false };
+
+        expect(toQuizExercise(details).isEditable).toBe(false);
+        expect(toQuizExercise({ ...details, isEditable: true }).isEditable).toBe(true);
     });
 });
 
