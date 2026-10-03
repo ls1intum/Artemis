@@ -7,3 +7,13 @@
 .sgi-item__control {
     border-radius: var(--tumaet-ui-radius-md, 0.375rem);
 }
+
+.sgi-item--armed {
+    border-color: var(--tumaet-ui-primary-color);
+}
+
+.sgi-item__control[aria-pressed='true'] {
+    border-color: var(--tumaet-ui-primary-color);
+    background: var(--tumaet-ui-primary-color);
+    color: var(--tumaet-ui-primary-contrast-color);
+}

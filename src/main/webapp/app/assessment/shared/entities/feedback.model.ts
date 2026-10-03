@@ -186,7 +186,7 @@ export class Feedback implements BaseEntity {
         return undefined;
     }
 
-    /** Tutor-facing title stored in {@link text}, without suggestion prefixes. Linked grading instructions own the title. */
+    /** Display title stored in {@link text}, without suggestion prefixes. Linked grading instructions own the title. */
     public static getDisplayTitle(feedback: Feedback): string | undefined {
         if (feedback.gradingInstruction || !feedback.text) {
             return undefined;
@@ -344,9 +344,9 @@ export class Feedback implements BaseEntity {
  *
  * An AI feedback suggestion's `text` is never included: it always holds just the suggestion's short title (tagged
  * with the internal `FeedbackSuggestion:...` marker), which is redundant with the suggestion's own `detailText`.
- * For text/programming/file-upload exercises that title is still shown separately (the editable unified feedback
+ * For text/programming/file-upload exercises an unlinked title is shown separately (the editable unified feedback
  * editor's own title field, or the "name · title" heading in the read-only feedback item), so dropping it here
- * only avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
+ * avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
  * no separate title UI — that is safe because Apollon always writes an assessor's real edit into `detailText` and
  * leaves `.text` as the untouched original suggestion title (see `ModelingAssessmentComponent`), so no
  * assessor-authored content is ever hiding behind the excluded `text`.
@@ -357,7 +357,8 @@ export class Feedback implements BaseEntity {
  * @returns formatted string representing the feedback text ready to display
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
-    const includeText = addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback);
+    const includeText =
+        addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback) && !(feedback.gradingInstruction && feedback.type === FeedbackType.MANUAL_UNREFERENCED);
     let feedbackText = '';
     if (feedback.gradingInstruction?.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;

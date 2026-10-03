@@ -217,6 +217,16 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredTitle()).toBe('Missing null check');
     });
 
+    it('should hide a linked feedback title while preserving the stored suggestion marker', () => {
+        const feedback = { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Old title`, gradingInstruction: { feedback: 'Criterion comment' } } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.detectChanges();
+
+        expect(component.inferredTitle()).toBe('');
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title')).toBeNull();
+        expect(feedback.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Old title`);
+    });
+
     it('should strip the internal identifier from a non-graded feedback suggestion title', () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('feedback', {

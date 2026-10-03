@@ -452,6 +452,9 @@ export class UnifiedFeedbackComponent {
     }
 
     private getReferencedFeedbackTitle(feedback: Feedback): string {
+        if (feedback.gradingInstruction) {
+            return '';
+        }
         if (feedback.text) {
             if (Feedback.isFeedbackSuggestion(feedback)) {
                 return Feedback.stripSuggestionPrefix(feedback.text);

@@ -65,7 +65,7 @@ export interface SortedGradingCriterion {
     ],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit, OnDestroy {
-    private readonly selectionService = inject(GradingInstructionSelectionService);
+    protected readonly selectionService = inject(GradingInstructionSelectionService);
     private readonly deleteDialogService = inject(DeleteDialogService);
 
     public readonly criteria = input.required<GradingCriterion[]>();
@@ -270,7 +270,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /**
-     * Keyboard stand-in for drag-and-drop when there is no checkbox host: Enter/Space on the card arms the instruction.
+     * Keyboard stand-in for drag-and-drop when there is no checkbox host: Enter/Space on the card toggles the instruction.
      * Selectable cards use {@link armInstruction} on their dedicated button instead (nested controls forbid role=button).
      */
     onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
@@ -281,11 +281,11 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             return;
         }
         event.preventDefault();
-        this.selectionService.armInstruction(instruction);
+        this.selectionService.toggleArmedInstruction(instruction);
     }
 
     /**
-     * Selectable-branch stand-in for drag-and-drop: arms the instruction for the next referenced feedback target.
+     * Selectable-branch stand-in for drag-and-drop: toggles the instruction for the next referenced feedback target.
      * Checkboxes stay the path for the unreferenced feedback list; existing target consumers still apply the armed instruction.
      */
     armInstruction(event: Event, instruction: GradingInstruction): void {
@@ -294,7 +294,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         if (!this.isDraggable(instruction)) {
             return;
         }
-        this.selectionService.armInstruction(instruction);
+        this.selectionService.toggleArmedInstruction(instruction);
     }
 
     /**

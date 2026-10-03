@@ -46,11 +46,13 @@
                          Selectable cards stay structural; a dedicated arm button covers referenced targets. -->
                     <div
                         class="flex flex-col gap-2 rounded-[0.625rem] border border-[var(--border-color)] p-3"
+                        [class.sgi-item--armed]="selectionService.isArmed(instruction)"
                         [draggable]="item.isDraggable"
                         (dragstart)="disableDrag()"
                         (dragstart)="drag($event, instruction)"
                         [attr.tabindex]="!selectable() && item.isDraggable ? 0 : null"
                         [attr.role]="!selectable() && item.isDraggable ? 'button' : null"
+                        [attr.aria-pressed]="!selectable() && item.isDraggable ? selectionService.isArmed(instruction) : null"
                         [attr.aria-labelledby]="!selectable() && item.isDraggable ? item.accessibleNameIds : null"
                         (keydown)="onInstructionKeydown($event, instruction)"
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
@@ -65,12 +67,15 @@
                             <div class="sgi-item__controls relative flex shrink-0 items-center gap-2 whitespace-nowrap">
                                 @if (selectable()) {
                                     @if (item.isDraggable) {
-                                        @let armLabel = 'artemisApp.exercise.armInstruction' | artemisTranslate;
+                                        @let armLabel =
+                                            (selectionService.isArmed(instruction) ? 'artemisApp.exercise.unarmInstruction' : 'artemisApp.exercise.armInstruction')
+                                                | artemisTranslate;
                                         <button
                                             type="button"
                                             id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}-arm"
                                             class="sgi-item__control inline-flex size-7 cursor-pointer items-center justify-center rounded-md border border-[var(--border-color)] bg-transparent p-0 text-inherit"
                                             [attr.aria-label]="armLabel"
+                                            [attr.aria-pressed]="selectionService.isArmed(instruction)"
                                             [attr.aria-describedby]="item.accessibleNameIds"
                                             [tumAetUiTooltip]="armLabel"
                                             (click)="armInstruction($event, instruction)"

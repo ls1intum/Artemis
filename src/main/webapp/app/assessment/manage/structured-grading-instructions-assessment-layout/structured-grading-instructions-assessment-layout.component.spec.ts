@@ -372,7 +372,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         fixture.detectChanges();
         const instruction = { id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction;
         const selectionService = TestBed.inject(GradingInstructionSelectionService);
-        const armSpy = vi.spyOn(selectionService, 'armInstruction');
+        const armSpy = vi.spyOn(selectionService, 'toggleArmedInstruction');
 
         expect(comp.selectable()).toBe(false);
         comp.onInstructionKeydown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent, instruction);
@@ -386,7 +386,10 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             {
                 id: 1,
                 title: 'Documentation',
-                structuredGradingInstructions: [{ id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction],
+                structuredGradingInstructions: [
+                    { id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction,
+                    { id: 2, instructionDescription: 'other', credits: 2, usageCount: 0 } as GradingInstruction,
+                ],
             } as GradingCriterion,
         ]);
         comp.ngOnInit();
@@ -412,8 +415,23 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent))).not.toBeNull();
 
         const armButton = fixture.debugElement.query(By.css('#criterion-0-instruction-0-arm')).nativeElement as HTMLButtonElement;
+        const otherArmButton = fixture.debugElement.query(By.css('#criterion-0-instruction-1-arm')).nativeElement as HTMLButtonElement;
         expect(armButton.tagName).toBe('BUTTON');
         armButton.click();
+        fixture.detectChanges();
+
+        expect(armButton.getAttribute('aria-pressed')).toBe('true');
+        expect(card.classList.contains('sgi-item--armed')).toBe(true);
+        otherArmButton.click();
+        fixture.detectChanges();
+        expect(armButton.getAttribute('aria-pressed')).toBe('false');
+        expect(otherArmButton.getAttribute('aria-pressed')).toBe('true');
+        otherArmButton.click();
+        fixture.detectChanges();
+        expect(otherArmButton.getAttribute('aria-pressed')).toBe('false');
+        expect(selectionService.hasArmedInstruction()).toBe(false);
+        armButton.click();
+        fixture.detectChanges();
 
         expect(selectionService.hasArmedInstruction()).toBe(true);
         expect(host.applyInstruction).not.toHaveBeenCalled();

@@ -6,6 +6,7 @@ import {
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackSuggestionType,
+    FeedbackType,
     buildFeedbackTextForReview,
 } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -109,6 +110,13 @@ describe('Feedback', () => {
             const feedback = { text: 'feedback1', gradingInstruction } as Feedback;
 
             expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>feedback1');
+        });
+
+        it('should omit a linked unreferenced feedback title from review without changing the stored text', () => {
+            const feedback = { type: FeedbackType.MANUAL_UNREFERENCED, text: 'Old title', detailText: 'Tutor comment', gradingInstruction } as Feedback;
+
+            expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>Tutor comment');
+            expect(feedback.text).toBe('Old title');
         });
 
         it('should drop even a non-suggestion text when addFeedbackText is false', () => {

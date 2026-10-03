@@ -114,6 +114,14 @@ describe('GradingInstructionSelectionService', () => {
         expect(service.hasArmedInstruction()).toBe(false);
     });
 
+    it('should toggle the same persisted instruction even when the card receives a new instance', () => {
+        service.toggleArmedInstruction(instruction);
+        expect(service.isArmed({ id: instruction.id } as GradingInstruction)).toBe(true);
+
+        service.toggleArmedInstruction({ id: instruction.id } as GradingInstruction);
+        expect(service.hasArmedInstruction()).toBe(false);
+    });
+
     it('should reject a finite armed instruction after the registered host exhausts its usage limit', () => {
         const appliedCounts = signal<ReadonlyMap<number, number>>(new Map());
         service.register({ ...host, appliedInstructionCounts: appliedCounts });

@@ -113,6 +113,15 @@ export class GradingInstructionSelectionService {
         this.armedInstruction.set(instruction);
     }
 
+    isArmed(instruction: GradingInstruction): boolean {
+        const armed = this.armedInstruction();
+        return armed !== undefined && (armed === instruction || (armed.id !== undefined && armed.id === instruction.id));
+    }
+
+    toggleArmedInstruction(instruction: GradingInstruction): void {
+        this.armedInstruction.set(this.isArmed(instruction) ? undefined : instruction);
+    }
+
     /** Takes and clears the keyboard-armed instruction when its live usage limit still allows an application. */
     consumeArmedInstruction(): GradingInstruction | undefined {
         const instruction = this.armedInstruction();
