@@ -6,10 +6,12 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
+import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -85,8 +87,21 @@ public class ArtemisGitServletService extends GitServlet {
             // request – the current request, may be used to inspect session state including cookies or user authentication.
             // name – name of the repository, as parsed out of the URL (everything after /git/).
 
-            // Return the opened repository instance.
-            return localVCServletService.resolveRepository(name);
+            try {
+                // Return the opened repository instance.
+                return localVCServletService.resolveRepository(name);
+            }
+            catch (RepositoryNotFoundException e) {
+                // JGit's RepositoryFilter resolves the repository before the authentication filters run and maps a
+                // RepositoryNotFoundException to HTTP 404, while an existing but forbidden repository is rejected with
+                // HTTP 401 by those filters. That difference lets an unauthenticated caller enumerate which repositories
+                // (and therefore which participations and usernames) exist. Masking the missing repository as
+                // ServiceNotAuthorizedException makes JGit answer with 401 as well, so both cases are indistinguishable.
+                // The message is a constant and carries neither the requested name nor the original cause, so nothing
+                // about the repository leaks; LocalVCAuthenticationResponseMaskingFilter additionally normalises the
+                // response body and headers of this 401 to match the ones the authentication filters produce.
+                throw new ServiceNotAuthorizedException("Not authorized");
+            }
         });
 
         // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.

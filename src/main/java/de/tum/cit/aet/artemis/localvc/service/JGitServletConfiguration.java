@@ -8,11 +8,13 @@ import org.eclipse.jgit.http.server.GitServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
@@ -45,6 +47,23 @@ public class JGitServletConfiguration {
 
         // OPTIONAL: allow access to all repos, otherwise must whitelist
         registration.addInitParameter("export-all", "true");
+        return registration;
+    }
+
+    /**
+     * Registers the filter that normalises every 401 response of the git server to a single shape, so that a missing
+     * repository cannot be told apart from an existing but forbidden one via the response headers or body. It is mapped
+     * to the same path as the git servlet and ordered before it, so it wraps the response the servlet writes to.
+     *
+     * @return the registration of the {@link LocalVCAuthenticationResponseMaskingFilter}.
+     */
+    @Bean
+    public FilterRegistrationBean<LocalVCAuthenticationResponseMaskingFilter> localVCAuthenticationResponseMaskingFilter() {
+        FilterRegistrationBean<LocalVCAuthenticationResponseMaskingFilter> registration = new FilterRegistrationBean<>(new LocalVCAuthenticationResponseMaskingFilter());
+        registration.addUrlPatterns("/git/*");
+        // Run as the outermost filter for git requests so it wraps the response before any downstream filter or the git
+        // servlet can commit a 401.
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return registration;
     }
 
