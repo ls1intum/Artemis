@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.security.Principal;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
 import de.tum.cit.aet.artemis.globalsearch.dto.SearchableEntityCandidateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
@@ -146,5 +148,46 @@ class IrisGlobalSearchResourceTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
                 eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null), eq((List<Long>) null), eq(false));
+    }
+
+    @Test
+    void ask_whenIrisIsDisabledForEveryAccessibleCourse_rejectsBeforeRegisteringAnyJob() {
+        var accessContext = scopedAccessContext();
+        when(irisAccessContextService.resolveAccessContext(testUser)).thenReturn(accessContext);
+        when(irisSettingsService.filterCourseIdsWithIrisEnabled(List.of(11L, 12L))).thenReturn(List.of());
+        var requestDTO = new GlobalSearchAskRequestDTO("what is backpropagation", 5, UUID.randomUUID());
+
+        assertThatThrownBy(() -> resource.ask(requestDTO, principal)).isInstanceOf(AccessForbiddenAlertException.class);
+        verifyNoInteractions(pyrisJobService, pyrisConnectorService, searchableEntityPrefetchApi);
+    }
+
+    @Test
+    void ask_whenIrisIsDisabledForPartOfTheScope_narrowsEntityPrefetchAndPyrisRequest() {
+        var accessContext = scopedAccessContext();
+        when(irisAccessContextService.resolveAccessContext(testUser)).thenReturn(accessContext);
+        when(irisSettingsService.filterCourseIdsWithIrisEnabled(List.of(11L, 12L))).thenReturn(List.of(12L));
+        when(searchableEntityPrefetchApi.prefetchCandidates(any(), any(), anyInt(), eq(List.of(12L)), eq(List.of()))).thenReturn(List.of());
+        var requestDTO = new GlobalSearchAskRequestDTO("what is backpropagation", 5, UUID.randomUUID());
+
+        assertThat(resource.ask(requestDTO, principal).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        verify(searchableEntityPrefetchApi).prefetchCandidates(any(), eq(requestDTO.query()), anyInt(), eq(List.of(12L)), eq(List.of()));
+        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), AiSelectionDecision.CLOUD_AI,
+                accessContext, List.of(), List.of(12L), null, false);
+    }
+
+    @Test
+    void ask_whenExcludingEveryRequestedCourse_doesNotFallBackToUnscopedPrefetch() {
+        var accessContext = scopedAccessContext();
+        when(irisAccessContextService.resolveAccessContext(testUser)).thenReturn(accessContext);
+        var requestDTO = new GlobalSearchAskRequestDTO("what is backpropagation", 5, UUID.randomUUID(), List.of(11L, 12L), List.of(11L, 12L));
+
+        assertThat(resource.ask(requestDTO, principal).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        verifyNoInteractions(searchableEntityPrefetchApi, irisSettingsService);
+        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), AiSelectionDecision.CLOUD_AI,
+                accessContext, List.of(), null, null, true);
+    }
+
+    private static PyrisAccessContextDTO scopedAccessContext() {
+        return new PyrisAccessContextDTO(List.of(11L, 12L), List.of(), List.of(), List.of(11L, 12L), List.of(), null, false);
     }
 }

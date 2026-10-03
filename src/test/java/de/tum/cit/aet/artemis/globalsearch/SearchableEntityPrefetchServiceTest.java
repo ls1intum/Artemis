@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.OffsetDateTime;
@@ -15,6 +17,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -30,13 +33,16 @@ class SearchableEntityPrefetchServiceTest {
 
     private SearchableEntityWeaviateService weaviateService;
 
+    private CourseRepository courseRepository;
+
     private SearchableEntityPrefetchService prefetchService;
 
     @BeforeEach
     void setUp() {
         accessFilterService = mock(SearchableEntityAccessFilterService.class);
         weaviateService = mock(SearchableEntityWeaviateService.class);
-        prefetchService = new SearchableEntityPrefetchService(accessFilterService, weaviateService, mock(CourseRepository.class));
+        courseRepository = mock(CourseRepository.class);
+        prefetchService = new SearchableEntityPrefetchService(accessFilterService, weaviateService, courseRepository);
     }
 
     private void givenAccessibleRows(List<Map<String, Object>> rows) {
@@ -174,5 +180,38 @@ class SearchableEntityPrefetchServiceTest {
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, false, null, null, null));
 
         assertThat(prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of())).isEmpty();
+    }
+
+    @Test
+    void adminCandidatesResolveOnlyExistingHitCourseTitlesByCourseId() {
+        // Administrators have no preloaded accessible-course map. Resolve titles only for the returned
+        // hit IDs, keep each title associated with its own candidate, and tolerate a course deleted
+        // after its search row was indexed.
+        Map<String, Object> secondCourse = new HashMap<>(
+                Map.of(SearchableEntitySchema.Properties.TYPE, "exercise", SearchableEntitySchema.Properties.ENTITY_ID, 12L, SearchableEntitySchema.Properties.COURSE_ID, 10L));
+        Map<String, Object> firstCourse = new HashMap<>(
+                Map.of(SearchableEntitySchema.Properties.TYPE, "exercise", SearchableEntitySchema.Properties.ENTITY_ID, 11L, SearchableEntitySchema.Properties.COURSE_ID, 9L));
+        Map<String, Object> deletedCourse = new HashMap<>(
+                Map.of(SearchableEntitySchema.Properties.TYPE, "exercise", SearchableEntitySchema.Properties.ENTITY_ID, 13L, SearchableEntitySchema.Properties.COURSE_ID, 99L));
+        when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
+                .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, null, null, null));
+        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(List.of(secondCourse, firstCourse, deletedCourse));
+
+        var first = new de.tum.cit.aet.artemis.course.domain.Course();
+        first.setId(9L);
+        first.setTitle("Algorithms");
+        var second = new de.tum.cit.aet.artemis.course.domain.Course();
+        second.setId(10L);
+        second.setTitle("Distributed Systems");
+        when(courseRepository.findAllById(any())).thenReturn(List.of(first, second));
+
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Iterable<Long>> hitCourseIds = ArgumentCaptor.forClass(Iterable.class);
+        verify(courseRepository).findAllById(hitCourseIds.capture());
+        assertThat(hitCourseIds.getValue()).containsExactlyInAnyOrder(9L, 10L, 99L);
+        assertThat(candidates).extracting(SearchableEntityCandidateDTO::courseId, SearchableEntityCandidateDTO::courseName).containsExactly(tuple(10L, "Distributed Systems"),
+                tuple(9L, "Algorithms"), tuple(99L, null));
     }
 }

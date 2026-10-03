@@ -232,6 +232,18 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component['navigateToResult']({ type: 'channel', id: '5', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: '5' } });
             });
+
+            it('should navigate to a post in its channel', () => {
+                component['navigateToResult']({ type: 'post', id: '6', metadata: { courseId: 10, channelId: 5 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 5, focusPostId: '6' } });
+            });
+
+            it('should navigate to an answer post in its channel', () => {
+                component['navigateToResult']({ type: 'answer_post', id: '7', metadata: { courseId: 10, channelId: 5, postId: 6 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], {
+                    queryParams: { conversationId: 5, messageId: 6, focusReplyId: '7' },
+                });
+            });
         });
 
         describe('template', () => {

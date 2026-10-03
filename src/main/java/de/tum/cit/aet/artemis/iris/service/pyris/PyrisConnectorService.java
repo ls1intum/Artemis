@@ -239,7 +239,7 @@ public class PyrisConnectorService {
             @Nullable PyrisAccessContextDTO accessContext) {
         var endpoint = "/api/v1/search/lectures";
         try {
-            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds, excludeCourseIds, accessContext);
+            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, artemisBaseUrl, courseIds, excludeCourseIds, accessContext);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 return List.of();
