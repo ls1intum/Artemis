@@ -1,6 +1,7 @@
 /* ── Iris inline answer card ───────────────────────────────────────────────── */
 
 .iris-inline-answer {
+    position: relative;
     border-radius: 0.75rem;
     border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);
     background: color-mix(in srgb, var(--bs-primary) 4.5%, transparent);

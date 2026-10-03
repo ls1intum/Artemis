@@ -769,15 +769,15 @@ export class GlobalSearchIrisAnswerComponent {
     }
 
     private showCitationPopover(chip: HTMLElement, sourceNumber: number | undefined): void {
-        const region = chip.closest('.iris-answer-region');
-        if (!sourceNumber || !(region instanceof HTMLElement)) {
+        const card = chip.closest('.iris-inline-answer');
+        if (!sourceNumber || !(card instanceof HTMLElement)) {
             this.citationPopover.set(undefined);
             return;
         }
         const chipRect = chip.getBoundingClientRect();
-        const regionRect = region.getBoundingClientRect();
-        const left = chipRect.left - regionRect.left + chipRect.width / 2;
-        const top = chipRect.top - regionRect.top;
+        const cardRect = card.getBoundingClientRect();
+        const left = chipRect.left - cardRect.left + chipRect.width / 2;
+        const top = chipRect.top - cardRect.top;
         const lectureSource = this.citedLectureSource(sourceNumber);
         if (lectureSource) {
             this.citationPopover.set({

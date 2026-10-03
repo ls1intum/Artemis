@@ -905,6 +905,23 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(fixture.nativeElement.querySelector('[data-testid="iris-citation-popover"]')).toBeNull();
         });
 
+        it('positions the first-line source preview outside the clipped answer body', () => {
+            const sup = injectRenderedCitation('1');
+            const card: HTMLElement = fixture.nativeElement.querySelector('.iris-inline-answer');
+            vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 100, 500, 200));
+            vi.spyOn(sup, 'getBoundingClientRect').mockReturnValue(new DOMRect(140, 150, 20, 16));
+
+            sup.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+            fixture.detectChanges();
+
+            const popover: HTMLElement = fixture.nativeElement.querySelector('[data-testid="iris-citation-popover"]');
+            expect(popover.closest('.iris-card-body')).toBeNull();
+            expect(popover.closest('.iris-card-body-wrapper')).toBeNull();
+            expect(popover.textContent).toContain('Unit 1');
+            expect(popover.style.left).toBe('110px');
+            expect(popover.style.top).toBe('50px');
+        });
+
         it('highlights the passage and its citation chip while hovered', () => {
             const sup = injectRenderedCitation('1');
             sup.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
