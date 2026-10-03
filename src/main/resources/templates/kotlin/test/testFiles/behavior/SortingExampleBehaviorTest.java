@@ -23,8 +23,12 @@ class SortingExampleBehaviorTest {
     private Policy policy;
     private Method methodPolicyConfigure;
 
-    @BeforeEach
-    void setup() {
+    /**
+     * Creates the student objects. This is deliberately called from each test and not from a {@code @BeforeEach} method:
+     * Ares only enforces the security policy while a test runs, so the constructors of the student code would run
+     * unrestricted in a {@code @BeforeEach} method.
+     */
+    private void setup() {
         context = (Context) newInstance(Context.class.getName());
         policy = (Policy) newInstance(Policy.class.getName(), context);
         methodPolicyConfigure = getMethod(Policy.class, "configure", boolean.class, boolean.class);
@@ -33,6 +37,7 @@ class SortingExampleBehaviorTest {
     @Test
     @StrictTimeout(1)
     void testMergeSort() {
+        setup();
         invokeMethod(policy, methodPolicyConfigure, true, false);
         Object sortAlgorithm = invokeMethod(context, "getSortAlgorithm");
         assertTrue(sortAlgorithm instanceof MergeSort, "Expected MergeSort when time is important and space is not");
@@ -41,6 +46,7 @@ class SortingExampleBehaviorTest {
     @Test
     @StrictTimeout(1)
     void testQuickSort() {
+        setup();
         invokeMethod(policy, methodPolicyConfigure, true, true);
         Object sortAlgorithm = invokeMethod(context, "getSortAlgorithm");
         assertTrue(sortAlgorithm instanceof QuickSort, "Expected QuickSort when time and space are important");
@@ -49,6 +55,7 @@ class SortingExampleBehaviorTest {
     @Test
     @StrictTimeout(1)
     void testSimulateRuntimeStrategyChoice() {
+        setup();
         Client.INSTANCE.simulateRuntimeConfigurationChange(policy);
         Object sortAlgorithm = invokeMethod(context, "getSortAlgorithm");
         assertNotNull(sortAlgorithm, "Expected Client to simulate runtime configuration change");
