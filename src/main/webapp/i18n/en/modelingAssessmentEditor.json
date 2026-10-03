@@ -26,7 +26,7 @@
                 "noConflicts": "Conflicts could not be loaded",
                 "conflictsResolved": "All conflicts have been processed.",
                 "feedbackTextTooLong": "Failed to save assessment. Feedback text must be no longer than 500 characters.",
-                "loadFeedbackSuggestionsFailed": "Retrieving automatically generated feedback suggestions failed."
+                "loadFeedbackSuggestionsFailed": "Retrieving AI generated feedback suggestions failed."
             }
         }
     }
