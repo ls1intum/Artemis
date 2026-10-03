@@ -13,6 +13,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,6 +26,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -300,6 +307,120 @@ class WeaviateOutboxDispatcherTest {
 
         // The stored value is the id of the row that wrote it; the newer row (id 10) must remain the final writer.
         assertThat(weaviate).containsEntry(COURSE + ":42", "10");
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testDrain_nudgeDuringShortBatchDrainsNewlyEnqueuedRowWithoutWaitingForScheduledDrain() throws Exception {
+        // A short batch stops after the first row. While that row is being applied, another thread commits a new
+        // row and sends its after-commit nudge. The nudge must not be lost merely because the first drain owns the lock.
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 2, 10, 300),
+                new WeaviateReconcileProperties(false, false, false, List.of(COURSE), 500, 100, 200, 1000, 5, 100, 100, 0.25));
+
+        WeaviateOutboxEntry first = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        first.setId(1L);
+        WeaviateOutboxEntry second = WeaviateOutboxEntry.forUpsert(COURSE, 2L, WeaviateOutboxOrigin.LIVE);
+        second.setId(2L);
+        table.add(first);
+
+        CountDownLatch firstApplyStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirstApply = new CountDownLatch(1);
+        AtomicInteger activeApplies = new AtomicInteger();
+        AtomicInteger maximumConcurrentApplies = new AtomicInteger();
+        doAnswer(invocation -> {
+            WeaviateOutboxEntry entry = invocation.getArgument(0);
+            int active = activeApplies.incrementAndGet();
+            maximumConcurrentApplies.accumulateAndGet(active, Math::max);
+            try {
+                if (entry == first) {
+                    firstApplyStarted.countDown();
+                    if (!releaseFirstApply.await(5, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("test did not release the first outbox apply");
+                    }
+                }
+                weaviate.put(entry.getEntityType() + ":" + entry.getEntityId(), String.valueOf(entry.getId()));
+                return Optional.of(HASH);
+            }
+            finally {
+                activeApplies.decrementAndGet();
+            }
+        }).when(searchableEntityWeaviateService).applyOutboxEntry(any(WeaviateOutboxEntry.class));
+
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            Future<?> drain = executor.submit(dispatcher::drain);
+            assertThat(firstApplyStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            table.add(second);
+            dispatcher.onOutboxEnqueued(new WeaviateOutboxEnqueuedEvent());
+            releaseFirstApply.countDown();
+
+            drain.get(5, TimeUnit.SECONDS);
+        }
+
+        assertThat(weaviate).containsEntry(COURSE + ":1", "1").containsEntry(COURSE + ":2", "2");
+        assertThat(table).isEmpty();
+        assertThat(maximumConcurrentApplies.get()).isOne();
+        verify(outboxRepository).delete(first);
+        verify(outboxRepository).delete(second);
+    }
+
+    @Test
+    void testDrain_databaseReadFailureDoesNotSpinOnConcurrentNudge() throws Exception {
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            doAnswer(invocation -> {
+                Future<?> nudge = executor.submit(() -> dispatcher.onOutboxEnqueued(new WeaviateOutboxEnqueuedEvent()));
+                nudge.get(5, TimeUnit.SECONDS);
+                throw new IllegalStateException("database unavailable");
+            }).when(outboxRepository).findDueForDispatch(any(), anyInt());
+
+            dispatcher.drain();
+        }
+
+        verify(outboxRepository, times(1)).findDueForDispatch(any(), anyInt());
+        verify(searchableEntityWeaviateService, never()).applyOutboxEntry(any());
+    }
+
+    @Test
+    void testDrain_nudgeDuringPausedMigrationWaitsForLaterDrain() throws Exception {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        entry.setId(1L);
+        table.add(entry);
+
+        CountDownLatch migrationPaused = new CountDownLatch(1);
+        CountDownLatch releaseMigration = new CountDownLatch(1);
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            Future<?> pausedMigration = executor.submit(() -> dispatcher.runWithDrainsPaused(() -> {
+                migrationPaused.countDown();
+                try {
+                    if (!releaseMigration.await(5, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("test did not release the paused migration");
+                    }
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            }));
+            assertThat(migrationPaused.await(5, TimeUnit.SECONDS)).isTrue();
+
+            dispatcher.onOutboxEnqueued(new WeaviateOutboxEnqueuedEvent());
+
+            verify(searchableEntityWeaviateService, never()).applyOutboxEntry(any());
+            assertThat(table).containsExactly(entry);
+            releaseMigration.countDown();
+            pausedMigration.get(5, TimeUnit.SECONDS);
+        }
+
+        assertThat(table).containsExactly(entry);
+        dispatcher.drain();
+
+        assertThat(weaviate).containsEntry(COURSE + ":1", "1");
         assertThat(table).isEmpty();
     }
 

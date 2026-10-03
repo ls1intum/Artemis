@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -92,6 +93,12 @@ public class WeaviateOutboxDispatcher {
      */
     private final ReentrantLock drainLock = new ReentrantLock();
 
+    /**
+     * Records that a scheduled tick or after-commit nudge requested a drain. The lock holder consumes this marker
+     * after each completed pass, so a nudge arriving during a short batch is drained before the holder returns.
+     */
+    private final AtomicBoolean drainPending = new AtomicBoolean();
+
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
             SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties, WeaviateReconcileProperties reconcileProperties) {
         this.outboxRepository = outboxRepository;
@@ -130,30 +137,46 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Drains all currently due outbox rows, one batch at a time. At most one drain runs at a time on this node;
-     * a concurrent trigger returns immediately and lets the in-flight drain finish the work.
+     * Drains all currently due outbox rows, one batch at a time. At most one drain runs at a time on this node. Every
+     * trigger marks work as pending before it competes for the lock; the holder consumes that mark after a completed
+     * pass, so a nudge arriving while it processes a short batch is not delayed until the next scheduled tick.
      */
     public void drain() {
-        if (!drainLock.tryLock()) {
-            // Another drain is already running on this node; it will pick up any rows we would have read.
-            return;
-        }
-        try {
-            // Give the drain thread an authorization context, matching the previous @Async write behavior.
-            SecurityUtils.setAuthorizationObject();
-            int processed;
-            do {
-                processed = drainBatch();
+        drainPending.set(true);
+        do {
+            if (!drainLock.tryLock()) {
+                return;
             }
-            while (processed == outboxProperties.batchSize());
+            try {
+                // Give the drain thread an authorization context, matching the previous @Async write behavior.
+                SecurityUtils.setAuthorizationObject();
+                while (drainPending.getAndSet(false)) {
+                    drainAllDueRows();
+                }
+            }
+            catch (Exception e) {
+                // The database was unavailable while reading or recording. Give up for now; the next tick retries.
+                // In particular, do not spin on a pending nudge after a failed database access.
+                log.error("Weaviate outbox drain aborted: {}", e.getMessage(), e);
+                return;
+            }
+            finally {
+                drainLock.unlock();
+            }
         }
-        catch (Exception e) {
-            // The database was unavailable while reading or recording. Give up for now; the next tick retries.
-            log.error("Weaviate outbox drain aborted: {}", e.getMessage(), e);
+        while (drainPending.get());
+    }
+
+    /**
+     * Drains complete due batches. A full batch may have more rows behind it, while a short batch completes the
+     * current pass and lets {@link #drain()} check whether a concurrent trigger recorded more work.
+     */
+    private void drainAllDueRows() {
+        int processed;
+        do {
+            processed = drainBatch();
         }
-        finally {
-            drainLock.unlock();
-        }
+        while (processed == outboxProperties.batchSize());
     }
 
     /**
