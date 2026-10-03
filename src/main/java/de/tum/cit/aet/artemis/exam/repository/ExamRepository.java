@@ -45,6 +45,25 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id IN :entityIds
+            """)
+    Set<Long> findExistingExamIds(@Param("entityIds") Collection<Long> entityIds);
+
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id > :afterId
+            ORDER BY exam.id ASC
+            """)
+    List<Long> findExamIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    /**
      * Reads only the dates that decide whether a submission is in time.
      * <p>
      * The submission gate runs on every autosave of every student and reads nothing from the exam but these three

@@ -156,8 +156,28 @@
             "irisAnswerShowLess": "Weniger anzeigen",
             "irisAnswerMore": "weitere",
             "irisAnswerThinking": "Nachdenken…",
+            "irisAnswerStageSearching": "Kursmaterial wird durchsucht…",
+            "irisAnswerStageRanking": "Suchergebnisse werden bewertet…",
+            "irisAnswerStageFoundSources": "Material gefunden in {{summary}}…",
+            "irisAnswerStageFoundSourcesAndMore": "Material gefunden in {{summary}} +{{extra}} weiteren…",
+            "irisAnswerStageGenerating": "Antwort wird verfasst…",
+            "irisAnswerNoneRelevant": "Iris hat gesucht, aber nichts Gefundenes ist relevant genug für eine verlässliche Antwort.",
+            "irisAnswerNoneRelevantHint": "Die Ergebnisse unten helfen vielleicht trotzdem weiter.",
+            "irisAnswerFailed": "Bei der Antwort von Iris ist ein Problem aufgetreten. Die Suchergebnisse sind davon nicht betroffen.",
+            "irisAnswerRetry": "Erneut versuchen",
             "irisCollapseSources": "Weniger Quellen anzeigen",
-            "irisAiBadge": "KI"
+            "irisAiBadge": "KI",
+            "entityType": {
+                "exercise": "Aufgabe",
+                "lecture": "Vorlesung",
+                "lecture_unit": "Vorlesungseinheit",
+                "exam": "Klausur",
+                "faq": "FAQ",
+                "channel": "Kanal",
+                "course": "Kurs",
+                "post": "Beitrag",
+                "answer_post": "Antwort"
+            }
         },
         "menu": {
             "home": "Startseite",
