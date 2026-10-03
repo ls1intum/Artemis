@@ -18,6 +18,15 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
 export class GeneralFeedbackComponent {
     readonly feedbacks = input<Feedback[] | undefined>([]);
     readonly course = input<Course>();
+    /** Sets the section apart from the submission above it with a rule, like the rating in the exercise details. */
+    readonly separated = input(false);
+    /** Whether the section names itself; a tab that already reads "General feedback" with the count shows it without. */
+    readonly showTitle = input(true);
+    /**
+     * Whether the cards fill the width in as many columns as fit, at least 20rem each, so a wide panel shows more feedback
+     * at once; a narrow one falls back to a single column.
+     */
+    readonly columns = input(false);
 
     protected readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 }

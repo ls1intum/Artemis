@@ -1,4 +1,4 @@
-<div [id]="'exercise-' + exercise()?.id">
+<div class="h-full" [id]="'exercise-' + exercise()?.id">
     @if (loadingParticipation() || participationCouldNotBeFetched()) {
         <nav class="card">
             <div class="card-body">
@@ -28,6 +28,8 @@
             [readOnlyManualFeedback]="true"
             [course]="course()"
             [showNavbar]="!lightweight()"
+            [generalFeedbackCount]="unreferencedFeedback.length"
+            [fillHeight]="true"
         >
             <div editorTitle>
                 <span>{{ exercise()?.title }}</span>
@@ -89,11 +91,8 @@
                 [personalParticipation]="true"
                 class="instructions-wrapper__content card-body p-0"
             />
+            <!-- Shown as a tab beside the build output -->
+            <jhi-general-feedback editorBottomFeedback [feedbacks]="unreferencedFeedback" [course]="course()" [showTitle]="false" [columns]="true" />
         </jhi-code-editor-container>
-    }
-    @if (unreferencedFeedback.length) {
-        <div class="row ms-0">
-            <jhi-general-feedback class="col-xl-8 mt-3" [feedbacks]="unreferencedFeedback" [course]="course()" />
-        </div>
     }
 </div>

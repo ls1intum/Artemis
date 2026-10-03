@@ -1,3 +1,5 @@
+@use 'src/main/webapp/content/scss/artemis-mixins' as mixins;
+
 :host {
     display: inline-flex;
     align-items: center;
@@ -5,14 +7,23 @@
     cursor: default;
 }
 
-.badge {
+// The same pill as the general feedback count, so every count of feedback looks alike
+.file-browser-badge {
+    @include mixins.count-pill;
+
+    color: var(--body-color);
     user-select: none;
-    background-color: var(--code-editor-file-browser-badge-background);
-    color: var(--bs-body-color);
 }
 
-.badge.on-colored-background {
-    /* Only slightly darken the background and always use white text */
-    background-color: rgba(0, 0, 0, 0.15);
+// The review comment count keeps its icon beside the number
+.file-browser-badge--with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+// On a selected, changed or erroneous file the pill only tints the row's color, and its text takes the row's text color
+.file-browser-badge.on-colored-background {
+    background: color-mix(in srgb, var(--colored-btn-font) 25%, transparent);
     color: var(--colored-btn-font);
 }

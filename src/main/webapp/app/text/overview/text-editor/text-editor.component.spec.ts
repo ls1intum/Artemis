@@ -40,7 +40,6 @@ import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/t
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -91,7 +90,6 @@ describe('TextEditorComponent', () => {
                 MockComponent(ButtonComponent),
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsFormComponent),
-                MockComponent(ComplaintsStudentViewComponent),
                 MockDirective(MarkdownDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ResizeableContainerComponent),
@@ -554,6 +552,20 @@ describe('TextEditorComponent', () => {
         expect(comp.isAutomaticResult).toBe(true);
         comp.result.set({ assessmentType: AssessmentType.MANUAL } as Result);
         expect(comp.isAutomaticResult).toBe(false);
+    });
+
+    it('frames only an assessed submission with feedback in the submission panel', () => {
+        comp.result.set({ assessmentType: AssessmentType.MANUAL, feedbacks: [] } as unknown as Result);
+        expect(comp.showsAssessedSubmission).toBe(false);
+
+        comp.result.set({ assessmentType: AssessmentType.MANUAL, feedbacks: [{ credits: 2 }] } as unknown as Result);
+        expect(comp.showsAssessedSubmission).toBe(true);
+
+        // Preliminary AI feedback leaves the editor open, unless the student reads it in an exam summary or a fixed submission
+        comp.result.set({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, feedbacks: [{ credits: 2 }] } as unknown as Result);
+        expect(comp.showsAssessedSubmission).toBe(false);
+        comp.isReadOnlyWithShowResult.set(true);
+        expect(comp.showsAssessedSubmission).toBe(true);
     });
 
     it('canDeactivate true when no submission or unchanged; false when changed', () => {

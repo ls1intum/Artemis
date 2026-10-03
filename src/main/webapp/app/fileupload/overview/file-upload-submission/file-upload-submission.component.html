@@ -1,7 +1,13 @@
 @if (fileUploadExercise()) {
     <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()" [showRightPanel]="showProblemStatement() && examMode()">
         <!--region Left Panel-->
-        <div left-body class="px-2 pb-2 w-100">
+        <div
+            left-body
+            class="w-100"
+            [class.px-2]="!showsAssessedSubmission()"
+            [class.pb-2]="!showsAssessedSubmission()"
+            [class.file-upload-submission__fill]="showsAssessedSubmission()"
+        >
             <div class="row">
                 @if ((isActive() || isLate()) && !result() && fileUploadExercise() && submission() && isOwnerOfParticipation()) {
                     <div class="col-12 col-md-6">
@@ -26,61 +32,74 @@
                     </div>
                 }
             </div>
-            @if (submittedFileName() && submission()?.filePathUrl) {
-                <div class="card-text">
-                    @if (!displayedInExamSummary()) {
-                        <h6>
-                            {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName() } }}
-                            @if (submission()?.submissionDate) {
-                                <span> {{ submission()?.submissionDate | artemisTimeAgo }}</span>
-                            }
-                        </h6>
-                    } @else {
-                        <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
-                        <span jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></span>
-                    }
-                    <br />
-                    <div class="mt-2">
-                        @if (submission()?.filePathUrl; as filePathUrl) {
-                            <button
-                                type="button"
-                                jhi-exercise-action-button
-                                [smallButton]="true"
-                                [buttonIcon]="faDownload"
-                                [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
-                                (click)="downloadFile(filePathUrl)"
-                            ></button>
-                        }
+            @if (showsAssessedSubmission()) {
+                <!-- Framed like the assessed submission of a text exercise: the file type in the header, the submitted file and
+                     the general feedback below. -->
+                <jhi-assessment-submission-panel
+                    titleKey="artemisApp.assessment.assessmentOfSubmission"
+                    [flush]="!displayedInExamSummary()"
+                    data-testid="file-upload-assessed-submission"
+                >
+                    <!-- The container carries the slot, so the tag inside the @if still lands in the panel header -->
+                    <ng-container submissionPanelMeta>
                         @if (submittedFileExtension()) {
-                            <span class="ms-2 badge bg-info">
-                                {{ submittedFileExtension() | uppercase }}
-                            </span>
+                            <tumaet-ui-tag severity="info">{{ submittedFileExtension() | uppercase }}</tumaet-ui-tag>
                         }
-                    </div>
-                </div>
+                    </ng-container>
+                    <ng-container [ngTemplateOutlet]="submittedFile" [ngTemplateOutletContext]="{ inPanel: true }" />
+                    <jhi-general-feedback [feedbacks]="unreferencedFeedback()" [course]="course()" [separated]="true" [columns]="true" />
+                    <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
+                    @if (isOwnerOfParticipation() && result() && participation() && displayedInExamSummary()) {
+                        <jhi-rating
+                            class="d-block mt-2 alert alert-info"
+                            [result]="result()!"
+                            [participation]="participation()!"
+                            [isOwnerOfParticipation]="isOwnerOfParticipation()"
+                        />
+                    }
+                </jhi-assessment-submission-panel>
+            } @else {
+                <ng-container [ngTemplateOutlet]="submittedFile" [ngTemplateOutletContext]="{ inPanel: false }" />
             }
-            @if (result()?.feedbacks?.length) {
-                <div>
-                    <br />
-                    <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
-                    <div class="row">
-                        <jhi-general-feedback class="col-xl-8" [feedbacks]="unreferencedFeedback()" [course]="course()" />
-                    </div>
-                    <div class="row">
-                        @if (isOwnerOfParticipation() && result() && participation()) {
-                            <jhi-rating class="mt-2 alert alert-info" [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
+            <ng-template #submittedFile let-inPanel="inPanel">
+                @if (submittedFileName() && submission()?.filePathUrl) {
+                    <div class="card-text">
+                        @if (!displayedInExamSummary()) {
+                            <h6>
+                                {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName() } }}
+                                @if (submission()?.submissionDate) {
+                                    <span> {{ submission()?.submissionDate | artemisTimeAgo }}</span>
+                                }
+                            </h6>
+                        } @else {
+                            <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
+                            <span jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></span>
                         }
+                        <!-- The panel spaces its content already -->
+                        @if (!inPanel) {
+                            <br />
+                        }
+                        <div class="mt-2">
+                            @if (submission()?.filePathUrl; as filePathUrl) {
+                                <button
+                                    type="button"
+                                    jhi-exercise-action-button
+                                    [smallButton]="true"
+                                    [buttonIcon]="faDownload"
+                                    [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
+                                    (click)="downloadFile(filePathUrl)"
+                                ></button>
+                            }
+                            <!-- In the panel the file type sits in its header -->
+                            @if (submittedFileExtension() && !inPanel) {
+                                <span class="ms-2 badge bg-info">
+                                    {{ submittedFileExtension() | uppercase }}
+                                </span>
+                            }
+                        </div>
                     </div>
-                </div>
-            }
-            @if (fileUploadExercise() && result() && participation() && isAfterAssessmentDueDate() && !examMode()) {
-                <jhi-complaint-student-view
-                    [result]="(resultWithComplaint() ?? result())!"
-                    [participation]="participation()!"
-                    [exercise]="fileUploadExercise()!"
-                    [isCurrentUserSubmissionAuthor]="isOwnerOfParticipation()"
-                />
-            }
+                }
+            </ng-template>
         </div>
         <!--endregion-->
         <!--region Right Panel-->

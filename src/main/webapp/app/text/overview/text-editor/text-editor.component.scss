@@ -72,3 +72,28 @@ div {
         background-color: lightblue;
     }
 }
+
+// The assessed submission panel fills the panel of the exercise page, like the modeling editor: every element down to it
+// takes the full height, and only the panel's content scrolls
+:host(.text-editor--fill) {
+    height: 100%;
+
+    jhi-resizeable-container {
+        display: block;
+        height: 100%;
+    }
+}
+
+.text-editor-grid--fill {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+
+    .grid-area-main {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+    }
+}

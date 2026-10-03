@@ -1,4 +1,11 @@
-<div class="editor-wrapper" #editorWrapper [class.assessment-wrapper]="isTutorAssessment()" [class.assessment-workspace]="assessmentWorkspace()">
+<div
+    class="editor-wrapper"
+    #editorWrapper
+    [class.assessment-wrapper]="isTutorAssessment()"
+    [class.assessment-workspace]="assessmentWorkspace()"
+    [class.editor-wrapper--fill]="fillHeight()"
+    [class.editor-wrapper--bottom-collapsed]="buildOutputIsCollapsed()"
+>
     <!-- Top bar -->
     <nav class="editor-statusbar" [hidden]="!showEditorNavbar()">
         <ng-content select="[editorNavbar]" />
@@ -68,12 +75,12 @@
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-bottom-bottom' }"
         [resizableConstraints]="{ minHeight: resizableMinHeightBottom, maxHeight: maxConstraints().heightBottom }"
-        [resizableEnabled]="!buildOutputIsCollapsed()"
+        [resizableEnabled]="bottomResizable() && !buildOutputIsCollapsed()"
         (resizeEnd)="onPanelResized(ResizeType.BOTTOM)"
     >
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
         <!-- Required for resizing; don't remove empty span -->
-        @if (!buildOutputIsCollapsed()) {
+        @if (bottomResizable() && !buildOutputIsCollapsed()) {
             <fa-icon [icon]="faGripLines" data-testid="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
         }
     </div>

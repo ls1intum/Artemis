@@ -18,13 +18,15 @@ import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.mode
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -37,10 +39,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { TextResultComponent } from '../text-result/text-result.component';
 import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { UpperCasePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,6 +50,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
+    // The page gives its panel no padding, so the editor adds it, unless the assessed submission panel fills the panel to its
+    // edges; an exam summary has its own frame.
+    host: { class: 'block', '[class.text-editor--fill]': 'showsAssessedSubmission', '[class.p-2]': '!isExamSummary() && !showsAssessedSubmission' },
     imports: [
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
@@ -60,11 +62,10 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         TextResultComponent,
         GeneralFeedbackComponent,
         RatingComponent,
-        ComplaintsStudentViewComponent,
         FaIconComponent,
-        UpperCasePipe,
-        ArtemisTranslatePipe,
         MarkdownDirective,
+        AssessmentSubmissionPanelComponent,
+        TumAetUiTagComponent,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
@@ -80,7 +81,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
     protected readonly Result = Result;
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
-    protected readonly isAthenaAIResult = isAthenaAIResult;
 
     participationId = input<number>();
     expandProblemStatement = input<boolean>(true);
@@ -92,7 +92,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly textExercise = signal<TextExercise>(undefined!);
     readonly participation = signal<StudentParticipation>(undefined!);
     readonly result = signal<Result>(undefined!);
-    readonly resultWithComplaint = signal<Result | undefined>(undefined);
     readonly submission = signal<TextSubmission>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly isSaving = signal(false);
@@ -326,9 +325,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.result().submission = this.submission();
             }
 
-            // if one of the submissions results has a complaint, we get it
-            this.resultWithComplaint.set(getFirstResultWithComplaint(this.submission()));
-
             if (this.submission()?.text) {
                 this.answer.set(this.submission().text ?? '');
             } else {
@@ -395,6 +391,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get unreferencedFeedback(): Feedback[] | undefined {
         return this.result() ? getUnreferencedFeedback(this.result().feedbacks) : undefined;
+    }
+
+    /** Whether the student reads an assessed submission, which the submission panel of the assessment page then frames. */
+    get showsAssessedSubmission(): boolean {
+        const result = this.result();
+        return !!result?.feedbacks?.length && (!this.isAutomaticResult || this.isExamSummary() || this.isReadOnlyWithShowResult());
     }
 
     get wordCount(): number {

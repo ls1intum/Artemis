@@ -63,3 +63,9 @@
         overscroll-behavior: contain;
     }
 }
+
+// On a surface that frames it already, the surface's border and corners are the panel's
+.assessment-submission-panel--flush {
+    border: 0;
+    border-radius: 0;
+}

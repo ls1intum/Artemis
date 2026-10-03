@@ -17,13 +17,22 @@ import { AssessmentScoreTagsComponent } from 'app/assessment/manage/assessment-s
     imports: [FaIconComponent, TranslateDirective, AssessmentScoreTagsComponent],
 })
 export class AssessmentSubmissionPanelComponent {
-    readonly score = input.required<AssessmentScore>();
-    readonly maxPoints = input.required<number>();
+    /** The awarded, deducted and final points shown in the header; a page that shows the points elsewhere leaves it out. */
+    readonly score = input<AssessmentScore>();
+    readonly maxPoints = input(0);
     /**
      * Whether the content gets padding and scrolls inside the panel, as text does. Off for content that fills the panel
      * and handles its own scrolling, such as a diagram editor.
      */
     readonly scrollContent = input(true);
+    /** The panel's title; the student's view of an assessed submission names the assessment rather than the submission. */
+    readonly titleKey = input('artemisApp.result.submission');
+    /**
+     * Whether the panel fills a surface that frames it already, such as the editor side of the exercise page: it then drops
+     * its own border and rounded corners, which would otherwise sit inside the surface's and leave its background in the
+     * corners.
+     */
+    readonly flush = input(false);
 
     protected readonly faSubmission = faFileAlt;
 }

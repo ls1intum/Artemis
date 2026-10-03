@@ -8,7 +8,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, RouterModule } from '@angular/router';
 import { type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -114,10 +113,10 @@ describe('ModelingSubmissionComponent', () => {
 
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, RatingComponent, ComplaintsStudentViewComponent],
+                imports: [ModelingEditorComponent, RatingComponent],
             },
             add: {
-                imports: [StubModelingEditorComponent, MockComponent(RatingComponent), MockComponent(ComplaintsStudentViewComponent)],
+                imports: [StubModelingEditorComponent, MockComponent(RatingComponent)],
             },
         });
 
@@ -158,7 +157,6 @@ describe('ModelingSubmissionComponent', () => {
                 MockComponent(ModelingAssessmentComponent),
                 MockComponent(UnifiedFeedbackComponent),
                 MockComponent(RatingComponent),
-                MockComponent(ComplaintsStudentViewComponent),
             ],
             providers: [
                 MockProvider(ChangeDetectorRef),
@@ -1003,22 +1001,6 @@ describe('ModelingSubmissionComponent', () => {
             await vi.waitFor(() => expect(captureException).toHaveBeenCalled());
 
             expect(comp['apollonCollaborationUser']()).toBeUndefined();
-        });
-    });
-
-    describe('complaint section', () => {
-        it.each([
-            { result: true, examMode: false, feedbackView: false, expected: true },
-            { result: false, examMode: false, feedbackView: false, expected: false },
-            { result: true, examMode: true, feedbackView: false, expected: false },
-            { result: true, examMode: false, feedbackView: true, expected: false },
-        ])('shows the complaint section: $expected (result=$result, exam=$examMode, feedbackView=$feedbackView)', ({ result, examMode, feedbackView, expected }) => {
-            createModelingSubmissionComponent();
-            comp.result.set(result ? ({ id: 1 } as Result) : undefined);
-            comp.examMode.set(examMode);
-            comp.isFeedbackView.set(feedbackView);
-
-            expect(comp['showComplaintSection']()).toBe(expected);
         });
     });
 

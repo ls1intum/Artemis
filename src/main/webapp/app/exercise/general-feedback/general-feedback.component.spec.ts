@@ -39,6 +39,36 @@ describe('GeneralFeedbackComponent', () => {
         expect(section()?.querySelectorAll('jhi-unified-feedback')).toHaveLength(2);
     });
 
+    it('should set the section apart with a rule only when asked to', () => {
+        fixture.componentRef.setInput('feedbacks', [{ id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 2 }] as Feedback[]);
+        fixture.detectChanges();
+        expect(section()?.classList).not.toContain('general-feedback--separated');
+
+        fixture.componentRef.setInput('separated', true);
+        fixture.detectChanges();
+        expect(section()?.classList).toContain('general-feedback--separated');
+    });
+
+    it('should leave out its heading when a tab already names it', () => {
+        fixture.componentRef.setInput('feedbacks', [{ id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 2 }] as Feedback[]);
+        fixture.componentRef.setInput('showTitle', false);
+        fixture.detectChanges();
+
+        expect(section()?.querySelector('.general-feedback__title')).toBeNull();
+        expect(section()?.querySelectorAll('jhi-unified-feedback')).toHaveLength(1);
+    });
+
+    it('should lay the cards out in columns only when asked to', () => {
+        fixture.componentRef.setInput('feedbacks', [{ id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 2 }] as Feedback[]);
+        fixture.detectChanges();
+        const list = (): HTMLElement | null => section()!.querySelector('.general-feedback__list');
+        expect(list()?.classList).not.toContain('general-feedback__list--columns');
+
+        fixture.componentRef.setInput('columns', true);
+        fixture.detectChanges();
+        expect(list()?.classList).toContain('general-feedback__list--columns');
+    });
+
     it('should render nothing without general feedback', () => {
         fixture.componentRef.setInput('feedbacks', []);
         fixture.detectChanges();

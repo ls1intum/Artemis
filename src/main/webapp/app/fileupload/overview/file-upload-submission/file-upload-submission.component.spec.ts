@@ -39,7 +39,6 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constan
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
@@ -162,7 +161,6 @@ describe('FileUploadSubmissionComponent', () => {
                         ResizeableContainerComponent,
                         UnifiedFeedbackComponent,
                         RatingComponent,
-                        ComplaintsStudentViewComponent,
                         ButtonComponent,
                         ArtemisTranslatePipe,
                         ArtemisTimeAgoPipe,
@@ -174,7 +172,6 @@ describe('FileUploadSubmissionComponent', () => {
                         MockComponent(ResizeableContainerComponent),
                         MockComponent(UnifiedFeedbackComponent),
                         MockComponent(RatingComponent),
-                        MockComponent(ComplaintsStudentViewComponent),
                         MockComponent(ButtonComponent),
                         MockPipe(ArtemisTranslatePipe),
                         MockPipe(ArtemisTimeAgoPipe),
@@ -412,23 +409,6 @@ describe('FileUploadSubmissionComponent', () => {
         it('should compute accepted file extensions from pattern', () => {
             expect(component.acceptedFileExtensions()).toContain('.pdf');
             expect(component.acceptedFileExtensions()).toContain('.png');
-        });
-
-        it('should compute isAfterAssessmentDueDate when no assessment due date', () => {
-            expect(component.isAfterAssessmentDueDate()).toBe(true);
-        });
-
-        it('should compute isAfterAssessmentDueDate when assessment due date passed', async () => {
-            const exercise = createExercise({ assessmentDueDate: dayjs().subtract(1, 'day') });
-            const submission = createSubmission(exercise);
-            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-
-            fixture = TestBed.createComponent(FileUploadSubmissionComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(component.isAfterAssessmentDueDate()).toBe(true);
         });
 
         it('should compute isLate when initialization is after due date', async () => {

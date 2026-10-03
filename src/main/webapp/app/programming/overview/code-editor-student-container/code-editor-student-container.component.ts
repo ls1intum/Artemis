@@ -34,6 +34,8 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
+    // Fills the panel of the exercise page, so the editor below can take its full height
+    host: { class: 'block h-full' },
     imports: [
         FaIconComponent,
         TranslateDirective,

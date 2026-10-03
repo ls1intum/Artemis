@@ -52,7 +52,7 @@
                                                     (selectedElementIdsChanged)="onSelectedElementIdsChanged($event)"
                                                     [highlightedElements]="highlightedFeedbackElements()"
                                                     [explanation]="explanation"
-                                                    [panelLabel]="'artemisApp.modelingSubmission.assessment.title' | artemisTranslate"
+                                                    [panelLabel]="'artemisApp.assessment.assessmentOfSubmission' | artemisTranslate"
                                                 >
                                                     <div modelingAssessmentTopRight class="apollon-glass apollon-chrome-cluster">
                                                         <button
@@ -114,15 +114,17 @@
                                                                                 [reference]="feedbackElementName(feedback)"
                                                                                 [referenceType]="feedbackElementType(feedback)"
                                                                                 [showReference]="true"
+                                                                                [referenceTooltip]="false"
                                                                                 [scoreAccuracy]="course()?.accuracyOfScores"
                                                                             />
                                                                         </li>
                                                                     }
                                                                 </ul>
                                                             }
-                                                            <jhi-general-feedback [feedbacks]="unreferencedFeedback" [course]="course()" />
+                                                            <jhi-general-feedback [feedbacks]="unreferencedFeedback" [course]="course()" [separated]="true" />
                                                         }
-                                                        @if (result()) {
+                                                        <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
+                                                        @if (result() && isExamSummary()) {
                                                             <jhi-rating
                                                                 class="modeling-submission-feedback__rating"
                                                                 [result]="result()"
@@ -130,11 +132,6 @@
                                                                 starSize="18"
                                                                 layout="inline"
                                                             />
-                                                        }
-                                                        @if (showComplaintSection()) {
-                                                            <div class="modeling-submission-feedback__complaint">
-                                                                <ng-container [ngTemplateOutlet]="complaintSection" />
-                                                            </div>
                                                         }
                                                     </div>
                                                 </jhi-modeling-assessment>
@@ -144,12 +141,6 @@
                                 }
                             </div>
                         </div>
-
-                        @if (showComplaintSection() && shouldShowLiveEditor()) {
-                            <div class="modeling-submission-complaint">
-                                <ng-container [ngTemplateOutlet]="complaintSection" />
-                            </div>
-                        }
                     </div>
                 }
             </ng-container>
@@ -163,6 +154,3 @@
         </jhi-resizeable-container>
     }
 </div>
-<ng-template #complaintSection>
-    <jhi-complaint-student-view [exercise]="modelingExercise()!" [participation]="participation()" [result]="resultWithComplaint() ? resultWithComplaint() : result()" />
-</ng-template>

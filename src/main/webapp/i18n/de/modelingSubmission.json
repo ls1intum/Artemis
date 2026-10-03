@@ -23,9 +23,8 @@
             "resizePanel": "Größe von {{ panel }} ändern",
             "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
             "assessment": {
-                "title": "Deine Bewertung",
                 "noAssessment": "Es liegt noch keine Bewertung vor.",
-                "onDiagram": "Feedback zu deinem Diagramm"
+                "onDiagram": "Feedback zum Diagramm"
             }
         }
     }

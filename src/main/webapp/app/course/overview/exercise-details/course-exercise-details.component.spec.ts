@@ -457,6 +457,23 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.latestRatedResult()).toBe(testResult);
     });
 
+    it.each([ExerciseType.MODELING, ExerciseType.TEXT])('should load the latest rated result of a %s exercise for the rating and the complaint', (type) => {
+        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as EntityResponseType));
+        const manualResult = { id: 1, rated: true, assessmentType: AssessmentType.MANUAL, completionDate: dayjs().subtract(1, 'hours') } as Result;
+        const gradedParticipation = { submissions: [{ id: 55, results: [manualResult] }], testRun: false } as StudentParticipation;
+        vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) => {
+            return participations?.find((p) => p.testRun === testRun);
+        });
+
+        comp.studentParticipations = [gradedParticipation];
+        comp.sortedHistoryResults = [manualResult];
+        comp.exercise = { ...exercise, type };
+
+        comp.loadComplaintAndLatestRatedResult();
+
+        expect(comp.latestRatedResult()).toBe(manualResult);
+    });
+
     it('should handle participation update', async () => {
         vi.useFakeTimers();
         const submissionId = 55;

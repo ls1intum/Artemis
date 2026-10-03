@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -8,9 +7,7 @@ import { faDownLeftAndUpRightToCenter, faExclamationTriangle, faUpRightAndDownLe
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
 import { type CollaborationUser, DEFAULT_LABELS, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -19,10 +16,10 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
-import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
@@ -68,11 +65,9 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
         ModelingAssessmentComponent,
         TranslateDirective,
         RatingComponent,
-        ComplaintsStudentViewComponent,
         MarkdownDirective,
         ArtemisTranslatePipe,
         ModelingAssessmentPanelDirective,
-        NgTemplateOutlet,
         UnifiedFeedbackComponent,
         GeneralFeedbackComponent,
     ],
@@ -137,7 +132,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly modelingExercise = signal<ModelingExercise>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly result = signal<Result | undefined>(undefined);
-    readonly resultWithComplaint = signal<Result | undefined>(undefined);
 
     readonly selectedElementIds = signal<string[]>([]);
     protected readonly previewedFeedbackReferenceId = signal<string | undefined>(undefined);
@@ -172,7 +166,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isAfterAssessmentDueDate = false;
     readonly isLoading = signal(true);
     readonly isLate = signal<boolean>(undefined!);
-    ComplaintType = ComplaintType;
     readonly examMode = signal(false);
 
     private submissionChange = new Subject<ModelingSubmission>();
@@ -186,16 +179,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     protected hasAssessmentToShow(): boolean {
         return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
-    }
-
-    protected showComplaintSection(): boolean {
-        return (
-            !!this.result() &&
-            !this.examMode() &&
-            !this.isFeedbackView() &&
-            !isPracticeMode(this.participation()) &&
-            this.result()!.assessmentType !== AssessmentType.AUTOMATIC_ATHENA
-        );
     }
 
     readonly canSubmitExercise = computed(() => this.shouldShowLiveEditor());
@@ -361,7 +344,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private resetSubmissionScopedState(): void {
         this.result.set(undefined);
         this.assessmentResult.set(undefined);
-        this.resultWithComplaint.set(undefined);
         this.assessmentsNames.set({});
         this.totalScore = 0;
         this.selectedElementIds.set([]);
@@ -428,7 +410,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 }
             }
         }
-        this.resultWithComplaint.set(getFirstResultWithComplaint(this.submission()));
         const result = this.result();
         if (this.submission().submitted && result && result.completionDate) {
             if (result.feedbacks && result.feedbacks.length > 0) {

@@ -41,6 +41,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 @Component({
     selector: 'jhi-exercise-split-panel',
     templateUrl: './exercise-split-panel.component.html',
+    styleUrl: './exercise-split-panel.component.scss',
     imports: [
         RouterOutlet,
         RouterLink,
@@ -178,6 +179,15 @@ export class ExerciseSplitPanelComponent {
         return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor;
     });
 
+    /**
+     * Whether the editor panel runs to the panel's edges. The modeling and code editors frame themselves; the text and file
+     * upload editors frame an assessed submission and add their own padding around everything else.
+     */
+    readonly flushEditorPanel = computed(() => {
+        const type = this.exercise().type;
+        return this.showEditorPanel() && (type === ExerciseType.MODELING || type === ExerciseType.TEXT || type === ExerciseType.FILE_UPLOAD || !!this.showCodeEditor());
+    });
+
     readonly showEditorPanel = computed(() => {
         const type = this.exercise().type;
         if (type === ExerciseType.QUIZ) return true;
@@ -210,11 +220,11 @@ export class ExerciseSplitPanelComponent {
         return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || type === ExerciseType.QUIZ || this.showCodeEditor();
     });
 
+    // Every exercise type asks for the rating and offers the complaint here, below its details, rather than beside its
+    // own feedback, so the student finds them in the same place whatever the exercise is.
     readonly showComplaintView = computed(() => {
-        const exercise = this.exercise();
         const result = this.latestRatedResult();
         return (
-            exercise.type === ExerciseType.PROGRAMMING &&
             !!this.gradedStudentParticipation() &&
             !!result &&
             (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC || this.allowComplaintsForAutomaticAssessments())
@@ -224,7 +234,6 @@ export class ExerciseSplitPanelComponent {
     readonly showRating = computed(() => {
         const result = this.latestRatedResult();
         return (
-            this.exercise().type === ExerciseType.PROGRAMMING &&
             !!this.gradedStudentParticipation() &&
             !!result &&
             (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC)

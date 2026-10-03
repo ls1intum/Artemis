@@ -23,9 +23,8 @@
             "resizePanel": "Resize {{ panel }}",
             "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
             "assessment": {
-                "title": "Your assessment",
                 "noAssessment": "There is no assessment available yet.",
-                "onDiagram": "Feedback on your diagram"
+                "onDiagram": "Feedback on the Diagram"
             }
         }
     }

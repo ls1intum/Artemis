@@ -1,11 +1,13 @@
 @let generalFeedbacks = feedbacks() ?? [];
 @if (generalFeedbacks.length) {
-    <section data-testid="general-feedback">
-        <h4 class="general-feedback__title">
-            <span jhiTranslate="artemisApp.assessment.generalFeedback"></span>
-            <span class="general-feedback__count">{{ generalFeedbacks.length }}</span>
-        </h4>
-        <ul class="general-feedback__list">
+    <section data-testid="general-feedback" [class.general-feedback--separated]="separated()">
+        @if (showTitle()) {
+            <h4 class="general-feedback__title">
+                <span jhiTranslate="artemisApp.assessment.generalFeedback"></span>
+                <span class="general-feedback__count">{{ generalFeedbacks.length }}</span>
+            </h4>
+        }
+        <ul class="general-feedback__list" [class.general-feedback__list--columns]="columns()">
             @for (feedback of generalFeedbacks; track feedback) {
                 <li>
                     <jhi-unified-feedback

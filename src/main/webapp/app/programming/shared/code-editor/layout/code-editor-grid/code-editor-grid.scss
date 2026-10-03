@@ -321,6 +321,75 @@
 }
 
 /* ==========================================================================
+   Filling its host: the student's code editor in the exercise's split panel
+   ========================================================================== */
+
+/* The grid takes the full height of its host instead of fixed panel heights, so the page around it does not scroll: the
+   file browser and the editor take the upper part and the bottom area takes the rest, each scrolling on its own. The grip
+   between them moves the split; it sets the upper part's height and the bottom area follows. */
+.code-editor-container--fill,
+.code-editor-grid--fill {
+    display: block;
+    height: 100%;
+    min-height: 0;
+}
+
+.editor-wrapper.editor-wrapper--fill {
+    display: flex;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    flex-direction: column;
+    row-gap: 0;
+
+    > .editor-statusbar {
+        flex: none;
+    }
+
+    .editor-main {
+        display: flex;
+        height: 65%;
+        min-height: 0;
+        flex: 0 0 auto;
+        flex-direction: column;
+        margin-bottom: 0;
+    }
+
+    .editor-main__content {
+        height: auto;
+        min-height: 0;
+        flex: 1 1 0;
+    }
+
+    .editor-main > .rg-main-bottom {
+        flex: none;
+    }
+
+    .editor-bottom {
+        height: auto;
+        max-height: none;
+        min-height: 0;
+        flex: 1 1 0;
+        overflow: hidden;
+
+        > * {
+            height: 100%;
+        }
+    }
+
+    /* A collapsed bottom area keeps only its header, and the editor takes the space it leaves */
+    &.editor-wrapper--bottom-collapsed {
+        .editor-main {
+            flex-grow: 1;
+        }
+
+        .editor-bottom {
+            flex: 0 0 auto;
+        }
+    }
+}
+
+/* ==========================================================================
    Assessment: laid out like the text and modeling assessments
    ========================================================================== */
 
