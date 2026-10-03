@@ -27,6 +27,7 @@ import {
     faQuestion,
     faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('GlobalSearchNavigationViewComponent', () => {
     let component: GlobalSearchNavigationViewComponent;
@@ -136,6 +137,27 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('navigateToResult', () => {
+            it('navigates to a course without lecture deep-link state', () => {
+                component['navigateToResult']({ type: 'course', id: '10', metadata: { courseId: 10 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10]);
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
+            it('preserves the discussion target when navigating to a post', () => {
+                component['navigateToResult']({ type: 'post', id: '5', metadata: { courseId: 10, channelId: 20 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 20, focusPostId: '5' } });
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
+            it('preserves the discussion target when navigating to a reply', () => {
+                component['navigateToResult']({ type: 'answer_post', id: '6', metadata: { courseId: 10, channelId: 20, postId: 5 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 20, messageId: 5, focusReplyId: '6' } });
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
             it('should close overlay if courseId is missing', () => {
                 component['navigateToResult']({ type: 'exercise', id: '1' } as GlobalSearchResult);
                 expect(overlay.close).toHaveBeenCalled();
@@ -197,6 +219,18 @@ describe('GlobalSearchNavigationViewComponent', () => {
             it('should navigate to lecture unit', () => {
                 component['navigateToResult']({ type: 'lecture_unit', id: '3', metadata: { courseId: 10, lectureId: 20 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20]);
+            });
+
+            it('should navigate to lecture content with a marked deep-link navigation', () => {
+                component['navigateToResult']({
+                    type: 'lecture_content',
+                    metadata: { link: '/courses/10/lectures/20', queryParams: { unit: 3, page: 4 } },
+                } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses/10/lectures/20'], {
+                    queryParams: { unit: 3, page: 4 },
+                    state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+                });
             });
 
             it('should navigate to student exam view when user is a student', () => {

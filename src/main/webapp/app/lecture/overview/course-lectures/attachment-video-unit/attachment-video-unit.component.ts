@@ -65,6 +65,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
 import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 type SplitSizes = [number, number];
 
@@ -113,14 +114,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     protected readonly faDownload = faDownload;
     protected readonly faXmark = faXmark;
 
-    targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
-    targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
-    /**
-     * Whether the deep link that opened this unit asks for the combined view. An Iris point-out marker sets it, so
-     * that clicking one from elsewhere in the app arrives in the same view as clicking it on this page does —
-     * the position alone is not the whole target, the toggle and its explanation live in that view too.
-     */
-    targetCombinedView = input<boolean>(false);
     irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
     contextsProvider = input<LectureContextsProvider | undefined>(undefined); // For collecting context from visible units
 
@@ -188,6 +181,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     /** Latches the one-off combined-view opening a deep link asks for, so a closed view stays closed. */
     private hasOpenedCombinedViewFromDeepLink = false;
+    private combinedViewDeepLink?: LectureDeepLink;
 
     // A point-out navigation target waiting to be applied once the combined view is open and the
     // relevant viewer (PDF / video) has rendered. Applied (and cleared) by an effect in the constructor.
@@ -198,10 +192,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly syncDisabledByPointOutState = signal<{ page: number; time: string } | undefined>(undefined);
     readonly syncDisabledByPointOut = this.syncDisabledByPointOutState.asReadonly();
 
-    readonly validatedPdfPage = computed(() => {
-        const page = this.targetPdfPage();
-        return page && Number.isInteger(page) && page > 0 ? page : undefined;
-    });
+    readonly targetTimestamp = computed(() => this.matchedDeepLink()?.timestamp);
+    readonly targetPdfPage = computed(() => this.matchedDeepLink()?.page);
 
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
@@ -322,8 +314,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // still being resolved when this unit is first built, so the effect waits for it rather than giving up.
         // It fires once: the student closing the view again must not be overruled by it reopening on the next run.
         effect(() => {
-            if (!this.targetCombinedView()) {
+            const deepLink = this.matchedDeepLink();
+            if (deepLink !== this.combinedViewDeepLink) {
+                this.combinedViewDeepLink = deepLink;
                 this.hasOpenedCombinedViewFromDeepLink = false;
+            }
+            if (!deepLink?.combined) {
                 return;
             }
             if (this.hasOpenedCombinedViewFromDeepLink || !this.hasFullscreenContent()) {
@@ -342,6 +338,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             if (!this.synchronizationAvailable() && this.synchronizeVideoAndSlides()) {
                 this.synchronizeVideoAndSlides.set(false);
                 this.clearSynchronizationTargets();
+            }
+        });
+
+        effect(() => {
+            const deepLink = this.matchedDeepLink();
+            if (deepLink) {
+                untracked(() => this.applyDeepLink(deepLink));
             }
         });
 
@@ -400,6 +403,19 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.pendingPointOut.set(undefined);
             });
         });
+    }
+
+    private applyDeepLink(deepLink: LectureDeepLink): void {
+        if (deepLink.timestamp !== undefined) {
+            this.activePlayer()?.seekTo(deepLink.timestamp, false);
+        }
+
+        const pdfViewer = this.pdfViewer();
+        if (deepLink.page !== undefined && pdfViewer && pdfViewer.getCurrentPage() !== deepLink.page) {
+            // A page-only request lets synchronization seek the video; an explicit timestamp must take precedence.
+            this.pendingPdfTargetPage = deepLink.timestamp !== undefined ? deepLink.page : undefined;
+            pdfViewer.goToPage(deepLink.page);
+        }
     }
 
     /**
