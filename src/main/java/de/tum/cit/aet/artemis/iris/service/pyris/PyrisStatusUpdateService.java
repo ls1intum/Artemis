@@ -360,7 +360,7 @@ public class PyrisStatusUpdateService {
         }
         return new PyrisChatStatusUpdateDTO(statusUpdate.result(), runState, statusUpdate.error(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
                 statusUpdate.accessedMemories(), statusUpdate.createdMemories(), statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(),
-                statusUpdate.activitySeq(), statusUpdate.finalResult());
+                statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.compaction());
     }
 
     private PyrisCompetencyStatusUpdateDTO withRunState(PyrisCompetencyStatusUpdateDTO statusUpdate, PyrisRunState runState) {
