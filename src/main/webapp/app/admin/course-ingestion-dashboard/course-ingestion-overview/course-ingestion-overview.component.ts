@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { TumAetUiButtonComponent, TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -41,6 +42,9 @@ export class CourseIngestionOverviewComponent implements OnInit {
     readonly loading = signal(true);
     readonly error = signal(false);
 
+    /** The overview request still in flight. A newer reload cancels it, so an older answer can never overwrite a newer one. */
+    private pendingRequest?: Subscription;
+
     /** The label naming what a collection holds, where its own name does not. */
     protected contentLabelKey(collection: string): string | undefined {
         return COLLECTION_CONTENTS[collection];
@@ -54,7 +58,8 @@ export class CourseIngestionOverviewComponent implements OnInit {
     reload(): void {
         this.loading.set(true);
         this.error.set(false);
-        this.dashboardService
+        this.pendingRequest?.unsubscribe();
+        this.pendingRequest = this.dashboardService
             .getIndexOverview()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({

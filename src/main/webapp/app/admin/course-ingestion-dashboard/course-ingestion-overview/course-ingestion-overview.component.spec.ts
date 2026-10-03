@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -88,6 +88,25 @@ describe('CourseIngestionOverviewComponent', () => {
         expect(component.error()).toBe(true);
         expect(component.loading()).toBe(false);
         expect(component.overview()).toBeUndefined();
+    });
+
+    it('should keep the newest overview when an older reload answers or fails last', async () => {
+        const first = new Subject<IndexOverview>();
+        const second = new Subject<IndexOverview>();
+        vi.mocked(service.getIndexOverview).mockReturnValueOnce(first.asObservable()).mockReturnValueOnce(second.asObservable());
+
+        component.reload();
+        component.reload();
+        const newer: IndexOverview = { ...reachableOverview, collections: [{ collection: 'ArtemisSearchableEntity', count: 43, readable: true }] };
+        second.next(newer);
+        second.complete();
+        first.next(reachableOverview);
+        first.error(new Error('stale failure'));
+
+        expect(first.observed).toBe(false);
+        expect(component.overview()).toEqual(newer);
+        expect(component.error()).toBe(false);
+        expect(component.loading()).toBe(false);
     });
 
     it('should report Iris as reachable when it answers', async () => {
