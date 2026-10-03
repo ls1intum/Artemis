@@ -177,7 +177,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
 
     @Query(nativeQuery = true, value = """
             SELECT CASE WHEN t.iris_message_id IS NOT NULL THEN 1 ELSE 0 END AS chatAttributed,
-                   SUM(r.num_input_tokens * r.cost_per_million_input_tokens / 1000000.0
+                   SUM((r.num_input_tokens - r.num_cached_input_tokens - r.num_cache_write_input_tokens) * r.cost_per_million_input_tokens / 1000000.0
+                     + r.num_cached_input_tokens * r.cost_per_million_cached_input_tokens / 1000000.0
+                     + r.num_cache_write_input_tokens * r.cost_per_million_cache_write_input_tokens / 1000000.0
                      + r.num_output_tokens * r.cost_per_million_output_tokens / 1000000.0) AS totalCostEur
             FROM llm_token_usage_trace t
             JOIN llm_token_usage_request r ON r.trace_id = t.id
@@ -233,7 +235,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
     @Query(nativeQuery = true, value = """
             SELECT t.time AS traceTime,
                    CASE WHEN t.iris_message_id IS NOT NULL THEN 1 ELSE 0 END AS chatAttributed,
-                   SUM(r.num_input_tokens * r.cost_per_million_input_tokens / 1000000.0
+                   SUM((r.num_input_tokens - r.num_cached_input_tokens - r.num_cache_write_input_tokens) * r.cost_per_million_input_tokens / 1000000.0
+                     + r.num_cached_input_tokens * r.cost_per_million_cached_input_tokens / 1000000.0
+                     + r.num_cache_write_input_tokens * r.cost_per_million_cache_write_input_tokens / 1000000.0
                      + r.num_output_tokens * r.cost_per_million_output_tokens / 1000000.0) AS costEur
             FROM llm_token_usage_trace t
             JOIN llm_token_usage_request r ON r.trace_id = t.id
@@ -258,7 +262,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
     @Query(nativeQuery = true, value = """
             SELECT r.model,
                    SUM(r.num_input_tokens + r.num_output_tokens) AS totalTokens,
-                   SUM(r.num_input_tokens * r.cost_per_million_input_tokens / 1000000.0
+                   SUM((r.num_input_tokens - r.num_cached_input_tokens - r.num_cache_write_input_tokens) * r.cost_per_million_input_tokens / 1000000.0
+                     + r.num_cached_input_tokens * r.cost_per_million_cached_input_tokens / 1000000.0
+                     + r.num_cache_write_input_tokens * r.cost_per_million_cache_write_input_tokens / 1000000.0
                      + r.num_output_tokens * r.cost_per_million_output_tokens / 1000000.0) AS totalCostEur
             FROM llm_token_usage_trace t
             JOIN llm_token_usage_request r ON r.trace_id = t.id
