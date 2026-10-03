@@ -332,7 +332,27 @@ describe('ResultService', () => {
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.preliminary');
         });
 
-        it('should return correct string for Athena non graded successful feedback', () => {
+        describe.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('completed %s AI feedback scores', (type) => {
+            it.each([0, 75, 100])('shows %s percent in the status with the preliminary label', (score) => {
+                const exercise = { ...programmingExercise, type };
+                const result: Result = { ...result6, score };
+
+                expect(resultService.getResultString(result, exercise, participation1, true)).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
+                expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: score });
+            });
+
+            it('includes points in the full result string', () => {
+                const exercise = { ...programmingExercise, type };
+                const result: Result = { ...result6, score: 75 };
+
+                expect(resultService.getResultString(result, exercise, participation1, false)).toBe(
+                    'artemisApp.result.resultString.nonProgramming (artemisApp.result.preliminary)',
+                );
+                expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.nonProgramming', { relativeScore: 75, points: 150 });
+            });
+        });
+
+        it('should return correct string for completed Athena feedback without a score', () => {
             programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
 
             expect(resultService.getResultString(result6, programmingExercise, participation1)).toBe(
