@@ -22,6 +22,7 @@ import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { CustomNoScientificNotationValidatorDirective } from 'app/foundation/validators/custom-no-scientific-notation-validator.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -40,6 +41,7 @@ import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
         KeyValuePipe,
         ArtemisTranslatePipe,
         Message,
+        CustomNoScientificNotationValidatorDirective,
     ],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
