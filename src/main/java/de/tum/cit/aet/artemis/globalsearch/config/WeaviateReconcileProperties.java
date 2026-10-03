@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.config;
 
 import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Positive;
@@ -8,6 +9,8 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
+
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
  * Configuration properties for the reconcile passes that keep the {@code SearchableEntities} index in step with
@@ -55,6 +58,28 @@ public record WeaviateReconcileProperties(@DefaultValue("true") boolean missingS
         @DefaultValue("500") @Positive int maxOutboxDepth, @DefaultValue("100") @Positive int missingBatchSize, @DefaultValue("200") @Positive int driftBatchSize,
         @DefaultValue("1000") @Positive int orphanPageSize, @DefaultValue("5") @Positive int orphanPagesPerTick, @DefaultValue("100") @Positive int orphanDeleteCapPerTick,
         @DefaultValue("100") @Positive int orphanRepairCapPerTick, @DefaultValue("0.25") @Positive @DecimalMax("1.0") double orphanAbortRatio){
+
+    /**
+     * Every discriminator the reconcile passes can enumerate. Posts and answer posts are supported but left out of the
+     * default list for the reason given above.
+     */
+    private static final Set<String> SUPPORTED_ENTITY_TYPES = Set.of(SearchableEntitySchema.TypeValues.COURSE, SearchableEntitySchema.TypeValues.LECTURE,
+            SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.EXERCISE,
+            SearchableEntitySchema.TypeValues.FAQ, SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.POST,
+            SearchableEntitySchema.TypeValues.ANSWER_POST);
+
+    /**
+     * Rejects an unknown entity type at startup. A typo would otherwise pass binding and then fail the missing pass on
+     * that type every tick, so the pass would never reach the types after it.
+     */
+    public WeaviateReconcileProperties {
+        for (String entityType : entityTypes) {
+            if (!SUPPORTED_ENTITY_TYPES.contains(entityType)) {
+                throw new IllegalArgumentException("Unknown artemis.weaviate.reconcile.entity-types value: " + entityType);
+            }
+        }
+        entityTypes = List.copyOf(entityTypes);
+    }
 
     /**
      * Returns whether a type is managed by the reconcile passes.

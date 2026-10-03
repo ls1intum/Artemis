@@ -68,12 +68,14 @@ class SearchableEntityOrphanSweepTest {
 
     private SearchableEntityOrphanSweep sweep;
 
+    private static final ZonedDateTime LEDGER_SYNCED_AT = ZonedDateTime.parse("2026-08-01T10:00:00Z");
+
     private static IndexedRow row(String entityType, long entityId, String contentHash) {
         return new IndexedRow("uuid-" + entityType + "-" + entityId, entityType, entityId, entityId, contentHash);
     }
 
     private static SearchableEntitySyncState ledgerRow(String entityType, long entityId, String contentHash) {
-        return new SearchableEntitySyncState(entityType, entityId, contentHash, ZonedDateTime.now());
+        return new SearchableEntitySyncState(entityType, entityId, contentHash, LEDGER_SYNCED_AT);
     }
 
     private void configure(double abortRatio, String... types) {
@@ -83,6 +85,11 @@ class SearchableEntityOrphanSweepTest {
 
     private void scanReturns(IndexedRow... rows) {
         when(indexScanService.scanFrom(any(), anyInt(), anyInt())).thenReturn(new IndexScanSlice(List.of(rows), "next-cursor"));
+    }
+
+    /** Stubs a scan that reads the whole collection at once, so every tick ends its cycle and starts a fresh one. */
+    private void scanReturnsWholeCollection(IndexedRow... rows) {
+        when(indexScanService.scanFrom(any(), anyInt(), anyInt())).thenReturn(new IndexScanSlice(List.of(rows), null));
     }
 
     /**
@@ -266,7 +273,7 @@ class SearchableEntityOrphanSweepTest {
         configure(0.25, COURSE);
         // A collection smaller than the scan budget: every tick reads this identical page, exactly as scanFrom
         // behaves once the whole collection fits in one read (its cursor comes back null every time).
-        scanReturns(row(COURSE, 1L, "v1:a"), row(COURSE, 2L, "v1:b"), row(COURSE, 3L, "v1:c"), row(COURSE, 4L, "v1:d"));
+        scanReturnsWholeCollection(row(COURSE, 1L, "v1:a"), row(COURSE, 2L, "v1:b"), row(COURSE, 3L, "v1:c"), row(COURSE, 4L, "v1:d"));
         when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of(1L)));
 
         for (int tick = 0; tick < 5; tick++) {
