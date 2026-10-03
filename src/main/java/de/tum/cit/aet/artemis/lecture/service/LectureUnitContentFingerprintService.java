@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -46,29 +49,31 @@ public class LectureUnitContentFingerprintService {
         String pdfHash = "";
         // Same rule as the ingestion payload, so the fingerprint certifies exactly the bytes Iris is sent: an external link has no stored file and counts as no PDF.
         if (unit.getAttachment() != null && unit.getAttachment().isStoredPdf()) {
-            pdfHash = sha256Hex(readAttachmentBytes(unit));
+            pdfHash = hashAttachment(unit);
         }
         String videoSource = unit.getVideoSource() != null ? unit.getVideoSource() : "";
         String canonicalInput = pdfHash + "\n" + videoSource;
-        return VERSION_PREFIX + sha256Hex(canonicalInput.getBytes(StandardCharsets.UTF_8));
+        return VERSION_PREFIX + HexFormat.of().formatHex(sha256().digest(canonicalInput.getBytes(StandardCharsets.UTF_8)));
     }
 
-    private byte[] readAttachmentBytes(AttachmentVideoUnit unit) {
+    private String hashAttachment(AttachmentVideoUnit unit) {
         // Resolved like every other reader of the file, which also finds one still left in its lecture's directory.
         Path path = unit.getAttachment().fileLocation().map(FileSystemLocation::path)
                 .orElseThrow(() -> new IllegalStateException("Attachment of lecture unit " + unit.getId() + " names no stored file"));
-        try {
-            return Files.readAllBytes(path);
+        // Streamed through the digest rather than read whole: the reconcile walk hashes every DONE PDF of a course on each pass.
+        MessageDigest digest = sha256();
+        try (InputStream in = new DigestInputStream(Files.newInputStream(path), digest)) {
+            in.transferTo(OutputStream.nullOutputStream());
         }
         catch (IOException e) {
             throw new IllegalStateException("Cannot read attachment file for lecture unit " + unit.getId(), e);
         }
+        return HexFormat.of().formatHex(digest.digest());
     }
 
-    private String sha256Hex(byte[] bytes) {
+    private static MessageDigest sha256() {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(bytes));
+            return MessageDigest.getInstance("SHA-256");
         }
         catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available", e);

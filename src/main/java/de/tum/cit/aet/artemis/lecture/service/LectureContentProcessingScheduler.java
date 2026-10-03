@@ -243,11 +243,16 @@ public class LectureContentProcessingScheduler {
         for (LectureUnitProcessingState candidate : lapsed) {
             // Atomic: a heartbeat renewing the lease, or a terminal callback finishing the run, in the window
             // since the batch read above cancels this reclaim instead of being overwritten by it. See
-            // LectureUnitProcessingStateRepository#reclaimLapsedLease.
-            boolean reclaimed = recoveryService.reclaimLapsedLease(candidate.getId(), candidate.getIngestionJobToken(), inFlightPhases, cutoff);
-            if (reclaimed) {
-                log.warn("lease-lapsed unit={} locked_by={} last_heartbeat={} — worker stopped renewing, reclaiming the run (retry budget preserved)",
-                        candidate.getLectureUnit() != null ? candidate.getLectureUnit().getId() : null, candidate.getLockedBy(), candidate.getLastHeartbeatAt());
+            // LectureUnitProcessingStateRepository#reclaimLapsedLease. Isolated per run, like the stage-liveness check.
+            try {
+                boolean reclaimed = recoveryService.reclaimLapsedLease(candidate.getId(), candidate.getIngestionJobToken(), inFlightPhases, cutoff);
+                if (reclaimed) {
+                    log.warn("lease-lapsed unit={} locked_by={} last_heartbeat={} — worker stopped renewing, reclaiming the run (retry budget preserved)",
+                            candidate.getLectureUnit() != null ? candidate.getLectureUnit().getId() : null, candidate.getLockedBy(), candidate.getLastHeartbeatAt());
+                }
+            }
+            catch (RuntimeException e) {
+                log.error("Lease reclaim failed for processing state {}, skipping it this pass: {}", candidate.getId(), e.getMessage());
             }
         }
     }
@@ -274,28 +279,35 @@ public class LectureContentProcessingScheduler {
             // Classify only runs that have reported a stage: the stall window needs a progress clock to
             // compare against. A run with no progress yet — before its first stage, or from an older Iris that
             // sends no stage names — is judged instead by findStuckStates' no-callback arm on lastUpdated.
-            if (state.getLastProgressAt() == null || state.getRetryEligibleAt() != null) {
+            if (state.getLectureUnit() == null || state.getLastProgressAt() == null || state.getRetryEligibleAt() != null) {
                 continue;
             }
-            // Alive means recent status callbacks OR a still-held lease. renewLease bumps only
-            // lastHeartbeatAt, so a run wedged mid-stage under a healthy worker keeps a fresh lease while
-            // callbacks fall silent; without the lease arm such a run (having reported a stage) would still
-            // escape this detector, findStuckStates and reclaimLapsedLeases alike.
-            boolean callbacksRecent = state.getLastUpdated() != null && state.getLastUpdated().isAfter(now.minusMinutes(noCallbackTimeoutMinutes));
-            boolean leaseHeld = state.getLastHeartbeatAt() != null && state.getLastHeartbeatAt().isAfter(now.minus(leaseExpiry));
-            boolean heartbeatsAlive = callbacksRecent || leaseHeld;
-            // A stage that never reports a counter still sets lastProgressAt once, on entry (see
-            // recordStageProgress), and then never again — so without this guard a healthy counterless
-            // stage would eventually read as frozen no matter how long it legitimately runs. Such a stage
-            // falls to the no-callback arm only without a worker lease; under one it is bounded by Iris's own
-            // timeout for that step and the absolute timeout.
-            boolean progressFrozen = state.getStageProgress() != null && state.getLastProgressAt().isBefore(now.minus(stallWindow));
-            if (heartbeatsAlive && progressFrozen) {
-                failStalledState(state);
+            // Isolate each run: one that throws must not abort the pass, which would also skip stuck recovery,
+            // claim release and dispatch for every other unit, on every pass while the bad row remains.
+            try {
+                // Alive means recent status callbacks OR a still-held lease. renewLease bumps only
+                // lastHeartbeatAt, so a run wedged mid-stage under a healthy worker keeps a fresh lease while
+                // callbacks fall silent; without the lease arm such a run (having reported a stage) would still
+                // escape this detector, findStuckStates and reclaimLapsedLeases alike.
+                boolean callbacksRecent = state.getLastUpdated() != null && state.getLastUpdated().isAfter(now.minusMinutes(noCallbackTimeoutMinutes));
+                boolean leaseHeld = state.getLastHeartbeatAt() != null && state.getLastHeartbeatAt().isAfter(now.minus(leaseExpiry));
+                boolean heartbeatsAlive = callbacksRecent || leaseHeld;
+                // A stage that never reports a counter still sets lastProgressAt once, on entry (see
+                // recordStageProgress), and then never again — so without this guard a healthy counterless
+                // stage would eventually read as frozen no matter how long it legitimately runs. Such a stage
+                // falls to the no-callback arm only without a worker lease; under one it is bounded by Iris's own
+                // timeout for that step and the absolute timeout.
+                boolean progressFrozen = state.getStageProgress() != null && state.getLastProgressAt().isBefore(now.minus(stallWindow));
+                if (heartbeatsAlive && progressFrozen) {
+                    failStalledState(state);
+                }
+                else if (state.getStageStartedAt() != null && state.getStageStartedAt().isBefore(now.minus(slowStageWarningAfter))) {
+                    log.warn("slow-stage unit={} stage={} progress={}/{} in_stage_since={} — progress is moving, not intervening", state.getLectureUnit().getId(),
+                            state.getCurrentStage(), state.getStageProgress(), state.getStageTotal(), state.getStageStartedAt());
+                }
             }
-            else if (state.getStageStartedAt() != null && state.getStageStartedAt().isBefore(now.minus(slowStageWarningAfter))) {
-                log.warn("slow-stage unit={} stage={} progress={}/{} in_stage_since={} — progress is moving, not intervening", state.getLectureUnit().getId(),
-                        state.getCurrentStage(), state.getStageProgress(), state.getStageTotal(), state.getStageStartedAt());
+            catch (RuntimeException e) {
+                log.error("Stage-liveness check failed for processing state {}, skipping it this pass: {}", state.getId(), e.getMessage());
             }
         }
     }
@@ -348,7 +360,13 @@ public class LectureContentProcessingScheduler {
             log.info("Found {} stuck processing states in phase {} older than {} minutes", stuckStates.size(), phase, timeoutMinutes);
 
             for (LectureUnitProcessingState state : stuckStates) {
-                recoverStuckState(state, phase, cutoff, absoluteCutoff);
+                // Isolated per run, like the stage-liveness check: one failing recovery must not stop the others or the rest of the pass.
+                try {
+                    recoverStuckState(state, phase, cutoff, absoluteCutoff);
+                }
+                catch (RuntimeException e) {
+                    log.error("Stuck recovery failed for processing state {}, skipping it this pass: {}", state.getId(), e.getMessage());
+                }
             }
         }
     }

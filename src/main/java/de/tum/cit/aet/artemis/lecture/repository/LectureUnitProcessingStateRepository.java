@@ -453,7 +453,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
 
     /**
      * Refresh liveness only, for a raw (non-enriched) transcription checkpoint that reports no stage
-     * progress of its own. Same token-and-phase guard as {@link #applyHeartbeat}, for the same reason.
+     * progress of its own. Same token-and-phase guard as {@link #applyHeartbeatLocked}, for the same reason.
      *
      * @param id    the processing state to update
      * @param token the job token the checkpoint carried
@@ -473,7 +473,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
 
     /**
      * Renew a run's worker lease atomically, for a heartbeat batch. Same token-and-phase guard as
-     * {@link #applyHeartbeat}: a terminal callback that finishes the run in the window between the
+     * {@link #applyHeartbeatLocked}: a terminal callback that finishes the run in the window between the
      * heartbeat's read and this write clears the token first, so this predicate then matches no row and
      * the stale lease-renewal is silently dropped instead of overwriting the DONE/FAILED state back to
      * the in-flight phase and token it read.
@@ -497,7 +497,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
 
     /**
      * Transition TRANSCRIBING to INGESTING for an enriched transcription checkpoint, atomically: same
-     * token-and-phase guard as {@link #applyHeartbeat}, and the same field set {@link
+     * token-and-phase guard as {@link #applyHeartbeatLocked}, and the same field set {@link
      * de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#transitionTo} applies, so a
      * checkpoint racing a terminal callback cannot revive a run the terminal callback already finished.
      * The transcription version and its content hash are written in the same statement, so a checkpoint
@@ -710,7 +710,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * stops a late activation from a superseded claim activating a newer one for the same unit with the wrong job
      * token: the timestamps are second-resolution, so two claims taken in the same second cannot be told apart by
      * them. Same guard as {@link #markSkippedIfStillClaimed}. Applies {@link LectureUnitProcessingState#transitionTo},
-     * the token, the fingerprint and {@link LectureUnitProcessingState#renewLease} in one statement.
+     * the token, the fingerprint and the initial worker lease ({@code lastHeartbeatAt}, {@code lockedBy}) in one statement.
      *
      * @param lectureUnitId      the claimed unit
      * @param phase              the in-flight phase to enter

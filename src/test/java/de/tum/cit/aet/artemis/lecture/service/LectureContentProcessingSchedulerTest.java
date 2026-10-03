@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -146,6 +147,30 @@ class LectureContentProcessingSchedulerTest {
     class LeaseReaper {
 
         @Test
+        void shouldReclaimTheOtherRunsAndFinishThePassWhenOneReclaimThrows() {
+            // Two lapsed leases; reclaiming the first throws. The second is still reclaimed, and the pass continues.
+            LectureUnitProcessingState broken = new LectureUnitProcessingState(testUnit);
+            broken.setId(2L);
+            broken.setPhase(ProcessingPhase.INGESTING);
+            broken.setIngestionJobToken("broken-token");
+            broken.setLastHeartbeatAt(ZonedDateTime.now().minusMinutes(2));
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(JOB_TOKEN);
+            testState.setLastHeartbeatAt(ZonedDateTime.now().minusMinutes(2));
+
+            when(processingStateRepository.findRunsWithLapsedLease(any(), any(ZonedDateTime.class))).thenReturn(List.of(broken, testState));
+            when(recoveryService.reclaimLapsedLease(eq(2L), eq("broken-token"), any(), any(ZonedDateTime.class))).thenThrow(new IllegalStateException("broken row"));
+            when(recoveryService.reclaimLapsedLease(eq(PROCESSING_STATE_ID), eq(JOB_TOKEN), any(), any(ZonedDateTime.class))).thenReturn(true);
+            when(processingStateRepository.findStuckStates(any(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
+
+            scheduler.processScheduledRetries();
+
+            verify(recoveryService).reclaimLapsedLease(eq(PROCESSING_STATE_ID), eq(JOB_TOKEN), any(), any(ZonedDateTime.class));
+            verify(callbackService).dispatchPendingJobs();
+        }
+
+        @Test
         void shouldReclaimRunWhoseLeaseLapsedWithoutSpendingRetryBudget() {
             // Given: an in-flight run whose worker stopped renewing its lease two minutes ago
             testState.setId(PROCESSING_STATE_ID);
@@ -194,6 +219,27 @@ class LectureContentProcessingSchedulerTest {
 
     @Nested
     class StuckStateRecovery {
+
+        @Test
+        void shouldRecoverTheOtherStuckRunsAndFinishThePassWhenOneRecoveryThrows() {
+            // Two stuck runs; re-reading the first throws. The second is still recovered, and the pass continues.
+            LectureUnitProcessingState broken = new LectureUnitProcessingState(testUnit);
+            broken.setId(2L);
+            broken.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setRetryEligibleAt(null);
+
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
+                    .thenReturn(List.of(broken, testState));
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findById(broken.getId())).thenThrow(new IllegalStateException("broken row"));
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
+
+            scheduler.processScheduledRetries();
+
+            verify(callbackService).handleProcessingFailureIfStillLive(testState, null, null, testState.getLastUpdated());
+            verify(callbackService).dispatchPendingJobs();
+        }
 
         @Test
         void shouldDelegateStuckRecoveryToCallbackService() {
@@ -442,6 +488,35 @@ class LectureContentProcessingSchedulerTest {
 
             // failStalledState pins the lastProgressAt this decision was based on.
             verify(callbackService).handleProcessingFailureIfStillLive(testState, null, testState.getLastProgressAt(), null);
+        }
+
+        @Test
+        void shouldKeepCheckingOtherRunsAndFinishThePassWhenOneRunThrows() {
+            // Two stalled runs; re-reading the first throws. The failure must stay with that row: the second run is
+            // still failed for retry, and the rest of the pass (stuck recovery, dispatch) still runs.
+            LectureUnitProcessingState broken = new LectureUnitProcessingState(testUnit);
+            broken.setId(2L);
+            broken.setPhase(ProcessingPhase.INGESTING);
+            broken.recordStageProgress("vision", 41, 180);
+            ReflectionTestUtils.setField(broken, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
+            broken.setLastUpdated(ZonedDateTime.now().minusMinutes(1));
+
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken("token");
+            testState.recordStageProgress("vision", 41, 180);
+            ReflectionTestUtils.setField(testState, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(1));
+
+            when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(broken, testState));
+            when(processingStateRepository.findById(broken.getId())).thenThrow(new IllegalStateException("broken row"));
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findStuckStates(any(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
+
+            scheduler.processScheduledRetries();
+
+            verify(callbackService).handleProcessingFailureIfStillLive(testState, null, testState.getLastProgressAt(), null);
+            verify(processingStateRepository, times(2)).findStuckStates(any(), any(ZonedDateTime.class), any(ZonedDateTime.class));
+            verify(callbackService).dispatchPendingJobs();
         }
 
         @Test
