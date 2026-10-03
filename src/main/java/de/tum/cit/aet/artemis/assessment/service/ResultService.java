@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -231,13 +230,10 @@ public class ResultService {
      * Rejects feedback referencing missing instructions or instructions from another exercise. Ownership is checked
      * against the database, not against instruction data supplied by the caller. Call before any assessment writes.
      *
-     * @param feedbacks  the new feedback, or null when a complaint update retains the existing feedback
+     * @param feedbacks  the new feedback
      * @param exerciseId the trusted id of the exercise being assessed
      */
-    public void validateGradingInstructions(@Nullable Collection<Feedback> feedbacks, long exerciseId) {
-        if (feedbacks == null) {
-            return;
-        }
+    public void validateGradingInstructions(Collection<Feedback> feedbacks, long exerciseId) {
         Set<Long> instructionIds = feedbacks.stream().map(Feedback::getGradingInstruction).filter(Objects::nonNull).map(GradingInstruction::getId).collect(Collectors.toSet());
         if (!instructionIds.isEmpty()
                 && (instructionIds.contains(null) || gradingInstructionRepository.countByIdInAndGradingCriterionExerciseId(instructionIds, exerciseId) != instructionIds.size())) {

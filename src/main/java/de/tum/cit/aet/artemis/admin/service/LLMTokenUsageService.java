@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -178,8 +179,9 @@ public class LLMTokenUsageService {
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return;
             }
-            // Spring AI is @NullMarked: model and token counts are never null
-            LLMRequest llmRequest = buildLLMRequest(metadata.getModel(), usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
+            // Spring AI is @NullMarked: token counts are never null; the model is defaulted because mocked metadata (tests) can return null
+            String model = Objects.requireNonNullElse(metadata.getModel(), "");
+            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {
