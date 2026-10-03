@@ -81,6 +81,11 @@ const IRIS_ANSWER_MIN_QUERY_LENGTH = SHORT_QUERY_MAX_LENGTH + 1;
 /** What the card is currently showing. Everything the template renders follows from this. */
 export type IrisAnswerPhase = 'idle' | 'thinking' | 'answering' | 'noAnswer' | 'failed';
 
+/** Whether two course-id lists hold the same ids in the same order. */
+function sameIds(first: number[], second: number[]): boolean {
+    return first.length === second.length && first.every((id, index) => id === second[index]);
+}
+
 @Component({
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
@@ -341,8 +346,17 @@ export class GlobalSearchIrisAnswerComponent {
         // State is reset at the top of the outer switchMap — before the debounce window —
         // so the UI clears on every keystroke even if the request has not fired yet.
         // A retry re-emits the same query, which is why the source carries the attempt; the course scope
-        // rides along so a scoped palette re-asks when the user switches course.
-        toObservable(computed(() => ({ query: this.searchQuery(), courseIds: this.courseIds(), excludeCourseIds: this.excludeCourseIds(), attempt: this.retryAttempt() })))
+        // rides along so a scoped palette re-asks when the user switches course. The scope is compared by value:
+        // editing an unrelated token hands in fresh but equal id arrays, which must not restart a running answer.
+        toObservable(
+            computed(() => ({ query: this.searchQuery(), courseIds: this.courseIds(), excludeCourseIds: this.excludeCourseIds(), attempt: this.retryAttempt() }), {
+                equal: (previous, next) =>
+                    previous.query === next.query &&
+                    previous.attempt === next.attempt &&
+                    sameIds(previous.courseIds, next.courseIds) &&
+                    sameIds(previous.excludeCourseIds, next.excludeCourseIds),
+            }),
+        )
             .pipe(
                 switchMap(({ query, courseIds, excludeCourseIds }) => {
                     this.resetRun();

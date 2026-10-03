@@ -408,8 +408,7 @@ public class SearchableEntityAccessFilterService {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
         }
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not(),
-                courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        return Filter.and(exactType(SearchableEntitySchema.TypeValues.LECTURE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
     /**
@@ -577,8 +576,7 @@ public class SearchableEntityAccessFilterService {
             return null;
         }
         // Posts are only indexed for public channels, so course membership is sufficient for access
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.POST), typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST).not(),
-                courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        return Filter.and(exactType(SearchableEntitySchema.TypeValues.POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
     /**
@@ -601,7 +599,7 @@ public class SearchableEntityAccessFilterService {
     private static Filter buildTypeDiscriminatorFilter(Set<String> types, Set<String> hiddenTypes) {
         List<Filter> typeFilters = new ArrayList<>(types.size());
         for (String type : types) {
-            typeFilters.add(typeEquals(type));
+            typeFilters.add(exactType(type));
         }
 
         // Absent is not the same as excluded: exercises may be missing because only exams were asked for, in which
@@ -619,6 +617,22 @@ public class SearchableEntityAccessFilterService {
 
     private static Filter typeEquals(String type) {
         return Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type);
+    }
+
+    /**
+     * Matches exactly one type despite the {@code word} tokenization of the discriminator (see
+     * {@link #buildLectureDisjunct(CourseRoleSets)}): {@code lecture} and {@code post} are token subsets of
+     * {@code lecture_unit} and {@code answer_post}, so a bare {@code Equal} on them also matches the longer type.
+     *
+     * @param type the {@code SearchableEntitySchema.TypeValues} discriminator to match
+     * @return a filter matching rows of exactly that type
+     */
+    private static Filter exactType(String type) {
+        return switch (type) {
+            case SearchableEntitySchema.TypeValues.LECTURE -> Filter.and(typeEquals(type), typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not());
+            case SearchableEntitySchema.TypeValues.POST -> Filter.and(typeEquals(type), typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST).not());
+            default -> typeEquals(type);
+        };
     }
 
     private static Filter courseIdIn(String property, List<Long> courseIds) {
@@ -639,7 +653,7 @@ public class SearchableEntityAccessFilterService {
      * exclusion would apply to nothing and an excluded course's rows would still match on type alone.
      */
     private static Filter adminUnscopedFilter(String type, List<Long> excludeCourseIds) {
-        Filter typeFilter = typeEquals(type);
+        Filter typeFilter = exactType(type);
         return excludeCourseIds.isEmpty() ? typeFilter : Filter.and(typeFilter, courseIdNotIn(SearchableEntitySchema.Properties.COURSE_ID, excludeCourseIds));
     }
 

@@ -481,6 +481,31 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, [16], []);
         });
 
+        it('does not re-ask when the course scope is handed in again with equal ids', () => {
+            fixture.componentRef.setInput('searchQuery', 'angular signals');
+            fixture.componentRef.setInput('courseIds', [14, 16]);
+            fixture.componentRef.setInput('excludeCourseIds', [20]);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).toHaveBeenCalledOnce();
+
+            // Editing a type token rebuilds both id lists without changing them.
+            fixture.componentRef.setInput('courseIds', [14, 16]);
+            fixture.componentRef.setInput('excludeCourseIds', [20]);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).toHaveBeenCalledOnce();
+
+            fixture.componentRef.setInput('excludeCourseIds', [21]);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).toHaveBeenCalledTimes(2);
+            expect(mockAsk).toHaveBeenLastCalledWith('angular signals', 5, [14, 16], [21]);
+        });
+
         it('should NOT call irisSearchAnswerService.ask() for an empty query', () => {
             mockAsk.mockClear();
             fixture.componentRef.setInput('searchQuery', '   ');
