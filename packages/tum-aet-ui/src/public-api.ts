@@ -69,7 +69,7 @@ export { TumAetUiTabPanelComponent } from './lib/tabs/tumaet-ui-tab-panel.compon
 export { TumAetUiTabPanelsComponent } from './lib/tabs/tumaet-ui-tab-panels.component';
 export { TumAetUiTabComponent } from './lib/tabs/tumaet-ui-tab.component';
 export { TumAetUiTabsComponent } from './lib/tabs/tumaet-ui-tabs.component';
-export type { TumAetUiTabValue } from './lib/tabs/tumaet-ui-tabs.service';
+export type { TumAetUiTabValue, TumAetUiTabsSelectedColor, TumAetUiTabsSize, TumAetUiTabsSurface } from './lib/tabs/tumaet-ui-tabs.service';
 export { TumAetUiTagComponent, type TumAetUiTagSeverity } from './lib/tag/tumaet-ui-tag.component';
 export { TumAetUiToggleSwitchComponent } from './lib/toggle-switch/tumaet-ui-toggle-switch.component';
 export { TumAetUiTooltipDirective } from './lib/tooltip/tumaet-ui-tooltip.directive';

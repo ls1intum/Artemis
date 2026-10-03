@@ -147,6 +147,7 @@
     --tumaet-ui-accent-color: var(--primary-dark);
     --tumaet-ui-focus-color: var(--primary);
     --tumaet-ui-content-background: var(--module-bg);
+    --tumaet-ui-hover-background: var(--hover-slightly-darker-body-bg);
     --tumaet-ui-control-background: var(--artemis-control-background);
     --tumaet-ui-control-border-color: var(--artemis-control-border);
     --tumaet-ui-control-border-hover-color: var(--artemis-control-border-hover);

@@ -1,30 +1,21 @@
-import { Component, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, effect, inject, input, output, viewChild } from '@angular/core';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
-import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',
     templateUrl: './text-block-feedback-editor.component.html',
-    styleUrls: ['./text-block-feedback-editor.component.scss'],
-    imports: [UnifiedFeedbackComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, TextblockFeedbackDropdownComponent, FaIconComponent, TranslateDirective],
+    imports: [UnifiedFeedbackComponent],
 })
 export class TextBlockFeedbackEditorComponent {
     private route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
-    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
     textBlock = input<TextBlock>(new TextBlock());
     feedback = input<Feedback>(new Feedback());
@@ -33,13 +24,8 @@ export class TextBlockFeedbackEditorComponent {
     onFocus = output<void>();
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
-    criteria = input<GradingCriterion[]>();
 
     private readonly unifiedFeedback = viewChild.required(UnifiedFeedbackComponent);
-
-    faAngleRight = faAngleRight;
-
-    readonly connectToInstructionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.connectToInstruction'));
 
     /**
      * Suggestion type observed the last time the bound {@link feedback} reference changed, i.e. its value before

@@ -3,16 +3,18 @@
 @import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import '../../../../content/scss/artemis-variables';
 
+// minmax(0, 1fr) rather than 1fr: a plain fr track never shrinks below its content's min-content width, so a long
+// single-line feedback title would keep the column wide and push the submission under the panel next to it.
 .text-editor-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
         'problem-statement'
         'team-info'
         'main';
 
     @media (min-width: map-get($grid-breakpoints, 'md')) {
-        grid-template-columns: 1fr min-content;
+        grid-template-columns: minmax(0, 1fr) min-content;
         grid-template-areas:
             'problem-statement team-info'
             'main              team-info';
@@ -68,5 +70,30 @@ div {
     &.missed-feedback {
         color: var(--textblock-assessment-text-feedback-neutral-color);
         background-color: lightblue;
+    }
+}
+
+// The assessed submission panel fills the panel of the exercise page, like the modeling editor: every element down to it
+// takes the full height, and only the panel's content scrolls
+:host(.text-editor--fill) {
+    height: 100%;
+
+    jhi-resizeable-container {
+        display: block;
+        height: 100%;
+    }
+}
+
+.text-editor-grid--fill {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+
+    .grid-area-main {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
     }
 }

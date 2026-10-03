@@ -36,6 +36,11 @@ export class ComplaintsForTutorComponent implements OnInit {
     readonly isTestRun = input(false);
     readonly isAssessor = input(false);
     readonly zeroIndent = input(true);
+    /**
+     * Whether the complaint and the response sit below each other rather than side by side, for a narrow panel such as
+     * a tab of the assessment workspace. The tab already names the form, so its heading is left out too.
+     */
+    readonly stacked = input(false);
     readonly exercise = input<Exercise>();
     readonly submission = input<Submission>();
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint

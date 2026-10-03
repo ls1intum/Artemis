@@ -23,6 +23,7 @@ import {
     isAIResultAndFailed,
     isAIResultAndTimedOut,
     isAthenaAIResult,
+    isPreliminaryProgrammingAIFeedback,
 } from 'app/exercise/result/result.utils';
 import { DialogService } from 'primeng/dynamicdialog';
 import { NavigationEnd, Router } from '@angular/router';
@@ -198,7 +199,7 @@ export class ResultHistoryDropdownComponent {
     }
 
     shouldShowResultScore(result: Result): boolean {
-        return result.score !== undefined && !this.isUnfinishedAthenaFeedback(result);
+        return result.score !== undefined && !this.isUnfinishedAthenaFeedback(result) && !isPreliminaryProgrammingAIFeedback(result, this.exercise().type);
     }
 
     shouldShowResultMetadata(result: Result): boolean {
@@ -237,6 +238,9 @@ export class ResultHistoryDropdownComponent {
             if (result.successful === undefined) {
                 return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
             }
+            if (isPreliminaryProgrammingAIFeedback(result, this.exercise().type)) {
+                return this.translateService.instant('artemisApp.result.progressString.aiFeedbackReceived');
+            }
         }
 
         const submission = result.submission;
@@ -250,12 +254,12 @@ export class ResultHistoryDropdownComponent {
         }
 
         const sortedResults = this.sortedHistoryResults();
-        const currentResultIndex = sortedResults.indexOf(result);
+        const previousResult = sortedResults.slice(sortedResults.indexOf(result) + 1).find((olderResult) => !isPreliminaryProgrammingAIFeedback(olderResult, this.exercise().type));
 
-        if (currentResultIndex === sortedResults.length - 1) {
+        if (!previousResult) {
             return this.translateService.instant(currentScore > 0 ? 'artemisApp.result.progressString.niceProgress' : 'artemisApp.result.progressString.stuck');
         }
-        const previousScore = sortedResults[currentResultIndex + 1].score ?? 0;
+        const previousScore = previousResult.score ?? 0;
         if (currentScore > previousScore) {
             return this.translateService.instant('artemisApp.result.progressString.niceProgress');
         } else if (currentScore < previousScore) {

@@ -2,7 +2,6 @@ import { Component, effect, input, model, output, signal } from '@angular/core';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ManualTextSelectionComponent, wordSelection } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
 import { TextBlockAssessmentCardComponent } from '../textblock-assessment-card/text-block-assessment-card.component';
 
@@ -16,7 +15,6 @@ export class ManualTextblockSelectionComponent {
     selectedRef = model<TextBlockRef | undefined>(undefined);
     readOnly = input.required<boolean>();
     submission = input.required<TextSubmission>();
-    criteria = input<GradingCriterion[]>();
 
     textBlockRefAdded = output<TextBlockRef>();
 

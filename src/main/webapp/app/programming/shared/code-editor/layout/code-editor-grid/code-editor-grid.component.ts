@@ -12,6 +12,7 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [FaIconComponent, ResizableDirective],
+    host: { '[class.code-editor-grid--fill]': 'fillHeight()' },
 })
 export class CodeEditorGridComponent {
     private renderer = inject(Renderer2);
@@ -22,8 +23,24 @@ export class CodeEditorGridComponent {
     readonly instructionsElement = viewChild.required<ElementRef>('instructions');
 
     readonly isTutorAssessment = input(false);
+    /**
+     * Whether the grid lays out a tutor's assessment workspace, filling the page like the text and modeling assessments.
+     * Pages that only show a tutor's feedback, such as a student's assessed submission, set {@link isTutorAssessment} alone.
+     */
+    readonly assessmentWorkspace = input(false);
     readonly showEditorNavbar = input(true);
     readonly showEditorSidebarRight = input(true);
+    /**
+     * Whether the bottom area has its own grip below it. The panel that shares the build output with the general feedback
+     * leaves it out; the grip between the editor and the bottom area still sets its height.
+     */
+    readonly bottomResizable = input(true);
+    /**
+     * Whether the grid fills the height of its host instead of using fixed panel heights: the file browser and the editor
+     * take the upper part, the bottom area the rest, and the page around them does not scroll. The grip between them still
+     * moves the split.
+     */
+    readonly fillHeight = input(false);
     readonly onResize = output<ResizeType>();
 
     readonly fileBrowserIsCollapsed = signal(false);
@@ -42,6 +59,11 @@ export class CodeEditorGridComponent {
     private static readonly EDITOR_CENTER_MIN_WIDTH = 300;
     private static readonly VERTICAL_BUFFER_PX = 40;
     private static readonly HORIZONTAL_BUFFER_PX = 24;
+    /**
+     * Widest share of the row the instructions column takes in an assessment, like the text and modeling assessment
+     * workspace, which keeps the side with the submission at 36% or more.
+     */
+    private static readonly ASSESSMENT_INSTRUCTIONS_MAX_SHARE = 0.64;
 
     /**
      * Maximum panel sizes (px), recomputed on layout-affecting events (see {@link recomputeMaxConstraints}) rather
@@ -100,11 +122,19 @@ export class CodeEditorGridComponent {
         const availableWidth = content?.clientWidth ?? window.innerWidth;
         const reservedWidth = CodeEditorGridComponent.EDITOR_CENTER_MIN_WIDTH + CodeEditorGridComponent.HORIZONTAL_BUFFER_PX;
 
+        // A filling grid gives the bottom area whatever the editor leaves, so the editor may grow until the bottom area is
+        // at its minimum rather than only into the bottom area's current height
+        const heightMain = this.fillHeight()
+            ? Math.max(this.resizableMinHeightMain, wrapper.getBoundingClientRect().bottom - mainTop - CodeEditorGridComponent.VERTICAL_BUFFER_PX - this.resizableMinHeightBottom)
+            : Math.max(this.resizableMinHeightMain, Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom)));
+
         this.maxConstraints.set({
-            heightMain: Math.max(this.resizableMinHeightMain, Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom))),
+            heightMain,
             heightBottom: Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain))),
             widthLeft: Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
-            widthRight: Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
+            widthRight: this.assessmentWorkspace()
+                ? availableWidth * CodeEditorGridComponent.ASSESSMENT_INSTRUCTIONS_MAX_SHARE
+                : Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
         });
     }
 

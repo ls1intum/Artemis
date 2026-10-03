@@ -16,7 +16,17 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async addNewFeedback(points: number, feedback?: string) {
-        await this.page.locator('.add-unreferenced-feedback').click();
+        // Text and modeling assessments add general feedback with the plus button of the general feedback tab in their
+        // panel header, the other assessment pages with the button in the feedback list.
+        const plusButton = this.page.getByTestId('assessment-details-add');
+        const addButton = this.page.locator('.add-unreferenced-feedback');
+        await plusButton.or(addButton).first().waitFor({ state: 'visible' });
+        if (await plusButton.isVisible()) {
+            await this.page.getByTestId('assessment-details-tab-feedback').click();
+            await plusButton.click();
+        } else {
+            await addButton.click();
+        }
         await this.fillFeedback(points, feedback);
     }
 

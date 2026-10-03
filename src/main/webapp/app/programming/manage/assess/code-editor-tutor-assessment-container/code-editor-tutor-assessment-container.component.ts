@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, HostListener, Injector, OnDestroy, OnInit, afterNextRender, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -23,6 +23,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -37,7 +38,12 @@ import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submissi
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
 import { faCircleInfo, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
+import { AssessmentDetailsHeaderComponent, AssessmentDetailsTab } from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
+import { AssessmentScoreTagsComponent } from 'app/assessment/manage/assessment-score-tags/assessment-score-tags.component';
+import { AssessmentScore } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -52,12 +58,14 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
     templateUrl: './code-editor-tutor-assessment-container.component.html',
+    styleUrls: ['./code-editor-tutor-assessment-container.component.scss'],
     imports: [
         FaIconComponent,
         TranslateDirective,
         AssessmentLayoutComponent,
         NgTemplateOutlet,
         CodeEditorContainerComponent,
+        CodeEditorBuildOutputComponent,
         IncludedInScoreBadgeComponent,
         RouterLink,
         ProgrammingAssessmentRepoExportButtonComponent,
@@ -66,6 +74,10 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         UnreferencedFeedbackComponent,
         FeedbackSuggestionsBannerComponent,
         ArtemisDatePipe,
+        AssessmentDetailsHeaderComponent,
+        AssessmentNoteComponent,
+        ComplaintsForTutorComponent,
+        AssessmentScoreTagsComponent,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -84,6 +96,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
     private datePipe = inject(ArtemisDatePipe);
+    private injector = inject(Injector);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
@@ -148,6 +161,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly isAtLeastEditor = signal(false);
 
     readonly unreferencedFeedback = signal<Feedback[]>([]);
+    /** The open tab of the build output, general feedback, notes and complaint panel below the instructions. */
+    readonly detailsTab = signal<AssessmentDetailsTab>('feedback');
+    /** The complaint whose tab was already opened for the assessor, so it is not opened again on every change. */
+    private complaintTabOpenedFor?: number;
+    private readonly unreferencedFeedbackList = viewChild(UnreferencedFeedbackComponent);
     // Signal-backed (not plain) so CodeEditorContainerComponent's badge-update effect reacts to it: Athena
     // suggestions are merged by mutating the existing manualResult/participation object in place, which would
     // not otherwise notify anything depending on participation()'s reference.
@@ -208,6 +226,53 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     constructor() {
         this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
+
+        // Answering the complaint is what the page is opened for, so its tab opens once for each complaint that still
+        // awaits a response. The assessor can then switch to the general feedback without being sent back. The tab is only
+        // selected once rendered: the tab list falls back to its first tab for a value none of its tabs has.
+        effect(() => {
+            const complaint = this.complaint();
+            if (complaint?.id !== undefined && complaint.accepted === undefined && complaint.id !== this.complaintTabOpenedFor) {
+                this.complaintTabOpenedFor = complaint.id;
+                afterNextRender(() => this.detailsTab.set('complaint'), { injector: this.injector });
+            }
+        });
+    }
+
+    /**
+     * The awarded, deducted and final points of all feedback, with the automatic tests capped at the exercise's points as
+     * the server does, shown in the editor's title bar. A plain method, not a computed: feedback is edited in place, which a
+     * computed would not notice.
+     */
+    assessmentScore(): AssessmentScore {
+        const maxPoints = getTotalMaxPoints(this.exercise());
+        // The exercise may not be loaded yet; capping against 0 points would wrongly show a score of 0 until it is
+        const cap = maxPoints > 0 ? maxPoints : Number.POSITIVE_INFINITY;
+        return this.structuredGradingCriterionService.computeAssessmentScore(this.allAssessmentFeedbacks(), cap, true);
+    }
+
+    /** Adds a general feedback from the plus button of the panel header. */
+    addGeneralFeedback(): void {
+        this.unreferencedFeedbackList()?.addUnreferencedFeedback();
+    }
+
+    /**
+     * Whether the private tutor note has text, marked on its tab. A plain method, not a computed: the note is edited in place
+     * on the result, which a computed would not notice.
+     */
+    hasTutorNote(): boolean {
+        return !!this.manualResult()?.assessmentNote?.note;
+    }
+
+    /**
+     * Keeps the internal note on the result, which save and submit send along. The note sits in the panel beside the build
+     * output, so the page shows it itself instead of the assessment layout.
+     */
+    onAssessmentNoteChange(assessmentNote: AssessmentNote): void {
+        const result = this.manualResult();
+        if (result) {
+            result.assessmentNote = assessmentNote;
+        }
     }
 
     /**
@@ -731,10 +796,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.assessmentsAreValid.set(true);
             return;
         }
-        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback());
-        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
-        // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
+        // Every manual feedback, inline or general, needs points and a description (or a grading instruction's text):
+        // the title is only a heading and is filled with a default when left empty, so the description carries the comment.
+        const manualFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
+        this.assessmentsAreValid.set(Feedback.haveCreditsAndComments(manualFeedback));
     }
 
     /**

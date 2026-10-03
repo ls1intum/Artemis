@@ -9,7 +9,6 @@
             (didChange)="textBlockRefsChangeEmit()"
             (didDelete)="removeTextBlockRef($event)"
             [highlightDifferences]="highlightDifferences()"
-            [criteria]="criteria()"
         />
     }
 } @else {
@@ -19,15 +18,16 @@
         [readOnly]="readOnly()"
         (textBlockRefAdded)="addTextBlockRef($event)"
         [submission]="submission()"
-        [criteria]="criteria()"
     />
 }
-<div>
-    <span class="badge bg-primary mb-2" data-testid="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
-    <span
-        class="badge bg-primary mb-2"
-        data-testid="text-assessment-character-count"
-        jhiTranslate="artemisApp.textExercise.characterCount"
-        [translateValues]="{ count: characterCount() }"
-    ></span>
-</div>
+@if (showCounts()) {
+    <div>
+        <span class="badge bg-primary mb-2" data-testid="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
+        <span
+            class="badge bg-primary mb-2"
+            data-testid="text-assessment-character-count"
+            jhiTranslate="artemisApp.textExercise.characterCount"
+            [translateValues]="{ count: characterCount() }"
+        ></span>
+    </div>
+}

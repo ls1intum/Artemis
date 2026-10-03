@@ -14,7 +14,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultService } from 'app/exercise/result/result.service';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
@@ -118,7 +118,7 @@ describe('CodeEditorStudentIntegration', () => {
                         MockComponent(UpdatingResultComponent),
                         MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
                         MockComponent(ProgrammingExerciseInstructionComponent),
-                        MockComponent(AdditionalFeedbackComponent),
+                        MockComponent(GeneralFeedbackComponent),
                         MockPipe(ArtemisTranslatePipe),
                     ],
                 },

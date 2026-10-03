@@ -1,4 +1,52 @@
+@use 'src/main/webapp/content/scss/artemis-mixins' as mixins;
+
 .editor-title {
     margin-bottom: 0;
     line-height: 1;
+}
+
+// The build output and the general feedback as tabs of one panel, like the feedback panel of the programming assessment.
+// Only the content scrolls, so the tabs stay in reach.
+.code-editor-bottom-panel {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+
+    // The tabs bring their own height, so the header keeps only the side padding. It takes the background of the editor's
+    // file header above it, so the tab row reads as the same kind of header.
+    > .code-editor-panel-header {
+        flex: none;
+        padding-block: 0;
+        border-bottom-color: var(--code-editor-file-browser-header-border);
+        background-color: var(--code-editor-file-browser-header-background);
+        cursor: default;
+    }
+
+    &__tabs {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    &__count {
+        @include mixins.count-pill;
+    }
+
+    &__collapse {
+        flex-shrink: 0;
+        color: inherit;
+    }
+
+    &__content {
+        min-height: 0;
+        flex: 1 1 auto;
+        padding: 0.75rem;
+        overflow-y: auto;
+    }
+
+    // The build output fills the tab edge to edge; the panel frames it already
+    &__build-output {
+        margin: -0.75rem;
+    }
 }

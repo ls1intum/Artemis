@@ -1,0 +1,15 @@
+<section class="assessment-submission-panel" [class.assessment-submission-panel--flush]="flush()">
+    <header class="assessment-submission-panel__header">
+        <fa-icon [icon]="faSubmission" aria-hidden="true" />
+        <h2 [jhiTranslate]="titleKey()"></h2>
+        <div class="assessment-submission-panel__meta">
+            <ng-content select="[submissionPanelMeta]" />
+            @if (score(); as score) {
+                <jhi-assessment-score-tags [score]="score" [maxPoints]="maxPoints()" />
+            }
+        </div>
+    </header>
+    <div class="assessment-submission-panel__content" [class.assessment-submission-panel__content--scroll]="scrollContent()">
+        <ng-content />
+    </div>
+</section>

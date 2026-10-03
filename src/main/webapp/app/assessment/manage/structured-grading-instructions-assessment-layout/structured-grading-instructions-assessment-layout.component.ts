@@ -1,6 +1,8 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { DraggedGradingInstruction } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal, viewChildren } from '@angular/core';
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -65,6 +67,11 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     );
 
     readonly selectable = computed(() => !this.readonly() && this.selectionService.isSelectable());
+
+    constructor() {
+        // A feedback card names the criterion of its instruction, which only this panel knows
+        effect(() => this.selectionService.setCriteria(this.criteria() ?? []));
+    }
 
     readonly appliedCountPerCriterion = computed(() => {
         const applied = this.selectionService.appliedInstructionIds();
@@ -174,15 +181,18 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * Connects the SGI with the Feedback of a Submission Element in assessment detail
      * @param {Event} event - The drag event
      * @param {Object} instruction - The SGI element that should be connected with the feedback on drop
+     * @param criterionTitle - The title of the instruction's criterion, which names the feedback it is dropped on
      * the corresponding drop method is in AssessmentDetailComponent
      */
-    drag(event: DragEvent, instruction: GradingInstruction) {
+    drag(event: DragEvent, instruction: GradingInstruction, criterionTitle?: string) {
         if (!this.isDraggable(instruction)) {
             event.preventDefault();
             return;
         }
+        // The criterion's title travels with the instruction, which does not carry it, so the drop target can name the feedback after it
+        const payload: DraggedGradingInstruction = cloneWith(instruction, { criterionTitle });
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
-        event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
+        event.dataTransfer?.setData('text/plain', JSON.stringify(payload));
     }
     /**
      * disables drag if on readOnly mode

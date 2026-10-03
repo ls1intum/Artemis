@@ -215,3 +215,20 @@
 
     height: $base;
 }
+
+/*
+ * The pill that shows a count beside a label: how many feedback a file holds in the code editor's file browser, or
+ * how many general feedback a tab or heading lists. Every count of feedback looks the same wherever it appears.
+ */
+@mixin count-pill {
+    display: inline-block;
+    min-width: 1.25rem;
+    padding: 0 0.375rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--body-color) 10%, transparent);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    line-height: 1.25rem;
+    text-align: center;
+}

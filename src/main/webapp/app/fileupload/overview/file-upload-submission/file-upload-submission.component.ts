@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { UpperCasePipe } from '@angular/common';
+import { NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -21,9 +21,9 @@ import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/sh
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
-import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
+import { checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -31,30 +31,37 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { FileService } from 'app/foundation/service/file.service';
 import { firstValueFrom, map } from 'rxjs';
+import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-file-upload-submission',
     templateUrl: './file-upload-submission.component.html',
+    styleUrl: './file-upload-submission.component.scss',
+    // The page gives its panel no padding, so the component adds it, unless the assessed submission panel fills the panel to
+    // its edges; an exam summary has its own frame.
+    host: { class: 'block', '[class.file-upload-submission--fill]': 'showsAssessedSubmission()', '[class.p-2]': '!displayedInExamSummary() && !showsAssessedSubmission()' },
     imports: [
         ResizeableContainerComponent,
         TranslateDirective,
         ExerciseActionButtonComponent,
-        UnifiedFeedbackComponent,
+        GeneralFeedbackComponent,
         RatingComponent,
-        ComplaintsStudentViewComponent,
         FaIconComponent,
         UpperCasePipe,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         MarkdownDirective,
+        NgTemplateOutlet,
+        AssessmentSubmissionPanelComponent,
+        TumAetUiTagComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -67,7 +74,6 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
     private accountService = inject(AccountService);
 
-    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
     readonly participationId = input<number>();
@@ -86,7 +92,6 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
     submissionFile = signal<File | undefined>(undefined);
 
     // Derived state via computed signals
-    resultWithComplaint = computed(() => getFirstResultWithComplaint(this.submission()));
     course = computed(() => getCourseFromExercise(this.fileUploadExercise()));
     examMode = computed(() => !!this.fileUploadExercise()?.exerciseGroup);
 
@@ -95,14 +100,12 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
         return filePath ? (filePath.split('/').pop() ?? '') : '';
     });
 
+    /** Whether the assessed submission panel is shown, which then fills the panel of the exercise page. */
+    readonly showsAssessedSubmission = computed(() => !!this.result()?.feedbacks?.length);
+
     submittedFileExtension = computed(() => {
         const fileName = this.submittedFileName();
         return fileName ? (fileName.split('.').pop() ?? '') : '';
-    });
-
-    isAfterAssessmentDueDate = computed(() => {
-        const exercise = this.fileUploadExercise();
-        return !exercise?.assessmentDueDate || dayjs().isAfter(exercise.assessmentDueDate);
     });
 
     isLate = computed(() => {

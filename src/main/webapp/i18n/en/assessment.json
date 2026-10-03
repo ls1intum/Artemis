@@ -2,12 +2,17 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Assessment",
-            "feedbackAndNotes": "Feedback & notes",
+            "assessmentOfSubmission": "Assessment of the Submission",
+            "feedbackAndNotes": "General Feedback & Notes",
             "assessmentNote": "Internal Note",
             "testRunAssessment": "Test Run Assessment",
             "additionalFeedback": "Additional feedback",
+            "generalFeedback": "General Feedback",
             "feedback": "Feedback",
-            "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
+            "linkedCriterion": "Linked to",
+            "linkedCriterionFallback": "Assessment Criterion",
+            "linkedCriterionSuffix": "Criterion",
+            "removeCriterionLink": "Remove the link to the assessment criterion",
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
@@ -44,8 +49,14 @@
                 "control": "Ctrl"
             },
             "detail": {
-                "feedback": "Feedback",
                 "assessmentNote": "Private tutor notes",
+                "notesTab": "Notes",
+                "notesTabHasNote": "The private tutor note has text",
+                "complaintTabAwaitsResponse": "Waiting for your response",
+                "studentComplaintTab": "Student Complaint",
+                "studentRequestTab": "Student Request",
+                "addGeneralFeedback": "Add general feedback",
+                "generalFeedbackAddHint": "Use the + button above to add general feedback, or drag an assessment instruction and drop it here.",
                 "assessmentNoteInfo": "Only tutors can see these notes. They are never shared with the student.",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
@@ -54,7 +65,6 @@
                     "one": "{{points}} Point",
                     "many": "{{points}} Points"
                 },
-                "otherFeedback": "Other feedback",
                 "baseAward": "Base award",
                 "deductions": "Deductions",
                 "finalScore": "Final",

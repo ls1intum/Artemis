@@ -17,6 +17,14 @@
         outline-color 0.2s;
 }
 
+// A compact tab fits a panel's title row: the small font size, with its icon following it, and tighter padding
+:host.tumaet-ui-tab-small {
+    gap: var(--tumaet-ui-spacing);
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 2.25);
+    font-size: var(--tumaet-ui-font-size-sm);
+    line-height: var(--tumaet-ui-line-height-sm);
+}
+
 :host.tumaet-ui-tab-disabled {
     opacity: 0.6;
     cursor: default;

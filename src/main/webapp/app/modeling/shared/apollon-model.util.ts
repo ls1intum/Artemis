@@ -150,3 +150,30 @@ export function hasModelElements(model: UMLModel | ApollonModelData | undefined)
 export function hasQuizRelevantElements(model: UMLModel | ApollonModelData | undefined): boolean {
     return getQuizRelevantElementIds(model).length > 0;
 }
+
+/**
+ * The diagram's own display order: each node followed by its attributes then its methods (both in the
+ * order Apollon stores them, i.e. the order they appear in the class box), before moving to the next
+ * node; edges/relationships come last. Used to lay out per-element feedback the same way the diagram
+ * itself groups a class's members, instead of the arbitrary order feedback was saved in.
+ */
+export function getModelElementDisplayOrder(model: UMLModel | ApollonModelData | undefined): string[] {
+    if (!model) {
+        return [];
+    }
+
+    const orderedIds: string[] = [];
+    for (const node of getModelNodes(model)) {
+        orderedIds.push(node.id);
+        const data = node.data as Record<string, unknown> | undefined;
+        const members = [data?.attributes, data?.methods, data?.actionRows].flatMap((collection) =>
+            Array.isArray(collection)
+                ? collection.filter((item): item is { id: string } => !!item && typeof item === 'object' && typeof (item as { id?: unknown }).id === 'string')
+                : [],
+        );
+        orderedIds.push(...members.map((member) => member.id));
+    }
+    orderedIds.push(...getModelEdges(model).map((edge) => edge.id));
+
+    return orderedIds;
+}

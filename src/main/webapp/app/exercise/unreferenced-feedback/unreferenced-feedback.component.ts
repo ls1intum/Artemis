@@ -6,23 +6,16 @@ import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unref
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-
-//One rendered block of the feedback list: the feedback belonging to a single grading criterion.
-export interface FeedbackGroup {
-    title: string;
-    translateTitle: boolean;
-    feedbacks: Feedback[];
-    points: number;
-    pointsSeverity: TumAetUiTagSeverity;
-}
+import { Course } from 'app/course/shared/entities/course.model';
+import { round, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: ['./unreferenced-feedback.component.scss'],
-    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiMessageComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, TumAetUiMessageComponent, ArtemisTranslatePipe],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -33,11 +26,18 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     assessmentsAreValid = false;
 
     readonly readOnly = input<boolean>(undefined!);
+    /** Whether the list has its own add button; a host that adds feedback from elsewhere (e.g. its panel header) turns it off. */
+    readonly showAddButton = input(true);
+    /**
+     * Whether the list shows its title and the awarded, deducted and final points; a host that names the list and shows the
+     * points elsewhere (e.g. in a tab and a panel header) turns this off.
+     */
+    readonly showHeader = input(true);
     readonly highlightDifferences = input<boolean>(undefined!);
     readonly resultId = input<number>(undefined!);
 
     /**
-     * Criteria of the assessed exercise; used to group the feedback cards by the criterion they belong to.
+     * Criteria of the assessed exercise; used to title a feedback created for one of their instructions after its criterion.
      */
     readonly gradingCriteria = input<GradingCriterion[]>([]);
     /**
@@ -45,9 +45,11 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * assessment save path does.
      */
     readonly maxPoints = input<number>();
+    /** The course whose accuracy of scores the points summary is shown with; without it, the summary shows two decimals. */
+    readonly course = input<Course>();
     /**
-     * Complete assessment feedback (referenced + unreferenced + automatic, where applicable). When provided, group
-     * and final totals follow the structured-grading usageCount rules and include every score-contributing item.
+     * Complete assessment feedback (referenced + unreferenced + automatic, where applicable). When provided, the
+     * totals follow the structured-grading usageCount rules and include every score-contributing item.
      */
     readonly allFeedbacks = input<Feedback[]>([]);
     /**
@@ -70,8 +72,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     });
 
     /**
-     * The score of the whole assessment, computed exactly as saving it would. Also carries how many points each
-     * single feedback contributes, which is what the per-criterion tags show.
+     * The score of the whole assessment, computed exactly as saving it would.
      */
     private readonly assessmentScore = computed(() => {
         const maxPoints = this.maxPoints();
@@ -99,49 +100,15 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     readonly removableInstructionIds = computed<ReadonlySet<number>>(() => new Set(instructionCountsOf(this.feedbacks()).keys()));
 
     /**
-     * The feedback cards split into one block per grading criterion (criteria in alphabetical order), with every
-     * feedback that belongs to no criterion collected in a trailing block.
-     */
-    readonly feedbackGroups = computed<FeedbackGroup[]>(() => {
-        const feedbacks = this.feedbacks();
-        const contributingCredits = this.assessmentScore().contributions;
-        const groups: FeedbackGroup[] = [];
-        const alreadyGrouped = new Set<Feedback>();
-
-        const sortedCriteria = [...this.gradingCriteria()].sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
-        for (const criterion of sortedCriteria) {
-            const instructionIds = new Set((criterion.structuredGradingInstructions ?? []).map((instruction) => instruction.id));
-            const groupFeedbacks = feedbacks.filter((feedback) => feedback.gradingInstruction?.id !== undefined && instructionIds.has(feedback.gradingInstruction.id));
-            if (groupFeedbacks.length === 0) {
-                continue;
-            }
-            groupFeedbacks.forEach((feedback) => alreadyGrouped.add(feedback));
-            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits));
-        }
-
-        const ungrouped = feedbacks.filter((feedback) => !alreadyGrouped.has(feedback));
-        if (ungrouped.length > 0) {
-            groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits));
-        }
-        return groups;
-    });
-
-    /**
-     * Group headers only add information once the feedback is actually split up.
-     * A single block of uncategorized feedback is rendered without a header.
-     */
-    readonly showGroupHeaders = computed(() => {
-        const groups = this.feedbackGroups();
-        return groups.length > 1 || (groups.length === 1 && !groups[0].translateTitle);
-    });
-
-    /**
      * Awarded / deducted / final points for the assessment, using the same structured-grading usage and
-     * positive/max-point capping as the assessment save path.
+     * positive/max-point capping as the assessment save path. They are rounded like the rest of the course's scores:
+     * automatic test points, e.g. 100 points split across 13 tests, are fractions that would otherwise show every digit.
      */
     readonly pointsSummary = computed(() => {
         const { awarded, deducted, total } = this.assessmentScore();
-        return { awarded, deducted, total };
+        const course = this.course();
+        const roundPoints = (points: number) => (course ? roundValueSpecifiedByCourseSettings(points, course) : round(points, 2));
+        return { awarded: roundPoints(awarded), deducted: roundPoints(deducted), total: roundPoints(total) };
     });
 
     constructor() {
@@ -213,9 +180,16 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
 
     applyInstruction(instruction: GradingInstruction): void {
         const feedback = this.createFeedback();
-        feedback.gradingInstruction = instruction;
-        feedback.credits = instruction.credits;
+        this.structuredGradingCriterionService.applyGradingInstruction(feedback, instruction, this.criterionTitleOf(instruction));
         this.appendFeedback(feedback);
+    }
+
+    /**
+     * The title of the instruction's criterion, which names a feedback created for it. Dropping an instruction brings the
+     * title along (see DraggedGradingInstruction); ticking it does not, so the criterion is looked up among the exercise's.
+     */
+    private criterionTitleOf(instruction: GradingInstruction): string | undefined {
+        return this.gradingCriteria().find((criterion) => criterion.structuredGradingInstructions?.some((candidate) => candidate.id === instruction.id))?.title;
     }
 
     unapplyInstruction(instruction: GradingInstruction): void {
@@ -277,15 +251,4 @@ function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number>
         }
     }
     return counts;
-}
-
-function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {
-    const points = feedbacks.reduce((sum, feedback) => sum + (contributingCredits.get(feedback) ?? 0), 0);
-    let pointsSeverity: TumAetUiTagSeverity = 'secondary';
-    if (points > 0) {
-        pointsSeverity = 'success';
-    } else if (points < 0) {
-        pointsSeverity = 'danger';
-    }
-    return { title, translateTitle, feedbacks, points, pointsSeverity };
 }

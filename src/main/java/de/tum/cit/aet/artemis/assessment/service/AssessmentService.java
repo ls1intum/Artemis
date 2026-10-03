@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
@@ -136,6 +137,7 @@ public class AssessmentService {
         if (assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
+        checkManualFeedbackCreditsWithinBoundsElseThrow(assessmentUpdate.feedbacks());
         // the update is copied onto a new result below, but the feedback ids are still read while the request is mapped
         checkFeedbackBelongsToResultElseThrow(assessmentUpdate.feedbacks(), originalResult);
         // Save the complaint response
@@ -324,6 +326,7 @@ public class AssessmentService {
             throw new BadRequestAlertException("The result does not belong to the assessed submission.", "result", "resultSubmissionMismatch");
         }
         resultService.validateGradingInstructions(feedbackList, exerciseId);
+        checkManualFeedbackCreditsWithinBoundsElseThrow(feedbackList);
 
         // run before a missing result is created, since saveNewEmptyResult commits the empty result on its own and a request refused afterwards would leave it behind
         checkFeedbackBelongsToResultElseThrow(feedbackList, result);
@@ -365,6 +368,21 @@ public class AssessmentService {
         result = resultRepository.save(result);
         result.setAssessor(assessor);
         return result;
+    }
+
+    /**
+     * Checks that no feedback given by the assessor exceeds {@link Feedback#MAX_MANUAL_CREDITS} in either direction. Feedback linked to a grading instruction takes its credits
+     * from the instruction, and automatic feedback (e.g. a test case of a programming exercise echoed by the client) is computed by the server, so neither is limited here. A
+     * feedback without a type counts as manual, since it becomes one when it is stored.
+     *
+     * @param feedbackList the feedback list sent by the client
+     */
+    protected void checkManualFeedbackCreditsWithinBoundsElseThrow(final Collection<Feedback> feedbackList) {
+        if (feedbackList != null && feedbackList.stream().anyMatch(feedback -> feedback.getType() != FeedbackType.AUTOMATIC && feedback.getGradingInstruction() == null
+                && feedback.getCredits() != null && Math.abs(feedback.getCredits()) > Feedback.MAX_MANUAL_CREDITS)) {
+            throw new BadRequestAlertException("The points of a feedback must be between -" + Feedback.MAX_MANUAL_CREDITS + " and " + Feedback.MAX_MANUAL_CREDITS, "Feedback",
+                    "feedbackCreditsOutOfBounds");
+        }
     }
 
     /**

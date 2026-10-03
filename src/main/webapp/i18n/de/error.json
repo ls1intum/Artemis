@@ -113,6 +113,7 @@
         "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
         "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
         "feedbackIdMismatch": "Die Bewertung enthält Feedback eines anderen Ergebnisses.",
+        "feedbackCreditsOutOfBounds": "Die Punkte eines Feedbacks müssen zwischen -100 und 100 liegen.",
         "resultParticipationMismatch": "Das Ergebnis ist kein manuelles Ergebnis dieser Teilnahme.",
         "textBlockSubmissionMismatch": "Die Bewertung enthält einen Textblock einer anderen Abgabe.",
         "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung.",
@@ -154,8 +155,7 @@
             "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
             "athenaNotEnabled": "Feedback-Anfragen für Text- und Modellierungsaufgaben sind nicht verfügbar.",
             "athenaNotEnabled_detail": "Das Athena-Modul ist nicht aktiviert (artemis.athena.enabled=true setzen).",
-            "notEnabled": "KI-Feedback-Anfragen sind für diesen Kurs nicht aktiviert.",
-            "manualAssessmentRequired": "Feedback-Anfragen für Programmieraufgaben erfordern eine aktivierte manuelle Bewertung."
+            "notEnabled": "KI-Feedback-Anfragen sind für diesen Kurs nicht aktiviert."
         },
         "athenaGradingFeedbackNotEnabled": "Athena-Bewertungsfeedback ist für diesen Kurs nicht aktiviert.",
         "teamExercise": {

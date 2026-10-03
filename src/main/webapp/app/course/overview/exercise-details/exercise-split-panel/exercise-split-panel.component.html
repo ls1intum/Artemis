@@ -1,9 +1,10 @@
-<!-- Only the modeling editor may sit flush, because it draws its own frame. Before the participation starts there is
-     no editor panel, so the problem statement takes the left panel, and flush would put its text on the panel edge. -->
+<!-- The editors sit flush and frame their content themselves. Before the participation starts there is no editor panel, so
+     the problem statement takes the left panel, and flush would put its text on the panel edge. -->
 <jhi-resizable-panels
     class="flex-fill h-100 overflow-hidden"
     [useViewportWidthForCollapse]="true"
-    [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()"
+    [flushLeftPanel]="flushEditorPanel()"
+    [leftMinSizePercent]="leftMinSizePercent()"
     storageKey="exercise-details-split"
 >
     @if (showEditorPanel()) {
@@ -82,21 +83,25 @@
                     </dl>
                 </p-panel>
             }
+            @if (showRating()) {
+                @defer (on idle) {
+                    <jhi-rating
+                        class="assessment-feedback-section"
+                        [result]="latestRatedResult()!"
+                        [participation]="gradedStudentParticipation()!"
+                        starSize="18"
+                        layout="inline"
+                    />
+                }
+            }
             @if (showComplaintView()) {
                 @defer (on idle) {
                     <jhi-complaint-student-view
-                        class="mb-2 mt-2 ms-3"
+                        class="assessment-feedback-section assessment-feedback-section--complaint"
                         [exercise]="exercise()"
                         [participation]="gradedStudentParticipation()!"
                         [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"
                     />
-                }
-            }
-            @if (showRating()) {
-                @defer (on idle) {
-                    <div class="row">
-                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
-                    </div>
                 }
             }
             @if (plagiarismCaseInfo()?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {

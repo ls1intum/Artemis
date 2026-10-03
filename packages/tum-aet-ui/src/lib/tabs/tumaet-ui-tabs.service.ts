@@ -17,6 +17,22 @@ export function tabValue(key: string): number | string {
     return key.slice(0, separator) === 'number' ? Number(value) : value;
 }
 
+/** How large its tabs are: `small` fits a compact header, such as the title row of a panel. */
+export type TumAetUiTabsSize = 'medium' | 'small';
+
+/** The color of the selected tab's label: the brand `accent`, or the `text` color, leaving the indicator to mark it. */
+export type TumAetUiTabsSelectedColor = 'accent' | 'text';
+
+/** The surface the tab list sits on, which the scroll buttons of a list that does not fit blend into. */
+export type TumAetUiTabsSurface = 'content' | 'muted';
+
+/** The appearance a `tumaet-ui-tabs` container shares with its tab list and tabs. */
+export interface TumAetUiTabsAppearance {
+    readonly size: Signal<TumAetUiTabsSize>;
+    readonly selectedColor: Signal<TumAetUiTabsSelectedColor>;
+    readonly surface: Signal<TumAetUiTabsSurface>;
+}
+
 /** A panel as its tabs container tracks it. */
 export interface TumAetUiTabsPanelEntry {
     readonly key: Signal<string>;
@@ -35,11 +51,17 @@ export class TumAetUiTabsService {
     private readonly source = signal<Signal<TumAetUiTabValue>>(signal<TumAetUiTabValue>(undefined));
     private onSelect: (value: TumAetUiTabValue) => void = () => {};
 
+    private readonly appearance = signal<TumAetUiTabsAppearance>({ size: signal('medium'), selectedColor: signal('accent'), surface: signal('content') });
+
     private readonly tabSet = signal<ReadonlySet<TumAetUiTabsTabEntry>>(new Set());
     private readonly panelSet = signal<ReadonlySet<TumAetUiTabsPanelEntry>>(new Set());
 
     /** The value of the selected tab, as bound on `tumaet-ui-tabs`. */
     readonly active = computed<TumAetUiTabValue>(() => this.source()());
+
+    readonly size = computed(() => this.appearance().size());
+    readonly selectedColor = computed(() => this.appearance().selectedColor());
+    readonly surface = computed(() => this.appearance().surface());
 
     /**
      * The tabs in document order, which is also the order the keyboard moves through them. Sorted on every call, because
@@ -62,6 +84,11 @@ export class TumAetUiTabsService {
     register(value: Signal<TumAetUiTabValue>, onSelect: (value: TumAetUiTabValue) => void): void {
         this.source.set(value);
         this.onSelect = onSelect;
+    }
+
+    /** Shares the appearance bound on `tumaet-ui-tabs` with its tab list and tabs. */
+    registerAppearance(appearance: TumAetUiTabsAppearance): void {
+        this.appearance.set(appearance);
     }
 
     select(value: TumAetUiTabValue): void {

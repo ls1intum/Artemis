@@ -16,6 +16,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { isPreliminaryProgrammingAIFeedback } from 'app/exercise/result/result.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -250,7 +251,10 @@ export class FeedbackComponent implements OnInit {
                         return this.fetchAndSetBuildLogs(participationId, result.id);
                     }
 
-                    if (this.scoreChartVisible() && this.feedbackItemNodes() !== undefined) {
+                    // Preliminary AI feedback on a programming submission is not graded, so its points are not charted either.
+                    if (isPreliminaryProgrammingAIFeedback(result, this.exerciseType())) {
+                        this.scoreChartVisible.set(false);
+                    } else if (this.scoreChartVisible() && this.feedbackItemNodes() !== undefined) {
                         this.updateChart(this.feedbackItemNodes()!);
                     }
 
@@ -297,7 +301,16 @@ export class FeedbackComponent implements OnInit {
                         reference.lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
                     }
                 });
-                this.feedbackItemNodes.update((nodes) => (nodes ? [...nodes] : nodes));
+                const exercise = this.resolvedExercise();
+                if (!exercise) {
+                    return;
+                }
+                // FeedbackNodeComponent reads its node once on init, so lines added to nodes already on screen never
+                // render. Regrouping hands the @for new node identities, and the groups keep whether they were open.
+                const wasOpen = new Map((this.feedbackItemNodes() ?? []).filter(isFeedbackGroup).map((group) => [group.name, group.open]));
+                const nodes = this.feedbackItemService.group(feedbackItems, exercise);
+                nodes.filter(isFeedbackGroup).forEach((group) => (group.open = wasOpen.get(group.name) ?? group.open));
+                this.feedbackItemNodes.set(nodes);
             });
     }
 

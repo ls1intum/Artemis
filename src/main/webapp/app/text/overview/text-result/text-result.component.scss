@@ -29,6 +29,12 @@
     }
 }
 
+// The feedback card of a sentence sits below it, set apart from the sentence and from the text that follows
+.text-result__feedback {
+    display: block;
+    margin: 0.5rem 0;
+}
+
 .white-space {
     white-space: pre-wrap;
 }
