@@ -19,7 +19,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faExclamationTriangle, faLink, faLinkSlash, faMinus, faPlus, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faInfo, faLink, faLinkSlash, faMinus, faPlus, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -180,7 +180,8 @@ export class UnifiedFeedbackComponent {
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'unified-feedback--success' },
-        needs_revision: { icon: faExclamationTriangle, alertClass: 'unified-feedback--info' },
+        // Feedback without points informs rather than warns, like the zero badge on the Apollon canvas
+        needs_revision: { icon: faInfo, alertClass: 'unified-feedback--info' },
         not_attempted: { icon: faMinus, alertClass: 'unified-feedback--neutral' },
         non_compliant: { icon: faTimes, alertClass: 'unified-feedback--danger' },
     };

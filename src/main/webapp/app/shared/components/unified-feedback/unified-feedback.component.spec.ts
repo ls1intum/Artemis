@@ -16,7 +16,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
-import { faExclamationTriangle, faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faInfo, faMinus } from '@fortawesome/free-solid-svg-icons';
 
 const CREDITS_STEP = 0.5;
 
@@ -323,10 +323,10 @@ describe('UnifiedFeedbackComponent', () => {
         expect(root.classList.contains('unified-feedback--info')).toBeTruthy();
     });
 
-    it('should expose the faExclamationTriangle icon for needs_revision (0 points), matching the Apollon legend', () => {
+    it('should expose the faInfo icon for needs_revision (0 points), matching the Apollon legend', () => {
         fixture.componentRef.setInput('type', 'needs_revision');
         fixture.detectChanges();
-        expect(component.inferredIcon()).toBe(faExclamationTriangle);
+        expect(component.inferredIcon()).toBe(faInfo);
     });
 
     it('should expose unified-feedback--neutral for not_attempted', () => {
