@@ -229,13 +229,10 @@ public class ResultService {
      * Rejects feedback referencing missing instructions or instructions from another exercise. Ownership is checked
      * against the database, not against instruction data supplied by the caller. Call before any assessment writes.
      *
-     * @param feedbacks  the new feedback, or null when a complaint update retains the existing feedback
+     * @param feedbacks  the new feedback
      * @param exerciseId the trusted id of the exercise being assessed
      */
     public void validateGradingInstructions(Collection<Feedback> feedbacks, long exerciseId) {
-        if (feedbacks == null) {
-            return;
-        }
         Set<Long> instructionIds = feedbacks.stream().map(Feedback::getGradingInstruction).filter(Objects::nonNull).map(GradingInstruction::getId).collect(Collectors.toSet());
         if (!instructionIds.isEmpty()
                 && (instructionIds.contains(null) || gradingInstructionRepository.countByIdInAndGradingCriterionExerciseId(instructionIds, exerciseId) != instructionIds.size())) {
@@ -392,7 +389,7 @@ public class ResultService {
      * @return the updated (and potentially saved) result
      */
     @NonNull
-    public Result addFeedbackToResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+    public Result addFeedbackToResult(@NonNull Result result, @NonNull List<Feedback> feedbackList, boolean shouldSave) {
         List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.addFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
@@ -638,7 +635,7 @@ public class ResultService {
     }
 
     @NonNull
-    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, List<Feedback> feedbackList) {
+    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, @NonNull List<Feedback> feedbackList) {
         validateGradingInstructions(feedbackList, result.getExerciseId());
         List<Feedback> savedFeedbacks = new ArrayList<>();
 

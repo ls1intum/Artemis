@@ -347,7 +347,9 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         }
         finally {
             // Not try-with-resources: close() waits for termination without a timeout, which is the very block
-            // awaitConsistencyTask exists to prevent. shutdownNow() interrupts and returns.
+            // awaitConsistencyTask exists to prevent. shutdown() rejects further tasks and shutdownNow()
+            // interrupts a straggling consistency check; neither waits for termination.
+            virtualThreads.shutdown();
             virtualThreads.shutdownNow();
         }
         synchronized (consistencyFindings) {

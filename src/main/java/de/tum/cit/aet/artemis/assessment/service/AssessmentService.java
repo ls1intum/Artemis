@@ -132,7 +132,10 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
-        resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
+        // a complaint update may retain the existing feedback, in which case there is nothing new to validate
+        if (assessmentUpdate.feedbacks() != null) {
+            resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
+        }
         if (assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }

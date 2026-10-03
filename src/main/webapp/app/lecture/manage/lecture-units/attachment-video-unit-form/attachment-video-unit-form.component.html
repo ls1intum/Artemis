@@ -4,6 +4,7 @@
         <input
             tumAetUiInput
             id="name"
+            [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.name' | artemisTranslate"
             type="text"
             formControlName="name"
             required
@@ -28,6 +29,7 @@
         <textarea
             tumAetUiTextarea
             id="description"
+            [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.description' | artemisTranslate"
             rows="3"
             formControlName="description"
             [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.descriptionPlaceHolder' | artemisTranslate"
@@ -238,6 +240,7 @@
             <textarea
                 tumAetUiTextarea
                 id="updateNotificationText"
+                [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationText' | artemisTranslate"
                 rows="3"
                 maxlength="255"
                 formControlName="updateNotificationText"
@@ -251,6 +254,7 @@
             #videoSourceInput
             tumAetUiInput
             id="videoSource"
+            [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.source' | artemisTranslate"
             type="text"
             formControlName="videoSource"
             [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.sourcePlaceHolder' | artemisTranslate"
@@ -273,7 +277,14 @@
         [error]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.urlHelperValidationError' | artemisTranslate"
     >
         <div class="flex flex-wrap gap-2">
-            <input tumAetUiInput id="urlHelper" type="text" class="min-w-0 grow" formControlName="urlHelper" />
+            <input
+                tumAetUiInput
+                id="urlHelper"
+                [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.urlVideoHelper' | artemisTranslate"
+                type="text"
+                class="min-w-0 grow"
+                formControlName="urlHelper"
+            />
             <button tumAetUiButton id="transformButton" type="button" severity="secondary" variant="outlined" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
                 <fa-icon [icon]="faArrowUp" />
                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.useAsVideoSource"></span>

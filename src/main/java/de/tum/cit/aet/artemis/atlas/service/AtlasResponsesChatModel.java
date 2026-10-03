@@ -213,8 +213,8 @@ public final class AtlasResponsesChatModel implements ChatModel {
             }
             else if (message instanceof ToolResponseMessage toolResponseMessage) {
                 for (ToolResponseMessage.ToolResponse response : toolResponseMessage.getResponses()) {
-                    inputItems.add(ResponseInputItem.ofFunctionCallOutput(
-                            ResponseInputItem.FunctionCallOutput.builder().callId(response.id()).output(response.responseData() == null ? "" : response.responseData()).build()));
+                    inputItems.add(
+                            ResponseInputItem.ofFunctionCallOutput(ResponseInputItem.FunctionCallOutput.builder().callId(response.id()).output(response.responseData()).build()));
                 }
             }
             else {

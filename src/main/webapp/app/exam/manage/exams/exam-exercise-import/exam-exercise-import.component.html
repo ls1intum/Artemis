@@ -26,6 +26,7 @@
                                 tumAetUiInput
                                 class="w-full"
                                 type="text"
+                                [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.title' | artemisTranslate"
                                 [tumAetUiInputInvalid]="!!getExerciseGroupTitleError(exerciseGroup)"
                                 [tumAetUiInputId]="'exerciseGroup-' + groupIndex + '-title'"
                                 name="exerciseGroup-{{ groupIndex }}-title"
@@ -111,6 +112,7 @@
                                                 tumAetUiInput
                                                 class="w-full"
                                                 type="text"
+                                                [attr.aria-label]="'artemisApp.exercise.title' | artemisTranslate"
                                                 [tumAetUiInputInvalid]="!validateTitleOfProgrammingExercise(exercise)"
                                                 [tumAetUiInputId]="'exercise-' + exercise.id + '-title'"
                                                 [name]="'exercise-' + exercise.id + '-title'"
@@ -133,6 +135,7 @@
                                                 tumAetUiInput
                                                 class="w-full"
                                                 type="text"
+                                                [attr.aria-label]="'artemisApp.exercise.shortName' | artemisTranslate"
                                                 [tumAetUiInputInvalid]="!validateShortNameOfProgrammingExercise(exercise)"
                                                 [tumAetUiInputId]="'programming-exercise-' + exercise.id + '-shortName'"
                                                 [name]="'programming-exercise-' + exercise.id + '-shortName'"

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.config;
 
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -54,7 +53,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("mainAgentToolCallbackProvider")
     public AtlasToolSurface mainAgentToolCallbackProvider(AtlasAgentToolsService toolsService) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(toolsService).build());
     }
@@ -67,7 +65,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("competencyExpertToolCallbackProvider")
     public AtlasToolSurface competencyExpertToolCallbackProvider(CompetencyExpertToolsService expertToolsService) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build());
     }
@@ -80,7 +77,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("competencyMapperToolCallbackProvider")
     public AtlasToolSurface competencyMapperToolCallbackProvider(CompetencyMappingToolsService mapperToolsService) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(mapperToolsService).build());
     }
@@ -93,7 +89,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("exerciseMapperToolCallbackProvider")
     public AtlasToolSurface exerciseMapperToolCallbackProvider(ExerciseMappingToolsService exerciseMapperToolsService) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build());
     }
@@ -112,7 +107,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("orchestratorReadToolCallbackProvider")
     public AtlasToolSurface orchestratorReadToolCallbackProvider(OrchestratorReadToolsService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
@@ -126,7 +120,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("orchestratorPlanningToolCallbackProvider")
     public AtlasToolSurface orchestratorPlanningToolCallbackProvider(OrchestratorPlanningToolsService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
@@ -139,7 +132,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("creatorToolCallbackProvider")
     public AtlasToolSurface creatorToolCallbackProvider(CreatorToolsService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
@@ -152,7 +144,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("editorToolCallbackProvider")
     public AtlasToolSurface editorToolCallbackProvider(EditorToolsService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
@@ -165,7 +156,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("assignerToolCallbackProvider")
     public AtlasToolSurface assignerToolCallbackProvider(AssignerToolsService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
@@ -178,7 +168,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("orchestratorTerminalToolCallbackProvider")
     public AtlasToolSurface orchestratorTerminalToolCallbackProvider(AtlasOrchestratorTerminalToolService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
