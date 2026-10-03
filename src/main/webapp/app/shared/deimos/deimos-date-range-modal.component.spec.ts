@@ -47,6 +47,48 @@ describe('DeimosDateRangeModalComponent', () => {
         expect(component.isSubmitDisabled()).toBe(true);
     });
 
+    it('should allow a window of exactly maxWindowDays', () => {
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z').toDate());
+        component.toDate.set(dayjs('2026-02-01T00:00:00Z').toDate());
+
+        // The server permits exactly 31 * 24h (Duration.between(from, to) > Duration.ofDays(31)), so the client must too.
+        expect(component.isWindowTooLarge()).toBe(false);
+        expect(component.isSubmitDisabled()).toBe(false);
+    });
+
+    it('should reject a window one hour past maxWindowDays', () => {
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z').toDate());
+        component.toDate.set(dayjs('2026-02-01T01:00:00Z').toDate());
+
+        expect(component.isWindowTooLarge()).toBe(true);
+    });
+
+    it('should reject a window that only fits within maxWindowDays because of a DST transition', () => {
+        // 1 October to 1 November in Europe/Berlin: the offset moves from +02:00 to +01:00, so 31 calendar days are
+        // 31 days AND one hour of elapsed time. dayjs' .diff(..., 'day', true) compensates for the offset change and
+        // reported exactly 31, which enabled Submit for a window the server then rejected with a 400.
+        // Explicit offsets keep this independent of the machine timezone, so it cannot silently pass under UTC in CI.
+        component.fromDate.set(dayjs('2026-10-01T00:00:00+02:00').toDate());
+        component.toDate.set(dayjs('2026-11-01T00:00:00+01:00').toDate());
+
+        // Asserted on elapsed time, not on dayjs' .diff(..., 'day', true): that expression is itself timezone
+        // dependent (31 under Europe/Berlin, 31.0416... under UTC), so asserting on it would pass locally and fail
+        // in CI. The elapsed span is the same instant arithmetic the server performs, in every timezone.
+        const elapsedMs = component.toDate()!.getTime() - component.fromDate()!.getTime();
+        expect(elapsedMs).toBe((31 * 24 + 1) * 60 * 60 * 1000);
+        expect(component.isWindowTooLarge()).toBe(true);
+        expect(component.isSubmitDisabled()).toBe(true);
+    });
+
+    it('should use the configured maxWindowDays rather than a hard-coded limit', () => {
+        fixture.componentRef.setInput('maxWindowDays', 7);
+        fixture.detectChanges();
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z').toDate());
+        component.toDate.set(dayjs('2026-01-09T00:00:00Z').toDate());
+
+        expect(component.isWindowTooLarge()).toBe(true);
+    });
+
     it('should disable submit while parent reports submitting', () => {
         component.fromDate.set(dayjs('2026-01-01T00:00:00Z').toDate());
         component.toDate.set(dayjs('2026-01-07T00:00:00Z').toDate());
