@@ -45,6 +45,9 @@ import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, Lectu
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { LectureDeepLink, isLectureDeepLinkNavigationState, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
+/** Shown when a deep link points at a lecture unit that no longer exists. */
+const DEEP_LINK_UNIT_GONE_ERROR_KEY = 'artemisApp.lectureUnit.deepLink.unitGone';
+
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
     completed: boolean;
@@ -369,6 +372,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         const targetUnit = this.lectureUnits().find((unit) => unit.id === pending.deepLink.unitId);
         if (!targetUnit) {
+            this.alertService.error(DEEP_LINK_UNIT_GONE_ERROR_KEY);
             this.pendingDeepLink = undefined;
             this.deepLink.set(undefined);
             return;

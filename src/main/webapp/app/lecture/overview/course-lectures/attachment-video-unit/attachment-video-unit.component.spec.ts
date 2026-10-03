@@ -1489,6 +1489,23 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
+        it('reopens on repeated safe fallbacks without moving viewers or acknowledging a pipeline', () => {
+            const { goToPage } = mockViewers(signal(10));
+            const openFullscreen = vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
+            makeCombinedViewOpenable();
+            const marker = pointOutRequest({ correlationId: undefined, page: undefined, timestamp: undefined, forceOpen: true });
+            for (let click = 0; click < 2; click++) {
+                component['fullscreenState'].set(false);
+                component['handlePointOut'](marker);
+                component['onFullscreenChange'](true);
+                fixture.detectChanges();
+                component['onFullscreenChange'](false);
+            }
+            expect(openFullscreen).toHaveBeenCalledTimes(2);
+            expect(goToPage).not.toHaveBeenCalled();
+            expect(chatService.sendCommandAck).not.toHaveBeenCalled();
+        });
+
         it('releases a pending point-out when a newer one replaces it or the view closes, unless nobody waits on its answer', () => {
             // No PDF viewer is available here, so a request stays pending and is still unacknowledged when the next
             // one arrives — without releasing it there, its pipeline would wait out the full server-side timeout.

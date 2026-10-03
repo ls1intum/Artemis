@@ -633,6 +633,65 @@ describe('CourseLectureDetailsComponent', () => {
             routerEvents.next(new NavigationEnd(eventId, urlAfterRedirects, urlAfterRedirects));
         };
 
+        it.each([{ unitIds: [] }, { unitIds: [7] }])('reports a missing target after a lecture with units $unitIds has loaded', ({ unitIds }) => {
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            respondWith(unitIds.map((id) => attachmentUnit(id)));
+            reInit();
+            expect(error).not.toHaveBeenCalled();
+
+            emitNavigationWithQueryParams({ unit: '999', page: '3', timestamp: '42', combined: 'true' });
+
+            expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.lectureUnit.deepLink.unitGone');
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+        });
+
+        it('stays silent when an empty lecture is opened without requesting a unit', () => {
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            respondWith([]);
+
+            reInit();
+
+            expect(courseLecturesDetailsComponent.lecture()?.id).toBe(1);
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+            expect(error).not.toHaveBeenCalled();
+        });
+
+        it('reports a missing cross-lecture target only after the requested lecture arrives', () => {
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            respondWith([attachmentUnit(7)]);
+            reInit();
+            const deliver = respondLater([], 2);
+
+            reInit({ unit: '999', page: '3' }, '2');
+
+            expect(error).not.toHaveBeenCalled();
+            deliver();
+            expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.lectureUnit.deepLink.unitGone');
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+        });
+
+        it('retains a cross-lecture request when the router updates query parameters before route parameters', () => {
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const routeParams = new Subject<Params>();
+            const route = TestBed.inject(ActivatedRoute);
+            (route as unknown as { params: unknown }).params = routeParams;
+            respondWith([attachmentUnit(7)]);
+            reInit();
+            routeParams.next({ lectureId: '1' });
+            const deliver = respondLater([attachmentUnit(9)], 2);
+
+            route.snapshot.params = { lectureId: '2' };
+            route.snapshot.queryParams = { unit: '9', page: '3', timestamp: '42', combined: 'true' };
+            routeParams.next({ lectureId: '2' });
+            emitNavigationWithQueryParams(route.snapshot.queryParams, '2');
+
+            expect(error).not.toHaveBeenCalled();
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+            deliver();
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual({ unitId: 9, page: 3, timestamp: 42, combined: true });
+            expect(error).not.toHaveBeenCalled();
+        });
+
         it.each([
             { name: 'keeps every target', params: { unit: '7', timestamp: '30', page: '4' }, expected: { unitId: 7, timestamp: 30, page: 4 } },
             {
