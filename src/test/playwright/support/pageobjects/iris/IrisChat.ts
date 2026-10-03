@@ -40,8 +40,13 @@ export class IrisChat {
         return this.page.locator('.chat-input textarea');
     }
 
+    /**
+     * The native button inside `jhi-button#irisSendButton`. The wrapper element is a custom element, which Playwright
+     * always considers enabled, so waiting on it (or clicking it) does not wait for the disabled state the inner button
+     * carries.
+     */
     getSendButton(): Locator {
-        return this.page.locator('#irisSendButton');
+        return this.page.locator('#irisSendButton button');
     }
 
     getLlmMessages(): Locator {

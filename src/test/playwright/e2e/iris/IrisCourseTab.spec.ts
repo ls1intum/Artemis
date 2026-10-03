@@ -7,6 +7,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { generateUUID } from '../../support/utils';
 import { enableIrisForCourse, loginWithoutIrisTour } from '../../support/irisSetup';
+import { IrisChat } from '../../support/pageobjects/iris/IrisChat';
 
 /**
  * Gets a student past the one-time LLM usage choice Iris puts in front of the chat. The choice is remembered per user,
@@ -125,10 +126,8 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
         await loginWithoutIrisTour(page, studentOne, `/courses/${course.id}/iris`);
         await openIrisChat(page);
 
-        const input = page.locator('.chat-input textarea');
-        await input.fill('Hello Iris, what is this course about?');
-        // The button stays disabled until the chat session has loaded; the click waits for that rather than losing the message
-        await page.locator('#irisSendButton').click();
+        // Waits for the send button to be enabled, which it only is once the chat session has loaded
+        await new IrisChat(page).sendMessage('Hello Iris, what is this course about?');
 
         // The mock LLM the Iris stack runs against always includes this marker in its reply
         await expect(page.locator('.llm-message-wrapper').last()).toContainText('mock-llm', { timeout: 60_000 });
