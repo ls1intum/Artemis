@@ -61,14 +61,14 @@ class PdfDropZoneStubComponent {
             [showDropZone]="false"
             [editingUnitId]="editingUnitId()"
             [editorTemplate]="editor"
-            (onSaveEditingClicked)="saved.push($event)"
+            (onDoneEditingClicked)="done.push($event)"
         />
     `,
     imports: [LectureUnitManagementComponent],
 })
 class EditingHostComponent {
     readonly editingUnitId = signal<number | undefined>(undefined);
-    readonly saved: LectureUnit[] = [];
+    readonly done: LectureUnit[] = [];
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -826,7 +826,7 @@ describe('LectureUnitManagementComponent', () => {
 
             expect(rows.filter((row) => row.attributes['data-editing'] === 'true')).toHaveLength(1);
             expect(editingRow.query(By.css('[data-testid="lecture-unit-editing-tag"]'))).not.toBeNull();
-            expect(editingRow.query(By.css('[data-testid="lecture-unit-save"]'))).not.toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-done"]'))).not.toBeNull();
             expect(editingRow.query(By.css('[data-testid="lecture-unit-edit"]'))).toBeNull();
             expect(editingRow.query(By.css('[data-testid="lecture-unit-editor"]')).nativeElement.textContent).toContain(`Editing ${textUnit.id}`);
             expect(rows.filter((row) => row !== editingRow).every((row) => row.classes['opacity-60'])).toBe(true);
@@ -834,10 +834,10 @@ describe('LectureUnitManagementComponent', () => {
             expect(hostFixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList).disabled).toBe(true);
         });
 
-        it('should report Save of the edited unit', () => {
-            queryAll('lecture-unit-save')[0].nativeElement.click();
+        it('should report Done of the edited unit', () => {
+            queryAll('lecture-unit-done')[0].nativeElement.click();
 
-            expect(host.saved).toEqual([expect.objectContaining({ id: textUnit.id })]);
+            expect(host.done).toEqual([expect.objectContaining({ id: textUnit.id })]);
         });
 
         it('should move the keyboard focus to the Edit button of a unit once its form closed', () => {

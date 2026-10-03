@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
@@ -56,6 +57,8 @@ public class PyrisJobService {
 
     private final DistributedDataProvider distributedDataProvider;
 
+    private final IrisLectureMaterialVersionService materialVersionService;
+
     @Nullable
     private DistributedMap<String, PyrisJob> jobMap;
 
@@ -82,9 +85,10 @@ public class PyrisJobService {
 
     private final IrisProactiveProperties proactiveProperties;
 
-    public PyrisJobService(DistributedDataProvider distributedDataProvider, IrisProactiveProperties proactiveProperties) {
+    public PyrisJobService(DistributedDataProvider distributedDataProvider, IrisProactiveProperties proactiveProperties, IrisLectureMaterialVersionService materialVersionService) {
         this.distributedDataProvider = distributedDataProvider;
         this.proactiveProperties = proactiveProperties;
+        this.materialVersionService = materialVersionService;
     }
 
     /**
@@ -465,6 +469,7 @@ public class PyrisJobService {
         getPyrisJobMap().remove(job.jobId());
         if (job instanceof ChatJob) {
             getChatJobClientIdMap().remove(job.jobId());
+            materialVersionService.remove(job.jobId());
         }
     }
 
@@ -478,6 +483,7 @@ public class PyrisJobService {
         int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
         getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
         if (job instanceof ChatJob) {
+            materialVersionService.refresh(job.jobId());
             var clientId = getChatJobClientIdMap().get(job.jobId());
             if (clientId != null) {
                 getChatJobClientIdMap().put(job.jobId(), clientId, Duration.ofSeconds(ttl));
