@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -36,6 +37,31 @@ public class ExamRepositoryApi extends AbstractExamApi {
 
     public Exam findByIdElseThrow(long id) {
         return examRepository.findByIdElseThrow(id);
+    }
+
+    /**
+     * Checks which of the given ids exists, for the pass that removes index rows with no backing entity.
+     *
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    public Set<Long> findExistingExamIds(Collection<Long> entityIds) {
+        return examRepository.findExistingExamIds(entityIds);
+    }
+
+    /**
+     * Walks the ids expected to be indexed, one page at a time, for the reconcile passes.
+     *
+     * @param afterId the id the previous page stopped at
+     * @param limit   the page size
+     * @return the next exam ids in ascending order
+     */
+    public List<Long> findExamIdsAfter(long afterId, int limit) {
+        return examRepository.findExamIdsAfter(afterId, PageRequest.ofSize(limit));
+    }
+
+    public Optional<Exam> findById(long id) {
+        return examRepository.findById(id);
     }
 
     public Set<Exam> findActiveExams(Set<Long> courseIds, long userId, ZonedDateTime visible, ZonedDateTime end) {
