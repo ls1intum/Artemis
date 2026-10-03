@@ -2,10 +2,15 @@ package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
+
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -408,35 +413,43 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     int invalidateTokenIfMatches(@Param("id") long id, @Param("expectedToken") String expectedToken, @Param("now") ZonedDateTime now);
 
     /**
-     * Apply a heartbeat's stage/progress fields, but only while the run is still in flight under the
-     * token that reported them. A terminal callback (success or failure) clears the token before this
-     * runs; matching on it here is what stops a heartbeat whose read raced ahead of that terminal write
-     * from reviving a row the terminal callback already finished, since the predicate then matches no
-     * row and the write is silently dropped instead of overwriting the DONE/FAILED state.
+     * Read a processing state and lock its row until the surrounding transaction ends.
      *
-     * @param id             the processing state to update
-     * @param token          the job token the heartbeat carried
-     * @param now            recorded as the new {@code lastUpdated}
-     * @param currentStage   the stage name to store
-     * @param stageStartedAt when the current stage began
-     * @param stageProgress  the stage's progress counter, may be null
-     * @param stageTotal     the stage's total work items, may be null
-     * @param lastProgressAt when the progress clock was last advanced
-     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     * @param id the processing state to read
+     * @return the locked state, if it exists
      */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.lastUpdated = :now, ps.currentStage = :currentStage, ps.stageStartedAt = :stageStartedAt,
-                ps.stageProgress = :stageProgress, ps.stageTotal = :stageTotal, ps.lastProgressAt = :lastProgressAt
-            WHERE ps.id = :id
-            AND ps.ingestionJobToken = :token
-            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
-            """)
-    int applyHeartbeat(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now, @Param("currentStage") String currentStage,
-            @Param("stageStartedAt") ZonedDateTime stageStartedAt, @Param("stageProgress") Integer stageProgress, @Param("stageTotal") Integer stageTotal,
-            @Param("lastProgressAt") ZonedDateTime lastProgressAt);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ps FROM LectureUnitProcessingState ps WHERE ps.id = :id")
+    Optional<LectureUnitProcessingState> findByIdForUpdate(@Param("id") long id);
+
+    /**
+     * Apply a heartbeat's liveness and stage progress to the row as it is committed now, not to an earlier snapshot.
+     * <p>
+     * Whether a reported counter is progress depends on the stored one (see
+     * {@link LectureUnitProcessingState#recordStageProgress}), so the comparison must read the committed value under
+     * the row lock: two overlapping heartbeats that both compared against a snapshot of 40 would otherwise let the one
+     * reporting 40 write back over the one reporting 41, rolling back the stall clock. The token and phase are
+     * re-checked under the same lock, so a heartbeat racing a terminal callback never revives a finished run.
+     *
+     * @param id            the processing state to update
+     * @param token         the job token the heartbeat carried
+     * @param now           recorded as the new {@code lastUpdated}
+     * @param stageName     the reported stage, may be null
+     * @param stageProgress the stage's progress counter, may be null
+     * @param stageTotal    the stage's total work items, may be null
+     * @return the updated state when the stage or its counter advanced; empty for a bare liveness heartbeat or when the
+     *         run is no longer in flight under this token
+     */
+    @Transactional // ok because the progress merge has to compare against the locked, committed row
+    default Optional<LectureUnitProcessingState> applyHeartbeatLocked(long id, String token, ZonedDateTime now, @Nullable String stageName, @Nullable Integer stageProgress,
+            @Nullable Integer stageTotal) {
+        return findByIdForUpdate(id).filter(state -> Objects.equals(token, state.getIngestionJobToken()) && state.isProcessing()).flatMap(state -> {
+            state.setLastUpdated(now);
+            boolean advanced = state.recordStageProgress(stageName, stageProgress, stageTotal);
+            LectureUnitProcessingState saved = saveAndFlush(state);
+            return advanced ? Optional.of(saved) : Optional.empty();
+        });
+    }
 
     /**
      * Refresh liveness only, for a raw (non-enriched) transcription checkpoint that reports no stage

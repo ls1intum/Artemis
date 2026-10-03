@@ -1,14 +1,25 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -43,6 +54,12 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private LectureContentProcessingScheduler scheduler;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private DataSource dataSource;
 
     private AttachmentVideoUnit unit;
 
@@ -471,6 +488,71 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(after.getConfirmedFingerprint()).isEqualTo("v1:confirmed");
         assertThat(after.getVideoSourceHash()).isEqualTo("hash");
         assertThat(after.getAttachmentVersion()).isEqualTo(3);
+    }
+
+    /**
+     * Two heartbeats of one run can overlap when a request is slow enough for Iris to time out and move on. Whether a
+     * reported counter is progress depends on the stored one, so the comparison has to run against the committed row:
+     * the older heartbeat must block on the newer one's row lock and then see 41, rather than write its stale 40 back
+     * over it and roll the stall clock back with it.
+     */
+    @Test
+    void testOverlappingHeartbeatsCannotRollProgressBack() throws Exception {
+        raiseLockTimeoutOnH2();
+        LectureUnitProcessingState running = new LectureUnitProcessingState(unit);
+        running.setPhase(ProcessingPhase.INGESTING);
+        running.setIngestionJobToken("heartbeat-token");
+        running.recordStageProgress("vision", 40, 180);
+        processingStateRepository.save(running);
+        long stateId = running.getId();
+
+        var holderHasLock = new CountDownLatch(1);
+        var releaseHolder = new CountDownLatch(1);
+        var holder = Executors.newSingleThreadExecutor();
+        var staleHeartbeat = Executors.newSingleThreadExecutor();
+        try {
+            // The newer heartbeat (41) applies and keeps its transaction, and with it the row lock, open until released.
+            var newer = holder.submit(() -> new TransactionTemplate(transactionManager).execute(status -> {
+                Optional<LectureUnitProcessingState> advanced = processingStateRepository.applyHeartbeatLocked(stateId, "heartbeat-token", ZonedDateTime.now(), "vision", 41, 180);
+                holderHasLock.countDown();
+                try {
+                    releaseHolder.await(30, TimeUnit.SECONDS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return advanced.isPresent();
+            }));
+            assertThat(holderHasLock.await(10, TimeUnit.SECONDS)).isTrue();
+
+            var older = staleHeartbeat.submit(() -> processingStateRepository.applyHeartbeatLocked(stateId, "heartbeat-token", ZonedDateTime.now(), "vision", 40, 180));
+
+            assertThatThrownBy(() -> older.get(2, TimeUnit.SECONDS)).as("the older heartbeat must wait for the newer one's row lock").isInstanceOf(TimeoutException.class);
+
+            releaseHolder.countDown();
+            assertThat(newer.get(30, TimeUnit.SECONDS)).as("41 is progress over the stored 40").isTrue();
+            assertThat(older.get(30, TimeUnit.SECONDS)).as("40 is not progress over the committed 41").isEmpty();
+        }
+        finally {
+            releaseHolder.countDown();
+            holder.shutdownNow();
+            staleHeartbeat.shutdownNow();
+        }
+
+        assertThat(processingStateRepository.findById(stateId).orElseThrow().getStageProgress()).isEqualTo(41);
+    }
+
+    // The heartbeat's FOR UPDATE blocks on the held lock. H2 gives up after one second by default, so raise its limit
+    // rather than loosen the assertion; a no-op on the other engines.
+    private void raiseLockTimeoutOnH2() throws SQLException {
+        try (var connection = dataSource.getConnection()) {
+            if (!connection.getMetaData().getURL().startsWith("jdbc:h2:")) {
+                return;
+            }
+            try (var statement = connection.createStatement()) {
+                statement.execute("SET DEFAULT_LOCK_TIMEOUT 10000");
+            }
+        }
     }
 
     /**

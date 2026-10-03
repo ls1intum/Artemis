@@ -766,32 +766,12 @@ public class ProcessingStateCallbackService {
         if (stateOpt.isEmpty()) {
             return;
         }
-
-        LectureUnitProcessingState state = stateOpt.get();
-        if (!Objects.equals(jobToken, state.getIngestionJobToken())) {
-            return;
-        }
-
-        if (!state.isProcessing()) {
-            return;
-        }
-
-        ZonedDateTime now = ZonedDateTime.now();
-        state.setLastUpdated(now);
-        boolean stageAdvanced = state.recordStageProgress(stageName, stageProgress, stageTotal);
-        // Conditional on token/phase: a terminal callback clearing the token first stops this from reviving a finished run.
-        int applied = processingStateRepository.applyHeartbeat(state.getId(), jobToken, now, state.getCurrentStage(), state.getStageStartedAt(), state.getStageProgress(),
-                state.getStageTotal(), state.getLastProgressAt());
-        if (applied == 0) {
-            log.debug("Ignoring heartbeat for unit {}: the run is no longer in flight under this token", lectureUnitId);
-            return;
-        }
-
-        // Only push when the stage/number moved; bare heartbeats refresh liveness without spamming.
-        if (stageAdvanced) {
+        // Merged under the row lock against the committed progress, so an overlapping older heartbeat cannot roll it back.
+        // Only a moved stage or counter is pushed; bare heartbeats refresh liveness without spamming.
+        processingStateRepository.applyHeartbeatLocked(stateOpt.get().getId(), jobToken, ZonedDateTime.now(), stageName, stageProgress, stageTotal).ifPresent(advanced -> {
             TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-            notificationService.notifyProcessingStateChange(state, transcriptionStatus);
-        }
+            notificationService.notifyProcessingStateChange(advanced, transcriptionStatus);
+        });
     }
 
     // -------------------- Checkpoint Processing --------------------
@@ -832,20 +812,21 @@ public class ProcessingStateCallbackService {
         transcription.setSegments(checkpoint.segments());
 
         if (checkpoint.isEnriched()) {
-            // TRANSCRIBING → INGESTING, proven before the write below: a checkpoint that lost ownership
-            // must never persist content a requeue may have already deleted the transcription for.
+            // Transcript first, then TRANSCRIBING → INGESTING: if the write fails, the row is still TRANSCRIBING and Iris's
+            // redelivery of this checkpoint replays both steps instead of being dropped as stale. The write guards ownership
+            // on its own (token-checked insert, id-checked update), and a refused write means ownership is gone, so no transition.
             String jobToken = state.getIngestionJobToken();
-            ZonedDateTime now = ZonedDateTime.now();
+            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+            if (!persistTranscription(lectureUnitId, jobToken, existing, transcription)) {
+                return;
+            }
             LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, checkpoint.segments());
-            if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, now, state.getTranscriptionVersion(),
+            if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, ZonedDateTime.now(), state.getTranscriptionVersion(),
                     state.getTranscriptionContentHash()) == 0) {
                 log.debug("Ignoring enriched checkpoint for unit {}: the run is no longer TRANSCRIBING under this token", lectureUnitId);
                 return;
             }
-
-            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
             log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
-            persistTranscription(lectureUnitId, jobToken, existing, transcription);
 
             // Notify UI via WebSocket, mirroring the just-persisted transition without a second read.
             state.resetRetryCount();
@@ -853,7 +834,7 @@ public class ProcessingStateCallbackService {
             notificationService.notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
         }
         else {
-            // Same reasoning as the enriched branch above.
+            // The row stays TRANSCRIBING either way, so a write that fails after this check is replayed by the redelivery.
             String jobToken = state.getIngestionJobToken();
             if (processingStateRepository.touchLastUpdated(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
                 log.debug("Ignoring raw checkpoint for unit {}: the run is no longer in flight under this token", lectureUnitId);
@@ -870,20 +851,25 @@ public class ProcessingStateCallbackService {
      * Conditional update keyed on the row's own id when it existed. A first checkpoint has no id to
      * guard an update on, so it inserts through {@link LectureTranscriptionRepository#insertIfTokenMatches},
      * which folds the ownership check into the insert itself instead of a separate read before it.
+     *
+     * @return whether the transcription was written; false when ownership or the stored row was gone
      */
-    private void persistTranscription(long lectureUnitId, String expectedToken, Optional<LectureTranscription> existing, LectureTranscription transcription) {
+    private boolean persistTranscription(long lectureUnitId, String expectedToken, Optional<LectureTranscription> existing, LectureTranscription transcription) {
         if (existing.isEmpty()) {
             String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(transcription.getSegments());
             if (transcriptionRepository.insertIfTokenMatches(lectureUnitId, transcription.getLanguage(), segmentsJson, transcription.getTranscriptionStatus().name(),
                     expectedToken) == 0) {
                 log.debug("Skipping transcription insert for unit {}: ownership token changed since it was proven", lectureUnitId);
+                return false;
             }
-            return;
+            return true;
         }
         if (transcriptionRepository.updateContentIfExists(transcription.getId(), transcription.getLanguage(), transcription.getSegments(),
                 transcription.getTranscriptionStatus()) == 0) {
             log.debug("Skipping transcription write for unit {}: the stored transcription was deleted since this checkpoint's earlier read", lectureUnitId);
+            return false;
         }
+        return true;
     }
 
     // -------------------- Failure Handling --------------------

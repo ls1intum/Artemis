@@ -533,6 +533,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
             when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.insertIfTokenMatches(eq(testUnit.getId()), any(), any(), any(), eq(TEST_JOB_TOKEN))).thenReturn(1);
             when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -558,25 +559,55 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldNotSaveEnrichedTranscriptionWhenLosingTheRaceOnCheckpoint() {
-            // A content-triggered requeue (video changed) can delete the stored transcription and
-            // supersede this run between the checkpoint's arrival and this write; the atomic
-            // TRANSCRIBING-to-INGESTING claim proves ownership first, so a checkpoint that has already
-            // lost it must never persist content that could recreate the old video's transcription.
+        void shouldNotTransitionWhenTheEnrichedInsertIsRefusedForALostToken() {
+            // A content-triggered requeue (video changed) can invalidate the token and delete the stored transcription
+            // between the checkpoint's arrival and this write. The token-checked insert then refuses, so the old video's
+            // transcription is never recreated, and with ownership gone the run must not move to INGESTING either.
             testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(0);
+            when(transcriptionRepository.insertIfTokenMatches(eq(testUnit.getId()), any(), any(), any(), eq(TEST_JOB_TOKEN))).thenReturn(0);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
             callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
-            verify(transcriptionRepository, never()).insertIfTokenMatches(any(), any(), any(), any(), any());
+            verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        }
+
+        /**
+         * A transcript write can fail (a lock-wait timeout, a dropped connection) and Iris then redelivers the same checkpoint. Writing the transcript before the phase
+         * transition is what keeps that redelivery useful: the failed attempt leaves the row TRANSCRIBING, so the retry replays both steps instead of being dropped as a stale
+         * checkpoint for a run that already moved to INGESTING without its transcript.
+         */
+        @Test
+        void shouldReplayAnEnrichedCheckpointWhoseTranscriptWriteFailed() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.insertIfTokenMatches(eq(testUnit.getId()), any(), any(), any(), eq(TEST_JOB_TOKEN)))
+                    .thenThrow(new CannotAcquireLockException("lock wait timeout")).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            assertThatThrownBy(() -> callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson)).isInstanceOf(CannotAcquireLockException.class);
+            verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+
+            // Iris redelivers the same checkpoint: it is not dropped as stale, and both steps now complete once
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository, times(2)).insertIfTokenMatches(eq(testUnit.getId()), eq("en"), any(), eq("COMPLETED"), eq(TEST_JOB_TOKEN));
+            verify(processingStateRepository, times(1)).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
         }
 
         @Test
@@ -597,27 +628,25 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldSkipEnrichedTranscriptionInsertWhenTokenChangedSinceOwnershipWasProven() {
-            // The ownership-proving update succeeded (the row still held this token at that instant),
-            // but this is the unit's first checkpoint: no existing row to guard an atomic update on.
-            // insertIfTokenMatches folds a fresh token check into the insert itself, so a content
-            // requeue invalidating the token in the meantime makes the atomic insert a no-op.
+        void shouldNotTransitionWhenTheTokenChangedRightAfterTheTranscriptWrite() {
+            // The transcript was written while the run still owned the unit, but the token changed before the transition.
+            // The guarded transition refuses, the run is left to whoever took it over, and nothing is pushed for it.
             testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
-            when(transcriptionRepository.insertIfTokenMatches(eq(testUnit.getId()), any(), any(), any(), eq(TEST_JOB_TOKEN))).thenReturn(0);
+            when(transcriptionRepository.insertIfTokenMatches(eq(testUnit.getId()), any(), any(), any(), eq(TEST_JOB_TOKEN))).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(0);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
             callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             verify(transcriptionRepository).insertIfTokenMatches(eq(testUnit.getId()), eq("en"), any(), eq("COMPLETED"), eq(TEST_JOB_TOKEN));
-            // The processing-state transition itself already committed atomically and is not undone.
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+            verify(websocketMessagingService, never()).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
 
         @Test
@@ -665,10 +694,9 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldNotFailWhenExistingTranscriptionWasDeletedBeforeEnrichedWrite() {
-            // Ownership was proven (the processing-state transition already committed), but the
-            // transcription row was deleted between the read and this write by a content-change
-            // requeue that has already moved the unit on to a fresh generation. The stale content must
-            // be dropped silently -- the state transition itself is not an error and is not undone.
+            // The transcription row was deleted between the read and this write by a content-change requeue that has
+            // already moved the unit on to a fresh generation. The stale content is dropped silently, and since the
+            // requeue took ownership, the run is not moved to INGESTING either.
             testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
@@ -677,7 +705,6 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
-            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.updateContentIfExists(eq(99L), any(), any(), any())).thenReturn(0);
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
@@ -685,7 +712,8 @@ class LectureContentProcessingServiceTest {
             callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             verify(transcriptionRepository, never()).save(any());
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
 
         @Test
@@ -1706,7 +1734,9 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.applyHeartbeat(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any(), any(), any(), any())).thenReturn(1);
+            when(processingStateRepository.findByIdForUpdate(PROCESSING_STATE_ID)).thenReturn(Optional.of(testState));
+            when(processingStateRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.applyHeartbeatLocked(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any(), any())).thenCallRealMethod();
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
 
             callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
@@ -1724,7 +1754,9 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.applyHeartbeat(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any(), any(), any(), any())).thenReturn(1);
+            when(processingStateRepository.findByIdForUpdate(PROCESSING_STATE_ID)).thenReturn(Optional.of(testState));
+            when(processingStateRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.applyHeartbeatLocked(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any(), any())).thenCallRealMethod();
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
 
             callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
