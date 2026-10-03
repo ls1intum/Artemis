@@ -11,9 +11,24 @@ inputs:
     required: false
     default: 'warn'
 
+outputs:
+  junit-artifact-name:
+    description: >-
+      Name of the uploaded JUnit artifact. It includes the run attempt: a re-run keeps the
+      run id, so an unqualified name would also match the first attempt's artifact and a
+      download by name could return stale results.
+    value: ${{ steps.junit-artifact-name.outputs.name }}
+
 runs:
   using: 'composite'
   steps:
+    - name: Determine JUnit artifact name
+      id: junit-artifact-name
+      shell: bash
+      env:
+        ARTIFACT_NAME: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }} (attempt ${{ github.run_attempt }})
+      run: echo "name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+
     - name: Drop intermediate Playwright XML files
       shell: bash
       # Playwright emits results-parallel.xml, results-sequential.xml, and a merged
@@ -27,7 +42,7 @@ runs:
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v7
       with:
-        name: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        name: ${{ steps.junit-artifact-name.outputs.name }}
         if-no-files-found: ${{ inputs.require-tests }}
         path: src/test/playwright/test-reports/*.xml
 
