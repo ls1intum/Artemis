@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -53,6 +54,10 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     public List<LectureUnit> findAllByIdsWithLecture(Collection<Long> ids) {
         return lectureUnitRepository.findAllByIdsWithLecture(ids);
+    }
+
+    public List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByCourseId(long courseId) {
+        return lectureUnitRepository.findIngestedVersionsByCourseId(courseId);
     }
 
     public LectureUnit save(LectureUnit lectureUnit) {
