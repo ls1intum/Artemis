@@ -126,6 +126,20 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testSearchEntityCandidatesForAnswer_recallsIndexedExercise() throws Exception {
+            // A bounded top-ten query must not compete with other fixtures sharing the generic exercise title.
+            programmingExercise.setTitle("AnswerCandidateExercise" + programmingExercise.getId());
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var candidates = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(programmingExercise.getTitle(), null, 10);
+                assertThat(candidates).anySatisfy(
+                        candidate -> assertThat(((Number) candidate.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(programmingExercise.getId()));
+            });
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testConcurrentUpserts_doNotCreateDuplicateRows() throws Exception {
             int threadCount = 10;
             CountDownLatch startLatch = new CountDownLatch(1);
