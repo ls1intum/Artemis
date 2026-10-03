@@ -12,6 +12,8 @@
             "startPractice": "Übung starten",
             "resumeExercise": "Aufgabe fortführen",
             "requestAutomaticFeedback": "AI Feedback anfragen",
+            "chooseAiExperience": "KI-Erfahrung wählen",
+            "changeAiExperience": "KI-Erfahrung ändern",
             "resumeExercisePractice": "Üben von Aufgabe fortführen",
             "resumeExerciseError": "Fehler beim Versuch die Aufgabe fortzuführen",
             "openCodeEditor": "Programmiereditor öffnen",
