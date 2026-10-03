@@ -62,7 +62,7 @@ public class WeaviateOutboxEntry extends DomainObject {
     private String params;
 
     /**
-     * Which path enqueued this row. Diagnostic only: the dispatcher treats every origin identically.
+     * Which path enqueued this row. Reconciliation deletes re-check current source state; LIVE deletes retain their explicit intent.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "origin", nullable = false, length = 32)
