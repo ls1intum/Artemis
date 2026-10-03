@@ -118,8 +118,11 @@ URL**. Until you do, **Save**, opening another item and adding one keep the item
 
 Artemis can split a lecture PDF into one item per section instead of you adding them one at a time. Choose a PDF item
 of the lecture under **Split a lecture PDF into several items** in the editor and select **Split into sections**, or
-select **Upload another PDF** for a PDF that is not part of the lecture yet. Artemis looks for the outline slide, a
-slide titled *Outline* that lists the sections, repeated at the start of every section.
+select **Upload another PDF** for a PDF that is not part of the lecture yet. Artemis starts a new item at every slide
+that contains the word *Outline* or *Gliederung*, spelled exactly like this, and proposes a name from the text of that
+slide, so it needs slides that repeat their outline before each section. Slides before the first such slide belong to
+the first item. This works for PDFs from any program, such as PowerPoint, Keynote or LaTeX, as long as their text can
+be selected. For a PDF without such slides, add the items and their slides with **Add item**.
 
 <Image src={automaticUnitProcessing} alt="Automatic Unit Processing" size={ImageSize.large} caption={"Splitting a lecture PDF"}></Image>
 

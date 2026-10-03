@@ -721,7 +721,9 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
-            'src/main/webapp/app/exam/manage/exercise-groups/**/*.html',
+            // The instructor pages of the exam mode, and the working-time, live-event and course-exams pieces that they share with the student pages.
+            'src/main/webapp/app/exam/manage/**/*.html',
+            'src/main/webapp/app/exam/shared/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',

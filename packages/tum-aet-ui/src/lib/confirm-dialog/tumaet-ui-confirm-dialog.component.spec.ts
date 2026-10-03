@@ -53,6 +53,14 @@ describe('TumAetUiConfirmDialogComponent', () => {
         expect(document.getElementById(describedBy!)?.textContent).toContain('Really delete this?');
     });
 
+    it('keeps the line breaks of a multi-line message', () => {
+        service.confirm({ header: 'Delete?', message: 'First line\nSecond line', acceptLabel: 'Delete', rejectLabel: 'Cancel', accept: () => {} });
+        fixture.detectChanges();
+        const message = document.querySelector('.tumaet-ui-confirm-dialog-message')!;
+        expect(message.textContent).toBe('First line\nSecond line');
+        expect(message.classList).toContain('tumaet:whitespace-pre-line');
+    });
+
     it('runs accept and closes when the confirm button is clicked', () => {
         const accept = vi.fn();
         const reject = vi.fn();
