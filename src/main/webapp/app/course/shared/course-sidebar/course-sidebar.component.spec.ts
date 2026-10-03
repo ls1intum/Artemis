@@ -153,6 +153,24 @@ describe('CourseSidebarComponent', () => {
 
         expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledWith(window.innerHeight);
     });
+    it('should draw an image icon in the text colour instead of a font icon', () => {
+        const imageItem: SidebarItem = {
+            routerLink: 'athena-settings',
+            iconImage: 'public/images/athena/athena-logo.png',
+            title: 'Athena Settings',
+            translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
+            testId: 'athena-settings',
+            hidden: false,
+        };
+        fixture.componentRef.setInput('sidebarItems', [imageItem]);
+        fixture.detectChanges();
+
+        const imageIcon: HTMLElement = fixture.nativeElement.querySelector('.sidebar-icon-image');
+        expect(imageIcon).toBeTruthy();
+        expect(imageIcon.style.maskImage).toContain('public/images/athena/athena-logo.png');
+        expect(imageIcon.parentElement?.querySelector('fa-icon')).toBeNull();
+    });
+
     it('should call updateVisibleNavbarItems on window resize', () => {
         const updateVisibleNavbarItemsSpy = vi.spyOn(component, 'updateVisibleNavbarItems');
 

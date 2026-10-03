@@ -63,6 +63,8 @@
 @source './app/exercise/feedback';
 @source './app/exercise/result';
 @source './app/iris/manage/settings';
+@source './app/course/manage/athena-settings-update';
+@source './app/course/manage/control-center/about-athena-modal';
 @source './app/editor/markdown-editor';
 @source './app/shared-ui/date-time-picker';
 

@@ -197,3 +197,17 @@ a:not(.btn, .tab-link):hover {
     // without this styling the tooltip is positioned with too much distance to the right of the collapse icon when the sidebar is collapsed.
     margin-left: -0.5rem !important;
 }
+
+// An image icon (SidebarItem.iconImage), sized like a fixed-width fa-icon and painted in the current text colour
+// through its alpha channel, so it follows hover, active and dark-theme colours like the icons around it.
+.sidebar-icon-image {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 1.25em;
+    height: 1.25em;
+    vertical-align: -0.125em;
+    background-color: currentcolor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+}
