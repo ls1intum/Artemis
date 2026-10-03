@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -370,8 +373,19 @@ public class ExerciseSharingService {
             return Optional.empty();
         }
 
-        String decodedToken = new String(Base64.getUrlDecoder().decode(b64Token), StandardCharsets.UTF_8);
-        Path zipPath = Path.of(repoDownloadClonePath, decodedToken + ".zip");
+        Path zipPath;
+        try {
+            // Decode strictly: a token that is not valid UTF-8 was never issued by exportExerciseToSharing and must not reach the file system,
+            // where replacement characters may be unmappable for the platform's file name encoding.
+            String decodedToken = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
+                    .decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(b64Token))).toString();
+            zipPath = Path.of(repoDownloadClonePath, decodedToken + ".zip");
+        }
+        catch (IllegalArgumentException | CharacterCodingException e) {
+            // IllegalArgumentException also covers InvalidPathException
+            log.warn("Undecodable token received: {}", b64Token);
+            return Optional.empty();
+        }
         if (!Files.isRegularFile(zipPath)) {
             return Optional.empty();
         }
