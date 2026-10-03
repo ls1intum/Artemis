@@ -14,42 +14,42 @@ catalog:
   '@angular-devkit/core': 22.2.0
   # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
   # move both together.
-  '@angular/aria': 22.2.0
+  '@angular/aria': 22.2.1
   '@angular/build': 22.2.0
-  '@angular/cdk': 22.2.0
+  '@angular/cdk': 22.2.1
   '@angular/cli': 22.2.0
-  '@angular/common': 22.2.0
-  '@angular/compiler': 22.2.0
-  '@angular/compiler-cli': 22.2.0
-  '@angular/core': 22.2.0
-  '@angular/forms': 22.2.0
-  '@angular/localize': 22.2.0
-  '@angular/platform-browser': 22.2.0
+  '@angular/common': 22.2.1
+  '@angular/compiler': 22.2.1
+  '@angular/compiler-cli': 22.2.1
+  '@angular/core': 22.2.1
+  '@angular/forms': 22.2.1
+  '@angular/localize': 22.2.1
+  '@angular/platform-browser': 22.2.1
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
   '@playwright/test': 1.63.0
-  '@storybook/addon-a11y': 10.6.0
-  '@storybook/addon-docs': 10.6.0
-  '@storybook/addon-themes': 10.6.0
-  '@storybook/addon-vitest': 10.6.0
-  '@storybook/angular-vite': 10.6.0
+  '@storybook/addon-a11y': 10.6.1
+  '@storybook/addon-docs': 10.6.1
+  '@storybook/addon-themes': 10.6.1
+  '@storybook/addon-vitest': 10.6.1
+  '@storybook/angular-vite': 10.6.1
   '@tailwindcss/postcss': 4.3.3
   '@types/node': 24.13.6
   '@types/react': 19.2.18
-  '@vitest/browser': 4.1.11
-  '@vitest/browser-playwright': 4.1.11
-  '@vitest/coverage-istanbul': 4.1.11
-  '@vitest/coverage-v8': 4.1.11
+  '@vitest/browser': 5.0.3
+  '@vitest/browser-playwright': 5.0.3
+  '@vitest/coverage-istanbul': 5.0.3
+  '@vitest/coverage-v8': 5.0.3
   chokidar: 5.0.0
   concurrently: 10.0.5
   cross-env: 10.1.0
   dayjs: 1.11.23
   eslint: 10.11.0
-  eslint-plugin-storybook: 10.6.0
+  eslint-plugin-storybook: 10.6.1
   jsdom: 30.0.1
   lodash-es: 4.18.1
-  ng-packagr: 22.2.1
+  ng-packagr: 22.2.3
   postcss: 8.5.28
   publint: 0.3.24
   playwright: 1.63.0
@@ -57,15 +57,15 @@ catalog:
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.105.0
+  sass: 1.105.1
   semver: 7.8.5
-  storybook: 10.6.0
+  storybook: 10.6.1
   stylelint: 17.15.0
   tailwindcss: 4.3.3
   tslib: 2.8.1
   typescript: 6.0.3
-  vite: 8.3.0
-  vitest: 4.1.11
+  vite: 8.3.1
+  vitest: 5.0.3
   yaml: 2.9.1
   zone.js: 0.16.3
 
@@ -143,13 +143,13 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': '22.2.0'
+  '@angular/localize': 22.2.1
   # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin
   # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
   # to @angular/core.
-  '@angular/animations': '22.2.0'
+  '@angular/animations': 22.2.1
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
@@ -161,6 +161,9 @@ overrides:
   brace-expansion: '5.0.12'
   braces: '3.0.3'
   debug: '4.4.3'
+  # Must stay >= 5.9.3, which fixed the uneval/stringify advisories reached through svelte (@embedpdf/engines).
+  # Kept on the 5.x line; 6.x is a major bump.
+  devalue: '5.9.3'
   diff: '9.0.0'
   dompurify: '3.4.16'
   esbuild: '0.28.2'
@@ -179,7 +182,10 @@ overrides:
   # down, which failed 65 tests across two specs on teardown alone. Revisit once PrimeNG or
   # jsdom fixes it; keep this equal to the catalog entry.
   jsdom: '30.0.1'
-  katex: '0.18.9'
+  katex: '0.18.10'
+  # Must stay >= 0.2.119: 0.2.118 only fixes CVE-2026-102360, 0.2.119 also fixes CVE-2026-102521. Mend flags 0.2.117, reached through yjs,
+  # y-protocols, y-monaco and @tumaet/apollon, none of which declare a patched range of their own yet.
+  lib0: '0.2.119'
   # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
   # far carries unfixed infinite-loop DoS advisories (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so
   # there is no version to upgrade to.
