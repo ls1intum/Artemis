@@ -246,15 +246,34 @@
                     "label": "Formative feedback requests",
                     "enabledLabel": "Formative feedback requests are enabled",
                     "disabledLabel": "Formative feedback requests are disabled",
-                    "enabledHint": "Students can request preliminary AI feedback on their submissions before the due date.",
-                    "disabledHint": "Students cannot request preliminary AI feedback in this course."
+                    "enabledHint": "Students can request preliminary feedback on their text, programming, and modeling submissions before the due date.",
+                    "disabledHint": "Students cannot request preliminary feedback in this course. Once enabled, you can optionally set a feedback style for text exercises."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Grading feedback suggestions",
                     "enabledLabel": "Grading feedback suggestions are enabled",
                     "disabledLabel": "Grading feedback suggestions are disabled",
-                    "enabledHint": "Tutors see Athena feedback suggestions while assessing text, programming, and modeling submissions.",
-                    "disabledHint": "Tutors assess submissions in this course without Athena feedback suggestions."
+                    "enabledHint": "Tutors get feedback suggestions while assessing text, programming, and modeling submissions.",
+                    "disabledHint": "Tutors assess submissions in this course without feedback suggestions."
+                },
+                "feedbackStyle": {
+                    "title": "Preliminary Feedback Style for Text Exercises",
+                    "hint": "Applies to students' preliminary feedback requests on text exercises if they have not set their own feedback preference. Grading suggestions for tutors are not affected."
+                },
+                "exampleFeedbackLabel": "Example Feedback",
+                "defaultFeedbackDetail": {
+                    "label": "Feedback Detail",
+                    "tooltip": "Choose whether your students get brief and straight to the point feedback or detailed feedback with explanations and examples.",
+                    "brief": "Brief",
+                    "neutral": "Neutral",
+                    "detailed": "Detailed"
+                },
+                "defaultFeedbackFormality": {
+                    "label": "Feedback Formality",
+                    "tooltip": "Choose whether your students get formal and professional feedback or friendly and approachable feedback.",
+                    "formal": "Formal",
+                    "neutral": "Neutral",
+                    "friendly": "Friendly"
                 },
                 "settingsPage": {
                     "title": "Athena Settings",

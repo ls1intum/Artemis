@@ -68,12 +68,18 @@ public class CourseAthenaConfigService {
         if (update.formativeFeedbackEnabled() != null) {
             courseAthenaConfigRepository.updateFormativeFeedbackEnabled(configId, update.formativeFeedbackEnabled());
         }
+        if (update.defaultFeedbackDetail() != null) {
+            courseAthenaConfigRepository.updateDefaultFeedbackDetail(configId, update.defaultFeedbackDetail());
+        }
+        if (update.defaultFeedbackFormality() != null) {
+            courseAthenaConfigRepository.updateDefaultFeedbackFormality(configId, update.defaultFeedbackFormality());
+        }
 
         if (gradingFeedbackChanged) {
             refreshAthenaSchedulingForCourseExercises(courseId);
         }
 
-        return courseAthenaConfigRepository.getArbitraryValueElseThrow(courseAthenaConfigRepository.findConfigById(configId), String.valueOf(configId));
+        return getConfig(courseId);
     }
 
     /**

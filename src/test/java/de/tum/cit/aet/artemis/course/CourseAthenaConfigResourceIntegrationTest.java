@@ -11,6 +11,8 @@ import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -25,7 +27,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 /**
  * Tests the course-level Athena configuration endpoints backing the toggles on the course overview and in the
- * onboarding wizard.
+ * onboarding wizard, and the feedback style defaults on the settings page.
  */
 class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -49,17 +51,23 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     private void persistAthenaConfig(boolean gradingFeedbackEnabled, boolean formativeFeedbackEnabled) {
+        persistAthenaConfig(gradingFeedbackEnabled, formativeFeedbackEnabled, 0, 0);
+    }
+
+    private void persistAthenaConfig(boolean gradingFeedbackEnabled, boolean formativeFeedbackEnabled, int defaultFeedbackDetail, int defaultFeedbackFormality) {
         Course persisted = courseRepository.findByIdElseThrow(course.getId());
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(persisted);
         athenaConfig.setGradingFeedbackEnabled(gradingFeedbackEnabled);
         athenaConfig.setFormativeFeedbackEnabled(formativeFeedbackEnabled);
+        athenaConfig.setDefaultFeedbackDetail(defaultFeedbackDetail);
+        athenaConfig.setDefaultFeedbackFormality(defaultFeedbackFormality);
         persisted.setAthenaConfig(athenaConfig);
         courseRepository.save(persisted);
     }
 
     private CourseAthenaConfigDTO storedConfig() {
-        return courseAthenaConfigRepository.findConfigByCourseId(course.getId()).orElseThrow();
+        return courseAthenaConfigService.getConfig(course.getId());
     }
 
     @Test
@@ -69,7 +77,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
 
         var config = request.get(configPath, HttpStatus.OK, CourseAthenaConfigDTO.class);
 
-        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(true, false));
+        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(true, false, 0, 0));
     }
 
     @Test
@@ -77,7 +85,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     void getAthenaConfig_courseWithoutConfig_returnsBothDisabled() throws Exception {
         var config = request.get(configPath, HttpStatus.OK, CourseAthenaConfigDTO.class);
 
-        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(false, false));
+        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(false, false, 0, 0));
     }
 
     @Test
@@ -85,19 +93,19 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     void updateAthenaConfig_persistsBothFlags() throws Exception {
         persistAthenaConfig(false, false);
 
-        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
+        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true, null, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, true));
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true));
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, true, 0, 0));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true, 0, 0));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAthenaConfig_courseWithoutConfig_createsIt() throws Exception {
-        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(false, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
+        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(false, true, null, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(false, true));
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, true));
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(false, true, 0, 0));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, true, 0, 0));
     }
 
     @Test
@@ -105,9 +113,9 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     void updateAthenaConfig_switchingOneFlagKeepsTheOther() throws Exception {
         persistAthenaConfig(true, false);
 
-        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
+        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, true, null, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true, 0, 0));
     }
 
     @Test
@@ -117,10 +125,10 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
 
         // What a client that only ever sends the feature it switched off looks like: the omitted grading flag has to
         // survive, even though this request carries no value for it at all.
-        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, false), CourseAthenaConfigDTO.class, HttpStatus.OK);
+        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, false, null, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, false));
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, false));
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, false, 0, 0));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, false, 0, 0));
     }
 
     @Test
@@ -128,10 +136,10 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     void updateAthenaConfig_emptyUpdate_changesNothing() throws Exception {
         persistAthenaConfig(true, false);
 
-        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
+        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null, null, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, false));
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, false));
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, false, 0, 0));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, false, 0, 0));
     }
 
     @Test
@@ -144,11 +152,11 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
         var barrier = new CyclicBarrier(2);
         Callable<CourseAthenaConfigDTO> enableGrading = () -> {
             barrier.await();
-            return courseAthenaConfigService.updateConfig(course.getId(), new CourseAthenaConfigUpdateDTO(true, null));
+            return courseAthenaConfigService.updateConfig(course.getId(), new CourseAthenaConfigUpdateDTO(true, null, null, null));
         };
         Callable<CourseAthenaConfigDTO> enableFormative = () -> {
             barrier.await();
-            return courseAthenaConfigService.updateConfig(course.getId(), new CourseAthenaConfigUpdateDTO(null, true));
+            return courseAthenaConfigService.updateConfig(course.getId(), new CourseAthenaConfigUpdateDTO(null, true, null, null));
         };
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -161,7 +169,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
             executor.shutdownNow();
         }
 
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true, 0, 0));
     }
 
     @Test
@@ -194,6 +202,51 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getAthenaConfig_returnsPersistedFeedbackStyleDefaults() throws Exception {
+        persistAthenaConfig(true, false, 3, 1);
+
+        var config = request.get(configPath, HttpStatus.OK, CourseAthenaConfigDTO.class);
+
+        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(true, false, 3, 1));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAthenaConfig_persistsFeedbackStyleDefaults() throws Exception {
+        persistAthenaConfig(false, false);
+
+        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null, 3, 1), CourseAthenaConfigDTO.class, HttpStatus.OK);
+
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(false, false, 3, 1));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, false, 3, 1));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAthenaConfig_canClearFeedbackStyleDefaultBackToNotSet() throws Exception {
+        persistAthenaConfig(false, false, 3, 1);
+
+        var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null, 0, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
+
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(false, false, 0, 1));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, false, 0, 1));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { -1, 4 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAthenaConfig_feedbackStyleDefaultOutOfRange_isBadRequest(int value) throws Exception {
+        persistAthenaConfig(false, false, 2, 2);
+
+        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null, value, null), CourseAthenaConfigDTO.class, HttpStatus.BAD_REQUEST);
+        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null, null, value), CourseAthenaConfigDTO.class, HttpStatus.BAD_REQUEST);
+
+        // A rejected value leaves the stored defaults as they were.
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, false, 2, 2));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAthenaConfig_asTutor_isForbidden() throws Exception {
         request.get(configPath, HttpStatus.FORBIDDEN, CourseAthenaConfigDTO.class);
@@ -202,12 +255,12 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateAthenaConfig_asTutor_isForbidden() throws Exception {
-        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true), CourseAthenaConfigDTO.class, HttpStatus.FORBIDDEN);
+        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true, null, null), CourseAthenaConfigDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateAthenaConfig_asStudent_isForbidden() throws Exception {
-        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true), CourseAthenaConfigDTO.class, HttpStatus.FORBIDDEN);
+        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true, null, null), CourseAthenaConfigDTO.class, HttpStatus.FORBIDDEN);
     }
 }

@@ -22,6 +22,8 @@ import { Subject, of, throwError } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('OnboardingGeneralSettingsComponent', () => {
     let comp: OnboardingGeneralSettingsComponent;
@@ -51,6 +53,7 @@ describe('OnboardingGeneralSettingsComponent', () => {
             imports: [OnboardingGeneralSettingsComponent, FormsModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
                 {
                     provide: ProfileService,
                     useValue: Object.assign(new MockProfileService(), { isModuleFeatureActive: (feature: string) => activeModuleFeatures.includes(feature) }),

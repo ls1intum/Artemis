@@ -246,15 +246,34 @@
                     "label": "Formative Feedbackanfragen",
                     "enabledLabel": "Formative Feedbackanfragen sind aktiviert",
                     "disabledLabel": "Formative Feedbackanfragen sind deaktiviert",
-                    "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihren Abgaben anfordern.",
-                    "disabledHint": "Studierende können in diesem Kurs kein vorläufiges KI-Feedback anfordern."
+                    "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges Feedback zu ihren Text-, Programmier- und Modellierungsabgaben anfordern.",
+                    "disabledHint": "Studierende können in diesem Kurs kein vorläufiges Feedback anfordern. Nach dem Aktivieren kannst du optional einen Feedback-Stil für Textaufgaben festlegen."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Feedbackvorschläge zur Bewertung",
                     "enabledLabel": "Feedbackvorschläge zur Bewertung sind aktiviert",
                     "disabledLabel": "Feedbackvorschläge zur Bewertung sind deaktiviert",
-                    "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",
-                    "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge von Athena."
+                    "enabledHint": "Tutor:innen erhalten beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge.",
+                    "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge."
+                },
+                "feedbackStyle": {
+                    "title": "Stil des vorläufigen Feedbacks für Textaufgaben",
+                    "hint": "Gilt für vorläufige Feedbackanfragen von Studierenden zu Textaufgaben, sofern sie keine eigene Feedback-Präferenz festgelegt haben. Bewertungsvorschläge für Tutor:innen sind davon nicht betroffen."
+                },
+                "exampleFeedbackLabel": "Beispiel-Feedback",
+                "defaultFeedbackDetail": {
+                    "label": "Feedback-Detailgrad",
+                    "tooltip": "Wähle, ob deine Studierenden kurzes und direkt auf den Punkt gebrachtes oder detailliertes Feedback mit Erklärungen und Beispielen erhalten.",
+                    "brief": "Kurz",
+                    "neutral": "Neutral",
+                    "detailed": "Detailliert"
+                },
+                "defaultFeedbackFormality": {
+                    "label": "Feedback-Förmlichkeit",
+                    "tooltip": "Wähle, ob deine Studierenden formelles und professionelles oder freundliches und zugängliches Feedback erhalten.",
+                    "formal": "Formell",
+                    "neutral": "Neutral",
+                    "friendly": "Freundlich"
                 },
                 "settingsPage": {
                     "title": "Athena-Einstellungen",

@@ -12,9 +12,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *
  * @param gradingFeedbackEnabled   whether Athena suggests feedback to tutors while they assess
  * @param formativeFeedbackEnabled whether students may request preliminary Athena feedback before the due date
+ * @param defaultFeedbackDetail    the course default for how detailed Athena feedback reads, on the same 1-3 scale as
+ *                                     {@code LearnerProfile.feedbackDetail}; 0 means no course default is set. Applies
+ *                                     only to a student who has not set their own feedback preference.
+ * @param defaultFeedbackFormality the course default for how formal Athena feedback reads, same scale and 0 meaning
+ *                                     as {@code defaultFeedbackDetail}.
  */
 // @JsonInclude (ALWAYS) rather than the usual NON_EMPTY: NON_EMPTY drops a false primitive from the payload, which
 // would leave the client unable to tell a disabled feature from a field the server did not send.
 @JsonInclude
-public record CourseAthenaConfigDTO(boolean gradingFeedbackEnabled, boolean formativeFeedbackEnabled) {
+public record CourseAthenaConfigDTO(boolean gradingFeedbackEnabled, boolean formativeFeedbackEnabled, int defaultFeedbackDetail, int defaultFeedbackFormality) {
 }

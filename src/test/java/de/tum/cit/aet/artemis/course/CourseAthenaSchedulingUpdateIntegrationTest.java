@@ -108,7 +108,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAthenaConfig_enablingGradingFeedback_reschedulesExistingExercises() throws Exception {
-        var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
+        var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null, null, null));
 
         assertThat(updated.gradingFeedbackEnabled()).isTrue();
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
@@ -121,7 +121,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         persistCourseGradingFeedbackEnabled(true);
         reset(instanceMessageSendService);
 
-        var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(false, null));
+        var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(false, null, null, null));
 
         assertThat(updated.gradingFeedbackEnabled()).isFalse();
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
@@ -136,7 +136,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
 
         // Whether the flag changed is decided by the statement that writes it, so a request restating the value it
         // already has updates no row and must not republish scheduling.
-        var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
+        var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null, null, null));
 
         assertThat(updated.gradingFeedbackEnabled()).isTrue();
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
@@ -146,7 +146,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAthenaConfig_onlyFormativeFeedbackChanged_doesNotRescheduleExercises() throws Exception {
-        var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(null, true));
+        var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(null, true, null, null));
 
         assertThat(updated.formativeFeedbackEnabled()).isTrue();
         assertThat(updated.gradingFeedbackEnabled()).isFalse();
@@ -190,7 +190,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         assertThat(configId).isPresent();
 
         // The switch reuses that configuration, and saving the course again leaves it attached.
-        updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
+        updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null, null, null));
         JsonNode updated = updateCourse(loaded);
 
         assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEqualTo(configId);
