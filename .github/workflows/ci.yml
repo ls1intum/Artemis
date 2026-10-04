@@ -162,6 +162,9 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
+              - 'install-localci-kubernetes-ubuntu.sh'
+              - 'supporting_scripts/test_verified_installers.py'
+              - 'supporting_scripts/update_python_dependency_locks.sh'
             has_version:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-version-consistency.yml'
