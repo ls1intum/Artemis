@@ -45,6 +45,7 @@
                                         </div>
                                     } @else {
                                         <input
+                                            [attr.aria-label]="'artemisApp.userSettings.passkeySettingsPage.label' | artemisTranslate"
                                             type="text"
                                             required
                                             [(ngModel)]="passkey.label"

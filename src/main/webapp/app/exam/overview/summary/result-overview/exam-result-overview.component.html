@@ -78,23 +78,23 @@
                             @if (showIncludedInScoreColumn()) {
                                 <td class="text-center">-</td>
                             }
-                            <th class="text-center">
+                            <td class="font-bold text-center">
                                 {{ overallAchievedPoints() }}
-                            </th>
-                            <th class="text-center">
+                            </td>
+                            <td class="font-bold text-center">
                                 {{ maxPoints() }}
-                            </th>
-                            <th class="text-center">
+                            </td>
+                            <td class="font-bold text-center">
                                 @if (studentExamWithGrade().studentResult.overallScoreAchieved !== undefined) {
                                     <span [class]="overallScoreTextColorClass()"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
                                 } @else {
                                     <jhi-no-data />
                                 }
-                            </th>
+                            </td>
                             @if (studentExamWithGrade()?.maxBonusPoints) {
-                                <th>
+                                <td class="font-bold">
                                     {{ studentExamWithGrade()?.maxBonusPoints }}
-                                </th>
+                                </td>
                             }
                         </tr>
                     </tfoot>

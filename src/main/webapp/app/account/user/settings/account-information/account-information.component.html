@@ -41,7 +41,14 @@
         }
         <li tumAetUiListItem>
             <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></dt>
-            <input type="file" accept="image/png, image/jpeg" #fileInput class="hidden" (change)="setUserImage($event)" />
+            <input
+                [attr.aria-label]="'artemisApp.userSettings.accountInformationPage.profilePicture' | artemisTranslate"
+                type="file"
+                accept="image/png, image/jpeg"
+                #fileInput
+                class="hidden"
+                (change)="setUserImage($event)"
+            />
             @if (user.imageUrl && !imageLoadFailed()) {
                 <div class="relative inline-block overflow-hidden rounded-lg">
                     <jhi-image class="secured-image" [src]="addPublicFilePrefix(user.imageUrl)!" (loadingStatus)="onImageLoadingStatus($event)" />

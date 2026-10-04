@@ -29,6 +29,7 @@
         <span class="file-label-group">
             <span class="ms-1 rename-input-wrapper"
                 ><input
+                    [attr.aria-label]="'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate"
                     #renamingInput
                     value="{{ item().text }}"
                     (keyup.enter)="renameNode($event)"

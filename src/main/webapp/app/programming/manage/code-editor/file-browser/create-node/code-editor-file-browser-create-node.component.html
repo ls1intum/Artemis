@@ -2,6 +2,7 @@
     <fa-icon aria-hidden="true" [icon]="createFileType() === FileType.FILE ? faFile : faFolder" [fixedWidth]="true" />
     <span class="ms-1"
         ><input
+            [attr.aria-label]="'accessibility.createFileOrFolder' | artemisTranslate"
             #creatingInput
             value=""
             (keyup.enter)="createFile($event)"

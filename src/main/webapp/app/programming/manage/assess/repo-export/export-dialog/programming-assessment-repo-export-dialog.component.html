@@ -27,6 +27,7 @@
             }
             @if (!participationIdList?.length && !isRepoExportForMultipleExercises()) {
                 <textarea
+                    [attr.aria-label]="'accessibility.participantIdentifiers' | artemisTranslate"
                     name="studentIds"
                     class="export-textarea"
                     [(ngModel)]="participantIdentifierList"
