@@ -232,7 +232,11 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     updateFeedbackOnDrop(event: Event) {
         event.stopPropagation();
         const feedback = this.feedback();
+        const previousInstruction = feedback.gradingInstruction;
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
+        if (feedback.gradingInstruction && feedback.gradingInstruction !== previousInstruction && feedback.text) {
+            feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
+        }
         this.feedback.set(feedback);
         this.onFeedbackChange.emit(feedback);
     }
@@ -246,6 +250,9 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
             return;
         }
         const feedback = this.feedback();
+        if (feedback.text) {
+            feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
+        }
         this.feedback.set(feedback);
         this.onFeedbackChange.emit(feedback);
     }

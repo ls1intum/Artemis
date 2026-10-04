@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -121,6 +121,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         const feedback = {
             id: 1,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title`,
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback;
@@ -142,6 +143,18 @@ describe('Unreferenced Feedback Detail Component', () => {
 
         // Verify the component emitted the feedback change
         expect(emitSpy).toHaveBeenCalledOnce();
+        expect(feedback.text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Title`);
+        expect(emitSpy).toHaveBeenCalledWith(feedback);
+    });
+
+    it('should keep an accepted suggestion unchanged when a drop does not link an instruction', () => {
+        const feedback = { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title` } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {});
+
+        comp.updateFeedbackOnDrop(new Event('drop'));
+
+        expect(feedback.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title`);
     });
 
     it('should apply an armed instruction via the dedicated button without a drop event', () => {
@@ -155,6 +168,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         };
         const feedback = {
             id: 1,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title`,
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback;
@@ -178,6 +192,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(dropSpy).not.toHaveBeenCalled();
         expect(feedback.gradingInstruction).toEqual(instruction);
         expect(feedback.credits).toBe(2);
+        expect(feedback.text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Title`);
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
