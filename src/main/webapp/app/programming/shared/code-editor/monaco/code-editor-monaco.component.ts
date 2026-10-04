@@ -561,7 +561,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     addNewFeedback(lineNumber: number): void {
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
-        if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
+        if (!this.newFeedbackLines().includes(lineNumberZeroBased) && !this.getInlineFeedbackNode(lineNumberZeroBased)) {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
             this.renderFeedbackWidgets(lineNumberZeroBased);
         }
@@ -1001,11 +1001,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
     getInlineFeedbackNode(line: number, feedback?: Feedback, isSuggestion = false): HTMLElement | undefined {
-        const components = feedback
-            ? isSuggestion
-                ? this.inlineFeedbackSuggestionComponents()
-                : this.inlineFeedbackComponents()
-            : [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()];
+        const components = isSuggestion ? this.inlineFeedbackSuggestionComponents() : this.inlineFeedbackComponents();
         return components.find((comp) => comp.codeLine() === line && (!feedback || (comp.feedback() && Feedback.areIdentical(comp.feedback()!, feedback))))?.elementRef
             ?.nativeElement;
     }

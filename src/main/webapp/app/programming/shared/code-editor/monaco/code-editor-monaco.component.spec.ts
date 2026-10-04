@@ -1036,6 +1036,29 @@ describe('CodeEditorMonacoComponent', () => {
         expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', expect.any(HTMLElement));
     });
 
+    it('opens a manual draft beside an existing suggestion', async () => {
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        getInlineFeedbackNodeStub.mockRestore();
+        const addLineWidget = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+        const suggestion = { id: 42, reference: 'file:file1.java_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested` } as Feedback;
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        comp.addNewFeedback(2);
+        comp.addNewFeedback(2);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const suggestionNode = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)).nativeElement as HTMLElement;
+        const draftNode = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent)).nativeElement as HTMLElement;
+        expect(comp.newFeedbackLines()).toEqual([1]);
+        expect(draftNode).not.toBe(suggestionNode);
+        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', suggestionNode);
+        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-new-1', draftNode);
+    });
+
     it('keeps a same-line draft distinct when a late suggestion is accepted', async () => {
         vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         getInlineFeedbackNodeStub.mockRestore();
