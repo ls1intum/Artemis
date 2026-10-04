@@ -208,6 +208,13 @@ client does not read the configuration leaves it out instead of spending a query
 
 Writing follows the key as well: the parent is saved first, then the configuration that names it.
 
+`TutorialGroupsConfiguration` and `OnlineCourseConfiguration` follow the same shape: they hold the course's key, `Course`
+carries no association to either, and the course management endpoints read them through
+`TutorialGroupsConfigurationRepository.findByCourseId` and `OnlineCourseConfigurationRepository.findByCourseId`, reached
+from the course module through `TutorialGroupApi` and `LtiApi`. Because the configuration's `course` is lazy, a query that
+returns a configuration whose course the caller reads has to fetch it (`JOIN FETCH t.course`); with open-in-view disabled,
+an unfetched proxy fails with a `LazyInitializationException` rather than loading quietly.
+
 #### Turning an existing association lazy
 
 `open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantType;
 
 /**
@@ -42,11 +43,15 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
+    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    public OnlineCourseConfigurationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+    public OnlineCourseConfigurationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
+            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository) {
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
     }
 
     public List<ClientRegistration> getAllClientRegistrations() {
@@ -61,15 +66,17 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     }
 
     /**
-     * Creates an initial configuration for online courses with default and random values
+     * Creates and stores an initial configuration for an online course with default values. The configuration holds the
+     * key to its course, so the course has to be stored already.
      *
-     * @param course the online course we create a configuration for
+     * @param course the stored online course we create a configuration for
+     * @return the stored configuration
      */
-    public void createOnlineCourseConfiguration(Course course) {
+    public OnlineCourseConfiguration createOnlineCourseConfiguration(Course course) {
         OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
         ocConfiguration.setCourse(course);
         ocConfiguration.setUserPrefix(course.getShortName());
-        course.setOnlineCourseConfiguration(ocConfiguration);
+        return onlineCourseConfigurationRepository.save(ocConfiguration);
     }
 
     /**

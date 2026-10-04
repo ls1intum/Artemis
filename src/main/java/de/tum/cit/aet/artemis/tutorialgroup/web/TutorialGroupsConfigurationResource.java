@@ -113,8 +113,6 @@ public class TutorialGroupsConfigurationResource {
         TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
         configuration.setCourse(course);
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configuration);
-        course.setTutorialGroupsConfiguration(persistedConfiguration);
-        courseRepository.save(course);
 
         if (persistedConfiguration.getUseTutorialGroupChannels()) {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);

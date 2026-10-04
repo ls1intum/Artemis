@@ -20,6 +20,7 @@ public interface TutorialGroupsConfigurationRepository extends ArtemisJpaReposit
     @Query("""
             SELECT t
             FROM TutorialGroupsConfiguration t
+                JOIN FETCH t.course
                 LEFT JOIN t.tutorialGroupFreePeriods
             WHERE t.id = :tutorialGroupConfigurationId
             """)
@@ -32,8 +33,23 @@ public interface TutorialGroupsConfigurationRepository extends ArtemisJpaReposit
     @Query("""
             SELECT t
             FROM TutorialGroupsConfiguration t
+                JOIN FETCH t.course
                 LEFT JOIN FETCH t.tutorialGroupFreePeriods
             WHERE t.course.id = :courseId
             """)
     Optional<TutorialGroupsConfiguration> findByCourseIdWithEagerTutorialGroupFreePeriods(@Param("courseId") Long courseId);
+
+    /**
+     * Finds the tutorial groups configuration of the given course, if one exists. The configuration holds the key to its
+     * course, so a course carries no association to it and this is where it is read.
+     *
+     * @param courseId the id of the course
+     * @return the configuration, or empty when the course has none yet
+     */
+    @Query("""
+            SELECT t
+            FROM TutorialGroupsConfiguration t
+            WHERE t.course.id = :courseId
+            """)
+    Optional<TutorialGroupsConfiguration> findByCourseId(@Param("courseId") long courseId);
 }

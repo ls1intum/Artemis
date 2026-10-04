@@ -264,7 +264,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup", "lectures" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites" })
     Optional<Course> findForUpdateById(long courseId);
 
     @Query("""
@@ -303,33 +303,28 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance and the
-    // per-course Atlas auto-orchestration settings for editing.
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "athenaConfig", "courseConfiguration" })
-    Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
-    Course findWithEagerOnlineCourseConfigurationById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration" })
-    Course findWithEagerTutorialGroupConfigurationsById(long courseId);
+    // The Athena configuration and the course configuration are fetched here so the (instructor) course management view
+    // exposes the Athena switches, grade-relevance and the per-course Atlas auto-orchestration settings for editing. The
+    // online course configuration and the tutorial groups configuration are not here because they hold the key to their
+    // course: read them through their own repositories.
+    @EntityGraph(type = LOAD, attributePaths = { "athenaConfig", "courseConfiguration" })
+    Course findWithEagerAthenaConfigAndCourseConfigurationById(long courseId);
 
     /**
-     * Fetches online courses with a specific LTI registration ID.
-     * Eagerly loads related configurations.
+     * Fetches the online courses of an LTI platform. The configuration holds the key to its course, so the query starts
+     * from it; every course returned belongs to the platform with the given registration id.
      *
      * @param registrationId The LTI platform's registration ID.
-     * @return Set of eagerly loaded courses.
+     * @return Set of courses.
      */
     @Query("""
-            SELECT c
-            FROM Course c
-                LEFT JOIN FETCH c.onlineCourseConfiguration onlineCourseConfiguration
-                LEFT JOIN FETCH onlineCourseConfiguration.ltiPlatformConfiguration ltiPlatformConfiguration
-            WHERE c.onlineCourse = TRUE
-                AND c.onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId
+            SELECT course
+            FROM OnlineCourseConfiguration onlineCourseConfiguration
+                JOIN onlineCourseConfiguration.course course
+            WHERE course.onlineCourse = TRUE
+                AND onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId
             """)
-    Set<Course> findOnlineCoursesWithRegistrationIdEager(@Param("registrationId") String registrationId);
+    Set<Course> findOnlineCoursesWithRegistrationId(@Param("registrationId") String registrationId);
 
     List<Course> findAllByShortName(String shortName);
 
@@ -510,16 +505,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
     }
 
-    default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
-        return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationById(courseId)), courseId);
-    }
-
-    default Course findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(long courseId) throws EntityNotFoundException {
-        return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(courseId)), courseId);
-    }
-
-    default Course findByIdWithEagerTutorialGroupConfigurationElseThrow(long courseId) throws EntityNotFoundException {
-        return getValueElseThrow(Optional.ofNullable(findWithEagerTutorialGroupConfigurationsById(courseId)), courseId);
+    default Course findByIdWithEagerAthenaConfigAndCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(Optional.ofNullable(findWithEagerAthenaConfigAndCourseConfigurationById(courseId)), courseId);
     }
 
     @NonNull

@@ -4,8 +4,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
 
 /**
  * Spring Data JPA repository for the OnlineCourseConfiguration entity.
@@ -13,6 +12,6 @@ import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 @Lazy
 @Repository
 @Primary
-public interface OnlineCourseConfigurationTestRepository extends ArtemisJpaRepository<OnlineCourseConfiguration, Long> {
+public interface OnlineCourseConfigurationTestRepository extends OnlineCourseConfigurationRepository {
     // This interface is intentionally left blank. Spring Data JPA generates the implementation at runtime.
 }

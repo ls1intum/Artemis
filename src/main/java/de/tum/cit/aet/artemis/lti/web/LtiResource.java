@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationDTO;
 import de.tum.cit.aet.artemis.lti.dto.OnlineCourseConfigurationDTO;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
@@ -79,6 +80,8 @@ public class LtiResource {
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
+    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     private final UserRepository userRepository;
 
     private final CourseService courseService;
@@ -86,22 +89,24 @@ public class LtiResource {
     /**
      * Constructor for LtiResource.
      *
-     * @param courseRepository                   Repository for course data access.
-     * @param authCheckService                   Service for authorization checks.
-     * @param ltiDeepLinkingService              Service for LTI deep linking.
-     * @param onlineCourseConfigurationService   Service for online course configuration.
-     * @param ltiPlatformConfigurationRepository Repository for LTI platform configuration.
-     * @param userRepository                     Repository for user data access.
-     * @param courseService                      Service for course operations.
+     * @param courseRepository                    Repository for course data access.
+     * @param authCheckService                    Service for authorization checks.
+     * @param ltiDeepLinkingService               Service for LTI deep linking.
+     * @param onlineCourseConfigurationService    Service for online course configuration.
+     * @param ltiPlatformConfigurationRepository  Repository for LTI platform configuration.
+     * @param onlineCourseConfigurationRepository Repository for the online course configuration of a course.
+     * @param userRepository                      Repository for user data access.
+     * @param courseService                       Service for course operations.
      */
     public LtiResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, LtiDeepLinkingService ltiDeepLinkingService,
-            OnlineCourseConfigurationService onlineCourseConfigurationService, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, UserRepository userRepository,
-            CourseService courseService) {
+            OnlineCourseConfigurationService onlineCourseConfigurationService, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
+            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, UserRepository userRepository, CourseService courseService) {
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.ltiDeepLinkingService = ltiDeepLinkingService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
     }
@@ -119,7 +124,7 @@ public class LtiResource {
             @Valid @RequestBody OnlineCourseConfigurationDTO onlineCourseConfigurationDTO) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);
 
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         OnlineCourseConfiguration onlineCourseConfiguration = OnlineCourseConfigurationDTO.from(onlineCourseConfigurationDTO);
@@ -135,13 +140,15 @@ public class LtiResource {
             throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
         }
 
-        if (!course.getOnlineCourseConfiguration().getId().equals(onlineCourseConfiguration.getId())) {
+        OnlineCourseConfiguration existingConfiguration = onlineCourseConfigurationRepository.findByCourseId(courseId)
+                .orElseThrow(() -> new BadRequestAlertException("LTI is not configured for this course", OnlineCourseConfiguration.ENTITY_NAME, "ltiNotConfigured"));
+        if (!existingConfiguration.getId().equals(onlineCourseConfiguration.getId())) {
             throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
                     OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
         }
 
         onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        onlineCourseConfiguration.setCourse(course);
         try {
             onlineCourseConfigurationService.addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
         }
@@ -150,9 +157,9 @@ public class LtiResource {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding online course configuration to LTI configurations", ex);
         }
 
-        courseRepository.save(course);
+        OnlineCourseConfiguration savedConfiguration = onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
 
-        return ResponseEntity.ok(OnlineCourseConfigurationDTO.of(onlineCourseConfiguration));
+        return ResponseEntity.ok(OnlineCourseConfigurationDTO.of(savedConfiguration));
     }
 
     /**
@@ -182,9 +189,9 @@ public class LtiResource {
         log.info("LTI 1.3 Deep Linking request received for course {} with resourceType: {}, contentIds: {}, registrationId: {}", courseId, resourceType, contentIds,
                 clientRegistrationId);
 
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
 
-        if (!course.isOnlineCourse() || course.getOnlineCourseConfiguration() == null) {
+        if (!course.isOnlineCourse() || onlineCourseConfigurationRepository.findByCourseId(courseId).isEmpty()) {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
@@ -232,15 +239,15 @@ public class LtiResource {
         if (clientId == null || clientId.isBlank()) {
             throw new BadRequestAlertException("clientId must not be blank", "LTI", "clientIdBlank");
         }
-        clientId = clientId.trim();
+        String registrationId = clientId.trim();
         // Pre-load the current user's course roles so the per-course isInstructorInCourse check inside
         // findAllOnlineCoursesForPlatformForUser resolves in memory instead of one EXISTS query per online course.
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
 
-        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
+        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(registrationId, user);
 
-        Set<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(OnlineCourseDTO::from).collect(Collectors.toSet());
+        Set<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(course -> OnlineCourseDTO.from(course, registrationId)).collect(Collectors.toSet());
 
         return ResponseEntity.ok(onlineCourseDTOS);
     }

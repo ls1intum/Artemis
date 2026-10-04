@@ -299,16 +299,16 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
         onlineCourseConfiguration.setRequireExistingUser(false);
-        onlineCourseConfiguration.setCourse(course);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         Course savedCourse = courseRepository.saveAndFlush(course);
+        onlineCourseConfiguration.setCourse(savedCourse);
+        onlineCourseConfigurationRepository.saveAndFlush(onlineCourseConfiguration);
         userUtilService.enrollPrefixedUsersInCourse(savedCourse, TEST_PREFIX);
         return savedCourse;
     }
 
     private ObjectNode onlineCourseConfigurationPayload(Course savedCourse, ObjectNode platformPayload) {
         ObjectNode payload = objectMapper.createObjectNode();
-        payload.put("id", savedCourse.getOnlineCourseConfiguration().getId());
+        payload.put("id", onlineCourseConfigurationRepository.findByCourseId(savedCourse.getId()).orElseThrow().getId());
         payload.put("userPrefix", "prefix");
         payload.put("requireExistingUser", false);
         payload.set("ltiPlatformConfiguration", platformPayload);

@@ -40,10 +40,8 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
 /**
  * A Course.
@@ -101,14 +99,14 @@ public class Course extends DomainObject {
     @Column(name = "online_course")
     private Boolean onlineCourse = false;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "online_course_configuration_id")
-    private OnlineCourseConfiguration onlineCourseConfiguration;
+    // The online course configuration and the tutorial groups configuration are not associations of the course: each one
+    // holds the key to its course. Read them through OnlineCourseConfigurationRepository and
+    // TutorialGroupsConfigurationRepository where they are needed.
 
     // Lazy on purpose: the course table is already wide and these values are only needed in specific flows. Note that
     // getCourseConfiguration() returns null while the association is uninitialized, so every flow that needs it must
     // fetch it deliberately. The ones that do: the instructor course-settings read path
-    // (findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById), the course update path (which attaches
+    // (findWithEagerAthenaConfigAndCourseConfigurationById), the course update path (which attaches
     // it via CourseConfigurationRepository.findByCourseId so applyTo updates it in place) and the data-retention cleanup
     // queries. Do NOT add it to any other course query or entity graph.
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -235,11 +233,6 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     @OrderBy("title")
     private Set<Prerequisite> prerequisites = new HashSet<>();
-
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tutorial_groups_configuration_id")
-    @JsonIgnoreProperties("course")
-    private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -438,14 +431,6 @@ public class Course extends DomainObject {
 
     public void setOnlineCourse(boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
-    }
-
-    public OnlineCourseConfiguration getOnlineCourseConfiguration() {
-        return Hibernate.isInitialized(onlineCourseConfiguration) ? onlineCourseConfiguration : null;
-    }
-
-    public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
-        this.onlineCourseConfiguration = onlineCourseConfiguration;
     }
 
     public CourseConfiguration getCourseConfiguration() {
@@ -855,14 +840,6 @@ public class Course extends DomainObject {
 
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
-    }
-
-    public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {
-        return tutorialGroupsConfiguration;
-    }
-
-    public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-        this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
 
     public CourseInformationSharingConfiguration getCourseInformationSharingConfiguration() {

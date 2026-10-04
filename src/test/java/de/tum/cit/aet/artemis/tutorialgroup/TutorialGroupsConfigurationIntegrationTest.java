@@ -22,7 +22,6 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
@@ -81,6 +80,18 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         this.testJustForInstructorEndpoints();
     }
 
+    @Test
+    void deletingTheCourse_deletesItsConfigurationAndFreePeriods() {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(configuration.getId(), FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
+
+        // the configuration holds the key to its course, so the database removes it, and the free periods below it, with the course
+        courseRepository.deleteById(courseId);
+
+        assertThat(tutorialGroupsConfigurationRepository.findById(configuration.getId())).isEmpty();
+        assertThat(tutorialGroupFreePeriodRepository.findById(freePeriod.getId())).isEmpty();
+    }
+
     @BeforeEach
     void deleteExistingConfiguration() {
         var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
@@ -91,12 +102,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     }
 
     private void deleteExampleConfiguration() {
-        Course course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
-        TutorialGroupsConfiguration configuration = course.getTutorialGroupsConfiguration();
+        TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(courseId).orElse(null);
         if (configuration != null) {
-            course.setTutorialGroupsConfiguration(null);
-            configuration.setCourse(null);
-            courseRepository.save(course);
             tutorialGroupsConfigurationRepository.delete(configuration);
         }
     }
@@ -275,13 +282,11 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // change time zone to berlin and change the end period
         var course = courseRepository.findByIdForUpdateElseThrow(courseId);
         course.setTimeZone("Europe/Berlin");
-        course.setTutorialGroupsConfiguration(null);
 
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
-        course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
-        assertThat(course.getTutorialGroupsConfiguration()).isNotNull();
+        assertThat(tutorialGroupsConfigurationRepository.findByCourseId(courseId)).isPresent();
 
         sessions = this.getTutorialGroupSessionsAscending(tutorialGroupWithSchedule.getId());
         assertThat(sessions).hasSize(2);

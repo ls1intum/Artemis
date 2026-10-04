@@ -232,11 +232,7 @@ public class TutorialGroupUtilService {
         var course = courseRepo.findByIdElseThrow(courseId);
         var tutorialGroupConfiguration = TutorialGroupFactory.generateTutorialGroupsConfiguration(start, end);
         tutorialGroupConfiguration.setCourse(course);
-        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupConfiguration);
-        course.setTutorialGroupsConfiguration(persistedConfiguration);
-        course = courseRepo.save(course);
-        persistedConfiguration.setCourse(course);
-        return persistedConfiguration;
+        return tutorialGroupsConfigurationRepository.save(tutorialGroupConfiguration);
     }
 
     public TutorialGroup createAndSaveTutorialGroup(Course course, String title, User teachingAssistant, int capacity, String campus) {

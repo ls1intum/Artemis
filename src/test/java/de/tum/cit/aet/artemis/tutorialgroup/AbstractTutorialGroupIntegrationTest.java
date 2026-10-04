@@ -461,7 +461,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     Channel asserTutorialGroupChannelIsCorrectlyConfigured(TutorialGroup tutorialGroup) {
-        var configuration = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(tutorialGroup.getCourse().getId()).getTutorialGroupsConfiguration();
+        var configuration = tutorialGroupsConfigurationRepository.findByCourseId(tutorialGroup.getCourse().getId()).orElseThrow();
 
         Function<TutorialGroup, String> expectedTutorialGroupName = (TutorialGroup tg) -> {
             var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase(Locale.ROOT);

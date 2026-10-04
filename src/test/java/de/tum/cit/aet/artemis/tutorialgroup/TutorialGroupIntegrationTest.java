@@ -457,11 +457,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void create_asEditorWithNoTutorialGroupsConfiguration_shouldReturnBadRequest() throws Exception {
-            Course course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(exampleCourseId);
-            TutorialGroupsConfiguration configuration = course.getTutorialGroupsConfiguration();
-            course.setTutorialGroupsConfiguration(null);
-            configuration.setCourse(null);
-            courseRepository.save(course);
+            TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(exampleCourseId).orElseThrow();
             tutorialGroupsConfigurationRepository.delete(configuration);
 
             CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mo 10", firstCourseTutor1.getId(),
@@ -629,11 +625,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_asEditorWithoutTutorialGroupsConfiguration_shouldReturnBadRequest() throws Exception {
-            Course course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(exampleCourseId);
-            TutorialGroupsConfiguration configuration = course.getTutorialGroupsConfiguration();
-            course.setTutorialGroupsConfiguration(null);
-            configuration.setCourse(null);
-            courseRepository.save(course);
+            TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(exampleCourseId).orElseThrow();
             tutorialGroupsConfigurationRepository.delete(configuration);
 
             CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mon 15", firstCourseTutor1.getId(),

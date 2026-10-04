@@ -169,8 +169,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         assertThat(updated.get("description").asString()).isEqualTo("Unrelated description change");
         // The response must still report the stored flag, so the client does not cache a course that claims Athena is off
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
-        assertThat(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(course.getId()).getAthenaConfig().isGradingFeedbackEnabled())
-                .isTrue();
+        assertThat(courseRepository.findByIdWithEagerAthenaConfigAndCourseConfigurationElseThrow(course.getId()).getAthenaConfig().isGradingFeedbackEnabled()).isTrue();
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService, never()).sendTextExerciseSchedule(textExercise.getId());
     }

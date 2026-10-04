@@ -181,11 +181,12 @@ public class AdminCourseResource {
         CourseValidator.validateSemester(course);
         CourseValidator.validateTimeZone(course.getTimeZone());
 
-        if (course.isOnlineCourse() && ltiApi.isPresent()) {
-            ltiApi.get().createOnlineCourseConfiguration(course);
-        }
-
         Course createdCourse = courseRepository.save(course);
+
+        // The configuration holds the key to its course, so it can only be created once the course is stored.
+        if (createdCourse.isOnlineCourse() && ltiApi.isPresent()) {
+            ltiApi.get().createOnlineCourseConfiguration(createdCourse);
+        }
 
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();

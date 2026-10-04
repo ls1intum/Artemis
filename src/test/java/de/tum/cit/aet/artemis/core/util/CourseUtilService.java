@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -110,6 +111,9 @@ public class CourseUtilService {
 
     @Autowired
     private CourseTestRepository courseRepo;
+
+    @Autowired
+    private OnlineCourseConfigurationTestRepository onlineCourseConfigurationRepository;
 
     @Autowired
     private LectureTestRepository lectureRepo;
@@ -933,9 +937,9 @@ public class CourseUtilService {
     public void addOnlineCourseConfigurationToCourse(Course course) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
-        onlineCourseConfiguration.setCourse(course);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        courseRepo.save(course);
+        Course savedCourse = courseRepo.save(course);
+        onlineCourseConfiguration.setCourse(savedCourse);
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
     }
 
     /**

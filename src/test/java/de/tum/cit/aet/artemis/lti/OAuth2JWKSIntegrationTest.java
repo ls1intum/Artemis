@@ -33,8 +33,7 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
     @WithAnonymousUser
     void getKeysetHasKey() throws Exception {
         Course course = CourseFactory.generateMinimalCourse();
-        course.setId(1L);
-        courseRepository.save(course);
+        course = courseRepository.save(course);
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setRegistrationId(TEST_PREFIX + "registrationId");

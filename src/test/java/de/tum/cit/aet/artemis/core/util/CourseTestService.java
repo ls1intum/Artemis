@@ -3220,10 +3220,9 @@ public class CourseTestService {
     public void testCreateValidOnlineCourse() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        Course courseWithOnlineConfiguration = courseRepo
-                .findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        OnlineCourseConfiguration configuration = onlineCourseConfigurationRepository.findByCourseId(createdCourse.getId()).orElseThrow();
+        assertThat(configuration.getUserPrefix()).isEqualTo(createdCourse.getShortName());
     }
 
     public void testUpdateToOnlineCourse() throws Exception {
@@ -3243,11 +3242,13 @@ public class CourseTestService {
         course.setOnlineCourse(true);
         course = courseRepo.save(course);
         var courseId = course.getId();
+        // the configuration exists, but a course does not carry it, so the list of courses cannot contain it
+        onlineCourseConfigurationRepository.save(CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null));
 
         List<CourseManagementDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseManagementDTO.class);
 
         CourseManagementDTO receivedCourse = courses.stream().filter(c -> courseId.equals(c.id())).findFirst().orElseThrow();
-        assertThat(receivedCourse.onlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
+        assertThat(receivedCourse.onlineCourseConfiguration()).as("A course does not carry its online course configuration").isNull();
     }
 
     // Test
@@ -3255,15 +3256,15 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
 
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         CourseManagementDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
 
-        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.id());
-        OnlineCourseConfiguration ocConfiguration = actualCourse.getOnlineCourseConfiguration();
+        Course actualCourse = courseRepo.findByIdElseThrow(updatedCourse.id());
+        OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.findByCourseId(actualCourse.getId()).orElse(null);
 
         assertThat(ocConfiguration).isNotNull();
         assertThat(ocConfiguration.getUserPrefix()).isEqualTo(actualCourse.getShortName());
@@ -3274,26 +3275,26 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        assertThat(onlineCourseConfigurationRepository.findByCourseId(createdCourse.getId())).isPresent();
 
         createdCourse.setOnlineCourse(false);
         MvcResult result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         CourseManagementDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
 
-        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.id());
-        assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
+        assertThat(onlineCourseConfigurationRepository.findByCourseId(updatedCourse.id())).isEmpty();
     }
 
     // Test
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
+        OnlineCourseConfiguration configuration = onlineCourseConfigurationRepository.save(CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null));
 
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
-        assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
+        assertThat(onlineCourseConfigurationRepository.findById(configuration.getId())).isNotPresent();
     }
 
     // Test
@@ -3301,13 +3302,13 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
         String courseId = createdCourse.getId().toString();
 
         // without online course configuration
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), null, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
 
-        var ocConfiguration = createdCourse.getOnlineCourseConfiguration();
+        var ocConfiguration = onlineCourseConfigurationRepository.findByCourseId(createdCourse.getId()).orElseThrow();
         // with invalid user prefix - not matching regex
         CourseFactory.updateOnlineCourseConfiguration(ocConfiguration, "with space", null, "10000");
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
@@ -3316,12 +3317,12 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
+        OnlineCourseConfiguration configuration = onlineCourseConfigurationRepository.save(CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null));
 
         String courseId = course.getId().toString();
 
-        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), course.getOnlineCourseConfiguration(), OnlineCourseConfiguration.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), configuration, OnlineCourseConfiguration.class, HttpStatus.FORBIDDEN);
     }
 
     public void testUpdateValidOnlineCourseConfigurationNotOnlineCourse() throws Exception {
@@ -3339,10 +3340,10 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
         String courseId = createdCourse.getId().toString();
 
-        OnlineCourseConfiguration ocConfiguration = createdCourse.getOnlineCourseConfiguration();
+        OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.findByCourseId(createdCourse.getId()).orElseThrow();
         ocConfiguration.setId(10000L);
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
@@ -3350,17 +3351,16 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfiguration() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
-
-        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+        OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.save(CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null));
         ocConfiguration.setUserPrefix("prefix");
 
         String courseId = course.getId().toString();
 
         OnlineCourseConfiguration response = request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class,
                 HttpStatus.OK);
-        assertThat(response).usingRecursiveComparison().ignoringFields("id").isEqualTo(ocConfiguration);
+        // the course is not part of the response: the configuration holds the key to it and hides it from JSON
+        assertThat(response).usingRecursiveComparison().ignoringFields("id", "course").isEqualTo(ocConfiguration);
     }
 
     /**
@@ -3385,9 +3385,7 @@ public class CourseTestService {
 
         course = courseRepo.save(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
-        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
-
-        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+        OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
         String clientId = ocConfiguration.getLtiPlatformConfiguration().getRegistrationId();
 
         String jsonResponse = request.get("/api/lti/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);

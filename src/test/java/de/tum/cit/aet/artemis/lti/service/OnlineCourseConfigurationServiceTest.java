@@ -22,12 +22,16 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
+import de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantType;
 
 class OnlineCourseConfigurationServiceTest {
 
     @Mock
     private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
+
+    @Mock
+    private OnlineCourseConfigurationTestRepository onlineCourseConfigurationRepository;
 
     private OnlineCourseConfigurationService onlineCourseConfigurationService;
 
@@ -40,7 +44,7 @@ class OnlineCourseConfigurationServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        onlineCourseConfigurationService = new OnlineCourseConfigurationService(ltiPlatformConfigurationRepository);
+        onlineCourseConfigurationService = new OnlineCourseConfigurationService(ltiPlatformConfigurationRepository, onlineCourseConfigurationRepository);
     }
 
     @AfterEach

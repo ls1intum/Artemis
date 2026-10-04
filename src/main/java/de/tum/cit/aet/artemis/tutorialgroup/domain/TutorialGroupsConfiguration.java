@@ -7,16 +7,19 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Entity
@@ -24,8 +27,15 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroupsConfiguration extends DomainObject {
 
-    @OneToOne(mappedBy = "tutorialGroupsConfiguration")
-    @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
+    /**
+     * The course this configuration belongs to. The key lives here rather than on the course: the course carries no
+     * association to its configuration, so loading a course can never pull this row in, and the configuration cannot
+     * outlive the course. Read the configuration through {@code TutorialGroupsConfigurationRepository} where it is needed.
+     */
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "course_id", nullable = false, unique = true)
+    @JsonIgnore
+    @Parent
     private Course course;
 
     /**

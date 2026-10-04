@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.lti.dto.Lti13LaunchRequest;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
@@ -116,6 +117,8 @@ public class Lti13Service {
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
+    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final RestTemplate restTemplate;
@@ -128,7 +131,7 @@ public class Lti13Service {
             CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository,
             Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
@@ -142,6 +145,7 @@ public class Lti13Service {
         this.restTemplate = restTemplate;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
     }
 
     /**
@@ -164,7 +168,7 @@ public class Lti13Service {
         }
 
         Course course = targetCourse.get();
-        OnlineCourseConfiguration onlineCourseConfiguration = courseRepository.findWithEagerOnlineCourseConfigurationById(course.getId()).getOnlineCourseConfiguration();
+        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository.findByCourseId(course.getId()).orElse(null);
         if (onlineCourseConfiguration == null) {
             String message = "LTI is not configured for course with target link URL: " + targetLinkUrl;
             log.error(message);
@@ -240,7 +244,7 @@ public class Lti13Service {
      * @param participation The exercise participation for which a new result is available
      */
     public void onNewResult(StudentParticipation participation) {
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+        Course course = courseRepository.findByIdElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
 
         if (!course.isOnlineCourse()) {
             log.error("Could not transmit score to external LMS for course {}:", course.getTitle());
