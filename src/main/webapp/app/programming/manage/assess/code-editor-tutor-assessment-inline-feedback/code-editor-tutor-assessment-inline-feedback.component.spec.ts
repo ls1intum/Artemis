@@ -54,6 +54,43 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
     });
 
+    it('should reference the whole range of a new feedback opened on several lines and name it', () => {
+        fixture.componentRef.setInput('codeLineEnd', codeLine + 3);
+        fixture.detectChanges();
+
+        comp.updateFeedback();
+
+        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}-${codeLine + 3}`);
+        const label = fixture.nativeElement.querySelector('.unified-feedback-reference-text');
+        expect(label?.textContent).toContain('artemisApp.programmingAssessment.lineRange');
+    });
+
+    it('should keep the range of a stored feedback when it is edited', () => {
+        const suggestion = {
+            type: FeedbackType.MANUAL,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Implementation logic`,
+            detailText: 'Mostly correct.',
+            credits: 7,
+            reference: `file:${fileName}_line:${codeLine}-${codeLine + 4}`,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', suggestion);
+        fixture.detectChanges();
+
+        comp.updateFeedback();
+
+        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}-${codeLine + 4}`);
+    });
+
+    it('should name the line of a single-line feedback', () => {
+        const instant = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+        fixture.detectChanges();
+
+        const label = fixture.nativeElement.querySelector('.unified-feedback-reference-text');
+        expect(label?.textContent).toContain('artemisApp.programmingAssessment.line');
+        expect(label?.textContent).not.toContain('lineRange');
+        expect(instant).toHaveBeenCalledWith('artemisApp.programmingAssessment.line', { line: codeLine + 1 });
+    });
+
     it('should enable edit feedback and emit to parent', () => {
         const onEditFeedbackSpy = vi.fn();
         comp.onEditFeedback.subscribe(onEditFeedbackSpy);
@@ -114,13 +151,27 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
         });
+        fixture.detectChanges();
         // Call spy function with empty event
         comp.updateFeedbackOnDrop(new Event(''));
+        fixture.detectChanges();
 
         expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
         expect(comp.currentFeedback().credits).toEqual(instruction.credits);
         expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
-        expect(comp.currentFeedback().text).toBe(`File ${fileName} at line ${codeLine + 1}`);
+        // The title is left empty, so it gets the default for the points the instruction brought in
+        expect(comp.currentFeedback().text).toBe('artemisApp.feedback.type.positive');
+    });
+
+    it('should let the tutor title a manual inline feedback', () => {
+        fixture.detectChanges();
+        const titleInput = fixture.debugElement.query(By.css('.unified-feedback-title-input'));
+        expect(titleInput).toBeTruthy();
+
+        fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance.onTitleInput('Loop never ends');
+
+        expect(comp.currentFeedback().text).toBe('Loop never ends');
+        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
     });
 
     it('should keep the suggestion identity but mark it adapted when an SGI is dropped on an accepted suggestion', () => {
@@ -257,11 +308,11 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(titleInput.nativeElement.value).toBe('Missing null check');
     });
 
-    it('should not render an editable title field for a non-suggestion feedback while editing', async () => {
-        // The title of a non-suggestion feedback is auto-generated on save, so it must not be offered as an input.
+    it('should render an editable title field holding the title of a non-suggestion feedback while editing', async () => {
+        // Like a suggestion, a manual feedback has a title of its own; the file and line are shown from the reference instead.
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.MANUAL,
-            text: 'File testFile at line 2',
+            text: 'Missing null check',
             detailText: 'Add a null check.',
             credits: 1,
         } as Feedback);
@@ -270,7 +321,9 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.unified-feedback-title-input'))).toBeNull();
+        const titleInput = fixture.debugElement.query(By.css('.unified-feedback-title-input'));
+        expect(titleInput).not.toBeNull();
+        expect((titleInput.nativeElement as HTMLTextAreaElement).value).toBe('Missing null check');
     });
 
     it('should show the suggestion badge only in the editable view, not the read-only collapsed view', () => {

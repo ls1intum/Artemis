@@ -5,7 +5,8 @@
         </div>
     </div>
 }
-@if (!isLoading() && complaint()) {
+<!-- Stacked, the form sits in a panel tab that already names it, so it drops its own heading. -->
+@if (!isLoading() && complaint() && !stacked()) {
     <h3 [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.review' : 'artemisApp.complaint.review'"></h3>
 }
 @if (!isLoading() && complaint()) {
@@ -36,7 +37,7 @@
             }
         </div>
         <div class="row">
-            <div class="col-12 col-md-6">
+            <div class="col-12" [class.col-md-6]="!stacked()">
                 <h4>
                     <span [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.title' : 'artemisApp.complaint.title'"></span>
                     @if (handled()) {
@@ -59,7 +60,7 @@
                 <textarea id="complaintTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
             </div>
             @if (handled() || isAllowedToRespond) {
-                <div class="col-12 col-md-6">
+                <div class="col-12" [class.col-md-6]="!stacked()">
                     <h3
                         [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedbackResponse.title' : 'artemisApp.complaintResponse.title'"
                     ></h3>

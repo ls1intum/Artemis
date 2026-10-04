@@ -248,6 +248,11 @@ describe('MonacoEditorComponent', () => {
         // The mock editor does not render decorations to the DOM, so we assert on the tracked highlight ranges.
         // Two highlight elements, each representing a range.
         expect(comp.getLineHighlights()).toHaveLength(2);
+
+        // Only the highlights of one group are removed by prefix; the others stay
+        comp.highlightLines(5, 7, undefined, 'test-margin-class-name', 'feedback-range-0');
+        comp.disposeLineHighlightsByPrefix('feedback-range-');
+        expect(comp.getLineHighlights()).toHaveLength(2);
     });
 
     it('should get the number of lines in the editor', () => {

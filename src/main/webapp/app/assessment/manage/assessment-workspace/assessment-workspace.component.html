@@ -45,9 +45,13 @@
                 </ng-template>
                 <ng-template #panel>
                     <section class="assessment-workspace__section">
-                        <header class="assessment-workspace__section-header">
-                            <fa-icon [icon]="faDetails" aria-hidden="true" />
-                            <h2 [jhiTranslate]="detailsLabelKey()"></h2>
+                        <header class="assessment-workspace__section-header" [class.assessment-workspace__section-header--custom]="customDetailsHeader()">
+                            @if (customDetailsHeader()) {
+                                <ng-content select="[assessmentWorkspaceDetailsHeader]" />
+                            } @else {
+                                <fa-icon [icon]="faDetails" aria-hidden="true" />
+                                <h2 [jhiTranslate]="detailsLabelKey()"></h2>
+                            }
                         </header>
                         <div class="assessment-workspace__section-content" cdkScrollable>
                             <ng-content select="[assessmentWorkspaceDetails]" />

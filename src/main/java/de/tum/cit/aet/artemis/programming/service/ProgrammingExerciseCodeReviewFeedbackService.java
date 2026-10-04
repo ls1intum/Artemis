@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -45,6 +46,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseCodeReviewFeedbackService.class);
 
     public static final String NON_GRADED_FEEDBACK_SUGGESTION = "NonGradedFeedbackSuggestion:";
+
+    // Length of the feedback text column, see Feedback#text
+    private static final int MAX_FEEDBACK_TEXT_LENGTH = 500;
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
@@ -139,20 +143,27 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         String feedbackText;
                         Integer lineStart = individualFeedbackItem.lineStart();
                         Integer lineEnd = individualFeedbackItem.lineEnd();
-                        if (Objects.nonNull(lineStart) && lineStart > 0) {
-                            if (Objects.nonNull(lineEnd) && lineEnd > lineStart) {
-                                feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s at lines %d-%d").formatted(individualFeedbackItem.filePath(), lineStart, lineEnd);
-                                feedback.setReference("file:%s_line:%d-%d".formatted(individualFeedbackItem.filePath(), lineStart, lineEnd));
+                        // A referenced suggestion carries its file and lines in the reference, which the editor anchors on and the
+                        // feedback panel shows as a code excerpt, so its title can be Athena's own. A suggestion about a whole file
+                        // has no reference, so its title stays the only place that names the file.
+                        // Athena numbers lines from 0 like the editor and the reference do; the title shows them 1-based.
+                        String filePath = individualFeedbackItem.filePath();
+                        String athenaTitle = individualFeedbackItem.title();
+                        if (Objects.nonNull(lineStart) && lineStart >= 0) {
+                            boolean isRange = Objects.nonNull(lineEnd) && lineEnd > lineStart;
+                            feedback.setReference(isRange ? "file:%s_line:%d-%d".formatted(filePath, lineStart, lineEnd) : "file:%s_line:%d".formatted(filePath, lineStart));
+                            if (StringUtils.isNotBlank(athenaTitle)) {
+                                feedbackText = StringUtils.abbreviate(athenaTitle.strip(), MAX_FEEDBACK_TEXT_LENGTH - NON_GRADED_FEEDBACK_SUGGESTION.length());
                             }
                             else {
-                                feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s at line %d").formatted(individualFeedbackItem.filePath(), lineStart);
-                                feedback.setReference("file:%s_line:%d".formatted(individualFeedbackItem.filePath(), lineStart));
+                                feedbackText = isRange ? "File %s at lines %d-%d".formatted(filePath, lineStart + 1, lineEnd + 1)
+                                        : "File %s at line %d".formatted(filePath, lineStart + 1);
                             }
                         }
                         else {
-                            feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s").formatted(individualFeedbackItem.filePath());
+                            feedbackText = "File %s".formatted(filePath);
                         }
-                        feedback.setText(feedbackText);
+                        feedback.setText(NON_GRADED_FEEDBACK_SUGGESTION + feedbackText);
                         feedback.setDetailText(individualFeedbackItem.description());
                         feedback.setHasLongFeedbackText(false);
                         feedback.setType(FeedbackType.AUTOMATIC);

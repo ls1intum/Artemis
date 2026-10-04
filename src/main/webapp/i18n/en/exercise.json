@@ -98,7 +98,6 @@
             "exampleSolutionPublicationDateRequiresExampleSolution": "Add an example solution or remove its publication date.",
             "assessmentCriterion": "Assessment Criterion",
             "assessmentInstructions": "Assessment Instructions",
-            "assessmentInstruction": "Assessment Instruction: ",
             "structuredAssessmentInstructions": "Structured Assessment Instructions",
             "addAssessmentCriterion": "Add assessment criterion",
             "deleteAssessmentCriterion": "Delete this criterion",

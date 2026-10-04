@@ -107,6 +107,17 @@ describe('CodeEditorBuildOutputComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('drops its header in a tab of the assessment that names it already', () => {
+        fixture.componentRef.setInput('participation', {});
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[role="button"]')).not.toBeNull();
+
+        fixture.componentRef.setInput('showHeader', false);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[role="button"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.build-output--embedded')).not.toBeNull();
+    });
+
     it('announces the owning grid collapse state after keyboard activation', () => {
         fixture.componentRef.setInput('participation', {});
         fixture.detectChanges();

@@ -862,17 +862,32 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void requestFeedbackExerciseNotPossibleIfOnlyAutomaticFeedbacks() throws Exception {
+    void requestProgrammingFeedbackSuccess_forAutomaticallyAssessedExercise() throws Exception {
+        // Formative feedback only depends on the course setting, not on how the exercise is graded
         setupAthenaForExercise(programmingExercise);
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
-        exerciseRepository.save(programmingExercise);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
 
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        participationRepo.save(participation);
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
 
-        request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
-                HttpStatus.BAD_REQUEST, "feedbackRequest.manualAssessmentRequired");
+        var participation = createParticipationWithRepository(programmingExercise);
+
+        Result testResult = participationUtilService.createSubmissionAndResult(participation, 60, false);
+        testResult.getSubmission().setSubmitted(true);
+        submissionRepository.save(testResult.getSubmission());
+
+        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                StudentParticipationDTO.class, HttpStatus.OK);
+
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+
+        Result invokedResult = resultCaptor.getAllValues().getLast();
+        assertThat(invokedResult.isAthenaBased()).isTrue();
+        assertThat(invokedResult.isSuccessful()).isTrue();
+        assertThat(invokedResult.getFeedbacks()).hasSize(1);
+        // the AI feedback keeps the score of the tests, so requesting it does not change the student's grade
+        assertThat(invokedResult.getScore()).isEqualTo(60.0);
     }
 
     @Test
