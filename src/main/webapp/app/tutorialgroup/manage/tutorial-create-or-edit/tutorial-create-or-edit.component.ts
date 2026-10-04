@@ -100,13 +100,17 @@ export class TutorialCreateOrEditComponent {
     configureSessionPlan = signal(false);
     firstSessionStart = signal<dayjs.Dayjs | undefined>(undefined);
     firstSessionStartInputTouched = signal(false);
+    // The picker keeps its last committed value when the text is unparseable, so track that validity separately.
+    firstSessionStartInputValid = signal(true);
     firstSessionStartValidationResult = computed<Validation>(() => this.computeFirstSessionStartValidation());
     firstSessionEnd = signal<dayjs.Dayjs | undefined>(undefined);
     firstSessionEndInputTouched = signal(false);
+    firstSessionEndInputValid = signal(true);
     firstSessionEndValidationResult = computed<Validation>(() => this.computeFirstSessionEndValidation());
     repetitionFrequency = signal<number>(1);
     tutorialPeriodEnd = signal<dayjs.Dayjs | undefined>(undefined);
     tutorialPeriodEndInputTouched = signal(false);
+    tutorialPeriodEndInputValid = signal(true);
     tutorialPeriodEndValidationResult = computed<Validation>(() => this.computeTeachingPeriodEndValidation());
     location = signal('');
     locationInputTouched = signal(false);
@@ -288,6 +292,12 @@ export class TutorialCreateOrEditComponent {
     }
 
     private computeFirstSessionStartValidation(): Validation {
+        if (!this.firstSessionStartInputValid()) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartInvalid',
+            };
+        }
         return this.firstSessionStart()
             ? { status: ValidationStatus.VALID }
             : {
@@ -297,6 +307,12 @@ export class TutorialCreateOrEditComponent {
     }
 
     private computeFirstSessionEndValidation(): Validation {
+        if (!this.firstSessionEndInputValid()) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndInvalid',
+            };
+        }
         const firstSessionEnd = this.firstSessionEnd();
         if (!firstSessionEnd) {
             return {
@@ -321,6 +337,12 @@ export class TutorialCreateOrEditComponent {
     }
 
     private computeTeachingPeriodEndValidation(): Validation {
+        if (!this.tutorialPeriodEndInputValid()) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.tutorialPeriodEndInvalid',
+            };
+        }
         const teachingPeriodEnd = this.tutorialPeriodEnd();
         if (!teachingPeriodEnd) {
             return {

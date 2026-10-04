@@ -121,6 +121,7 @@
             <div class="label-and-input-row">
                 @let firstSessionStartValidation = firstSessionStartValidationResult();
                 <tumaet-ui-form-field
+                    #firstSessionStartField
                     class="label-and-input"
                     controlId="first-session-start-input"
                     [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate"
@@ -138,12 +139,15 @@
                         [value]="firstSessionStart()"
                         (valueChange)="firstSessionStart.set($event)"
                         (touch)="firstSessionStartInputTouched.set(true)"
+                        (inputValidityChange)="firstSessionStartInputValid.set($event)"
                         [invalid]="firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()"
+                        [ariaDescribedBy]="firstSessionStartField.describedBy()"
                     />
                 </tumaet-ui-form-field>
 
                 @let firstSessionEndValidation = firstSessionEndValidationResult();
                 <tumaet-ui-form-field
+                    #firstSessionEndField
                     class="label-and-input"
                     controlId="first-session-end-input"
                     [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate"
@@ -161,7 +165,9 @@
                         [value]="firstSessionEnd()"
                         (valueChange)="firstSessionEnd.set($event)"
                         (touch)="firstSessionEndInputTouched.set(true)"
+                        (inputValidityChange)="firstSessionEndInputValid.set($event)"
                         [invalid]="firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()"
+                        [ariaDescribedBy]="firstSessionEndField.describedBy()"
                     />
                 </tumaet-ui-form-field>
             </div>
@@ -187,6 +193,7 @@
 
                 @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
                 <tumaet-ui-form-field
+                    #tutorialPeriodEndField
                     class="label-and-input"
                     controlId="tutorial-period-end-input"
                     [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate"
@@ -205,7 +212,9 @@
                         [value]="tutorialPeriodEnd()"
                         (valueChange)="tutorialPeriodEnd.set($event)"
                         (touch)="tutorialPeriodEndInputTouched.set(true)"
+                        (inputValidityChange)="tutorialPeriodEndInputValid.set($event)"
                         [invalid]="tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()"
+                        [ariaDescribedBy]="tutorialPeriodEndField.describedBy()"
                     />
                 </tumaet-ui-form-field>
             </div>

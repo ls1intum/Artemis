@@ -3,9 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService, TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ValidationStatus } from 'app/foundation/util/validation';
@@ -371,6 +372,28 @@ describe('TutorialCreateOrEditComponent', () => {
         setValidScheduleInputs();
         expect(component.saveButtonDisabled()).toBe(false);
         expect(component.saveDisabledReasons()).toEqual([]);
+    });
+
+    it('should block saving when a schedule date is edited into invalid text and unblock once corrected', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+        setValidGeneralInputs();
+        setValidScheduleInputs();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.saveButtonDisabled()).toBe(false);
+
+        // The first picker keeps its last committed date but reports the unparseable text through inputValidityChange.
+        const startPicker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent));
+        startPicker.componentInstance.inputValidityChange.emit(false);
+        fixture.detectChanges();
+
+        expect(component.firstSessionStart()).toEqual(dayjs('2026-04-20T10:15'));
+        expect(component.saveButtonDisabled()).toBe(true);
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartInvalid');
+
+        startPicker.componentInstance.inputValidityChange.emit(true);
+        fixture.detectChanges();
+        expect(component.saveButtonDisabled()).toBe(false);
     });
 
     it('should list the missing general-information fields as reasons the save button is disabled', async () => {
