@@ -1,12 +1,16 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, JsonPipe } from '@angular/common';
-import { TableModule } from 'primeng/table';
-import { TabsModule } from 'primeng/tabs';
-import { PanelModule } from 'primeng/panel';
-import { SelectModule } from 'primeng/select';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPanelComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTableDirective,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +21,8 @@ import { faRobot, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subscription } from 'rxjs';
 import { IrisKpiCardComponent } from './iris-kpi-card/iris-kpi-card.component';
+import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 
 type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: number };
 
@@ -26,17 +32,21 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
     imports: [
         DecimalPipe,
         JsonPipe,
-        TableModule,
-        TabsModule,
-        PanelModule,
-        SelectModule,
-        ButtonModule,
-        MessageModule,
+        TumAetUiTableDirective,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiPanelComponent,
+        TumAetUiSelectComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
         FaIconComponent,
         IrisKpiCardComponent,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
     templateUrl: './iris-dashboard.component.html',
     styleUrls: ['./iris-dashboard.component.scss'],
@@ -54,6 +64,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
     readonly loading = signal(true);
     readonly error = signal(false);
     readonly activeBreakdownTab = signal(0);
+
+    onBreakdownTabChange(value: number | string | undefined): void {
+        if (typeof value === 'number') {
+            this.activeBreakdownTab.set(value);
+        }
+    }
 
     readonly chatModeBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
     readonly courseBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);

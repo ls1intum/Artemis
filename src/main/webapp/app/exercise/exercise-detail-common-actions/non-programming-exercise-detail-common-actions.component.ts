@@ -46,7 +46,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
      * - Course exercises: Teaching assistants (tutors) and above can access
      * - Exam exercises: Only instructors and above can access (more restrictive for exam confidentiality)
      *
-     * This aligns with the access rights documented in docs/admin/access-rights.mdx
+     * This aligns with the access rights documented in documentation/docs/admin/access-rights.mdx
      */
     canAccessParticipationsAndScores = computed(() => {
         const exercise = this.exercise();

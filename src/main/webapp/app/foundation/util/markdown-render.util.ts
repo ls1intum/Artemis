@@ -1,4 +1,4 @@
-import type { PluginSimple } from 'markdown-it';
+import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 
 /**
  * Lazy boundary for the markdown rendering pipeline.
@@ -30,7 +30,7 @@ function loadMarkdownModule(): Promise<typeof import('app/foundation/util/markdo
  */
 export async function renderMarkdownToHtml(
     markdownText?: string,
-    extensions: PluginSimple[] = [],
+    extensions: MarkdownItPlugin[] = [],
     allowedHtmlTags?: string[],
     allowedHtmlAttributes?: string[],
     lineBreaks = false,

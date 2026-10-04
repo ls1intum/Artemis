@@ -16,7 +16,9 @@ export default [
             "/webauthn/",
             "/login/webauthn",
             "/saml2/",
-            "/login/saml2/"
+            "/login/saml2/",
+            "/oauth2/",
+            "/login/oauth2/",
         ],
         target: `http://localhost:8080`,
         secure: false

@@ -1,46 +1,47 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
+import { LectureCreationMode, LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
+import { hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { Subject, of, throwError } from 'rxjs';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
-import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
+import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
-import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { signal } from '@angular/core';
+import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { PDF_UPLOAD_CONFIRMATION_STATE_KEY, PdfUploadConfirmation } from 'app/lecture/manage/lecture-update/pdf-upload-confirmation.model';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -63,17 +64,12 @@ describe('LectureUpdateComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 FormsModule,
-                MockModule(NgbTooltipModule),
                 FontAwesomeTestingModule,
                 LectureUpdateComponent,
                 MockComponent(LectureTitleChannelNameComponent),
-                MockComponent(TitleChannelNameComponent),
-                MockComponent(FormDateTimePickerComponent),
-                MockComponent(LectureAttachmentsComponent),
                 MockComponent(LectureUpdateUnitsComponent),
-                MockComponent(LectureUpdatePeriodComponent),
+                MockComponent(LectureTimelineComponent),
                 MockComponent(LectureUnitManagementComponent),
-                MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -81,7 +77,6 @@ describe('LectureUpdateComponent', () => {
                 MockDirective(MarkdownDirective),
                 MockRouterLinkDirective,
                 MockComponent(UnitCreationCardComponent),
-                MockDirective(CustomNotIncludedInValidatorDirective),
                 MockComponent(PdfDropZoneComponent),
             ],
             providers: [
@@ -105,7 +100,7 @@ describe('LectureUpdateComponent', () => {
         vi.restoreAllMocks();
     });
 
-    async function configureActiveRouteMockAndCompileComponents(parentData: any = { course: { id: 1 } }) {
+    async function configureActiveRouteMockAndCompileComponents(parentData: any = { course: { id: 1 } }, navigationState: Record<string, unknown> = { existingLectures: [] }) {
         const activatedRouteMock = {
             parent: {
                 data: of(parentData),
@@ -125,15 +120,39 @@ describe('LectureUpdateComponent', () => {
 
         await TestBed.compileComponents();
 
+        router = TestBed.inject(Router);
+        // The page reads the navigation while it is created and the history entry when it initializes.
+        vi.spyOn(router, 'currentNavigation').mockReturnValue({
+            extras: { state: navigationState },
+        } as any);
+        TestBed.inject(Location).replaceState('/', '', navigationState);
+
         lectureUpdateComponentFixture = TestBed.createComponent(LectureUpdateComponent);
         lectureUpdateComponent = lectureUpdateComponentFixture.componentInstance;
 
         lectureService = TestBed.inject(LectureService);
-        router = TestBed.inject(Router);
-        vi.spyOn(router, 'currentNavigation').mockReturnValue({
-            extras: { state: { existingLectures: [] } },
-        } as any);
         TestBed.inject(ActivatedRoute);
+    }
+
+    /** A stand-in for the content section with the state the page reads; its content is saved unless a test says otherwise. */
+    function unitSectionWith(state: { hasUnsavedContent?: () => boolean; isSavingContent?: () => boolean; flushBufferedEdits?: () => void } = {}) {
+        return signal({
+            isUnitConfigurationValid: () => true,
+            hasUnsavedContent: state.hasUnsavedContent ?? (() => false),
+            isSavingContent: state.isSavingContent ?? (() => false),
+            flushBufferedEdits: state.flushBufferedEdits ?? vi.fn(),
+        } as any);
+    }
+
+    async function configureValidLectureUpdateForm() {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Test Lecture', channelName: 'test-lecture' } });
+        lectureUpdateComponent.titleSection = signal({ isValid: () => true } as any);
+        lectureUpdateComponent.unitSection = unitSectionWith();
+        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
+
+        lectureUpdateComponent.isPeriodValid.set(true);
+        lectureUpdateComponentFixture.detectChanges();
     }
 
     it('should create lecture', async () => {
@@ -190,21 +209,215 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.save();
         await lectureUpdateComponentFixture.whenStable();
 
-        const expectedPath = ['course-management', 1, 'lectures', 6];
-        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
+        // Saving the details keeps the editor open, so the content below can still be edited.
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(lectureUpdateComponent.lastSavedAt()).toBeDefined();
+        expect(lectureUpdateComponent.lectureOnInit.title).toBe('test1Updated');
+        expect(lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection()).toBe(false);
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(true);
 
         expect(updateSpy).toHaveBeenCalledTimes(1);
-        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated', isTutorialLecture: false });
+        expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 6, title: 'test1Updated', channelName: 'test1Updated' }));
         expect(refreshSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should select process units checkbox', async () => {
+    it('should open the editor of a created lecture in place of the creation page', async () => {
         await configureActiveRouteMockAndCompileComponents();
-        lectureUpdateComponent.processUnitMode.set(false);
-        const selectProcessUnit = vi.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
-        lectureUpdateComponent.onSelectProcessUnit();
-        expect(selectProcessUnit).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.processUnitMode()).toBe(true);
+        lectureUpdateComponent.isEditMode.set(false);
+        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'lecture-test1' } as Lecture);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        vi.spyOn(lectureService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 3, title: 'test1', course: { id: 1 } } as Lecture })));
+
+        lectureUpdateComponent.save();
+        await lectureUpdateComponentFixture.whenStable();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 3, 'edit'], {
+            replaceUrl: true,
+            state: { lectureDetailsSavedAt: expect.any(String) },
+        });
+        // The editor of the new lecture takes over, so the creation page is left without asking.
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(false);
+    });
+
+    it.each([
+        ['cancels the navigation to its editor', () => Promise.resolve(false)],
+        ['cannot load its editor', () => Promise.reject(new Error('The editor could not be loaded'))],
+    ])('should keep the created lecture when the router %s, so saving again updates it', async (_, navigation) => {
+        await configureActiveRouteMockAndCompileComponents();
+        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
+        lectureUpdateComponent.isEditMode.set(false);
+        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'lecture-test1' } as Lecture);
+        vi.spyOn(router, 'navigate').mockImplementation(navigation);
+        const created = new HttpResponse({ body: { id: 3, title: 'test1', course: { id: 1 } } as Lecture });
+        const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(of(created));
+        const updateSpy = vi.spyOn(lectureService, 'update').mockReturnValue(of(created));
+
+        lectureUpdateComponent.save();
+
+        await vi.waitFor(() => expect(lectureUpdateComponent.lecture().id).toBe(3));
+        expect(lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection()).toBe(false);
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(true);
+        lectureUpdateComponent.save();
+        expect(createSpy).toHaveBeenCalledOnce();
+        expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }));
+    });
+
+    it('should keep its own lecture after saving and count what was typed meanwhile as unsaved', async () => {
+        const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
+        await configureActiveRouteMockAndCompileComponents({ course, lecture: { id: 6, title: 'Old title', channelName: 'lecture-old-title', course } });
+        lectureUpdateComponentFixture.detectChanges();
+        const response = new Subject<HttpResponse<Lecture>>();
+        vi.spyOn(lectureService, 'update').mockReturnValue(response);
+
+        lectureUpdateComponent.onLectureChange({ id: 6, title: 'New title', channelName: 'lecture-new-title', course } as Lecture);
+        lectureUpdateComponent.save();
+        lectureUpdateComponent.onLectureChange({ id: 6, title: 'Newer title', channelName: 'lecture-newer-title', course } as Lecture);
+        // The response describes the course only in part, without its communication settings.
+        response.next(new HttpResponse({ body: { id: 6, title: 'New title', channelName: 'lecture-new-title', course: { id: 1 } } as Lecture }));
+
+        expect(lectureUpdateComponent.lecture().course?.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        expect(lectureUpdateComponent.lecture().title).toBe('Newer title');
+        expect(lectureUpdateComponent.lectureOnInit.title).toBe('New title');
+        expect(lectureUpdateComponent.changedSections()).toEqual(['artemisApp.lecture.sections.title']);
+    });
+
+    it('should offer the sections in the title bar, but not while a series is created', async () => {
+        await configureValidLectureUpdateForm();
+        const titleBar = TestBed.inject(CourseTitleBarService);
+        expect(titleBar.actionsTemplate()).toBeDefined();
+
+        lectureUpdateComponent.isEditMode.set(false);
+        lectureUpdateComponent.selectedCreateLectureOption.set(LectureCreationMode.SERIES);
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(titleBar.actionsTemplate()).toBeUndefined();
+    });
+
+    describe('reloading or closing the tab', () => {
+        const unloadEvent = () => ({ preventDefault: vi.fn() }) as unknown as BeforeUnloadEvent;
+
+        it('should ask the browser to confirm while details are unsaved or content is being saved', async () => {
+            await configureValidLectureUpdateForm();
+            const isSavingContent = signal(false);
+            lectureUpdateComponent.unitSection = unitSectionWith({ isSavingContent });
+
+            const quiet = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(quiet);
+            expect(quiet.preventDefault).not.toHaveBeenCalled();
+
+            isSavingContent.set(true);
+            const whileSaving = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(whileSaving);
+            expect(whileSaving.preventDefault).toHaveBeenCalledOnce();
+
+            isSavingContent.set(false);
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+            const withDetails = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(withDetails);
+            expect(withDetails.preventDefault).toHaveBeenCalledOnce();
+        });
+
+        it('should send text the markdown editor still holds before the browser decides, so a reload right after typing asks too', async () => {
+            await configureValidLectureUpdateForm();
+            const isSavingContent = signal(false);
+            const flushBufferedEdits = vi.fn(() => isSavingContent.set(true));
+            lectureUpdateComponent.unitSection = unitSectionWith({ isSavingContent, flushBufferedEdits });
+
+            const event = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(event);
+
+            expect(flushBufferedEdits).toHaveBeenCalledOnce();
+            expect(event.preventDefault).toHaveBeenCalledOnce();
+        });
+
+        it('should keep asking while the details of an existing lecture are saved, since the save does not cover content that could not be saved', async () => {
+            await configureValidLectureUpdateForm();
+            lectureUpdateComponent.unitSection = unitSectionWith({ hasUnsavedContent: () => true });
+            vi.spyOn(lectureService, 'update').mockReturnValue(new Subject<HttpResponse<Lecture>>());
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+
+            lectureUpdateComponent.save();
+
+            expect(lectureUpdateComponent.isSaving()).toBe(true);
+            expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(true);
+            const event = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(event);
+            expect(event.preventDefault).toHaveBeenCalledOnce();
+            const confirmSpy = vi.spyOn(lectureUpdateComponent, 'confirmLeave').mockReturnValue(of(false));
+            hasLectureUnsavedChangesGuard(lectureUpdateComponent, undefined as any, undefined as any, undefined as any);
+            expect(confirmSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not ask after the page decided to leave on purpose', async () => {
+            await configureValidLectureUpdateForm();
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+            lectureUpdateComponent.shouldDisplayDismissWarning = false;
+
+            const event = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(event);
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should not ask about the single lecture form while a series is created', async () => {
+        await configureActiveRouteMockAndCompileComponents();
+        lectureUpdateComponent.isEditMode.set(false);
+        lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+        expect(lectureUpdateComponent.hasUnsavedChanges()).toBe(true);
+
+        lectureUpdateComponent.selectedCreateLectureOption.set(LectureCreationMode.SERIES);
+
+        expect(lectureUpdateComponent.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('should confirm in the editor of a created lecture when it was saved, once', async () => {
+        await configureActiveRouteMockAndCompileComponents(
+            { course: { id: 1 }, lecture: { id: 3, title: 'test1', course: { id: 1 } } },
+            { lectureDetailsSavedAt: '2026-10-01T09:30:00.000Z', navigationId: 3 },
+        );
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.lastSavedAt()?.toISOString()).toBe('2026-10-01T09:30:00.000Z');
+        // A reload or a later step back to this page must not show the time again.
+        expect(TestBed.inject(Location).getState()).toEqual({ navigationId: 3 });
+    });
+
+    it('should close the editor of a created lecture to the lecture list, since going back could leave Artemis', async () => {
+        await configureActiveRouteMockAndCompileComponents(
+            { course: { id: 1 }, lecture: { id: 3, title: 'test1', course: { id: 1 } } },
+            { lectureDetailsSavedAt: '2026-10-01T09:30:00.000Z' },
+        );
+        lectureUpdateComponentFixture.detectChanges();
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        lectureUpdateComponent.previousState();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', '1', 'lectures']);
+    });
+
+    it('should ask again before leaving when saving failed', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
+        lectureUpdateComponentFixture.detectChanges();
+        vi.spyOn(lectureService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        lectureUpdateComponent.save();
+        await lectureUpdateComponentFixture.whenStable();
+
+        expect(lectureUpdateComponent.isSaving()).toBe(false);
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(true);
+    });
+
+    it('should mark the details as changed when the title component reports a change', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title' } });
+        lectureUpdateComponentFixture.detectChanges();
+
+        lectureUpdateComponent.onLectureChange({ id: 6, title: 'New title' } as Lecture);
+
+        expect(lectureUpdateComponent.lecture().title).toBe('New title');
+        expect(lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection()).toBe(true);
+        expect(lectureUpdateComponent.changedSections()).toEqual(['artemisApp.lecture.sections.title']);
     });
 
     it('should navigate to previous state', async () => {
@@ -223,107 +436,111 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
     });
 
-    it('should create a lecture and then redirect to unit split', async () => {
-        await configureActiveRouteMockAndCompileComponents();
-        // Ensure ngOnInit runs first (which sets processUnitMode = false)
+    it('should leave at once without unsaved changes', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title', course: { id: 1 } } });
         lectureUpdateComponentFixture.detectChanges();
-        await lectureUpdateComponentFixture.whenStable();
-
-        lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
-        lectureUpdateComponent.fileName.set('testFile');
-        // Set processUnitMode after initialization to prevent ngOnInit from resetting it
-        lectureUpdateComponent.processUnitMode.set(true);
-        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1', isTutorialLecture: false } as Lecture);
         const navigateSpy = vi.spyOn(router, 'navigate');
+        const confirmationService = lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
 
-        const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(
-            of<HttpResponse<Lecture>>(
-                new HttpResponse({
-                    body: {
-                        id: 3,
-                        title: 'test1',
-                        course: {
-                            id: 1,
-                        },
-                    } as Lecture,
-                }),
-            ),
-        );
+        lectureUpdateComponent.previousState();
 
-        const proceedToUnitSplitSpy = vi.spyOn(lectureUpdateComponent, 'proceedToUnitSplit');
-        lectureUpdateComponent.proceedToUnitSplit();
-        await lectureUpdateComponentFixture.whenStable();
-
-        expect(createSpy).toHaveBeenCalledTimes(1);
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1', isTutorialLecture: false });
-        expect(proceedToUnitSplitSpy).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.processUnitMode()).toBe(true);
-
-        const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-video-units', 'process'];
-        expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName() } });
+        expect(confirmationService.request(undefined)).toBeUndefined();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', '1', 'lectures', '6']);
     });
 
-    it('should call onFileChange on changed file', async () => {
-        await configureActiveRouteMockAndCompileComponents();
-        lectureUpdateComponent.processUnitMode.set(false);
-        await lectureUpdateComponentFixture.whenStable();
-        expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
-
-        const onFileChangeStub = vi.spyOn(lectureUpdateComponent, 'onFileChange');
-
-        const processUnit = lectureUpdateComponentFixture.debugElement.query(By.css('input[name="processUnit"]')).nativeElement;
-        processUnit.checked = true;
-        processUnit.dispatchEvent(new Event('change'));
+    it('should ask before leaving unsaved changes, stay when the user keeps editing and leave without asking again on discard', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title', course: { id: 1 } } });
         lectureUpdateComponentFixture.detectChanges();
-        lectureUpdateComponent.processUnitMode.set(true);
-        lectureUpdateComponentFixture.autoDetectChanges();
-        const fileInput = lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
-        expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
-        fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalledTimes(1);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const confirmationService = lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
+        lectureUpdateComponent.onLectureChange({ id: 6, title: 'New title', course: { id: 1 } } as Lecture);
+
+        lectureUpdateComponent.previousState();
+        confirmationService.request(undefined)?.reject?.();
+
+        // Nothing navigated yet, so the history keeps the entry the user came from.
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(true);
+
+        lectureUpdateComponent.previousState();
+        confirmationService.request(undefined)?.accept();
+
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(false);
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', '1', 'lectures', '6']);
     });
 
-    it('should set lecture start date and end date correctly', async () => {
-        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
-
-        await lectureUpdateComponentFixture.whenStable();
-        lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated' } as Lecture);
-
-        const setDatesSpy = vi.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
-
-        lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(3).date(5);
-        lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(3).date(1);
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(1);
-        // endDate was before startDate, so endDate gets corrected to equal startDate
-        expect(lectureUpdateComponent.lecture().endDate).toEqual(lectureUpdateComponent.lecture().startDate);
-
-        await lectureUpdateComponentFixture.whenStable();
-
-        lectureUpdateComponent.lecture().startDate = undefined;
-        lectureUpdateComponent.lecture().endDate = undefined;
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(2);
-        expect(lectureUpdateComponent.lecture().startDate).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
-
-        await lectureUpdateComponentFixture.whenStable();
-
-        lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(1).date(2);
-        lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(1).date(3);
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(3);
-        if (lectureUpdateComponent.lecture().startDate && lectureUpdateComponent.lecture().endDate) {
-            expect(lectureUpdateComponent.lecture().startDate!.toDate() < lectureUpdateComponent.lecture().endDate!.toDate()).toBe(true);
-        } else {
-            throw new Error('startDate and endDate should not be undefined');
+    describe('Enter in the details', () => {
+        function pressEnter(target: HTMLElement): KeyboardEvent {
+            const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+            target.dispatchEvent(event);
+            return event;
         }
+
+        function addField(type: string): HTMLInputElement {
+            const field = document.createElement('input');
+            field.type = type;
+            lectureUpdateComponentFixture.nativeElement.querySelector('section').appendChild(field);
+            return field;
+        }
+
+        it('should save changed details from a single-line field, as the form of the page did', async () => {
+            await configureValidLectureUpdateForm();
+            const saveSpy = vi.spyOn(lectureUpdateComponent, 'save').mockImplementation(() => {});
+            const textField = addField('text');
+
+            pressEnter(textField);
+            expect(saveSpy).not.toHaveBeenCalled();
+
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+            const event = pressEnter(textField);
+
+            expect(saveSpy).toHaveBeenCalledOnce();
+            expect(event.defaultPrevented).toBe(true);
+        });
+
+        it('should not save from a checkbox, from a field of the content, nor while saving is blocked', async () => {
+            await configureValidLectureUpdateForm();
+            const saveSpy = vi.spyOn(lectureUpdateComponent, 'save').mockImplementation(() => {});
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+
+            pressEnter(addField('checkbox'));
+            const contentField = document.createElement('input');
+            contentField.type = 'text';
+            lectureUpdateComponentFixture.nativeElement.querySelector('jhi-lecture-update-units').appendChild(contentField);
+            pressEnter(contentField);
+            lectureUpdateComponent.isPeriodValid.set(false);
+            pressEnter(addField('text'));
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should move the keyboard focus to the section the user jumps to', async () => {
+        await configureValidLectureUpdateForm();
+
+        lectureUpdateComponent.scrollToSection('artemisApp.lecture.sections.title');
+
+        expect(document.activeElement?.id).toBe('artemisApp.lecture.sections.title');
+    });
+
+    it('should disable saving when the timeline is invalid', async () => {
+        await configureValidLectureUpdateForm();
+
+        lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.saveBlockedReason()).toBeUndefined();
+        const saveButton = lectureUpdateComponentFixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+        expect(saveButton.getAttribute('aria-disabled')).toBe('false');
+
+        lectureUpdateComponent.isPeriodValid.set(false);
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+        expect(lectureUpdateComponent.saveBlockedReason()).toBe('artemisApp.lecture.editFooter.periodInvalid');
+        const saveSpy = vi.spyOn(lectureUpdateComponent, 'save');
+        saveButton.click();
+        expect(saveSpy).not.toHaveBeenCalled();
     });
 
     describe('isChangeMadeToTitleSection', () => {
@@ -357,6 +574,21 @@ describe('LectureUpdateComponent', () => {
     });
 
     describe('isChangeMadeToPeriodSection', () => {
+        it('should store the emitted period validity and update the period change state when dates change', async () => {
+            await configureActiveRouteMockAndCompileComponents();
+            lectureUpdateComponentFixture.detectChanges();
+            lectureUpdateComponent.lectureOnInit = { startDate: dayjs(), endDate: dayjs().add(1, 'day') } as Lecture;
+            lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'days'), endDate: dayjs().add(3, 'days') } as Lecture);
+            const timeline = lectureUpdateComponentFixture.debugElement.query(By.directive(LectureTimelineComponent)).componentInstance as LectureTimelineComponent;
+
+            timeline.periodValidChange.emit(false);
+            timeline.datesChanged.emit();
+
+            expect(lectureUpdateComponent.isPeriodValid()).toBe(false);
+            expect(lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection()).toBe(true);
+            expect(lectureUpdateComponent.changedSections()).toEqual(['artemisApp.lecture.sections.period']);
+        });
+
         it('should detect changes made to the period section', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
@@ -388,14 +620,8 @@ describe('LectureUpdateComponent', () => {
         it('should update form status bar correctly in edit mode', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.isEditMode.set(true);
-            lectureUpdateComponent.titleSection = signal({
-                titleChannelNameComponent: () => ({
-                    isValid: () => true,
-                }),
-            } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => true,
-            } as any);
+            lectureUpdateComponent.titleSection = signal({ isValid: () => true } as any);
+            lectureUpdateComponent.isPeriodValid.set(true);
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => true,
             } as any);
@@ -412,14 +638,8 @@ describe('LectureUpdateComponent', () => {
         it('should update form status bar correctly in create mode', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.isEditMode.set(false);
-            lectureUpdateComponent.titleSection = signal({
-                titleChannelNameComponent: () => ({
-                    isValid: () => false,
-                }),
-            } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => true,
-            } as any);
+            lectureUpdateComponent.titleSection = signal({ isValid: () => false } as any);
+            lectureUpdateComponent.isPeriodValid.set(true);
 
             lectureUpdateComponent.updateFormStatusBar();
 
@@ -432,14 +652,8 @@ describe('LectureUpdateComponent', () => {
         it('should handle invalid sections correctly', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.isEditMode.set(true);
-            lectureUpdateComponent.titleSection = signal({
-                titleChannelNameComponent: () => ({
-                    isValid: () => false,
-                }),
-            } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => false,
-            } as any);
+            lectureUpdateComponent.titleSection = signal({ isValid: () => false } as any);
+            lectureUpdateComponent.isPeriodValid.set(false);
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => false,
             } as any);
@@ -451,6 +665,208 @@ describe('LectureUpdateComponent', () => {
                 { title: 'artemisApp.lecture.sections.period', valid: false },
                 { title: 'artemisApp.lecture.sections.units', valid: false },
             ]);
+        });
+    });
+
+    describe('leaving with unsaved changes', () => {
+        async function requestDecision() {
+            await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title' } });
+            lectureUpdateComponentFixture.detectChanges();
+            lectureUpdateComponent.onLectureChange({ id: 6, title: 'New title' } as Lecture);
+            const confirmationService = lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+            const decisions: boolean[] = [];
+            lectureUpdateComponent.confirmLeave().subscribe((decision) => decisions.push(decision));
+            return { decisions, request: confirmationService.request(undefined) };
+        }
+
+        it('should close a dialog nobody waits for anymore', async () => {
+            await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title' } });
+            lectureUpdateComponentFixture.detectChanges();
+            lectureUpdateComponent.onLectureChange({ id: 6, title: 'New title' } as Lecture);
+            const confirmationService = lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+            const subscription = lectureUpdateComponent.confirmLeave().subscribe();
+            expect(confirmationService.request(undefined)).toBeDefined();
+            subscription.unsubscribe();
+
+            expect(confirmationService.request(undefined)).toBeUndefined();
+        });
+
+        it('should name the changed sections and discard the changes on accept', async () => {
+            const { decisions, request } = await requestDecision();
+
+            expect(request?.message).toContain('artemisApp.lecture.dismissChangesModal.message');
+            expect(request?.acceptLabel).toContain('entity.action.discardChanges');
+            request?.accept();
+
+            expect(decisions).toEqual([true]);
+        });
+
+        it('should keep editing on reject', async () => {
+            const { decisions, request } = await requestDecision();
+
+            request?.reject?.();
+
+            expect(decisions).toEqual([false]);
+        });
+
+        it('should ask before content that could not be saved is left, and name the content', async () => {
+            await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title' } });
+            const hasUnsavedContent = signal(false);
+            lectureUpdateComponent.unitSection = unitSectionWith({ hasUnsavedContent });
+            lectureUpdateComponentFixture.detectChanges();
+            expect(lectureUpdateComponent.hasUnsavedChanges()).toBe(false);
+
+            hasUnsavedContent.set(true);
+
+            expect(lectureUpdateComponent.hasUnsavedChanges()).toBe(true);
+            // Only the details count as changed, which Save saves; the content saves itself.
+            expect(lectureUpdateComponent.changedSections()).toEqual([]);
+            const instantSpy = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+            lectureUpdateComponent.confirmLeave().subscribe();
+            expect(instantSpy).toHaveBeenCalledWith('artemisApp.lecture.dismissChangesModal.message', { sections: 'artemisApp.lecture.sections.units' });
+            expect(instantSpy).not.toHaveBeenCalledWith('artemisApp.lecture.dismissChangesModal.stillSaving');
+        });
+
+        it('should say that content still being saved is saved anyway when changes are discarded', async () => {
+            await configureValidLectureUpdateForm();
+            lectureUpdateComponent.unitSection = unitSectionWith({ hasUnsavedContent: () => true, isSavingContent: () => true });
+            const confirmationService = lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+            lectureUpdateComponent.confirmLeave().subscribe();
+
+            const request = confirmationService.request(undefined);
+            expect(request?.header).toBe('artemisApp.lecture.dismissChangesModal.title');
+            expect(request?.message).toContain('artemisApp.lecture.dismissChangesModal.stillSaving');
+        });
+
+        it('should not close a newer dialog when an older decision is no longer needed', async () => {
+            await configureValidLectureUpdateForm();
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+            const confirmationService = lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
+            const older = lectureUpdateComponent.confirmLeave().subscribe();
+            const olderRequest = confirmationService.request(undefined);
+            lectureUpdateComponent.confirmLeave().subscribe();
+            const newerRequest = confirmationService.request(undefined);
+            expect(newerRequest).not.toBe(olderRequest);
+
+            // The router unsubscribes the guard of a navigation that a newer one superseded.
+            older.unsubscribe();
+
+            expect(confirmationService.request(undefined)).toBe(newerRequest);
+        });
+    });
+
+    describe('leaving while content is still being saved', () => {
+        async function setUp(state: { hasUnsavedContent?: () => boolean; isSavingContent?: () => boolean; flushBufferedEdits?: () => void }) {
+            await configureValidLectureUpdateForm();
+            lectureUpdateComponent.unitSection = unitSectionWith(state);
+            return lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
+        }
+
+        it('should send the edits the content still holds back before it decides', async () => {
+            const isSavingContent = signal(false);
+            const confirmationService = await setUp({ isSavingContent, flushBufferedEdits: () => isSavingContent.set(true) });
+
+            lectureUpdateComponent.confirmLeave().subscribe();
+
+            expect(confirmationService.request(undefined)?.header).toBe('artemisApp.lecture.leaveWhileSavingModal.title');
+        });
+
+        it('should keep the user on the page by default and leave only on purpose', async () => {
+            const confirmationService = await setUp({ isSavingContent: () => true });
+            const decisions: boolean[] = [];
+
+            lectureUpdateComponent.confirmLeave().subscribe((decision) => decisions.push(decision));
+            const request = confirmationService.request(undefined)!;
+            // Escape and the close button reject, so they keep the user on the page, like the primary button.
+            expect(request.rejectLabel).toBe('artemisApp.lecture.dismissChangesModal.keepEditing');
+            expect(request.rejectSeverity).toBe('primary');
+            expect(request.acceptLabel).toBe('artemisApp.lecture.leaveWhileSavingModal.leave');
+            request.reject!();
+            lectureUpdateComponent.confirmLeave().subscribe((decision) => decisions.push(decision));
+            confirmationService.request(undefined)!.accept();
+
+            expect(decisions).toEqual([false, true]);
+        });
+
+        it('should leave without asking once the content is saved', async () => {
+            const confirmationService = await setUp({});
+            const decisions: boolean[] = [];
+
+            lectureUpdateComponent.confirmLeave().subscribe((decision) => decisions.push(decision));
+
+            expect(decisions).toEqual([true]);
+            expect(confirmationService.request(undefined)).toBeUndefined();
+        });
+
+        it('should go back once when Close is pressed again while the dialog is open', async () => {
+            const confirmationService = await setUp({ isSavingContent: () => true });
+            const leaveSpy = vi.spyOn(TestBed.inject(ArtemisNavigationUtilService), 'navigateBackWithOptional').mockImplementation(() => {});
+
+            lectureUpdateComponent.previousState();
+            lectureUpdateComponent.previousState();
+            confirmationService.request(undefined)!.accept();
+
+            expect(leaveSpy).toHaveBeenCalledOnce();
+            expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(false);
+        });
+
+        it('should close its dialog when the page is destroyed', async () => {
+            const confirmationService = await setUp({ isSavingContent: () => true });
+
+            lectureUpdateComponent.previousState();
+            expect(confirmationService.request(undefined)).toBeDefined();
+            lectureUpdateComponentFixture.destroy();
+
+            expect(confirmationService.request(undefined)).toBeUndefined();
+        });
+    });
+
+    describe('PDF upload confirmation', () => {
+        const confirmation: PdfUploadConfirmation = { lectureCreated: true, fileNames: ['Introduction.pdf'], releaseDate: '2026-10-01T08:00:00.000Z' };
+
+        it('should confirm the lecture created from a dropped PDF until it is dismissed', async () => {
+            await configureActiveRouteMockAndCompileComponents(
+                { course: { id: 1 }, lecture: { id: 6, title: 'Introduction' } },
+                { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: confirmation },
+            );
+            lectureUpdateComponentFixture.detectChanges();
+
+            expect(lectureUpdateComponent.pdfUploadConfirmationText()).toEqual(
+                expect.objectContaining({
+                    title: 'artemisApp.lecture.pdfUpload.createdTitle',
+                    body: 'artemisApp.lecture.pdfUpload.createdSingle',
+                    params: { title: 'Introduction', fileName: 'Introduction.pdf', count: 1 },
+                    release: 'artemisApp.lecture.pdfUpload.releaseSingle',
+                }),
+            );
+            expect(lectureUpdateComponentFixture.nativeElement.querySelector('[data-testid="pdf-upload-confirmation"]')).toBeTruthy();
+
+            const location = TestBed.inject(Location);
+            location.replaceState('/', '', { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: confirmation, navigationId: 2 });
+            lectureUpdateComponent.dismissPdfUploadConfirmation();
+            lectureUpdateComponentFixture.detectChanges();
+
+            expect(lectureUpdateComponentFixture.nativeElement.querySelector('[data-testid="pdf-upload-confirmation"]')).toBeFalsy();
+            // The dismiss button is gone, so the keyboard focus continues at the details.
+            expect(document.activeElement?.id).toBe('artemisApp.lecture.sections.title');
+            // Reloading the page must not confirm the upload a second time.
+            expect(location.getState()).toEqual({ navigationId: 2 });
+        });
+
+        it('should word the confirmation for several files added to an existing lecture', async () => {
+            const addedFiles: PdfUploadConfirmation = { lectureCreated: false, fileNames: ['a.pdf', 'b.pdf'] };
+            await configureActiveRouteMockAndCompileComponents(
+                { course: { id: 1 }, lecture: { id: 6, title: 'Introduction' } },
+                { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: addedFiles },
+            );
+            lectureUpdateComponentFixture.detectChanges();
+
+            expect(lectureUpdateComponent.pdfUploadConfirmationText()).toEqual(
+                expect.objectContaining({ title: 'artemisApp.lecture.pdfUpload.addedTitle', body: 'artemisApp.lecture.pdfUpload.addedMultiple', release: undefined }),
+            );
         });
     });
 });

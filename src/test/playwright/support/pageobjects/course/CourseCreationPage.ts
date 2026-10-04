@@ -2,7 +2,7 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { COURSE_ADMIN_BASE } from '../../constants';
-import { enterDate, readResponseJson } from '../../utils';
+import { fillDateTimePicker, readResponseJson } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the course creation page.
@@ -42,14 +42,14 @@ export class CourseCreationPage {
      * @param date the date when the course starts
      */
     async setStartDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#field_startDate', date);
+        await fillDateTimePicker(this.page.locator('#field_startDate_input'), date);
     }
 
     /**
      * @param date the date when the course will end
      */
     async setEndDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#field_endDate', date);
+        await fillDateTimePicker(this.page.locator('#field_endDate_input'), date);
     }
 
     /**
@@ -66,11 +66,11 @@ export class CourseCreationPage {
     }
 
     /**
-     * Sets semester for the course
+     * Sets semester for the course. Selecting it also fills in the start and end date unless they were set by hand.
      * @param semester the semester of the course
      */
     async setSemester(semester: string) {
-        await this.page.locator('#semester').selectOption(semester);
+        await this.selectOption('#semester', semester);
     }
 
     /**
@@ -86,52 +86,17 @@ export class CourseCreationPage {
      * @param programmingLanguage the programming language
      */
     async setProgrammingLanguage(programmingLanguage: string) {
-        await this.page.locator('#programmingLanguage').selectOption(programmingLanguage);
+        await this.selectOption('#programmingLanguage', programmingLanguage);
     }
 
     /**
-     * Sets if the course group names should be customized
-     * @param customizeGroupNames customize the group names
+     * Picks an option of a TUM AET UI select, which opens a listbox rather than being a native select.
+     * @param triggerSelector the selector of the select's trigger
+     * @param label the visible label of the option
      */
-    async setCustomizeGroupNames(customizeGroupNames: boolean) {
-        const selector = this.page.locator('#field_customizeGroupNamesEnabled');
-        if (customizeGroupNames) {
-            await selector.check();
-        } else {
-            await selector.uncheck();
-        }
-    }
-
-    /**
-     * Sets the customized group name for students
-     * @param groupName the group name
-     */
-    async setStudentGroup(groupName: string) {
-        await this.page.locator('#field_studentGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for tutors
-     * @param groupName the group name
-     */
-    async setTutorGroup(groupName: string) {
-        await this.page.locator('#field_teachingAssistantGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for editors
-     * @param groupName the group name
-     */
-    async setEditorGroup(groupName: string) {
-        await this.page.locator('#field_editorGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for instructors
-     * @param groupName the group name
-     */
-    async setInstructorGroup(groupName: string) {
-        await this.page.locator('#field_instructorGroupName').fill(groupName);
+    private async selectOption(triggerSelector: string, label: string) {
+        await this.page.locator(triggerSelector).click();
+        await this.page.getByRole('option', { name: label, exact: true }).click();
     }
 
     /**

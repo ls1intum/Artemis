@@ -81,7 +81,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
     }
 
     @Test
@@ -188,7 +188,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + sourceLecture.getId() + "&courseId=" + course.getId(), null,
                 LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
 
-        Lecture newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(importedLectureDto.id());
+        Lecture newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(importedLectureDto.id());
         TextUnit importedTextUnit = (TextUnit) newlyImportedLecture.getLectureUnits().stream().filter(u -> u instanceof TextUnit).findFirst().orElseThrow();
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {

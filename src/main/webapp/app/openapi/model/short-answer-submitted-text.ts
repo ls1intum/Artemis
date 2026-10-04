@@ -11,7 +11,6 @@
 import type { ShortAnswerSpot } from './short-answer-spot';
 
 export interface ShortAnswerSubmittedText {
-    id?: number;
     text?: string;
     isCorrect?: boolean;
     spot?: ShortAnswerSpot;

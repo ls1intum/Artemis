@@ -3,9 +3,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Params, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -43,6 +45,7 @@ import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 
 describe('FileUploadAssessmentComponent', () => {
     let component: FileUploadAssessmentComponent;
@@ -145,6 +148,7 @@ describe('FileUploadAssessmentComponent', () => {
                     useValue: {
                         params: routeParams$.asObservable(),
                         queryParamMap: routeQueryParams$.asObservable(),
+                        snapshot: { queryParams: { 'correction-round': '0', testRun: 'false' } },
                     },
                 },
                 {
@@ -245,6 +249,64 @@ describe('FileUploadAssessmentComponent', () => {
             expect(component.correctionRound()).toBe(1);
         });
 
+        it.each([
+            { param: '1', expectedRound: 1, description: 'a usable round' },
+            { param: undefined, expectedRound: 0, description: 'an absent round' },
+            { param: '   ', expectedRound: 0, description: 'a whitespace only round' },
+            { param: 'abc', expectedRound: 0, description: 'a round that is not a number' },
+            { param: '1.5', expectedRound: 0, description: 'a fractional round' },
+            { param: '-1', expectedRound: 0, description: 'a negative round' },
+            { param: '1e3', expectedRound: 0, description: 'an exponential round' },
+        ])('should request the submission for $description', ({ param, expectedRound }) => {
+            // The round is requested from the server and then used to index the loaded results, so an unusable value must
+            // not travel on as NaN, a fraction or a negative number. The URL decides, and no usable value means the
+            // first round, so the same URL always opens the same round (#13396).
+            routeQueryParams$.next(convertToParamMap(param === undefined ? { testRun: 'false' } : { testRun: 'false', 'correction-round': param }));
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+
+            component.ngOnInit();
+
+            expect(component.correctionRound()).toBe(expectedRound);
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(7, expectedRound, 0);
+        });
+
+        it('should open the first round for a url without the parameter even on a reused component', () => {
+            // This component is reused for the next submission, so the round has to come from the url every time rather
+            // than being kept from the submission before: a url that names no round must open the first one, otherwise
+            // the same url shows different rounds depending on how it was reached.
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            component.ngOnInit();
+            expect(component.correctionRound()).toBe(1);
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false' }));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
+
+            expect(component.correctionRound()).toBe(0);
+            expect(getSpy).toHaveBeenLastCalledWith(8, 0, 0);
+        });
+
+        it('should keep the round it loaded when only the correction round in the url changes', () => {
+            // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+            // hand-editing the address bar — starts no new load. The round it shows must then stay the round the
+            // submission was requested with, because the same value indexes the results of that submission.
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            component.ngOnInit();
+            expect(component.correctionRound()).toBe(1);
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '0' }));
+
+            expect(component.correctionRound()).toBe(1);
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(7, 1, 0);
+        });
+
         it('should extract route params for course and exercise', () => {
             const submission = createSubmission();
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
@@ -276,15 +338,33 @@ describe('FileUploadAssessmentComponent', () => {
             expect(getWithoutAssessmentSpy).toHaveBeenCalledWith(20, true, 0);
         });
 
+        it('should keep the exam route and query parameters when replacing new with the loaded submission id', () => {
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 'new', examId: 5, exerciseGroupId: 10 });
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(submission));
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree').mockReturnValue({ toString: () => '/rewritten' } as unknown as UrlTree);
+            const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+            component.ngOnInit();
+
+            expect(createUrlTreeSpy).toHaveBeenCalledExactlyOnceWith(
+                ['/course-management', '123', 'exams', '5', 'exercise-groups', '10', 'file-upload-exercises', '20', 'submissions', '2278', 'assessment'],
+                { queryParams: { 'correction-round': '0', testRun: 'false' } },
+            );
+            expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
+        });
+
         it('should navigate back and show alert when no optimal submission is available', () => {
             routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 'new' });
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
             const alertSpy = vi.spyOn(alertService, 'info');
-            vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
             component.exercise.set(createExercise());
             component.ngOnInit();
 
+            expect(navigateSpy).toHaveBeenCalledWith('/course-management/123/assessment-dashboard/20');
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.noSubmissions');
         });
 
@@ -400,6 +480,65 @@ describe('FileUploadAssessmentComponent', () => {
             component.ngOnInit();
 
             expect(alertErrorSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('when assessment is not possible yet', () => {
+        // The submission exists and the student may still change it, so the page has to say that the exam is not over
+        // yet — the "submission not found" state it shows for any other load error would contradict that.
+        const notPossibleYetResponse = () =>
+            new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+
+        it('should explain the wait instead of claiming that the submission was not found', () => {
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            expect(component.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.fileUploadAssessment.notFound"]'))).toBeNull();
+            // a toast would fade and leave only the misleading state behind, so the page carries the explanation
+            expect(alertErrorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the explanation when the next submission is loaded into the reused component', () => {
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+            component.ngOnInit();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
+
+            expect(component.assessmentNotPossibleYet()).toBeUndefined();
+            expect(component.submission()).toBe(submission);
+        });
+
+        it('should replace an already loaded assessment when the next submission turns out to be blocked', () => {
+            // the exam can be extended while the tutor is correcting, so a loaded assessment does not mean the next
+            // one is assessable — the previous submission must not stay on screen in place of the explanation
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+
+            component.ngOnInit();
+            expect(component.submission()).toBe(submission);
+
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
+            fixture.detectChanges();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.result()).toBeUndefined();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
         });
     });
 
@@ -622,7 +761,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.onCancelAssessment();
 
-            expect(cancelSpy).toHaveBeenCalledWith(component.submission()!.id);
+            expect(cancelSpy).toHaveBeenCalledWith(component.submission()!.id, component.result()?.id);
         });
 
         it('should not cancel assessment when user declines confirmation', () => {
@@ -660,19 +799,28 @@ describe('FileUploadAssessmentComponent', () => {
             nextSubmission.participation = nextParticipation;
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(nextSubmission));
             const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            component.correctionRound.set(1);
 
             component.assessNext();
 
-            expect(navigateSpy).toHaveBeenCalled();
+            // Assert the exact navigation contract: the correction round has to travel with the next submission, and it
+            // has to be merged rather than replace the query string, otherwise testRun is dropped on the way.
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', '123', 'file-upload-exercises', '20', 'submissions', '999', 'assessment'], {
+                queryParams: { 'correction-round': 1 },
+                queryParamsHandling: 'merge',
+            });
             expect(component.isLoading()).toBe(false);
         });
 
-        it('should clear submission when no next submission is available', () => {
+        it('should navigate back and show an info alert when no next submission is available', () => {
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const alertInfoSpy = vi.spyOn(alertService, 'info');
 
             component.assessNext();
 
-            expect(component.submission()).toBeUndefined();
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith('/course-management/123/assessment-dashboard/20');
+            expect(alertInfoSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exerciseAssessmentDashboard.noSubmissions');
         });
 
         it('should show error alert on fetch failure', () => {
@@ -687,10 +835,31 @@ describe('FileUploadAssessmentComponent', () => {
         it('should reset unreferencedFeedback when loading next assessment', () => {
             component.unreferencedFeedback.set([createFeedback()]);
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
             component.assessNext();
 
             expect(component.unreferencedFeedback()).toHaveLength(0);
+        });
+
+        it('should say when assessment is possible instead of reporting a missing authorization', () => {
+            // an exam can re-open while the tutor is correcting, e.g. when a student is granted more working time
+            vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 403,
+                            error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+                        }),
+                ),
+            );
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.assessNext();
+
+            // the current assessment stays on the page, so this one belongs in an alert
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, expect.anything());
+            expect(alertErrorSpy).not.toHaveBeenCalledWith('error.http.403');
         });
     });
 

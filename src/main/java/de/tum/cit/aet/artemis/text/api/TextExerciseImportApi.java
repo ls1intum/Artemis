@@ -34,12 +34,12 @@ public class TextExerciseImportApi extends AbstractTextApi {
         return textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(exerciseId);
     }
 
-    public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
-        return textExerciseImportService.importTextExercise(templateExercise, importedExercise);
+    public TextExercise importTextExercise(final TextExercise newExercise, final TextExercise sourceExercise) {
+        return textExerciseImportService.importTextExercise(newExercise, sourceExercise);
     }
 
-    public Optional<TextExercise> importTextExercise(final long templateExerciseId, final TextExercise exerciseToCopy) {
-        final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findWithExampleSubmissionsAndResultsAndGradingCriteriaById(templateExerciseId);
-        return optionalOriginalTextExercise.map(textExercise -> textExerciseImportService.importTextExercise(textExercise, exerciseToCopy));
+    public Optional<TextExercise> importTextExercise(final long sourceExerciseId, final TextExercise newExercise) {
+        final Optional<TextExercise> optionalSourceExercise = textExerciseRepository.findWithExampleSubmissionsAndResultsAndGradingCriteriaById(sourceExerciseId);
+        return optionalSourceExercise.map(sourceExercise -> textExerciseImportService.importTextExercise(newExercise, sourceExercise));
     }
 }

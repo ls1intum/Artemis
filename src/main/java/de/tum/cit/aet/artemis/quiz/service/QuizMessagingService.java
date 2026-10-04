@@ -2,20 +2,22 @@ package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.quiz.domain.QuizAction.START_BATCH;
+import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.COURSE_QUIZ_EXERCISES;
+import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.QUIZ_BATCH;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -31,15 +33,14 @@ public class QuizMessagingService {
 
     private static final Logger log = LoggerFactory.getLogger(QuizMessagingService.class);
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final GroupNotificationService groupNotificationService;
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public QuizMessagingService(MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter, GroupNotificationService groupNotificationService,
-            WebsocketMessagingService websocketMessagingService) {
-        this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
+    public QuizMessagingService(JsonMapper objectMapper, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService) {
+        this.objectMapper = objectMapper;
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
     }
@@ -70,24 +71,22 @@ public class QuizMessagingService {
                 var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
                 // Create a group notification if actions is 'start-now'. The fan-out to (potentially thousands of)
                 // students runs asynchronously so it does not block the HTTP response of the lifecycle action that
-                // triggered this broadcast (see GroupNotificationService#notifyStudentGroupAboutQuizExerciseStartAsync).
+                // triggered this broadcast (see GroupNotificationService#notifyStudentsAboutQuizExerciseStartAsync).
                 // Primitives are resolved here on the caller's session before the async handoff. The surrounding
                 // isCourseExercise() guard already excludes exam exercises, so no extra exam check is needed here.
                 if (quizChange == QuizAction.START_NOW) {
-                    groupNotificationService.notifyStudentGroupAboutQuizExerciseStartAsync(course.getId(), course.getTitle(), course.getCourseIcon(), course.getStudentGroupName(),
-                            quizExercise.getId(), quizExercise.getExerciseNotificationTitle());
+                    groupNotificationService.notifyStudentsAboutQuizExerciseStartAsync(course.getId(), course.getTitle(), course.getCourseIcon(), quizExercise.getId(),
+                            quizExercise.getExerciseNotificationTitle());
                 }
                 // Send quiz via websocket.
-                String destination = "/topic/courses/" + course.getId() + "/quizExercises";
-                if (quizChange == START_BATCH && quizBatch != null) {
-                    destination = destination + "/" + quizBatch.getId();
-                }
+                WebsocketDestination destination = quizChange == START_BATCH && quizBatch != null ? QUIZ_BATCH.at(course.getId(), quizBatch.getId())
+                        : COURSE_QUIZ_EXERCISES.at(course.getId());
                 // TODO the view could also be passed as conversion hint to the message converter
                 websocketMessagingService.sendMessage(destination, MessageBuilder.withPayload(payload).build());
                 log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
             }
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Exception occurred while serializing quiz exercise", e);
         }
     }

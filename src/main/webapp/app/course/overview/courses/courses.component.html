@@ -2,7 +2,16 @@
     <div>
         <h3 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.examTitle" [translateValues]="{ course: nextRelevantCourseForExam()?.title }"></h3>
         <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center exam-container px-3" (click)="openExam()">
+            <div
+                class="d-flex justify-content-between align-items-center exam-container px-3"
+                (click)="openExam()"
+                #keyboardAction5
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
+            >
                 <div class="mb-4 mt-4 d-flex" style="width: unset">
                     <fa-icon [icon]="faPenAlt" size="2x" />
                     <h4 class="ms-2 fw-medium">{{ nextRelevantExam()?.title }}</h4>
@@ -26,23 +35,37 @@
             <div class="text-primary d-inline-flex">
                 <button
                     id="test-sort"
+                    tumAetUiButton
                     type="button"
+                    variant="text"
+                    size="small"
                     (click)="onSort()"
-                    class="btn btn-link p-0 border-0 text-decoration-none text-primary d-inline-flex align-items-center"
                     [attr.aria-label]="'artemisApp.studentDashboard.sort' | artemisTranslate"
                 >
                     <fa-icon [icon]="isSortAscending() ? faArrowDownAZ : faArrowUpAZ" />
-                    <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.studentDashboard.sort"></span>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.studentDashboard.sort"></span>
                 </button>
             </div>
             <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="my-0" />
-            @if (regularCourses().length) {
-                <div class="col-sm-auto d-flex">
-                    <a class="btn btn-primary" [routerLink]="['/courses/enroll']">
+            @if (coursesLoaded()) {
+                <div class="flex sm:w-auto">
+                    <a id="course-enrollment" tumAetUiButton [severity]="canRequestCourse() || isAdmin() ? 'secondary' : 'primary'" [routerLink]="['/courses/enroll']" size="small">
                         <fa-icon [icon]="faDoorOpen" />
-                        <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.studentDashboard.enroll.title"></span>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.studentDashboard.enroll.title"></span>
                     </a>
                 </div>
+            }
+            @if (canRequestCourse()) {
+                <a tumAetUiButton id="request-course" [routerLink]="['/course-requests']" size="small">
+                    <fa-icon [icon]="faBook" />
+                    <span jhiTranslate="global.menu.courseRequests"></span>
+                </a>
+            }
+            @if (isAdmin()) {
+                <a tumAetUiButton id="create-course" size="small" [routerLink]="['/course-management/new']">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.course.home.createLabel"></span>
+                </a>
             }
         </div>
     </div>
@@ -58,16 +81,21 @@
         }
     }
     @if (coursesLoaded() && !regularCourses().length && !recentlyAccessedCourses().length) {
-        <div class="mt-5 mb-5 d-flex flex-column gap-3">
-            <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
-            <div class="col-sm-auto d-flex justify-content-center">
-                <a class="btn btn-primary" [routerLink]="['/courses/enroll']" jhiTranslate="artemisApp.studentDashboard.enroll.title"></a>
+        @if (!testCourses().length) {
+            <div>
+                <h4 class="text-center text-muted-color" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
             </div>
-        </div>
+        }
     } @else {
         <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: regularCourses() }" />
     }
 </div>
+@if (testCourses().length) {
+    <div class="mt-4">
+        <h3 class="mb-4 font-medium">{{ 'artemisApp.studentDashboard.testCourses' | artemisTranslate }} ({{ testCourses().length }})</h3>
+        <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: testCourses() }" />
+    </div>
+}
 @if (coursesLoaded()) {
     <div class="d-flex justify-content-center mt-5 mb-3">
         <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>

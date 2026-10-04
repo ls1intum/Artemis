@@ -1,0 +1,14 @@
+# Envoy Gateway GatewayClass that references the EnvoyProxy in this folder,
+# applying the MetalLB pool + dual-stack customization to every Gateway of this
+# class. Set gateway.className=envoy in your chart values.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: artemis-envoy-proxy
+    namespace: envoy-gateway-system

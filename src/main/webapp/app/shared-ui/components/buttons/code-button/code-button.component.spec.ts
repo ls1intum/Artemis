@@ -128,7 +128,7 @@ describe('CodeButtonComponent', () => {
     it('should initialize', async () => {
         fixture.componentRef.setInput('participations', [participation]);
 
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         component.onClick();
         fixture.detectChanges();
         expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
@@ -137,10 +137,37 @@ describe('CodeButtonComponent', () => {
         expect(getCachedSshKeysSpy).toHaveBeenCalled();
     });
 
+    it('should default to token authentication when password was stored in local storage', async () => {
+        localStorageState = RepositoryAuthenticationMethod.Password;
+        fixture.componentRef.setInput('participations', [participation]);
+        await component['initializeCodeButtonComponent']();
+        fixture.detectChanges();
+
+        component.onClick();
+        fixture.detectChanges();
+
+        expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
+        expect(component.useToken()).toBe(true);
+        expect(localStorageMock.store).toHaveBeenCalledWith('code-button-state', RepositoryAuthenticationMethod.Token);
+    });
+
+    it('should preserve SSH preference from local storage', async () => {
+        localStorageState = RepositoryAuthenticationMethod.SSH;
+        fixture.componentRef.setInput('participations', [participation]);
+        await component['initializeCodeButtonComponent']();
+        fixture.detectChanges();
+
+        component.onClick();
+        fixture.detectChanges();
+
+        expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.SSH);
+        expect(component.useSsh()).toBe(true);
+    });
+
     it('should not load participation vcsAccessToken when it already exists in participation', async () => {
         participation.vcsAccessToken = 'vcpat-1234';
         fixture.componentRef.setInput('participations', [participation]);
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         component.onClick();
         fixture.detectChanges();
 
@@ -151,7 +178,7 @@ describe('CodeButtonComponent', () => {
 
     it('should load participation vcsAccessToken if it exists on the server', async () => {
         fixture.componentRef.setInput('participations', [participation]);
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
@@ -164,7 +191,7 @@ describe('CodeButtonComponent', () => {
     it('should only display available authentication mechanisms', async () => {
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Password;
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
 
         component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
         component.onClick();
@@ -186,12 +213,12 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
             expect(component.isBaseRepository()).toBe(true);
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(42, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(42, 'TEMPLATE', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
             expect(createRepoTokenSpy).not.toHaveBeenCalled();
         });
@@ -200,11 +227,11 @@ describe('CodeButtonComponent', () => {
             getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             fixture.componentRef.setInput('repositoryType', 'SOLUTION');
             fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
-            expect(createRepoTokenSpy).toHaveBeenCalledWith(42, 'SOLUTION', undefined);
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(42, 'SOLUTION', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
         });
 
@@ -212,7 +239,7 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('repositoryType', 'TESTS');
             fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
             fixture.componentRef.setInput('participations', [participation]);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
@@ -223,11 +250,11 @@ describe('CodeButtonComponent', () => {
             // The exercise detail view only knows the exercise id, not the full exercise object.
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
         });
 
@@ -235,11 +262,11 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('repositoryType', 'AUXILIARY');
             fixture.componentRef.setInput('exerciseId', 7);
             fixture.componentRef.setInput('auxiliaryRepositoryId', 3);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'AUXILIARY', 3);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'AUXILIARY', 3, undefined);
         });
 
         it('should reload a fresh token when the component is reused for a different base repository', async () => {
@@ -249,11 +276,11 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
 
             component.onClick();
             fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
 
             // Navigate to the solution repository of the same exercise: same component instance, only the repository type and URI change.
@@ -267,7 +294,7 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
 
             // A fresh token request is made for the new repository and the stale template token is replaced.
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(solutionToken);
             // The embedded clone URL must use the new repository's token, never the stale template one.
             const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
@@ -284,11 +311,11 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
 
             component.onClick();
             fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
 
             fixture.componentRef.setInput('repositoryType', 'SOLUTION');
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-solution.git');
@@ -296,7 +323,7 @@ describe('CodeButtonComponent', () => {
 
             component.onClick();
             fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
 
             templateTokenSubject.next(new HttpResponse({ body: repoToken }));
             templateTokenSubject.complete();
@@ -321,7 +348,7 @@ describe('CodeButtonComponent', () => {
             localStorageState = RepositoryAuthenticationMethod.SSH;
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
 
             component.onClick();
             expect(component.useSsh()).toBe(true);
@@ -336,13 +363,63 @@ describe('CodeButtonComponent', () => {
             expect(component.copyEnabled()).toBe(true);
         });
 
+        it('should display password warning nudge when password is selected and switch to token on click', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
+            expect(useHTTPSButton).not.toBeNull();
+            useHTTPSButton.nativeElement.click();
+            fixture.detectChanges();
+
+            const warningNudge = fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'));
+            expect(warningNudge).not.toBeNull();
+
+            const switchButton = warningNudge.query(By.css('[data-testid="switch-to-token-button"]'));
+            expect(switchButton).not.toBeNull();
+            switchButton.nativeElement.click();
+            fixture.detectChanges();
+
+            expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
+            expect(component.useToken()).toBe(true);
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+        });
+
+        it('should not display password warning nudge when token mechanism is not available in configuration', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+            component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password]);
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Password);
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+        });
+
+        it('should not display password warning nudge when token or SSH is selected', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+            component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+
+            component.useSshUrl();
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+        });
+
         it('should not show the manual VCS token warning for a base repository in course management', async () => {
             // In course management (e.g. the exercise detail page) the personal-token warning must never appear for base
             // repositories, because a repository-scoped staff token is provisioned automatically instead.
             localStorageState = RepositoryAuthenticationMethod.Token;
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.isInCourseManagement.set(true);
             fixture.detectChanges();
 
@@ -350,7 +427,7 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
 
             expect(component.isBaseRepository()).toBe(true);
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
             expect(fixture.debugElement.query(By.css('.alert-warning'))).toBeNull();
         });
 
@@ -359,7 +436,7 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
@@ -376,7 +453,7 @@ describe('CodeButtonComponent', () => {
             localStorageState = RepositoryAuthenticationMethod.Token;
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
@@ -391,7 +468,7 @@ describe('CodeButtonComponent', () => {
             getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
@@ -405,11 +482,11 @@ describe('CodeButtonComponent', () => {
             createRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
             fixture.componentRef.setInput('repositoryType', 'SOLUTION');
             fixture.componentRef.setInput('exerciseId', 7);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
 
-            expect(createRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
             expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
             expect(component.repositoryAccessToken()).toBeUndefined();
         });
@@ -422,7 +499,7 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('exerciseId', 7);
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-tests.git');
             fixture.componentRef.setInput('participations', [undefined as unknown as ProgrammingExerciseStudentParticipation]);
-            await component.ngOnInit();
+            await component['initializeCodeButtonComponent']();
 
             expect(() => component.activeParticipation()).not.toThrow();
             expect(component.activeParticipation()).toBeUndefined();
@@ -435,6 +512,84 @@ describe('CodeButtonComponent', () => {
             expect(cloneUrl).toContain('test-tests.git');
             expect(cloneUrl).toContain(`:${repoToken}@`);
         });
+
+        it('should mint a repository-scoped token for a student repository browsed by staff and never leave the clone button disabled', async () => {
+            // Course staff opening another student's assignment repository in course management. Even without a personal VCS
+            // token, a repository-scoped USER token is provisioned on demand (keyed by the participation), so the copy button
+            // becomes enabled and the clone URL embeds that scoped token.
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
+            localStorageState = RepositoryAuthenticationMethod.Token;
+
+            const othersParticipation = {
+                id: 45,
+                student: { login: 'some_student' },
+                repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-some_student.git',
+            } as ProgrammingExerciseStudentParticipation;
+
+            await component['initializeCodeButtonComponent']();
+            component.isInCourseManagement.set(true);
+            fixture.componentRef.setInput('exercise', { id: 99 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participations', [othersParticipation]);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(component.usesStudentRepositoryStaffToken()).toBe(true);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(99, 'USER', undefined, 45);
+            expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+            expect(component.copyEnabled()).toBe(true);
+            const url = component.getHttpOrSshRepositoryUri(false);
+            expect(url).toContain(`:${repoToken}@`);
+            expect(url).not.toContain('undefined');
+        });
+
+        it('should mint the student token from a participationId input when no participation object is passed (staff tables)', async () => {
+            // The scores / participations / feedback tables render the code button with only repositoryUri + exerciseId +
+            // participationId (no participations array). The scoped USER token must still be minted so the button is never disabled.
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('exerciseId', 55);
+            fixture.componentRef.setInput('participationId', 66);
+            fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/COURSE/some-student.git');
+            await component['initializeCodeButtonComponent']();
+            component.isInCourseManagement.set(true);
+            fixture.detectChanges();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(component.usesStudentRepositoryStaffToken()).toBe(true);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(55, 'USER', undefined, 66);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+            expect(component.copyEnabled()).toBe(true);
+            const url = component.getHttpOrSshRepositoryUri(false);
+            expect(url).toContain(`:${repoToken}@`);
+            expect(url).not.toContain('undefined');
+        });
+
+        it('should create the repository-scoped student token on demand when none exists yet (404)', async () => {
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            localStorageState = RepositoryAuthenticationMethod.Token;
+
+            const othersParticipation = {
+                id: 46,
+                student: { login: 'some_student' },
+                repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-some_student.git',
+            } as ProgrammingExerciseStudentParticipation;
+
+            await component['initializeCodeButtonComponent']();
+            component.isInCourseManagement.set(true);
+            fixture.componentRef.setInput('exercise', { id: 99 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participations', [othersParticipation]);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(99, 'USER', undefined, 46);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+        });
     });
 
     it('should create new vcsAccessToken when it does not exist', async () => {
@@ -443,7 +598,7 @@ describe('CodeButtonComponent', () => {
 
         participation.id = 1;
         fixture.componentRef.setInput('participations', [participation]);
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
@@ -471,8 +626,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
-        localStorageState = RepositoryAuthenticationMethod.Password;
-        component.onClick();
+        component.useHttpsPassword();
         fixture.changeDetectorRef.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
@@ -488,7 +642,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Token;
 
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -527,7 +681,7 @@ describe('CodeButtonComponent', () => {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
         } as ProgrammingExerciseStudentParticipation;
 
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         component.isInCourseManagement.set(true);
         fixture.componentRef.setInput('participations', [ownTestRunParticipation]);
         fixture.detectChanges();
@@ -543,9 +697,11 @@ describe('CodeButtonComponent', () => {
         expect(url).not.toContain('undefined');
     });
 
-    it('should keep using the personal staff token for another users test run participation in course management', async () => {
-        // When course staff open another instructor's test run summary, the participation is not owned by them, so the
-        // personal staff token must still be used (fetching the participation token would be forbidden server-side).
+    it('should mint a repository-scoped staff token for another users test run participation in course management', async () => {
+        // When course staff open another instructor's test run summary, the participation is not owned by them. Instead of the
+        // (deprecated) personal staff token, a repository-scoped USER token is minted on demand for that student repository.
+        const repoToken = 'vcpat-StaffScopedTestRunTokenStaffScopedTestRun12';
+        const getRepoTokenSpy = vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
         localStorageState = RepositoryAuthenticationMethod.Token;
 
         const othersTestRunParticipation = {
@@ -555,17 +711,22 @@ describe('CodeButtonComponent', () => {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
         } as ProgrammingExerciseStudentParticipation;
 
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         component.isInCourseManagement.set(true);
+        fixture.componentRef.setInput('exercise', { id: 77 } as ProgrammingExercise);
         fixture.componentRef.setInput('participations', [othersTestRunParticipation]);
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
         fixture.detectChanges();
 
+        // The participation token endpoint must not be used for a repository the staff member does not own.
         expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+        // A repository-scoped staff token is requested for the student (USER) repository, keyed by the participation.
+        expect(getRepoTokenSpy).toHaveBeenCalledWith(77, 'USER', undefined, 43);
         const url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://edx_userLogin:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
+        expect(url).toBe(`https://edx_userLogin:${repoToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
+        expect(url).not.toContain('undefined');
     });
 
     it('should omit the token and report to Sentry when a participation token is unexpectedly missing', async () => {
@@ -583,7 +744,7 @@ describe('CodeButtonComponent', () => {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
         } as ProgrammingExerciseStudentParticipation;
 
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         fixture.componentRef.setInput('participations', [participation]);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -612,7 +773,7 @@ describe('CodeButtonComponent', () => {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
         } as ProgrammingExerciseStudentParticipation;
 
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         fixture.componentRef.setInput('participations', [participation]);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -661,11 +822,13 @@ describe('CodeButtonComponent', () => {
         freshFixture.destroy();
     });
 
-    it('should not report to Sentry when only the personal staff token is missing (known, UI-handled case)', async () => {
+    it('should not report to Sentry while a repository-scoped staff token for a student repository is still loading', async () => {
         const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
-        // Course staff browsing another participant's repository without having created a personal VCS token: the URL
-        // must still not contain "undefined", but this is an expected, already UI-surfaced state and must not be reported.
+        // Course staff browsing another participant's repository: a repository-scoped token is minted on demand. While it is
+        // still loading, the URL must omit the token (never contain "undefined"), and this transient state must not be reported.
+        const tokenSubject = new Subject<HttpResponse<string>>();
+        vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(tokenSubject.asObservable());
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined }));
         localStorageState = RepositoryAuthenticationMethod.Token;
 
@@ -675,8 +838,9 @@ describe('CodeButtonComponent', () => {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
         } as ProgrammingExerciseStudentParticipation;
 
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
         component.isInCourseManagement.set(true);
+        fixture.componentRef.setInput('exercise', { id: 88 } as ProgrammingExercise);
         fixture.componentRef.setInput('participations', [othersParticipation]);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -782,18 +946,36 @@ describe('CodeButtonComponent', () => {
         const useSSHButton = fixture.debugElement.query(By.css('#useSSHButton'));
         expect(useSSHButton).not.toBeNull();
         useSSHButton.nativeElement.click();
+        fixture.detectChanges();
+        expect(
+            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
+                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
+            ),
+        ).toEqual(['false', 'false', 'true']);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
         expect(component.useSsh()).toBeTruthy();
 
         const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
         expect(useHTTPSButton).not.toBeNull();
         useHTTPSButton.nativeElement.click();
+        fixture.detectChanges();
+        expect(
+            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
+                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
+            ),
+        ).toEqual(['true', 'false', 'false']);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
         expect(component.useSsh()).toBeFalsy();
 
         const useHTTPSWithTokenButton = fixture.debugElement.query(By.css('#useHTTPSWithTokenButton'));
         expect(useHTTPSWithTokenButton).not.toBeNull();
         useHTTPSWithTokenButton.nativeElement.click();
+        fixture.detectChanges();
+        expect(
+            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
+                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
+            ),
+        ).toEqual(['false', 'true', 'false']);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
         expect(component.useSsh()).toBeFalsy();
         expect(component.useToken()).toBeTruthy();
@@ -935,7 +1117,7 @@ describe('CodeButtonComponent', () => {
             ...programmingExercise,
         } as any);
 
-        await component.ngOnInit();
+        await component['initializeCodeButtonComponent']();
 
         expect(component.theiaEnabled()).toBe(expectedVisibility);
     });

@@ -30,8 +30,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
@@ -46,7 +45,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                { provide: DialogService, useClass: MockDialogService },
+                MockProvider(DeleteDialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

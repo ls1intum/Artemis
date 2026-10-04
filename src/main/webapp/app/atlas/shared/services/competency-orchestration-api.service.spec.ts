@@ -16,10 +16,10 @@ describe('CompetencyOrchestrationApiService', () => {
 
     afterEach(() => httpMock.verify());
 
-    it('should POST run for programming exercise', async () => {
+    it('should POST run for exercise', async () => {
         const expected: CompetencyOrchestrationResultDTO = { status: CompetencyOrchestrationStatus.Success, summary: 'ok', appliedActions: [] };
-        const call = service.runForProgrammingExercise(7);
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/atlas/orchestrator/programming-exercises/7/run' });
+        const call = service.runForExercise(7);
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/atlas/orchestrator/exercises/7/run' });
         req.flush(expected);
         expect(await call).toEqual(expected);
     });

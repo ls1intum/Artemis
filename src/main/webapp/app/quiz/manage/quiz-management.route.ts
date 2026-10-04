@@ -17,15 +17,6 @@ export const quizManagementRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'quiz-exercises/export',
-        loadComponent: () => import('./export/quiz-exercise-export.component').then((m) => m.QuizExerciseExportComponent),
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: 'quiz-exercises/:exerciseId',
         loadChildren: () => import('./quiz-management-detail.route').then((m) => m.quizManagementDetailRoute),
     },

@@ -68,7 +68,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
@@ -100,6 +100,8 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             double updatedMaxPoints = 42.0;
             programmingExercise.setTitle(updatedTitle);
             programmingExercise.setMaxPoints(updatedMaxPoints);
+            // Persist the change, since the dispatcher re-derives the entity from the database at dispatch time
+            programmingExerciseRepository.save(programmingExercise);
 
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
@@ -122,6 +124,20 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, programmingExercise.getId());
 
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId()));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testSearchEntityCandidatesForAnswer_recallsIndexedExercise() throws Exception {
+            // A bounded top-ten query must not compete with other fixtures sharing the generic exercise title.
+            programmingExercise.setTitle("AnswerCandidateExercise" + programmingExercise.getId());
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var candidates = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(programmingExercise.getTitle(), null, 10);
+                assertThat(candidates).anySatisfy(
+                        candidate -> assertThat(((Number) candidate.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(programmingExercise.getId()));
+            });
         }
 
         @Test

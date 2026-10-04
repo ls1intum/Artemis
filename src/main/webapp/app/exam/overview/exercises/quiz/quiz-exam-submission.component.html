@@ -26,6 +26,12 @@
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!dragAndDropMappings().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                     [ngClass]="!!dragAndDropMappings().get(question.id!)?.length ? 'changed-question' : ''"
+                                    #keyboardAction24
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction24.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction24.click() : undefined"
                                 >
                                     <b class="fa">DD</b>
                                 </span>
@@ -36,6 +42,12 @@
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!selectedAnswerOptions().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                     [ngClass]="!!selectedAnswerOptions().get(question.id!)?.length ? 'changed-question' : ''"
+                                    #keyboardAction34
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
                                 >
                                     <b class="fa">MC</b>
                                 </span>
@@ -46,6 +58,12 @@
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!shortAnswerSubmittedTexts().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                     [ngClass]="!!shortAnswerSubmittedTexts().get(question.id!)?.length ? 'changed-question' : ''"
+                                    #keyboardAction44
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction44.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction44.click() : undefined"
                                 >
                                     <b class="fa">SA</b>
                                 </span>
@@ -68,7 +86,7 @@
                             [question]="question"
                             [selectedAnswerOptions]="selectedAnswerOptions().get(question.id!)!"
                             (selectedAnswerOptionsChange)="onSelectedAnswerOptionsChange(question.id!, $event)"
-                            [fnOnSelection]="onSelectionChanged.bind(this)"
+                            [fnOnSelection]="selectionChangedCallback"
                             [quizQuestions]="quizConfiguration().quizQuestions"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
@@ -81,7 +99,7 @@
                             [question]="question"
                             [mappings]="dragAndDropMappings().get(question.id!)!"
                             (mappingsChange)="onDragAndDropMappingsChange(question.id!, $event)"
-                            [onMappingUpdate]="onSelectionChanged.bind(this)"
+                            [onMappingUpdate]="selectionChangedCallback"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
                         />
@@ -93,7 +111,7 @@
                             [question]="question"
                             [submittedTexts]="shortAnswerSubmittedTexts().get(question.id!)!"
                             (submittedTextsChange)="onShortAnswerSubmittedTextsChange(question.id!, $event)"
-                            [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
+                            [fnOnSubmittedTextUpdate]="selectionChangedCallback"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
                         />

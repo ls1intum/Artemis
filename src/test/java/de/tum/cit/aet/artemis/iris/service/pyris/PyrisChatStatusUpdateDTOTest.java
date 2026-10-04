@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -16,10 +16,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 
 class PyrisChatStatusUpdateDTOTest {
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
-    void deserializesPartialFields() throws JsonProcessingException {
+    void deserializesPartialFields() throws JacksonException {
         String json = """
                 {
                     "runState": "RUNNING",
@@ -36,7 +36,7 @@ class PyrisChatStatusUpdateDTOTest {
     }
 
     @Test
-    void deserializesSuggestedContext() throws JsonProcessingException {
+    void deserializesSuggestedContext() throws JacksonException {
         String json = """
                 {
                     "runState": "RUNNING",
@@ -57,7 +57,7 @@ class PyrisChatStatusUpdateDTOTest {
     }
 
     @Test
-    void deserializesWithoutSuggestedContext() throws JsonProcessingException {
+    void deserializesWithoutSuggestedContext() throws JacksonException {
         String json = """
                 {
                     "runState": "RUNNING",
@@ -71,7 +71,7 @@ class PyrisChatStatusUpdateDTOTest {
     }
 
     @Test
-    void deserializesActivities() throws JsonProcessingException {
+    void deserializesActivities() throws JacksonException {
         String json = """
                 {
                     "runState": "RUNNING",
@@ -102,7 +102,7 @@ class PyrisChatStatusUpdateDTOTest {
     }
 
     @Test
-    void deserializesAndSerializesFinalFlagWithReservedJsonName() throws JsonProcessingException {
+    void deserializesAndSerializesFinalFlagWithReservedJsonName() throws JacksonException {
         String json = """
                 {
                     "runState": "RUNNING",
@@ -123,7 +123,7 @@ class PyrisChatStatusUpdateDTOTest {
     }
 
     @Test
-    void serializesWithoutStagesField() throws JsonProcessingException {
+    void serializesWithoutStagesField() throws JacksonException {
         var dto = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null);
 
         String json = objectMapper.writeValueAsString(dto);

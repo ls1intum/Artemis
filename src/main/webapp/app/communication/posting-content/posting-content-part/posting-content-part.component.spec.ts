@@ -6,7 +6,7 @@ import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
-import { PostingContentPart, ReferenceType } from 'app/communication/metis.util';
+import { PostingContentPart, ReferenceType } from 'app/communication/communication.util';
 import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
@@ -18,6 +18,8 @@ import { FileService } from 'app/foundation/service/file.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 /**
  * Synchronous stand-in for the real (lazy, async) MarkdownDirective so these tests can assert the rendered
@@ -85,6 +87,7 @@ describe('PostingContentPartComponent', () => {
                     useValue: new MockActivatedRoute(),
                 },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             // DialogService is provided at the component level, so override it on the component for the mock to take effect.
@@ -109,6 +112,48 @@ describe('PostingContentPartComponent', () => {
         openAttachmentSpy = vi.spyOn(fileService, 'downloadFile');
         contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
         contentAfterReference = 'in my content,\n\n does it *actually* work?';
+    });
+
+    it.each([true, false])('only exposes actionable user references (own reference: %s)', (own) => {
+        const ownLogin = 'own-user';
+        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ login: ownLogin } as User);
+        fixture.componentRef.setInput('postingContentPart', {
+            referenceType: ReferenceType.USER,
+            referenceStr: '@user',
+            queryParams: { referenceUserLogin: own ? ownLogin : 'other-user' },
+        });
+        fixture.detectChanges();
+        const reference = fixture.nativeElement.querySelector('a.reference') as HTMLElement;
+        const emitted = vi.spyOn(component.userReferenceClicked, 'emit');
+        expect(reference.getAttribute('role')).toBe(own ? null : 'button');
+        if (!own) {
+            reference.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            fixture.detectChanges();
+            expect(emitted).toHaveBeenCalledExactlyOnceWith('other-user');
+        }
+        expect(reference.hasAttribute('role')).toBe(false);
+        expect(reference.tabIndex).toBe(-1);
+        emitted.mockClear();
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            reference.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(emitted).not.toHaveBeenCalled();
+    });
+
+    it('removes the slide action when its image cannot load', () => {
+        fixture.componentRef.setInput('postingContentPart', { slideToReference: '/slide.png', referenceStr: 'Slide 1' });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[role="button"]')).not.toBeNull();
+        fixture.nativeElement.querySelector('img').dispatchEvent(new Event('error'));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('a.reference')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"]')).not.toBeNull();
     });
 
     describe('For posting without reference', () => {
@@ -196,7 +241,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should contain a reference to attachment with icon', () => {
             const referenceStr = 'Lecture 1 - Slide';
-            const attachmentURL = '/api/core/files/attachments/lecture/1/Lecture-1.pdf';
+            const attachmentURL = '/api/core/files/attachments/lectures/1/Lecture-1.pdf';
             fixture.componentRef.setInput('postingContentPart', {
                 contentBeforeReference,
                 referenceStr,
@@ -221,7 +266,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should contain a reference to lecture unit', () => {
             const referenceStr = 'Lecture Unit 1';
-            const attachmentURL = '/api/core/files/attachments/attachment-unit/1/LectureUnit1.pdf';
+            const attachmentURL = '/api/core/files/attachments/attachment-video-units/1/LectureUnit1.pdf';
             fixture.componentRef.setInput('postingContentPart', {
                 contentBeforeReference,
                 referenceStr,
@@ -260,7 +305,7 @@ describe('PostingContentPartComponent', () => {
 
             referenceLink.click();
             expect(enlargeImageSpy).toHaveBeenCalledOnce();
-            expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
+            expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL, referenceStr);
         });
 
         it('should open the enlarge slide image dialog with the correct config when enlargeImage is called', () => {
@@ -272,10 +317,23 @@ describe('PostingContentPartComponent', () => {
             expect(dialogService.open).toHaveBeenCalledWith(
                 EnlargeSlideImageComponent,
                 expect.objectContaining({
-                    data: { slideToReference },
+                    data: { slideToReference, imageAlt: 'artemisApp.communication.imagePreviewAlt' },
                     modal: true,
+                    closable: true,
                     dismissableMask: true,
                     closeOnEscape: true,
+                    header: 'artemisApp.communication.imagePreviewTitle',
+                }),
+            );
+        });
+
+        it('should pass the provided image description as alt text to the enlarge dialog', () => {
+            component.enlargeImage('/path/x.png', 'A meaningful image description');
+
+            expect(dialogService.open).toHaveBeenCalledWith(
+                EnlargeSlideImageComponent,
+                expect.objectContaining({
+                    data: { slideToReference: '/path/x.png', imageAlt: 'A meaningful image description' },
                 }),
             );
         });

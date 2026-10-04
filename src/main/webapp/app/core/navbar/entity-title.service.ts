@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
@@ -14,6 +14,7 @@ export enum EntityType {
     ORGANIZATION = 'ORGANIZATION',
     EXAM = 'EXAM',
     TUTORIAL_GROUP = 'TUTORIAL_GROUP',
+    EXERCISE_VARIANT_GROUP = 'EXERCISE_VARIANT_GROUP',
 }
 
 const FETCH_FALLBACK_TIMEOUT = 3000;
@@ -21,7 +22,7 @@ const FETCH_FALLBACK_TIMEOUT = 3000;
 /**
  * Provides titles for entities, currently used by breadcrumbs
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class EntityTitleService implements OnDestroy {
     private http = inject(HttpClient);
     private readonly accountService = inject(AccountService);
@@ -146,6 +147,9 @@ export class EntityTitleService implements OnDestroy {
      * @param ids the ids that identify the entity. Mostly one ID, for exercise hints provide the exercise id as second item in the array.
      */
     private fetchTitle(type: EntityType, ids: number[]): void {
+        if (type === EntityType.EXERCISE_VARIANT_GROUP) {
+            return;
+        }
         let resourceUrl = 'api/';
         switch (type) {
             case EntityType.COURSE:

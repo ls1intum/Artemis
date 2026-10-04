@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationChannelSetting } from 'app/notification/shared/entities/course-notification/course-notification-channel-setting';
@@ -7,19 +7,18 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { AccountService } from 'app/core/auth/account.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Service for managing course notification settings.
  * Provides methods to fetch and update notification preferences for courses.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseNotificationSettingService implements OnDestroy {
-    private readonly apiEndpoint = '/api/notification/courses/';
-
     private http = inject(HttpClient);
     private readonly accountService = inject(AccountService);
+
+    private readonly apiEndpoint = '/api/notification/courses/';
 
     private settingInfoSubjects: Record<number, BehaviorSubject<CourseNotificationSettingInfo | undefined>> = {};
 
@@ -111,7 +110,7 @@ export class CourseNotificationSettingService implements OnDestroy {
             if (copyPreset) {
                 currentValue.notificationTypeChannels = copyPreset.presetMap;
             }
-            const updatedValue = { ...currentValue, selectedPreset: presetTypeId };
+            const updatedValue = cloneWith(currentValue, { selectedPreset: presetTypeId });
             subject.next(updatedValue);
         }
 
@@ -143,7 +142,7 @@ export class CourseNotificationSettingService implements OnDestroy {
             } else {
                 currentValue.notificationTypeChannels[notificationSettingSpecification.identifier] = notificationSettingSpecification.channelSetting;
             }
-            const updatedValue = { ...currentValue, selectedPreset: 0 };
+            const updatedValue = cloneWith(currentValue, { selectedPreset: 0 });
             subject.next(updatedValue);
         }
 

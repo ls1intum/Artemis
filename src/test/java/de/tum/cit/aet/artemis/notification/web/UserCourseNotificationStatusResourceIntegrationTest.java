@@ -42,7 +42,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        course = courseUtilService.createCourse();
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
     }
 
     @Test
@@ -111,6 +111,25 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
 
             assertThat(newStatus.getStatus()).isEqualTo(UserCourseNotificationStatusType.SEEN);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldMarkOnlyTheDisplayedNotificationsAsSeen() throws Exception {
+        var displayed = new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now());
+        var notDisplayed = new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now());
+        courseNotificationRepository.save(displayed);
+        courseNotificationRepository.save(notDisplayed);
+        userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(displayed, user, UserCourseNotificationStatusType.UNSEEN));
+        userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(notDisplayed, user, UserCourseNotificationStatusType.UNSEEN));
+
+        String requestBody = "{\"notificationIds\":[" + displayed.getId() + "]}";
+
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/courses/" + course.getId() + "/seen").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isOk());
+
+        assertThat(userCourseNotificationStatusRepository.findByCourseNotificationId(displayed.getId()).getStatus()).isEqualTo(UserCourseNotificationStatusType.SEEN);
+        assertThat(userCourseNotificationStatusRepository.findByCourseNotificationId(notDisplayed.getId()).getStatus()).isEqualTo(UserCourseNotificationStatusType.UNSEEN);
     }
 
     @Test

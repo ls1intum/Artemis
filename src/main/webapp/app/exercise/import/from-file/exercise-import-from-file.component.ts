@@ -13,6 +13,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseImportDialogData } from '../exercise-import.component';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',
@@ -73,7 +74,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
                     // under buildConfig). Those fields are disjoint from Exercise, so we view the parsed exercise as also
                     // carrying the optional legacy build-config fields and copy them across.
                     const raw = exerciseJson as Exercise & Partial<ProgrammingExerciseBuildConfig>;
-                    Object.assign(buildConfig, raw);
+                    hydrate(buildConfig, raw);
                     progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
                 if (progEx.auxiliaryRepositories) {

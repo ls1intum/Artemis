@@ -21,6 +21,7 @@ const course = { id: SEED_COURSES.textAssessment.id } as any;
 
 test.describe('Text exercise assessment', { tag: '@slow' }, () => {
     let exercise: TextExercise;
+    let participationId: number;
     let dueDate: dayjs.Dayjs;
     let assessmentDueDate: dayjs.Dayjs;
     test.beforeAll('Create exercise and make a submission', async ({ browser }) => {
@@ -33,13 +34,91 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
         assessmentDueDate = dueDate.add(10, 'seconds');
         exercise = await exerciseAPIRequests.createTextExerciseWithDates({ course }, dayjs(), dueDate, assessmentDueDate);
         await Commands.login(page, studentOne);
-        await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+        const participationResponse = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+        expect(participationResponse.status()).toBe(201);
+        const participation: { id: number } = await participationResponse.json();
+        participationId = participation.id;
         const submission = await Fixtures.get('loremIpsum-short.txt');
         await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
         const now = dayjs();
         if (now.isBefore(dueDate)) {
             await page.waitForTimeout(dueDate.diff(now, 'ms') + 2000);
         }
+    });
+
+    test('Tutor sees anonymous participation and score lists without identity search', async ({ login, page }) => {
+        await login(tutor);
+        for (const view of [
+            { route: 'participations', endpoint: 'page', component: 'jhi-participation' },
+            { route: 'scores', endpoint: 'scores', component: 'jhi-exercise-scores' },
+        ]) {
+            const [response] = await Promise.all([
+                page.waitForResponse(
+                    (candidate) =>
+                        new URL(candidate.url()).pathname === `/api/exercise/exercises/${exercise.id}/participations/${view.endpoint}` && candidate.request().method() === 'GET',
+                ),
+                page.goto(`/course-management/${course.id}/text-exercises/${exercise.id}/${view.route}`),
+            ]);
+            expect(response.status()).toBe(200);
+            const participations: Record<string, unknown>[] = await response.json();
+            expect(participations.map((participation) => participation.participationId)).toContain(participationId);
+            for (const participation of participations) {
+                for (const field of ['participantName', 'participantIdentifier', 'studentId', 'studentLogin', 'teamId', 'teamStudents', 'repositoryUri', 'buildPlanId']) {
+                    expect(participation, `${view.route} must not reveal ${field}`).not.toHaveProperty(field);
+                }
+            }
+
+            const component = page.locator(view.component);
+            const table = component.getByRole('table');
+            await expect(table.getByRole('columnheader', { name: /Participation ID/ })).toBeVisible();
+            await expect(table.getByRole('cell').first()).toHaveText(String(participationId));
+            await expect(table).not.toContainText(studentOne.username);
+            await expect(table).not.toContainText(studentOne.displayName!);
+            await expect(component.getByTestId('search-filter')).toHaveCount(0);
+        }
+    });
+
+    /**
+     * Cancelling releases the lock on the assessment the tutor has open. Kept self contained with its own exercise and
+     * submission so it cannot race the serial Feedback block over the single shared submission.
+     *
+     * Issue #13396: cancelling resolved the result on the server instead of using the one the caller named, so it
+     * released the newest correction round rather than the one the button belonged to.
+     */
+    test.describe('Cancelling an assessment', () => {
+        let cancelExercise: TextExercise;
+
+        test.beforeAll('Create a second exercise and submission', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            const exerciseAPIRequests = new ExerciseAPIRequests(page);
+            await Commands.login(page, admin);
+            const cancelDueDate = dayjs().add(10, 'seconds');
+            cancelExercise = await exerciseAPIRequests.createTextExerciseWithDates({ course }, dayjs(), cancelDueDate, cancelDueDate.add(2, 'hours'));
+            await Commands.login(page, studentOne);
+            await exerciseAPIRequests.startExerciseParticipation(cancelExercise.id!);
+            const submission = await Fixtures.get('loremIpsum-short.txt');
+            await exerciseAPIRequests.makeTextExerciseSubmission(cancelExercise.id!, submission!);
+            const now = dayjs();
+            if (now.isBefore(cancelDueDate)) {
+                await page.waitForTimeout(cancelDueDate.diff(now, 'ms') + 2000);
+            }
+            await page.close();
+        });
+
+        test('releases the lock so the submission can be assessed again', async ({ login, exerciseAssessment, textExerciseAssessment }) => {
+            await login(tutor, `/course-management/${course.id}/assessment-dashboard/${cancelExercise.id!}`);
+            await exerciseAssessment.clickHaveReadInstructionsButton();
+            await exerciseAssessment.clickStartNewAssessment();
+            await expect(textExerciseAssessment.getInstructionsRootElement().filter({ hasText: cancelExercise.title })).toBeVisible();
+
+            const cancelResponse = await textExerciseAssessment.cancelAssessment();
+            expect(cancelResponse.status()).toBe(200);
+
+            // The lock is gone only if the very same submission can be picked up for assessment again.
+            await login(tutor, `/course-management/${course.id}/assessment-dashboard/${cancelExercise.id!}`);
+            await exerciseAssessment.clickStartNewAssessment();
+            await expect(textExerciseAssessment.getInstructionsRootElement().filter({ hasText: cancelExercise.title })).toBeVisible();
+        });
     });
 
     test.describe.serial('Feedback', () => {
@@ -74,7 +153,7 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
             const percentage = totalPoints * 10;
             await login(instructor, `/course-management/${course.id}/text-exercises/${exercise.id}/example-submissions`);
-            await page.locator('#import-example-submission').click();
+            await page.locator('[data-testid="import-example-submission"]').click();
             const modal = page.locator('jhi-example-submission-import');
             await modal.locator('#searchParticipant').waitFor({ state: 'visible' });
             // The student-name search is exercise-scoped, so the only participant ("Student One") yields one row.
@@ -112,6 +191,37 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             await page.locator('a[href*="/participations/"][href*="/submissions"]').first().click();
             await page.waitForURL('**/participations/*/submissions');
             await expect(page.locator('jhi-participation-submission jhi-result').first()).toContainText(`${percentage}%`, { timeout: 20000 });
+        });
+
+        test('Result badge on the assessment dashboard does not leave for the student exercise page', async ({ login, page }) => {
+            test.slow();
+            // #13921: the badge used to deep-link into `courses/…/text-exercises/…/participate/:participationId/…`,
+            // the student exercise page. For an exam exercise that page 403s, and in a course it swaps in the viewer's
+            // own participation — so a tutor never saw the student's result. The assessment button beside it does.
+            const now = dayjs();
+            if (now.isBefore(assessmentDueDate)) {
+                await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
+            }
+            const dashboard = `/course-management/${course.id}/assessment-dashboard/${exercise.id}`;
+            await login(tutor, dashboard);
+            // Assert on the jhi-result host rather than on #result-score: depending on whether the submission landed
+            // just before or after the (short) due date the component renders HAS_RESULT or LATE, and only the former
+            // has that id. Neither may carry the clickable affordance.
+            const badge = page.locator('jhi-result').first();
+            await expect(badge).toBeVisible({ timeout: 20000 });
+            await expect(badge.locator('.clickable-result')).toHaveCount(0);
+
+            let navigated = false;
+            page.on('framenavigated', (frame) => {
+                if (frame === page.mainFrame()) {
+                    navigated = true;
+                }
+            });
+            await badge.click();
+            // Give a navigation the click must not start the time to commit before asserting it did not happen.
+            await page.waitForTimeout(1000);
+            expect(navigated).toBeFalsy();
+            await expect(page).toHaveURL(new RegExp(`${dashboard}$`));
         });
 
         test('Student sees feedback after assessment due date and complains', async ({ login, page, courseManagementAPIRequests, exerciseResult, textExerciseFeedback }) => {

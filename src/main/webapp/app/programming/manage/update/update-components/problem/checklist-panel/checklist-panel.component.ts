@@ -52,6 +52,7 @@ import { Checkbox } from 'primeng/checkbox';
 import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Type-safe section identifier used for stale tracking and section-level re-analysis.
@@ -495,7 +496,7 @@ export class ChecklistPanelComponent {
                 next: (res: ChecklistAnalysisResponse) => {
                     const current = this.analysisResult();
                     if (current) {
-                        const updated = Object.assign({}, current, { [SECTION_TO_FIELD[section]]: res[SECTION_TO_FIELD[section]] });
+                        const updated = cloneWith(current, { [SECTION_TO_FIELD[section]]: res[SECTION_TO_FIELD[section]] });
                         this.analysisResult.set(updated);
                     } else {
                         this.analysisResult.set(res);
@@ -544,7 +545,7 @@ export class ChecklistPanelComponent {
             },
             `fix-issue-${index}`,
             ['competencies', 'difficulty'],
-            () => this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) })),
+            () => this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) })),
         );
     }
 
@@ -561,7 +562,7 @@ export class ChecklistPanelComponent {
             'fix-all',
             ['competencies', 'difficulty'],
             () => {
-                this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: [] }));
+                this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: [] }));
                 this.selectedIssueIndices.set(new Set());
             },
         );
@@ -572,7 +573,7 @@ export class ChecklistPanelComponent {
      * The quality radar graph updates reactively since qualityScores is a computed signal.
      */
     discardQualityIssue(index: number) {
-        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) }));
+        this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) }));
         // Reindex selected indices after removal
         this.selectedIssueIndices.update((current) => {
             const updated = new Set<number>();
@@ -654,7 +655,7 @@ export class ChecklistPanelComponent {
             'fix-selected',
             ['competencies', 'difficulty'],
             () => {
-                this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
+                this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
                 this.selectedIssueIndices.set(new Set());
             },
         );
@@ -668,7 +669,7 @@ export class ChecklistPanelComponent {
         const selected = this.selectedIssueIndices();
         if (selected.size === 0) return;
 
-        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
+        this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
         this.selectedIssueIndices.set(new Set());
         this.alertService.success('artemisApp.programmingExercise.instructorChecklist.quality.discardedMultiple');
     }
@@ -725,7 +726,7 @@ export class ChecklistPanelComponent {
         const toDiscard = this.analysisResult()?.inferredCompetencies?.[index];
         if (!toDiscard) return;
         this.unlinkDiscardedCompetencies([toDiscard]);
-        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => i !== index) }));
+        this.updateAnalysisOptimistically((r) => cloneWith(r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => i !== index) }));
         this.selectedCompetencyIndices.update((current) => {
             const updated = new Set<number>();
             for (const idx of current) {
@@ -755,7 +756,7 @@ export class ChecklistPanelComponent {
         const allInferred = this.analysisResult()?.inferredCompetencies ?? [];
         const toDiscard = allInferred.filter((_, i) => selected.has(i));
         this.unlinkDiscardedCompetencies(toDiscard);
-        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => !selected.has(i)) }));
+        this.updateAnalysisOptimistically((r) => cloneWith(r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => !selected.has(i)) }));
         this.selectedCompetencyIndices.set(new Set());
         // Reindex expanded competencies: remove discarded, shift down indices above removed ones
         this.expandedCompetencies.update((current) => {
@@ -812,8 +813,9 @@ export class ChecklistPanelComponent {
             ['quality', 'competencies'],
             () => {
                 this.updateAnalysisOptimistically((r) =>
-                    Object.assign({}, r, {
-                        difficultyAssessment: Object.assign({}, r.difficultyAssessment, {
+                    cloneWith(r, {
+                        // `?? {}` preserves the previous Object.assign behaviour when no assessment exists yet.
+                        difficultyAssessment: cloneWith(r.difficultyAssessment ?? {}, {
                             suggested: targetDifficulty,
                             delta: 'MATCH',
                             reasoning: this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.actions.adaptedReasoning', {

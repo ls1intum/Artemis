@@ -15,58 +15,11 @@ import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-li
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { LineChange, convertMonacoLineChanges } from 'app/programming/shared/utils/diff.utils';
 import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
+import { EMOTICON_REGEX, EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
 
 export type { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 
 export const MAX_TAB_SIZE = 8;
-
-/**
- * Maps the ASCII emoticons that {@link MonacoEditorComponent.convertTextToEmoji} converts to their
- * Unicode emoji. Only emoticons starting with ':' are listed, because convertTextToEmoji only
- * processes words starting with ':'.
- */
-const EMOTICON_TO_EMOJI: Record<string, string> = {
-    ':o)': '🐵',
-    ':D': '😄',
-    ':-D': '😄',
-    ':|': '😐',
-    ':-|': '😐',
-    ':\\': '😕',
-    ':-\\': '😕',
-    ':/': '😕',
-    ':-/': '😕',
-    ':*': '😘',
-    ':-*': '😘',
-    ':p': '😛',
-    ':-p': '😛',
-    ':P': '😛',
-    ':-P': '😛',
-    ':b': '😛',
-    ':-b': '😛',
-    ':(': '😞',
-    ':-(': '😞',
-    ":'(": '😢',
-    ':o': '😮',
-    ':-o': '😮',
-    ':O': '😮',
-    ':-O': '😮',
-    ':)': '🙂',
-    ':-)': '🙂',
-};
-
-/**
- * Matches an emoticon preceded by the start of the string or whitespace and followed by the end of
- * the string or a delimiter. Emoticons are ordered longest-first so e.g. ':o)' wins over ':o'.
- */
-const EMOTICON_REGEX = new RegExp(
-    '(^|\\s)(' +
-        Object.keys(EMOTICON_TO_EMOJI)
-            .sort((a, b) => b.length - a.length)
-            .map((emoticon) => emoticon.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-            .join('|') +
-        ')(?=$|[\\s|?.,!])',
-    'g',
-);
 
 const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
@@ -85,6 +38,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
     private static readonly CUSTOM_BACKSPACE_ACTION_ID = 'artemis-grapheme-backspace';
+    /*
+     * Injected services and elements.
+     */
+    private readonly renderer = inject(Renderer2);
+    private readonly translateService = inject(TranslateService);
+    private readonly elementRef = inject(ElementRef);
+    private readonly monacoEditorService = inject(MonacoEditorService);
 
     /** The primary code editor instance — created once in the constructor. Reassigned only during diff-mode transitions. */
     private _editor!: monaco.editor.IStandaloneCodeEditor; // assigned in initializeMonacoEditor(), called from the constructor
@@ -162,15 +122,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private diffUpdateListener?: Disposable;
     private diffLayoutListener?: Disposable;
-
-    /*
-     * Injected services and elements.
-     */
-    private readonly renderer = inject(Renderer2);
-    private readonly translateService = inject(TranslateService);
-
-    private readonly elementRef = inject(ElementRef);
-    private readonly monacoEditorService = inject(MonacoEditorService);
 
     constructor() {
         /*

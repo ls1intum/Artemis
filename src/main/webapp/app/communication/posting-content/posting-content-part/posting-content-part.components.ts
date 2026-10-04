@@ -1,5 +1,5 @@
 import { Component, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { PostingContentPart, ReferenceType } from '../../metis.util';
+import { PostingContentPart, ReferenceType } from '../../communication.util';
 import {
     faAt,
     faBan,
@@ -23,12 +23,13 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
-    styleUrls: ['../../metis.component.scss'],
+    styleUrls: ['../../communication.component.scss'],
     imports: [RouterLink, FaIconComponent, MarkdownDirective, TranslateDirective],
     providers: [DialogService],
 })
@@ -36,6 +37,7 @@ export class PostingContentPartComponent implements OnInit {
     private fileService = inject(FileService);
     private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
 
     postingContentPart = input<PostingContentPart>();
     userReferenceClicked = output<string>();
@@ -141,11 +143,17 @@ export class PostingContentPartComponent implements OnInit {
      * Opens a dialog to display the image in full size
      *
      * @param slideToReference {string} the reference to the slide
+     * @param imageAlt {string} optional description of the image used as its alt text (falls back to a localized label)
      */
-    enlargeImage(slideToReference: string) {
+    enlargeImage(slideToReference: string, imageAlt?: string) {
         this.dialogService.open(EnlargeSlideImageComponent, {
-            data: { slideToReference },
+            // A translated header gives the dialog an accessible name and renders PrimeNG's themed close button, so the preview can always be dismissed.
+            header: this.translateService.instant('artemisApp.communication.imagePreviewTitle'),
+            // Prefer the image's own description (markdown alt text) so assistive technologies can announce the preview; fall back to a generic localized label.
+            data: { slideToReference, imageAlt: imageAlt || this.translateService.instant('artemisApp.communication.imagePreviewAlt') },
             modal: true,
+            // Without closable the DynamicDialog header renders no close button (PrimeNG defaults it to undefined), which left the preview stuck open.
+            closable: true,
             dismissableMask: true,
             closeOnEscape: true,
             style: { 'max-width': '95vw' },
@@ -181,13 +189,17 @@ export class PostingContentPartComponent implements OnInit {
         }
     }
 
+    protected canActivateUserReference(referenceUserLogin: string | undefined): boolean {
+        return !this.hasClickedUserReference && !!referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity()?.login;
+    }
+
     /**
      * Emit an event if the clicked user reference is different from the current user
      *
      * @param referenceUserLogin login of the referenced user
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
-        if (!this.hasClickedUserReference && referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity()?.login) {
+        if (referenceUserLogin && this.canActivateUserReference(referenceUserLogin)) {
             this.hasClickedUserReference = true;
             this.userReferenceClicked.emit(referenceUserLogin);
         }

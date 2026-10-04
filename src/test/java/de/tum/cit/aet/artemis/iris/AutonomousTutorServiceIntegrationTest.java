@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.iris.service.AutonomousTutorService.AUTO_VERIFY_CONFIDENCE_THRESHOLD;
+import static de.tum.cit.aet.artemis.iris.service.AutonomousTutorService.REVIEW_MIN_CONFIDENCE_THRESHOLD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -20,6 +23,7 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -69,7 +73,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         channel = conversationUtilService.createCourseWideChannel(course, "general");
         irisBotUserService.ensureIrisBotUserExists();
         botUser = irisBotUserService.getIrisBotUser();
-        student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         featureToggleService.enableFeature(Feature.AutonomousTutor);
     }
 
@@ -92,8 +96,8 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
     void handleStatusUpdate_createsAnswerPost() {
         Post post = createPostInChannel(student, "How does recursion work?");
         var job = new AutonomousTutorJob("job1", post.getId(), course.getId());
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Recursion is a technique where a function calls itself.", true, 0.9, PyrisRunState.FINISHED, null,
-                null);
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Recursion is a technique where a function calls itself.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD,
+                PyrisRunState.FINISHED, null, null);
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
@@ -110,7 +114,8 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), botUser.getId())).isEmpty();
 
         var job = new AutonomousTutorJob("job2", post.getId(), course.getId());
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Polymorphism allows objects to take many forms.", true, 0.85, PyrisRunState.FINISHED, null, null);
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Polymorphism allows objects to take many forms.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD,
+                PyrisRunState.FINISHED, null, null);
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
@@ -121,12 +126,16 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
     void handleStatusUpdate_sendsWebSocketForCourseWideChannel() {
         Post post = createPostInChannel(student, "Explain inheritance.");
         var job = new AutonomousTutorJob("job3", post.getId(), course.getId());
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Inheritance allows a class to inherit from another.", true, 0.9, PyrisRunState.FINISHED, null, null);
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Inheritance allows a class to inherit from another.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD,
+                PyrisRunState.FINISHED, null, null);
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         // The broadcast is now wrapped in PostBroadcastDTO (cycle-free wire payload)
-        verify(websocketMessagingService, timeout(2000)).sendMessage(contains("/topic/metis/courses/" + course.getId()), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic("/topic/communication/courses/" + course.getId()), any(PostBroadcastDTO.class));
+        // One broadcast in total over the whole window: a restored legacy mirror topic would make it two.
+        // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
+        verify(websocketMessagingService, after(2000).times(1)).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -136,12 +145,13 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         Post post = createPostInChannel(student, "What is encapsulation?");
         var job = new AutonomousTutorJob("job4", post.getId(), course.getId());
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Encapsulation hides internal state.", true, 0.9, PyrisRunState.FINISHED, null, null);
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Encapsulation hides internal state.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD, PyrisRunState.FINISHED,
+                null, null);
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         assertThat(answerPostRepository.findAnswerPostsByAuthorId(botUser.getId())).hasSize(initialCount);
-        verify(websocketMessagingService, never()).sendMessage(any(String.class), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -158,12 +168,26 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
     }
 
     @Test
-    void handleStatusUpdate_skipsWhenShouldNotPostDirectly() {
+    void handleStatusUpdate_skipsWhenConfidenceBelowReviewThreshold() {
         int initialCount = answerPostRepository.findAnswerPostsByAuthorId(botUser.getId()).size();
 
         Post post = createPostInChannel(student, "What are design patterns?");
         var job = new AutonomousTutorJob("job6", post.getId(), course.getId());
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Design patterns are reusable solutions.", false, 0.5, PyrisRunState.FINISHED, null, null);
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Design patterns are reusable solutions.", true, REVIEW_MIN_CONFIDENCE_THRESHOLD - 0.3,
+                PyrisRunState.FINISHED, null, null);
+
+        autonomousTutorService.handleStatusUpdate(job, statusUpdate);
+
+        assertThat(answerPostRepository.findAnswerPostsByAuthorId(botUser.getId())).hasSize(initialCount);
+    }
+
+    @Test
+    void handleStatusUpdate_skipsWhenConfidenceMissing() {
+        int initialCount = answerPostRepository.findAnswerPostsByAuthorId(botUser.getId()).size();
+
+        Post post = createPostInChannel(student, "What is SOLID?");
+        var job = new AutonomousTutorJob("job7", post.getId(), course.getId());
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("SOLID is a set of principles.", true, null, PyrisRunState.FINISHED, null, null);
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 

@@ -47,6 +47,11 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtlasIntegrationTest {
 
+    /** Stored in {@link #setupTestScenario} so that helper methods can create prefix-matched courses. */
+    protected String testPrefix;
+
+    protected String otherPrefix;
+
     protected Course course;
 
     protected Course course2;
@@ -64,28 +69,32 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     protected TextExercise textExercise;
 
     // BeforeEach
-    void setupTestScenario(String TEST_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
+    void setupTestScenario(String TEST_PREFIX, String OTHER_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
+        // Store prefix so that helper test methods can create prefix-matched courses.
+        testPrefix = TEST_PREFIX;
+        otherPrefix = OTHER_PREFIX;
+
         // Mock AtlasML saves to avoid external calls in tests that create/import competencies
         atlasMLRequestMockProvider.ifPresent(provider -> {
             provider.enableMockingOfRequests();
             provider.mockSaveCompetenciesAny();
         });
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime releaseDate = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime dueDate = releaseDate.plusHours(1);
+        ZonedDateTime assessmentDueDate = dueDate.plusHours(1);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        course2 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
-
-        // creating course
-        course = courseUtilService.createCourse();
-        course2 = courseUtilService.createCourse();
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         courseCompetency = createCourseCompetencyForCourse.apply(course);
         lecture = createLecture(course);
 
-        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, courseCompetency, false);
-        teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, courseCompetency, true);
+        textExercise = createTextExercise(releaseDate, dueDate, assessmentDueDate, courseCompetency, false);
+        teamTextExercise = createTextExercise(releaseDate, dueDate, assessmentDueDate, courseCompetency, true);
 
         creatingLectureUnitsOfLecture(courseCompetency);
     }
@@ -164,7 +173,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     private ProgrammingExercise createProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
 
         CompetencyExerciseLink link = new CompetencyExerciseLink(courseCompetency, programmingExercise, 1);
@@ -283,7 +291,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         CompetencyRelation relation = createRelation(courseCompetency, competency2, RelationType.EXTENDS);
         Prerequisite prerequisite = prerequisiteUtilService.createPrerequisite(course);
 
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(courseCompetencyRepository.existsById(courseCompetency.getId())).isFalse();
         assertThat(courseCompetencyRepository.existsById(competency2.getId())).isFalse();
@@ -336,6 +344,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exercise.setMaxPoints(1.0);
         exercise.setIncludedInOverallScore(includedInOverallScore);
+        // Save the exercise itself rather than letting the link write it, so the row carries the course the factory set.
+        exercise = exerciseRepository.save(exercise);
         CompetencyExerciseLink link = new CompetencyExerciseLink(newCompetency, exercise, 1);
         competencyExerciseLinkRepository.save(link);
 
@@ -407,6 +417,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     void shouldImportExerciseAndLectureWithCompetency() throws Exception {
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
         textExercise.setReleaseDate(releaseDate);
+        // presentationScoreEnabled has a non-null default, so it can only be preserved if it is copied explicitly onto
+        // the fresh target exercise (see LearningObjectImportService); assert that the competency import keeps it.
+        textExercise.setPresentationScoreEnabled(true);
         exerciseRepository.save(textExercise);
 
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(courseCompetency.getId()), Optional.empty(), false, true, true, Optional.empty(), false);
@@ -414,6 +427,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
         assertThat(course2.getExercises()).hasSize(2);
+        // Only the (non-team) text exercise had presentation scoring enabled on the source; it must survive the import.
+        assertThat(course2.getExercises()).anyMatch(exercise -> Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()));
         assertThat(course2.getLectures()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
     }
@@ -503,7 +518,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportAllCompetencies(Function<Course, CourseCompetency> createCourseCompetencyForCourse) throws Exception {
-        var course3 = courseUtilService.createCourse();
+        // Use testPrefix so the editor/instructor users are enrolled in course3 and can import from it.
+        // In the UCR-based auth model, the user must be at least EDITOR in the source course.
+        var course3 = courseUtilService.createEnrolledCourse(testPrefix);
 
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), false, false, false, Optional.empty(), false);
         var competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);

@@ -23,7 +23,6 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { MissingResultInformation } from 'app/exercise/result/result.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -99,24 +98,22 @@ describe('UpdatingResultComponent', () => {
         vi.restoreAllMocks();
     });
 
-    // Drive ngOnInit before ngOnChanges so isLocalCIEnabled is settled when the participation change fires.
-    // (Angular's natural lifecycle is the reverse on first detection — keeping the manual ordering is the
-    // pragmatic way to preserve the original assertions without changing production behaviour.)
+    // detectChanges runs ngOnInit (settling isLocalCIEnabled) and then the constructor effect, which reacts to the
+    // participation id. This replaces the former manual ngOnInit + ngOnChanges orchestration.
     const cleanInitializeGraded = (participation = initialParticipation) => {
         fixture.componentRef.setInput('participation', participation);
-        comp.ngOnInit();
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
+        fixture.detectChanges();
     };
 
     const cleanInitializeUngraded = (participation = initialParticipation) => {
         fixture.componentRef.setInput('showUngradedResults', true);
         fixture.componentRef.setInput('participation', participation);
-        comp.ngOnInit();
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
+        fixture.detectChanges();
     };
 
     it('should not try to subscribe for new results if no participation is provided', () => {
-        triggerChanges(comp, { property: 'participation', currentValue: undefined, firstChange: true });
+        // participation stays undefined; the effect guards out without subscribing.
+        fixture.detectChanges();
 
         expect(subscribeForLatestResultOfParticipationStub).not.toHaveBeenCalled();
         expect(comp.result()).toBeUndefined();
@@ -164,6 +161,32 @@ describe('UpdatingResultComponent', () => {
 
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
         expect(comp.result()!.id).toBe(newGradedResult.id);
+    });
+
+    it('should tear down active subscriptions when the participation becomes undefined', () => {
+        cleanInitializeGraded();
+        expect(comp.resultSubscription).toBeDefined();
+        const unsubscribeSpy = vi.spyOn(comp.resultSubscription!, 'unsubscribe');
+
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
+        expect(comp.resultSubscription).toBeUndefined();
+    });
+
+    it('releases the shared submission-service state when the participation becomes undefined', () => {
+        fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING } as Exercise);
+        cleanInitializeGraded(); // registers submission state for participation id 1
+        const unsubscribeSharedSpy = vi.spyOn(programmingSubmissionService, 'unsubscribeForLatestSubmissionOfParticipation');
+
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+
+        // The valid→undefined transition must release the shared ProgrammingSubmissionService state for the
+        // previous participation (subject, mapping, timers), not just the local observer, or it leaks until logout.
+        expect(unsubscribeSharedSpy).toHaveBeenCalledWith(initialParticipation.id);
+        expect(comp.submissionSubscription).toBeUndefined();
     });
 
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {

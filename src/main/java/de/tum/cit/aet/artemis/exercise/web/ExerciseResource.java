@@ -31,17 +31,24 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -50,8 +57,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsExerciseDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -69,6 +80,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.EXERCISE_MANAGEMENT)
 @RestController
 @RequestMapping("api/exercise/")
 public class ExerciseResource {
@@ -105,11 +117,14 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -128,20 +143,44 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /courses/{courseId}/exercise-titles : the id, title and type of the course exercises visible to the user.
+     * <p>
+     * For callers that only have to name exercises rather than show them, such as the Iris chat context picker, which
+     * previously loaded the full course exercise payload — participations, submissions, results and scores included —
+     * to fill a dropdown with these three fields.
+     * <p>
+     * Visibility matches the course overview's release and online-course LTI-launch rules. The repository evaluates the
+     * rules while projecting the three returned scalars, so neither course nor exercise entities are hydrated.
+     *
+     * @param courseId the id of the course
+     * @return the exercises of the course the user may see, as id, title and type
+     */
+    @GetMapping("courses/{courseId}/exercise-titles")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<ExerciseTitleDTO>> getExerciseTitlesForCourse(@PathVariable long courseId) {
+        log.debug("REST request to get the exercise titles of course {}", courseId);
+        boolean seesUnreleased = authCheckService.isAtLeastTeachingAssistantInCourse(courseId);
+        String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        Set<ExerciseTitleDTO> titles = exerciseRepository.findTitlesVisibleToUser(courseId, ZonedDateTime.now(), seesUnreleased, userLogin);
+        return ResponseEntity.ok(titles);
+    }
+
+    /**
      * GET /exercises/:exerciseId : get the "exerciseId" exercise.
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise,
      *         or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @GetMapping("exercises/{exerciseId}")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<ExerciseResponseDTO> getExercise(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
 
         // Exam exercise
@@ -182,7 +221,7 @@ public class ExerciseResource {
                 exercise.filterSensitiveInformation();
             }
         }
-        return ResponseEntity.ok(exercise);
+        return ResponseEntity.ok(ExerciseResponseDTO.of(exercise));
     }
 
     /**
@@ -199,13 +238,14 @@ public class ExerciseResource {
      *         403 (Forbidden) if the current user does not have access to the
      *         example solution.
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @GetMapping("exercises/{exerciseId}/example-solution")
     @EnforceAtLeastStudent
-    public ResponseEntity<Exercise> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
+    public ResponseEntity<ExerciseResponseDTO> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get exercise with example solution: {}", exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
@@ -223,7 +263,7 @@ public class ExerciseResource {
         }
 
         exercise.filterSensitiveInformation();
-        return ResponseEntity.ok(exercise);
+        return ResponseEntity.ok(ExerciseResponseDTO.of(exercise));
     }
 
     /**
@@ -234,11 +274,12 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise,
      *         or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("exercises/{exerciseId}/for-assessment-dashboard")
     @EnforceAtLeastTutor
-    public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
+    public ResponseEntity<ExerciseResponseDTO> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (exercise instanceof ProgrammingExercise) {
@@ -249,6 +290,19 @@ public class ExerciseResource {
                         "programmingExerciseWithOnlyAutomaticAssessment");
             }
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+        }
+        // after the reload above, which answers from its own persistence context and carries no configuration
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
+
+        if (exercise.isExamExercise()) {
+            // let the client explain why assessment is not possible yet and from when on it is, instead of running into a 403
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            var exam = exercise.getExam();
+            var examAssessmentDates = ExerciseDateService.computeExamAssessmentDates(exercise, exam, api.getLatestIndividualExamEndDate(exam));
+            if (examAssessmentDates != null) {
+                exercise.setLatestExamEndDate(examAssessmentDates.latestExamEndDate());
+                exercise.setAssessmentPossibleFrom(examAssessmentDates.assessmentPossibleFrom());
+            }
         }
 
         Set<ExampleSubmission> exampleSubmissions = exerciseService.findExampleSubmissionsForExercise(exercise);
@@ -264,7 +318,7 @@ public class ExerciseResource {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
         exercise.setTutorParticipations(Set.of(tutorParticipation));
-        return ResponseEntity.ok(exercise);
+        return ResponseEntity.ok(ExerciseResponseDTO.of(exercise));
     }
 
     /**
@@ -275,6 +329,8 @@ public class ExerciseResource {
      * @return the title of the exercise wrapped in an ResponseEntity or 404 Not
      *         Found if no exercise with that id exists
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("exercises/{exerciseId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
@@ -304,6 +360,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or
      *         with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("exercises/{exerciseId}/stats-for-assessment-dashboard")
     @EnforceAtLeastTutor
     public ResponseEntity<StatsForDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
@@ -339,12 +396,15 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise,
      *         or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @GetMapping("exercises/{exerciseId}/details")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<ExerciseDetailsDTO> getExerciseDetails(@PathVariable Long exerciseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
+        // the page offers the AI feedback request based on these, and the config is lazy
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
 
         final boolean isAtLeastTAForExercise = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
 
@@ -383,7 +443,7 @@ public class ExerciseResource {
 
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseApi.flatMap(api -> api.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId())).orElse(null);
 
-        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, plagiarismCaseInfo));
+        return ResponseEntity.ok(new ExerciseDetailsDTO(ExerciseDetailsExerciseDTO.of(exercise), plagiarismCaseInfo));
     }
 
     /**
@@ -394,6 +454,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and new state of the
      *         correction toggle state
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @PutMapping("exercises/{exerciseId}/toggle-second-correction")
     @EnforceAtLeastInstructor
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
@@ -412,6 +473,7 @@ public class ExerciseResource {
      *                       from
      * @return the ResponseEntity with status 200 (OK) and the latest due date
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @GetMapping("exercises/{exerciseId}/latest-due-date")
     @EnforceAtLeastStudent
     public ResponseEntity<ZonedDateTime> getLatestDueDate(@PathVariable Long exerciseId) {

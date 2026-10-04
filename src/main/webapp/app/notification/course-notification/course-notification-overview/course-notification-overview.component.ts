@@ -9,6 +9,8 @@ import { CourseNotificationCategory } from 'app/notification/shared/entities/cou
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { firstValueFrom, from, fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
@@ -45,12 +47,14 @@ import { CourseNotificationPresetPickerComponent } from 'app/notification/course
     styleUrls: ['./course-notification-overview.component.scss'],
 })
 export class CourseNotificationOverviewComponent implements AfterViewInit {
-    readonly courseId = input.required<number>();
-
     private elementRef = inject(ElementRef);
     private courseNotificationService = inject(CourseNotificationService);
+    private accountService = inject(AccountService);
+    private courseStorageService = inject(CourseStorageService);
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
     private destroyRef = inject(DestroyRef);
+
+    readonly courseId = input.required<number>();
 
     // Icons
     protected readonly faBell = faBell;
@@ -85,6 +89,18 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
 
         this.subscribeToSettingAndInfoChanges();
         this.subscribeToNotificationChanges();
+    }
+
+    /**
+     * Whether the IRIS_REVIEW tab should be shown. Hidden for students because they have nothing to
+     * review. The decision is made when ngOnInit runs (the courseId input is required, so it is set).
+     */
+    protected isCategoryVisible(categoryString: string): boolean {
+        if (categoryString !== 'IRIS_REVIEW') {
+            return true;
+        }
+        const course = this.courseStorageService.getCourse(this.courseId());
+        return !!course && this.accountService.isAtLeastTutorInCourse(course);
     }
 
     ngAfterViewInit(): void {
@@ -338,7 +354,11 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
      * both in the local state and on the server.
      */
     protected markAllAsReadClicked() {
-        this.updateCurrentCategoryNotificationsToSeenOnServer();
+        const visibleUnseenNotificationIds = this.getVisibleUnseenNotificationIds();
+        if (visibleUnseenNotificationIds.length > 0) {
+            // An explicit action of the user, so not the automatic update the overview sends when it displays notifications
+            this.courseNotificationService.setNotificationStatus(this.courseId(), visibleUnseenNotificationIds, CourseNotificationViewingStatus.SEEN);
+        }
         this.updateCurrentCategoryNotificationsToSeenOnClient();
     }
 
@@ -385,7 +405,7 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
             return;
         }
 
-        this.courseNotificationService.setNotificationStatus(this.courseId(), visibleUnseenNotificationIds, CourseNotificationViewingStatus.SEEN);
+        this.courseNotificationService.markDisplayedNotificationsAsSeen(this.courseId(), visibleUnseenNotificationIds);
     }
 
     /**

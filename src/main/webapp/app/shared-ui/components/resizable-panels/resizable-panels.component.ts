@@ -13,11 +13,12 @@ import { parseJson } from 'app/foundation/util/json.util';
 
 @Directive({ selector: 'ng-template[jhiPanel]' })
 export class PanelDirective {
+    readonly templateRef = inject(TemplateRef);
+
     readonly label = input.required<string>();
     readonly icon = input<IconProp>();
     readonly iconTemplate = input<TemplateRef<unknown>>();
     readonly startsCollapsed = input(false);
-    readonly templateRef = inject(TemplateRef);
 }
 
 @Component({
@@ -45,9 +46,16 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      * migration dropped. Set to 0 to disable drag-to-collapse.
      */
     readonly collapseSnapPercent = input(12);
+    /** Removes the standard content gutter around the primary panel for full-bleed editors or canvases. */
+    readonly flushLeftPanel = input(false);
 
-    /** Gutter size (px) of the splitter; kept in sync with the template's [gutterSize]. */
-    private static readonly GUTTER_SIZE = 12;
+    /**
+     * Gutter size (px) of the splitter: the grey divider between the two panels, so it matches `--spacing-divider`,
+     * the width every other divider in the shells uses. The template binds `gutterSize` below, so the value the
+     * splitter renders and the value the flex-basis arithmetic assumes cannot drift apart.
+     */
+    private static readonly GUTTER_SIZE = 6;
+    protected readonly gutterSize = ResizablePanelsComponent.GUTTER_SIZE;
     /** Split (percent) used when reopening without a usable saved size. */
     private static readonly DEFAULT_SIZES = [65, 35];
 
@@ -231,7 +239,11 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      * must be copied before being stored. The splitter also persists that raw size to localStorage (stateStorage)
      * before this handler runs, so on a snap-collapse the stored size must be overwritten too.
      */
-    onResizeEnd(sizes: number[]): void {
+    onResizeEnd(rawSizes: (number | string)[]): void {
+        const sizes = rawSizes.map(Number);
+        if (sizes.some((size) => !Number.isFinite(size))) {
+            return;
+        }
         const rightSize = sizes[1] ?? 0;
         if (this.collapseSnapPercent() > 0 && rightSize <= this.collapseSnapPercent()) {
             // Only reuse the remembered split if it is itself usable. Guards against a degenerate value (and, as a

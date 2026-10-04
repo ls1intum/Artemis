@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -10,10 +10,9 @@ import { FileUploadExerciseService } from '../services/file-upload-exercise.serv
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -23,7 +22,7 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/c
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { FormsModule, NgModel } from '@angular/forms';
@@ -40,10 +39,18 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/fo
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+const MIN_FILE_PATTERN_LENGTH = 2;
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
+    styleUrl: './file-upload-exercise-update.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
@@ -57,7 +64,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         FaIconComponent,
         NgbTooltip,
@@ -65,6 +72,8 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
+        ExerciseTimelineComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit {
@@ -86,13 +95,9 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
 
     bonusPoints = viewChild<NgModel>('bonusPoints');
     points = viewChild<NgModel>('points');
-    solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
-    releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
-    startDateField = viewChild<FormDateTimePickerComponent>('startDate');
-    dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
-    assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
+    gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 
     // Signals for state
     fileUploadExercise = signal<FileUploadExercise>(new FileUploadExercise(undefined, undefined));
@@ -103,6 +108,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     notificationText = signal<string | undefined>(undefined);
     exerciseCategories = signal<ExerciseCategory[]>([]);
     existingCategories = signal<ExerciseCategory[]>([]);
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     examCourseId = signal<number | undefined>(undefined);
     formStatusSections = signal<FormSectionStatus[]>([]);
@@ -127,12 +133,17 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             this.updateFormSectionsOnIsValidChange();
         });
 
+        effect(() => {
+            this.timelineStatus();
+            this.validateDate();
+        });
+
         // Effect to handle route data loading
         effect(() => {
             const data = this.routeData();
             if (data?.fileUploadExercise) {
                 this.fileUploadExercise.set(data.fileUploadExercise);
-                this.backupExercise.set(cloneDeep(data.fileUploadExercise));
+                this.backupExercise.set(deepClone(data.fileUploadExercise));
                 this.examCourseId.set(getCourseId(data.fileUploadExercise));
             }
         });
@@ -187,11 +198,25 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
         this.isSaving.set(false);
     }
 
+    /**
+     * Follows the bonus field as the score mode creates and destroys it.
+     *
+     * The wiring used to run once, when the view was first built, which was enough while the field merely hid itself.
+     * Now that it is removed and rebuilt, a subscription to the control that happened to exist then would stop
+     * reporting the moment the reader switched modes - and the section status would sit on whatever it last heard.
+     * Recalculated on every appearance and disappearance too, since both change what the section is worth.
+     */
+    protected readonly followBonusPointsControl = effect((onCleanup) => {
+        const control = this.bonusPoints();
+        // Untracked: the calculation reads half the form, and tracking all of it here would re-run this on every
+        // keystroke rather than when the control itself comes or goes.
+        untracked(() => this.calculateFormSectionStatus());
+        const subscription = control?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        onCleanup(() => subscription?.unsubscribe());
+    });
+
     ngAfterViewInit() {
         this.points()
-            ?.valueChanges?.pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => this.calculateFormSectionStatus());
-        this.bonusPoints()
             ?.valueChanges?.pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => this.calculateFormSectionStatus());
         this.teamConfigFormGroupComponent()
@@ -212,29 +237,46 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !exercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode() || (!exercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true))),
-                empty: !exercise.exampleSolution || (!this.isExamMode() && !exercise.exampleSolutionPublicationDate),
+                valid: true,
+                empty: !exercise.exampleSolution,
             },
             {
+                // The example solution publication date lives in the timeline (as for programming exercises), so its
+                // validity is part of the grading section.
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
                     (this.points()?.valid ?? true) &&
                     (this.bonusPoints()?.valid ?? true) &&
-                    (this.isExamMode() ||
-                        (!exercise.startDateError &&
-                            !exercise.dueDateError &&
-                            !exercise.assessmentDueDateError &&
-                            (this.releaseDateField()?.dateInput?.valid ?? true) &&
-                            (this.startDateField()?.dateInput?.valid ?? true) &&
-                            (this.dueDateField()?.dateInput?.valid ?? true) &&
-                            (this.assessmentDateField()?.dateInput?.valid ?? true))),
+                    (this.isExamMode() || (this.timelineStatus().valid && !exercise.exampleSolutionPublicationDateError)),
                 ),
-                empty:
-                    !this.isExamMode() &&
-                    // if a dayjs object contains an empty date, it is considered "invalid"
-                    (!exercise.startDate?.isValid() || !exercise.dueDate?.isValid() || !exercise.assessmentDueDate?.isValid() || !exercise.releaseDate?.isValid()),
+                empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);
+    }
+
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
+    getInvalidReasons(): ValidationReason[] {
+        const exercise = this.fileUploadExercise();
+        if (!exercise) {
+            return [];
+        }
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        const reasons = getCommonExerciseInvalidReasons(exercise, {
+            isExamMode: this.isExamMode(),
+            minTitleLength: 3,
+            isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
+            isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
+            timelineStatus: this.timelineStatus(),
+        });
+
+        const filePattern = exercise.filePattern;
+        if (!filePattern) {
+            reasons.push({ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.undefined', translateValues: {} });
+        } else if (filePattern.length < MIN_FILE_PATTERN_LENGTH) {
+            reasons.push({ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: MIN_FILE_PATTERN_LENGTH } });
+        }
+
+        return reasons;
     }
 
     /**
@@ -292,9 +334,14 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     }
 
     async save() {
+        // Flush text-mode Monaco before isSaving disables the child (editable becomes false). A
+        // rejected parse aborts the save: the model still holds the previous grading criteria.
+        if (this.gradingInstructionsDetails()?.prepareForSave() === false) {
+            return;
+        }
         this.isSaving.set(true);
 
-        const command = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise(), this.editType(), this.alertService);
+        const command = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise(), this.editType());
 
         try {
             // save() returns Observable. Convert to Promise.

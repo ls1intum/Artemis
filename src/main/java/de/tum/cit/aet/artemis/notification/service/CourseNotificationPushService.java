@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -47,9 +48,16 @@ public class CourseNotificationPushService extends CourseNotificationBroadcastSe
      * @param recipients         A list of recipients who should receive the notification
      */
     @Override
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+    protected CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         var recipientSet = new HashSet<>(recipients);
         applePushNotificationService.sendCourseNotification(courseNotification, recipientSet);
         firebasePushNotificationService.sendCourseNotification(courseNotification, recipientSet);
+        // Completes on dispatch, not on delivery, and deliberately so. Both delegates are @Async void, each one hands
+        // batches to sendRelayRequest which is @Async again, and that method swallows a RestClientException after
+        // retrying rather than reporting it. Threading futures through all of that would still complete successfully
+        // after a swallowed relay failure, so the only way to a real push error rate is to change how push delivery
+        // handles its errors. That is a behaviour change to a user-facing delivery path in service of a statistic, so
+        // the count is left meaning "handed to the push pipeline" and the admin page says as much.
+        return CompletableFuture.completedFuture(null);
     }
 }

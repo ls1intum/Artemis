@@ -2,10 +2,11 @@ import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { FeedbackChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FeedbackChartService {
     create = (feedbackNodes: FeedbackNode[], exercise: Exercise): FeedbackChartData => {
         const summarizedNodes = this.summarizePoints(feedbackNodes);
@@ -56,10 +57,7 @@ export class FeedbackChartService {
 
             subtrahend = Math.min(subtrahend + current, 0);
 
-            return {
-                ...node,
-                credits,
-            };
+            return cloneWith(node, { credits });
         });
     };
 
@@ -84,20 +82,14 @@ export class FeedbackChartService {
      * Sets credits in nodes to absolute value
      */
     private absCredits = (feedbackNodes: FeedbackNode[]) => {
-        return feedbackNodes.map((node) => ({
-            ...node,
-            credits: Math.abs(node.credits ?? 0),
-        }));
+        return feedbackNodes.map((node) => cloneWith(node, { credits: Math.abs(node.credits ?? 0) }));
     };
 
     /*
      * Sets credits to 0 for all feedback nodes
      */
     private clearCredits = (feedbackNodes: FeedbackNode[]) => {
-        return feedbackNodes.map((node) => ({
-            ...node,
-            credits: 0,
-        }));
+        return feedbackNodes.map((node) => cloneWith(node, { credits: 0 }));
     };
 
     private capCredits = (credits: number, maxCredits?: number): number => {

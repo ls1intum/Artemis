@@ -24,16 +24,15 @@ class JenkinsPipelineScriptCreatorIntegrationTest extends AbstractProgrammingInt
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.getBuildConfig().setSequentialTestRuns(false);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setSequentialTestRuns(false);
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, programmingExercise);
     }
 
     @Test

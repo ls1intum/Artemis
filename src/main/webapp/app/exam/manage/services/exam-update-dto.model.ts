@@ -31,6 +31,7 @@ export interface ExamUpdateDTO {
     moduleNumber?: string;
     courseName?: string;
     exampleSolutionPublicationDate?: string;
+    examSummaryPublicationDate?: string;
     channelName?: string;
 }
 
@@ -68,6 +69,7 @@ export function toExamUpdateDTO(exam: Exam): ExamUpdateDTO {
         moduleNumber: exam.moduleNumber,
         courseName: exam.courseName,
         exampleSolutionPublicationDate: convertDateFromClient(exam.exampleSolutionPublicationDate),
+        examSummaryPublicationDate: convertDateFromClient(exam.examSummaryPublicationDate),
         channelName: exam.channelName,
     };
 }

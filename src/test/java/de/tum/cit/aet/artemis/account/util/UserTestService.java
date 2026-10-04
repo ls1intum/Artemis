@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.account.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -28,20 +27,29 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactDTO;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.PermanentUserDeletionRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionConfirmationDTO;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactDTO;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -52,7 +60,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.lti.service.LtiService;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
+import de.tum.cit.aet.artemis.lti.domain.UserLti;
+import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -77,6 +87,9 @@ public class UserTestService {
     private PasswordService passwordService;
 
     @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
+
+    @Autowired
     private CourseTestRepository courseRepository;
 
     @Autowired
@@ -84,6 +97,13 @@ public class UserTestService {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    // Optional: the repository only exists where LTI is enabled, and this helper is shared with test classes that run without it.
+    @Autowired(required = false)
+    private UserLtiRepository userLtiRepository;
 
     @Autowired
     private TeamUtilService teamUtilService;
@@ -112,6 +132,9 @@ public class UserTestService {
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     private String TEST_PREFIX;
 
     public User student;
@@ -132,7 +155,7 @@ public class UserTestService {
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userTestRepository.save(student);
-        student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        student = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         final var event = new ScienceEvent();
         event.setIdentity(student.getLogin());
@@ -211,41 +234,56 @@ public class UserTestService {
         student.setImageUrl("images/user/profiles-pictures/image.jpg");
         userTestRepository.save(student);
 
-        request.delete("/api/account/admin/users/" + student.getLogin(), HttpStatus.OK);
+        deletePermanently(student.getLogin());
 
-        final var deletedUser = userTestRepository.findById(student.getId()).orElseThrow();
-        assertThatUserWasSoftDeleted(student, deletedUser);
+        // Permanent rather than soft deletion: the row itself is gone, so there is nothing left to anonymize.
+        assertThat(userTestRepository.findById(student.getId())).isEmpty();
+    }
+
+    /**
+     * Deletes a user the way the client does: read the impact, then confirm it by its fingerprint. The endpoint rejects
+     * a deletion that carries no fingerprint or a stale one, so the read is part of the call rather than a convenience.
+     *
+     * @param login the user to delete
+     */
+    private void deletePermanently(String login) throws Exception {
+        var impact = request.get("/api/account/admin/users/" + login + "/deletion-impact", HttpStatus.OK, UserDeletionImpactDTO.class);
+        request.delete("/api/account/admin/users/" + login, HttpStatus.OK, new PermanentUserDeletionRequestDTO(impact.impactFingerprint()));
     }
 
     // Test
     public void deleteSelf_isNotSuccessful(String currentUserLogin) throws Exception {
-        request.delete("/api/account/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST);
-        final var deletedUser = userTestRepository.findById(student.getId()).orElseThrow();
-        assertThatUserWasNotSoftDeleted(student, deletedUser);
+        request.get("/api/account/admin/users/" + currentUserLogin + "/deletion-impact", HttpStatus.BAD_REQUEST, UserDeletionImpactDTO.class);
+
+        final var untouchedUser = userTestRepository.findById(student.getId()).orElseThrow();
+        assertThatUserWasNotSoftDeleted(student, untouchedUser);
     }
 
     // Test
     public void deleteUsers(String currentUserLogin) throws Exception {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        // The endpoint resolves the authenticated login against the database, so the caller has to hold the admin
+        // authority there. Self-deletion is rejected already by the preview and is therefore excluded from the request.
+        userUtilService.addAdminAuthorityTo(currentUserLogin);
 
-        var users = Stream.of("student1", "tutor1", "editor1", "instructor1").map(login -> {
-            final User user = userUtilService.getUserByLogin(TEST_PREFIX + login);
-            user.getGroups().clear();
-            return userTestRepository.save(user);
-        }).collect(Collectors.toSet());
+        var users = Stream.of("student1", "tutor1", "editor1", "instructor1")
+                .map(login -> userTestRepository.findOneByLogin(TEST_PREFIX + login).orElseThrow(() -> new IllegalArgumentException("User not found: " + TEST_PREFIX + login)))
+                .collect(Collectors.toSet());
 
-        var logins = users.stream().map(User::getLogin).toList();
-        request.delete("/api/account/admin/users", HttpStatus.OK, logins);
+        var logins = users.stream().map(User::getLogin).filter(login -> !login.equals(currentUserLogin)).toList();
+        var bulkImpact = request.postWithResponseBody("/api/account/admin/users/deletion-impact", new BulkUserDeletionImpactRequestDTO(logins), BulkUserDeletionImpactDTO.class,
+                HttpStatus.OK);
+        var confirmations = bulkImpact.users().stream().map(impact -> new UserDeletionConfirmationDTO(impact.login(), impact.impactFingerprint())).toList();
+        request.delete("/api/account/admin/users", HttpStatus.OK, new BulkUserDeletionRequestDTO(confirmations));
 
         for (var user : users) {
-            final var deletedUser = userTestRepository.findById(user.getId()).orElseThrow();
-
-            if (deletedUser.getLogin().equals(currentUserLogin)) {
-                assertThatUserWasNotSoftDeleted(user, deletedUser);
+            if (user.getLogin().equals(currentUserLogin)) {
+                final var untouchedUser = userTestRepository.findById(user.getId()).orElseThrow();
+                assertThatUserWasNotSoftDeleted(user, untouchedUser);
             }
             else {
-                assertThatUserWasSoftDeleted(user, deletedUser);
+                assertThat(userTestRepository.findById(user.getId())).isEmpty();
             }
         }
     }
@@ -257,7 +295,6 @@ public class UserTestService {
         final var newPassword = "bonobo42";
         final var newEmail = "bonobo42@tum.com";
         final var newFirstName = "Bruce";
-        final var newGroups = Set.of("foo", "bar");
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
@@ -266,7 +303,6 @@ public class UserTestService {
         student.setAuthorities(newAuthorities);
         student.setEmail(newEmail);
         student.setFirstName(newFirstName);
-        student.setGroups(newGroups);
         student.setLastName(newLastName);
         student.setImageUrl(newImageUrl);
         student.setLangKey(newLangKey);
@@ -276,7 +312,7 @@ public class UserTestService {
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
-        final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserIndDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
         assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
@@ -301,7 +337,7 @@ public class UserTestService {
         assertThat(response).isNotNull();
 
         // do not allow empty authorities
-        final var updatedUserInDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserInDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
         assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
     }
 
@@ -327,28 +363,9 @@ public class UserTestService {
         assertThat(userInDB.getId()).isEqualTo(student.getId());
     }
 
-    // Test
-    public void updateUserGroups() throws Exception {
-        var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        courseRepository.save(course);
-
-        // First we create a new user with group
-        student.setGroups(Set.of("instructor"));
-        student = userTestRepository.save(student);
-
-        // We will then update the user by modifying the groups
-        var updatedUser = student;
-        updatedUser.setGroups(Set.of("tutor"));
-        request.put("/api/account/admin/users", new ManagedUserVM(updatedUser, "this is a password"), HttpStatus.OK);
-
-        var updatedUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
-        assertThat(updatedUserOrEmpty).isPresent();
-
-        updatedUser = updatedUserOrEmpty.get();
-        assertThat(updatedUser.getId()).isEqualTo(student.getId());
-        assertThat(updatedUser.getGroups()).hasSize(1).contains("tutor");
-    }
+    // NOTE: updateUserGroups test removed — the admin user update API (ManagedUserVM) no longer
+    // carries group strings (UserDTO dropped the groups field in Phase 6). Course membership is
+    // now managed via user_course_role; see UserUtilService.enrollUserInCourse().
 
     // Test
     public User createExternalUser_asAdmin_isSuccessful() throws Exception {
@@ -377,7 +394,7 @@ public class UserTestService {
     // Test
     public void createExternalUser_asAdmin_withVcsToken_isSuccessful() throws Exception {
         var user = this.createExternalUser_asAdmin_isSuccessful();
-        assertThat(user.getVcsAccessToken()).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
     }
 
     // Test
@@ -499,39 +516,7 @@ public class UserTestService {
     }
 
     // Test
-    public void createUserWithGroups() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
-
-        var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        course = courseUtilService.addEmptyCourse();
-        course.setInstructorGroupName("instructor2");
-        courseRepository.save(course);
-
-        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
-
-        var newUser = student;
-        newUser.setId(null);
-        newUser.setLogin("batman");
-        newUser.setEmail("foobar@tum.com");
-        newUser.setGroups(Set.of("tutor", "instructor2"));
-
-        request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
-
-        var createdUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(newUser.getLogin());
-        assertThat(createdUserOrEmpty).isPresent();
-
-        var createdUser = createdUserOrEmpty.get();
-        assertThat(createdUser.getId()).isNotNull();
-        assertThat(createdUser.getGroups()).hasSize(2).isEqualTo(newUser.getGroups());
-    }
-
-    // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalse().stream().peek(user -> user.setGroups(Set.of())).toList();
-        userTestRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -568,8 +553,6 @@ public class UserTestService {
 
     // Test
     public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
-        student.setGroups(Set.of());
-        userTestRepository.save(student);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -661,8 +644,11 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
-        repoUser.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
+        markCreatedByLtiLaunch(repoUser);
         userTestRepository.save(repoUser);
+        // Seeded so the assertion below can fail: the key lives in user_recovery_key now, and an account that has none has
+        // nothing to clear.
+        userRecoveryKeyService.storeActivationKey(repoUser.getId(), "some-key");
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
@@ -674,6 +660,10 @@ public class UserTestService {
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+        // The key the factory generated for the internal account is unreachable state once the account is activated, and
+        // an activated account carrying one would break the invariant the data repair for wrongly unactivated accounts
+        // relies on.
+        assertThat(userRecoveryKeyService.findActivationKey(currentUser.getId())).as("activating through the LTI initialization clears the activation key").isNull();
     }
 
     // Test
@@ -683,7 +673,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        user.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
+        markCreatedByLtiLaunch(user, true);
         userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -695,6 +685,53 @@ public class UserTestService {
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+    }
+
+    /**
+     * The reason initialisation has its own marker. An LTI-provisioned account that an administrator deactivated is
+     * inactive, exactly like one that has never been initialised - and this endpoint needs only an authenticated session,
+     * which a token issued before the deactivation still provides. Deciding on {@code activated} therefore let a disabled
+     * account activate itself again and collect a working password.
+     */
+    // Test
+    public void initializeUserDeactivatedAfterInitialization() throws Exception {
+        String password = passwordService.hashPassword("ThisIsAPassword");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setPassword(password);
+        user.setInternal(true);
+        user.setActivated(false);
+        markCreatedByLtiLaunch(user, true);
+        userTestRepository.save(user);
+
+        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(dto.password()).as("a deactivated account must not be handed a password").isNull();
+
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(currentUser.getPassword()).isEqualTo(password);
+        assertThat(currentUser.getActivated()).as("a deactivated account must not activate itself here").isFalse();
+    }
+
+    /**
+     * Initialisation happens once. The marker is claimed in a single conditional statement, so a second call finds nothing
+     * to claim and gets no password - which also means two concurrent calls cannot both be served.
+     */
+    // Test
+    public void initializeUserOnlyOnce() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setPassword(passwordService.hashPassword("ThisIsAPassword"));
+        user.setInternal(true);
+        user.setActivated(false);
+        markCreatedByLtiLaunch(user, false);
+        userTestRepository.save(user);
+
+        UserInitializationDTO first = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+        UserInitializationDTO second = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(first.password()).isNotEmpty();
+        assertThat(second.password()).as("the second call has nothing left to claim").isNull();
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(passwordService.checkPasswordMatch(first.password(), currentUser.getPassword())).as("the first password stays valid").isTrue();
     }
 
     // Test
@@ -711,7 +748,9 @@ public class UserTestService {
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.getActivated()).isTrue();
+        // An account the LTI launch did not create is answered without being touched. It used to be activated here, which
+        // let it undo an administrator's deactivation.
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
@@ -731,7 +770,9 @@ public class UserTestService {
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.getActivated()).isTrue();
+        // Same for an externally managed account: it has no Artemis password to initialise, and only an administrator may
+        // reverse a deactivation.
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
         assertThat(currentUser.isInternal()).isFalse();
     }
 
@@ -742,7 +783,7 @@ public class UserTestService {
         // try to get token for non existent participation
         request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
 
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         courseRepository.save(course);
 
@@ -761,6 +802,13 @@ public class UserTestService {
                 HttpStatus.OK);
         assertThat(newToken).isNotEqualTo(token);
 
+        // creating a second token for the same participation is rejected with a conflict, not an internal server error
+        request.put("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, HttpStatus.CONFLICT);
+
+        // the rejected request left the existing token untouched
+        var tokenAfterConflict = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        assertThat(tokenAfterConflict).isEqualTo(newToken);
+
         submissionRepository.delete(submission);
         participationVCSAccessTokenRepository.deleteAll();
         participationRepository.deleteById(submission.getParticipation().getId());
@@ -769,7 +817,7 @@ public class UserTestService {
     // Test
     public void getAndCreateParticipationVcsAccessTokenForTeamExercise() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         exercise.setMode(ExerciseMode.TEAM);
         exerciseTestRepository.save(exercise);
@@ -799,7 +847,7 @@ public class UserTestService {
     // Test
     public void createAndDeleteUserVcsAccessToken() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isNull();
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
         // Set expiry date to already past date -> Bad Request
         ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
@@ -810,14 +858,14 @@ public class UserTestService {
         expiryDate = ZonedDateTime.now().plusMonths(1);
         userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isEqualTo(userDTO.getVcsAccessToken());
-        assertThat(user.getVcsAccessTokenExpiryDate()).isEqualTo(userDTO.getVcsAccessTokenExpiryDate());
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo(userDTO.getVcsAccessToken());
+        assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNotNull();
 
         // Delete token
         request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isNull();
-        assertThat(user.getVcsAccessTokenExpiryDate()).isNull();
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
+        assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNull();
     }
 
     public UserRepository getUserTestRepository() {
@@ -834,7 +882,7 @@ public class UserTestService {
      * @return params for request
      */
     private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status,
-            boolean findWithoutUserGroups) {
+            boolean findWithoutCourseEnrollment) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "1000");
@@ -845,7 +893,7 @@ public class UserTestService {
         params.add("origins", origins);
         params.add("registrationNumbers", registrationNumbers);
         params.add("status", status);
-        params.add("findWithoutUserGroups", Boolean.toString(findWithoutUserGroups));
+        params.add("findWithoutCourseEnrollment", Boolean.toString(findWithoutCourseEnrollment));
         return params;
     }
 
@@ -873,7 +921,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (Integer[] number : numbers) {
@@ -882,16 +930,13 @@ public class UserTestService {
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Set.of());
-            user2.setGroups(Set.of("tumuser"));
-            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), user2.getLogin());
         }
     }
 
     // Test
-    public void testUserWithoutGroups() throws Exception {
+    public void testUserWithoutCourseEnrollment() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         courseRepository.save(course);
 
@@ -906,9 +951,9 @@ public class UserTestService {
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Set.of());
-            user2.setGroups(Set.of("tumuser"));
-            userTestRepository.saveAll(List.of(user1, user2));
+            // Enroll user2 in the course — the filter excludes users that have any UCR entry.
+            // user1 has no UCR entry and must appear; user2 is enrolled and must be excluded.
+            userCourseRoleTestRepository.save(new UserCourseRole(user2, course, CourseRole.STUDENT));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin()).doesNotContain(user2.getLogin());
         }
@@ -942,7 +987,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -965,7 +1010,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -989,7 +1034,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1020,7 +1065,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1047,7 +1092,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1074,7 +1119,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1090,5 +1135,27 @@ public class UserTestService {
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(admin.getLogin()).doesNotContain(user1.getLogin(), user2.getLogin());
         }
+    }
+
+    /**
+     * Marks the account as created by an LTI launch. The marker is a row in {@code user_lti} rather than a column on the
+     * user, so it cannot be set by mutating the entity.
+     *
+     * @param user the account to mark
+     */
+    private void markCreatedByLtiLaunch(User user) {
+        markCreatedByLtiLaunch(user, false);
+    }
+
+    /**
+     * Records that an LTI launch provisioned the account, and whether that account has already completed the one-time
+     * initialisation. The endpoint decides on this marker rather than on {@code activated}, so a test that wants an
+     * already-initialised account has to say so here.
+     */
+    private void markCreatedByLtiLaunch(User user, boolean initialized) {
+        userTestRepository.save(user);
+        UserLti marker = new UserLti(user.getId(), true);
+        marker.setInitialized(initialized);
+        userLtiRepository.save(marker);
     }
 }

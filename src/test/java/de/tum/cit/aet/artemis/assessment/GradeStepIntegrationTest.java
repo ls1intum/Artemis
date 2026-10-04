@@ -36,6 +36,9 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
 
     private static final String TEST_PREFIX = "gradestep";
 
+    /** Student not enrolled in the test course; exercises the wrong-course branch. */
+    private static final String OTHER_PREFIX = "gradestepother";
+
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
@@ -70,11 +73,8 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-
-        // Student not belonging to any course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student2");
-
-        course = courseUtilService.addEmptyCourse();
+        userUtilService.addUsers(OTHER_PREFIX, 1, 0, 0, 0); // outsider student — never enrolled in course
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam = examUtilService.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
         examGradingScale = new GradingScale();
@@ -96,7 +96,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForCourseStudentNotInCourse() throws Exception {
         createGradeScale();
         request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);

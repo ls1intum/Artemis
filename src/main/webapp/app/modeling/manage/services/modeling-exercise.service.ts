@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -6,12 +6,12 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/foundation/util/download.util';
-import { toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
+import { toImportModelingExerciseDTO, toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ModelingExerciseService implements ExerciseServicable<ModelingExercise> {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
@@ -20,11 +20,8 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     public adminResourceUrl = 'api/modeling/admin/modeling-exercises';
 
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
-        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .post<ModelingExercise>(this.resourceUrl, toUpdateModelingExerciseDTO(modelingExercise), { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -54,11 +51,10 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceModelingExercise: ModelingExercise) {
-        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceModelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<ModelingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
+            .post<ModelingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceModelingExercise.id}`, toImportModelingExerciseDTO(adaptedSourceModelingExercise), {
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

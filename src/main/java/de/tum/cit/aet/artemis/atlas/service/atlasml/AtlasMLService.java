@@ -22,9 +22,9 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
@@ -139,12 +139,28 @@ public class AtlasMLService {
     }
 
     /**
-     * Suggests competencies based on the provided request.
+     * Suggests competencies based on the provided request, using the standard AtlasML timeouts.
      *
      * @param request the suggestion request containing id and description
      * @return the suggested competency IDs and their relations
      */
     public SuggestCompetencyResponseDTO suggestCompetencies(SuggestCompetencyRequestDTO request) {
+        return suggestCompetencies(request, atlasmlRestTemplate);
+    }
+
+    /**
+     * Suggests competencies using the short-timeout RestTemplate. Intended for best-effort / advisory callers
+     * (e.g. the orchestrator similarity shortlist) that must not block on a slow or unreachable AtlasML instance:
+     * the standard 30s/60s timeouts could otherwise hold a caller for minutes when AtlasML is degraded.
+     *
+     * @param request the suggestion request containing id and description
+     * @return the suggested competency IDs and their relations
+     */
+    public SuggestCompetencyResponseDTO suggestCompetenciesWithShortTimeout(SuggestCompetencyRequestDTO request) {
+        return suggestCompetencies(request, shortTimeoutAtlasmlRestTemplate);
+    }
+
+    private SuggestCompetencyResponseDTO suggestCompetencies(SuggestCompetencyRequestDTO request, RestTemplate restTemplate) {
         try {
             log.debug("Requesting competency suggestions for id: {}", request.description());
             HttpHeaders headers = buildHeadersWithAuth();
@@ -153,7 +169,7 @@ public class AtlasMLService {
 
             // Get the raw response as String first to handle empty array responses
             // TODO: please directly convert the response: the REST Template can handle empty responses
-            ResponseEntity<String> response = atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SUGGEST_ENDPOINT, HttpMethod.POST, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(config.getAtlasmlBaseUrl() + SUGGEST_ENDPOINT, HttpMethod.POST, entity, String.class);
 
             String responseBody = response.getBody();
 
@@ -164,7 +180,7 @@ public class AtlasMLService {
 
             // Parse the response as SuggestCompetencyResponseDTO
             try {
-                ObjectMapper objectMapper = JsonObjectMapper.get();
+                JsonMapper objectMapper = JsonObjectMapper.get();
                 return objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
             }
             catch (Exception parseException) {
@@ -203,7 +219,7 @@ public class AtlasMLService {
 
             String responseBody = response.getBody();
 
-            ObjectMapper objectMapper = JsonObjectMapper.get();
+            JsonMapper objectMapper = JsonObjectMapper.get();
             return objectMapper.readValue(responseBody, SuggestCompetencyRelationsResponseDTO.class);
         }
         catch (HttpClientErrorException e) {
@@ -396,7 +412,7 @@ public class AtlasMLService {
             return true;
         }
         catch (Exception e) {
-            final String opStr = operationType != null ? operationType.value().toLowerCase() : "update";
+            final String opStr = operationType.value().toLowerCase(Locale.ROOT);
             log.error("Failed to {} {} competencies", opStr, competencies.size(), e);
             return false;
         }
@@ -424,7 +440,7 @@ public class AtlasMLService {
             return true;
         }
         catch (Exception e) {
-            final String opStr = operationType != null ? operationType.value().toLowerCase() : "update";
+            final String opStr = operationType.value().toLowerCase(Locale.ROOT);
             log.error("Failed to {} exercise with id {}", opStr, exerciseId, e);
             return false;
         }
@@ -475,7 +491,7 @@ public class AtlasMLService {
             return saveExercise(exercise.getId(), exercise.getTitle(), description, competencyIds, courseId, operationType);
         }
         catch (Exception e) {
-            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.value().toLowerCase(), exercise.getId(), e);
+            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.value().toLowerCase(Locale.ROOT), exercise.getId(), e);
             return false;
         }
     }
@@ -517,7 +533,7 @@ public class AtlasMLService {
             return saveExercise(exerciseId, exercise.getTitle(), description, competencyIds, courseId, operationType);
         }
         catch (Exception e) {
-            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.value().toLowerCase(), exerciseId, e);
+            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.value().toLowerCase(Locale.ROOT), exerciseId, e);
             return false;
         }
     }
@@ -538,7 +554,7 @@ public class AtlasMLService {
         }
 
         try {
-            ObjectMapper objectMapper = JsonObjectMapper.get();
+            JsonMapper objectMapper = JsonObjectMapper.get();
             JsonNode root = objectMapper.readTree(responseBody);
             boolean isHealthy = isHttpHealthy;
 
@@ -555,7 +571,7 @@ public class AtlasMLService {
 
             return new ConnectorHealth(isHealthy, additionalInfo);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("AtlasML health payload has invalid JSON", e);
             return createFailedHealth(additionalInfo, "Incorrect format from AtlasML");
         }
@@ -630,7 +646,7 @@ public class AtlasMLService {
         if (child.isMissingNode() || child.isNull() || !child.isValueNode()) {
             return null;
         }
-        String value = child.asText();
+        String value = child.asString();
         return value == null || value.isBlank() ? null : value;
     }
 }

@@ -1,0 +1,65 @@
+{{- /*
+JHipster Registry = Eureka service discovery. Mandatory: Artemis disables all
+other Hazelcast joiners and injects TCP-IP members from Eureka metadata, so
+nodes cannot form a cluster without it. Runs with the `dev` profile so it serves
+config from the local filesystem (no external Git config server needed).
+*/ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "artemis.registryName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "artemis.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: registry
+  template:
+    metadata:
+      labels:
+        {{- include "artemis.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: registry
+    spec:
+      containers:
+        - name: registry
+          image: "{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}"
+          imagePullPolicy: {{ .Values.registry.image.pullPolicy }}
+          env:
+            - name: _JAVA_OPTIONS
+              value: "-Xmx512m -Xms256m"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "dev,openapi"
+            - name: SPRING_SECURITY_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "artemis.secretName" . }}
+                  key: JHIPSTER_REGISTRY_PASSWORD
+            - name: JHIPSTER_REGISTRY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "artemis.secretName" . }}
+                  key: JHIPSTER_REGISTRY_PASSWORD
+            - name: JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "artemis.secretName" . }}
+                  key: JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET
+            - name: SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_TYPE
+              value: "native"
+            - name: SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS
+              value: "file:./central-config/localhost-config/"
+          ports:
+            - name: http
+              containerPort: 8761
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
+          resources:
+            {{- toYaml .Values.registry.resources | nindent 12 }}

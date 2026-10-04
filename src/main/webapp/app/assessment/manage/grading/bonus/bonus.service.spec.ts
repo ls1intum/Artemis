@@ -7,9 +7,9 @@ import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-s
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { cloneDeep } from 'lodash-es';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('Bonus Service', () => {
     type GradeStepBuilder = {
@@ -431,7 +431,7 @@ describe('Bonus Service', () => {
             sourceGradingScale,
         };
 
-        const bonusToGradeStepsDTOWithoutIncludedBounds = cloneDeep(bonusToGradeStepsDTO);
+        const bonusToGradeStepsDTOWithoutIncludedBounds = deepClone(bonusToGradeStepsDTO);
         bonusToGradeStepsDTOWithoutIncludedBounds.gradeSteps.forEach((gradeStep) => {
             gradeStep.lowerBoundInclusive = false;
             gradeStep.upperBoundInclusive = false;

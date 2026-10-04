@@ -1,8 +1,42 @@
+@use 'src/main/webapp/content/scss/artemis-variables' as artemis;
+
+:host {
+    --modeling-submission-editor-corner-radius: #{artemis.$border-radius-lg};
+
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.modeling-submission {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.modeling-submission-content,
 .submission-container {
-    min-height: 100vh;
+    height: 100%;
+    min-height: 0;
+}
+
+.submission-container {
+    container-type: inline-size;
+}
+
+jhi-resizeable-container {
+    --resizeable-container-border-radius: var(--modeling-submission-editor-corner-radius);
+
+    display: flex;
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
 }
 
 jhi-modeling-editor {
+    display: block;
     width: 100%;
 }
 
@@ -10,32 +44,228 @@ jhi-modeling-assessment {
     width: 100%;
 }
 
-.editor-large {
-    min-height: 100vh;
-}
-
-.editor-assessment {
-    max-width: 70vw;
-    height: 100vh;
-}
-
-.feedback-list {
+.modeling-submission-editor-tile {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    width: 100%;
+    height: 100%;
+    min-height: 24rem;
+    overflow: clip;
+    border-radius: var(--modeling-submission-editor-corner-radius);
+    background: transparent;
+
+    jhi-modeling-editor {
+        height: 100%;
+    }
 }
 
-.rg-bottom {
-    align-self: center;
-    cursor: row-resize;
+.modeling-submission-surface {
+    display: block;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.modeling-submission-content {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.submission-container {
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.modeling-submission-complaint {
+    max-height: 40%;
+    flex: 0 0 auto;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.modeling-submission-assessment-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+
+    &__canvas {
+        display: flex;
+        min-width: 0;
+        min-height: min(34rem, 70dvh);
+        flex: 1 1 auto;
+        overflow: hidden;
+    }
 }
 
 @media print {
-    /* Ensure the parent container adjusts its height during printing */
     .submission-container {
         min-height: auto !important;
         height: auto !important;
         break-inside: avoid !important;
     }
+}
+
+.modeling-submission-feedback {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    color: var(--apollon-foreground, var(--bs-body-color));
+    font-size: 0.875rem;
+}
+
+.modeling-submission-feedback__empty {
+    margin: 0;
+    color: var(--apollon-secondary, var(--bs-secondary-color));
+}
+
+.feedback-group__title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    margin: 0 0 0.375rem;
+    color: var(--apollon-secondary, var(--bs-secondary-color));
+    font-size: 0.8125rem;
+    font-weight: 600;
+
+    &:not(:first-child) {
+        margin-top: 0.875rem;
+    }
+}
+
+.feedback-group__count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+}
+
+.feedback-list {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+}
+
+.feedback-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.5rem;
+    row-gap: 0.125rem;
+    padding: 0.4375rem 0.5rem;
+    border: 1px solid var(--apollon-border, var(--bs-border-color));
+    border-radius: var(--apollon-radius-md, 6px);
+    background-color: var(--apollon-surface, var(--bs-body-bg));
+    transition: border-color 120ms ease;
+
+    &[role='button'] {
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--apollon-interactive-selection, #f39c12);
+        }
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--apollon-primary);
+        outline-offset: 2px;
+    }
+}
+
+.feedback-row--selected {
+    border-color: var(--apollon-interactive-selection, #f39c12);
+    box-shadow: 0 0 0 1px var(--apollon-interactive-selection, #f39c12);
+}
+
+.feedback-row__score {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.0625rem 0.375rem;
+    border-radius: var(--apollon-radius-sm, 4px);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+    white-space: nowrap;
+
+    &[data-tone='positive'] {
+        color: var(--apollon-assessment-positive-text);
+        background-color: var(--apollon-assessment-positive-bg);
+    }
+
+    &[data-tone='negative'] {
+        color: var(--apollon-assessment-negative-text);
+        background-color: var(--apollon-assessment-negative-bg);
+    }
+
+    &[data-tone='zero'] {
+        color: var(--apollon-assessment-zero-text);
+        background-color: var(--apollon-assessment-zero-bg);
+    }
+}
+
+.feedback-row__name {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--apollon-secondary, var(--bs-secondary-color));
+    font-size: 0.8125rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.feedback-row__text {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+.modeling-submission-feedback__complaint {
+    margin-top: 0.75rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid var(--apollon-border, var(--bs-border-color));
+
+    ::ng-deep .btn {
+        width: 100%;
+        margin: 0;
+        font-size: 0.8125rem;
+    }
+
+    ::ng-deep .complaints-student-view__actions {
+        display: grid;
+        margin-top: 0.5rem !important;
+        gap: 0.375rem;
+        grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    }
+
+    ::ng-deep .row > * {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+
+    ::ng-deep h3 {
+        margin-bottom: 0.375rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    ::ng-deep textarea {
+        width: 100%;
+        font-size: 0.8125rem;
+    }
+
+    ::ng-deep p {
+        margin-bottom: 0.5rem;
+        font-size: 0.8125rem;
+    }
+}
+
+.modeling-submission-feedback__rating {
+    display: block;
+    margin-top: 0.75rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid var(--apollon-border, var(--bs-border-color));
+    color: var(--apollon-secondary, var(--bs-secondary-color));
 }

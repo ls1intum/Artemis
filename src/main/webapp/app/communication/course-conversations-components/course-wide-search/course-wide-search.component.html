@@ -1,18 +1,18 @@
 <div class="course-wide-search-mobile-disclaimer" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig().searchTerm }">
-    <span class="mb-2" jhiTranslate="artemisApp.metis.overview.mobileDisclaimer"></span>
-    <button class="btn btn-outline-secondary" jhiTranslate="artemisApp.metis.overview.mobileDisclaimerCallToAction" (click)="openSidebar()"></button>
+    <span class="mb-2" jhiTranslate="artemisApp.communication.overview.mobileDisclaimer"></span>
+    <button type="button" class="btn btn-outline-secondary" jhiTranslate="artemisApp.communication.overview.mobileDisclaimerCallToAction" (click)="openSidebar()"></button>
 </div>
 <div class="course-wide-search-content" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig().searchTerm }">
     <div class="mt-2 mx-2 course-wide-search-inner">
         <div>
             <h4 class="d-inline-block rounded p-1 info">
                 @if (!courseWideSearchConfig().searchTerm) {
-                    <span jhiTranslate="artemisApp.metis.overview.allMessages"></span>
+                    <span jhiTranslate="artemisApp.communication.overview.allMessages"></span>
                 } @else {
-                    <button class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
                         <fa-icon [icon]="faChevronLeft" />
                     </button>
-                    <span jhiTranslate="artemisApp.metis.overview.searchResults" [translateValues]="{ search: courseWideSearchConfig().searchTerm }"></span>
+                    <span jhiTranslate="artemisApp.communication.overview.searchResults" [translateValues]="{ search: courseWideSearchConfig().searchTerm }"></span>
                 }
             </h4>
         </div>
@@ -36,7 +36,7 @@
                                     (change)="onSelectContext()"
                                     [attr.disabled]="formGroup.get('filterToCourseWide')?.disabled ? '' : null"
                                 />
-                                <label for="filterToCourseWide" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToCourseWide"></label>
+                                <label for="filterToCourseWide" class="p-0" jhiTranslate="artemisApp.communication.overview.filterToCourseWide"></label>
                             </div>
                             <div class="col-auto p-0 ps-2">
                                 <input
@@ -47,7 +47,7 @@
                                     id="filterToUnresolved"
                                     (change)="onSelectContext()"
                                 />
-                                <label for="filterToUnresolved" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToUnresolved"></label>
+                                <label for="filterToUnresolved" class="p-0" jhiTranslate="artemisApp.communication.overview.filterToUnresolved"></label>
                             </div>
                             <div class="col-auto p-0 ps-2">
                                 <input
@@ -58,19 +58,47 @@
                                     id="filterToAnsweredOrReacted"
                                     (change)="onSelectContext()"
                                 />
-                                <label for="filterToAnsweredOrReacted" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToAnsweredOrReacted"></label>
+                                <label for="filterToAnsweredOrReacted" class="p-0" jhiTranslate="artemisApp.communication.overview.filterToAnsweredOrReacted"></label>
                             </div>
+                            @if (isAtLeastTutor()) {
+                                <div class="col-auto p-0 ps-2">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        formControlName="filterToUnverifiedIris"
+                                        name="filterToUnverifiedIris"
+                                        id="filterToUnverifiedIris"
+                                        (change)="onSelectContext()"
+                                    />
+                                    <label for="filterToUnverifiedIris" class="p-0" jhiTranslate="artemisApp.communication.overview.filterToUnverifiedIris"></label>
+                                </div>
+                            }
                         </div>
                         <!-- sort dropdown -->
                         <div class="d-flex">
-                            <div class="col-auto p-0 me-1" jhiTranslate="artemisApp.metis.overview.sortedByDate"></div>
-                            <div class="col-auto p-0 clickable" role="button" (click)="onChangeSortDir()">
+                            <div class="col-auto p-0 me-1" jhiTranslate="artemisApp.communication.overview.sortedByDate"></div>
+                            <div
+                                class="col-auto p-0 clickable"
+                                role="button"
+                                (click)="onChangeSortDir()"
+                                #keyboardAction80
+                                tabindex="0"
+                                [attr.aria-label]="
+                                    (sortingOrder() === SortDirection.ASCENDING
+                                        ? 'artemisApp.communication.overview.sortAscending'
+                                        : 'artemisApp.communication.overview.sortDescending'
+                                    ) | artemisTranslate
+                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction80.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction80.click() : undefined"
+                            >
                                 <fa-icon
                                     [icon]="sortingOrder() === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
                                     [ngbTooltip]="
                                         sortingOrder() === SortDirection.ASCENDING
-                                            ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
-                                            : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
+                                            ? ('artemisApp.communication.overview.sortAscending' | artemisTranslate)
+                                            : ('artemisApp.communication.overview.sortDescending' | artemisTranslate)
                                     "
                                 />
                             </div>
@@ -93,7 +121,7 @@
                     @if (!isFetchingPosts() && posts().length === 0) {
                         <div class="envelope">
                             <fa-icon size="5x" [icon]="faEnvelope" />
-                            <div class="text-center mt-2" jhiTranslate="artemisApp.metis.noPosts"></div>
+                            <div class="text-center mt-2" jhiTranslate="artemisApp.communication.noPosts"></div>
                         </div>
                     }
                     <!-- list of messages -->

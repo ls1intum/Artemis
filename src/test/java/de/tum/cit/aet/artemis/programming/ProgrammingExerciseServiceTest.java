@@ -35,8 +35,8 @@ class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndep
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
-        var course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        var course2 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var course1 = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var course2 = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
 
         programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(course1, ProgrammingExercise.class);
         programmingExercise2 = ExerciseUtilService.getFirstExerciseWithType(course2, ProgrammingExercise.class);

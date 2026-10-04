@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -7,10 +7,10 @@ import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * This service is used to store course scores and participation results (the relevant result used for the score calculation for each participation) for the currently logged-in user.
- * The methods {@link CourseManagementService#findAllForDashboard} and {@link CourseManagementService#findOneForDashboard} retrieve the scores and participation results in addition to one or multiple {@link Course} objects and save the scores and participation results in this service.
+ * The method {@link CourseManagementService#findAllForDashboard} retrieves the scores and participation results in addition to the {@link Course} objects and saves the scores and participation results in this service.
  * This way, multiple components that need the scores and participation results can access them without having to retrieve them again from the server.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ScoresStorageService implements OnDestroy {
     private readonly accountService = inject(AccountService);
 
@@ -29,6 +29,12 @@ export class ScoresStorageService implements OnDestroy {
      * This map stores the {@link Result} object for each {@link Participation} of the currently logged-in user. The number is the id of the participation.
      */
     private storedParticipationResults: Map<number, ParticipationResultDTO> = new Map();
+
+    /**
+     * This nested map stores, per course id, the points the user earns from each exercise variant group (keyed by group id).
+     * The values are server-computed: capped at the group's maxPoints and adjusted for plagiarism verdicts.
+     */
+    private storedAchievedPointsPerVariantGroup: Map<number, Map<number, number>> = new Map();
 
     private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
@@ -54,6 +60,7 @@ export class ScoresStorageService implements OnDestroy {
         this.storedTotalScores.clear();
         this.storedScoresPerExerciseType.clear();
         this.storedParticipationResults.clear();
+        this.storedAchievedPointsPerVariantGroup.clear();
     }
 
     getStoredTotalScores(courseId: number): CourseScores | undefined {
@@ -80,5 +87,21 @@ export class ScoresStorageService implements OnDestroy {
         for (const participationResult of participationResults ?? []) {
             this.storedParticipationResults.set(participationResult.participationId, participationResult);
         }
+    }
+
+    /**
+     * The server-computed points the user earns from a variant group (capped where the group has a cap), or
+     * {@code undefined} when nothing was stored for it.
+     */
+    getStoredAchievedGroupPoints(courseId: number, groupId: number): number | undefined {
+        return this.storedAchievedPointsPerVariantGroup.get(courseId)?.get(groupId);
+    }
+
+    setStoredAchievedPointsPerVariantGroup(courseId: number, achievedPointsPerVariantGroup?: { [groupId: number]: number }): void {
+        const perGroup = new Map<number, number>();
+        for (const [groupId, points] of Object.entries(achievedPointsPerVariantGroup ?? {})) {
+            perGroup.set(Number(groupId), points);
+        }
+        this.storedAchievedPointsPerVariantGroup.set(courseId, perGroup);
     }
 }

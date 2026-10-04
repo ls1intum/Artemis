@@ -1,6 +1,7 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
 import { fillDateTimePicker, setMonacoEditorContentByLocator } from '../../utils';
@@ -31,7 +32,7 @@ export class LectureManagementPage {
     async deleteLecture(lecture: Lecture) {
         const lectureRow = this.getLecture(lecture.id!);
         await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
-        await lectureRow.locator('#delete-lecture').click();
+        await lectureRow.locator('[data-testid="delete-lecture"]').click();
         const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', lecture.title!);
@@ -77,41 +78,24 @@ export class LectureManagementPage {
      * the caller starts interacting with it.
      */
     async openUnitsPage(lectureId: number) {
-        await this.gotoLectureSubPage(lectureId, 'unit-management');
+        const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
+        if (courseIdMatch) {
+            await Commands.gotoAndEnsureRendered(this.page, `/course-management/${courseIdMatch[1]}/lectures/${lectureId}/unit-management`);
+        } else {
+            const lectureRow = this.getLecture(lectureId);
+            await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
+            await lectureRow.locator('#units').click();
+        }
         await this.getUnitCreationCard().waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**
-     * Navigates to the attachments page of a specified lecture by its identifier.
-     * Waits for the create-attachment button to confirm the page is hydrated before
-     * returning, matching the pattern used by `openUnitsPage` so callers (e.g.
-     * `openAttachmentUnitCreationPage`) do not race the SPA bootstrap.
+     * Opens the creation form for a file/video content unit, which is where lecture files
+     * are attached since lecture-level attachments were removed in favour of lecture units.
      */
-    async openAttachmentsPage(lectureId: number) {
-        await this.gotoLectureSubPage(lectureId, 'attachments');
-        await this.page.locator('#add-attachment').waitFor({ state: 'visible', timeout: 30_000 });
-    }
-
-    /**
-     * Navigates to a lecture sub-page (unit-management, attachments, …) directly via URL
-     * instead of clicking through the lectures list. The caller is expected to be on a
-     * page whose URL contains `/course-management/<courseId>/…` so we can extract the
-     * course id; otherwise we fall back to the legacy click-through path.
-     */
-    private async gotoLectureSubPage(lectureId: number, subPath: string) {
-        const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
-        if (courseIdMatch) {
-            await Commands.gotoAndEnsureRendered(this.page, `/course-management/${courseIdMatch[1]}/lectures/${lectureId}/${subPath}`);
-            return;
-        }
-        const lectureRow = this.getLecture(lectureId);
-        await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
-        await lectureRow.locator(subPath === 'unit-management' ? '#units' : '#attachments').click();
-    }
-
     async openAttachmentUnitCreationPage(lectureId: number) {
-        await this.openAttachmentsPage(lectureId);
-        await this.page.locator('#add-attachment').click();
+        await this.openUnitsPage(lectureId);
+        await this.openCreateUnit(UnitType.ATTACHMENT_VIDEO);
     }
 
     /**
@@ -127,7 +111,7 @@ export class LectureManagementPage {
      * @returns A Playwright locator for the unit creation card.
      */
     getUnitCreationCard() {
-        return this.page.locator('#unit-creation');
+        return this.page.locator('[data-testid="unit-creation"]');
     }
 
     /**
@@ -140,7 +124,7 @@ export class LectureManagementPage {
     async addTextUnit(name: string, text: string, releaseDate = dayjs()) {
         await this.openCreateUnit(UnitType.TEXT);
         await this.page.fill('#name', name);
-        await fillDateTimePicker(this.page.locator('#pick-releaseDate #date-input-field'), releaseDate);
+        await fillDateTimePicker(this.page.locator('input#pick-releaseDate'), releaseDate);
         // Use the specific container for the content Monaco editor
         const contentField = this.page.locator('#content');
         await setMonacoEditorContentByLocator(this.page, contentField, text);
@@ -159,6 +143,61 @@ export class LectureManagementPage {
         await exerciseUnit.waitFor();
         await exerciseUnit.click();
         return this.submitUnit('#createButton');
+    }
+
+    /**
+     * Creates a file/video content unit from a file through the creation form of the unit management page.
+     * The unit is looked up in the lecture afterwards, because the body of a response to a file upload cannot
+     * be read reliably (see readResponseJson).
+     * @param lectureId - The lecture the unit management page belongs to.
+     * @param name - The name of the unit.
+     * @param filePath - Absolute path of the file to attach.
+     * @returns A promise that resolves with the created unit.
+     */
+    async addAttachmentVideoUnit(lectureId: number, name: string, filePath: string) {
+        await this.openCreateUnit(UnitType.ATTACHMENT_VIDEO);
+        await this.getAttachmentFileInput().setInputFiles(filePath);
+        await this.page.fill('#name', name);
+        const responsePromise = this.page.waitForResponse(
+            (response) => response.request().method() === 'POST' && /\/lecture\/lectures\/\d+\/attachment-video-units$/.test(new URL(response.url()).pathname),
+        );
+        await this.page.click('#submitButton');
+        expect((await responsePromise).status()).toBe(201);
+        const lectureResponse = await this.page.request.get(`${BASE_API}/lecture/lectures/${lectureId}/details`);
+        const lecture = (await lectureResponse.json()) as Lecture;
+        const unit = lecture.lectureUnits!.find((lectureUnit) => lectureUnit.name === name) as AttachmentVideoUnit;
+        expect(unit, `unit ${name} in lecture ${lectureId}`).toBeDefined();
+        return unit;
+    }
+
+    /**
+     * Opens the edit form of a file/video content unit.
+     */
+    async openAttachmentVideoUnitEditPage(courseId: number, lectureId: number, unitId: number) {
+        await Commands.gotoAndEnsureRendered(this.page, `/course-management/${courseId}/lectures/${lectureId}/unit-management/attachment-video-units/${unitId}/edit`);
+        await this.page.getByTestId('current-file').waitFor({ state: 'visible', timeout: 30_000 });
+    }
+
+    /**
+     * Replaces the file of the file/video content unit whose edit form is open and saves it.
+     * @param filePath - Absolute path of the new file.
+     * @returns A promise that resolves with the response of the update.
+     */
+    async replaceAttachmentVideoUnitFile(filePath: string) {
+        await this.getAttachmentFileInput().setInputFiles(filePath);
+        await this.page.getByTestId('replacement-file').waitFor({ state: 'visible' });
+        const responsePromise = this.page.waitForResponse(
+            (response) => response.request().method() === 'PUT' && /\/lecture\/lectures\/\d+\/attachment-video-units\/\d+$/.test(new URL(response.url()).pathname),
+        );
+        await this.page.click('#submitButton');
+        return responsePromise;
+    }
+
+    /**
+     * The hidden file input of the file/video content form, which its "Choose file" and "Replace file" buttons open.
+     */
+    getAttachmentFileInput() {
+        return this.page.getByTestId('attachment-file-input');
     }
 
     /**
@@ -214,6 +253,6 @@ export class LectureManagementPage {
 export enum UnitType {
     TEXT = '#createTextUnitButton',
     EXERCISE = '#createExerciseUnitButton',
-    VIDEO = '#createVideoUnitButton',
-    FILE = '#createFileUploadUnitButton',
+    ONLINE = '#createOnlineUnitButton',
+    ATTACHMENT_VIDEO = '#createAttachmentVideoUnitButton',
 }

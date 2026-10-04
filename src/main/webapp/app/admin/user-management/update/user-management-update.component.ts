@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -6,35 +7,35 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { TooltipModule } from 'primeng/tooltip';
-import { InputTextModule } from 'primeng/inputtext';
-import { CheckboxModule } from 'primeng/checkbox';
-import { SelectModule } from 'primeng/select';
-import { AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
-import { ChipModule } from 'primeng/chip';
-import { ButtonModule } from 'primeng/button';
-import { DialogService } from 'primeng/dynamicdialog';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiChipComponent,
+    TumAetUiDialogComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiSelectComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { PASSWORD_MAX_BYTES, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
-import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AccountService } from 'app/core/auth/account.service';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
 
-/**
- * Component for creating and updating users in the admin user management.
- * Provides a form with validation for user properties, groups, and organizations.
- */
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
@@ -43,14 +44,17 @@ import { Authority } from 'app/foundation/constants/authority.constants';
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        TooltipModule,
+        TumAetUiTooltipDirective,
         HelpIconComponent,
-        InputTextModule,
-        CheckboxModule,
-        SelectModule,
-        AutoCompleteModule,
-        ChipModule,
-        ButtonModule,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiSelectComponent,
+        TumAetUiChipComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+        OrganizationSelectorComponent,
         FaIconComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
@@ -59,20 +63,21 @@ import { Authority } from 'app/foundation/constants/authority.constants';
 export class UserManagementUpdateComponent implements OnInit {
     private readonly languageHelper = inject(JhiLanguageHelper);
     private readonly userService = inject(AdminUserService);
-    private readonly courseAdminService = inject(CourseAdminService);
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
     private readonly fb = inject(FormBuilder);
     private readonly accountService = inject(AccountService);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    protected readonly faTimes = faTimes;
+
+    /** Controls visibility of the declarative organization-selector dialog. */
+    readonly orgSelectorVisible = signal(false);
 
     private readonly findLanguageFromKeyPipe = new FindLanguageFromKeyPipe();
 
@@ -81,6 +86,7 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+    readonly PASSWORD_MAX_BYTES = PASSWORD_MAX_BYTES;
     readonly EMAIL_MIN_LENGTH = 5;
     readonly EMAIL_MAX_LENGTH = 100;
     readonly REGISTRATION_NUMBER_MAX_LENGTH = 20;
@@ -96,6 +102,9 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /** Whether a random password should be generated (new users) or the old password kept (existing users). */
     readonly useRandomPassword = signal(true);
+
+    /** Whether an administrator explicitly chose to revoke the existing user's other credentials with a password change. */
+    readonly revokeCredentials = signal(false);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -120,11 +129,6 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Whether the form is currently being submitted */
     readonly isSaving = signal(false);
 
-    /** All available groups for autocomplete */
-    allGroups: string[] = [];
-
-    readonly groupSuggestions = signal<string[]>([]);
-
     /** Authority to translation key mapping */
     private readonly authorityTranslationKeys: Record<string, string> = {
         ROLE_SUPER_ADMIN: 'artemisApp.userManagement.roles.superAdmin',
@@ -145,7 +149,7 @@ export class UserManagementUpdateComponent implements OnInit {
     private isJenkins = false;
 
     /**
-     * Initializes the component by loading user data, authorities, languages, and groups.
+     * Initializes the component by loading user data, authorities and languages.
      */
     ngOnInit(): void {
         // create a new user, and only overwrite it if we fetch a user to edit
@@ -156,20 +160,9 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.oldLogin = this.user().login;
                 this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
                     // Rebuild the user reference so the async organization update renders under zoneless.
-                    this.user.update((currentUser) => ({ ...currentUser, organizations }));
+                    this.user.update((currentUser) => cloneWith(currentUser, { organizations }));
                 });
             }
-        });
-        this.courseAdminService.getAllGroupsForAllCourses().subscribe((groups) => {
-            this.allGroups = [];
-            if (groups.body) {
-                groups.body.forEach((group) => {
-                    if (group != undefined) {
-                        this.allGroups.push(group);
-                    }
-                });
-            }
-            this.groupSuggestions.set(this.availableGroups());
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
@@ -178,10 +171,6 @@ export class UserManagementUpdateComponent implements OnInit {
             );
         });
         this.languages.set(this.languageHelper.getAll());
-        // Empty array for new user
-        if (!this.user().id) {
-            this.user().groups = [];
-        }
         // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
         this.user().password = undefined;
         this.initializeForm();
@@ -204,14 +193,41 @@ export class UserManagementUpdateComponent implements OnInit {
      * Saves the user (creates new or updates existing).
      * Shows a warning for Jenkins users when login changes.
      */
-    save(): void {
-        this.isSaving.set(true);
-        // temporarily store the user groups and organizations in variables, because they are not part of the edit form
-        const userGroups = this.user().groups;
+    async save(): Promise<void> {
+        const passwordControl = this.editForm.get('password')!;
+        if (passwordControl.invalid) {
+            passwordControl.markAsTouched();
+            return;
+        }
+
+        // temporarily store the user organizations because they are not part of the edit form
         const userOrganizations = this.user().organizations;
         const updatedUser: User = this.editForm.getRawValue();
-        updatedUser.groups = userGroups;
+        // An omitted password generates a random one for new users and keeps it unchanged for existing users.
+        // The form clears the control to an empty string, which the server rejects as a too-short password.
+        updatedUser.password = updatedUser.password || undefined;
         updatedUser.organizations = userOrganizations;
+        if (updatedUser.id) {
+            updatedUser.revokeCredentials = !!updatedUser.password && this.revokeCredentials();
+        }
+
+        // Deactivating an active account also revokes every credential, in UserCreationService.updateUser and regardless
+        // of the checkbox, so clearing "Activated" and saving deletes all passkeys, keys and tokens too. Confirming only
+        // the checkbox left that path silent, which is the more surprising of the two: the administrator was not asked
+        // about credentials at all.
+        const deactivating = this.user().id !== undefined && this.user().activated && !updatedUser.activated;
+
+        // Confirmed before saving, and before the spinner starts, because this deletes another person's authenticators
+        // and keys irreversibly. An administrator has no way to notice a mistyped click here the way the owner would, so
+        // this is the site that most needs the question asked. A save that revokes nothing is not interrupted.
+        if (updatedUser.revokeCredentials || deactivating) {
+            const confirmed = await this.credentialRevocationConfirmationService.confirm({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        this.isSaving.set(true);
         this.user.set(updatedUser);
         if (updatedUser.id) {
             this.userService.update(updatedUser).subscribe({
@@ -239,28 +255,30 @@ export class UserManagementUpdateComponent implements OnInit {
     shouldRandomizePassword(useRandomPassword: boolean) {
         this.useRandomPassword.set(useRandomPassword);
         this.user().password = useRandomPassword ? undefined : '';
+        // Clears the typed value as well, not just the model: save() submits editForm.getRawValue(), so a
+        // password typed before toggling back would otherwise still be sent — silently changing the password
+        // while revokeCredentials is reset to false, i.e. a real credential change that leaves the user's
+        // other credentials intact.
+        this.updatePasswordValidators(true);
+        if (useRandomPassword) {
+            this.revokeCredentials.set(false);
+        }
     }
 
     /**
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
-            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
-            width: '80vw',
-            modal: true,
-            closable: true,
-            dismissableMask: true,
-            data: {
-                organizations: this.user().organizations,
-            },
-        });
-        dialogRef?.onClose.subscribe((organization) => {
-            if (organization !== undefined) {
-                // Rebuild the user reference (new organizations array) so the async dialog result renders under zoneless.
-                this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
-            }
-        });
+        this.orgSelectorVisible.set(true);
+    }
+
+    /**
+     * Adds the organization chosen in the selector dialog to the user.
+     * @param organization the organization selected in the dialog
+     */
+    onOrgSelected(organization: Organization) {
+        // Rebuild the user reference (new organizations array) so the dialog result renders under zoneless.
+        this.user.update((currentUser) => cloneWith(currentUser, { organizations: [...(currentUser.organizations ?? []), organization] }));
     }
 
     /**
@@ -269,45 +287,38 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     removeOrganizationFromUser(organization: Organization) {
         // Rebuild the user reference (new organizations array) so the updated list renders under zoneless.
-        this.user.update((currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }));
-    }
-
-    /** Filters the group suggestions shown in the autocomplete dropdown based on the typed query. */
-    filterGroups(event: AutoCompleteCompleteEvent): void {
-        const query = (event.query ?? '').trim();
-        this.groupSuggestions.set(query ? this.filter(query) : this.availableGroups());
-    }
-
-    onGroupSelect(event: AutoCompleteSelectEvent): void {
-        const groupString = (event.value ?? '').toString().trim();
-        this.addGroup(this.user(), groupString);
+        this.user.update((currentUser) =>
+            cloneWith(currentUser, { organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }),
+        );
     }
 
     /**
-     * Adds the group typed into the autocomplete when the user presses Enter. Cancels the key first so it does not
-     * ALSO submit the surrounding `(ngSubmit)="save()"` edit form (which would save and navigate away mid-edit).
+     * Recomputes the password validators from the current state, and clears the value when a password no longer
+     * applies.
+     * <p>
+     * Owned here rather than by a template `[required]` binding because the password input is rendered inside
+     * both `@if (internal)` and `@if (!useRandomPassword())`. Whenever either turns off, the input and any
+     * validator directive on it are destroyed while a rule left composed on the control keeps the form invalid —
+     * with no field on screen for the administrator to fix, so Save stays disabled for good. Driving it from
+     * state instead covers every route out of manual-password mode: toggling back to keeping the password, and
+     * switching a new user to external.
+     *
+     * @param clearTypedValue whether to discard a password already typed, used when the mode itself changed
      */
-    onGroupAdd(user: User, event: Event): void {
-        event.preventDefault();
-        event.stopPropagation();
-        const input = event.target as HTMLInputElement;
-        this.addGroup(user, (input.value || '').trim());
-        input.value = '';
-    }
-
-    onGroupUnselect(event: AutoCompleteUnselectEvent): void {
-        const group = (event.value ?? '').toString();
-        this.removeGroup(this.user(), group);
-    }
-
-    removeGroup(user: User, group: string) {
-        user.groups = user.groups?.filter((userGroup) => userGroup !== group);
-        this.commitUser(user);
-    }
-
-    private availableGroups(): string[] {
-        const assigned = this.user()?.groups ?? [];
-        return (this.allGroups ?? []).filter((group) => group != undefined && !assigned.includes(group));
+    private updatePasswordValidators(clearTypedValue = false) {
+        const passwordControl = this.editForm?.get('password');
+        if (!passwordControl) {
+            return;
+        }
+        const lengthRules = [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator];
+        const passwordApplies = !!this.editForm.get('internal')?.value && !this.useRandomPassword();
+        passwordControl.setValidators(passwordApplies ? [Validators.required, ...lengthRules] : lengthRules);
+        if (clearTypedValue || !passwordApplies) {
+            // reset() re-runs the validators just set.
+            passwordControl.reset('');
+        } else {
+            passwordControl.updateValueAndValidity();
+        }
     }
 
     private initializeForm() {
@@ -319,10 +330,11 @@ export class UserManagementUpdateComponent implements OnInit {
             login: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
             firstName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
             lastName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
-            password: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+            password: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator]],
             email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
             visibleRegistrationNumber: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
             activated: [''],
+            isTestUser: [''],
             langKey: [''],
             authorities: [''],
             internal: [{ disabled: true }], // initially disabled, will be enabled if user.id is undefined
@@ -333,6 +345,13 @@ export class UserManagementUpdateComponent implements OnInit {
         } else {
             this.editForm.get('internal')?.enable(); // New users can either be internal or external
         }
+        // Recompute whenever `internal` changes: unchecking it hides the whole password section without going
+        // through shouldRandomizePassword(), which would otherwise leave a required rule stranded on a hidden
+        // control. initializeForm() returns early when the form already exists, so this subscribes once.
+        this.editForm
+            .get('internal')
+            ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.updatePasswordValidators());
         this.editForm.patchValue(this.user());
     }
 
@@ -349,38 +368,6 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     private onSaveError(): void {
         this.isSaving.set(false);
-    }
-
-    /**
-     * Filter the groups based on the input value
-     * @param value input value
-     */
-    private filter(value: string): string[] {
-        const filterValue = value.toLowerCase();
-        return this.allGroups.filter((group) => group != undefined && group.toLowerCase().includes(filterValue));
-    }
-
-    /**
-     * Adds a group to the user if it is valid
-     * @param user to add the group to
-     * @param groupString group to add
-     */
-    private addGroup(user: User, groupString: string) {
-        if (groupString && this.allGroups.includes(groupString) && !user.groups?.includes(groupString)) {
-            if (!user.groups) {
-                user.groups = [];
-            }
-            user.groups.push(groupString);
-            this.commitUser(user);
-        }
-    }
-
-    /**
-     * Rebuild the user signal reference after an in-place mutation so the dependent template (chip list) re-renders under zoneless.
-     * Only rebuilds when the mutated object is the currently held user to avoid clobbering unrelated state.
-     */
-    private commitUser(user: User) {
-        this.user.update((currentUser) => (currentUser === user ? { ...currentUser } : currentUser));
     }
 
     /**

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
 
 describe('deepClone', () => {
@@ -246,5 +246,205 @@ describe('deepClone', () => {
         expect(cloned).toBeInstanceOf(Set);
         expect(cloned.has(cloned)).toBe(true);
         expect(cloned).not.toBe(original);
+    });
+
+    it('should preserve the prototype of class instances, including nested ones', () => {
+        class Attachment {
+            name?: string;
+
+            label(): string {
+                return `Attachment: ${this.name}`;
+            }
+        }
+        class Lecture {
+            title?: string;
+            attachment?: Attachment;
+
+            label(): string {
+                return `Lecture: ${this.title}`;
+            }
+        }
+        const original = new Lecture();
+        original.title = 'Intro';
+        original.attachment = new Attachment();
+        original.attachment.name = 'Slides';
+
+        const cloned = deepClone(original);
+
+        // Every entity conversion away from object spread relies on this: the copy must keep its class methods.
+        expect(cloned).toBeInstanceOf(Lecture);
+        expect(cloned.label()).toBe('Lecture: Intro');
+        expect(cloned.attachment).toBeInstanceOf(Attachment);
+        expect(cloned.attachment!.label()).toBe('Attachment: Slides');
+        expect(cloned.attachment).not.toBe(original.attachment);
+    });
+});
+
+describe('cloneWith', () => {
+    it('should return a new object carrying the overrides', () => {
+        const original = { title: 'Original', points: 10 };
+
+        const updated = cloneWith(original, { title: 'Updated' });
+
+        expect(updated).toEqual({ title: 'Updated', points: 10 });
+        expect(updated).not.toBe(original);
+    });
+
+    it('should not mutate the source', () => {
+        const original = { title: 'Original', nested: { value: 1 } };
+
+        const updated = cloneWith(original, { title: 'Updated' });
+        updated.nested.value = 2;
+
+        expect(original.title).toBe('Original');
+        expect(original.nested.value).toBe(1);
+    });
+
+    it('should detach nested objects and arrays from the source', () => {
+        const original = { course: { id: 1 }, tags: ['a'] };
+
+        const updated = cloneWith(original, { tags: ['a', 'b'] });
+
+        expect(updated.course).not.toBe(original.course);
+        expect(updated.tags).toEqual(['a', 'b']);
+    });
+
+    it('should preserve Day.js properties that are not overridden', () => {
+        const original = { title: 'Lecture', startDate: dayjs('2024-01-15T10:00:00') };
+
+        const updated = cloneWith(original, { title: 'Renamed' });
+
+        expect(dayjs.isDayjs(updated.startDate)).toBe(true);
+        expect(updated.startDate.isSame(original.startDate)).toBe(true);
+        expect(updated.startDate).not.toBe(original.startDate);
+    });
+
+    it('should apply an explicitly undefined override rather than skipping it', () => {
+        const original = { id: 1, submission: { id: 5 } as { id: number } | undefined };
+
+        const updated = cloneWith(original, { submission: undefined });
+
+        expect(updated.submission).toBeUndefined();
+        expect('submission' in updated).toBe(true);
+    });
+
+    it('should take override values by reference so live values survive', () => {
+        const marker = () => 'live';
+        const original = { id: 1 };
+
+        const updated = cloneWith(original, { callback: marker });
+
+        // A deep clone of a function would yield an unusable copy; overrides must pass through untouched.
+        expect(updated.callback).toBe(marker);
+    });
+
+    it('should add fields the source type does not declare', () => {
+        const original: { id: number } = { id: 1 };
+
+        const updated = cloneWith(original, { isAtLeastTutor: true });
+
+        expect(updated.id).toBe(1);
+        expect(updated.isAtLeastTutor).toBe(true);
+    });
+
+    it('should support computed override keys', () => {
+        const original: Record<string, boolean> = { a: true };
+        const key = 'b';
+
+        const updated = cloneWith(original, { [key]: false });
+
+        expect(updated).toEqual({ a: true, b: false });
+    });
+
+    it('should let the overrides win over the source', () => {
+        const updated = cloneWith({ value: 'source' }, { value: 'override' });
+
+        expect(updated.value).toBe('override');
+    });
+
+    it('should keep the prototype of the copied source', () => {
+        class Lecture {
+            title?: string;
+
+            label(): string {
+                return `Lecture: ${this.title}`;
+            }
+        }
+        const original = new Lecture();
+        original.title = 'Intro';
+
+        const renamed = cloneWith(original, { title: 'Renamed' });
+
+        expect(renamed).toBeInstanceOf(Lecture);
+        expect(renamed.label()).toBe('Lecture: Renamed');
+    });
+});
+
+describe('hydrate', () => {
+    class Lecture {
+        title?: string;
+        startDate?: ReturnType<typeof dayjs>;
+
+        displayTitle(): string {
+            return `Lecture: ${this.title}`;
+        }
+    }
+
+    it('should populate the instance and keep its prototype methods', () => {
+        const dto = { title: 'Intro' };
+
+        const lecture = hydrate(new Lecture(), dto);
+
+        expect(lecture).toBeInstanceOf(Lecture);
+        expect(lecture.title).toBe('Intro');
+        expect(lecture.displayTitle()).toBe('Lecture: Intro');
+    });
+
+    it('should return the same instance that was passed in', () => {
+        const target = new Lecture();
+
+        expect(hydrate(target, { title: 'Intro' })).toBe(target);
+    });
+
+    it('should detach the copied values from the source DTO', () => {
+        const dto = { nested: { value: 1 } };
+
+        const hydrated = hydrate({} as { nested: { value: number } }, dto);
+        hydrated.nested.value = 2;
+
+        expect(dto.nested.value).toBe(1);
+    });
+
+    it('should preserve Day.js properties from the DTO', () => {
+        const dto = { startDate: dayjs('2024-01-15T10:00:00') };
+
+        const lecture = hydrate(new Lecture(), dto);
+
+        expect(dayjs.isDayjs(lecture.startDate)).toBe(true);
+        expect(lecture.startDate!.isSame(dto.startDate)).toBe(true);
+        expect(lecture.startDate).not.toBe(dto.startDate);
+    });
+
+    it('should keep target properties the source does not mention', () => {
+        const target = new Lecture();
+        target.title = 'Existing';
+
+        const hydrated = hydrate(target, { startDate: dayjs('2024-01-15') });
+
+        expect(hydrated.title).toBe('Existing');
+    });
+
+    it('should apply several sources in order, with later ones winning', () => {
+        const hydrated = hydrate(new Lecture(), { title: 'First' }, { title: 'Second' });
+
+        expect(hydrated.title).toBe('Second');
+        expect(hydrated).toBeInstanceOf(Lecture);
+    });
+
+    it('should merge disjoint properties from several sources', () => {
+        const hydrated = hydrate(new Lecture(), { title: 'Intro' }, { startDate: dayjs('2024-01-15') });
+
+        expect(hydrated.title).toBe('Intro');
+        expect(dayjs.isDayjs(hydrated.startDate)).toBe(true);
     });
 });

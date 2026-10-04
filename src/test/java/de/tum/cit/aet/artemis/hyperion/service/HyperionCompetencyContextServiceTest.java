@@ -71,8 +71,7 @@ class HyperionCompetencyContextServiceTest {
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
         var templateService = new HyperionPromptTemplateService();
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
-        lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        // Since Spring AI 2.0 the ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         service = new HyperionCompetencyContextService(Optional.of(courseCompetencyApi), Optional.of(competencyRelationApi), Optional.of(irisLectureSearchApi),

@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.QuizExerciseStartedPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user a new quiz was started.
@@ -14,17 +16,14 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(9)
 public class QuizExerciseStartedNotification extends CourseNotification {
 
-    protected Long exerciseId;
-
-    protected String exerciseTitle;
+    private final QuizExerciseStartedPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
      */
     public QuizExerciseStartedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.exerciseId = exerciseId;
-        this.exerciseTitle = exerciseTitle;
+        this.payload = new QuizExerciseStartedPayloadDTO(exerciseId, exerciseTitle);
     }
 
     /**
@@ -32,6 +31,7 @@ public class QuizExerciseStartedNotification extends CourseNotification {
      */
     public QuizExerciseStartedNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, QuizExerciseStartedPayloadDTO.class);
     }
 
     @Override
@@ -51,6 +51,11 @@ public class QuizExerciseStartedNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/exercises/" + exerciseId;
+        return "/courses/" + courseId + "/exercises/" + payload.exerciseId();
+    }
+
+    @Override
+    public QuizExerciseStartedPayloadDTO payload() {
+        return payload;
     }
 }

@@ -10,9 +10,11 @@
             }
             mavenCentral()
         }
+        // The org.openapi.generator plugin comes from the plugins block of the root build.gradle. Do not add it here as
+        // well: the Jackson pin in the root buildscript block does not reach this classpath, so a second copy would put
+        // its older jackson-databind into the GitHub dependency graph.
         dependencies {
             classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
-            classpath "org.openapitools:openapi-generator-gradle-plugin:7.14.0"
         }
     }
 
@@ -29,7 +31,7 @@
             jvmArgs = [
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
-                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.training",
+                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.openapi",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",

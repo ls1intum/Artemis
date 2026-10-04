@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -15,8 +15,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
-import { addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublicFilePrefix } from 'app/app.constants';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 export interface IAccountService {
     save: (account: User) => Observable<HttpResponse<User>>;
@@ -26,23 +27,27 @@ export interface IAccountService {
     hasAuthority: (authority: string) => Promise<boolean>;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
+    isAtLeastTutorInCourseWithId: (courseId?: number) => boolean;
     isAtLeastTutorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastEditorInCourse: (course: Course) => boolean;
+    isAtLeastEditorInCourseWithId: (courseId?: number) => boolean;
     isAtLeastEditorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
+    isAtLeastInstructorInCourseWithId: (courseId?: number) => boolean;
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AccountService implements IAccountService {
     private readonly translateService = inject(TranslateService);
     private readonly sessionStorageService = inject(SessionStorageService);
     private readonly http = inject(HttpClient);
     private readonly websocketService = inject(WebsocketService);
     private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly profileService = inject(ProfileService);
 
     // cached value of the user to avoid unnecessary requests to the server
     userIdentity = signal<User | undefined>(undefined);
@@ -94,16 +99,6 @@ export class AccountService implements IAccountService {
         this.userIdentity.set(identity);
     }
 
-    syncGroups(groups: string[]) {
-        this.userIdentity.update((currentUserIdentity) => {
-            if (!currentUserIdentity) {
-                return currentUserIdentity;
-            }
-            currentUserIdentity.groups = groups;
-            return currentUserIdentity;
-        });
-    }
-
     hasAnyAuthority(authorities: readonly Authority[]): Promise<boolean> {
         return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
     }
@@ -136,14 +131,6 @@ export class AccountService implements IAccountService {
                 return Promise.resolve(false);
             },
         );
-    }
-
-    hasGroup(group?: string): boolean {
-        if (!this.authenticated() || !this.userIdentity()?.authorities || !this.userIdentity()?.groups || !group) {
-            return false;
-        }
-
-        return this.userIdentity()?.groups?.some((userGroup: string) => userGroup === group) ?? false;
     }
 
     identity(force?: boolean): Promise<User | undefined> {
@@ -192,12 +179,14 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastTutorInCourse(course?: Course): boolean {
-        return (
-            this.hasGroup(course?.instructorGroupName) ||
-            this.hasGroup(course?.editorGroupName) ||
-            this.hasGroup(course?.teachingAssistantGroupName) ||
-            this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)
-        );
+        return this.isAtLeastTutorInCourseWithId(course?.id);
+    }
+
+    isAtLeastTutorInCourseWithId(courseId?: number): boolean {
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(courseId, 'TEACHING_ASSISTANT');
     }
 
     /**
@@ -205,7 +194,14 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastEditorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.editorGroupName) || this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+        return this.isAtLeastEditorInCourseWithId(course?.id);
+    }
+
+    isAtLeastEditorInCourseWithId(courseId?: number): boolean {
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(courseId, 'EDITOR');
     }
 
     /**
@@ -213,7 +209,31 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastInstructorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+        return this.isAtLeastInstructorInCourseWithId(course?.id);
+    }
+
+    isAtLeastInstructorInCourseWithId(courseId?: number): boolean {
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(courseId, 'INSTRUCTOR');
+    }
+
+    private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: string): boolean {
+        if (!courseId || !this.authenticated()) {
+            return false;
+        }
+        const courseRoles = this.userIdentity()?.courseRoles;
+        if (!courseRoles) {
+            return false;
+        }
+        const entry = courseRoles.find((r) => r.courseId === courseId);
+        if (!entry) {
+            return false;
+        }
+        const roleHierarchy: Record<string, number> = { STUDENT: 0, TEACHING_ASSISTANT: 1, EDITOR: 2, INSTRUCTOR: 3 };
+        const minLevel = roleHierarchy[minimumRole] ?? 0;
+        return entry.roles.some((role) => (roleHierarchy[role] ?? -1) >= minLevel);
     }
 
     /**
@@ -250,6 +270,30 @@ export class AccountService implements IAccountService {
 
     isAtLeastTutor(): boolean {
         return this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
+    }
+
+    /**
+     * Whether the user may use editor features that are not bound to a course, as the server decides for editor endpoints:
+     * an editor or instructor, or an administrator whose session grants the administrator rights.
+     */
+    hasEditorAccess(): boolean {
+        return this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]) || this.hasAdministratorAccess();
+    }
+
+    /**
+     * Whether administrators have to sign in with a passkey that a super administrator approved before they may use
+     * administrator features.
+     */
+    isPasskeyRequiredForAdministratorFeatures(): boolean {
+        return this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+    }
+
+    /**
+     * Unlike {@link isAdmin}, the administrator authority alone is not enough while passkeys are required for administrator
+     * features: until the administrator signs in with an approved passkey, the server does not grant the administrator rights.
+     */
+    private hasAdministratorAccess(): boolean {
+        return this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
     }
 
     isAuthenticated(): boolean {
@@ -409,12 +453,32 @@ export class AccountService implements IAccountService {
      * to omit accepting LLM usage popup appearing multiple time before user refreshes the page.
      */
     setUserLLMSelectionDecision(accepted: LLMSelectionDecision): void {
+        this.applyLLMSelectionDecision(accepted, dayjs());
+    }
+
+    /**
+     * Restores a previously captured decision verbatim, including "no decision made yet" ({@code undefined}) and an
+     * absent timestamp. Used to roll back an optimistic update whose persistence failed; unlike
+     * {@link setUserLLMSelectionDecision} it must never stamp the current time, because that would claim the user
+     * decided just now.
+     */
+    restoreUserLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
+        this.applyLLMSelectionDecision(accepted, timestamp);
+    }
+
+    private applyLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
         this.userIdentity.update((currentUserIdentity) => {
             if (!currentUserIdentity) {
                 return currentUserIdentity;
             }
 
-            return Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: dayjs() });
+            // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
+            // same reference emits no notification. deepClone (not Object.assign) because User carries a Day.js
+            // date — see deep-clone.util.ts. Mirrors setImageUrl.
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.selectedLLMUsage = accepted;
+            updatedUserIdentity.selectedLLMUsageTimestamp = timestamp;
+            return updatedUserIdentity;
         });
     }
 

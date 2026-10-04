@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
@@ -10,10 +10,12 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { parseJson } from 'app/foundation/util/json.util';
+import { ApollonModelData, countModelElements } from 'app/modeling/shared/apollon-model.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExampleSubmissionService {
     private http = inject(HttpClient);
     private stringCountService = inject(StringCountService);
@@ -101,14 +103,14 @@ export class ExampleSubmissionService {
      * Convert a returned JSON object to ExampleSubmission.
      */
     private convertItemFromServer(exampleSubmission: ExampleSubmission): ExampleSubmission {
-        return Object.assign({}, exampleSubmission);
+        return deepClone(exampleSubmission);
     }
 
     /**
      * Convert a ExampleSubmission to a JSON which can be sent to the server.
      */
     private convert(exampleSubmission: ExampleSubmission): ExampleSubmission {
-        const jsonCopy = Object.assign({}, exampleSubmission);
+        const jsonCopy = deepClone(exampleSubmission);
         if (jsonCopy.exercise) {
             jsonCopy.exercise = ExerciseService.convertExerciseDatesFromClient(jsonCopy.exercise);
             jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise);
@@ -128,8 +130,8 @@ export class ExampleSubmissionService {
         if (submission && exercise && exercise.type === ExerciseType.TEXT) {
             return this.stringCountService.countWords((submission as TextSubmission).text);
         } else if (submission && exercise && exercise.type === ExerciseType.MODELING) {
-            const umlModel = parseJson<{ elements: unknown[]; relationships: unknown[] }>((submission as ModelingSubmission).model!);
-            return umlModel ? umlModel.elements?.length + umlModel.relationships?.length : 0;
+            const model = (submission as ModelingSubmission).model;
+            return model ? countModelElements(parseJson<ApollonModelData>(model)) : 0;
         }
         return 0;
     }

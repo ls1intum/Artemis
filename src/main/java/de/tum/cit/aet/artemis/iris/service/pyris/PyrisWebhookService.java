@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,8 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
@@ -37,7 +34,6 @@ import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -81,7 +77,10 @@ public class PyrisWebhookService {
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
-        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        // An attachment that links to a document hosted elsewhere has nothing here to ingest. Resolving the link would read whichever unrelated file shares its last segment
+        // and hand that to Pyris as this unit's content.
+        Path path = attachmentVideoUnit.getAttachment().fileLocation().orElseThrow(() -> new IrisInternalPyrisErrorException(
+                "Attachment video unit " + attachmentVideoUnit.getId() + " links to a document this application does not store, so it cannot be ingested")).path();
         try {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.getEncoder().encodeToString(fileBytes);
@@ -188,14 +187,14 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created else null
      */
     public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
-        if (irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()) {
-            String videoSource = attachmentVideoUnit.getVideoSource();
-            if ((videoSource != null && !videoSource.isBlank()) || (attachmentVideoUnit.getAttachment() != null
-                    && (attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")))) {
-                return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
-            }
+        if (isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
+            return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
         }
         return null;
+    }
+
+    private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
+        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit);
     }
 
     /**

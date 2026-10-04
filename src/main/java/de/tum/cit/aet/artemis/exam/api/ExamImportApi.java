@@ -33,10 +33,9 @@ public class ExamImportApi extends AbstractExamApi {
      *
      * @param examToCopy     the exam to copy
      * @param targetCourseId the ID of the target course
-     * @return the imported exam (created even if some exercises were skipped)
      * @throws IOException if an error occurs during import
      */
-    public Exam importExamWithExercises(Exam examToCopy, long targetCourseId) throws IOException {
-        return examImportService.importExamWithExercises(examToCopy, targetCourseId).exam();
+    public void importExamWithExercises(Exam examToCopy, long targetCourseId) throws IOException {
+        examImportService.importExamWithExercises(examToCopy, targetCourseId);
     }
 }

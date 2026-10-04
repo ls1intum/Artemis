@@ -6,12 +6,10 @@ import { MockDirective } from 'ng-mocks';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 
 describe('CourseTitleBarComponent', () => {
     let component: CourseTitleBarComponent;
     let fixture: ComponentFixture<CourseTitleBarComponent>;
-    let toggleSidebarSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -23,11 +21,7 @@ describe('CourseTitleBarComponent', () => {
         component = fixture.componentInstance;
 
         // Set default input values
-        fixture.componentRef.setInput('hasSidebar', false);
-        fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.componentRef.setInput('isExamStarted', false);
-
-        toggleSidebarSpy = vi.spyOn(component.toggleSidebar, 'emit');
 
         fixture.detectChanges();
     });
@@ -50,50 +44,6 @@ describe('CourseTitleBarComponent', () => {
         fixture.detectChanges();
 
         expect(titleBar.styles['display']).toBe('none');
-    });
-
-    it('should not show sidebar toggle button when hasSidebar is false', () => {
-        fixture.componentRef.setInput('hasSidebar', false);
-        fixture.detectChanges();
-
-        const sidebarToggleBtn = fixture.debugElement.query(By.css('.btn-sidebar-collapse'));
-        expect(sidebarToggleBtn).toBeNull();
-    });
-
-    it('should show sidebar toggle button when hasSidebar is true', () => {
-        fixture.componentRef.setInput('hasSidebar', true);
-        fixture.detectChanges();
-
-        const sidebarToggleBtn = fixture.debugElement.query(By.css('.btn-sidebar-collapse'));
-        expect(sidebarToggleBtn).toBeTruthy();
-    });
-
-    it('should apply is-collapsed class when sidebar is collapsed', () => {
-        fixture.componentRef.setInput('hasSidebar', true);
-        fixture.componentRef.setInput('isSidebarCollapsed', true);
-        fixture.detectChanges();
-
-        const sidebarToggleBtn = fixture.debugElement.query(By.css('.btn-sidebar-collapse'));
-        expect(sidebarToggleBtn.classes['is-collapsed']).toBeTruthy();
-    });
-
-    it('should apply is-communication-module class when pageTitle is "communication"', () => {
-        fixture.componentRef.setInput('pageTitle', 'communication');
-        fixture.componentRef.setInput('hasSidebar', true);
-        fixture.detectChanges();
-
-        const sidebarToggleBtn = fixture.debugElement.query(By.css('.btn-sidebar-collapse'));
-        expect(sidebarToggleBtn.classes['is-communication-module']).toBeTruthy();
-    });
-
-    it('should emit toggleSidebar event when sidebar button is clicked', () => {
-        fixture.componentRef.setInput('hasSidebar', true);
-        fixture.detectChanges();
-
-        const sidebarToggleBtn = fixture.debugElement.query(By.css('.btn-sidebar-collapse'));
-        sidebarToggleBtn.triggerEventHandler('click', null);
-
-        expect(toggleSidebarSpy).toHaveBeenCalled();
     });
 
     it('should display the page title', () => {
@@ -130,13 +80,6 @@ describe('CourseTitleBarComponent', () => {
         const renderedContent = fixture.debugElement.query(By.css('.test-content'));
         expect(renderedContent).toBeTruthy();
         expect(renderedContent.nativeElement.textContent).toBe('Test Content');
-    });
-
-    it('should render the shared sidebar toggle button', () => {
-        fixture.componentRef.setInput('hasSidebar', true);
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeTruthy();
     });
 
     it('should have the correct styling classes on the title bar', () => {

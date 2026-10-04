@@ -16,8 +16,8 @@ import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-dialog.service';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { AdminDataExportsComponent } from 'app/admin/admin-data-exports/admin-data-exports.component';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -77,7 +77,7 @@ describe('AdminDataExportsComponent', () => {
                 { provide: AdminDataExportsService, useValue: mockAdminDataExportsService },
                 { provide: AlertService, useValue: mockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: DeleteDialogService, useClass: MockDeleteDialogService },
             ],
         });
 
@@ -131,7 +131,7 @@ describe('AdminDataExportsComponent', () => {
 
         vi.clearAllMocks();
 
-        component.onPageChange({ first: 20, rows: 20 });
+        component.onPageChange(1);
         await fixture.whenStable();
 
         expect(component.first()).toBe(20);
@@ -145,7 +145,7 @@ describe('AdminDataExportsComponent', () => {
 
         vi.clearAllMocks();
 
-        component.onPageChange({ first: 0, rows: 50 });
+        component.onPageSizeChange(50);
         await fixture.whenStable();
 
         expect(component.rows()).toBe(50);

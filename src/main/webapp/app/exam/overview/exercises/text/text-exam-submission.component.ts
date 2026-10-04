@@ -9,6 +9,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -41,6 +42,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     private textService = inject(TextEditorService);
     private stringCountService = inject(StringCountService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
+    private examParticipationService = inject(ExamParticipationService);
 
     exerciseType = ExerciseType.TEXT;
 
@@ -109,6 +111,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     onTextEditorInput(event: Event) {
         this.studentSubmission().isSynced = false;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
         this.textEditorInput.next((event.target as HTMLTextAreaElement).value);
     }
 

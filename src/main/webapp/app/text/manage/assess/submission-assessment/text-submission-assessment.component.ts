@@ -9,7 +9,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,6 +25,7 @@ import {
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -43,6 +44,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
+import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -57,6 +61,7 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
         TranslateDirective,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
+        AssessmentNotPossibleYetComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
     ],
@@ -98,6 +103,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     readonly correctionRound = signal<number>(0);
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
+    // Set when the server refused to open the assessment because the exam is not over yet: the submission exists, so the
+    // page explains the wait instead of claiming that it was not found.
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     readonly highlightDifferences = signal(false);
 
     /*
@@ -124,6 +132,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private get assessments(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
+
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.assessments;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     // Icons
     farListAlt = faListAlt;
@@ -160,16 +175,20 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.noNewSubmissions.set(false);
         this.hasAutomaticFeedback.set(false);
         this.highlightDifferences.set(false);
+        this.assessmentNotPossibleYet.set(undefined);
     }
 
     /**
      * Life cycle hook to indicate component creation is done
      */
-    override async ngOnInit(): Promise<void> {
-        await super.ngOnInit();
+    override ngOnInit(): void {
+        void this.initializeTextSubmissionAssessmentComponent();
+    }
+
+    private async initializeTextSubmissionAssessmentComponent(): Promise<void> {
+        await super.initializeTextAssessmentBaseComponent();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            this.correctionRound.set(Number(queryParams.get('correction-round')));
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
@@ -183,8 +202,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             }
             this.exerciseDashboardLink.set(getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun()));
         });
-        this.activatedRoute.data.subscribe(({ studentParticipation }) => {
-            this.setPropertiesFromServerResponse(studentParticipation);
+        this.activatedRoute.data.subscribe(({ textAssessmentData }) => {
+            this.setPropertiesFromServerResponse(textAssessmentData);
             this.validateFeedback();
         });
     }
@@ -193,10 +212,19 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.feedbackSuggestionsObservable?.unsubscribe();
     }
 
-    private setPropertiesFromServerResponse(studentParticipation?: StudentParticipation) {
+    private setPropertiesFromServerResponse(routeData?: TextAssessmentRouteData) {
         this.resetComponent();
         this.loadingInitialSubmission.set(false);
+        // The round comes from the resolver, which requested the participation for it, rather than from the URL again:
+        // the results below are indexed by the round, so reading the parameter a second time here would let the page
+        // index a round the resolver never loaded. This also matters when the router reuses this component for the next
+        // submission, where the round must follow the newly resolved data instead of staying on the previous one.
+        this.correctionRound.set(routeData?.correctionRound ?? 0);
+        const studentParticipation = routeData?.participation;
         if (!studentParticipation) {
+            // The resolver swallows load errors, so a missing participation can also mean that the exam is still running.
+            // Saying so keeps the page from claiming that a submission which does exist was not found.
+            this.assessmentNotPossibleYet.set(routeData?.assessmentNotPossibleYet);
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions.set(this.isNewAssessmentRoute);
             return;
@@ -210,8 +238,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(this.submission, this.resultId()));
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound.set(this.submission!.results?.findIndex((result) => result.id === this.resultId())!);
+            // Read off the result, not off its position in the results array.
+            this.correctionRound.set(this.result()?.correctionRound ?? 0);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission, this.correctionRound()));
         }
@@ -226,7 +254,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore.set(this.computeTotalScore(this.assessments));
         this.isLoading.set(false);
 
-        this.loadFeedbackSuggestions();
+        if (this.isFeedbackSuggestionsEnabled) {
+            this.loadFeedbackSuggestions();
+        }
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
@@ -234,6 +264,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private updateUrlIfNeeded() {
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
+            // Keep the query parameters. The correction round is carried only in the URL, so rebuilding the URL from
+            // the route commands alone dropped it and the next load of this page started the second correction round
+            // as the first one (#13396). The modeling and file upload editors rewrite the hash in place and therefore
+            // never lost it.
             const newUrl = this.router
                 .createUrlTree(
                     getLinkToSubmissionAssessment(
@@ -245,6 +279,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                         this.examId,
                         this.exerciseGroupId,
                     ),
+                    { queryParams: this.route.snapshot.queryParams },
                 )
                 .toString();
             this.location.go(newUrl);
@@ -256,7 +291,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.exercise?.feedbackSuggestionModule);
+        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled);
     }
 
     private checkPermissions(result?: Result): void {
@@ -352,7 +387,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * (only if this is a fresh submission, i.e. no assessments exist yet)
      */
     loadFeedbackSuggestions(): void {
-        if (this.assessments.length > 0) {
+        // Without a result there is nothing to attach a suggestion to. This happens for a correction round the tutor has
+        // not started yet, where the submission is opened before a result exists.
+        if (this.assessments.length > 0 || !this.result()) {
             return;
         }
         this.loadingFeedbackSuggestions.set(true);
@@ -425,7 +462,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy.set(true);
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission.id!).subscribe(() => this.navigateBack());
+            this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission.id!, this.result()?.id).subscribe(() => this.navigateBack());
         }
     }
 
@@ -435,7 +472,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     async nextSubmission(): Promise<void> {
         const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.participation!.id, 'new', this.examId, this.exerciseGroupId);
         this.nextSubmissionBusy.set(true);
-        await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+        // Merge rather than replace: a supplied queryParams object drops every other parameter, testRun among them.
+        await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
     }
 
     /**
@@ -508,6 +546,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         const feedbacks = this.result()?.feedbacks || [];
         this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
+
+        // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
+        // AUTOMATIC type check alone misses them here: loadFeedbackSuggestions() only sees a fresh Athena response
+        // and never runs at all once this submission already has assessments.
+        this.hasAutomaticFeedback.set(
+            feedbacks.some(
+                (feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC || Feedback.getFeedbackSuggestionType(feedbackItem) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+        );
 
         const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);

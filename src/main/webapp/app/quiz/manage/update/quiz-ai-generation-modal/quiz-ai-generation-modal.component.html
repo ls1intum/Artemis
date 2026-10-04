@@ -8,6 +8,7 @@
     [style]="{ width: '90vw', 'max-width': '84rem' }"
     [contentStyle]="{ padding: '1.25rem' }"
     styleClass="quiz-ai-generation-modal"
+    [pt]="{ root: { 'data-testid': 'quiz-ai-generation-modal' }, header: { 'data-testid': 'quiz-ai-generation-modal-header' } }"
     [breakpoints]="{ '1200px': '96vw' }"
     appendTo="body"
 >
@@ -56,8 +57,23 @@
             <!-- Competency-graph mode: multi-select -->
             @if (isCompetencyMode()) {
                 <div class="field-group">
-                    <label class="field-label" for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                    <div class="field-label label-with-help">
+                        <label for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                        <span
+                            class="label-with-help-icon"
+                            [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesTooltip' | artemisTranslate"
+                            tooltipPosition="right"
+                            appendTo="body"
+                            tooltipStyleClass="quiz-ai-generation-tooltip"
+                            tabindex="0"
+                        >
+                            <fa-stack class="icon-full-size">
+                                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
+                            </fa-stack>
+                        </span>
+                    </div>
                     <p-multiselect
+                        [pt]="{ overlay: { 'data-testid': 'quiz-ai-competency-overlay' }, option: { 'data-testid': 'quiz-ai-competency-option' } }"
                         inputId="quiz-ai-competencies"
                         [options]="courseCompetencies()"
                         [ngModel]="selectedCompetencies()"
@@ -74,9 +90,9 @@
 
             <div class="field-group">
                 <div class="field-label label-with-help">
-                    <label class="mb-0" for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
+                    <label for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
                     <span
-                        class="text-secondary d-inline-flex align-items-center"
+                        class="label-with-help-icon"
                         [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
                         tooltipPosition="right"
                         appendTo="body"

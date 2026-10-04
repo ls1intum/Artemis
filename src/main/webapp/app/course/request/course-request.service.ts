@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
@@ -33,7 +33,7 @@ interface CourseRequestsAdminOverviewDTO {
     totalDecidedCount: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseRequestService {
     private http = inject(HttpClient);
 
@@ -94,6 +94,7 @@ export class CourseRequestService {
         };
         response.id = dto.id;
         response.semester = dto.semester;
+        // A legacy request predating the mandatory dates can still arrive without them, so this stays optional.
         response.startDate = convertDateStringFromServer(dto.startDate);
         response.endDate = convertDateStringFromServer(dto.endDate);
         response.status = dto.status;

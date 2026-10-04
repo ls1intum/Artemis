@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 export class MockAuthServerProviderService implements IAuthServerProvider {
     login = (credentials: Credentials) => of(EMPTY);
     loginSAML2 = (rememberMe: boolean) => of(EMPTY);
+    loginOIDC = (rememberMe: boolean) => of(EMPTY);
     logout = () => of(EMPTY);
     clearCaches = () => of(undefined);
 }

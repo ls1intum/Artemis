@@ -139,7 +139,6 @@ public class CourseMaterialImportService {
         log.info("Starting course material import from course {} to course {}", options.sourceCourseId(), targetCourseId);
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
-        Course sourceCourse = courseRepository.findByIdElseThrow(options.sourceCourseId());
 
         List<String> errors = new ArrayList<>();
         int exercisesImported = 0;
@@ -258,7 +257,7 @@ public class CourseMaterialImportService {
     /**
      * Import a single exercise based on its type.
      */
-    private Optional<? extends Exercise> importSingleExercise(Exercise exercise, Course targetCourse) throws Exception {
+    private Optional<? extends Exercise> importSingleExercise(Exercise exercise, Course targetCourse) {
         return switch (exercise.getExerciseType()) {
             case PROGRAMMING -> importProgrammingExercise((ProgrammingExercise) exercise, targetCourse);
             case QUIZ -> importQuizExercise((QuizExercise) exercise, targetCourse);
@@ -270,7 +269,7 @@ public class CourseMaterialImportService {
 
     private Optional<ProgrammingExercise> importProgrammingExercise(ProgrammingExercise exercise, Course targetCourse) {
         var optionalOriginal = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(exercise.getId());
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndCategories(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }
@@ -289,7 +288,7 @@ public class CourseMaterialImportService {
         newExercise.forceNewProjectKey();
 
         try {
-            return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false, false));
+            return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false));
         }
         catch (Exception e) {
             log.error("Failed to import programming exercise: {}", e.getMessage());
@@ -298,7 +297,7 @@ public class CourseMaterialImportService {
     }
 
     private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) {
-        var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
+        var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }
@@ -308,7 +307,7 @@ public class CourseMaterialImportService {
         copyImportOverrides(optionalOriginal.get(), newExercise);
 
         try {
-            return Optional.of(quizExerciseImportService.importQuizExercise(optionalOriginal.get(), newExercise, null));
+            return Optional.of(quizExerciseImportService.importQuizExercise(newExercise, optionalOriginal.get(), null));
         }
         catch (Exception e) {
             log.error("Failed to import quiz exercise: {}", e.getMessage());
@@ -369,6 +368,10 @@ public class CourseMaterialImportService {
         skeleton.setMaxPoints(source.getMaxPoints());
         skeleton.setBonusPoints(source.getBonusPoints());
         skeleton.setIncludedInOverallScore(source.getIncludedInOverallScore());
+        skeleton.setPresentationScoreEnabled(source.getPresentationScoreEnabled());
+        // The skeleton has no grading criteria of its own; null asks the import service to deep-copy the source's (an
+        // initialized empty collection would count as "the caller wants none", see ExerciseImportService#copyExerciseBasis).
+        skeleton.setGradingCriteria(null);
         // Note: mode is intentionally not copied here. A TEAM source would also need its teamAssignmentConfig, which the
         // course-material fetch does not load; preserving team mode + config for course-material import is left as a
         // follow-up together with the categories / plagiarism-config fetch-graph expansion.

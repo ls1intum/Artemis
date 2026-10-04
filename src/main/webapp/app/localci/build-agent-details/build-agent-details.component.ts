@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
+import { BuildAgentAddressInfo, BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -7,10 +7,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
-import { InputTextModule } from 'primeng/inputtext';
+import { TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -18,8 +15,6 @@ import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/localci/shar
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -33,6 +28,7 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
 import { RunningJobsTableComponent } from 'app/localci/build-queue/tables/running-jobs-table/running-jobs-table.component';
 import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -49,10 +45,10 @@ import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-ad
     imports: [
         FontAwesomeModule,
         RouterModule,
-        ButtonModule,
-        TagModule,
-        MessageModule,
-        InputTextModule,
+        TumAetUiButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,
@@ -63,6 +59,7 @@ import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-ad
         AdminTitleBarActionsDirective,
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
+        FinishedBuildsFilterModalComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -72,11 +69,12 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
 
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
+
+    /** The addresses this agent is registered to connect from, undefined while unknown or unavailable. */
+    registeredAddressInfo = signal<BuildAgentAddressInfo | undefined>(undefined);
 
     /** Whether the build agent was not found (offline/removed) */
     agentNotFound = signal(false);
@@ -107,6 +105,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Subscription for initial agent details REST API load */
     agentDetailsSubscription?: Subscription;
+
+    /** Subscription for the registered network addresses of this agent */
+    registeredAddressesSubscription?: Subscription;
 
     /** Interval timer for updating running build job durations every second */
     buildDurationInterval!: ReturnType<typeof setInterval>; // set in ngOnInit() before any read
@@ -158,6 +159,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Filter configuration for finished build jobs */
     readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(undefined!);
+
+    /** Controls the visibility of the finished-build-jobs filter dialog */
+    readonly filterModalVisible = signal(false);
 
     /** Number of applied finished-build-job filters, defaulting to 0 while the filter is not yet initialized */
     readonly appliedFilterCount = computed(() => this.finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0);
@@ -213,6 +217,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.runningJobsWebsocketSubscription?.unsubscribe();
         this.agentDetailsSubscription?.unsubscribe();
         this.runningJobsSubscription?.unsubscribe();
+        this.registeredAddressesSubscription?.unsubscribe();
         clearInterval(this.buildDurationInterval);
         this.routeParamsSubscription?.unsubscribe();
     }
@@ -312,6 +317,25 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Loads the network addresses this agent is registered to connect from.
+     *
+     * A separate request because the addresses are recorded by the core nodes rather than reported by the agent, which
+     * is what makes them meaningful: a clone is only served from an address the agent is actually connected from.
+     */
+    private loadRegisteredAddresses() {
+        this.registeredAddressesSubscription?.unsubscribe();
+        this.registeredAddressesSubscription = this.buildAgentsService.getBuildAgentAddresses().subscribe({
+            next: (addressInfos) => {
+                this.registeredAddressInfo.set(addressInfos.find((addressInfo) => addressInfo.agentName === this.agentName()));
+            },
+            error: () => {
+                // Not worth an alert: the addresses are supplementary information on a page that is otherwise complete
+                this.registeredAddressInfo.set(undefined);
+            },
+        });
+    }
+
+    /**
      * Loads agent details from the API.
      */
     private loadAgentDetails() {
@@ -329,6 +353,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 // Initialize filter with this agent's address to show only its finished jobs
                 this.finishedBuildJobFilter.set(new FinishedBuildJobFilter(buildAgent.buildAgent?.memberAddress));
                 this.loadFinishedBuildJobs();
+                this.loadRegisteredAddresses();
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status === 404) {
@@ -464,24 +489,16 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * When the modal closes with a result, applies the new filter and reloads data.
      */
     openFilterModal() {
-        const dialogRef = this.dialogService.open(FinishedBuildsFilterModalComponent, {
-            header: this.translateService.instant('artemisApp.buildQueue.filter.title'),
-            width: '60rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-            data: {
-                finishedBuildJobFilter: this.finishedBuildJobFilter(),
-                finishedBuildJobs: this.finishedBuildJobs(),
-            },
-        });
-        dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
-            if (result) {
-                this.finishedBuildJobFilter.set(result);
-                this.loadFinishedBuildJobs();
-            }
-        });
+        this.filterModalVisible.set(true);
+    }
+
+    /**
+     * Applies the filter edited in the filter modal and reloads the finished build jobs.
+     * @param result the edited filter returned by the modal
+     */
+    onFilterConfirmed(result: FinishedBuildJobFilter) {
+        this.finishedBuildJobFilter.set(result);
+        this.loadFinishedBuildJobs();
     }
 
     /**
@@ -522,7 +539,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
                 const start = dayjs(buildJob.buildStartDate);
                 const end = dayjs(buildJob.buildCompletionDate);
-                return { ...buildJob, buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' };
+                return cloneWith(buildJob, { buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' });
             }
             return buildJob;
         });
@@ -583,7 +600,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
             // This is necessary to update the view when the build job duration is updated
-            return { ...buildJob };
+            return deepClone(buildJob);
         });
     }
 

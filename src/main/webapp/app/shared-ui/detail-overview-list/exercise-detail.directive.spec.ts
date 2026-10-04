@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { ExerciseDetailDirective } from 'app/shared-ui/detail-overview-list/exercise-detail.directive';
-import { Component, signal, viewChild } from '@angular/core';
+import { WritableSignal, inputBinding, signal } from '@angular/core';
 import type {
     BooleanDetail,
     DateDetail,
@@ -15,7 +15,6 @@ import type {
     TextDetail,
 } from 'app/shared-ui/detail-overview-list/detail.model';
 import { TextDetailComponent } from 'app/shared-ui/detail-overview-list/components/text-detail/text-detail.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DateDetailComponent } from 'app/shared-ui/detail-overview-list/components/date-detail/date-detail.component';
 import { LinkDetailComponent } from 'app/shared-ui/detail-overview-list/components/link-detail/link-detail.component';
@@ -24,29 +23,15 @@ import { ProgrammingRepositoryButtonsDetailComponent } from 'app/shared-ui/detai
 import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
 import { ProgrammingTestStatusDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { vi } from 'vitest';
 
-@Component({
-    template: ` <div jhiExerciseDetail [detail]="detail()"></div>`,
-    imports: [ExerciseDetailDirective],
-})
-class TestDetailHostComponent {
-    directive = viewChild.required(ExerciseDetailDirective);
-    detail = signal<Detail>(undefined);
-}
-
 describe('ExerciseDetailDirective', () => {
-    let component: TestDetailHostComponent;
-    let fixture: ComponentFixture<TestDetailHostComponent>;
+    let fixture: DirectiveFixture<ExerciseDetailDirective>;
+    let detail: WritableSignal<Detail>;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [TestDetailHostComponent, MockDirective(TranslateDirective), MockComponent(TextDetailComponent), MockComponent(ProgrammingDiffReportDetailComponent)],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(TestDetailHostComponent);
-        component = fixture.componentInstance;
+    beforeEach(() => {
+        detail = signal<Detail>(undefined);
+        fixture = TestBed.createDirective(ExerciseDetailDirective, { tagName: 'div', bindings: [inputBinding('detail', detail)] });
         fixture.detectChanges();
     });
 
@@ -56,67 +41,70 @@ describe('ExerciseDetailDirective', () => {
 
     /** tests directive for {@link NotShownDetail}s */
     describe('should not create component for NotShownDetails', () => {
-        it('detail "false"', () => {
-            checkComponentForDetailWasNotCreated(false as NotShownDetail);
+        it('detail "false"', async () => {
+            await checkComponentForDetailWasNotCreated(false as NotShownDetail);
         });
 
-        it('detail "undefined"', () => {
-            checkComponentForDetailWasNotCreated(undefined as NotShownDetail);
+        it('detail "undefined"', async () => {
+            await checkComponentForDetailWasNotCreated(undefined as NotShownDetail);
         });
     });
 
     /** tests directive for {@link ShownDetail}s */
     describe('should create component for ShownDetails', () => {
-        it('should create TextDetail component', () => {
-            checkComponentForDetailWasCreated({ type: DetailType.Text } as TextDetail, TextDetailComponent);
+        it('should create TextDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.Text } as TextDetail, TextDetailComponent);
         });
 
-        it('should create DateDetail component', () => {
-            checkComponentForDetailWasCreated({ type: DetailType.Date } as DateDetail, DateDetailComponent);
+        it('should create DateDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.Date } as DateDetail, DateDetailComponent);
         });
 
-        it('should create LinkDetail component', () => {
-            checkComponentForDetailWasCreated({ type: DetailType.Link } as LinkDetail, LinkDetailComponent);
+        it('should create LinkDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.Link } as LinkDetail, LinkDetailComponent);
         });
 
-        it('should create BooleanDetail component', () => {
-            checkComponentForDetailWasCreated({ type: DetailType.Boolean } as BooleanDetail, BooleanDetailComponent);
+        it('should create BooleanDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.Boolean } as BooleanDetail, BooleanDetailComponent);
         });
 
-        it('should create ProgrammingRepositoryButtonsDetailComponent component', () => {
-            checkComponentForDetailWasCreated({ type: DetailType.ProgrammingRepositoryButtons } as ProgrammingRepositoryButtonsDetail, ProgrammingRepositoryButtonsDetailComponent);
+        it('should create ProgrammingRepositoryButtonsDetailComponent component', async () => {
+            await checkComponentForDetailWasCreated(
+                { type: DetailType.ProgrammingRepositoryButtons } as ProgrammingRepositoryButtonsDetail,
+                ProgrammingRepositoryButtonsDetailComponent,
+            );
         });
 
-        it('should create ProgrammingAuxiliaryRepositoryButtonsDetailComponent component', () => {
-            checkComponentForDetailWasCreated(
+        it('should create ProgrammingAuxiliaryRepositoryButtonsDetailComponent component', async () => {
+            await checkComponentForDetailWasCreated(
                 { type: DetailType.ProgrammingAuxiliaryRepositoryButtons } as ProgrammingAuxiliaryRepositoryButtonsDetail,
                 ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
             );
         });
 
-        it('should create ProgrammingTestStatusDetail component', () => {
-            checkComponentForDetailWasCreated({ type: DetailType.ProgrammingTestStatus } as ProgrammingTestStatusDetail, ProgrammingTestStatusDetailComponent);
+        it('should create ProgrammingTestStatusDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.ProgrammingTestStatus } as ProgrammingTestStatusDetail, ProgrammingTestStatusDetailComponent);
         });
 
-        it('should create ProgrammingDiffReportDetail component', () => {
-            checkComponentForDetailWasCreated({ type: DetailType.ProgrammingDiffReport } as ProgrammingDiffReportDetail, ProgrammingDiffReportDetailComponent);
+        it('should create ProgrammingDiffReportDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.ProgrammingDiffReport } as ProgrammingDiffReportDetail, ProgrammingDiffReportDetailComponent);
         });
     });
 
-    function checkComponentForDetailWasNotCreated(detailToBeChecked: NotShownDetail) {
-        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent');
-        component.detail.set(detailToBeChecked);
-        fixture.changeDetectorRef.detectChanges();
-        component.directive().ngOnInit();
+    async function checkComponentForDetailWasNotCreated(detailToBeChecked: NotShownDetail) {
+        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
+        detail.set(detailToBeChecked);
+        fixture.detectChanges();
+        await fixture.directiveInstance['initializeExerciseDetailDirective']();
 
         expect(createComponentSpy).not.toHaveBeenCalled();
     }
 
-    function checkComponentForDetailWasCreated(detailToBeChecked: ShownDetail, expectedComponent: any) {
-        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent').mockReturnValue({ setInput: vi.fn(), destroy: vi.fn() } as any);
-        component.detail.set(detailToBeChecked);
-        fixture.changeDetectorRef.detectChanges();
-        component.directive().ngOnInit();
+    async function checkComponentForDetailWasCreated(detailToBeChecked: ShownDetail, expectedComponent: any) {
+        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent').mockReturnValue({ setInput: vi.fn(), destroy: vi.fn() } as any);
+        detail.set(detailToBeChecked);
+        fixture.detectChanges();
+        await fixture.directiveInstance['initializeExerciseDetailDirective']();
 
         expect(createComponentSpy).toHaveBeenCalledWith(expectedComponent);
     }

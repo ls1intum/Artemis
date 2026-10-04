@@ -3,7 +3,7 @@
     id="page-wrapper"
     class="page-wrapper"
     [ngClass]="{ 'no-padding': isShownViaLti() }"
-    [ngStyle]="{ 'overflow-y': !isTestRunExam() && isExamStarted() ? 'hidden' : 'auto' }"
+    [style.overflow-y]="!isTestRunExam() && isExamStarted() ? 'hidden' : 'auto'"
     cdkScrollable
 >
     @if (showPageRibbon()) {
@@ -16,7 +16,7 @@
     }
     @if (showSkeleton()) {
         <div>
-            <div [ngClass]="{ 'module-bg m-3 mb-5 p-3 mt-0 rounded rounded-3': usesModuleBackground() }">
+            <div [ngClass]="{ 'module-bg page-content-card p-3 rounded rounded-3': usesModuleBackground() }">
                 <router-outlet />
             </div>
         </div>

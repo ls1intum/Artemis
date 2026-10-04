@@ -9,7 +9,12 @@
                 "reject": "FAQ ablehnen",
                 "filterLabel": "Filter",
                 "createOrEditLabel": "FAQ erstellen oder bearbeiten",
-                "ingestLabel": "FAQs an IRIS schicken"
+                "ingestLabel": "FAQs an IRIS schicken",
+                "empty": {
+                    "title": "Noch keine FAQs",
+                    "noMatchingTitle": "Keine passenden FAQs",
+                    "documentation": "Mehr über FAQs erfahren"
+                }
             },
             "faqDisabled": {
                 "title": "Willkommen zur FAQ!",

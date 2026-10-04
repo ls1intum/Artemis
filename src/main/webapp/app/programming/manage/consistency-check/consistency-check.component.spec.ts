@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideRouter } from '@angular/router';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
@@ -33,29 +32,19 @@ describe('ConsistencyCheckComponent', () => {
     const consistencyErrors = [error1, error2];
     const programmingExercises = [programmingExercise, programmingExercise2];
 
-    const dialogConfig: DynamicDialogConfig = { data: { exercisesToCheck: [] } };
-
-    /**
-     * Creates the component after the dialog config data has been set so the component
-     * picks up the exercises to check via the PrimeNG DynamicDialogConfig (as it does at runtime).
-     */
-    function createComponent() {
+    /** Opens the modal for the given exercises (the check runs when `visible` flips true, as it does at runtime). */
+    function open(exercisesToCheck: ProgrammingExercise[]) {
         fixture = TestBed.createComponent(ConsistencyCheckComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('exercisesToCheck', exercisesToCheck);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
     }
 
     beforeEach(() => {
-        dialogConfig.data = { exercisesToCheck: [] };
         TestBed.configureTestingModule({
             imports: [ConsistencyCheckComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogConfig, useValue: dialogConfig },
-                { provide: DynamicDialogRef, useValue: { close: vi.fn() } },
-                MockProvider(AlertService),
-                MockProvider(ConsistencyCheckService),
-                provideRouter([]),
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(AlertService), MockProvider(ConsistencyCheckService), provideRouter([])],
         });
         service = TestBed.inject(ConsistencyCheckService);
     });
@@ -65,44 +54,29 @@ describe('ConsistencyCheckComponent', () => {
     });
 
     it('should call checks for single programming exercise', () => {
-        // GIVEN
         const checkConsistencyForProgrammingExerciseStub = vi.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
-        dialogConfig.data = { exercisesToCheck: Array.of(programmingExercise) };
 
-        // WHEN
-        createComponent();
-        fixture.detectChanges();
+        open([programmingExercise]);
 
-        // THEN
         expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledOnce();
         expect(component.inconsistencies()).toEqual(consistencyErrors);
     });
 
     it('should call checks for multiple programming exercises', () => {
-        // GIVEN
         const checkConsistencyForProgrammingExerciseStub = vi.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
-        dialogConfig.data = { exercisesToCheck: programmingExercises };
 
-        // WHEN
-        createComponent();
-        fixture.detectChanges();
+        open(programmingExercises);
 
-        // THEN
         expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledTimes(2);
         expect(component.inconsistencies()).toEqual(consistencyErrors.concat(consistencyErrors));
     });
 
     it('should close the dialog', () => {
-        // GIVEN
         vi.spyOn(service, 'checkConsistencyForProgrammingExercise').mockReturnValue(of(consistencyErrors));
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        createComponent();
-        fixture.detectChanges();
+        open([programmingExercise]);
 
-        // WHEN
         component.closeModal();
 
-        // THEN
-        expect(dialogRef.close).toHaveBeenCalledOnce();
+        expect(component.visible()).toBe(false);
     });
 });

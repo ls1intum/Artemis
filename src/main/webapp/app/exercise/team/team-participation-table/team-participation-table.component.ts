@@ -24,6 +24,7 @@ import { Tooltip } from 'primeng/tooltip';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 enum AssessmentAction {
     START = 'start',
@@ -58,8 +59,18 @@ export class TeamParticipationTableComponent implements OnInit {
     readonly isTeamOwner = input(false);
 
     exercises = signal<ExerciseForTeam[]>([]);
-    submissions = signal<Submission[]>([]);
     isLoading = signal<boolean>(false);
+
+    /**
+     * The assessment warning must only ever see the submission of the exercise it is scoped to.
+     * `exercises()` aggregates every exercise of the team's course, so filtering here (rather than
+     * passing the whole list) prevents an Athena feedback-request result on an unrelated exercise
+     * from suppressing the pre-due-date warning for this one.
+     */
+    readonly currentExerciseSubmissions = computed<Submission[]>(() => {
+        const submission = this.exercises().find((exercise) => exercise.id === this.exercise().id)?.submission;
+        return submission ? [submission] : [];
+    });
 
     // Cell templates
     readonly titleTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('titleTemplate');
@@ -157,15 +168,13 @@ export class TeamParticipationTableComponent implements OnInit {
         this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
             next: (courseResponse) => {
                 const exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
-                    return {
-                        ...exercise,
+                    return cloneWith(exercise, {
                         isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course),
                         isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(exercise.course),
                         isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course),
-                    };
+                    });
                 });
                 this.exercises.set(exercises);
-                this.submissions.set(exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!));
                 this.isLoading.set(false);
             },
             error: (error) => this.onError(error),

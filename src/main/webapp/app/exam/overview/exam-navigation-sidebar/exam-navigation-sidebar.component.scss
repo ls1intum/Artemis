@@ -85,7 +85,7 @@ $exam-sidebar-margin: 62px;
     }
 }
 
-.double-arrow.menu-closed {
+.double-arrow.menu-collapsed {
     transform: translate(24px);
 }
 
@@ -99,7 +99,7 @@ $exam-sidebar-margin: 62px;
     display: flex;
 }
 
-.menu-closed .double-arrow-icon {
+.menu-collapsed .double-arrow-icon {
     transform: rotate(0deg);
 }
 

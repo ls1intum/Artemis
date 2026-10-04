@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { concatMap, filter, last, map } from 'rxjs/operators';
+import { concatMap, filter, map, toArray } from 'rxjs/operators';
 import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -11,7 +11,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faFile, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { Subject, from } from 'rxjs';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -24,13 +24,17 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { PdfUploadTarget, PdfUploadTargetDialogComponent } from '../pdf-upload-target-dialog/pdf-upload-target-dialog.component';
 import { AttachmentVideoUnitService } from '../lecture-units/services/attachment-video-unit.service';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { PDF_UPLOAD_CONFIRMATION_STATE_KEY, PdfUploadConfirmation } from 'app/lecture/manage/lecture-update/pdf-upload-confirmation.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -55,11 +59,13 @@ export enum LectureDateFilter {
         SortByDirective,
         DeleteButtonDirective,
         ArtemisDatePipe,
-        MarkdownDirective,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
         PdfDropZoneComponent,
+        PdfUploadTargetDialogComponent,
+        ArtemisTranslatePipe,
+        TumAetUiEmptyStateComponent,
     ],
 })
 export class LectureComponent implements OnInit, OnDestroy {
@@ -74,7 +80,11 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     readonly lectures = signal<Lecture[]>([]);
     isUploadingPdfs = signal(false);
+    /** The PDFs dropped last; the dialog asks where they go. */
+    readonly droppedPdfFiles = signal<File[]>([]);
+    readonly isPdfUploadTargetDialogVisible = signal(false);
     readonly filteredLectures = signal<Lecture[]>([]);
+    readonly loaded = signal(false);
     courseId!: number; // set in ngOnInit() from route params
 
     private dialogErrorSource = new Subject<string>();
@@ -92,7 +102,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     faFileImport = faFileImport;
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
-    faFile = faFile;
+    faChalkboardTeacher = faChalkboardTeacher;
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
     faSort = faSort;
@@ -189,11 +199,12 @@ export class LectureComponent implements OnInit, OnDestroy {
                     this.lectures.set(
                         res.map((lectureData) => {
                             const lecture = new Lecture();
-                            Object.assign(lecture, lectureData);
+                            hydrate(lecture, lectureData);
                             return lecture;
                         }),
                     );
                     this.applyFilters();
+                    this.loaded.set(true);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -248,29 +259,17 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Opens a dialog to select target lecture (new or existing)
      */
     onPdfFilesDropped(files: File[]): void {
-        const dialogRef = this.dialogService.open(PdfUploadTargetDialogComponent, {
-            header: this.translateService.instant('artemisApp.lecture.pdfUpload.dialogTitle'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: {
-                lectures: this.lectures(),
-                uploadedFiles: files,
-            },
-        });
+        this.droppedPdfFiles.set(files);
+        this.isPdfUploadTargetDialogVisible.set(true);
+    }
 
-        dialogRef?.onClose.subscribe((result: PdfUploadTarget | undefined) => {
-            if (result) {
-                if (result.targetType === 'new' && result.newLectureTitle) {
-                    this.createLectureWithUnits(result.newLectureTitle, files);
-                } else if (result.targetType === 'existing' && result.lectureId) {
-                    this.createUnitsForExistingLecture(result.lectureId, files);
-                }
-            }
-        });
+    onPdfUploadTargetSelected(target: PdfUploadTarget): void {
+        const files = this.droppedPdfFiles();
+        if (target.targetType === 'new' && target.newLectureTitle) {
+            this.createLectureWithUnits(target.newLectureTitle, files);
+        } else if (target.targetType === 'existing' && target.lectureId) {
+            this.createUnitsForExistingLecture(target.lectureId, files);
+        }
     }
 
     /**
@@ -297,17 +296,15 @@ export class LectureComponent implements OnInit, OnDestroy {
                     // Create attachment units sequentially to maintain order
                     return from(files).pipe(
                         concatMap((file) => this.createAttachmentUnit(createdLecture.id!, file)),
-                        map(() => createdLecture),
-                        // Emit only the final value after all files are processed
-                        last(),
+                        toArray(),
+                        map((responses) => ({ lecture: createdLecture, responses })),
                     );
                 }),
             )
             .subscribe({
-                next: (createdLecture: Lecture) => {
+                next: ({ lecture: createdLecture, responses }) => {
                     this.isUploadingPdfs.set(false);
-                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    void this.router.navigate(['course-management', this.courseId, 'lectures', createdLecture.id, 'edit']);
+                    this.openEditorWithConfirmation(createdLecture.id!, true, files, responses);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.isUploadingPdfs.set(false);
@@ -323,21 +320,40 @@ export class LectureComponent implements OnInit, OnDestroy {
         this.isUploadingPdfs.set(true);
 
         from(files)
-            .pipe(concatMap((file) => this.createAttachmentUnit(lectureId, file)))
+            .pipe(
+                concatMap((file) => this.createAttachmentUnit(lectureId, file)),
+                toArray(),
+            )
             .subscribe({
-                next: () => {
-                    // Each unit created successfully
+                next: (responses) => {
+                    this.isUploadingPdfs.set(false);
+                    this.openEditorWithConfirmation(lectureId, false, files, responses);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.isUploadingPdfs.set(false);
                     onError(this.alertService, error);
                 },
-                complete: () => {
-                    this.isUploadingPdfs.set(false);
-                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    void this.router.navigate(['course-management', this.courseId, 'lectures', lectureId, 'edit']);
-                },
             });
+    }
+
+    /**
+     * Opens the lecture editor, which confirms the upload there until the user dismisses it: a notification that disappears after a few seconds
+     * is too easily missed while the page changes underneath it.
+     */
+    private openEditorWithConfirmation(lectureId: number, lectureCreated: boolean, files: File[], responses: HttpResponse<AttachmentVideoUnit>[]): void {
+        const releaseDates = responses
+            .map((response) => response.body?.releaseDate)
+            .filter((releaseDate) => !!releaseDate)
+            .map((releaseDate) => dayjs(releaseDate));
+        const earliestReleaseDate = releaseDates.reduce<dayjs.Dayjs | undefined>((earliest, date) => (!earliest || date.isBefore(earliest) ? date : earliest), undefined);
+        const confirmation: PdfUploadConfirmation = {
+            lectureCreated,
+            fileNames: files.map((file) => file.name),
+            releaseDate: earliestReleaseDate?.toISOString(),
+        };
+        void this.router.navigate(['course-management', this.courseId, 'lectures', lectureId, 'edit'], {
+            state: { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: confirmation },
+        });
     }
 
     /**

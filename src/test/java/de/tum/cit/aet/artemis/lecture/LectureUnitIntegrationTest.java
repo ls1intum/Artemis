@@ -22,9 +22,12 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
@@ -32,22 +35,42 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "lectureunitintegration";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    private static final String CITED_VIDEO_SOURCE = "https://live.rbg.tum.de/w/citation/1";
+
     @Autowired
     private TextUnitRepository textUnitRepository;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Autowired
     private LectureTestRepository lectureRepository;
@@ -75,22 +98,28 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
     private TextUnit textUnit3;
 
+    private Exercise exerciseOfCourse1;
+
+    private AttachmentVideoUnit attachmentVideoUnit;
+
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         var sortedLectures = course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getId)).toList();
+        // a programming exercise, so the projection's programming-only fields (IDE flags, language, final test date, feedback view settings) are covered
+        this.exerciseOfCourse1 = course1.getExercises().stream().filter(ProgrammingExercise.class::isInstance).min(Comparator.comparing(Exercise::getId)).orElseThrow();
         this.lecture1 = sortedLectures.getFirst();
         var lecture2 = sortedLectures.get(1);
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         this.textUnit = lectureUtilService.createTextUnit(lecture1);
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        this.attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
         OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
         this.textUnit2 = lectureUtilService.createTextUnit(lecture2);
         // textUnit3 belongs to a different lecture to test invalid lecture-unit combinations
@@ -98,7 +127,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
         lectureUtilService.addLectureUnitsToLecture(lecture2, List.of(textUnit2, textUnit3));
         this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentVideoUnit));
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).orElseThrow();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).orElseThrow();
         this.textUnit3 = textUnitRepository.findById(textUnit3.getId()).orElseThrow();
@@ -126,8 +155,94 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     void deleteLectureUnit() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnitId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_asStudent_shouldReturnDetailsProjectionWithLectureAndCourse() throws Exception {
+        String url = "/api/lecture/lecture-units/" + textUnit.getId();
+        var unit = assertThatDb(() -> request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class)).hasBeenCalledAtMostTimes(6);
+
+        assertThat(unit).isInstanceOf(LectureDetailsDTO.TextUnitDTO.class);
+        LectureDetailsDTO.TextUnitDTO textUnitDTO = (LectureDetailsDTO.TextUnitDTO) unit;
+        assertThat(textUnitDTO.id()).isEqualTo(textUnit.getId());
+        assertThat(textUnitDTO.content()).isEqualTo(textUnit.getContent());
+        assertThat(textUnitDTO.completed()).isFalse();
+        assertThat(textUnitDTO.visibleToStudents()).isTrue();
+        // the learning path page reads the lecture id and the course's communication configuration off the unit
+        assertThat(textUnitDTO.lecture().id()).isEqualTo(lecture1.getId());
+        assertThat(textUnitDTO.lecture().course().id()).isEqualTo(lecture1.getCourse().getId());
+        assertThat(textUnitDTO.lecture().course().courseInformationSharingConfiguration()).isEqualTo(lecture1.getCourse().getCourseInformationSharingConfiguration());
+
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + textUnit.getId() + "/completion?completed=true", null, HttpStatus.OK, null);
+        LectureDetailsDTO.TextUnitDTO completedUnit = (LectureDetailsDTO.TextUnitDTO) request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+        assertThat(completedUnit.completed()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_athenaFormativeFeedbackEnabled_shouldReportItEnabled() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(lecture1.getCourse().getId());
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
+        var unit = (LectureDetailsDTO.TextUnitDTO) request.get("/api/lecture/lecture-units/" + textUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+
+        // the discussion section reads this switch; the configuration is lazy, so an unfetched one would report false here
+        assertThat(unit.lecture().course().athenaFormativeFeedbackEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_exerciseUnit_shouldProjectTheExerciseLikeTheCourseOverview() throws Exception {
+        var exerciseUnit = lectureUtilService.createExerciseUnit(exerciseOfCourse1, lecture1);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(exerciseUnit));
+
+        var unit = request.get("/api/lecture/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+
+        assertThat(unit).isInstanceOf(LectureDetailsDTO.ExerciseUnitDTO.class);
+        LectureDetailsDTO.ExerciseUnitDTO exerciseUnitDTO = (LectureDetailsDTO.ExerciseUnitDTO) unit;
+        assertThat(exerciseUnitDTO.id()).isEqualTo(exerciseUnit.getId());
+        assertThat(exerciseUnitDTO.name()).isEqualTo(exerciseOfCourse1.getTitle());
+        assertThat(exerciseUnitDTO.exercise().id()).isEqualTo(exerciseOfCourse1.getId());
+        assertThat(exerciseUnitDTO.exercise().type()).isEqualTo(exerciseOfCourse1.getExerciseType());
+        assertThat(exerciseUnitDTO.exercise().title()).isEqualTo(exerciseOfCourse1.getTitle());
+        // fields the exercise row's code button reads
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseOfCourse1;
+        assertThat(exerciseUnitDTO.exercise().programmingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
+        assertThat(exerciseUnitDTO.exercise().allowOnlineIde()).isEqualTo(programmingExercise.isAllowOnlineIde());
+        assertThat(exerciseUnitDTO.exercise().allowOfflineIde()).isEqualTo(programmingExercise.isAllowOfflineIde());
+        // fields the result string and the feedback view read
+        assertThat(exerciseUnitDTO.exercise().buildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        assertThat(exerciseUnitDTO.exercise().showTestNamesToStudents()).isEqualTo(programmingExercise.getShowTestNamesToStudents());
+        assertThat(exerciseUnitDTO.exercise().maxStaticCodeAnalysisPenalty()).isEqualTo(programmingExercise.getMaxStaticCodeAnalysisPenalty());
+        assertThat(exerciseUnitDTO.lecture().course().id()).isEqualTo(lecture1.getCourse().getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLectureUnitById_attachmentVideoUnit_asInstructor_shouldCarryTheAttachment() throws Exception {
+        var unit = request.get("/api/lecture/lecture-units/" + attachmentVideoUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+
+        assertThat(unit).isInstanceOf(LectureDetailsDTO.AttachmentUnitDTO.class);
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = (LectureDetailsDTO.AttachmentUnitDTO) unit;
+        assertThat(attachmentUnitDTO.id()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(attachmentUnitDTO.description()).isEqualTo(attachmentVideoUnit.getDescription());
+        assertThat(attachmentUnitDTO.attachment()).isNotNull();
+        assertThat(attachmentUnitDTO.attachment().id()).isEqualTo(attachmentVideoUnit.getAttachment().getId());
+        assertThat(attachmentUnitDTO.attachment().link()).isEqualTo(attachmentVideoUnit.getAttachment().getLink());
+        assertThat(attachmentUnitDTO.lecture().isTutorialLecture()).isEqualTo(lecture1.isTutorialLecture());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void getLectureUnitById_asStudentNotInCourse_shouldBeForbidden() throws Exception {
+        request.get("/api/lecture/lecture-units/" + textUnit.getId(), HttpStatus.FORBIDDEN, LectureDetailsDTO.LectureUnitDetailsDTO.class);
     }
 
     @Test
@@ -142,7 +257,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         assertThat(lecture.getLectureUnits().getFirst().getCompetencyLinks()).isNotEmpty();
 
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
     }
 
@@ -162,13 +277,13 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
 
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLectureUnit_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.FORBIDDEN);
@@ -204,7 +319,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         // The endpoint returns the reordered units as polymorphic LectureUnitDTOs (a 200 proves they serialize);
         // verify the persisted order directly, which is the actual contract the client relies on.
         request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.OK);
-        List<LectureUnit> reorderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits();
+        List<LectureUnit> reorderedUnits = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits();
         assertThat(reorderedUnits).extracting(LectureUnit::getId).containsExactlyElementsOf(newlyOrderedList);
     }
 
@@ -231,7 +346,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
     }
@@ -243,7 +358,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true",
                 null, HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId());
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().getFirst();
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
@@ -253,7 +368,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=false",
                 null, HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId());
         lectureUnit = this.lecture1.getLectureUnits().getFirst();
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
@@ -284,7 +399,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void setLectureUnitCompletion_shouldReturnForbidden() throws Exception {
         // User is not in same course as lecture unit
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true",
@@ -300,7 +415,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetLectureUnitForLearningPathNodeDetailsForNonExistingLectureUnit() throws Exception {
+        // Administrators pass the access check without the lecture unit, so the lecture unit itself is looked up.
+        request.get("/api/lecture/lecture-units/123124123123/for-learning-path-node-details", HttpStatus.NOT_FOUND, LectureUnitForLearningPathNodeDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void testGetLectureUnitForLearningPathNodeDetailsAsStudentNotInCourse() throws Exception {
         request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
     }
@@ -412,7 +534,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void getUnitStatuses_asInstructorNotInCourse_shouldBeForbidden() throws Exception {
         request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
     }
@@ -555,5 +677,170 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         var statusMap = statuses.stream().collect(toMap(LectureUnitCombinedStatusDTO::lectureUnitId, s -> s));
         assertThat(statusMap.get(videoUnits.get(0).getId()).processingPhase()).isEqualTo(ProcessingPhase.INGESTING);
         assertThat(statusMap.get(videoUnits.get(1).getId()).processingPhase()).isEqualTo(ProcessingPhase.DONE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findIngestedVersions_reportsWhatIrisHasIngested() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
+
+        var otherCourse = courseUtilService.createCourse();
+        var otherLecture = new Lecture();
+        otherLecture.setTitle("Other course lecture");
+        otherLecture.setCourse(otherCourse);
+        otherLecture = lectureRepository.save(otherLecture);
+        var foreignUnit = lectureUtilService.createAttachmentVideoUnit(otherLecture, false);
+        assertThat(lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId())).extracting(LectureUnitIngestedVersionsDTO::lectureUnitId)
+                .doesNotContain(foreignUnit.getId());
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.lectureUnitId()).isEqualTo(unit.getId());
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+            assertThat(versions.videoVersion()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findIngestedVersions_reportsNothingWhileUnitIsBeingReprocessed() {
+        var unit = citedUnitFixture(ProcessingPhase.INGESTING);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
+
+        // While reprocessing, the vector database still serves the previous revision, so there is nothing trustworthy to pin
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.attachmentVersion()).isNull();
+            assertThat(versions.videoVersion()).isNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findIngestedVersions_reportsNoVideoVersionWhenTheTranscriptionWasDeleted() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
+
+        // Without a transcription there are no timestamps left to pin, while the slides keep their version
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.videoVersion()).isNull();
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findIngestedVersions_reportsNoVideoVersionForAPendingTranscription() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        var transcription = lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId()).orElseThrow();
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        lectureTranscriptionRepository.save(transcription);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
+
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.videoVersion()).isNull();
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_returnsCurrentVersionsOfBothMaterials() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        // The instructor re-uploaded the PDF after Iris ingested version 3
+        var attachment = unit.getAttachment();
+        attachment.setVersion(4);
+        attachmentRepository.save(attachment);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        assertThat(versions.attachmentVersion()).isEqualTo(4);
+        assertThat(versions.videoVersion()).isEqualTo(2);
+        assertThat(versions.hasVideo()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whenTheTranscriptionIsMissingButTheVideoIsNot_reportsTheVideoAsStillPresent() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        // The state a unit is in while its video is being re-transcribed: the transcription row is deleted and rewritten, the video itself never goes away
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        // Nothing is left to compare a cited timestamp against, but the video is still there — which is what keeps the client from calling it gone
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whileTheVideoIsBeingReTranscribed_reportsNoVideoVersion() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.TRANSCRIBING);
+        // What a raw checkpoint of a run in progress leaves behind: a pending transcription, while the version still describes the completed one before it
+        var transcription = lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId()).orElseThrow();
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        lectureTranscriptionRepository.save(transcription);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        // Reporting the retained version here would let a citation of the previous video pass as current and jump to a timestamp that no longer says what it said
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isTrue();
+        assertThat(versions.attachmentVersion()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whenTheVideoWasRemoved_reportsNoVideo() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+        unit.setVideoSource(null);
+        attachmentVideoUnitRepository.save(unit);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void getMaterialVersions_asStudentNotInCourse_shouldBeForbidden() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+
+        request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.FORBIDDEN, LectureUnitMaterialVersionsDTO.class);
+    }
+
+    /**
+     * Creates an attachment video unit with a PDF at version 3 and a transcribed video at version 2, both already ingested by Iris in the given processing phase.
+     */
+    private AttachmentVideoUnit citedUnitFixture(ProcessingPhase phase) {
+        var unit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        unit.setVideoSource(CITED_VIDEO_SOURCE);
+        unit = attachmentVideoUnitRepository.save(unit);
+
+        var attachment = unit.getAttachment();
+        attachment.setVersion(3);
+        attachmentRepository.save(attachment);
+
+        var transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Hello", 1)), unit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        lectureTranscriptionRepository.save(transcription);
+
+        var processingState = new LectureUnitProcessingState(unit);
+        processingState.setPhase(phase);
+        processingState.setAttachmentVersion(3);
+        processingState.setTranscriptionVersion(2);
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        return unit;
     }
 }

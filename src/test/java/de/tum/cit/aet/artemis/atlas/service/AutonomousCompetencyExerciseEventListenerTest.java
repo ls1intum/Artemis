@@ -6,25 +6,39 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Behaviour of {@link AutonomousCompetencyExerciseEventListener} — the event listener that feeds
  * the automatic pipeline from exercise creation / update events. Verifies the feature-toggle gate,
- * the programming-exercise scope filter, exam filtering, and null guards without needing a full
- * Spring context.
+ * the per-course kill switch (with flush-on-disable), the content-relevant changed-field filter,
+ * that every exercise type (programming, text, modeling, quiz, file upload) is recorded, exam
+ * filtering, and null guards without needing a full Spring context.
  */
 @ExtendWith(MockitoExtension.class)
 class AutonomousCompetencyExerciseEventListenerTest {
@@ -33,25 +47,39 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
     private static final long EXERCISE_ID = 9L;
 
+    /** A change set that intersects the competency allowlist (problemStatement is content-bearing). */
+    private static final Set<String> RELEVANT_FIELDS = Set.of("problemStatement");
+
+    /** A change set that does not intersect the allowlist (dates / points are administrative). */
+    private static final Set<String> IRRELEVANT_FIELDS = Set.of("dueDate", "maxPoints");
+
     @Mock
     private ContentChangeAccumulatorService accumulator;
 
     @Mock
     private FeatureToggleService featureToggleService;
 
+    @Mock
+    private CourseConfigurationRepository courseConfigurationRepository;
+
     private AutonomousCompetencyExerciseEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new AutonomousCompetencyExerciseEventListener(accumulator, featureToggleService);
+        listener = new AutonomousCompetencyExerciseEventListener(accumulator, featureToggleService, courseConfigurationRepository);
+    }
+
+    private void stubCourseEnabled(boolean enabled) {
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(enabled, null, null)));
     }
 
     @Test
-    void onExerciseVersionCreated_toggleEnabled_recordsAccumulator() {
+    void onExerciseVersionCreated_toggleEnabledCourseEnabledRelevantChange_recordsAccumulator() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
         ProgrammingExercise exercise = courseExercise();
 
-        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, RELEVANT_FIELDS));
 
         verify(accumulator).record(COURSE_ID, EXERCISE_ID);
     }
@@ -61,7 +89,56 @@ class AutonomousCompetencyExerciseEventListenerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(false);
         ProgrammingExercise exercise = courseExercise();
 
-        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, RELEVANT_FIELDS));
+
+        verify(accumulator, never()).record(anyLong(), anyLong());
+        verify(accumulator, never()).flush(anyLong());
+    }
+
+    @Test
+    void onExerciseVersionCreated_courseDisabled_flushesAndDoesNotRecord() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(false);
+        ProgrammingExercise exercise = courseExercise();
+
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, RELEVANT_FIELDS));
+
+        verify(accumulator).flush(COURSE_ID);
+        verify(accumulator, never()).record(anyLong(), anyLong());
+    }
+
+    @Test
+    void onExerciseVersionCreated_irrelevantChangeOnly_doesNotRecord() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        ProgrammingExercise exercise = courseExercise();
+
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, IRRELEVANT_FIELDS));
+
+        verify(accumulator, never()).record(anyLong(), anyLong());
+        verify(accumulator, never()).flush(anyLong());
+    }
+
+    @Test
+    void onExerciseVersionCreated_mixedChange_records() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        ProgrammingExercise exercise = courseExercise();
+        // A version that touched both an administrative field and a content-bearing field must record.
+        Set<String> mixedFields = Set.of("dueDate", "title");
+
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, mixedFields));
+
+        verify(accumulator).record(COURSE_ID, EXERCISE_ID);
+    }
+
+    @Test
+    void onExerciseVersionCreated_emptyChangeSet_doesNotRecord() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        ProgrammingExercise exercise = courseExercise();
+
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, Set.of()));
 
         verify(accumulator, never()).record(anyLong(), anyLong());
     }
@@ -74,30 +151,42 @@ class AutonomousCompetencyExerciseEventListenerTest {
         ExerciseGroup group = new ExerciseGroup();
         exercise.setExerciseGroup(group);
 
-        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, RELEVANT_FIELDS));
 
         verify(accumulator, never()).record(anyLong(), anyLong());
     }
 
-    @Test
-    void onExerciseVersionCreated_nonProgrammingExercise_filtered() {
+    @ParameterizedTest(name = "records {0} exercise")
+    @MethodSource("courseExercisesOfEachType")
+    void onExerciseVersionCreated_anyExerciseType_records(String type, Exercise exercise) {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, RELEVANT_FIELDS));
+
+        // Every exercise type now feeds the accumulator — the previous programming-only gate is gone.
+        verify(accumulator).record(COURSE_ID, EXERCISE_ID);
+    }
+
+    private static Stream<Arguments> courseExercisesOfEachType() {
+        return Stream.of(Arguments.of("programming", withCourse(new ProgrammingExercise())), Arguments.of("text", withCourse(new TextExercise())),
+                Arguments.of("modeling", withCourse(new ModelingExercise())), Arguments.of("quiz", withCourse(new QuizExercise())),
+                Arguments.of("file-upload", withCourse(new FileUploadExercise())));
+    }
+
+    private static Exercise withCourse(Exercise exercise) {
         Course course = new Course();
         course.setId(COURSE_ID);
-        TextExercise exercise = new TextExercise();
         exercise.setId(EXERCISE_ID);
         exercise.setCourse(course);
-
-        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
-
-        verify(accumulator, never()).record(anyLong(), anyLong());
+        return exercise;
     }
 
     @Test
     void onExerciseVersionCreated_nullExercise_safe() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
 
-        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(null));
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(null, RELEVANT_FIELDS));
 
         verify(accumulator, never()).record(anyLong(), anyLong());
     }
@@ -105,10 +194,11 @@ class AutonomousCompetencyExerciseEventListenerTest {
     @Test
     void onExerciseVersionCreated_dedupedByAccumulator() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
         ProgrammingExercise exercise = courseExercise();
 
-        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
-        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, RELEVANT_FIELDS));
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, RELEVANT_FIELDS));
 
         verify(accumulator, times(2)).record(COURSE_ID, EXERCISE_ID);
     }

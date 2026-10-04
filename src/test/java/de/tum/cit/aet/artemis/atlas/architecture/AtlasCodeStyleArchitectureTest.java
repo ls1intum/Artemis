@@ -11,6 +11,6 @@ class AtlasCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 7;
+        return 6;
     }
 }

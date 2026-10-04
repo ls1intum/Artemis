@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { MODULE_FEATURE_SHARING } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -8,6 +8,7 @@ import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
 import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -25,16 +26,16 @@ interface ParticipationWithCircularReferences {
 }
 
 /** the programming exercise sharing service */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseSharingService {
+    private readonly http = inject(HttpClient);
+    private readonly profileService = inject(ProfileService);
+
     protected readonly baseSharingConfigUrl = 'api/core/sharing/config';
     protected readonly resourceUrl = 'api/programming/sharing/import';
     protected readonly resourceUrlBasket = 'api/programming/sharing/import/basket/';
     protected readonly resourceUrlExport = 'api/programming/sharing/export';
     protected readonly resourceUrlSetupImport = 'api/programming/sharing/setup-import';
-
-    private readonly http = inject(HttpClient);
-    private readonly profileService = inject(ProfileService);
 
     /**
      * loads the Shopping Basket via the Service
@@ -78,13 +79,12 @@ export class ProgrammingExerciseSharingService {
      * @param exercise for which the data should be converted
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = {
-            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+        const copy = cloneWith(ExerciseService.convertExerciseDatesFromClient(exercise), {
             buildAndTestStudentSubmissionsAfterDueDate:
                 exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
                     ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
                     : undefined,
-        };
+        });
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
@@ -94,7 +94,7 @@ export class ProgrammingExerciseSharingService {
                 submissions: _ignoredSubmissions,
                 ...filteredTemplateParticipation
             } = copy.templateParticipation as ParticipationWithCircularReferences;
-            copy.templateParticipation = { ...filteredTemplateParticipation };
+            copy.templateParticipation = deepClone(filteredTemplateParticipation);
         }
         if (copy.solutionParticipation) {
             const {
@@ -103,7 +103,7 @@ export class ProgrammingExerciseSharingService {
                 submissions: _ignoredSubmissions,
                 ...filteredSolutionParticipation
             } = copy.solutionParticipation as ParticipationWithCircularReferences;
-            copy.solutionParticipation = { ...filteredSolutionParticipation };
+            copy.solutionParticipation = deepClone(filteredSolutionParticipation);
         }
 
         ExerciseService.stringifyExerciseCategories(copy);

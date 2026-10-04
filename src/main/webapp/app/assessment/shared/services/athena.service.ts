@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -12,28 +12,12 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AthenaService {
     protected http = inject(HttpClient);
     private profileService = inject(ProfileService);
 
     public resourceUrl = 'api/athena';
-
-    /**
-     * Fetches all available modules for a course and exercise.
-     *
-     * @param courseId The id of the course for which the feedback suggestion modules should be fetched
-     * @param exercise The exercise for which the feedback suggestion modules should be fetched
-     */
-    public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
-        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
-            return of([] as string[]);
-        }
-
-        return this.http
-            .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { observe: 'response' })
-            .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
-    }
 
     /**
      * Get feedback suggestions for the given submission from Athena
@@ -43,9 +27,6 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions
      */
     private getFeedbackSuggestions<T>(exercise: Exercise, submissionId: number): Observable<T[]> {
-        if (!exercise.feedbackSuggestionModule) {
-            return of([]);
-        }
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
             return of([] as T[]);
         }
@@ -76,7 +57,7 @@ export class AthenaService {
      * @param submission  the submission
      * @return observable that emits the referenced feedback suggestions as TextBlockRef objects
      * with TextBlocks and the unreferenced feedback suggestions as Feedback objects
-     * with the "FeedbackSuggestion:" prefix
+     * with the "FeedbackSuggestion:accepted:" prefix
      */
     public getTextFeedbackSuggestions(exercise: Exercise, submission: TextSubmission): Observable<(TextBlockRef | Feedback)[]> {
         return this.getFeedbackSuggestions<TextFeedbackSuggestion>(exercise, submission.id!).pipe(
@@ -115,7 +96,7 @@ export class AthenaService {
      *
      * @param exercise
      * @param submissionId the id of the submission
-     * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:" prefix
+     * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:accepted:" prefix
      */
     public getProgrammingFeedbackSuggestions(exercise: Exercise, submissionId: number): Observable<Feedback[]> {
         return this.getFeedbackSuggestions<ProgrammingFeedbackSuggestion>(exercise, submissionId).pipe(
@@ -123,12 +104,14 @@ export class AthenaService {
                 return suggestions.map((suggestion) => {
                     const feedback = new Feedback();
                     feedback.credits = suggestion.credits;
-                    feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
+                    // Programming feedback suggestions are automatically accepted, so we can set the text directly:
+                    feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
-                    if (suggestion.filePath != undefined && (suggestion.lineEnd ?? suggestion.lineStart) != undefined) {
+                    if (suggestion.filePath && Number.isInteger(suggestion.lineStart) && suggestion.lineStart! > 0) {
                         // Referenced feedback
                         feedback.type = FeedbackType.MANUAL;
-                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineEnd ?? suggestion.lineStart}`; // Only use a single line for now because Artemis does not support line ranges
+                        const lineEnd = Number.isInteger(suggestion.lineEnd) && suggestion.lineEnd! > suggestion.lineStart! ? suggestion.lineEnd : suggestion.lineStart;
+                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineStart}${lineEnd !== suggestion.lineStart ? `-${lineEnd}` : ''}`;
                     } else {
                         // Unreferenced feedback
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
@@ -149,7 +132,7 @@ export class AthenaService {
      *
      * @param exercise The exercise for which a submission is assessed
      * @param submission The assessed submission
-     * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:" prefix
+     * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:accepted:" prefix
      */
     public getModelingFeedbackSuggestions(exercise: Exercise, submission: ModelingSubmission): Observable<Feedback[]> {
         return this.getFeedbackSuggestions<ModelingFeedbackSuggestion>(exercise, submission.id!).pipe(
@@ -172,7 +155,8 @@ export class AthenaService {
                         feedback.referenceType = referenceType;
                     } else {
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-                        feedback.text = `${FEEDBACK_SUGGESTION_IDENTIFIER}${suggestion.title}`;
+                        // Modeling feedback suggestions are automatically accepted, so we can set the text directly:
+                        feedback.text = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}${suggestion.title}`;
                         feedback.detailText = suggestion.description;
                     }
 

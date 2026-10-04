@@ -14,6 +14,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -137,5 +138,20 @@ describe('TextExamSubmissionComponent', () => {
         const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
         saveButton.triggerEventHandler('save', null);
         expect(saveExerciseSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the sync-state version whenever it marks the submission unsaved', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if this notification fires. Without it a
+        // student editing this exercise type during an exam sees no unsaved-changes indicator.
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        component.onTextEditorInput({ target: { value: 'abc' } } as unknown as Event);
+
+        expect(component.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledTimes(1);
     });
 });

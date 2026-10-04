@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.feature;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.web.CoreWebsocketTopics.FEATURE_TOGGLES;
 
 import java.util.List;
 import java.util.Map;
@@ -8,18 +9,16 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
-
 import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -27,8 +26,6 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 public class FeatureToggleService {
 
     private static final Logger log = LoggerFactory.getLogger(FeatureToggleService.class);
-
-    private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/feature-toggles";
 
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
@@ -38,45 +35,61 @@ public class FeatureToggleService {
 
     private final boolean globalSearchEnabledOnStart;
 
+    // The reconcile passes have their own static config (artemis.weaviate.reconcile.*) precisely because their
+    // numeric tuning (batch sizes, the outbox depth limit) still needs a deliberate, restart-time decision — see
+    // WeaviateReconcileProperties. These two booleans exist only to seed the runtime toggle's very first value, the
+    // same role globalSearchEnabledOnStart plays for Feature.GlobalSearch; from then on the toggle is the live,
+    // restart-free switch. missing and drift share one toggle because neither deletes; orphan stays separate
+    // because it does.
+    private final boolean globalSearchReconcileEnabledOnStart;
+
+    private final boolean globalSearchReconcileOrphanEnabledOnStart;
+
     private final RateLimitConfigurationService rateLimitConfigurationService;
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final ProfileService profileService;
 
-    private Map<Feature, Boolean> features;
+    private DistributedMap<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
-            ProfileService profileService, RateLimitConfigurationService rateLimitConfigurationService,
-            @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, DistributedDataProvider distributedDataProvider, ProfileService profileService,
+            RateLimitConfigurationService rateLimitConfigurationService, @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.missing-sweep-enabled:true}") boolean missingSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.drift-sweep-enabled:true}") boolean driftSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.orphan-sweep-enabled:false}") boolean orphanSweepEnabledOnStart) {
         this.websocketMessagingService = websocketMessagingService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
         this.profileService = profileService;
         this.rateLimitConfigurationService = rateLimitConfigurationService;
         this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
+        // A single combined toggle can't honor two conflicting YAML values, so an asymmetric seed (one true, one
+        // false) resolves to off rather than guessing which pass the operator actually meant to enable.
+        this.globalSearchReconcileEnabledOnStart = missingSweepEnabledOnStart && driftSweepEnabledOnStart;
+        this.globalSearchReconcileOrphanEnabledOnStart = orphanSweepEnabledOnStart;
     }
 
-    private Optional<Map<Feature, Boolean>> getFeatures() {
+    private Optional<DistributedMap<Feature, Boolean>> getFeatures() {
         try {
-            if (isHazelcastRunning()) {
+            if (isDistributedDataAvailable()) {
                 return Optional.ofNullable(getFeaturesMap());
             }
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to get features in {} as Hazelcast instance is not active anymore.", FeatureToggleService.class.getSimpleName());
+        catch (RuntimeException e) {
+            log.error("Failed to get features in {} as the distributed data provider is unavailable.", FeatureToggleService.class.getSimpleName());
         }
         return Optional.empty();
     }
 
     /**
-     * Lazy init: Retrieves the Hazelcast map that stores features
+     * Lazy init: Retrieves the distributed map that stores features
      * If the map is not initialized, it initializes it.
      *
      * @return The map of features
      */
-    private Map<Feature, Boolean> getFeaturesMap() {
+    private DistributedMap<Feature, Boolean> getFeaturesMap() {
         if (this.features == null) {
             initFeatures();
         }
@@ -84,18 +97,20 @@ public class FeatureToggleService {
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Initialize relevant data from the distributed data provider
      */
     private void initFeatures() {
-        // The map will automatically be distributed between all instances by Hazelcast.
-        features = hazelcastInstance.getMap("features");
+        // The map is shared across all nodes by the distributed data provider.
+        features = distributedDataProvider.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, GlobalSearch, and AutonomousTutor) are
-        // enabled once the system starts up
+        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, GlobalSearch, AutonomousTutor, and Deimos) are enabled once
+        // the
+        // system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
-                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor) {
+                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
+                    && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile && feature != Feature.GlobalSearchReconcileOrphan) {
                 features.put(feature, true);
             }
         }
@@ -124,8 +139,20 @@ public class FeatureToggleService {
             features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
         }
 
+        if (!features.containsKey(Feature.GlobalSearchReconcile)) {
+            features.put(Feature.GlobalSearchReconcile, globalSearchReconcileEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.GlobalSearchReconcileOrphan)) {
+            features.put(Feature.GlobalSearchReconcileOrphan, globalSearchReconcileOrphanEnabledOnStart);
+        }
+
         if (!features.containsKey(Feature.AutonomousTutor)) {
             features.put(Feature.AutonomousTutor, false);
+        }
+
+        if (!features.containsKey(Feature.Deimos)) {
+            features.put(Feature.Deimos, false);
         }
 
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
@@ -177,12 +204,12 @@ public class FeatureToggleService {
 
     private void sendUpdate() {
         try {
-            if (isHazelcastRunning()) {
-                websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures());
+            if (isDistributedDataAvailable()) {
+                websocketMessagingService.sendMessage(FEATURE_TOGGLES.at(), enabledFeatures());
             }
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to send features update in {} as Hazelcast instance is not active anymore.", FeatureToggleService.class.getSimpleName());
+        catch (RuntimeException e) {
+            log.error("Failed to send features update in {} as the distributed data provider is unavailable.", FeatureToggleService.class.getSimpleName());
         }
     }
 
@@ -194,13 +221,13 @@ public class FeatureToggleService {
      */
     public boolean isFeatureEnabled(Feature feature) {
         try {
-            if (isHazelcastRunning()) {
+            if (isDistributedDataAvailable()) {
                 Boolean isEnabled = getFeaturesMap().get(feature);
                 return Boolean.TRUE.equals(isEnabled);
             }
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to check if feature is enabled in FeatureToggleService as Hazelcast instance is not active any more.");
+        catch (RuntimeException e) {
+            log.error("Failed to check if feature is enabled in FeatureToggleService as the distributed data provider is unavailable.");
         }
         return false;
     }
@@ -212,12 +239,12 @@ public class FeatureToggleService {
      */
     public List<Feature> enabledFeatures() {
         try {
-            if (isHazelcastRunning()) {
+            if (isDistributedDataAvailable()) {
                 return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
             }
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to retrieve enabled features update in FeatureToggleService as Hazelcast instance is not active any more.");
+        catch (RuntimeException e) {
+            log.error("Failed to retrieve enabled features update in FeatureToggleService as the distributed data provider is unavailable.");
         }
         return List.of();
     }
@@ -229,17 +256,23 @@ public class FeatureToggleService {
      */
     public List<Feature> disabledFeatures() {
         try {
-            if (isHazelcastRunning()) {
+            if (isDistributedDataAvailable()) {
                 return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
             }
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to retrieve disabled features update in FeatureToggleService as Hazelcast instance is not active any more.");
+        catch (RuntimeException e) {
+            log.error("Failed to retrieve disabled features update in FeatureToggleService as the distributed data provider is unavailable.");
         }
         return List.of();
     }
 
-    private boolean isHazelcastRunning() {
-        return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
+    /**
+     * The distributed store can be unreachable while a node is starting or reconnecting. Callers degrade gracefully
+     * rather than failing the request, so they check this first.
+     *
+     * @return true if the distributed data provider is usable right now
+     */
+    private boolean isDistributedDataAvailable() {
+        return distributedDataProvider.isInstanceRunning();
     }
 }

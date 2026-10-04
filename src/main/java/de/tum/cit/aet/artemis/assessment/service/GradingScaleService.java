@@ -75,11 +75,11 @@ public class GradingScaleService {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.GRADING_SCALE);
         final var searchTerm = search.getSearchTerm();
         final Page<GradingScale> gradingScalePage;
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(searchTerm, pageable);
         }
         else {
-            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
+            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getId(), pageable);
         }
         List<GradingScaleDTO> dtoContent = gradingScalePage.getContent().stream().map(GradingScaleDTO::of).toList();
         return new SearchResultPageDTO<>(dtoContent, gradingScalePage.getTotalPages());

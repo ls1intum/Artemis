@@ -38,7 +38,7 @@ class ExamSessionIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course1 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Exam exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
         studentExam1 = examUtilService.addStudentExam(exam1);

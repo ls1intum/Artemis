@@ -36,6 +36,14 @@ describe('PasswordService', () => {
         passwordService.changePassword(newPassword, currentPassword).subscribe();
 
         expect(postStub).toHaveBeenCalledOnce();
-        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword });
+        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword, revokeCredentials: undefined });
+    });
+
+    it('should pass on which other credentials to revoke', () => {
+        const revokeCredentials = { passkeys: true, sshKeys: false, vcsAccessTokens: true };
+
+        passwordService.changePassword('newPassword', 'currentPassword', revokeCredentials).subscribe();
+
+        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword: 'currentPassword', newPassword: 'newPassword', revokeCredentials });
     });
 });

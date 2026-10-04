@@ -8,13 +8,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -62,7 +63,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final Optional<IrisCitationService> irisCitationService;
 
@@ -73,7 +74,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * Use this for chat sessions that can have citations (Course, Lecture, Exercise chats).
      */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JsonMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
             Optional<IrisCitationService> irisCitationService, PyrisJobService pyrisJobService) {
         this.irisSessionRepository = irisSessionRepository;
@@ -93,7 +94,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * Use this for sessions that don't support citations (e.g., Tutor Suggestions).
      */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JsonMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
             PyrisJobService pyrisJobService) {
         this.irisSessionRepository = irisSessionRepository;
@@ -123,9 +124,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         try {
             var suggestions = objectMapper.writeValueAsString(latestSuggestions);
             session.setLatestSuggestions(suggestions);
-            irisSessionRepository.save(session);
+            // Scalar update, never save(session): this session was loaded with its messages, and there is no reason to
+            // drag that collection through an aggregate merge to write one column. See updateLatestSuggestions.
+            irisSessionRepository.updateLatestSuggestions(session.getId(), suggestions);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException("Could not update latest suggestions for session " + session.getId(), e);
         }
     }
@@ -145,7 +148,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         if (sessionTitle != null && !sessionTitle.isBlank()) {
             String truncatedTitle = sessionTitle.length() > MAX_SESSION_TITLE_LENGTH ? sessionTitle.substring(0, MAX_SESSION_TITLE_LENGTH) : sessionTitle;
             session.setTitle(truncatedTitle);
-            sessionRepository.save(session);
+            // Scalar update, never save(session): the status handler passes a session loaded with its messages, and
+            // there is no reason to drag that collection through an aggregate merge to write one column.
+            sessionRepository.updateTitle(session.getId(), truncatedTitle);
             return truncatedTitle;
         }
         return null;
@@ -168,8 +173,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      *
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
-     * @return the same job record or a new job record with the same job id if changes were made
+     * @return the same job record or a new job record with the same job id if changes were made, or {@code null} if the session no longer exists
      */
+    @Nullable
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         long handlingStart = System.nanoTime();
         // Only the result branch (saving the assistant message) needs the messages and contents;
@@ -177,7 +183,12 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         // its pipeline thread on each callback, so this reload is on the chat latency critical path.
         // noinspection unchecked
         var session = statusUpdate.result() != null ? (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId())
-                : (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
+                : (S) irisSessionRepository.findById(job.sessionId()).orElse(null);
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping status update for Iris job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return null;
+        }
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
 
@@ -207,8 +218,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
             String sessionTitle) {
+        // Intermediate messages are persisted and, once the session is reloaded, get their citation metadata resolved just like final ones - so their citations become
+        // clickable and have to be pinned too. The run snapshot pins citations before they are persisted; stampCitationVersions returns
+        // immediately otherwise, which keeps the frequent citation-free intermediate updates off the database.
+        var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
+
         var message = new IrisMessage();
-        for (var content : parseResultContents(statusUpdate.result())) {
+        for (var content : parseResultContents(result)) {
             message.addContent(content);
         }
         message.setIntermediate(true);
@@ -234,11 +250,15 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 handleSuggestedContextChange(session, statusUpdate.suggestedContext());
             }
 
+            // Pin every citation to the version of the material it was generated from, before the text is persisted. Once stored, the marker keeps that version forever,
+            // so a later re-upload of the PDF or a re-transcribed video can be detected when the citation is clicked.
+            var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
+
             var message = new IrisMessage();
-            for (var content : parseResultContents(statusUpdate.result())) {
+            for (var content : parseResultContents(result)) {
                 message.addContent(content);
             }
-            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             message.setToolActivity(statusUpdate.activities());
@@ -323,11 +343,18 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      *
      * @param job          The job that is currently executed
      * @param statusUpdate The partial status update of the job
+     * @return {@code false} if the session no longer exists and the update was dropped, {@code true} otherwise
      */
-    public void handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+    public boolean handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         // noinspection unchecked
-        var session = (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
+        var session = (S) irisSessionRepository.findById(job.sessionId()).orElse(null);
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping partial status update for Iris job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return false;
+        }
         irisChatWebsocketService.sendPartialUpdate(session, statusUpdate.partialResult(), statusUpdate.partialSeq(), job.jobId());
+        return true;
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";
@@ -356,14 +383,14 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         if (trimmed.startsWith("{")) {
             try {
                 JsonNode jsonNode = objectMapper.readTree(trimmed);
-                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
+                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asString())) {
                     if (isValidMcqNode(jsonNode)) {
                         return List.of(new IrisJsonMessageContent(jsonNode));
                     }
                     return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
                 }
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 // Not valid JSON as a whole, try mixed content below
             }
         }
@@ -388,7 +415,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
             try {
                 JsonNode jsonNode = objectMapper.readTree(jsonCandidate);
-                if (!jsonNode.has("type") || !MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
+                if (!jsonNode.has("type") || !MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asString())) {
                     continue;
                 }
                 if (!isValidMcqNode(jsonNode)) {
@@ -407,7 +434,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 lastEnd = jsonStart + jsonCandidate.length();
                 foundMcq = true;
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 // Invalid JSON, skip this match
             }
         }
@@ -480,7 +507,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * @return true if the node represents a valid MCQ
      */
     private boolean isValidMcqNode(JsonNode node) {
-        String type = node.has("type") ? node.get("type").asText() : "";
+        String type = node.has("type") ? node.get("type").asString() : "";
 
         if ("mcq-set".equals(type)) {
             JsonNode questions = node.get("questions");
@@ -509,7 +536,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      */
     private boolean isValidSingleMcqNode(JsonNode node) {
         JsonNode question = node.get("question");
-        if (question == null || !question.isTextual() || question.asText().isBlank()) {
+        if (question == null || !question.isString() || question.asString().isBlank()) {
             return false;
         }
 
@@ -524,7 +551,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             }
             JsonNode text = option.get("text");
             JsonNode correct = option.get("correct");
-            if (text == null || !text.isTextual() || text.asText().isBlank()) {
+            if (text == null || !text.isString() || text.asString().isBlank()) {
                 return false;
             }
             if (correct == null || !correct.isBoolean()) {
@@ -539,7 +566,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         }
 
         JsonNode explanation = node.get("explanation");
-        if (explanation == null || !explanation.isTextual() || explanation.asText().isBlank()) {
+        if (explanation == null || !explanation.isString() || explanation.asString().isBlank()) {
             return false;
         }
 
@@ -549,10 +576,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
     Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
         List<ProgrammingExerciseStudentParticipation> participations;
         if (exercise.isTeamMode()) {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin());
+            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentIdInTeam(exercise.getId(), user.getId());
         }
         else {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentId(exercise.getId(), user.getId());
         }
 
         if (participations.isEmpty()) {

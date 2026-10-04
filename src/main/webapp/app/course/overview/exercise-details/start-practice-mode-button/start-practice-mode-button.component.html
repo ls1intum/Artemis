@@ -1,6 +1,7 @@
 <ng-container>
     @if (isProgrammingExercise()) {
         <button
+            type="button"
             jhi-exercise-action-button
             [buttonIcon]="faPlayCircle"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -22,6 +23,7 @@
                 }
                 <div class="button-footer">
                     <button
+                        type="button"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -36,6 +38,7 @@
                     ></button>
                     @if (gradedStudentParticipation()) {
                         <button
+                            type="button"
                             jhi-exercise-action-button
                             class="ms-2"
                             [buttonIcon]="faPlayCircle"
@@ -52,6 +55,7 @@
         </ng-template>
     } @else {
         <button
+            type="button"
             jhi-exercise-action-button
             [buttonIcon]="faPlayCircle"
             [buttonLabel]="'artemisApp.exerciseActions.startPractice' | artemisTranslate"

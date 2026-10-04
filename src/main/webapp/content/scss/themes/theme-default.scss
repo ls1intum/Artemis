@@ -1,5 +1,6 @@
 /* stylelint-disable */
 @use 'sass:meta';
+@use 'apollon';
 @use 'generate-css-vars';
 
 @import 'default-variables';
@@ -38,6 +39,11 @@ html {
     }
 }
 
+.artemis-apollon-theme {
+    @include generate-css-vars.generate-prefixed('default-variables', 'apollon-');
+    @include apollon.component-overrides;
+}
+
 @import '../global';
 
 // Needed for highlighting code in the markdown editor
@@ -58,4 +64,5 @@ html {
     --overview-card-bg: #ffffff;
     --overview-card-nested-bg: #f1f5f9;
     --overview-card-hover-bg: #e2e8f0;
+    --overview-card-hover-color: #{$body-color};
 }

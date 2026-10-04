@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideTranslateService } from '@ngx-translate/core';
-import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { ResultHistoryDropdownComponent, latestSubmissionRoute } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -16,8 +16,42 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import dayjs from 'dayjs/esm';
+
+describe('latestSubmissionRoute', () => {
+    const participation = { id: 7 } as StudentParticipation;
+    const exerciseOfType = (type: ExerciseType, extra: object = {}): Exercise => ({ id: 3, type, course: { id: 1 }, ...extra }) as Exercise;
+
+    it('routes to the participation the exercise type actually uses', () => {
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.TEXT), participation)).toEqual(['/courses', 1, 'exercises', 'text-exercises', 3, 'participate', 7]);
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.MODELING), participation)).toEqual(['/courses', 1, 'exercises', 'modeling-exercises', 3, 'participate', 7]);
+        // Both of these used to fall through to the modeling route, because the mapping was a two-way guess rather
+        // than the shared one every other caller uses.
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.FILE_UPLOAD), participation)).toEqual(['/courses', 1, 'exercises', 'file-upload-exercises', 3, 'participate', 7]);
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.PROGRAMMING, { allowOnlineEditor: true }), participation)).toEqual([
+            '/courses',
+            1,
+            'exercises',
+            'programming-exercises',
+            3,
+            'code-editor',
+            7,
+        ]);
+    });
+
+    it('has nowhere to send a programming exercise without the online editor', () => {
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.PROGRAMMING, { allowOnlineEditor: false }), participation)).toBeUndefined();
+    });
+
+    it('routes a quiz by mode rather than by participation id', () => {
+        const quiz = exerciseOfType(ExerciseType.QUIZ);
+
+        expect(latestSubmissionRoute(quiz, participation)).toEqual(['/courses', 1, 'exercises', 'quiz-exercises', 3, 'live']);
+        expect(latestSubmissionRoute(quiz, { id: 7, testRun: true } as StudentParticipation)).toEqual(['/courses', 1, 'exercises', 'quiz-exercises', 3, 'practice', 7]);
+    });
+});
 
 describe('ResultHistoryDropdownComponent', () => {
     let component: ResultHistoryDropdownComponent;
@@ -26,12 +60,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
     const defaultExercise: Exercise = { id: 1, type: ExerciseType.PROGRAMMING, course: { id: 1 } } as Exercise;
 
-    const createResult = (id: number, score: number, submission?: Partial<Submission>): Result => {
-        const participation: Participation = { id: 1 } as Participation;
-        const sub = { id: id, participation } as Submission;
-        Object.assign(sub, submission);
-        return { id, score, submission: sub, completionDate: undefined } as unknown as Result;
-    };
+    const createResult = (id: number, score: number): Result => ({ id, score, submission: { id }, completionDate: undefined }) as unknown as Result;
 
     beforeEach(async () => {
         mockRouter = new MockRouter();
@@ -50,6 +79,22 @@ describe('ResultHistoryDropdownComponent', () => {
         })
             .compileComponents()
             .then(() => {
+                const translateService = TestBed.inject(TranslateService);
+                translateService.setTranslation('en', {
+                    artemisApp: {
+                        result: {
+                            resultString: {
+                                automaticAIFeedbackInProgress: 'AI feedback request is being processed',
+                                automaticAIFeedbackSuccessfulTooltip: 'AI-based feedback can include mistakes. Consider checking important information.',
+                                automaticAIFeedbackFailed: 'AI feedback generation failed.',
+                                automaticAIFeedbackFailedTooltip: 'AI feedback generation failed.',
+                                automaticAIFeedbackTimedOut: 'AI feedback generation timed out.',
+                                automaticAIFeedbackInProgressTooltip: 'AI feedback is being generated.',
+                            },
+                        },
+                    },
+                });
+                translateService.use('en');
                 fixture = TestBed.createComponent(ResultHistoryDropdownComponent);
                 component = fixture.componentInstance;
                 fixture.componentRef.setInput('exercise', defaultExercise);
@@ -114,8 +159,6 @@ describe('ResultHistoryDropdownComponent', () => {
             const participation: Participation = { id: 1, type: 'student' } as unknown as Participation;
             const programmingSub = { buildFailed: true, participation } as unknown as ProgrammingSubmission;
             const result = { id: 1, score: 0, submission: programmingSub } as unknown as Result;
-            fixture.componentRef.setInput('sortedHistoryResults', [result]);
-            fixture.detectChanges();
 
             expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
         });
@@ -195,10 +238,89 @@ describe('ResultHistoryDropdownComponent', () => {
             const participation: Participation = { id: 1, type: 'student' } as unknown as Participation;
             const programmingSub = { buildFailed: true, participation } as unknown as ProgrammingSubmission;
             const result = { id: 1, score: 100, submission: programmingSub } as unknown as Result;
+
+            expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
+        });
+
+        it('should show in-progress AI feedback message instead of score progress for unfinished Athena results', () => {
+            const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result;
+
+            expect(component.getResultFeedbackMessage(result)).toBe('AI feedback request is being processed');
+        });
+
+        it('should show failed AI feedback message instead of score progress for failed Athena results', () => {
+            const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false } as Result;
+
+            expect(component.getResultFeedbackMessage(result)).toBe('AI feedback generation failed.');
+        });
+
+        it('should show timed out AI feedback message instead of score progress for timed out Athena results', () => {
+            const result = {
+                id: 1,
+                score: 0,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().subtract(5, 'minutes'),
+            } as Result;
+
+            expect(component.getResultFeedbackMessage(result)).toBe('AI feedback generation timed out.');
+        });
+    });
+
+    describe('AI feedback indicator', () => {
+        it('should render an accessible indicator for Athena results', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = true;
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
+            expect(indicator).toBeTruthy();
+            expect(indicator?.getAttribute('aria-label')).toBe('AI-based feedback can include mistakes. Consider checking important information.');
+        });
+
+        it('should use the failed tooltip for failed Athena results', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = false;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
+            expect(indicator?.getAttribute('aria-label')).toBe('AI feedback generation failed.');
+        });
+
+        it('should use the in-progress tooltip for Athena results still being generated', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = undefined;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
+            expect(indicator?.getAttribute('aria-label')).toBe('AI feedback is being generated.');
+        });
+
+        it('should not render an indicator for normal automatic results', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            expect(document.querySelector('[data-testid="ai-feedback-indicator"]')).toBeNull();
         });
     });
 
@@ -214,6 +336,86 @@ describe('ResultHistoryDropdownComponent', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
             const icon = component.getResultIcon(result);
             expect(icon).toBeTruthy();
+        });
+    });
+
+    describe('getResultIconAnimation', () => {
+        it('should spin while Athena feedback is being generated', () => {
+            const participation: Participation = { id: 1, exercise: defaultExercise } as Participation;
+            const result = {
+                id: 1,
+                score: 50,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().add(5, 'minutes'),
+                submission: { id: 1, participation },
+            } as unknown as Result;
+
+            expect(component.getResultIconAnimation(result)).toBe('spin');
+        });
+
+        it('should not spin for completed Athena feedback', () => {
+            const participation: Participation = { id: 1, exercise: defaultExercise } as Participation;
+            const result = {
+                id: 1,
+                score: 50,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: true,
+                completionDate: dayjs().subtract(5, 'minutes'),
+                submission: { id: 1, participation },
+            } as unknown as Result;
+
+            expect(component.getResultIconAnimation(result)).toBeUndefined();
+        });
+
+        it('should not spin for timed-out text Athena feedback', () => {
+            const textExercise = { id: 1, type: ExerciseType.TEXT, dueDate: dayjs().add(1, 'day'), course: { id: 1 } } as Exercise;
+            const participation: Participation = {
+                id: 1,
+                exercise: textExercise,
+                submissions: [{ id: 1, submissionDate: dayjs().subtract(1, 'hour') }],
+            } as Participation;
+            const result = {
+                id: 1,
+                score: 0,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().subtract(5, 'minutes'),
+                submission: { id: 1, participation },
+            } as unknown as Result;
+            fixture.componentRef.setInput('exercise', textExercise);
+            fixture.detectChanges();
+
+            expect(component.getResultIconAnimation(result)).toBeUndefined();
+        });
+
+        it('should not spin when the result has no participation', () => {
+            const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
+
+            expect(component.getResultIconAnimation(result)).toBeUndefined();
+        });
+    });
+
+    describe('pending Athena feedback display', () => {
+        it('should hide score and metadata for unfinished Athena results', () => {
+            const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result;
+
+            expect(component.shouldShowResultScore(result)).toBe(false);
+            expect(component.shouldShowResultMetadata(result)).toBe(false);
+        });
+
+        it('should show score and metadata for completed Athena results', () => {
+            const result = { id: 1, score: 75, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+
+            expect(component.shouldShowResultScore(result)).toBe(true);
+            expect(component.shouldShowResultMetadata(result)).toBe(true);
+        });
+
+        it('should hide score when a result has no score', () => {
+            const result = { id: 1, score: undefined, assessmentType: AssessmentType.AUTOMATIC } as Result;
+
+            expect(component.shouldShowResultScore(result)).toBe(false);
+            expect(component.shouldShowResultMetadata(result)).toBe(true);
         });
     });
 
@@ -246,6 +448,24 @@ describe('ResultHistoryDropdownComponent', () => {
             expect(component.isRowClickable()).toBe(true);
         });
 
+        it('should return false for unfinished Athena feedback placeholders', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, course: { id: 1 } } as Exercise);
+            fixture.detectChanges();
+
+            const result = { score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result;
+
+            expect(component.isRowClickable(result)).toBe(false);
+        });
+
+        it('should return true for persisted completed text results', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, course: { id: 1 } } as Exercise);
+            fixture.detectChanges();
+
+            const result = { id: 1, score: 75, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+
+            expect(component.isRowClickable(result)).toBe(true);
+        });
+
         it('should return false for PROGRAMMING exercises', () => {
             expect(component.isRowClickable()).toBe(false);
         });
@@ -259,6 +479,33 @@ describe('ResultHistoryDropdownComponent', () => {
     });
 
     describe('navigateToSubmission', () => {
+        it('should prevent default page scrolling when activating a clickable row with space', () => {
+            fixture.componentRef.setInput('exercise', { id: 10, type: ExerciseType.TEXT, course: { id: 5 } } as Exercise);
+            fixture.detectChanges();
+
+            const participation: Participation = { id: 2 } as Participation;
+            const result = { id: 1, submission: { id: 7, participation } } as unknown as Result;
+            const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as KeyboardEvent;
+
+            component.handleRowSpaceKeydown(result, event);
+
+            expect(event.preventDefault).toHaveBeenCalledOnce();
+            expect(event.stopPropagation).toHaveBeenCalledOnce();
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'text-exercises', 10, 'participate', 2, 'submission', 7, 'result', 1]);
+        });
+
+        it('should not prevent default page scrolling when space is pressed on a non-clickable row', () => {
+            const participation: Participation = { id: 2 } as Participation;
+            const result = { id: 1, submission: { id: 7, participation } } as unknown as Result;
+            const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as KeyboardEvent;
+
+            component.handleRowSpaceKeydown(result, event);
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+            expect(mockRouter.navigate).not.toHaveBeenCalled();
+        });
+
         it('should not navigate when result has no participation', () => {
             const result = { id: 1, submission: { id: 1 } } as unknown as Result;
             const event = new Event('click');
@@ -323,6 +570,51 @@ describe('ResultHistoryDropdownComponent', () => {
         });
     });
 
+    describe('displayedResultChange', () => {
+        const participation: StudentParticipation = { id: 3, testRun: true } as StudentParticipation;
+        const olderResult = { id: 1, score: 40, submission: { id: 7, participation } } as unknown as Result;
+        const latestResult = { id: 2, score: 90, submission: { id: 8, participation } } as unknown as Result;
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('exercise', { id: 10, type: ExerciseType.QUIZ, course: { id: 5 } } as Exercise);
+            fixture.componentRef.setInput('sortedHistoryResults', [latestResult, olderResult]);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.detectChanges();
+        });
+
+        it('should emit the result picked from the history', () => {
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            component.navigateToSubmission(olderResult, new Event('click'));
+
+            expect(emitSpy).toHaveBeenCalledWith(olderResult);
+        });
+
+        it('should emit the result matching the result id in the route', () => {
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            mockRouter.setUrl('/courses/5/exercises/text-exercises/10/participate/3/submission/8/result/1');
+
+            expect(emitSpy).toHaveBeenLastCalledWith(olderResult);
+        });
+
+        it('should emit the result matching the submission id in the route', () => {
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            mockRouter.setUrl('/courses/5/exercises/quiz-exercises/10/practice/3/submission/8');
+
+            expect(emitSpy).toHaveBeenLastCalledWith(latestResult);
+        });
+
+        it('should emit undefined when the route does not point at a result', () => {
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            mockRouter.setUrl('/courses/5/exercises/quiz-exercises/10/practice');
+
+            expect(emitSpy).toHaveBeenLastCalledWith(undefined);
+        });
+    });
+
     describe('showFeedback', () => {
         it('should not open modal when result has no participation', () => {
             const dialogService = TestBed.inject(DialogService);
@@ -348,6 +640,7 @@ describe('ResultHistoryDropdownComponent', () => {
             component.showFeedback(result, event);
 
             expect(event.stopPropagation).toHaveBeenCalled();
+            expect(component.isViewingSubmission()).toBe(false);
             expect(openSpy).toHaveBeenCalledWith(
                 FeedbackComponent,
                 expect.objectContaining({
@@ -383,6 +676,31 @@ describe('ResultHistoryDropdownComponent', () => {
             const compiled = fixture.nativeElement as HTMLElement;
             const arrow = compiled.querySelector('fa-icon');
             expect(arrow).toBeTruthy();
+        });
+
+        it('should render unfinished Athena feedback as pending instead of a scored result', () => {
+            const exercise = { id: 1, type: ExerciseType.TEXT, course: { id: 1 } } as Exercise;
+            const participation = { id: 1, exercise } as Participation;
+            const result = {
+                score: 0,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                submission: { id: 1, participation },
+            } as unknown as Result;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const row = document.querySelector<HTMLElement>('[data-testid="result-history-row"]');
+            expect(row?.textContent).toContain('AI feedback request is being processed');
+            expect(row?.textContent).not.toContain('0%');
+            expect(row?.textContent).not.toContain('artemisApp.result.progressString.stuck');
+            expect(row?.querySelector('p-tag')).toBeNull();
+            expect(row?.getAttribute('role')).toBeNull();
         });
     });
 });

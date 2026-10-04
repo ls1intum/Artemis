@@ -184,10 +184,12 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         singleUserNotificationService.notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(plagiarismCase, user);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+            // Scope to this test's course: the embedded database is shared by concurrently executing test classes,
+            // so findAll() also returns notifications of the same type created elsewhere.
+            List<CourseNotification> notifications = courseNotificationRepository.findAll().stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .toList();
 
-            var hasNewCpcPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
-                    .anyMatch(notification -> notification.getType() == 13);
+            var hasNewCpcPlagiarismCaseNotification = notifications.stream().anyMatch(notification -> notification.getType() == 13);
 
             assertThat(hasNewCpcPlagiarismCaseNotification).isTrue();
 
@@ -207,10 +209,12 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+            // Scope to this test's course: the embedded database is shared by concurrently executing test classes,
+            // so findAll() also returns notifications of the same type created elsewhere.
+            List<CourseNotification> notifications = courseNotificationRepository.findAll().stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .toList();
 
-            var hasNewPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
-                    .anyMatch(notification -> notification.getType() == 14);
+            var hasNewPlagiarismCaseNotification = notifications.stream().anyMatch(notification -> notification.getType() == 14);
 
             assertThat(hasNewPlagiarismCaseNotification).isTrue();
 
@@ -232,10 +236,12 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+            // Scope to this test's course: the embedded database is shared by concurrently executing test classes,
+            // so findAll() also returns notifications of the same type created elsewhere.
+            List<CourseNotification> notifications = courseNotificationRepository.findAll().stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .toList();
 
-            var hasNewPlagiarismVerdictNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
-                    .anyMatch(notification -> notification.getType() == 17);
+            var hasNewPlagiarismVerdictNotification = notifications.stream().anyMatch(notification -> notification.getType() == 17);
 
             assertThat(hasNewPlagiarismVerdictNotification).isTrue();
 

@@ -2,10 +2,10 @@ package de.tum.cit.aet.artemis.course.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +32,20 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseExerciseDueDateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForQuizSelectionDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithContentDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithExercisesDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithOrganizationsDTO;
+import de.tum.cit.aet.artemis.course.dto.LockedCourseSubmissionDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseForUserGroupService;
 import de.tum.cit.aet.artemis.course.service.CourseLoadService;
@@ -52,9 +62,9 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.COURSE_MANAGEMENT_OVERVIEW)
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/course/")
 public class CourseManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseManagementResource.class);
@@ -106,11 +116,11 @@ public class CourseManagementResource {
      */
     @GetMapping("courses")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Course>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public ResponseEntity<List<CourseManagementDTO>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all courses the user has access to");
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         List<Course> courses = courseForUserGroupService.getCoursesForTutors(user, onlyActive);
-        return ResponseEntity.ok(courses);
+        return ResponseEntity.ok(courses.stream().map(CourseManagementDTO::of).toList());
     }
 
     /**
@@ -119,11 +129,12 @@ public class CourseManagementResource {
      * @param search The pageable search containing the page size, page number and query string
      * @return the ResponseEntity with status 200 (OK) and with body the desired page
      */
+    @FeatureUsage(UserFeature.COURSE_MATERIAL_IMPORT)
     @GetMapping("courses/for-import")
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get a list of courses for import.");
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         var coursePage = courseService.getAllOnPageWithSize(search, user);
         var resultsOnPage = coursePage.getResultsOnPage().stream().map(CourseForImportDTO::new).toList();
         return ResponseEntity.ok(new SearchResultPageDTO<>(resultsOnPage, coursePage.getNumberOfPages()));
@@ -136,14 +147,14 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/courses-with-quiz")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Course>> getCoursesWithQuizExercises() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (authCheckService.isAdmin(user)) {
-            return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises());
+    public ResponseEntity<List<CourseForQuizSelectionDTO>> getCoursesWithQuizExercises() {
+        User user = userRepository.getUserWithAuthorities();
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
+            return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises().stream().map(CourseForQuizSelectionDTO::of).toList());
         }
         else {
-            var userGroups = new ArrayList<>(user.getGroups());
-            return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups));
+            return ResponseEntity
+                    .ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(user.getId()).stream().map(CourseForQuizSelectionDTO::of).toList());
         }
     }
 
@@ -155,8 +166,8 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/course-management-overview")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Course>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        return ResponseEntity.ok(courseOverviewService.getAllCoursesForManagementOverview(onlyActive));
+    public ResponseEntity<List<CourseManagementOverviewDTO>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        return ResponseEntity.ok(courseOverviewService.getAllCoursesForManagementOverview(onlyActive).stream().map(CourseManagementOverviewDTO::of).toList());
     }
 
     /**
@@ -165,9 +176,10 @@ public class CourseManagementResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/for-assessment-dashboard")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
+    public ResponseEntity<CourseAssessmentDashboardDTO> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-assessment-dashboard");
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
 
@@ -177,7 +189,7 @@ public class CourseManagementResource {
         User user = userRepository.getUser();
         List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
         assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(CourseAssessmentDashboardDTO.of(course));
     }
 
     /**
@@ -188,11 +200,11 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/{courseId}/with-exercises")
     @EnforceAtLeastTutor
-    public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
+    public ResponseEntity<CourseWithExercisesDTO> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(CourseWithExercisesDTO.of(course));
     }
 
     /**
@@ -203,9 +215,9 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/{courseId}/with-exercises-lectures-competencies")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<Course> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
+    public ResponseEntity<CourseWithContentDTO> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
-        return ResponseEntity.ok(courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId));
+        return ResponseEntity.ok(CourseWithContentDTO.of(courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId)));
     }
 
     /**
@@ -216,11 +228,11 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/{courseId}/with-organizations")
     @EnforceAtLeastTutor
-    public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) {
+    public ResponseEntity<CourseWithOrganizationsDTO> getCourseWithOrganizations(@PathVariable Long courseId) {
         log.debug("REST request to get a course with its organizations : {}", courseId);
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(CourseWithOrganizationsDTO.of(course));
     }
 
     /**
@@ -229,12 +241,13 @@ public class CourseManagementResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/locked-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<LockedCourseSubmissionDTO>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         List<Submission> submissions = submissionService.getLockedSubmissions(courseId);
@@ -242,7 +255,7 @@ public class CourseManagementResource {
             submissionService.hideDetails(submission, user);
         }
 
-        return ResponseEntity.ok(submissions);
+        return ResponseEntity.ok(submissions.stream().map(LockedCourseSubmissionDTO::of).toList());
     }
 
     /**
@@ -254,32 +267,13 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/{courseId}/all-exercises-with-due-dates")
     @EnforceAtLeastTutor
-    public ResponseEntity<Set<Exercise>> getAllExercisesWithDueDatesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<CourseExerciseDueDateDTO>> getAllExercisesWithDueDatesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exercises with due dates and categories in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         Set<Exercise> exercises = exerciseRepository.findByCourseIdWithFutureDueDatesAndCategories(courseId);
-        return ResponseEntity.ok(exercises);
-    }
-
-    /**
-     * GET /courses/exercises-for-management-overview
-     * <p>
-     * gets the courses with exercises for the user
-     *
-     * @param onlyActive if true, only active courses will be considered in the result
-     * @return ResponseEntity with status, containing a list of courses
-     */
-    @GetMapping("courses/exercises-for-management-overview")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Course>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        final List<Course> courses = new ArrayList<>();
-        for (final var course : courseOverviewService.getAllCoursesForManagementOverview(onlyActive)) {
-            course.setExercises(exerciseRepository.getExercisesForCourseManagementOverview(course.getId()));
-            courses.add(course);
-        }
-        return ResponseEntity.ok(courses);
+        return ResponseEntity.ok(exercises.stream().map(CourseExerciseDueDateDTO::of).collect(Collectors.toSet()));
     }
 
     /**

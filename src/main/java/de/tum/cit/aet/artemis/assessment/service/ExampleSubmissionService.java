@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
@@ -65,6 +67,69 @@ public class ExampleSubmissionService {
     }
 
     /**
+     * Creates an example submission for the given exercise from the request body. The submission entity is built from the
+     * exercise type (text or modeling); the request never carries an entity.
+     *
+     * @param exercise the managed exercise the example submission belongs to
+     * @param request  the request body
+     * @return the saved example submission
+     */
+    public ExampleSubmission create(Exercise exercise, ExampleSubmissionRequestDTO request) {
+        ExampleSubmission exampleSubmission = new ExampleSubmission();
+        exampleSubmission.setExercise(exercise);
+        exampleSubmission.setSubmission(newSubmissionFor(exercise, request.submission()));
+        applyMetadata(exampleSubmission, request);
+        return save(exampleSubmission);
+    }
+
+    /**
+     * Applies the request body to an existing example submission: metadata and the submitted content. The example
+     * assessment is not touched; it is managed through the exercise type's example assessment endpoint.
+     *
+     * @param exampleSubmission the example submission loaded with its submission and results
+     * @param request           the request body
+     * @return the saved example submission
+     */
+    public ExampleSubmission update(ExampleSubmission exampleSubmission, ExampleSubmissionRequestDTO request) {
+        applyContent(exampleSubmission.getSubmission(), request.submission());
+        applyMetadata(exampleSubmission, request);
+        return save(exampleSubmission);
+    }
+
+    private static void applyMetadata(ExampleSubmission exampleSubmission, ExampleSubmissionRequestDTO request) {
+        // null means "keep the default"; on create there is nothing to keep, so it means "not used for tutorial".
+        if (request.usedForTutorial() != null) {
+            exampleSubmission.setUsedForTutorial(request.usedForTutorial());
+        }
+        else if (exampleSubmission.getId() == null) {
+            exampleSubmission.setUsedForTutorial(Boolean.FALSE);
+        }
+        exampleSubmission.setAssessmentExplanation(request.assessmentExplanation());
+    }
+
+    private static Submission newSubmissionFor(Exercise exercise, ExampleSubmissionRequestDTO.SubmissionRequestDTO content) {
+        Submission submission = switch (exercise) {
+            case TextExercise ignored -> new TextSubmission();
+            case ModelingExercise ignored -> new ModelingSubmission();
+            default -> throw new BadRequestAlertException("Example submissions are not supported for this exercise type", ENTITY_NAME, "exerciseTypeNotSupported");
+        };
+        applyContent(submission, content);
+        return submission;
+    }
+
+    private static void applyContent(Submission submission, ExampleSubmissionRequestDTO.SubmissionRequestDTO content) {
+        switch (submission) {
+            case TextSubmission textSubmission -> textSubmission.setText(content.text());
+            case ModelingSubmission modelingSubmission -> {
+                modelingSubmission.setModel(content.model());
+                modelingSubmission.setExplanationText(content.explanationText());
+            }
+            default -> {
+            }
+        }
+    }
+
+    /**
      * First saves the corresponding submission with the exampleSubmission flag. Then the example submission itself is saved.
      *
      * @param exampleSubmission the example submission to save
@@ -72,14 +137,26 @@ public class ExampleSubmissionService {
      */
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
         Submission submission = exampleSubmission.getSubmission();
-        if (submission != null) {
-            submission.setExampleSubmission(true);
-            // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-            if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
-                submission.getLatestResult().setSubmission(submission);
-            }
-            submissionRepository.save(submission);
+        if (submission == null) {
+            // An example submission is the submission it shows, so one without a submission says nothing. The column
+            // requires it, and answering the request tells the caller what is wrong instead of failing on the insert.
+            throw new BadRequestAlertException("An example submission must reference a submission", "exampleSubmission", "submissionMissing");
         }
+        submission.setExampleSubmission(true);
+        // Result.exerciseId is a non-null FK column the cascade merge writes back. Clients echo results they loaded from
+        // DTO-shaped endpoints that do not carry it, so derive it from the example submission's (already checked) exercise
+        // instead of trusting the payload.
+        Long exerciseId = exampleSubmission.getExercise().getId();
+        for (Result result : submission.getResults()) {
+            if (result != null) {
+                result.setExerciseId(exerciseId);
+            }
+        }
+        // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
+        if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
+            submission.getLatestResult().setSubmission(submission);
+        }
+        submissionRepository.save(submission);
         return exampleSubmissionRepository.save(exampleSubmission);
     }
 
@@ -137,10 +214,16 @@ public class ExampleSubmissionService {
 
             newExampleSubmission.setSubmission(api.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
-        if (exercise instanceof TextExercise) {
+        else if (exercise instanceof TextExercise) {
             var api = textSubmissionImportApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
             TextSubmission textSubmission = api.importStudentSubmission(submissionId, exercise.getId(), gradingInstructionCopyTracker);
             newExampleSubmission.setSubmission(textSubmission);
+        }
+        else {
+            // Only modeling and text exercises can copy a student submission into an example submission. For anything
+            // else there is nothing to copy, and the example submission would be stored without the submission it is
+            // supposed to show.
+            throw new BadRequestAlertException("Example submissions cannot be imported for this exercise type", "exampleSubmission", "exerciseTypeNotSupported");
         }
         return exampleSubmissionRepository.save(newExampleSubmission);
     }

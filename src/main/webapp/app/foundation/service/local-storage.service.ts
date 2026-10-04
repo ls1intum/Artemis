@@ -1,8 +1,10 @@
-import { Injectable } from '@angular/core';
-import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { Service } from '@angular/core';
 import { parseJson } from 'app/foundation/util/json.util';
 
-@Injectable({ providedIn: 'root' })
+/** Earliest date on which the setup passkey modal reminds the user again. Kept across logouts, see {@link LocalStorageService.clear}. */
+export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestSetupPasskeyReminderDate';
+
+@Service()
 export class LocalStorageService {
     /**
      * Stores a value in the local storage under the specified key.

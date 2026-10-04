@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
+import { computed } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ExamNavigationSidebarComponent', () => {
@@ -253,5 +254,30 @@ describe('ExamNavigationSidebarComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         window.dispatchEvent(event);
         expect(preventDefaultSpy).toHaveBeenCalled();
+    });
+
+    it('should re-evaluate the save-state icon when a submission editor reports an isSynced change', () => {
+        // Regression guard: `isSynced` is mutated in place on a plain submission object, so under
+        // zoneless change detection only a signal read makes these bindings re-evaluate. The sidebar used
+        // to read just its own syncStateVersion, which is bumped exclusively by the programming-repository
+        // watcher, so editing a text exercise left the icon stale and the "Exercise not saved" indicator
+        // never appeared. A cached `computed` reproduces a template binding: it only recomputes if
+        // getExerciseIcon actually tracked the service-wide signal the editors bump.
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const exercise = {
+            id: 3,
+            type: ExerciseType.TEXT,
+            studentParticipations: [{ submissions: [{ id: 7, submitted: true, isSynced: true } as Submission] } as StudentParticipation],
+        } as Exercise;
+        fixture.componentRef.setInput('exercises', [exercise]);
+
+        const icon = TestBed.runInInjectionContext(() => computed(() => comp.getExerciseIcon(0)));
+        expect(icon()).toEqual(facSaveSuccess);
+
+        // Exactly what the text/quiz/modeling editors do when the student edits their answer.
+        ExamParticipationService.getSubmissionForExercise(exercise)!.isSynced = false;
+        examParticipationService.notifySubmissionSyncStateChanged();
+
+        expect(icon()).toEqual(facSaveWarning);
     });
 });

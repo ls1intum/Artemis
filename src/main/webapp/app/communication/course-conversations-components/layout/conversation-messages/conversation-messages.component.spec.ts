@@ -8,11 +8,11 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { DialogService } from 'primeng/dynamicdialog';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
@@ -62,8 +62,8 @@ examples.forEach((activeConversation) => {
     describe('ConversationMessagesComponent with ' + (getAsChannelDTO(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {
         let component: ConversationMessagesComponent;
         let fixture: ComponentFixture<ConversationMessagesComponent>;
-        let metisService: MetisService;
-        let metisConversationService: MetisConversationService;
+        let communicationService: CommunicationService;
+        let courseConversationsService: CourseConversationsService;
         let examplePost: Post;
         const course = { id: 1 } as Course;
 
@@ -84,8 +84,8 @@ examples.forEach((activeConversation) => {
                     InfiniteScrollStubDirective,
                 ],
                 providers: [
-                    MockProvider(MetisConversationService),
-                    MockProvider(MetisService),
+                    MockProvider(CourseConversationsService),
+                    MockProvider(CommunicationService),
                     MockProvider(DialogService),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: AccountService, useClass: MockAccountService },
@@ -113,18 +113,18 @@ examples.forEach((activeConversation) => {
         beforeEach(() => {
             examplePost = { id: 1, content: 'loremIpsum' } as Post;
 
-            metisService = TestBed.inject(MetisService);
-            metisConversationService = TestBed.inject(MetisConversationService);
-            Object.defineProperty(metisService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
-            Object.defineProperty(metisService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
-            Object.defineProperty(metisService, 'createEmptyPostForContext', { value: () => new Post() });
-            Object.defineProperty(metisConversationService, 'course', { get: () => course });
-            Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
-            Object.defineProperty(metisService, 'getPinnedPosts', {
+            communicationService = TestBed.inject(CommunicationService);
+            courseConversationsService = TestBed.inject(CourseConversationsService);
+            Object.defineProperty(communicationService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
+            Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
+            Object.defineProperty(communicationService, 'createEmptyPostForContext', { value: () => new Post() });
+            Object.defineProperty(courseConversationsService, 'course', { get: () => course });
+            Object.defineProperty(courseConversationsService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
+            Object.defineProperty(communicationService, 'getPinnedPosts', {
                 value: () => of([]),
             });
 
-            Object.defineProperty(metisService, 'fetchAllPinnedPosts', {
+            Object.defineProperty(communicationService, 'fetchAllPinnedPosts', {
                 value: () => of([]),
             });
 
@@ -158,7 +158,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should fetch posts on next page fetch', () => {
-            const getFilteredPostSpy = vi.spyOn(metisService, 'getFilteredPosts');
+            const getFilteredPostSpy = vi.spyOn(communicationService, 'getFilteredPosts');
             component.searchText = 'loremIpsum';
             component.totalNumberOfPosts = 10;
             component.fetchNextPage();
@@ -202,7 +202,7 @@ examples.forEach((activeConversation) => {
 
         it('should find visible elements at the scroll position and save scroll position', () => {
             // Mock des Containers
-            component.content().nativeElement = {
+            component.content()!.nativeElement = {
                 getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 100 }),
                 scrollTop: 0,
                 scrollHeight: 200,
@@ -236,15 +236,15 @@ examples.forEach((activeConversation) => {
         });
 
         it('should scroll to the bottom when a new message is created', () => {
-            component.content().nativeElement.scrollTop = 100;
+            component.content()!.nativeElement.scrollTop = 100;
             fixture.detectChanges();
             component.handleNewMessageCreated();
             vi.advanceTimersByTime(300);
-            expect(component.content().nativeElement.scrollTop).toBe(component.content().nativeElement.scrollHeight);
+            expect(component.content()!.nativeElement.scrollTop).toBe(component.content()!.nativeElement.scrollHeight);
         });
 
         it('should create empty post with the correct conversation type', () => {
-            const createEmptyPostForContextSpy = vi.spyOn(metisService, 'createEmptyPostForContext').mockReturnValue(new Post());
+            const createEmptyPostForContextSpy = vi.spyOn(communicationService, 'createEmptyPostForContext').mockReturnValue(new Post());
             component.createEmptyPost();
             expect(createEmptyPostForContextSpy).toHaveBeenCalledOnce();
             const conversation = createEmptyPostForContextSpy.mock.calls[0][0];
@@ -303,9 +303,9 @@ examples.forEach((activeConversation) => {
                 body: [{ id: 1, messages: mockForwardedMessages }],
             });
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
 
-            metisService.getForwardedMessagesByIds([1], PostingType.POST)?.subscribe((response) => {
+            communicationService.getForwardedMessagesByIds([1], PostingType.POST)?.subscribe((response) => {
                 expect(response.body).toEqual(mockResponse.body);
             });
         });
@@ -337,7 +337,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should handle posts without forwarded messages gracefully', () => {
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
 
             component.posts.set([{ id: 1, hasForwardedMessages: false } as Post]);
 
@@ -353,10 +353,10 @@ examples.forEach((activeConversation) => {
                 { id: 102, sourceId: 100, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
             ];
 
-            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
-            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
 
             component.allPosts.set([{ id: 1, hasForwardedMessages: true } as Post]);
             component.setPosts();
@@ -370,13 +370,13 @@ examples.forEach((activeConversation) => {
         it('should not fetch source posts or answers for empty forwarded messages', () => {
             const mockForwardedMessages: ForwardedMessage[] = [];
 
-            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
-            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
 
-            const getSourcePostsSpy = vi.spyOn(metisService, 'getSourcePostsByIds');
-            const getSourceAnswersSpy = vi.spyOn(metisService, 'getSourceAnswerPostsByIds');
+            const getSourcePostsSpy = vi.spyOn(communicationService, 'getSourcePostsByIds');
+            const getSourceAnswersSpy = vi.spyOn(communicationService, 'getSourceAnswerPostsByIds');
 
             component.allPosts.set([{ id: 1, hasForwardedMessages: true } as Post]);
             component.setPosts();
@@ -396,12 +396,12 @@ examples.forEach((activeConversation) => {
             const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation() as Conversation } as Post];
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
-            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
-            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
-            const getSourcePostsSpy = vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
-            const getSourceAnswersSpy = vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+            const getSourcePostsSpy = vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
+            const getSourceAnswersSpy = vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
             component.allPosts.set([
                 {
@@ -454,10 +454,10 @@ examples.forEach((activeConversation) => {
             ];
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
-            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
             // the source post is inaccessible to the viewer -> the server replies 403; it must not break the rest of the rendering
-            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
-            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            vi.spyOn(communicationService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
             component.allPosts.set([{ id: 1, content: 'Some content...', hasForwardedMessages: true } as Post]);
             component.setPosts();
@@ -507,7 +507,7 @@ examples.forEach((activeConversation) => {
             const pinnedPostsSubject = new BehaviorSubject<Post[]>([]);
 
             const pinnedCountSpy = vi.spyOn(component.pinnedCount, 'emit');
-            vi.spyOn(metisService, 'getPinnedPosts').mockReturnValue(pinnedPostsSubject.asObservable());
+            vi.spyOn(communicationService, 'getPinnedPosts').mockReturnValue(pinnedPostsSubject.asObservable());
 
             component.ngOnInit();
 
@@ -521,7 +521,7 @@ examples.forEach((activeConversation) => {
         it('should fetch pinned posts in onActiveConversationChange and emit pinnedCount', () => {
             const pinnedPostsStub = [{ id: 77, displayPriority: 'PINNED' }] as Post[];
             const pinnedCountSpy = vi.spyOn(component.pinnedCount, 'emit');
-            vi.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
+            vi.spyOn(communicationService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
 
             component._activeConversation.set({ id: 123, type: ConversationType.CHANNEL });
             fixture.componentRef.setInput('course', { id: 1 } as Course);
@@ -834,5 +834,85 @@ examples.forEach((activeConversation) => {
             const result = (component as any).isPostVisible(postId);
             expect(result).toBe(false);
         });
+    });
+});
+
+// Regression test for NG0951 ("Child query result is required but no value is available").
+// The whole component template is wrapped in `@if (course())`, so the `#container` template ref
+// does not exist until a course is set. `setPosts()` runs from the posts subscription, which
+// can fire before that. Reading a `viewChild.required` signal in that state throws.
+// NOTE: deliberately does NOT stub `content` and does NOT set the `course` input — the rest of this
+// spec file stubs `content` with a fake container, which is exactly why this bug went unnoticed.
+describe('ConversationMessagesComponent before the container is rendered', () => {
+    let component: ConversationMessagesComponent;
+    let fixture: ComponentFixture<ConversationMessagesComponent>;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                FaIconComponent,
+                ConversationMessagesComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ButtonComponent),
+                MockComponent(PostingThreadComponent),
+                MockComponent(MessageInlineInputComponent),
+                MockComponent(PostCreateEditModalComponent),
+                MockDirective(TranslateDirective),
+                InfiniteScrollStubDirective,
+            ],
+            providers: [
+                MockProvider(CourseConversationsService),
+                MockProvider(CommunicationService),
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+
+        TestBed.overrideComponent(ConversationMessagesComponent, {
+            remove: {
+                imports: [PostingThreadComponent, MessageInlineInputComponent, PostCreateEditModalComponent, InfiniteScrollDirective, ButtonComponent, TranslateDirective],
+            },
+            add: {
+                imports: [
+                    MockComponent(PostingThreadComponent),
+                    MockComponent(MessageInlineInputComponent),
+                    MockComponent(PostCreateEditModalComponent),
+                    InfiniteScrollStubDirective,
+                    MockComponent(ButtonComponent),
+                    MockDirective(TranslateDirective),
+                ],
+                schemas: [NO_ERRORS_SCHEMA],
+            },
+        });
+
+        const communicationService = TestBed.inject(CommunicationService);
+        const courseConversationsService = TestBed.inject(CourseConversationsService);
+        // A non-emitting posts stream, so nothing calls setPosts() during construction and the test
+        // can exercise it explicitly.
+        Object.defineProperty(communicationService, 'posts', { get: () => new Subject<Post[]>().asObservable() });
+        Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(0).asObservable() });
+        Object.defineProperty(communicationService, 'createEmptyPostForContext', { value: () => new Post() });
+        Object.defineProperty(communicationService, 'getPinnedPosts', { value: () => of([]) });
+        Object.defineProperty(communicationService, 'fetchAllPinnedPosts', { value: () => of([]) });
+        // An active conversation IS required (ngOnInit dereferences it); the point of this test is that
+        // the `course` input is still unset, so the template's `@if (course())` keeps `#container` out of the DOM.
+        Object.defineProperty(courseConversationsService, 'activeConversation$', {
+            get: () => new BehaviorSubject(generateExampleChannelDTO({} as ChannelDTO)).asObservable(),
+        });
+
+        fixture = TestBed.createComponent(ConversationMessagesComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should not throw when posts are prepared before the container exists', () => {
+        expect(() => component.setPosts()).not.toThrow();
     });
 });

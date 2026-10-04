@@ -25,7 +25,7 @@
                     Confirm export
                 </p>
             }
-            @if (!participationIdList && !isRepoExportForMultipleExercises()) {
+            @if (!participationIdList?.length && !isRepoExportForMultipleExercises()) {
                 <textarea
                     name="studentIds"
                     class="export-textarea"
@@ -139,13 +139,8 @@
             <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
                 <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <button
-                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                [overwriteDisabled]="!this.participationIdList && !this.participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !this.exportInProgress"
-                type="submit"
-                class="btn btn-default"
-            >
-                @if (this.exportInProgress) {
+            <button [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises" [overwriteDisabled]="exportInProgress()" type="submit" class="btn btn-default">
+                @if (exportInProgress()) {
                     <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
                 }
                 <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export"></span>

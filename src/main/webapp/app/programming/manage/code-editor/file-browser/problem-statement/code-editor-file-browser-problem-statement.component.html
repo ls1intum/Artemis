@@ -1,5 +1,17 @@
 <!-- Problem Statement -->
-<li (click)="onNodeSelect.emit(item())" class="list-group-item file-item problem-statement-entry" [class.node-selected]="item().checked" id="file-browser-problem-statement">
+<li
+    (click)="onNodeSelect.emit(item())"
+    class="list-group-item file-item problem-statement-entry"
+    [class.node-selected]="item().checked"
+    id="file-browser-problem-statement"
+    [attr.aria-pressed]="item().checked"
+    #keyboardAction2
+    role="button"
+    tabindex="0"
+    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+>
     <fa-icon aria-hidden="true" [icon]="faListAlt" [fixedWidth]="true" class="problem-statement-icon" />
     <span class="file-label-group">
         <span

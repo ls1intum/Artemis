@@ -46,24 +46,25 @@ describe('CourseStorageService', () => {
         expect(service.getCourse(1)).toBeDefined();
     });
 
-    describe('fully loaded course tracking', () => {
-        it('should mark a course as fully loaded only when stored as a full course', () => {
-            service.updateCourse({ id: 1 } as Course, true);
-            expect(service.isCourseFullyLoaded(1)).toBe(true);
-            expect(service.isCourseFullyLoaded(42)).toBe(false);
-        });
+    it('should derive the current course from its id and follow course updates', () => {
+        service.setCourses([{ id: 1, title: 'old' } as Course]);
+        service.setCurrentCourse(1);
 
-        it('should drop the fully loaded marker when a course is updated without full details', () => {
-            service.updateCourse({ id: 1 } as Course, true);
-            service.updateCourse({ id: 1 } as Course);
-            expect(service.isCourseFullyLoaded(1)).toBe(false);
-        });
+        expect(service.currentCourse()?.title).toBe('old');
 
-        it('should drop all fully loaded markers when the slim course list replaces the stored courses', () => {
-            service.updateCourse({ id: 1 } as Course, true);
-            service.setCourses([{ id: 1 } as Course]);
-            expect(service.isCourseFullyLoaded(1)).toBe(false);
-        });
+        service.updateCourse({ id: 1, title: 'new' } as Course);
+
+        expect(service.currentCourse()?.title).toBe('new');
+    });
+
+    it('should clear the current course without removing it from storage', () => {
+        service.setCourses([{ id: 1 } as Course]);
+        service.setCurrentCourse(1);
+
+        service.clearCurrentCourse();
+
+        expect(service.currentCourse()).toBeUndefined();
+        expect(service.getCourse(1)).toBeDefined();
     });
 
     describe('authentication state changes', () => {
@@ -85,8 +86,10 @@ describe('CourseStorageService', () => {
         });
 
         it('should clear stored courses on logout', () => {
+            scoped.setCurrentCourse(1);
             authState.next(undefined);
             expect(scoped.getCourse(1)).toBeUndefined();
+            expect(scoped.currentCourse()).toBeUndefined();
         });
 
         it('should clear stored courses when a different user logs in', () => {

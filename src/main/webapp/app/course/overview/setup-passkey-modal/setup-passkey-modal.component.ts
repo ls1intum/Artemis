@@ -1,28 +1,35 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { faKey, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
+import { faBolt, faFingerprint, faKey, faLock, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-
-export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestSetupPasskeyReminderDate';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-setup-passkey-modal',
-    imports: [FormsModule, TranslateDirective, FontAwesomeModule, DialogModule, ButtonModule],
+    imports: [TranslateDirective, FontAwesomeModule, TumAetUiDialogComponent, TumAetUiButtonComponent, TranslatePipe],
     templateUrl: './setup-passkey-modal.component.html',
 })
 export class SetupPasskeyModalComponent implements OnInit {
+    private readonly webauthnService = inject(WebauthnService);
+    private readonly alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly profileService = inject(ProfileService);
+    private readonly destroyRef = inject(DestroyRef);
+
     protected readonly faKey = faKey;
     protected readonly faShieldHalved = faShieldHalved;
+    protected readonly faFingerprint = faFingerprint;
+    protected readonly faBolt = faBolt;
+    protected readonly faLock = faLock;
 
     readonly visible = signal(false);
 
@@ -32,13 +39,6 @@ export class SetupPasskeyModalComponent implements OnInit {
      * authentication state re-emits (e.g. after changing the AI experience). Reset on a full reload.
      */
     private dismissedForCurrentSession = false;
-
-    private readonly webauthnService = inject(WebauthnService);
-    private readonly alertService = inject(AlertService);
-    private readonly accountService = inject(AccountService);
-    private readonly localStorageService = inject(LocalStorageService);
-    private readonly profileService = inject(ProfileService);
-    private readonly destroyRef = inject(DestroyRef);
 
     ngOnInit(): void {
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY)) {

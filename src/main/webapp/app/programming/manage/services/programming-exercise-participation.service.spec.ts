@@ -145,6 +145,19 @@ describe('ProgrammingExerciseParticipation Service', () => {
             const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
             req.flush(files);
         });
+
+        it('getSelectedParticipationRepositoryFilesAtCommit', () => {
+            const filePaths = ['src/Main.java', 'src/Other.java'];
+
+            service.getSelectedParticipationRepositoryFilesAtCommit(123, 42, 'commitId', filePaths).subscribe((files) => {
+                expect(files).toEqual(new Map([['src/Main.java', 'content']]));
+            });
+
+            const expectedURL = `${resourceUrl}123/files-content-commit-details/selected?commitId=commitId&participationId=42`;
+            const req = httpMock.expectOne({ method: 'POST', url: expectedURL });
+            expect(req.request.body).toEqual(filePaths);
+            req.flush({ 'src/Main.java': 'content' });
+        });
     });
 
     it('should make GET request to retrieve files with content at commit', () => {

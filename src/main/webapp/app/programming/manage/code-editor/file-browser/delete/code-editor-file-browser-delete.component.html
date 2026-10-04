@@ -21,7 +21,7 @@
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button type="submit" class="btn btn-danger" [disabled]="!deleteForm.valid">
-            <fa-icon id="delete-file" [icon]="faTrashAlt" />&nbsp;<span jhiTranslate="artemisApp.editor.fileBrowser.delete"></span>
+            <fa-icon data-testid="delete-file" [icon]="faTrashAlt" />&nbsp;<span jhiTranslate="artemisApp.editor.fileBrowser.delete"></span>
         </button>
     </div>
 </form>

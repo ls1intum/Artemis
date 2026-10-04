@@ -1,5 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
@@ -44,15 +45,17 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { QuizParticipationBase } from './quiz-participation.base';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
-    providers: [ParticipationService],
+    providers: [ParticipationService, ArtemisDurationFromSecondsPipe],
     styleUrls: ['./quiz-participation.component.scss'],
     imports: [
         NgClass,
@@ -70,8 +73,9 @@ import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exerci
         ArtemisTranslatePipe,
     ],
 })
-export class QuizParticipationComponent implements OnInit, OnDestroy {
+export class QuizParticipationComponent extends QuizParticipationBase implements OnInit, OnDestroy, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
+    private durationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private quizExerciseService = inject(QuizExerciseService);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
@@ -122,6 +126,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly unsavedChanges = signal(false);
 
     readonly showingResult = signal(false);
+    readonly viewingExistingPracticeResult = signal(false);
     readonly userScore = signal<number>(0);
 
     readonly mode = signal<string>('');
@@ -162,6 +167,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly submitTitleKey = this._submitTitleKey.asReadonly();
     private readonly _shouldTreatAsSubmittedForUi = signal(false);
     readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
+    private readonly _practiceAttemptFinished = signal(false);
+    readonly practiceAttemptFinished = this._practiceAttemptFinished.asReadonly();
 
     private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
@@ -188,6 +195,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private participationSubscription?: Subscription;
     private quizExerciseSubscription?: Subscription;
     private quizBatchSubscription?: Subscription;
+    /** The pending practice load (an existing result or a fresh attempt), cancelled whenever practice mode is re-initialized. */
+    private practiceLoadSubscription?: Subscription;
 
     /**
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
@@ -201,6 +210,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
 
     constructor() {
+        super();
         effect(() => {
             if (this.quizHeader() && this.stepWizard()) {
                 const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
@@ -280,6 +290,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.participationSubscription?.unsubscribe();
         this.quizExerciseSubscription?.unsubscribe();
         this.quizBatchSubscription?.unsubscribe();
+        this.practiceLoadSubscription?.unsubscribe();
         this.websocketSubscription?.unsubscribe();
         this.routeAndDataSubscription?.unsubscribe();
     }
@@ -332,10 +343,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * loads quizExercise and starts practice mode, or loads an existing practice result if participationId is provided
      */
     initPracticeMode(participationId?: number, submissionId?: number) {
+        // The header offers "Start Practice Mode" as soon as an existing result is opened, before it has loaded. Cancel
+        // any load still pending so a late response cannot overwrite the attempt that replaced it.
+        this.practiceLoadSubscription?.unsubscribe();
         if (participationId) {
+            this.viewingExistingPracticeResult.set(true);
+            this.syncSubmitState();
             this.loadExistingPracticeResult(participationId, submissionId);
         } else {
-            this.quizExerciseService.findForStudent(this.quizId).subscribe({
+            this.viewingExistingPracticeResult.set(false);
+            this.practiceLoadSubscription = this.quizExerciseService.findForStudent(this.quizId).subscribe({
                 next: (res: HttpResponse<QuizExercise>) => {
                     if (res.body && hasDueDatePassed(res.body)) {
                         this.startQuizPreviewOrPractice(res.body);
@@ -352,7 +369,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * loads an existing practice participation result
      */
     private loadExistingPracticeResult(participationId: number, submissionId?: number) {
-        this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
+        this.practiceLoadSubscription = this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
             next: (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
@@ -405,7 +422,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // auto submit when time is up
         this.runningTimeouts.push(
             setTimeout(() => {
-                this.onSubmit();
+                this.submitExercise();
             }, quizExercise.duration! * 1000),
         );
     }
@@ -904,6 +921,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.unsavedChanges.set(true);
     }
 
+    // Bound once and handed to the question components by reference. `onSelectionChanged.bind(this)` in the template
+    // created a new function on every change-detection pass, so every question component saw a changed input on every
+    // pass. Three bindings per question made this the busiest churn site in the participation view.
+    readonly selectionChangedCallback = () => this.onSelectionChanged();
+
     triggerSave(resetAutoSaveTimer = true): void {
         if (resetAutoSaveTimer) {
             this.autoSaveTimer = 0;
@@ -994,7 +1016,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * This function is called when the user clicks the 'Submit' button
      */
-    onSubmit() {
+    submitExercise() {
         const translationBasePath = 'artemisApp.quizExercise.';
         this.applySelection();
         let confirmSubmit = true;
@@ -1058,6 +1080,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param result
      */
     onSubmitPracticeOrPreviewSuccess(result: Result) {
+        this.runningTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.runningTimeouts = [];
         this.isSubmitting.set(false);
         this.syncSubmitState();
         this.submission.set(result.submission as QuizSubmission);
@@ -1069,6 +1093,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
         this.applySubmission();
         this.showResult(result);
+        // Re-sync after the (submitted) submission and result are applied, so the surrounding exercise header
+        // immediately reflects the finished attempt (submit button -> "Start Practice Mode") without waiting for
+        // the next UI interval tick.
+        this.syncSubmitState();
 
         if (this.mode() === 'practice' && participation) {
             // Surface the practice participation (with its result) to the surrounding exercise page so the status badge
@@ -1086,7 +1114,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param error
      */
     onSubmitError(error: HttpErrorResponse) {
-        const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
+        const errorMessage = 'Submitting the quiz was not possible. ' + (error.headers?.get('X-artemisApp-message') || error.message);
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
@@ -1198,6 +1226,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      *
      * This is the case if either:
      * <ul>
+     *   <li>in practice mode, a result is being shown or an existing practice result is opened — the attempt is over, or</li>
      *   <li>the submission has already been marked as submitted by the server, or</li>
      *   <li>the quiz working time has expired and the submission shows evidence of user interaction
      *       (e.g. at least one answer was given, or the submission has already been saved or created)</li>
@@ -1208,7 +1237,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     private computeShouldTreatAsSubmittedForUi(hasAnyAnswer: boolean): boolean {
         const hasSavedOrAnswered = hasAnyAnswer || !!this.submission()?.submissionDate || !!this.submission()?.id;
-        return this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
+        const practiceAttemptOver = this.mode() === 'practice' && (this.viewingExistingPracticeResult() || this.showingResult());
+        return practiceAttemptOver || !!this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
     }
 
     /**
@@ -1221,6 +1251,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         const hasAnyAnswer = this.hasAnyAnswer();
         const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
         this._shouldTreatAsSubmittedForUi.set(submittedForUi);
+        // The practice attempt is also over once it expired: an attempt without a single answer never counts as
+        // submitted, yet Submit is disabled from then on. A submission in flight keeps it open — restarting under one
+        // would let its response land on the fresh attempt.
+        this._practiceAttemptFinished.set(this.mode() === 'practice' && !this.isSubmitting() && (submittedForUi || this.remainingTimeSeconds() < 0));
         const disabled = submittedForUi || this.isSubmitting() || this.waitingForQuizStart() || this.remainingTimeSeconds() < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
@@ -1270,6 +1304,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             } else if (this.quizExercise().dueDate && ((!this.quizExercise().quizEnded && this.submission().submitted) || (this.remainingTimeSeconds() < 0 && hasAnyAnswer))) {
                 info.showResultsAvailable = true;
                 info.resultsAvailableDate = this.quizExercise().dueDate;
+            } else if (this.waitingForQuizStart()) {
+                const duration = this.quizExercise().duration;
+                if (duration) {
+                    info.showDuration = true;
+                    info.durationText = this.durationFromSecondsPipe.transform(duration);
+                }
             }
         }
         this._liveHeaderInfo.set(info);

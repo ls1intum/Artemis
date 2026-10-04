@@ -15,8 +15,8 @@ describe('WebsocketAdminComponent', () => {
     let mockService: any;
     let alertService: AlertService;
 
-    const coreNode = { memberId: 'core-1', liteMember: false } as WebsocketNode;
-    const liteNode = { memberId: 'lite-1', liteMember: true } as WebsocketNode;
+    const coreNode = { memberId: 'core-1' } as WebsocketNode;
+    const secondNode = { memberId: 'core-3' } as WebsocketNode;
 
     beforeEach(async () => {
         vi.useFakeTimers();
@@ -47,12 +47,12 @@ describe('WebsocketAdminComponent', () => {
     });
 
     it('should load nodes successfully', () => {
-        mockService.getNodes.mockReturnValue(of([coreNode, liteNode]));
+        mockService.getNodes.mockReturnValue(of([coreNode, secondNode]));
 
         component.loadNodes();
 
         expect(mockService.getNodes).toHaveBeenCalledOnce();
-        expect(component.nodes()).toEqual([coreNode, liteNode]);
+        expect(component.nodes()).toEqual([coreNode, secondNode]);
         expect(component.loading()).toBe(false);
         expect(component.lastUpdateFailed()).toBe(false);
         expect(component.lastUpdated()).toBeInstanceOf(Date);
@@ -83,7 +83,7 @@ describe('WebsocketAdminComponent', () => {
 
     it('should show error when reconnecting without core nodes', () => {
         mockService.getNodes.mockReturnValue(of([]));
-        component.nodes.set([liteNode]);
+        component.nodes.set([]);
 
         component.reconnect();
 
@@ -113,8 +113,8 @@ describe('WebsocketAdminComponent', () => {
     });
 
     it('should trigger connect for all core nodes', () => {
-        const otherCore = { memberId: 'core-2', liteMember: false } as WebsocketNode;
-        component.nodes.set([coreNode, otherCore, liteNode]);
+        const otherCore = { memberId: 'core-2' } as WebsocketNode;
+        component.nodes.set([coreNode, otherCore]);
         mockService.triggerAction.mockReturnValue(of(void 0));
 
         component.connect();
@@ -126,8 +126,8 @@ describe('WebsocketAdminComponent', () => {
     });
 
     it('should trigger connect for specific node only', () => {
-        const otherCore = { memberId: 'core-2', liteMember: false } as WebsocketNode;
-        component.nodes.set([coreNode, otherCore, liteNode]);
+        const otherCore = { memberId: 'core-2' } as WebsocketNode;
+        component.nodes.set([coreNode, otherCore]);
         mockService.triggerAction.mockReturnValue(of(void 0));
 
         component.connect(coreNode.memberId);
@@ -138,7 +138,7 @@ describe('WebsocketAdminComponent', () => {
     });
 
     it('should show error when connecting without core nodes', () => {
-        component.nodes.set([liteNode]);
+        component.nodes.set([]);
 
         component.connect();
 
@@ -156,7 +156,7 @@ describe('WebsocketAdminComponent', () => {
     });
 
     it('should show error when disconnecting without core nodes', () => {
-        component.nodes.set([liteNode]);
+        component.nodes.set([]);
 
         component.disconnect();
 
@@ -164,8 +164,8 @@ describe('WebsocketAdminComponent', () => {
     });
 
     it('should trigger disconnect for specific node only', () => {
-        const otherCore = { memberId: 'core-2', liteMember: false } as WebsocketNode;
-        component.nodes.set([coreNode, otherCore, liteNode]);
+        const otherCore = { memberId: 'core-2' } as WebsocketNode;
+        component.nodes.set([coreNode, otherCore]);
         mockService.triggerAction.mockReturnValue(of(void 0));
 
         component.disconnect(coreNode.memberId);
@@ -176,7 +176,7 @@ describe('WebsocketAdminComponent', () => {
     });
 
     it('should trigger disconnect for all core nodes successfully', () => {
-        const otherCore = { memberId: 'core-2', liteMember: false } as WebsocketNode;
+        const otherCore = { memberId: 'core-2' } as WebsocketNode;
         component.nodes.set([coreNode, otherCore]);
         mockService.triggerAction.mockReturnValue(of(void 0));
 
@@ -197,7 +197,7 @@ describe('WebsocketAdminComponent', () => {
     });
 
     it('should trigger reconnect for all core nodes successfully', () => {
-        const otherCore = { memberId: 'core-2', liteMember: false } as WebsocketNode;
+        const otherCore = { memberId: 'core-2' } as WebsocketNode;
         component.nodes.set([coreNode, otherCore]);
         mockService.triggerAction.mockReturnValue(of(void 0));
 
@@ -208,19 +208,10 @@ describe('WebsocketAdminComponent', () => {
     });
 
     describe('sortedNodes', () => {
-        it('should sort nodes with core nodes first', () => {
-            component.nodes.set([liteNode, coreNode]);
-
-            const sorted = component.sortedNodes();
-
-            expect(sorted[0].liteMember).toBe(false);
-            expect(sorted[1].liteMember).toBe(true);
-        });
-
         it('should sort nodes alphabetically by instanceId', () => {
-            const coreA = { memberId: 'a', instanceId: 'artemis-1', liteMember: false } as WebsocketNode;
-            const coreB = { memberId: 'b', instanceId: 'artemis-2', liteMember: false } as WebsocketNode;
-            const coreC = { memberId: 'c', instanceId: 'artemis-10', liteMember: false } as WebsocketNode;
+            const coreA = { memberId: 'a', instanceId: 'artemis-1' } as WebsocketNode;
+            const coreB = { memberId: 'b', instanceId: 'artemis-2' } as WebsocketNode;
+            const coreC = { memberId: 'c', instanceId: 'artemis-10' } as WebsocketNode;
             component.nodes.set([coreC, coreA, coreB]);
 
             const sorted = component.sortedNodes();
@@ -231,8 +222,8 @@ describe('WebsocketAdminComponent', () => {
         });
 
         it('should fall back to host for sorting when instanceId is missing', () => {
-            const coreA = { memberId: 'a', host: 'host-1', liteMember: false } as WebsocketNode;
-            const coreB = { memberId: 'b', host: 'host-2', liteMember: false } as WebsocketNode;
+            const coreA = { memberId: 'a', host: 'host-1' } as WebsocketNode;
+            const coreB = { memberId: 'b', host: 'host-2' } as WebsocketNode;
             component.nodes.set([coreB, coreA]);
 
             const sorted = component.sortedNodes();
@@ -242,8 +233,8 @@ describe('WebsocketAdminComponent', () => {
         });
 
         it('should fall back to memberId for sorting when instanceId and host are missing', () => {
-            const coreA = { memberId: 'member-a', liteMember: false } as WebsocketNode;
-            const coreB = { memberId: 'member-b', liteMember: false } as WebsocketNode;
+            const coreA = { memberId: 'member-a' } as WebsocketNode;
+            const coreB = { memberId: 'member-b' } as WebsocketNode;
             component.nodes.set([coreB, coreA]);
 
             const sorted = component.sortedNodes();
@@ -254,16 +245,13 @@ describe('WebsocketAdminComponent', () => {
     });
 
     describe('coreNodes', () => {
-        it('should filter only non-lite member nodes', () => {
-            const coreA = { memberId: 'core-a', liteMember: false } as WebsocketNode;
-            const coreB = { memberId: 'core-b', liteMember: false } as WebsocketNode;
-            const liteA = { memberId: 'lite-a', liteMember: true } as WebsocketNode;
-            component.nodes.set([coreA, liteA, coreB]);
+        // Build agents no longer appear in this list: only core nodes register with the node registry the endpoint reads.
+        it('should report every reported node as a core node', () => {
+            const coreA = { memberId: 'core-a' } as WebsocketNode;
+            const coreB = { memberId: 'core-b' } as WebsocketNode;
+            component.nodes.set([coreA, coreB]);
 
-            const coreNodes = component.coreNodes();
-
-            expect(coreNodes).toHaveLength(2);
-            expect(coreNodes.every((n) => !n.liteMember)).toBe(true);
+            expect(component.coreNodes()).toHaveLength(2);
         });
     });
 

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
@@ -28,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.context.MessageSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -40,6 +42,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -86,8 +89,6 @@ class IrisChatSessionServiceStatusUpdateTest {
 
     private ExerciseTestRepository exerciseRepository;
 
-    private IrisChatSessionRepository irisChatSessionRepository;
-
     private IrisChatSessionService irisChatSessionService;
 
     @BeforeEach
@@ -100,13 +101,13 @@ class IrisChatSessionServiceStatusUpdateTest {
         pyrisJobService = mock(PyrisJobService.class);
         userRepository = mock(UserTestRepository.class);
         exerciseRepository = mock(ExerciseTestRepository.class);
-        irisChatSessionRepository = mock(IrisChatSessionRepository.class);
 
         irisChatSessionService = new IrisChatSessionService(irisMessageService, irisMessageRepository, llmTokenUsageService, mock(IrisSettingsService.class),
-                irisChatWebsocketService, mock(AuthorizationCheckService.class), irisSessionRepository, irisChatSessionRepository,
+                irisChatWebsocketService, mock(AuthorizationCheckService.class), irisSessionRepository, mock(IrisChatSessionRepository.class),
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class), mock(IrisRateLimitService.class),
                 JsonObjectMapper.get(), exerciseRepository, mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
-                mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService, userRepository);
+                mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService, mock(UserAiPreferenceService.class),
+                new IrisProactiveProperties(), userRepository);
     }
 
     @Test
@@ -270,7 +271,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         var session = contextSwitchSession();
         when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(session);
         stubContextSwitchTargets();
-        stubMarkerAndAnswerPersistence(session);
+        var marker = stubMarkerAndAnswerPersistence(session);
 
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
         stubJobLock(job);
@@ -282,14 +283,11 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         assertThat(session.getMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         assertThat(session.getEntityId()).isEqualTo(11L);
-        verify(irisChatSessionRepository).save(session);
-        var markerCaptor = ArgumentCaptor.forClass(IrisMessage.class);
-        verify(irisMessageService).saveMessage(markerCaptor.capture(), eq(session), eq(IrisMessageSender.CTXSWAP));
-        verify(irisChatWebsocketService).sendMessage(eq(session), eq(markerCaptor.getValue()), isNull(), isNull());
+        verify(irisChatWebsocketService).sendMessage(eq(session), eq(marker), isNull(), isNull());
 
         // The CTXSWAP marker must precede the answer so the client renders the divider above it
-        var inOrder = inOrder(irisMessageService);
-        inOrder.verify(irisMessageService).saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.CTXSWAP));
+        var inOrder = inOrder(irisSessionRepository, irisMessageService);
+        inOrder.verify(irisSessionRepository).switchContextAndAppendMarker(2L, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 11L, 1L, "Sorting");
         inOrder.verify(irisMessageService).saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM));
     }
 
@@ -301,7 +299,7 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         var user = new User();
         user.setId(5L);
-        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(5L)).thenReturn(user);
+        when(userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(5L)).thenReturn(user);
         when(exerciseRepository.findByIdElseThrow(999L)).thenThrow(new EntityNotFoundException("Exercise", 999L));
 
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
@@ -314,8 +312,7 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         assertThat(session.getMode()).isEqualTo(IrisChatMode.COURSE_CHAT);
         assertThat(session.getEntityId()).isEqualTo(1L);
-        verify(irisMessageService, never()).saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.CTXSWAP));
-        verify(irisChatSessionRepository, never()).save(any(IrisChatSession.class));
+        verify(irisSessionRepository, never()).switchContextAndAppendMarker(anyLong(), any(IrisChatMode.class), anyLong(), anyLong(), any());
         // The answer still reaches the student
         verify(irisMessageService).saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM));
     }
@@ -323,7 +320,7 @@ class IrisChatSessionServiceStatusUpdateTest {
     @Test
     void suggestedContextOnAStatusOnlyUpdateDoesNotSwitchTheContext() {
         var session = contextSwitchSession();
-        when(irisSessionRepository.findByIdElseThrow(2L)).thenReturn(session);
+        when(irisSessionRepository.findById(2L)).thenReturn(Optional.of(session));
         stubContextSwitchTargets();
 
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
@@ -334,8 +331,7 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         assertThat(session.getMode()).isEqualTo(IrisChatMode.COURSE_CHAT);
         assertThat(session.getEntityId()).isEqualTo(1L);
-        verify(irisMessageService, never()).saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.CTXSWAP));
-        verify(irisChatSessionRepository, never()).save(any(IrisChatSession.class));
+        verify(irisSessionRepository, never()).switchContextAndAppendMarker(anyLong(), any(IrisChatMode.class), anyLong(), anyLong(), any());
     }
 
     @Test
@@ -354,8 +350,7 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         assertThat(session.getMode()).isEqualTo(IrisChatMode.COURSE_CHAT);
         assertThat(session.getEntityId()).isEqualTo(1L);
-        verify(irisMessageService, never()).saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.CTXSWAP));
-        verify(irisChatSessionRepository, never()).save(any(IrisChatSession.class));
+        verify(irisSessionRepository, never()).switchContextAndAppendMarker(anyLong(), any(IrisChatMode.class), anyLong(), anyLong(), any());
     }
 
     @Test
@@ -366,11 +361,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         var secondSnapshot = contextSwitchSession();
         when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(firstSnapshot, secondSnapshot);
         stubContextSwitchTargets();
-        when(irisMessageService.saveMessage(any(IrisMessage.class), any(IrisChatSession.class), eq(IrisMessageSender.CTXSWAP))).thenAnswer(invocation -> {
-            var message = invocation.getArgument(0, IrisMessage.class);
-            message.setId(300L);
-            return message;
-        });
+        stubMarker();
 
         var initialJob = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
         var jobMapEntry = new AtomicReference<PyrisJob>(initialJob);
@@ -423,7 +414,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         assertThat(firstSnapshot.getMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         assertThat(firstSnapshot.getEntityId()).isEqualTo(11L);
         assertThat(secondSnapshot.getMode()).isEqualTo(IrisChatMode.COURSE_CHAT);
-        verify(irisMessageService, times(1)).saveMessage(any(IrisMessage.class), any(IrisChatSession.class), eq(IrisMessageSender.CTXSWAP));
+        verify(irisSessionRepository, times(1)).switchContextAndAppendMarker(anyLong(), any(IrisChatMode.class), anyLong(), anyLong(), any());
         verify(irisMessageService, times(1)).saveMessage(any(IrisMessage.class), any(IrisChatSession.class), eq(IrisMessageSender.LLM));
     }
 
@@ -440,7 +431,7 @@ class IrisChatSessionServiceStatusUpdateTest {
     private void stubContextSwitchTargets() {
         var user = new User();
         user.setId(5L);
-        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(5L)).thenReturn(user);
+        when(userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(5L)).thenReturn(user);
 
         var course = new Course();
         course.setId(1L);
@@ -451,17 +442,21 @@ class IrisChatSessionServiceStatusUpdateTest {
         when(exerciseRepository.findByIdElseThrow(11L)).thenReturn(exercise);
     }
 
-    private void stubMarkerAndAnswerPersistence(IrisChatSession session) {
-        when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.CTXSWAP))).thenAnswer(invocation -> {
-            var message = invocation.getArgument(0, IrisMessage.class);
-            message.setId(300L);
-            return message;
-        });
+    private IrisMessage stubMarker() {
+        var marker = new IrisMessage();
+        marker.setId(300L);
+        when(irisSessionRepository.switchContextAndAppendMarker(2L, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 11L, 1L, "Sorting")).thenReturn(marker);
+        return marker;
+    }
+
+    private IrisMessage stubMarkerAndAnswerPersistence(IrisChatSession session) {
+        var marker = stubMarker();
         when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> {
             var message = invocation.getArgument(0, IrisMessage.class);
             message.setId(301L);
             return message;
         });
+        return marker;
     }
 
     private void stubJobLock(ChatJob job) {

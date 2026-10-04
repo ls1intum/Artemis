@@ -1,7 +1,5 @@
 import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/foundation/model/base-entity';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 export const enum AttachmentType {
@@ -18,8 +16,6 @@ export class Attachment implements BaseEntity {
     version?: number;
     uploadDate?: dayjs.Dayjs;
     attachmentType?: AttachmentType;
-    lecture?: Lecture;
-    exercise?: Exercise;
     attachmentVideoUnit?: AttachmentVideoUnit;
     studentVersion?: string;
     displayPageNumbers?: number[];

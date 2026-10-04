@@ -23,6 +23,7 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface WeightOption {
     label: string;
@@ -54,6 +55,11 @@ export interface AgentChatModalData {
     styleUrl: './agent-chat-modal.component.scss',
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    private readonly agentChatService = inject(AgentChatService);
+    private readonly translateService = inject(TranslateService);
+
     private readonly messagesContainer = viewChild.required<ElementRef>('messagesContainer');
     private readonly messageInput = viewChild.required<ElementRef<HTMLTextAreaElement>>('messageInput');
 
@@ -62,10 +68,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     protected readonly closeIcon = faTimes;
     protected readonly userIcon = faUser;
 
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
-    private readonly agentChatService = inject(AgentChatService);
-    private readonly translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     courseId = signal<number>(0);
@@ -222,7 +224,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.isAgentTyping.set(false);
 
                 // Mark this message's competencies as created
-                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg)));
+                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? cloneWith(msg, { competencyCreated: true }) : msg)));
 
                 // Add agent response message (may include next step preview from plan continuation)
                 this.addMessage(
@@ -260,7 +262,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.isAgentTyping.set(false);
 
                 // Mark this message's relation as created
-                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, relationCreated: true } : msg)));
+                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? cloneWith(msg, { relationCreated: true }) : msg)));
 
                 // Add agent response message
                 this.addMessage(
@@ -311,7 +313,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.isAgentTyping.set(false);
 
                 // Mark this message as saved to prevent resubmission
-                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, exerciseMappingCreated: true } : msg)));
+                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? cloneWith(msg, { exerciseMappingCreated: true }) : msg)));
 
                 this.addMessage(
                     response.message ?? this.translateService.instant('artemisApp.agent.chat.success.exerciseMappingCreated'),
@@ -339,7 +341,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             return;
         }
 
-        this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, planApproved: true, planPending: false } : msg)));
+        this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? cloneWith(msg, { planApproved: true, planPending: false }) : msg)));
 
         this.addMessage(this.translateService.instant('artemisApp.agent.chat.approvePlan'), false);
         this.isAgentTyping.set(true);
@@ -454,10 +456,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             exerciseId: preview.exerciseId,
             exerciseTitle: preview.exerciseTitle,
             viewOnly: preview.viewOnly,
-            competencies: preview.competencies.map((comp): CompetencyMappingViewModel => ({
-                ...comp,
-                selected: signal((comp.alreadyMapped ?? false) || (comp.suggested ?? false)),
-            })),
+            competencies: preview.competencies.map((comp): CompetencyMappingViewModel =>
+                cloneWith(comp, { selected: signal((comp.alreadyMapped ?? false) || (comp.suggested ?? false)) }),
+            ),
         };
     }
 
@@ -566,7 +567,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.messages.update((msgs) =>
             msgs.map((msg) => {
                 if (msg.planPending && !msg.planApproved) {
-                    return { ...msg, planPending: false };
+                    return cloneWith(msg, { planPending: false });
                 }
                 return msg;
             }),

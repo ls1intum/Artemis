@@ -5,11 +5,11 @@ import dayjs from 'dayjs/esm';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { User } from 'app/account/user/user.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
-import { faRobot, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
-import { DisplayPriority, UserRole } from 'app/communication/metis.util';
+import { faRobot, faTriangleExclamation, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { DisplayPriority, UserRole } from 'app/communication/communication.util';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
@@ -20,14 +20,18 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { TagModule } from 'primeng/tag';
 
 @Component({
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
-    styleUrls: ['../metis.component.scss'],
-    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent],
+    styleUrls: ['../communication.component.scss'],
+    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent, TagModule],
 })
 export class PostingHeaderComponent implements OnInit {
+    private communicationService = inject(CommunicationService);
+    private accountService = inject(AccountService);
+
     lastReadDate = input<dayjs.Dayjs>();
     posting = input<Posting>();
     readOnlyMode = input<boolean>(false);
@@ -35,6 +39,7 @@ export class PostingHeaderComponent implements OnInit {
     hasChannelModerationRights = input<boolean>(false);
     isCommunicationPage = input<boolean>();
     isDeleted = input<boolean>(false);
+    isUnverifiedIris = input<boolean>(false);
 
     isModalOpen = output<void>();
     readonly onUserNameClicked = output<void>();
@@ -53,9 +58,7 @@ export class PostingHeaderComponent implements OnInit {
     // Icons
     readonly faPencilAlt = faPencilAlt;
     readonly faCheckSquare = faCheckSquare;
-
-    private metisService = inject(MetisService);
-    private accountService = inject(AccountService);
+    readonly faTriangleExclamation = faTriangleExclamation;
 
     constructor() {
         effect(() => {
@@ -82,7 +85,7 @@ export class PostingHeaderComponent implements OnInit {
     });
 
     /**
-     * on initialization: determines if user is author of posting by invoking the metis service,
+     * on initialization: determines if user is author of posting by invoking the communication service,
      * determines if posting is of today and sets the today flag to be shown in the header of the posting
      * determines icon and tooltip for authority type of the author
      */
@@ -130,7 +133,7 @@ export class PostingHeaderComponent implements OnInit {
      */
     getTodayFlag(): string | undefined {
         if (this.postingIsOfToday()) {
-            return 'artemisApp.metis.today';
+            return 'artemisApp.communication.today';
         } else {
             return undefined;
         }
@@ -144,7 +147,7 @@ export class PostingHeaderComponent implements OnInit {
      * @returns {void}
      */
     setUserProperties(): void {
-        this.isAuthorOfPosting.set(this.metisService.metisUserIsAuthorOfPosting(this.posting()!));
+        this.isAuthorOfPosting.set(this.communicationService.currentUserIsAuthorOfPosting(this.posting()!));
         this.setUserAuthorityIconAndTooltip();
     }
 
@@ -152,8 +155,8 @@ export class PostingHeaderComponent implements OnInit {
      * assigns suitable icon and tooltip for the author's authority type
      */
     setUserAuthorityIconAndTooltip(): void {
-        const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
-        const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
+        const toolTipTranslationPath = 'artemisApp.communication.userAuthorityTooltips.';
+        const roleBadgeTranslationPath = 'artemisApp.communication.userRoles.';
         this.userAuthorityIcon.set(faUser);
         if (this.posting()?.author?.bot) {
             this.userAuthorityIcon.set(faRobot);
@@ -176,8 +179,8 @@ export class PostingHeaderComponent implements OnInit {
             this.userAuthorityTooltip.set(toolTipTranslationPath + this.userAuthority());
         } else {
             this.userAuthority.set('student');
-            this.userRoleBadge.set('artemisApp.metis.userRoles.deleted');
-            this.userAuthorityTooltip.set('artemisApp.metis.userAuthorityTooltips.deleted');
+            this.userRoleBadge.set('artemisApp.communication.userRoles.deleted');
+            this.userAuthorityTooltip.set('artemisApp.communication.userAuthorityTooltips.deleted');
         }
     }
 

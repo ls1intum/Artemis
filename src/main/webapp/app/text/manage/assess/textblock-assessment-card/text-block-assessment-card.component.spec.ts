@@ -8,7 +8,7 @@ import { MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
@@ -68,6 +68,59 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(selectSpy).not.toHaveBeenCalled();
     });
 
+    it.each([
+        { readOnly: true, selectable: true },
+        { readOnly: false, selectable: false },
+        { readOnly: true, selectable: false },
+    ])('should not expose an inactive block as a button ($readOnly, $selectable)', ({ readOnly, selectable }) => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.selectable = selectable;
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.componentRef.setInput('readOnly', readOnly);
+        fixture.detectChanges();
+        const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+        const select = vi.spyOn(component, 'select');
+        const didSelect = vi.spyOn(component.didSelect, 'emit');
+
+        expect(block.hasAttribute('role')).toBe(false);
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+        expect(block.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            block.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(select).not.toHaveBeenCalled();
+        expect(didSelect).not.toHaveBeenCalled();
+    });
+
+    it('should expose a selectable block as a button and select once on Space release', () => {
+        vi.useFakeTimers();
+        try {
+            const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+            const didSelect = vi.spyOn(component.didSelect, 'emit');
+            expect(block.getAttribute('role')).toBe('button');
+            expect(block.tabIndex).toBe(0);
+            for (const repeat of [false, true, true]) {
+                const event = new KeyboardEvent('keydown', { key: ' ', repeat, bubbles: true, cancelable: true });
+                block.dispatchEvent(event);
+                expect(event.defaultPrevented).toBe(true);
+            }
+            expect(didSelect).not.toHaveBeenCalled();
+            block.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            expect(didSelect).toHaveBeenCalledExactlyOnceWith(component.textBlockRef());
+            block.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(didSelect).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
     it('should select and emit when autofocus is enabled', () => {
         fixture.componentRef.setInput('readOnly', false);
         const textBlockRef = TextBlockRef.new();
@@ -84,6 +137,32 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(didSelectSpy).toHaveBeenCalledWith(textBlockRef);
+    });
+
+    it('should expose selected state only while the block is interactive', () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+        expect(block.getAttribute('aria-pressed')).toBe('false');
+
+        fixture.componentRef.setInput('selected', true);
+        fixture.detectChanges();
+        expect(block.getAttribute('aria-pressed')).toBe('true');
+
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+
+        fixture.componentRef.setInput('readOnly', false);
+        textBlockRef.selectable = false;
+        reapplyTextBlockRef(textBlockRef);
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+
+        textBlockRef.selectable = true;
+        reapplyTextBlockRef(textBlockRef);
+        expect(block.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('should show text block', () => {
@@ -142,6 +221,19 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(component.didDelete.emit).not.toHaveBeenCalled();
     });
 
+    it('should delete feedback when the dismiss icon is clicked via a real DOM click (regression: click must not bubble into select())', () => {
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        reapplyTextBlockRef(textBlockRef);
+
+        const dismissIcon = fixture.debugElement.nativeElement.querySelector('#dismiss-icon') as HTMLButtonElement;
+        expect(dismissIcon).toBeTruthy();
+        dismissIcon.click();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.textBlockRef().feedback).toBeUndefined();
+    });
+
     it('should send assessment event when selecting automatic text block', () => {
         fixture.componentRef.setInput('selected', false);
         component.textBlockRef().feedback = {
@@ -152,6 +244,34 @@ describe('TextblockAssessmentCardComponent', () => {
         component.select();
         fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+    });
+
+    /**
+     * Deleting feedback from an automatic text block, i.e. a line of the submission, used to be impossible: the click on the
+     * close control bubbled to the editor host, whose `(click)="select(false)"` calls `TextBlockRef.initFeedback()` and
+     * re-created the feedback that `unselect()` had just removed. A manual block hid the problem, because it is additionally
+     * removed from the list via `didDelete`.
+     *
+     * The click has to go through the DOM: calling `dismiss()` on the editor directly never bubbles, which is why the
+     * existing tests above did not catch this.
+     */
+    it('should delete the feedback of an automatic text block when the close control is clicked', () => {
+        const block = new TextBlock();
+        block.type = TextBlockType.AUTOMATIC;
+        block.text = 'a line of the submission';
+        const textBlockRef = new TextBlockRef(block, { type: FeedbackType.MANUAL, credits: 0, detailText: '' });
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.changeDetectorRef.detectChanges();
+
+        const dismissIcon = fixture.debugElement.query(By.css('#dismiss-icon'));
+        expect(dismissIcon).toBeTruthy();
+
+        // No change detection afterwards on purpose: the click handlers run synchronously, and in the real page the parent
+        // destroys this editor in response to didSelect(undefined). Re-rendering it here instead would only exercise the
+        // test's own missing parent wiring.
+        dismissIcon.nativeElement.click();
+
+        expect(textBlockRef.feedback).toBeUndefined();
     });
 
     it('should not send assessment event when selecting text block that is unselectable', () => {

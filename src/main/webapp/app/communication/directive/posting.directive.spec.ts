@@ -2,17 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { DisplayPriority } from 'app/communication/metis.util';
+import { DisplayPriority } from 'app/communication/communication.util';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -67,9 +67,9 @@ describe('PostingDirective', () => {
     let component: TestPostingComponent;
     let fixture: ComponentFixture<TestPostingComponent>;
     let mockReactionsBar: MockReactionsBar;
-    let mockMetisService: MetisService;
+    let mockCommunicationService: CommunicationService;
     let mockOneToOneChatService: OneToOneChatService;
-    let mockMetisConversationService: MetisConversationService;
+    let mockCourseConversationsService: CourseConversationsService;
     let mockRouter: Router;
 
     beforeEach(async () => {
@@ -79,8 +79,8 @@ describe('PostingDirective', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
-                MockProvider(MetisService),
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                MockProvider(CommunicationService),
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: OneToOneChatService, useClass: MockOneToOneChatService },
                 { provide: Router, useValue: { navigate: vi.fn() } },
             ],
@@ -97,13 +97,13 @@ describe('PostingDirective', () => {
         fixture.componentRef.setInput('isThreadSidebar', false);
         fixture.detectChanges();
 
-        mockMetisService = TestBed.inject(MetisService);
+        mockCommunicationService = TestBed.inject(CommunicationService);
         const course = new Course();
         course.id = 1;
-        mockMetisService.setCourse(course);
-        mockMetisService.getCourse = vi.fn().mockReturnValue(course);
+        mockCommunicationService.setCourse(course);
+        mockCommunicationService.getCourse = vi.fn().mockReturnValue(course);
         mockOneToOneChatService = TestBed.inject(OneToOneChatService);
-        mockMetisConversationService = TestBed.inject(MetisConversationService);
+        mockCourseConversationsService = TestBed.inject(CourseConversationsService);
         mockRouter = TestBed.inject(Router);
     });
 
@@ -182,8 +182,8 @@ describe('PostingDirective', () => {
         expect(component.showReactionSelector).toBe(false);
     });
 
-    it('should call markMessageAsUnread on metisService', () => {
-        const markMessageAsUnreadSpy = vi.spyOn(mockMetisService, 'markMessageAsUnread');
+    it('should call markMessageAsUnread on communicationService', () => {
+        const markMessageAsUnreadSpy = vi.spyOn(mockCommunicationService, 'markMessageAsUnread');
 
         component.markMessageAsUnread();
 
@@ -201,7 +201,7 @@ describe('PostingDirective', () => {
 
     it('should not proceed in onUserNameClicked if messaging is not enabled', () => {
         vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(false);
-        const createOneToOneChatSpy = vi.spyOn(mockMetisConversationService, 'createOneToOneChatWithId');
+        const createOneToOneChatSpy = vi.spyOn(mockCourseConversationsService, 'createOneToOneChatWithId');
         const createChatSpy = vi.spyOn(mockOneToOneChatService, 'createWithId');
         const navigateSpy = vi.spyOn(mockRouter, 'navigate');
 
@@ -214,7 +214,7 @@ describe('PostingDirective', () => {
 
     it('should not proceed in onUserReferenceClicked if messaging is not enabled', () => {
         vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(false);
-        const createOneToOneChatSpy = vi.spyOn(mockMetisConversationService, 'createOneToOneChat');
+        const createOneToOneChatSpy = vi.spyOn(mockCourseConversationsService, 'createOneToOneChat');
         const createChatSpy = vi.spyOn(mockOneToOneChatService, 'create');
         const navigateSpy = vi.spyOn(mockRouter, 'navigate');
 
@@ -229,7 +229,7 @@ describe('PostingDirective', () => {
         vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
         fixture.componentRef.setInput('isCommunicationPage', true);
 
-        const createOneToOneChatIdSpy = vi.spyOn(mockMetisConversationService, 'createOneToOneChatWithId');
+        const createOneToOneChatIdSpy = vi.spyOn(mockCourseConversationsService, 'createOneToOneChatWithId');
         const createWithIdSpy = vi.spyOn(mockOneToOneChatService, 'createWithId');
 
         component.onUserNameClicked();
@@ -247,7 +247,7 @@ describe('PostingDirective', () => {
         vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
         fixture.componentRef.setInput('isCommunicationPage', true);
 
-        const createOneToOneChatSpy = vi.spyOn(mockMetisConversationService, 'createOneToOneChat');
+        const createOneToOneChatSpy = vi.spyOn(mockCourseConversationsService, 'createOneToOneChat');
         const createSpy = vi.spyOn(mockOneToOneChatService, 'create');
 
         component.onUserReferenceClicked('test');
@@ -289,8 +289,8 @@ describe('PostingDirective', () => {
         expect(component.deleteTimerInSeconds()).toBe(component.timeToDeleteInSeconds);
     });
 
-    it('should call metisService.deletePost for regular post', () => {
-        const deletePostSpy = vi.spyOn(mockMetisService, 'deletePost');
+    it('should call communicationService.deletePost for regular post', () => {
+        const deletePostSpy = vi.spyOn(mockCommunicationService, 'deletePost');
         vi.useFakeTimers();
 
         component.isAnswerPost = false;
@@ -301,8 +301,8 @@ describe('PostingDirective', () => {
         expect(deletePostSpy).toHaveBeenCalledWith(component.posting());
     });
 
-    it('should call metisService.deleteAnswerPost for answer post', () => {
-        const deleteAnswerPostSpy = vi.spyOn(mockMetisService, 'deleteAnswerPost');
+    it('should call communicationService.deleteAnswerPost for answer post', () => {
+        const deleteAnswerPostSpy = vi.spyOn(mockCommunicationService, 'deleteAnswerPost').mockReturnValue(of(undefined));
         vi.useFakeTimers();
 
         component.isAnswerPost = true;
@@ -336,8 +336,8 @@ describe('PostingDirective', () => {
     });
 
     it('should do nothing if delete event is false', () => {
-        const deletePostSpy = vi.spyOn(mockMetisService, 'deletePost');
-        const deleteAnswerPostSpy = vi.spyOn(mockMetisService, 'deleteAnswerPost');
+        const deletePostSpy = vi.spyOn(mockCommunicationService, 'deletePost');
+        const deleteAnswerPostSpy = vi.spyOn(mockCommunicationService, 'deleteAnswerPost');
 
         component.onDeleteEvent(false);
 

@@ -1,46 +1,86 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
-
 /**
  * A MultipleChoiceSubmittedAnswer.
+ * <p>
+ * The selected answer options are stored inside the {@code submitted_answer.selection} JSON column (as a list of answer-option ids in a
+ * {@link MultipleChoiceSubmittedAnswerSelection}) instead of the former {@code multiple_choice_submitted_answer_selected_options} join table. The public
+ * {@code getSelectedOptions()} / {@code setSelectedOptions()} accessors keep their original signatures/shape: they resolve the stored ids against the owning question so the
+ * REST/websocket wire format (nested {@code selectedOptions} objects) is preserved. Mirrors {@link DragAndDropSubmittedAnswer}.
  */
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
-    // No @Cache here on purpose. A second-level cache with NONSTRICT_READ_WRITE used to produce partial / stale selected-option collections
-    // under concurrent activity (autosave, evaluation) on a clustered setup, see Artemis issue #12574. Selected options are small and
-    // rarely re-read for the same submission, so always fetching from the database is both simpler and deterministic.
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "multiple_choice_submitted_answer_selected_options", joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
-    private Set<AnswerOption> selectedOptions = new HashSet<>();
-
-    public Set<AnswerOption> getSelectedOptions() {
-        return selectedOptions;
+    private MultipleChoiceSubmittedAnswerSelection mcSelection() {
+        if (getSelection() instanceof MultipleChoiceSubmittedAnswerSelection multipleChoiceSelection) {
+            return multipleChoiceSelection;
+        }
+        MultipleChoiceSubmittedAnswerSelection created = new MultipleChoiceSubmittedAnswerSelection();
+        setSelection(created);
+        return created;
     }
 
+    private MultipleChoiceQuestion multipleChoiceQuestion() {
+        return getQuizQuestion() instanceof MultipleChoiceQuestion question ? question : null;
+    }
+
+    /**
+     * The selected answer options resolved into objects against the owning question. Built on demand from the scalar-id selection stored in the JSON column. Mutating the returned
+     * set does not affect the stored selection — use {@link #addSelectedOptions} / {@link #setSelectedOptions} instead.
+     *
+     * @return the resolved selected answer options
+     */
+    public Set<AnswerOption> getSelectedOptions() {
+        Set<AnswerOption> result = new HashSet<>();
+        if (!(getSelection() instanceof MultipleChoiceSubmittedAnswerSelection selection)) {
+            return result;
+        }
+        MultipleChoiceQuestion question = multipleChoiceQuestion();
+        if (question == null) {
+            return result;
+        }
+        for (Long optionId : selection.getSelectedOptionIds()) {
+            AnswerOption option = question.findAnswerOptionById(optionId);
+            if (option != null) {
+                result.add(option);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Replaces the selected options, storing them as scalar ids in the JSON selection.
+     *
+     * @param answerOptions the selected answer options whose ids are stored
+     */
     public void setSelectedOptions(Set<AnswerOption> answerOptions) {
-        this.selectedOptions = answerOptions;
+        List<Long> ids = new ArrayList<>();
+        if (answerOptions != null) {
+            for (AnswerOption option : answerOptions) {
+                if (option != null && option.getId() != null) {
+                    ids.add(option.getId());
+                }
+            }
+        }
+        mcSelection().setSelectedOptionIds(ids);
     }
 
     public void addSelectedOptions(AnswerOption answerOption) {
-        this.selectedOptions.add(answerOption);
+        if (answerOption != null && answerOption.getId() != null && !mcSelection().getSelectedOptionIds().contains(answerOption.getId())) {
+            mcSelection().getSelectedOptionIds().add(answerOption.getId());
+        }
     }
 
     /**
@@ -50,34 +90,10 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
      * @return true if the answer option is selected, false otherwise
      */
     public boolean isSelected(AnswerOption answerOption) {
-        // search for this answer option in the selected answer options
-        for (AnswerOption selectedOption : getSelectedOptions()) {
-            if (Objects.equals(selectedOption.getId(), answerOption.getId())) {
-                // this answer option is selected => we can stop searching
-                return true;
-            }
+        if (answerOption == null || answerOption.getId() == null || !(getSelection() instanceof MultipleChoiceSubmittedAnswerSelection selection)) {
+            return false;
         }
-        // we didn't find the answer option => it wasn't selected
-        return false;
-    }
-
-    /**
-     * Check if answerOptions were deleted and delete reference to in selectedOptions
-     *
-     * @param question the changed question with the answerOptions
-     */
-    private void checkAndDeleteSelectedOptions(MultipleChoiceQuestion question) {
-
-        if (question != null) {
-            // Check if an answerOption was deleted and delete reference to in selectedOptions
-            Set<AnswerOption> selectedOptionsToDelete = new HashSet<>();
-            for (AnswerOption answerOption : this.getSelectedOptions()) {
-                if (!question.getAnswerOptions().contains(answerOption)) {
-                    selectedOptionsToDelete.add(answerOption);
-                }
-            }
-            this.getSelectedOptions().removeAll(selectedOptionsToDelete);
-        }
+        return selection.getSelectedOptionIds().contains(answerOption.getId());
     }
 
     /**
@@ -87,17 +103,19 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
      */
     @Override
     public void checkAndDeleteReferences(QuizExercise quizExercise) {
-
-        if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
+        if (getQuizQuestion() == null || !quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
             setQuizQuestion(null);
-            selectedOptions = null;
+            setSelection(null);
+            return;
         }
-        else {
-            // find same quizQuestion in quizExercise
-            QuizQuestion quizQuestion = quizExercise.findQuestionById(getQuizQuestion().getId());
-
-            // Check if an answerOption was deleted and delete reference to in selectedOptions
-            checkAndDeleteSelectedOptions((MultipleChoiceQuestion) quizQuestion);
+        // Check if an answerOption was deleted and remove it from the stored selection
+        if (quizExercise.findQuestionById(getQuizQuestion().getId()) instanceof MultipleChoiceQuestion question
+                && getSelection() instanceof MultipleChoiceSubmittedAnswerSelection selection) {
+            Set<Long> answerOptionIds = new HashSet<>();
+            for (AnswerOption answerOption : question.getAnswerOptions()) {
+                answerOptionIds.add(answerOption.getId());
+            }
+            selection.getSelectedOptionIds().removeIf(optionId -> !answerOptionIds.contains(optionId));
         }
     }
 
@@ -107,7 +125,10 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     }
 
     public Set<Long> toSelectedIds() {
-        return getSelectedOptions().stream().map(DomainObject::getId).collect(Collectors.toSet());
+        if (!(getSelection() instanceof MultipleChoiceSubmittedAnswerSelection selection)) {
+            return new HashSet<>();
+        }
+        return new HashSet<>(selection.getSelectedOptionIds());
     }
 
 }

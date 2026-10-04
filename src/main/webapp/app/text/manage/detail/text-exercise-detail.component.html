@@ -9,7 +9,11 @@
                 <hr />
                 <div class="text-start">
                     @if (course()) {
-                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="course()!" [exercise]="textExercise()" />
+                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="course()!" [exercise]="textExercise()">
+                            @if (textExercise().isAtLeastInstructor && !isExamExercise()) {
+                                <jhi-atlas-orchestration-trigger [exercise]="textExercise()" />
+                            }
+                        </jhi-non-programming-exercise-detail-common-actions>
                     }
                 </div>
                 @if (!textExercise().releaseDate || dayjs(textExercise().releaseDate).isBefore(dayjs())) {

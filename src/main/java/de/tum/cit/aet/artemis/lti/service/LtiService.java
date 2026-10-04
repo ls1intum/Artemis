@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -27,15 +25,22 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
+import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.domain.UserLti;
+import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
 
 @Lazy
 @Service
@@ -45,8 +50,6 @@ public class LtiService {
     @Value("${artemis.lti.trustExternalLTISystems:false}")
     private boolean trustExternalLTISystems;
 
-    public static final String LTI_GROUP_NAME = "lti";
-
     protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
     private static final Logger log = LoggerFactory.getLogger(LtiService.class);
@@ -55,14 +58,27 @@ public class LtiService {
 
     private final UserRepository userRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
+    private final AuthorityService authorityService;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final JWTCookieService jwtCookieService;
 
-    public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService) {
+    private final UserLtiRepository userLtiRepository;
+
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
+    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService, UserLtiRepository userLtiRepository,
+            UserRecoveryKeyService userRecoveryKeyService) {
         this.userCreationService = userCreationService;
+        this.userLtiRepository = userLtiRepository;
+        this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
+        this.authorityService = authorityService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
     }
@@ -104,7 +120,7 @@ public class LtiService {
 
             if (trustExternalLTISystems) {
                 log.info("Trusting external LTI system. Authenticating user with email: {}", email);
-                User user = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email).orElseThrow();
+                User user = userRepository.findOneWithAuthoritiesByEmailIgnoreCase(email).orElseThrow();
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
                 return;
             }
@@ -126,14 +142,15 @@ public class LtiService {
     @NonNull
     protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
-            final User newUser;
-            final var groups = new HashSet<String>();
-            groups.add(LTI_GROUP_NAME);
-
             var password = RandomUtil.generatePassword();
-            newUser = userCreationService.createUser(login, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
-            newUser.setActivationKey(null);
-            userRepository.save(newUser);
+            final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            // Marked in user_lti rather than on the user row, which the lti module does not own. createUser already saved
+            // the account, so the id is available and no further save of the user itself is needed.
+            userLtiRepository.save(new UserLti(newUser.getId(), true));
+            // createUser issues an activation key for every internal account. A launch-provisioned account never receives
+            // the activation mail and must not be activatable by that key, so it is dropped again here - the account uses
+            // `activated` as its own "already initialised" marker instead. See User#activated.
+            userRecoveryKeyService.clearActivationKey(newUser.getId());
 
             log.info("Created new user {}", newUser);
             return newUser;
@@ -147,30 +164,28 @@ public class LtiService {
     }
 
     /**
-     * Handler for successful LTI auth. Adds the groups to the user
+     * Handler for successful LTI auth. Enrolls the user as a student in the exercise's course.
      *
      * @param user     The user that is authenticated
      * @param exercise Exercise to launch
      */
     public void onSuccessfulLtiAuthentication(User user, Exercise exercise) {
-        // Make sure user is added to group for this exercise
-        addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());
+        enrollUserInCourse(user, exercise.getCourseViaExerciseGroupOrCourseMember());
     }
 
     /**
-     * Add a user to the course student group
+     * Enrolls a user as a student in the given course.
      *
-     * @param user   the user who should be added the course
-     * @param course the course to which the user should be added
+     * @param user   the user to enroll
+     * @param course the course to enroll the user in
      */
-    private void addUserToExerciseGroup(User user, Course course) {
-        String courseStudentGroupName = course.getStudentGroupName();
-        if (!user.getGroups().contains(courseStudentGroupName)) {
-            Set<String> groups = user.getGroups();
-            groups.add(courseStudentGroupName);
-            user.setGroups(groups);
-            userCreationService.saveUser(user);
+    private void enrollUserInCourse(User user, Course course) {
+        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
+            userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
         }
+        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        user.setAuthorities(authorityService.buildAuthorities(user));
+        userCreationService.saveUser(user);
     }
 
     /**
@@ -182,8 +197,10 @@ public class LtiService {
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
 
-        if (!user.getActivated()) {
-            log.info("User is not activated. Adding initialize parameter to query.");
+        // Gated on the launch's own marker, not on `activated`: an account an administrator has deactivated is also
+        // inactive, and offering it the initialisation dialog only leads to a request the endpoint refuses.
+        if (needsInitialization(user)) {
+            log.info("User has not completed the initialization from its first launch. Adding initialize parameter to query.");
             uriComponentsBuilder.queryParam("initialize", "");
         }
 
@@ -193,13 +210,36 @@ public class LtiService {
     }
 
     /**
+     * Whether the account was provisioned by a launch and still has to complete the initialisation that hands it its
+     * password.
+     *
+     * @param user the account
+     * @return true if the account still has to be initialised
+     */
+    public boolean needsInitialization(User user) {
+        return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId());
+    }
+
+    /**
+     * Claims the one-time initialisation of a launch-provisioned account, so that only the first caller proceeds.
+     *
+     * @param user the account
+     * @return true if this caller claimed it and may hand out a password
+     */
+    public boolean claimInitialization(User user) {
+        return user.getId() != null && userLtiRepository.claimInitialization(user.getId()) == 1;
+    }
+
+    /**
      * Checks if a user was created as part of an LTI launch.
      *
      * @param user the user to check if
      * @return true if the user was created as part of an LTI launch
      */
     public boolean isLtiCreatedUser(User user) {
-        return user.getGroups().contains(LTI_GROUP_NAME);
+        // Null-checked because the marker is a row keyed on the user id, so an account that has not been persisted cannot
+        // have one. Callers do pass transient users here, and looking one up by a null id would fail.
+        return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrue(user.getId());
     }
 
     /**

@@ -6,6 +6,12 @@
     border-color: var(--module-bg) !important;
 }
 
+// A variant group has no difficulty of its own, so its left stripe carries the primary colour instead — same slot,
+// same width as the difficulty stripe on a single exercise, marking the tile as a group at a glance.
+.border-variant-group {
+    border-color: var(--primary) !important;
+}
+
 .hover-effect {
     &:hover {
         background-color: var(--link-item-bg);
@@ -20,7 +26,11 @@
     }
 }
 
-.bg-selected {
+// `bg-selected` is owned by routerLinkActive on this element: it re-adds and REMOVES that class on every navigation,
+// so a card highlighted for any other reason must not reuse the name or the removal wipes it. `bg-group-selected`
+// marks a variant-group card whose open member has no card of its own; it looks identical but is ours to control.
+.bg-selected,
+.bg-group-selected {
     background-color: var(--sidebar-card-selected-bg);
 
     &.border-module {
@@ -33,7 +43,5 @@
 }
 
 .item-border {
-    border-width: 1px !important;
-    border-style: solid;
-    border-color: var(--bs-border-color) !important;
+    border: 1px solid var(--border-color) !important;
 }

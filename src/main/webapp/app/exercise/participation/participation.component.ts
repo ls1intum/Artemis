@@ -45,6 +45,7 @@ import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/fil
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum FilterProp {
     ALL = 'All',
@@ -176,6 +177,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         striped: true,
         scrollable: true,
         scrollHeight: 'flex',
+        showSearch: !!this.exercise()?.isAtLeastInstructor,
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
     }));
 
@@ -197,7 +199,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
         const cols: ColumnDef<ParticipationManagementDTO>[] = [];
 
-        if (!ex.teamMode) {
+        if (!ex.isAtLeastInstructor) {
+            cols.push({ headerKey: 'artemisApp.participation.participationId', field: 'participationId', width: '150px', sort: true });
+        } else if (!ex.teamMode) {
             cols.push({
                 headerKey: 'artemisApp.participation.student',
                 field: 'participantName',
@@ -223,7 +227,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             );
         }
 
-        if (ex.type === ExerciseType.PROGRAMMING) {
+        if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastInstructor) {
             cols.push({
                 headerKey: 'artemisApp.participation.repository',
                 width: '80px',
@@ -371,10 +375,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
-        const search: ParticipationSearch = {
-            ...base,
+        const search: ParticipationSearch = cloneWith(base, {
+            searchTerm: ex.isAtLeastInstructor ? base.searchTerm : '',
+            sortedColumn: !ex.isAtLeastInstructor && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
-        };
+        });
 
         this.participationService.searchParticipations(ex.id, search).subscribe({
             next: (result) => {
@@ -532,7 +537,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     return next;
                 });
                 this.isSaving.set(false);
-                this.alertService.success('artemisApp.participation.updateDueDates.success', { name: dto.participantName ?? dto.participantIdentifier });
+                this.alertService.success('artemisApp.participation.updateDueDates.success', {
+                    name: dto.participantName ?? dto.participantIdentifier ?? String(dto.participationId),
+                });
                 this.loadPage();
             },
             error: () => {

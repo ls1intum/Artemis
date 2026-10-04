@@ -27,7 +27,8 @@
             "registrationNumber": "registration number",
             "room": "Room",
             "seat": "Seat",
-            "email": "Email"
+            "email": "Email",
+            "testUser": "Test user"
         }
     }
 }

@@ -98,11 +98,22 @@
                                 "glob": "pdfium.wasm",
                                 "input": "./node_modules/@embedpdf/pdfium/dist",
                                 "output": "assets/embedpdf"
+                            },
+                            {
+                                "glob": "{katex.min.js,katex.min.css}",
+                                "input": "./node_modules/katex/dist",
+                                "output": "assets/katex"
+                            },
+                            {
+                                "glob": "**/*.woff2",
+                                "input": "./node_modules/katex/dist/fonts",
+                                "output": "assets/katex/fonts"
                             }
                         ],
                         "styles": [
                             "src/main/webapp/content/scss/themes/theme-default.scss",
                             "src/main/webapp/tailwind.css",
+                            "@tumaet/ui-angular/styles.css",
                             {
                                 "bundleName": "theme-dark",
                                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
@@ -165,6 +176,9 @@
                                     "with": "src/main/webapp/app/core/environments/environment.override.ts"
                                 }
                             ]
+                        },
+                        "tum-aet-ui-source": {
+                            "tsConfig": "tsconfig.serve.json"
                         }
                     },
                     "defaultConfiguration": "production"
@@ -172,7 +186,10 @@
                 "serve": {
                     "builder": "@angular/build:dev-server",
                     "options": {
-                        "buildTarget": "artemis:build:development",
+                        "buildTarget": "artemis:build:development,tum-aet-ui-source",
+                        "prebundle": {
+                            "exclude": ["@tumaet/ui-angular"]
+                        },
                         "proxyConfig": "proxy.conf.mjs",
                         "port": 9000
                     },
@@ -181,7 +198,7 @@
                             "buildTarget": "artemis:build:production"
                         },
                         "development": {
-                            "buildTarget": "artemis:build:development"
+                            "buildTarget": "artemis:build:development,tum-aet-ui-source"
                         }
                     },
                     "defaultConfiguration": "development"
@@ -190,6 +207,53 @@
                     "builder": "@angular-eslint/builder:lint",
                     "options": {
                         "lintFilePatterns": ["src/main/webapp/**/*.ts", "src/main/webapp/**/*.html"]
+                    }
+                }
+            }
+        },
+        "tum-aet-ui": {
+            "projectType": "library",
+            "root": "packages/tum-aet-ui",
+            "sourceRoot": "packages/tum-aet-ui/src",
+            "prefix": "tumaet-ui",
+            "architect": {
+                "build": {
+                    "builder": "@angular/build:ng-packagr",
+                    "configurations": {
+                        "production": {
+                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.prod.json"
+                        },
+                        "development": {
+                            "project": "packages/tum-aet-ui/ng-package.dev.json",
+                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.json"
+                        },
+                        "pack": {
+                            "project": "packages/tum-aet-ui/ng-package.pack.json",
+                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.prod.json"
+                        }
+                    },
+                    "defaultConfiguration": "production"
+                },
+                "lint": {
+                    "builder": "@angular-eslint/builder:lint",
+                    "options": {
+                        "lintFilePatterns": ["packages/tum-aet-ui/**/*.ts", "packages/tum-aet-ui/**/*.html"]
+                    }
+                },
+                "test": {
+                    "builder": "@angular/build:unit-test",
+                    "options": {
+                        "tsConfig": "packages/tum-aet-ui/tsconfig.spec.json",
+                        "providersFile": "packages/tum-aet-ui/test-providers.ts",
+                        "coverageInclude": ["packages/tum-aet-ui/src/lib/**/*.ts"],
+                        "coverageExclude": ["packages/tum-aet-ui/src/**/*.spec.ts", "packages/tum-aet-ui/src/**/*.stories.ts"],
+                        "coverageReporters": ["text", "json-summary"],
+                        "coverageThresholds": {
+                            "lines": 90,
+                            "statements": 90,
+                            "functions": 90,
+                            "branches": 75
+                        }
                     }
                 }
             }

@@ -4,6 +4,7 @@ import { faCheck, faCircleNotch, faCircleXmark } from '@fortawesome/free-solid-s
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { IrisActivityItem, IrisActivityState } from 'app/iris/shared/entities/iris-activity.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type IrisActivityFeedMode = 'live' | 'trail';
 
@@ -13,6 +14,8 @@ interface IrisActivityViewItem extends IrisActivityItem {
     stateClass: string;
     icon: typeof faCircleNotch;
     spin: boolean;
+    /** Accessible label (name + detail + state + duration) exposed on the stepper node via aria-label. */
+    tooltip: string;
 }
 
 export function prettifyActivityName(name: string): string {
@@ -39,14 +42,25 @@ export class IrisActivityFeedComponent {
 
     protected readonly viewItems = computed<IrisActivityViewItem[]>(() => {
         this.currentLocale();
-        return this.activities().map((activity) => ({
-            ...activity,
-            label: this.translateActivityName(activity.name),
-            durationLabel: this.formatDuration(activity),
-            stateClass: activity.state.toLowerCase(),
-            icon: this.iconFor(activity.state),
-            spin: activity.state === IrisActivityState.RUNNING,
-        }));
+        return this.activities().map((activity) => {
+            const label = this.translateActivityName(activity.name);
+            const durationLabel = this.formatDuration(activity);
+            // Accessible name reads name (+ detail) + state (+ duration), matching the visible label order.
+            // The state is otherwise conveyed only by the node icon, which is invisible to screen readers.
+            const namePart = activity.detail ? `${label} · ${activity.detail}` : label;
+            const parts = [namePart, this.translateActivityState(activity.state)];
+            if (durationLabel) {
+                parts.push(durationLabel);
+            }
+            return cloneWith(activity, {
+                label,
+                durationLabel,
+                stateClass: activity.state.toLowerCase(),
+                icon: this.iconFor(activity.state),
+                spin: activity.state === IrisActivityState.RUNNING,
+                tooltip: parts.join(' · '),
+            });
+        });
     });
 
     protected readonly feedAriaLabel = computed(() => {
@@ -61,6 +75,15 @@ export class IrisActivityFeedComponent {
             return translated;
         }
         return prettifyActivityName(name);
+    }
+
+    private translateActivityState(state: IrisActivityState): string {
+        const key = `artemisApp.iris.activities.states.${state.toLowerCase()}`;
+        const translated = this.translateService.instant(key);
+        if (typeof translated === 'string' && translated !== key && !translated.startsWith('translation-not-found[')) {
+            return translated;
+        }
+        return prettifyActivityName(state.toLowerCase());
     }
 
     private formatDuration(activity: IrisActivityItem): string | undefined {

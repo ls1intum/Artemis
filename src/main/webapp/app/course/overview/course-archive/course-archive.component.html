@@ -10,28 +10,30 @@
                     ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}"
                 />
             </div>
-            @if (courses().length) {
+            @if (courses().length || testCourses().length) {
                 <div class="d-flex justify-content-between gap-3 align-items-center ms-1">
-                    <div class="text-primary d-inline-flex">
-                        <button
-                            id="sort-test"
-                            type="button"
-                            (click)="onSort()"
-                            class="btn btn-link p-0 border-0 text-decoration-none text-primary d-inline-flex align-items-center"
-                        >
-                            <fa-icon id="icon-test-down" [icon]="isSortAscending() ? faArrowDown19 : faArrowUp19" />
-                            <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
-                        </button>
-                    </div>
+                    @if (courses().length) {
+                        <div class="text-primary d-inline-flex">
+                            <button
+                                id="sort-test"
+                                type="button"
+                                (click)="onSort()"
+                                class="btn btn-link p-0 border-0 text-decoration-none text-primary d-inline-flex align-items-center"
+                            >
+                                <fa-icon id="icon-test-down" [icon]="isSortAscending() ? faArrowDown19 : faArrowUp19" />
+                                <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
+                            </button>
+                        </div>
+                    }
                     <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="my-0" />
                 </div>
             }
         </div>
     </div>
     <div class="py-3">
-        @if (courses().length) {
+        @if (archiveGroups().length) {
             <div class="mb-0">
-                @for (semester of semesters(); track semester; let last = $last; let i = $index) {
+                @for (semester of archiveGroups(); track semester; let last = $last; let i = $index) {
                     <div
                         class="d-flex justify-content-between align-items-center px-3"
                         (click)="isCourseFoundInSemester(semester) && toggleCollapseState(semester)"
@@ -55,6 +57,7 @@
                                             [courseIcon]="course.icon"
                                             [courseColor]="course.color"
                                             [archiveMode]="true"
+                                            [canManageCourse]="course.canManage"
                                         />
                                     </div>
                                 }

@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
@@ -80,6 +81,13 @@ public class Exam extends DomainObject {
 
     @Column(name = "exam_student_review_end")
     private ZonedDateTime examStudentReviewEnd;
+
+    /**
+     * The date from which students can see the summary (submission overview) of their submitted exam.
+     * If null, the summary is available immediately after submission (default behavior).
+     */
+    @Column(name = "exam_summary_publication_date")
+    private ZonedDateTime examSummaryPublicationDate;
 
     /**
      * The duration in which the students can do final submissions before the exam ends in seconds
@@ -136,7 +144,8 @@ public class Exam extends DomainObject {
     private ZonedDateTime exampleSolutionPublicationDate;
 
     @ManyToOne
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
+    @Parent
     private Course course;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -144,8 +153,6 @@ public class Exam extends DomainObject {
     @JsonIgnoreProperties(value = "exam", allowSetters = true)
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
-    // No @Cache on studentExams / examUsers / examRoomExamAssignments: all grow / are mutated during exam registration and prep while conduction monitoring reads
-    // them concurrently; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exam")
     private Set<StudentExam> studentExams = new HashSet<>();
@@ -254,6 +261,14 @@ public class Exam extends DomainObject {
 
     public void setExamStudentReviewEnd(ZonedDateTime examStudentReviewEnd) {
         this.examStudentReviewEnd = examStudentReviewEnd;
+    }
+
+    public ZonedDateTime getExamSummaryPublicationDate() {
+        return examSummaryPublicationDate;
+    }
+
+    public void setExamSummaryPublicationDate(ZonedDateTime examSummaryPublicationDate) {
+        this.examSummaryPublicationDate = examSummaryPublicationDate;
     }
 
     public Integer getGracePeriod() {
@@ -482,6 +497,23 @@ public class Exam extends DomainObject {
             return false;
         }
         return publishResultsDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * Checks whether the student exam summary (submission overview incl. exam questions, the student's own answers and the PDF export) may be shown to students.
+     * <p>
+     * If no publication date is set, the summary is available immediately after submission (default behavior). Otherwise it becomes available once the publication
+     * date has passed. As a safeguard it is always available once the results are published, so a misconfigured date can never hide the overview after grades are out.
+     *
+     * @return true if the exam summary may be shown to students, false otherwise
+     */
+    @JsonIgnore
+    public boolean isExamSummaryPublished() {
+        // test exams are self-service practice with no shift concern; their summary is always available
+        if (isTestExam() || examSummaryPublicationDate == null) {
+            return true;
+        }
+        return examSummaryPublicationDate.isBefore(ZonedDateTime.now()) || resultsPublished();
     }
 
     /**

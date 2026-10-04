@@ -1,12 +1,13 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,7 +17,9 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -29,15 +32,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -52,6 +58,12 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Autowired
     private SlideTestRepository slideRepository;
+
+    @Autowired
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -103,13 +115,41 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
     }
 
+    /**
+     * Re-uploading a file replaces the deck rather than adding a second copy of it. This path creates a slide per page
+     * unconditionally, so without superseding the previous set the unit would carry both: a three page file uploaded
+     * twice left six slides in the deck, each page present twice, and nothing in the UI to tell them apart.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void repeatedBasicSlideSplitReplacesTheDeckWithUniqueImagePaths() {
+        slideRepository.deleteAll(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()));
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
+        List<Slide> firstSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<String> firstImagePaths = firstSlides.stream().map(Slide::getSlideImagePath).toList();
+        assertThat(firstSlides).as("the first upload produces one slide per page").hasSize(3);
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
+        List<Slide> attachedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<String> attachedImagePaths = attachedSlides.stream().map(Slide::getSlideImagePath).toList();
+
+        assertThat(attachedImagePaths).as("the unit carries exactly one slide per page of the re-uploaded file").hasSize(3).doesNotHaveDuplicates();
+        assertThat(attachedImagePaths).as("every attached slide belongs to the new deck").doesNotContainAnyElementsOf(firstImagePaths);
+
+        // Superseded rather than deleted: the rows may still be referenced, and they keep pointing at files that exist.
+        assertThat(firstSlides).allSatisfy(slide -> {
+            Slide reloaded = slideRepository.findById(slide.getId()).orElseThrow();
+            assertThat(reloaded.isSuperseded()).as("a slide of the previous deck is marked superseded").isTrue();
+            assertThat(reloaded.getAttachmentVideoUnit()).as("a superseded slide still names the unit it was uploaded to").isEqualTo(testAttachmentVideoUnit);
+            assertThat(slideImageFile(reloaded)).as("a superseded slide still points at a file that exists").exists();
+        });
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
-        // Create and save an Exercise
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -242,8 +282,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             Slide savedSlide = slideRepository.save(slide);
             slideIds.add(savedSlide.getId());
 
-            // Create the proper directory structure for the slide
-            Path slideDir = slideImagesDir.resolve(savedSlide.getId().toString());
+            // Create the proper directory structure for the slide, which the service names by the slide number rather than by the slide id
+            Path slideDir = slideImagesDir.resolve(String.valueOf(i));
             Files.createDirectories(slideDir);
             Path slidePath = slideDir.resolve("slide" + i + ".png");
 
@@ -252,7 +292,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             ImageIO.write(image, "png", slidePath.toFile());
 
             // Update the slide with the proper path format
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, savedSlide.getId()).toString());
+            savedSlide.setSlideImagePath(slidePath.getFileName().toString());
             slideRepository.save(savedSlide);
         }
 
@@ -267,28 +307,16 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(2); // Should only have 2 slides attached to unit
 
-        // Check if slide 3 exists but is detached - use actual ID
-        Long thirdSlideId = slideIds.get(2);
-        Slide slide3 = slideRepository.findById(thirdSlideId).orElse(null);
-
-        // If slide3 is null, the service is completely removing it rather than detaching
-        if (slide3 == null) {
-            // Test that it was removed instead
-            assertThat(slideRepository.existsById(thirdSlideId)).isFalse();
-        }
-        else {
-            // Test that it was detached
-            assertThat(slide3.getAttachmentVideoUnit()).isNull();
-        }
+        // Slide 3 is out of the deck, which keeps the row and marks it rather than deleting it
+        Slide slide3 = slideRepository.findById(slideIds.get(2)).orElseThrow();
+        assertThat(slide3.isSuperseded()).isTrue();
+        assertThat(slide3.getAttachmentVideoUnit()).isEqualTo(testAttachmentVideoUnit);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
-        // Create and save an Exercise1
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -327,11 +355,106 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide updatedSlide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(updatedSlide).isNotNull();
         assertThat(updatedSlide.getHidden()).isNotNull();
-        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(1, ChronoUnit.MILLIS));
 
         // Verify the exercise association
         assertThat(updatedSlide.getExercise()).isNotNull();
         assertThat(updatedSlide.getExercise().getId()).isEqualTo(testExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void updateSlideVisibilityDoesNotRebuildSlideContent() {
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        Slide hiddenSlide = slides.getFirst();
+        ZonedDateTime hiddenUntil = ZonedDateTime.now().plusDays(1);
+        String originalImagePath = hiddenSlide.getSlideImagePath();
+
+        slideSplitterService.updateSlideVisibility(testAttachmentVideoUnit, List.of(new HiddenPageInfoDTO(hiddenSlide.getId().toString(), hiddenUntil, null)));
+
+        List<Slide> updatedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        Slide updatedHiddenSlide = updatedSlides.stream().filter(slide -> slide.getId().equals(hiddenSlide.getId())).findFirst().orElseThrow();
+        assertThat(updatedHiddenSlide.getHidden().toInstant()).isCloseTo(hiddenUntil.toInstant(), within(1, ChronoUnit.MILLIS));
+        assertThat(updatedHiddenSlide.getSlideImagePath()).isEqualTo(originalImagePath);
+        assertThat(updatedSlides.stream().filter(slide -> !slide.getId().equals(hiddenSlide.getId()))).allMatch(slide -> slide.getHidden() == null);
+
+        slideSplitterService.updateSlideVisibility(testAttachmentVideoUnit, List.of());
+
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId())).allMatch(slide -> slide.getHidden() == null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void slideSplitRollbackKeepsPreviousImagesAndRemovesReplacementFiles() throws IOException {
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        Slide firstSlide = slides.get(0);
+        Slide secondSlide = slides.get(1);
+        Path slideDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString()).resolve("slide");
+        // The slide number, not the slide id: that is the directory the service writes to. The two coincide only while
+        // ids happen to start at one, which made this test pass alone and fail after any test that inserts a slide.
+        Path firstSlideOriginalFile = slideDirectory.resolve(String.valueOf(firstSlide.getSlideNumber())).resolve(Path.of(firstSlide.getSlideImagePath()).getFileName());
+        Path secondSlideOriginalFile = slideDirectory.resolve(String.valueOf(secondSlide.getSlideNumber())).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
+        firstSlide.setSlideImagePath(firstSlideOriginalFile.getFileName().toString());
+        secondSlide.setSlideImagePath(secondSlideOriginalFile.getFileName().toString());
+        slideRepository.saveAll(List.of(firstSlide, secondSlide));
+        String firstSlideOriginalImagePath = firstSlide.getSlideImagePath();
+        Files.delete(secondSlideOriginalFile);
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString());
+        Set<Path> filesBeforeFailedSplit;
+        try (var files = Files.walk(attachmentDirectory)) {
+            filesBeforeFailedSplit = files.filter(Files::isRegularFile).collect(Collectors.toSet());
+        }
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO(firstSlide.getId().toString(), 2), new SlideOrderDTO(secondSlide.getId().toString(), 1));
+
+        assertThatThrownBy(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", List.of(), pageOrder))
+                .isInstanceOf(InternalServerErrorException.class);
+
+        Slide unchangedFirstSlide = slideRepository.findById(firstSlide.getId()).orElseThrow();
+        assertThat(unchangedFirstSlide.getSlideImagePath()).isEqualTo(firstSlideOriginalImagePath);
+        assertThat(firstSlideOriginalFile).exists();
+        try (var files = Files.walk(attachmentDirectory)) {
+            assertThat(files.filter(Files::isRegularFile).collect(Collectors.toSet())).isEqualTo(filesBeforeFailedSplit);
+        }
+    }
+
+    /**
+     * The sibling rollback test above covers a failure while replacing an existing slide's image. This covers the other
+     * half of the compensation: a slide row that this operation created has to be removed again, or a retry would add a
+     * second copy of every page it had already written before the failure.
+     * <p>
+     * Deliberately against the real repository and the real filesystem rather than static mocks, as the sibling test is.
+     * What is under test is whether a row and a file that were genuinely written are genuinely gone again; a mock would
+     * only confirm that {@code deleteAllById} was called, which is the part that was never in doubt. This is the
+     * mechanism that replaced a transaction, so it has to be verified against something that can actually persist.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void slideSplitRollbackRemovesSlidesCreatedBeforeTheFailure() throws IOException {
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        Slide brokenSlide = slides.getFirst();
+        // Resolved the way the service resolves it: the stored value is a file name, under a directory named by the
+        // slide's number.
+        Path brokenSlideFile = slideImageFile(brokenSlide);
+        // Removing the file makes updateExistingSlideImage throw once the loop reaches this slide.
+        Files.delete(brokenSlideFile);
+
+        Set<Long> slideIdsBefore = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getId).collect(Collectors.toSet());
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString());
+        Set<Path> filesBefore;
+        try (var files = Files.walk(attachmentDirectory)) {
+            filesBefore = files.filter(Files::isRegularFile).collect(Collectors.toSet());
+        }
+
+        // The new slide is ordered first so that it is created, and its image written, before the failure hits.
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO("temp_created_before_failure", 1), new SlideOrderDTO(brokenSlide.getId().toString(), 2));
+
+        assertThatThrownBy(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", List.of(), pageOrder))
+                .isInstanceOf(InternalServerErrorException.class);
+
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId())).extracting(Slide::getId).containsExactlyInAnyOrderElementsOf(slideIdsBefore);
+        try (var files = Files.walk(attachmentDirectory)) {
+            assertThat(files.filter(Files::isRegularFile).collect(Collectors.toSet())).isEqualTo(filesBefore);
+        }
     }
 
     @Test
@@ -356,10 +479,12 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         // Verify the slide was saved properly
         assertThat(slideId).isNotNull();
 
-        Path directoryFilePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(testAttachmentVideoUnit.getId().toString(), "slide", slideId.toString()));
+        // A slide image is stored under the slide's number, not under its id, which is what the service writes and therefore what it has to find again.
+        Path directoryFilePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath()
+                .resolve(Path.of(testAttachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber())));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
-        slide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
+        slide.setSlideImagePath(originalSlidePath.getFileName().toString());
         slideRepository.save(slide);
         // Create a test image file
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -404,8 +529,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(originalSlidePath.toFile().exists()).isFalse();
 
         // Verify the new file exists by resolving the path
-        Path newImagePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(updatedSlide.getSlideImagePath()), FilePathType.SLIDE);
-        assert newImagePath != null;
+        Path newImagePath = slideImageFile(updatedSlide);
         assertThat(newImagePath.toFile().exists()).isTrue();
 
         // Verify the image content is preserved
@@ -526,10 +650,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithExistingAndNewSlides() throws IOException {
-        // Create and save an Exercise
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise for Mixed Slides");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise for Mixed Slides");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -553,8 +674,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentVideoUnit.getAttachment()
-                .setLink(FilePathConverter.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentVideoUnit.getId()).toString());
+        testAttachmentVideoUnit.getAttachment().setLink(pdfPath.getFileName().toString());
         testAttachmentVideoUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
@@ -575,12 +695,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
             // Save the slide and add it to our collection
             Slide savedSlide = slideRepository.save(slide);
-            Files.createDirectories(slideImagesDir.resolve(savedSlide.getId().toString()));
-            Path slidePath = slideImagesDir.resolve(Path.of(savedSlide.getId().toString(), "slide" + i + ".png"));
+            // The service names the directory by the slide number rather than by the slide id
+            Files.createDirectories(slideImagesDir.resolve(String.valueOf(i)));
+            Path slidePath = slideImagesDir.resolve(Path.of(String.valueOf(i), "slide" + i + ".png"));
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
+            savedSlide.setSlideImagePath(slidePath.getFileName().toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }
@@ -624,7 +745,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getSlideNumber()).isEqualTo(1); // Should have slide number 1
         assertThat(firstSlide.getHidden()).isNotNull();
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(1, ChronoUnit.MILLIS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -637,10 +758,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStrings() throws IOException, InterruptedException {
-        // Create and save an Exercise for testing
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -701,8 +819,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide firstSlide = slides.stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
-        // Compare dates truncated to millis to avoid timing precision issues
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        // The service stores this exact value (SlideSplitterService.setHidden(hiddenPageInfo.date())), so there is
+        // only one clock sample; the persisted copy differs solely because the `hidden` column is datetime(3) and
+        // the database ROUNDS to millisecond precision. That rounding can carry the value across a second boundary
+        // (e.g. ...:56.9997 -> ...:57.000), which is why truncating both sides to seconds could differ by a whole
+        // second. The true deviation is at most 0.5 ms, so assert that instead — matching the millisecond tolerance
+        // already used further down in this file.
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(1, ChronoUnit.MILLIS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -720,9 +843,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             assertThat(slide.getSlideImagePath()).isNotNull().isNotEmpty();
 
             // Check that image files actually exist on filesystem
-            Path imagePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(slide.getSlideImagePath()), FilePathType.SLIDE);
-            assert imagePath != null;
-            assertThat(imagePath.toFile().exists()).isTrue();
+            assertThat(slideImageFile(slide).toFile().exists()).isTrue();
         }
 
         // Clean up
@@ -756,8 +877,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         // Set an invalid link that doesn't point to an actual file
         testAttachmentVideoUnit.getAttachment().setLink("file:///nonexistent/path/file.pdf");
+        attachmentRepository.saveAndFlush(testAttachmentVideoUnit.getAttachment());
 
-        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testAttachmentVideoUnit, hiddenPagesList, pageOrderList);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(testAttachmentVideoUnit, hiddenPagesList, pageOrderList));
 
         // Use Awaitility for deterministic waiting
         await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
@@ -781,19 +903,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
-        // Create a mock PDF file
-        Path tempDir = tempFileUtilService.createTempDirectory("test-slides");
-        Path tempPdfPath = tempDir.resolve("test-slides.pdf");
-        try (PDDocument doc = new PDDocument()) {
-            doc.addPage(new PDPage());
-            doc.save(tempPdfPath.toFile());
-        }
-
-        // Set a valid attachment link
-        testAttachmentVideoUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
-
         // Act - call the async method
-        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testAttachmentVideoUnit, hiddenPagesList, pageOrderList);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(testAttachmentVideoUnit, hiddenPagesList, pageOrderList)).join();
 
         // Use Awaitility for deterministic waiting
         await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
@@ -805,18 +916,44 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(slides).isEmpty();
 
-        // Clean up
-        Files.deleteIfExists(tempPdfPath);
-        Files.deleteIfExists(tempDir);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void testObsoleteAttachmentRevisionIsIgnoredWhenSplitJobsExecuteInReverseOrder() {
+        List<Slide> originalSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        assertThat(originalSlides).hasSize(3);
+        slideRepository.deleteAll(originalSlides);
+
+        List<SlideOrderDTO> oldPageOrder = List.of(new SlideOrderDTO("temp_1", 3), new SlideOrderDTO("temp_2", 2), new SlideOrderDTO("temp_3", 1));
+        AttachmentVideoUnitSlideSplitJob oldJob = AttachmentVideoUnitSlideSplitJob.of(testAttachmentVideoUnit, List.of(), oldPageOrder);
+
+        Integer oldVersion = testAttachmentVideoUnit.getAttachment().getVersion();
+        testAttachmentVideoUnit.getAttachment().setVersion(oldVersion == null ? 1 : oldVersion + 1);
+        testAttachmentVideoUnit.getAttachment().setSha256Hash("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        attachmentRepository.saveAndFlush(testAttachmentVideoUnit.getAttachment());
+
+        ZonedDateTime hiddenUntil = ZonedDateTime.now().plusDays(1);
+        List<SlideOrderDTO> currentPageOrder = List.of(new SlideOrderDTO("temp_1", 1), new SlideOrderDTO("temp_2", 2), new SlideOrderDTO("temp_3", 3));
+        AttachmentVideoUnitSlideSplitJob currentJob = AttachmentVideoUnitSlideSplitJob.of(testAttachmentVideoUnit, List.of(new HiddenPageInfoDTO("temp_1", hiddenUntil, null)),
+                currentPageOrder);
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(currentJob).join();
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(oldJob).join();
+
+        await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            List<Slide> resultingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+            assertThat(resultingSlides).hasSize(3);
+            assertThat(resultingSlides).extracting(Slide::getSlideNumber).containsExactly(1, 2, 3);
+            assertThat(resultingSlides.getFirst().getHidden()).isCloseTo(hiddenUntil, within(1, ChronoUnit.MILLIS));
+            assertThat(resultingSlides.subList(1, resultingSlides.size())).allMatch(slide -> slide.getHidden() == null);
+        });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStringsJson() throws IOException, InterruptedException {
-        // Create and save an Exercise for testing
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -877,8 +1014,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide firstSlide = slides.stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
-        // Compare dates truncated to millis to avoid timing precision issues
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        // The service stores this exact value (SlideSplitterService.setHidden(hiddenPageInfo.date())), so there is
+        // only one clock sample; the persisted copy differs solely because the `hidden` column is datetime(3) and
+        // the database ROUNDS to millisecond precision. That rounding can carry the value across a second boundary
+        // (e.g. ...:56.9997 -> ...:57.000), which is why truncating both sides to seconds could differ by a whole
+        // second. The true deviation is at most 0.5 ms, so assert that instead — matching the millisecond tolerance
+        // already used further down in this file.
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(1, ChronoUnit.MILLIS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -899,4 +1041,30 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             }
         });
     }
+
+    /**
+     * The image file of a slide, located from the slide itself: the unit it belongs to and the number it currently has name the directory, and only the filename comes out of the
+     * stored value.
+     *
+     * @param slide the slide whose image is wanted
+     * @return the location of the slide image on disk
+     */
+    private static Path slideImageFile(Slide slide) {
+        return new FileSystemLocation.Slide(slide.getAttachmentVideoUnit().getId(), slide.getSlideNumber(), slide.getSlideImagePath()).path();
+    }
+
+    /**
+     * Creates and saves a text exercise that a hidden page can point at. It names a course because an exercise row
+     * belongs to a course or to an exercise group, never to neither.
+     *
+     * @param title the title of the exercise
+     * @return the saved exercise
+     */
+    private Exercise createAndSaveExercise(String title) {
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle(title);
+        testExercise.setCourse(courseUtilService.addEmptyCourse());
+        return exerciseRepository.save(testExercise);
+    }
+
 }

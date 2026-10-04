@@ -1,6 +1,7 @@
 import { CropperOptions, OutputFormat } from './cropper-options.interface';
 import { ImageTransform } from './image-transform.interface';
 import { SimpleChanges } from '@angular/core';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export class CropperSettings implements CropperOptions {
     // From options
@@ -57,7 +58,7 @@ export class CropperSettings implements CropperOptions {
      * // cropperSettings.imageQuality is now 90
      */
     private updateProperties<T extends CropperOptions>(source: Partial<T>, target: Partial<T>) {
-        Object.assign(target, source);
+        hydrate(target, source);
         this.validateOptions();
     }
 

@@ -1,6 +1,7 @@
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Course } from 'app/course/shared/entities/course.model';
+import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChartLine, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -17,6 +18,7 @@ export class OnboardingAssessmentAiComponent {
     readonly course = input.required<Course>();
     readonly courseUpdated = output<Course>();
 
+    protected readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
     protected readonly faChartLine = faChartLine;
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;

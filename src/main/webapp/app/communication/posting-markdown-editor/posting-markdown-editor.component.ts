@@ -15,8 +15,9 @@ import {
 } from '@angular/core';
 import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
@@ -35,13 +36,14 @@ import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachment.action';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
+import { EmojiCompletionAction } from 'app/editor/monaco-editor/model/actions/communication/emoji-completion.action';
+import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { BulletedListAction } from 'app/editor/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/editor/monaco-editor/model/actions/ordered-list.action';
 import { StrikethroughAction } from 'app/editor/monaco-editor/model/actions/strikethrough.action';
 import { PostingContentComponent } from '../posting-content/posting-content.components';
-import { NgStyle } from '@angular/common';
-import { PostingEditType } from '../metis.util';
+import { PostingEditType } from '../communication.util';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { FileService } from 'app/foundation/service/file.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -58,16 +60,19 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle],
+    imports: [MarkdownEditorMonacoComponent, PostingContentComponent],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit {
-    private metisService = inject(MetisService);
+    private communicationService = inject(CommunicationService);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
     private lectureService = inject(LectureService);
+    private exerciseService = inject(ExerciseService);
     private channelService = inject(ChannelService);
+    private emojiSearch = inject(EmojiSearch);
     viewContainerRef = inject(ViewContainerRef);
     private positionBuilder = inject(OverlayPositionBuilder);
+    private overlay = inject(Overlay);
 
     readonly markdownEditor = viewChild.required(MarkdownEditorMonacoComponent);
 
@@ -85,7 +90,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     readonly EditType = PostingEditType.CREATE;
     /**
-     * For AnswerPosts, the MetisService may not always have an active conversation (e.g. when in the 'all messages' view).
+     * For AnswerPosts, the CommunicationService may not always have an active conversation (e.g. when in the 'all messages' view).
      * In this case, file uploads have to rely on the parent post to determine the course.
      */
     readonly activeConversation = input<ConversationDTO>();
@@ -97,14 +102,13 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-    private overlay = inject(Overlay);
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
      */
     ngOnInit(): void {
-        const messagingOnlyActions = isCommunicationEnabled(this.metisService.getCourse())
-            ? [new UserMentionAction(this.courseManagementService, this.metisService), new ChannelReferenceAction(this.metisService, this.channelService)]
+        const messagingOnlyActions = isCommunicationEnabled(this.communicationService.getCourse())
+            ? [new UserMentionAction(this.courseManagementService, this.communicationService), new ChannelReferenceAction(this.communicationService, this.channelService)]
             : [];
 
         this.defaultActions.set([
@@ -113,6 +117,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new UnderlineAction(),
             new StrikethroughAction(),
             new EmojiAction(this.viewContainerRef, this.overlay, this.positionBuilder),
+            new EmojiCompletionAction(this.emojiSearch),
             new BulletedListAction(),
             new OrderedListAction(),
             new QuoteAction(),
@@ -121,11 +126,11 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new UrlAction(),
             new AttachmentAction(),
             ...messagingOnlyActions,
-            new ExerciseReferenceAction(this.metisService),
-            new FaqReferenceAction(this.metisService),
+            new ExerciseReferenceAction(this.communicationService, this.exerciseService),
+            new FaqReferenceAction(this.communicationService),
         ]);
 
-        this.lectureAttachmentReferenceAction.set(new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService));
+        this.lectureAttachmentReferenceAction.set(new LectureAttachmentReferenceAction(this.communicationService, this.lectureService, this.fileService));
     }
 
     ngAfterViewInit(): void {

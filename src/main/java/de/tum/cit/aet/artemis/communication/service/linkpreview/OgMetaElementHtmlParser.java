@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.communication.service.linkpreview;
 import java.io.IOException;
 import java.util.List;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
@@ -25,7 +24,7 @@ class OgMetaElementHtmlParser {
     List<OgMetaElement> getOgMetaElementsFrom(String url) {
         try {
             log.info("Parsing html meta elements from url: {}", url);
-            final Document document = Jsoup.connect(url).get();
+            final Document document = LinkPreviewDocumentFetcher.fetch(url);
             final Elements metaElements = document.select("meta");
 
             // Filter and map the meta elements to OgMetaElement objects
@@ -38,7 +37,7 @@ class OgMetaElementHtmlParser {
             }).toList();
         }
         catch (IOException e) {
-            log.info("IOException occurred while parsing html meta elements.");
+            log.info("Could not retrieve link preview: {}", e.getMessage());
             return List.of();
         }
     }

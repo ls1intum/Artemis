@@ -3,11 +3,11 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { By } from '@angular/platform-browser';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PostService } from 'app/communication/service/post.service';
@@ -23,9 +23,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -34,8 +34,8 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 describe('CourseConversationComponent with communication disabled', () => {
     let component: CourseConversationsComponent;
     let fixture: ComponentFixture<CourseConversationsComponent>;
-    let metisConversationService: MetisConversationService;
-    let metisService: MetisService;
+    let courseConversationsService: CourseConversationsService;
+    let communicationService: CommunicationService;
     let alertService: AlertService;
     let eventManager: EventManager;
     const courseWithDisabledCommunication = {
@@ -63,9 +63,12 @@ describe('CourseConversationComponent with communication disabled', () => {
                     provide: Router,
                     useValue: {
                         url: '/course-management/1/conversations',
+                        // Read by CourseTabRefreshService, which listens for the tab being selected again
+                        events: EMPTY,
+                        currentNavigation: () => null,
                     },
                 },
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 MockProvider(PostService),
                 MockProvider(AnswerPostService),
                 MockProvider(ReactionService),
@@ -76,7 +79,7 @@ describe('CourseConversationComponent with communication disabled', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -87,11 +90,11 @@ describe('CourseConversationComponent with communication disabled', () => {
 
         fixture = TestBed.createComponent(CourseConversationsComponent);
         component = fixture.componentInstance;
-        metisConversationService = TestBed.inject(MetisConversationService);
-        metisService = fixture.debugElement.injector.get(MetisService);
+        courseConversationsService = TestBed.inject(CourseConversationsService);
+        communicationService = fixture.debugElement.injector.get(CommunicationService);
         eventManager = TestBed.inject(EventManager);
         alertService = TestBed.inject(AlertService);
-        vi.spyOn(metisConversationService, 'isServiceSetup$', 'get').mockReturnValue(of(false));
+        vi.spyOn(courseConversationsService, 'isServiceSetup$', 'get').mockReturnValue(of(false));
     });
     it('should render feature activation page when instructor + management view', () => {
         fixture.detectChanges();
@@ -101,7 +104,7 @@ describe('CourseConversationComponent with communication disabled', () => {
     });
 
     it.each([true, false])('should call service method to enable communication', async (withMessaging: boolean) => {
-        const serviceSpy = vi.spyOn(metisService, 'enable').mockReturnValue(of(undefined));
+        const serviceSpy = vi.spyOn(communicationService, 'enable').mockReturnValue(of(undefined));
         const alertSpy = vi.spyOn(alertService, 'error');
         const eventManagerSpy = vi.spyOn(eventManager, 'broadcast').mockImplementation(() => {});
         fixture.detectChanges();
@@ -117,7 +120,7 @@ describe('CourseConversationComponent with communication disabled', () => {
     });
 
     it('should call alert service on error', async () => {
-        vi.spyOn(metisService, 'enable').mockImplementation(() => {
+        vi.spyOn(communicationService, 'enable').mockImplementation(() => {
             throw new Error('Test error');
         });
         const alertSpy = vi.spyOn(alertService, 'error');

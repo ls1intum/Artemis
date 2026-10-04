@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { provideTranslateService } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -50,7 +50,7 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [NgbModule, ReactiveFormsModule, FaIconComponent, StudentExamDetailTableRowComponent, MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
+            imports: [NgbTooltip, ReactiveFormsModule, FaIconComponent, StudentExamDetailTableRowComponent, MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
             providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective), provideTranslateService()],
         })
             .compileComponents()

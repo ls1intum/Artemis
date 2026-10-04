@@ -45,7 +45,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBa
 
 class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
-    private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
+    private static final String TEST_PREFIX = "attachmentunits";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
@@ -66,7 +68,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
     private Lecture lecture1;
 
-    private Lecture invalidLecture;
+    /** A lecture in a different course, used to prove that its files are not reachable through {@link #lecture1}. */
+    private Lecture otherLecture;
 
     @BeforeEach
     void initTestCase() {
@@ -75,14 +78,14 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
-        this.invalidLecture = lectureUtilService.createLecture(null);
+        this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
+        this.otherLecture = lectureUtilService.createLecture(courseUtilService.addEmptyCourse());
         List<LectureUnitSplitDTO> units = new ArrayList<>();
         this.lectureUnitSplits = new LectureUnitSplitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         slideRepository.deleteAll();
     }
@@ -105,24 +108,9 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testAll_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         this.testAllPreAuthorize();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testAll_LectureWithoutCourse_shouldReturnBadRequest() throws Exception {
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
-
-        request.postWithMultipartFile("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/upload", null, "upload", createLectureFile(true), String.class,
-                HttpStatus.BAD_REQUEST);
-        request.get("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/data/any-file", HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class);
-        request.get("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/slides-to-remove/any-file", HttpStatus.BAD_REQUEST,
-                LectureUnitSplitInformationDTO.class, params);
-        request.postListWithResponseBody("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/split/any-file", lectureUnitSplits,
-                AttachmentVideoUnitDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -133,8 +121,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
         var lectureFile = createLectureFile(true);
-        String filename = manualFileUpload(invalidLecture.getId(), lectureFile);
-        Path filePath = lectureUnitProcessingService.getPathForTempFilename(invalidLecture.getId(), filename);
+        String filename = manualFileUpload(otherLecture.getId(), lectureFile);
+        Path filePath = lectureUnitProcessingService.getPathForTempFilename(otherLecture.getId(), filename);
 
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class);
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/slides-to-remove/" + filename, HttpStatus.NOT_FOUND,

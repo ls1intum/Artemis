@@ -4,7 +4,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, finalize, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -12,6 +12,7 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
@@ -107,31 +108,33 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         }
 
         // Create new objects to avoid mutating signal-stored objects
-        const updatedAttachment = Object.assign(new Attachment(), currentAttachment, {
+        const updatedAttachment = hydrate(new Attachment(), currentAttachment, {
             name,
             releaseDate,
             attachmentType: AttachmentType.FILE,
         });
 
-        const updatedUnit = Object.assign(new AttachmentVideoUnit(), currentUnit, {
+        const hasUpload = !!file && file.size > 0;
+        const updatedUnit = hydrate(new AttachmentVideoUnit(), currentUnit, {
             name,
             description,
             releaseDate,
             competencyLinks,
             videoSource,
+            attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
 
         this.isLoading.set(true);
 
         const formData = new FormData();
-        if (file) {
+        if (hasUpload) {
             formData.append('file', file, fileName);
         }
         formData.append('attachment', objectToJsonBlob(updatedAttachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(updatedUnit));
 
         this.attachmentVideoUnitService
-            .update(lectureId, currentUnit.id, formData, this.notificationText())
+            .update(lectureId, currentUnit.id, formData, this.notificationText() || undefined)
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isLoading.set(false)),

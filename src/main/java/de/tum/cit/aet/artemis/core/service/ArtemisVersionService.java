@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Instant;
 
 import org.jspecify.annotations.Nullable;
+import org.semver4j.Semver;
+import org.semver4j.SemverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +23,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.vdurmont.semver4j.Semver;
-import com.vdurmont.semver4j.SemverException;
 
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.util.ArtemisVersionUtil;
@@ -43,19 +43,27 @@ public class ArtemisVersionService {
     private static final Logger log = LoggerFactory.getLogger(ArtemisVersionService.class);
 
     /**
-     * GitHub API URL for fetching the latest release.
+     * GitHub API URL for fetching the most recently created releases, newest first.
+     * <p>
+     * This deliberately does not use {@code /releases/latest}: by default GitHub marks the most recently published release
+     * as latest, so publishing a patch release of an older line (a 9.9.x fix after 10.0) would report that patch as latest.
+     * <p>
+     * Reading only the first page is enough: a new line is always created after the older ones, so its releases stay on the
+     * first page unless 30 patches for older lines follow them without any newer release.
      */
-    private static final String GITHUB_RELEASES_API_URL = "https://api.github.com/repos/ls1intum/Artemis/releases/latest";
+    private static final String GITHUB_RELEASES_API_URL = "https://api.github.com/repos/ls1intum/Artemis/releases?per_page=30";
 
     /**
-     * Cache name for storing version data in Hazelcast.
+     * Cache name for storing version data in the distributed cache. Its entries expire, see {@code CacheManagerConfiguration}.
      */
     private static final String VERSION_CACHE_NAME = "artemisVersion";
 
     /**
-     * Cache key for the version data.
+     * Prefix of the cache key for the version data, completed by the running version. During a rolling update, nodes on
+     * different versions then keep separate entries instead of replacing each other's, and the entries of a version that
+     * no longer runs expire with the cache.
      */
-    private static final String VERSION_CACHE_KEY = "latestVersion";
+    private static final String VERSION_CACHE_KEY_PREFIX = "latestVersion:";
 
     private final RestTemplate restTemplate;
 
@@ -86,7 +94,7 @@ public class ArtemisVersionService {
         // Try to retrieve from cache
         var cache = cacheManager.getCache(VERSION_CACHE_NAME);
         if (cache != null) {
-            ArtemisVersionDTO cachedResult = cache.get(VERSION_CACHE_KEY, ArtemisVersionDTO.class);
+            ArtemisVersionDTO cachedResult = cache.get(versionCacheKey(), ArtemisVersionDTO.class);
             if (cachedResult != null) {
                 log.debug("Returning cached version info, last checked: {}", cachedResult.lastChecked());
                 return cachedResult;
@@ -98,7 +106,7 @@ public class ArtemisVersionService {
 
         // Store in cache
         if (cache != null) {
-            cache.put(VERSION_CACHE_KEY, result);
+            cache.put(versionCacheKey(), result);
         }
 
         return result;
@@ -114,20 +122,24 @@ public class ArtemisVersionService {
 
         var cache = cacheManager.getCache(VERSION_CACHE_NAME);
         if (cache != null) {
-            cache.evict(VERSION_CACHE_KEY);
+            cache.evict(versionCacheKey());
         }
 
         ArtemisVersionDTO result = fetchVersionFromGitHub();
 
         if (cache != null) {
-            cache.put(VERSION_CACHE_KEY, result);
+            cache.put(versionCacheKey(), result);
         }
 
         return result;
     }
 
+    private String versionCacheKey() {
+        return VERSION_CACHE_KEY_PREFIX + currentVersion;
+    }
+
     /**
-     * Fetches the latest release information from GitHub API.
+     * Fetches the recent releases from GitHub API and picks the highest published version among them.
      *
      * @return DTO containing version information
      */
@@ -138,10 +150,10 @@ public class ArtemisVersionService {
             headers.set("User-Agent", "Artemis-Version-Check");
             HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
-            ResponseEntity<GitHubReleaseResponse> response = restTemplate.exchange(GITHUB_RELEASES_API_URL, HttpMethod.GET, requestEntity, GitHubReleaseResponse.class);
+            ResponseEntity<GitHubReleaseResponse[]> response = restTemplate.exchange(GITHUB_RELEASES_API_URL, HttpMethod.GET, requestEntity, GitHubReleaseResponse[].class);
 
-            GitHubReleaseResponse release = response.getBody();
-            if (release == null || release.tagName() == null) {
+            GitHubReleaseResponse release = findHighestRelease(response.getBody());
+            if (release == null) {
                 return createVersionInfoWithoutUpdate();
             }
 
@@ -154,6 +166,37 @@ public class ArtemisVersionService {
             log.error("Failed to fetch latest version from GitHub: {}", e.getMessage());
             return createVersionInfoWithoutUpdate();
         }
+    }
+
+    /**
+     * Picks the release with the highest version, ignoring drafts, pre-releases and tags that are not Artemis versions.
+     *
+     * @param releases the releases returned by GitHub, may be null
+     * @return the highest release, or null if there is none
+     */
+    @Nullable
+    private static GitHubReleaseResponse findHighestRelease(GitHubReleaseResponse @Nullable [] releases) {
+        if (releases == null) {
+            return null;
+        }
+        GitHubReleaseResponse highestRelease = null;
+        Semver highestVersion = null;
+        for (GitHubReleaseResponse release : releases) {
+            if (release == null || release.draft() || release.prerelease() || release.tagName() == null) {
+                continue;
+            }
+            try {
+                Semver version = ArtemisVersionUtil.parseForComparison(normalizeVersion(release.tagName()));
+                if (highestVersion == null || version.isGreaterThan(highestVersion)) {
+                    highestRelease = release;
+                    highestVersion = version;
+                }
+            }
+            catch (SemverException e) {
+                log.debug("Ignoring GitHub release with tag '{}' that is not an Artemis version", release.tagName());
+            }
+        }
+        return highestRelease;
     }
 
     /**
@@ -171,7 +214,7 @@ public class ArtemisVersionService {
      * @param version the version string (e.g., "v7.8.0" or "7.8.0")
      * @return normalized version (e.g., "7.8.0")
      */
-    private String normalizeVersion(String version) {
+    private static String normalizeVersion(String version) {
         if (version == null) {
             return "unknown";
         }
@@ -236,6 +279,6 @@ public class ArtemisVersionService {
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record GitHubReleaseResponse(@JsonProperty("tag_name") String tagName, @JsonProperty("html_url") String htmlUrl, @JsonProperty("body") String body,
-            @JsonProperty("name") String name) {
+            @JsonProperty("name") String name, @JsonProperty("draft") boolean draft, @JsonProperty("prerelease") boolean prerelease) {
     }
 }
