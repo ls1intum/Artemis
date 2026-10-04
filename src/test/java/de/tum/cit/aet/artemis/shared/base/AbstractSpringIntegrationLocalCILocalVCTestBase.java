@@ -245,8 +245,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService,
-                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService,
-                pyrisEventService, ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
+                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService,
+                pyrisPipelineService, pyrisEventService, ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
         super.resetSpyBeans();
     }
 
