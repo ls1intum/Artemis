@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -265,7 +266,7 @@ public class ProgrammingExerciseExportImportResource {
         originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
 
         // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
-        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !recreateBuildPlans) {
+        if (!Objects.equals(newExercise.isStaticCodeAnalysisEnabled(), originalProgrammingExercise.isStaticCodeAnalysisEnabled()) && !recreateBuildPlans) {
             throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans is activated", ENTITY_NAME,
                     "staticCodeAnalysisCannotChange");
         }

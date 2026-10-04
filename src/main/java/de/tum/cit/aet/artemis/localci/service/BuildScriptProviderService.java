@@ -35,15 +35,14 @@ public class BuildScriptProviderService {
     public String buildTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, String fileExtension) {
         List<String> fileNameComponents = new ArrayList<>();
 
-        ProjectType type = projectType.orElse(null);
-        if (ProjectType.MAVEN_BLACKBOX.equals(type)) {
-            fileNameComponents.add("plain_" + type.name().toLowerCase(Locale.ROOT));
+        if (projectType.filter(ProjectType.MAVEN_BLACKBOX::equals).isPresent()) {
+            fileNameComponents.add("plain_" + ProjectType.MAVEN_BLACKBOX.name().toLowerCase(Locale.ROOT));
         }
-        else if (ProjectType.MAVEN_MAVEN.equals(type)) {
+        else if (projectType.filter(ProjectType.MAVEN_MAVEN::equals).isPresent()) {
             // the exemplary dependency only changes the exercise and solution repositories, the build is the one of the plain project
             fileNameComponents.add(ProjectType.PLAIN_MAVEN.name().toLowerCase(Locale.ROOT));
         }
-        else if (ProjectType.GRADLE_GRADLE.equals(type)) {
+        else if (projectType.filter(ProjectType.GRADLE_GRADLE::equals).isPresent()) {
             fileNameComponents.add(ProjectType.PLAIN_GRADLE.name().toLowerCase(Locale.ROOT));
         }
         else {

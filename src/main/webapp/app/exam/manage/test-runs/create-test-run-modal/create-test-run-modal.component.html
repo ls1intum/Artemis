@@ -4,9 +4,30 @@
             <h5><span jhiTranslate="artemisApp.studentExams.workingTime"></span></h5>
             <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime"></p>
             <form class="flex items-center gap-1" [formGroup]="workingTimeForm">
-                <input formControlName="minutes" id="workingTimeMinutes" type="number" tumAetUiInput class="w-20" min="0" step="1" required />
+                <input
+                    formControlName="minutes"
+                    id="workingTimeMinutes"
+                    [attr.aria-label]="'artemisApp.examManagement.testRun.workingTimeMinutes' | artemisTranslate"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20"
+                    min="0"
+                    step="1"
+                    required
+                />
                 :
-                <input formControlName="seconds" id="workingTimeSeconds" type="number" tumAetUiInput class="w-20" min="0" max="59" step="1" required />
+                <input
+                    formControlName="seconds"
+                    id="workingTimeSeconds"
+                    [attr.aria-label]="'artemisApp.examManagement.testRun.workingTimeSeconds' | artemisTranslate"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20"
+                    min="0"
+                    max="59"
+                    step="1"
+                    required
+                />
             </form>
         </div>
         <div>

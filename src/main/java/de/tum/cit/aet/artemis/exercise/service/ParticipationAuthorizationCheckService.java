@@ -182,7 +182,7 @@ public class ParticipationAuthorizationCheckService {
 
         // if the user is not the owner of the participation, the user can only see it in case they are
         // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
-        final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 

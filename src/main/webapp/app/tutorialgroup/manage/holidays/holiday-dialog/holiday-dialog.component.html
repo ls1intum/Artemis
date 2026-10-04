@@ -72,6 +72,8 @@
                     type="text"
                     [attr.maxlength]="reasonMaxLength"
                     data-testid="holiday-reason"
+                    id="holiday-reason-input"
+                    [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.reason' | artemisTranslate"
                     [value]="reason()"
                     (input)="onReasonInput($event)"
                     [attr.placeholder]="'artemisApp.pages.tutorialFreePeriodsManagement.form.reasonPlaceholder' | artemisTranslate"

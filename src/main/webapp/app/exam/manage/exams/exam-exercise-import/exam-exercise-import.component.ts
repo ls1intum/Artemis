@@ -13,12 +13,14 @@ import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageCompo
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
     templateUrl: './exam-exercise-import.component.html',
     imports: [
         TranslateDirective,
+        ArtemisTranslatePipe,
         HelpIconComponent,
         FormsModule,
         FaIconComponent,
