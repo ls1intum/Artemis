@@ -82,12 +82,20 @@ public class LtiApi extends AbstractLtiApi {
     }
 
     /**
-     * Removes the online course configuration of a course, e.g. when it stops being an online course.
+     * Reconciles the configuration with the saved course's online flag. Call from the course repository's locked save
+     * transaction so the existence check and configuration write are atomic with the course update.
      *
-     * @param courseId the id of the course
+     * @param course the saved course
      */
-    public void deleteOnlineCourseConfiguration(long courseId) {
-        onlineCourseConfigurationRepository.deleteByCourseId(courseId);
+    public void updateOnlineCourseConfiguration(Course course) {
+        if (course.isOnlineCourse()) {
+            if (onlineCourseConfigurationRepository.findByCourseId(course.getId()).isEmpty()) {
+                onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
+            }
+        }
+        else {
+            onlineCourseConfigurationRepository.deleteByCourseId(course.getId());
+        }
     }
 
     public Collection<LtiResourceLaunch> findByUserAndExercise(User user, Exercise exercise) {

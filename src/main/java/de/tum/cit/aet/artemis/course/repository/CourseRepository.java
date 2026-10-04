@@ -9,7 +9,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import jakarta.persistence.LockModeType;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
@@ -18,9 +21,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -47,6 +52,33 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Lazy
 @Repository
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
+
+    /**
+     * Locks the course row until the surrounding repository transaction completes.
+     *
+     * @param courseId the course id
+     * @return the course, if it still exists
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT course FROM Course course WHERE course.id = :courseId")
+    Optional<Course> findByIdWithWriteLock(@Param("courseId") long courseId);
+
+    /**
+     * Saves a course and reconciles its online-course configuration in one transaction. The course-row lock serializes
+     * updates even when no configuration exists yet. The callback reaches the optional LTI module through its API and
+     * must check configuration existence inside this transaction; a failed configuration write rolls back the course save.
+     *
+     * @param course              the updated, already persisted course
+     * @param updateConfiguration the configuration update to perform for the saved course
+     * @return the saved course
+     */
+    @Transactional
+    default Course saveWithOnlineCourseConfigurationUpdate(Course course, Consumer<Course> updateConfiguration) {
+        getValueElseThrow(findByIdWithWriteLock(course.getId()), course.getId());
+        Course savedCourse = save(course);
+        updateConfiguration.accept(savedCourse);
+        return savedCourse;
+    }
 
     /**
      * Answers in one query whether a course has lectures, competencies, tutorial groups, accepted FAQs, quiz questions

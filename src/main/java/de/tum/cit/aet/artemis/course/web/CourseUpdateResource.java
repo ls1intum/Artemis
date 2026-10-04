@@ -220,25 +220,12 @@ public class CourseUpdateResource {
             fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
         }
 
-        // The online course configuration holds the key to its course, so the course does not carry it.
-        boolean wasOnlineCourse = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).isPresent();
-        boolean onlineCourseChanged = courseUpdateDTO.onlineCourse() != null && courseUpdateDTO.onlineCourse() != wasOnlineCourse;
-
         if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), oldCodeOfConduct)) {
             conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
-        Course result = courseRepository.save(existingCourse);
-
-        // The course exists by now, which is what the configuration's key to it needs.
-        if (onlineCourseChanged) {
-            if (courseUpdateDTO.onlineCourse() && ltiApi.isPresent()) {
-                ltiApi.get().createOnlineCourseConfiguration(result);
-            }
-            else {
-                ltiApi.ifPresent(api -> api.deleteOnlineCourseConfiguration(courseId));
-            }
-        }
+        Course result = courseRepository.saveWithOnlineCourseConfigurationUpdate(existingCourse,
+                savedCourse -> ltiApi.ifPresent(api -> api.updateOnlineCourseConfiguration(savedCourse)));
 
         // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
         // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).
