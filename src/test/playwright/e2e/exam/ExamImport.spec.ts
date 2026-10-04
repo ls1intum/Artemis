@@ -59,6 +59,7 @@ test.describe('Exam import', { tag: '@slow' }, () => {
         await expect(row).toContainText(SEED_COURSES.exerciseManagement.title ?? '');
         await row.getByRole('button', { name: 'Import' }).click();
         await page.waitForURL(new RegExp(`/course-management/${targetCourse.id}/exams/import/${sourceExam.id}$`));
+        await expect(dialog, 'the selection dialog closes once the exam is chosen').toBeHidden();
 
         // The import page offers every group and exercise of the source with its title.
         for (const [index, group] of sourceGroups.entries()) {

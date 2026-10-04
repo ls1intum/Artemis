@@ -15,8 +15,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science, TutorSuggestions, AtlasAgent, AtlasML, Memiris, RateLimit, GlobalSearch, AutonomousTutor, Deimos disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 9;
+    // science, TutorSuggestions, AtlasAgent, AtlasML, Memiris, RateLimit, GlobalSearch, AutonomousTutor, Deimos,
+    // GlobalSearchReconcileOrphan disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 10;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -42,6 +43,8 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.RateLimit)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearch)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Deimos)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcile)).isTrue();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcileOrphan)).isFalse();
     }
 
     private void resetToDefaultState() {
@@ -53,6 +56,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.enableFeature(Feature.StandardizedCompetencies);
         featureToggleService.enableFeature(Feature.IrisProactiveStruggle);
         featureToggleService.enableFeature(Feature.PresentationAssessments);
+        featureToggleService.enableFeature(Feature.GlobalSearchReconcile);
         // Disable features that should be disabled by default
         featureToggleService.disableFeature(Feature.Science);
         featureToggleService.disableFeature(Feature.TutorSuggestions);
@@ -63,6 +67,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.disableFeature(Feature.GlobalSearch);
         featureToggleService.disableFeature(Feature.Memiris);
         featureToggleService.disableFeature(Feature.Deimos);
+        featureToggleService.disableFeature(Feature.GlobalSearchReconcileOrphan);
     }
 
     @Test

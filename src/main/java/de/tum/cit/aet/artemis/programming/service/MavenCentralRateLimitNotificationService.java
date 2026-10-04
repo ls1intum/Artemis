@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -86,7 +87,7 @@ public class MavenCentralRateLimitNotificationService {
     private final MailSendingService mailSendingService;
 
     /** Lazily resolved cluster-shared map with the last notification timestamp (epoch millis) per exercise id; {@code null} until first use. */
-    private volatile DistributedMap<Long, Long> distributedSentMap;
+    private final AtomicReference<DistributedMap<Long, Long>> distributedSentMap = new AtomicReference<>();
 
     /** Node-local fallback for deployments without a {@link DistributedDataProvider}. */
     private final ConcurrentHashMap<Long, Long> localSentMap = new ConcurrentHashMap<>();
@@ -185,17 +186,7 @@ public class MavenCentralRateLimitNotificationService {
     }
 
     private DistributedMap<Long, Long> distributedSentMap() {
-        DistributedMap<Long, Long> resolved = distributedSentMap;
-        if (resolved == null) {
-            synchronized (this) {
-                resolved = distributedSentMap;
-                if (resolved == null) {
-                    resolved = distributedDataProvider.orElseThrow().getMap(NOTIFICATION_SENT_MAP);
-                    distributedSentMap = resolved;
-                }
-            }
-        }
-        return resolved;
+        return distributedSentMap.updateAndGet(current -> current != null ? current : distributedDataProvider.orElseThrow().getMap(NOTIFICATION_SENT_MAP));
     }
 
     private void notifyInstructors(long exerciseId) {

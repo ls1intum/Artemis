@@ -20,6 +20,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -440,7 +441,7 @@ public class Course extends DomainObject {
         this.onlineCourse = onlineCourse;
     }
 
-    public OnlineCourseConfiguration getOnlineCourseConfiguration() {
+    public @Nullable OnlineCourseConfiguration getOnlineCourseConfiguration() {
         return Hibernate.isInitialized(onlineCourseConfiguration) ? onlineCourseConfiguration : null;
     }
 

@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Install bats
         run: |
           set -Eeuo pipefail
@@ -33,6 +33,10 @@ jobs:
                      .github/actions/resolve-artifact-run/resolve-artifact-run.sh
       - name: bats unit tests
         run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests
+      - name: Verify LocalCI installer safety
+        run: |
+          shellcheck -e SC1091 install-localci-kubernetes-ubuntu.sh supporting_scripts/update_python_dependency_locks.sh
+          python3 supporting_scripts/test_verified_installers.py
 
   actionlint:
     name: actionlint
@@ -41,7 +45,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Run actionlint
         # The install script is pinned to a release tag AND to its SHA-256, because piping it
         # straight into bash would execute whatever that URL returns. A tag can be moved; the

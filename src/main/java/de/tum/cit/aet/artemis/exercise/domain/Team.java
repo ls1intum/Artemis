@@ -70,6 +70,8 @@ public class Team extends AbstractAuditingEntity implements Participant {
         this.image = team.image;
         this.students.addAll(team.students);
         this.owner = team.owner;
+        // intentionally not copied: the copy is not assigned to an exercise yet
+        this.exercise = null;
     }
 
     public Team id(Long id) {

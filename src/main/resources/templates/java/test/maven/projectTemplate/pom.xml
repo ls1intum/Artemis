@@ -8,41 +8,27 @@
     <name>${exerciseName} Tests</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-Dfile.encoding=UTF-8</argLine>
+        <ares.version>2.1.5</ares.version>
+        <aspectj.version>1.9.25.1</aspectj.version>
+        <!-- Keeps @{argLine} resolvable when no other plugin contributes JVM arguments -->
+        <argLine></argLine>
         <!--%static-code-analysis-start%-->
         <scaConfigDirectory>${project.basedir}/staticCodeAnalysisConfig</scaConfigDirectory>
         <analyzeTests>false</analyzeTests>
         <!--%static-code-analysis-stop%-->
 	</properties>
-    <!-- artemis-java-test-sandbox still resolves to Logback 1.5.18 and AssertJ 3.27.3, both of which carry
-         published advisories (GHSA-25qh-j22f-pwp8, GHSA-qqpg-mvqg-649v, GHSA-p47f-322f-whfh,
-         GHSA-jhq6-gfmj-v8fx and GHSA-rqfh-9r24-8c9r). Pin the patched releases here until the sandbox
-         ships them itself; both bumps stay within the same minor version and are API-compatible. -->
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>1.5.38</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>1.5.38</version>
-            </dependency>
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>3.27.7</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
         <dependency>
-            <!-- Comes with JUnit 5, AssertJ and Hamcrest. JUnit 4 (JUnit 5 Vintage) or jqwik need to be added explicitly -->
-            <groupId>de.tum.in.ase</groupId>
-            <artifactId>artemis-java-test-sandbox</artifactId>
-            <version>1.15.0</version>
+            <!-- Ares 2 comes with JUnit 5 and AssertJ. It is needed on the aspect path while compiling, hence "provided" instead of "test" -->
+            <groupId>de.tum.cit.ase</groupId>
+            <artifactId>ares</artifactId>
+            <version>${ares.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
+            <version>${aspectj.version}</version>
         </dependency>
     </dependencies>
     <!--%maven-central-mirror-start%-->
@@ -77,63 +63,194 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.16.0</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <release>25</release>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.5.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.6.0</version>
+                <configuration>
+                    <argLine>
+                        @{argLine}
+                        -Dfile.encoding=UTF-8
+                        "-javaagent:${project.build.directory}/ares/ares-agent.jar"
+                        "-Xbootclasspath/a:${project.build.directory}/ares/aspectjrt.jar"
+                        --add-exports java.base/java.lang=ALL-UNNAMED
+                        --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
+                        --add-opens java.base/java.io=ALL-UNNAMED
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                        --add-opens java.base/java.net=ALL-UNNAMED
+                        --add-opens java.base/java.nio=ALL-UNNAMED
+                        --add-opens java.base/java.nio.channels=ALL-UNNAMED
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-opens java.base/java.util.concurrent=ALL-UNNAMED
+                        --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED
+                        --add-opens java.base/java.util.concurrent.locks=ALL-UNNAMED
+                        --add-opens java.base/jdk.internal.misc=ALL-UNNAMED
+                        --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED
+                        --add-opens java.base/sun.net.www.protocol.https=ALL-UNNAMED
+                        --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+                        --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+                    </argLine>
+                </configuration>
             </plugin>
+            <!-- Weave the Ares security aspects into the student code -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
+                <groupId>dev.aspectj</groupId>
+                <artifactId>aspectj-maven-plugin</artifactId>
+                <version>1.14.1</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjtools</artifactId>
+                        <version>${aspectj.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <forceAjcCompile>true</forceAjcCompile>
+                    <complianceLevel>25</complianceLevel>
+                    <release>25</release>
+                    <aspectLibraries>
+                        <aspectLibrary>
+                            <groupId>de.tum.cit.ase</groupId>
+                            <artifactId>ares</artifactId>
+                        </aspectLibrary>
+                    </aspectLibraries>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>enforce-no-student-code-in-trusted-packages</id>
+                        <id>weave-main-classes</id>
                         <phase>process-classes</phase>
                         <goals>
-                            <goal>enforce</goal>
+                            <goal>compile</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <rules>
-                        <requireFilesDontExist>
-                            <files>
-                                <file>${project.build.outputDirectory}/ch/qos/logback/</file>
-                                <file>${project.build.outputDirectory}/com/github/javaparser/</file>
-                                <file>${project.build.outputDirectory}/com/intellij/</file>
-                                <file>${project.build.outputDirectory}/com/sun/</file>
-                                <file>${project.build.outputDirectory}/de/tum/in/test/api/</file>
-                                <file>${project.build.outputDirectory}/java/</file>
-                                <file>${project.build.outputDirectory}/javax/</file>
-                                <file>${project.build.outputDirectory}/jdk/</file>
-                                <file>${project.build.outputDirectory}/net/jqwik/</file>
-                                <file>${project.build.outputDirectory}/org/apache/</file>
-                                <file>${project.build.outputDirectory}/org/assertj/</file>
-                                <file>${project.build.outputDirectory}/org/eclipse/</file>
-                                <file>${project.build.outputDirectory}/org/jacoco/</file>
-                                <file>${project.build.outputDirectory}/org/json/</file>
-                                <file>${project.build.outputDirectory}/org/junit/</file>
-                                <file>${project.build.outputDirectory}/org/opentest4j/</file>
-                                <file>${project.build.outputDirectory}/sun/</file>
-                                <file>${project.build.outputDirectory}/org/gradle/</file>
-                                <file>${project.build.outputDirectory}/worker/org/gradle/</file>
-                            </files>
-                        </requireFilesDontExist>
-                    </rules>
-                </configuration>
+            </plugin>
+            <!-- Ares reserved-package build boundary, version 2: student code must not shadow trusted packages -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>verify-ares-reserved-packages-v2</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <resourcecount property="ares.reserved.package.count">
+                                    <fileset dir="${project.build.outputDirectory}">
+                                        <!-- The JDK -->
+                                        <include name="java/**"/>
+                                        <include name="javax/**"/>
+                                        <include name="jdk/**"/>
+                                        <include name="sun/**"/>
+                                        <include name="com/sun/**"/>
+                                        <!-- Ares and the libraries it brings to the test runtime. Student classes in these packages would shadow
+                                             the real ones (e.g. an Assertions class that never fails) and forge the grading. -->
+                                        <include name="anonymous/toolclasses/**"/>
+                                        <include name="ch/qos/logback/**"/>
+                                        <include name="com/fasterxml/**"/>
+                                        <include name="com/github/javaparser/**"/>
+                                        <include name="com/google/**"/>
+                                        <include name="com/ibm/wala/**"/>
+                                        <include name="com/intellij/**"/>
+                                        <include name="com/opencsv/**"/>
+                                        <include name="com/tngtech/archunit/**"/>
+                                        <include name="de/tum/cit/ase/ares/**"/>
+                                        <include name="javassist/**"/>
+                                        <include name="junit/**"/>
+                                        <include name="metatest/**"/>
+                                        <include name="net/bytebuddy/**"/>
+                                        <include name="net/jqwik/**"/>
+                                        <include name="org/apache/**"/>
+                                        <include name="org/apfloat/**"/>
+                                        <include name="org/apiguardian/**"/>
+                                        <include name="org/aspectj/**"/>
+                                        <include name="org/assertj/**"/>
+                                        <include name="org/checkerframework/**"/>
+                                        <include name="org/eclipse/**"/>
+                                        <include name="org/gradle/**"/>
+                                        <include name="org/hamcrest/**"/>
+                                        <include name="org/jacoco/**"/>
+                                        <include name="org/jgrapht/**"/>
+                                        <include name="org/jheaps/**"/>
+                                        <include name="org/json/**"/>
+                                        <include name="org/jspecify/**"/>
+                                        <include name="org/junit/**"/>
+                                        <include name="org/mockito/**"/>
+                                        <include name="org/objenesis/**"/>
+                                        <include name="org/opentest4j/**"/>
+                                        <include name="org/slf4j/**"/>
+                                        <include name="org/yaml/**"/>
+                                        <include name="worker/org/gradle/**"/>
+                                    </fileset>
+                                </resourcecount>
+                                <fail message="Ares reserved-package validation 2 rejected student output. No bypass flag is supported.">
+                                    <condition>
+                                        <not>
+                                            <equals arg1="${ares.reserved.package.count}" arg2="0"/>
+                                        </not>
+                                    </condition>
+                                </fail>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Put the Ares agent and the AspectJ runtime at a known path for the surefire argLine -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.11.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-ares-runtime-jars</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>de.tum.cit.ase</groupId>
+                                    <artifactId>ares</artifactId>
+                                    <version>${ares.version}</version>
+                                    <classifier>agent</classifier>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/ares</outputDirectory>
+                                    <destFileName>ares-agent.jar</destFileName>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.aspectj</groupId>
+                                    <artifactId>aspectjrt</artifactId>
+                                    <version>${aspectj.version}</version>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/ares</outputDirectory>
+                                    <destFileName>aspectjrt.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!--%static-code-analysis-start%-->
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.8.4.0</version>
+                <version>4.10.4.1</version>
                 <configuration>
                     <!-- Do not analyze the files in the test directory -->
                     <includeTests>${analyzeTests}</includeTests>
@@ -153,12 +270,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.6.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>10.17.0</version>
+                        <version>14.3.0</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -173,17 +290,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.22.0</version>
+                <version>3.28.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>net.sourceforge.pmd</groupId>
                         <artifactId>pmd-core</artifactId>
-                        <version>7.22.0</version>
+                        <version>7.28.0</version>
                     </dependency>
                     <dependency>
                         <groupId>net.sourceforge.pmd</groupId>
                         <artifactId>pmd-java</artifactId>
-                        <version>7.22.0</version>
+                        <version>7.28.0</version>
                     </dependency>
                 </dependencies>
                 <configuration>

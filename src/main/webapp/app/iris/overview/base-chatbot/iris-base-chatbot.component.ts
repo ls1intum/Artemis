@@ -310,7 +310,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.awaitingAnswer(),
     );
-    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
+    // Without a session there is nothing to send to: the chat service rejects the message, so sending while the session
+    // is still loading would only lose what the user typed.
+    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled() || this.currentSessionId() === undefined);
     readonly canShowSuggestions = computed(
         () =>
             !!this.suggestions()?.length &&
@@ -908,7 +910,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     onSend(): void {
         this.chatService.messagesRead();
         const content = this.newMessageTextContent().trim();
-        if (content) {
+        // Enter and the suggestion chips reach here without passing the disabled send button, so keep the text for a retry
+        if (content && this.currentSessionId() !== undefined) {
             this.isLoading.set(true);
             const provider = this.contextProvider();
             const context = provider ? provider() : undefined;

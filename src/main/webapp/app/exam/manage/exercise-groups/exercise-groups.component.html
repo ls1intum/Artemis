@@ -1,5 +1,5 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0" data-testid="exercise-groups-title">
+    <h5 class="mb-0!" data-testid="exercise-groups-title">
         <span><span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span> ({{ exerciseGroupCount() }})</span>
     </h5>
 </div>
@@ -111,7 +111,7 @@
     } @empty {
         <div class="text-center py-5 text-muted-color">
             <fa-icon [icon]="faLayerGroup" size="2x" class="mb-3" aria-hidden="true" />
-            <p class="mb-2" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
+            <p class="mb-2!" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
             @if (course()?.isAtLeastEditor) {
                 <tumaet-ui-button size="small" id="create-first-group" (clicked)="openCreateGroupModal()">
                     <fa-icon [icon]="faPlus" />
@@ -137,3 +137,23 @@
 @if (groupEditTarget(); as editTarget) {
     <jhi-exam-exercise-group-edit-modal [(visible)]="groupEditVisible" [group]="editTarget" [isNew]="groupEditIsNew()" (saved)="onGroupEditSaved($event)" />
 }
+
+@if (groupImportVisible()) {
+    <tumaet-ui-dialog [(visible)]="groupImportVisible" [header]="'artemisApp.examManagement.importExam' | artemisTranslate" size="large">
+        <jhi-exam-import [subsequentExerciseGroupSelection]="true" [targetCourseId]="courseId()" [targetExamId]="examId()" (imported)="onExerciseGroupsImported($event)" />
+    </tumaet-ui-dialog>
+}
+
+@if (exerciseImportType(); as importType) {
+    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" (imported)="onExerciseImported($event)" />
+}
+
+<jhi-exam-delete-dialog
+    [(visible)]="deleteGroupVisible"
+    [entityTitle]="groupToDelete()?.title || ''"
+    [deleteQuestion]="deleteGroupQuestion()"
+    deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+    [additionalChecks]="deleteGroupChecks()"
+    [dialogError]="dialogError"
+    (confirmed)="deleteExerciseGroup(groupToDelete()!.id!, $event)"
+/>
