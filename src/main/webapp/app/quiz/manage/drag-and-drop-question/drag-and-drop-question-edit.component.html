@@ -426,7 +426,24 @@
                             }
                             @if (!dragItem.pictureFilePath) {
                                 <div>
-                                    <textarea id="drag-item-{{ i }}-text" [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
+                                    <textarea
+                                        id="drag-item-{{ i }}-text"
+                                        [(ngModel)]="dragItem.text"
+                                        [maxlength]="MAX_DRAG_ITEM_TEXT_LENGTH"
+                                        [attr.aria-invalid]="(dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH"
+                                        [attr.aria-describedby]="
+                                            (dragItem.text?.length ?? 0) >= MAX_DRAG_ITEM_TEXT_LENGTH ? 'drag-item-text-limit-' + questionIndex() + '-' + i : undefined
+                                        "
+                                        (ngModelChange)="questionUpdated.emit()"
+                                    ></textarea>
+                                    @if ((dragItem.text?.length ?? 0) >= MAX_DRAG_ITEM_TEXT_LENGTH) {
+                                        <small
+                                            id="drag-item-text-limit-{{ questionIndex() }}-{{ i }}"
+                                            class="drag-item-text-limit block text-state-danger"
+                                            jhiTranslate="entity.validation.maxlength"
+                                            [translateValues]="{ max: MAX_DRAG_ITEM_TEXT_LENGTH }"
+                                        ></small>
+                                    }
                                 </div>
                             }
                             @if (!reEvaluationInProgress()) {
