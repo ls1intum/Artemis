@@ -31,6 +31,7 @@
         "bonusSourcePoints": "Student points in the bonus source",
         "exportQuestion": "Export question: {{ title }}",
         "dragItemText": "Drag item text",
-        "createFileOrFolder": "File or folder name"
+        "createFileOrFolder": "File or folder name",
+        "externalApplicationLauncher": "External application launcher"
     }
 }

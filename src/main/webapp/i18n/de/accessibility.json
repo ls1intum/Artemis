@@ -31,6 +31,7 @@
         "bonusSourcePoints": "Punkte des Studierenden in der Bonusquelle",
         "exportQuestion": "Frage exportieren: {{ title }}",
         "dragItemText": "Text des Drag-Elements",
-        "createFileOrFolder": "Datei- oder Ordnername"
+        "createFileOrFolder": "Datei- oder Ordnername",
+        "externalApplicationLauncher": "Starten einer externen Anwendung"
     }
 }

@@ -7,6 +7,11 @@
                         >You are about to download all teams'/students' submissions of the following exercises:</span
                     >
                     <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col" jhiTranslate="artemisApp.exercise.title"></th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @for (programmingExercise of programmingExercises; track programmingExercise) {
                                 <tr>
