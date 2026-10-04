@@ -173,8 +173,7 @@ export class TutorialCreateOrEditComponent {
         if (this.saveButtonDisabled()) {
             return;
         }
-        // The save button is disabled without a tutor, so this never returns here; reading it once also narrows the
-        // type for the request below, which avoids a non-null assertion.
+        // Save is disabled without a tutor; reading it here also narrows the type for the request.
         const tutorId = this.selectedTutorId();
         if (tutorId === undefined) {
             return;
@@ -220,8 +219,7 @@ export class TutorialCreateOrEditComponent {
         };
     }
 
-    // The schedule fields are optional until the toggle is on, and save stays disabled until all four are filled, so
-    // an incomplete schedule never reaches here; guarding the dates keeps it type-safe without a non-null assertion.
+    // Undefined unless the schedule toggle is on and all dates are set.
     private buildSchedule(): TutorialGroupSchedule | undefined {
         const firstSessionStart = this.firstSessionStart();
         const firstSessionEnd = this.firstSessionEnd();
