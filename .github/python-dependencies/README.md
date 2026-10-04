@@ -1,7 +1,7 @@
 # Deployment Python dependencies
 
 `prod-like-deployment.yml` installs this complete hash lock with Python 3.14. The input is based on
-the Artemis-Ansible snapshot recorded in `requirements.in`, with HTTP dependency security fixes.
+the Artemis-Ansible snapshot recorded in `requirements.in`, with dependency security fixes.
 The workflow checks out this lock from its own ref into a separate directory, leaving the
 Artemis-Ansible checkout and Ansible Galaxy requirement paths intact.
 
