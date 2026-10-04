@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Lti13DeepLinkingComponent } from 'app/lti/manage/lti13-deep-linking/lti13-deep-linking.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,7 +19,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 
 describe('Lti13DeepLinkingComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: Lti13DeepLinkingComponent;
     let fixture: ComponentFixture<Lti13DeepLinkingComponent>;
     let routeParamsSubject: Subject<{ courseId?: string }>;

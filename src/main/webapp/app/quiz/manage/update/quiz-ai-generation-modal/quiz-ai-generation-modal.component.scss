@@ -49,6 +49,16 @@
     gap: 0.35rem;
 }
 
+.quiz-ai-generation-modal .label-with-help label {
+    margin-bottom: 0;
+}
+
+.quiz-ai-generation-modal .label-with-help-icon {
+    align-items: center;
+    color: var(--text-muted-color);
+    display: inline-flex;
+}
+
 .quiz-ai-generation-modal .selection-list {
     display: flex;
     flex-wrap: wrap;

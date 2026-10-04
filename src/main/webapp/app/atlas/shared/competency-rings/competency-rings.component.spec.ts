@@ -7,10 +7,8 @@ import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyRings', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyRingsComponent>;
     let component: CompetencyRingsComponent;
 

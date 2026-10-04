@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -13,7 +12,6 @@ import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 describe('GradingService', () => {
-    setupTestBed({ zoneless: true });
     let service: GradingService;
     let httpMock: HttpTestingController;
 

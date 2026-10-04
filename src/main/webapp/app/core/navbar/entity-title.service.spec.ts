@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import 'app/foundation/util/map.extension';
 
 vi.mock('@sentry/angular', async (importOriginal) => {
@@ -22,8 +21,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('EntityTitleService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: EntityTitleService;
 
     beforeEach(() => {
@@ -177,8 +174,6 @@ describe('EntityTitleService', () => {
 });
 
 describe('EntityTitleService - authentication state changes', () => {
-    setupTestBed({ zoneless: true });
-
     let authState: BehaviorSubject<User | undefined>;
     let scoped: EntityTitleService;
 

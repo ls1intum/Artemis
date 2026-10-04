@@ -18,10 +18,8 @@ import { ProfileService } from '../../../core/layouts/profiles/shared/profile.se
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('EditCompetencyComponent', () => {
-    setupTestBed({ zoneless: true });
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
     let editCompetencyComponent: EditCompetencyComponent;
     beforeEach(async () => {
@@ -105,7 +103,7 @@ describe('EditCompetencyComponent', () => {
             description: competencyOfResponse.description,
             optional: competencyOfResponse.optional,
         });
-        expect(competencyFormComponent.formData).toEqual(editCompetencyComponent.formData());
+        expect(competencyFormComponent.formData()).toEqual(editCompetencyComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {

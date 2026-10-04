@@ -32,7 +32,6 @@ vi.mock('app/programming/shared/utils/diff.utils', async () => ({
     }),
 }));
 
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -42,7 +41,7 @@ import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detai
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -55,7 +54,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
@@ -76,8 +75,6 @@ import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 
 describe('ProgrammingExerciseDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
@@ -147,7 +144,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
+            imports: [],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -158,21 +155,26 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: NgbModal, useValue: new MockNgbModalService() },
-                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: Router, useClass: MockRouter },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         })
             // Mock the heavy presentational children so the eager zoneless render does not pull in
             // their own dependencies (e.g. DialogService) or crash on missing inputs (doughnut chart).
             .overrideComponent(ProgrammingExerciseDetailComponent, {
                 remove: {
-                    imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent],
+                    imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent, ConsistencyCheckComponent],
                 },
                 add: {
-                    imports: [MockComponent(ExerciseDetailStatisticsComponent), MockComponent(DetailOverviewListComponent), MockComponent(DocumentationButtonComponent)],
+                    imports: [
+                        MockComponent(ExerciseDetailStatisticsComponent),
+                        MockComponent(DetailOverviewListComponent),
+                        MockComponent(DocumentationButtonComponent),
+                        MockComponent(ConsistencyCheckComponent),
+                    ],
                 },
             })
             .compileComponents();
@@ -419,7 +421,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(sections).toBeDefined();
     });
 
-    it.each([['jenkins', true]])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
+    it.each([
+        ['jenkins', true],
+        ['localci', true],
+        ['gitlabci', false],
+    ])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
         profileInfo.activeProfiles = [profile as string];
         const profileInfoStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 

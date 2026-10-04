@@ -1,12 +1,12 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { DialogModule } from 'primeng/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { ButtonDirective } from 'primeng/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { HttpResponse } from '@angular/common/http';
 import {
     TutorialRegistrationsImportModalTableComponent,
     TutorialRegistrationsImportModalTableRow,
@@ -14,8 +14,9 @@ import {
 import { TutorialGroupRegisterStudentRequest } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupStudentImportData } from 'app/openapi/model/tutorialGroupStudentImportData';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudentImportData } from 'app/openapi/model/tutorial-group-student-import-data';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum ImportFlowStep {
     EXPLANATION = 'EXPLANATION',
@@ -30,17 +31,26 @@ interface ImportResult {
 
 @Component({
     selector: 'jhi-tutorial-registrations-import-modal',
-    imports: [DialogModule, TranslateDirective, ButtonDirective, TutorialRegistrationsImportModalTableComponent, LoadingIndicatorOverlayComponent],
+    imports: [
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        FaIconComponent,
+        TranslateDirective,
+        TutorialRegistrationsImportModalTableComponent,
+        LoadingIndicatorOverlayComponent,
+    ],
     templateUrl: './tutorial-registrations-import-modal.component.html',
     styleUrl: './tutorial-registrations-import-modal.component.scss',
 })
 export class TutorialRegistrationsImportModalComponent {
-    protected readonly ImportFlowStep = ImportFlowStep;
-
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
+
+    protected readonly ImportFlowStep = ImportFlowStep;
+    protected readonly faCircleCheck = faCircleCheck;
+
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private parsedStudents = signal<TutorialGroupRegisterStudentRequest[]>([]);
     private importResults = signal<ImportResult[]>([]);
@@ -107,9 +117,9 @@ export class TutorialRegistrationsImportModalComponent {
 
     importParsedStudents() {
         this.isLoading.set(true);
-        this.tutorialGroupApiService.importRegistrations(this.courseId(), this.tutorialGroupId(), this.parsedStudents(), 'response').subscribe({
-            next: (response: HttpResponse<Array<TutorialGroupStudentImportData>>) => {
-                const nonExistingStudents = response.body || [];
+        this.tutorialGroupApiService.importRegistrations(this.courseId(), this.tutorialGroupId(), this.parsedStudents()).subscribe({
+            next: (response: Array<TutorialGroupStudentImportData>) => {
+                const nonExistingStudents = response || [];
                 const studentResults: ImportResult[] = this.parsedStudents().map((parsedStudent) => {
                     return {
                         student: parsedStudent,
@@ -170,17 +180,11 @@ export class TutorialRegistrationsImportModalComponent {
                 ];
             case ImportFlowStep.CONFIRMATION:
                 return this.parsedStudents().map((student) => {
-                    return {
-                        ...student,
-                        markFilledCells: false,
-                    };
+                    return cloneWith(student, { markFilledCells: false });
                 });
             case ImportFlowStep.RESULTS:
                 return this.importResults().map((result) => {
-                    return {
-                        ...result.student,
-                        markFilledCells: !result.exists,
-                    };
+                    return cloneWith(result.student, { markFilledCells: !result.exists });
                 });
         }
     }

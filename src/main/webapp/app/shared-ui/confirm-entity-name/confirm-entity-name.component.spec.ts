@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
@@ -21,7 +20,6 @@ class ConfirmEntityNameHostComponent {
 }
 
 describe('ConfirmEntityNameComponent', () => {
-    setupTestBed({ zoneless: true });
     describe('NgModel', () => {
         let component: ConfirmEntityNameHostComponent;
         let fixture: ComponentFixture<ConfirmEntityNameHostComponent>;

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Signal } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -31,8 +30,6 @@ type InstructorStatusInternals = ProgrammingExerciseInstructorStatusComponent & 
 const internals = (c: ProgrammingExerciseInstructorStatusComponent): InstructorStatusInternals => c as InstructorStatusInternals;
 
 describe('ProgrammingExerciseInstructorStatusComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseInstructorStatusComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorStatusComponent>;
     let participationWebsocketService: ParticipationWebsocketService;

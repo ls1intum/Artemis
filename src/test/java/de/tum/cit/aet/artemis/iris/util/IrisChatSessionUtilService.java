@@ -34,6 +34,7 @@ public class IrisChatSessionUtilService {
 
     /**
      * Creates and persists an Iris course chat session for the given course and user.
+     * The session is pre-seeded with one LLM and one USER message.
      *
      * @param course the course for which to create the session
      * @param user   the user for whom to create the session
@@ -41,5 +42,16 @@ public class IrisChatSessionUtilService {
      */
     public IrisChatSession createAndSaveCourseChatSessionForUser(Course course, User user) {
         return irisSessionRepository.save(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
+    }
+
+    /**
+     * Creates and persists a bare Iris course chat session (no pre-seeded messages) for the given course and user.
+     *
+     * @param course the course for which to create the session
+     * @param user   the user for whom to create the session
+     * @return the persisted IrisChatSession (course context, empty)
+     */
+    public IrisChatSession createAndSaveBareCourseSessionForUser(Course course, User user) {
+        return irisSessionRepository.save(IrisChatSessionFactory.createCourseChatSessionForUser(course, user));
     }
 }

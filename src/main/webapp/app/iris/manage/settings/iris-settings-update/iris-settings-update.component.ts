@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faCog, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { cloneDeep, isEqual } from 'lodash-es';
+import { isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -40,6 +41,7 @@ import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 interface SaveSettingsOptions {
     keepPersistedRateLimit?: boolean;
@@ -80,6 +82,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
+    private featureToggleService = inject(FeatureToggleService);
     private translateService = inject(TranslateService);
 
     public courseId?: number;
@@ -199,7 +202,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
 
     /**
-     * Current instructional support level, defaulting to MODERATE to mirror the backend.
+     * Current instructional support level, defaulting to MODERATE to mirror the server.
      */
     readonly currentSupportLevel = computed((): IrisSupportLevel => this.settings()?.supportLevel ?? 'moderate');
 
@@ -299,8 +302,11 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (!settings) {
             return undefined;
         }
-        return Object.assign({}, settings, {
+        return cloneWith(settings, {
             customInstructions: this.normalizeEmpty(settings.customInstructions),
+            // A never-opted-in course loads the flag as `false` (or absent, on a row predating the field). Coerce to
+            // a boolean so an unchanged off-course is not falsely flagged dirty against an explicit `false`.
+            proactiveStruggleEnabled: !!settings.proactiveStruggleEnabled,
         });
     }
 
@@ -339,7 +345,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                     this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
                     this.effectiveRateLimit.set(response.effectiveRateLimit);
                     this.applicationDefaults.set(response.applicationRateLimitDefaults);
-                    this.originalSettings.set(cloneDeep(this.settings()));
+                    this.originalSettings.set(deepClone(this.settings()));
                 },
                 error: (error) => {
                     this.isLoading.set(false);
@@ -359,17 +365,14 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
 
         // Normalize empty strings to undefined before saving
-        const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
+        const settingsToSave: IrisCourseSettingsDTO = cloneWith(currentSettings, {
             customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
         });
 
         const originalSettingsValue = this.originalSettings();
         if (!this.isAdmin()) {
-            // Non-admins can only change enabled, supportLevel and customInstructions.
-            // Restore original variant and rate limits to prevent unauthorized changes.
             if (originalSettingsValue) {
-                settingsToSave.variant = originalSettingsValue.variant;
-                settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+                this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
             }
         } else {
             // Admin: reconstruct rateLimit from form fields unless a caller only saves
@@ -394,7 +397,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                         this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
                         this.effectiveRateLimit.set(response.body.effectiveRateLimit);
                         this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
-                        this.originalSettings.set(cloneDeep(this.settings()));
+                        this.originalSettings.set(deepClone(this.settings()));
                     }
                     this.alertService.success('artemisApp.iris.settings.success');
                 },
@@ -416,7 +419,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     setEnabled(enabled: boolean): void {
         const currentSettings = this.settings();
         if (currentSettings && currentSettings.enabled !== enabled) {
-            this.settings.set(Object.assign({}, currentSettings, { enabled }));
+            this.settings.set(cloneWith(currentSettings, { enabled }));
             // Auto-save enabled/disabled changes immediately
             this.saveEnabledOnly(enabled);
         }
@@ -444,15 +447,13 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
         // Persist the current edits together with the new enabled state, normalizing
         // empty custom instructions the same way saveSettings() does.
-        const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
+        const settingsToSave: IrisCourseSettingsDTO = cloneWith(currentSettings, {
             enabled,
             customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
         });
 
         if (!this.isAdmin()) {
-            // Non-admins cannot change variant or rate limits — restore the originals.
-            settingsToSave.variant = originalSettingsValue.variant;
-            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+            this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
         } else if (this.isFormValid()) {
             // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
             settingsToSave.rateLimit = this.buildRateLimitForSave();
@@ -470,8 +471,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
                     if (response.body) {
                         // Update original settings to reflect the new enabled state
-                        this.originalSettings.set(cloneDeep(response.body.settings));
-                        this.settings.set(cloneDeep(response.body.settings));
+                        this.originalSettings.set(deepClone(response.body.settings));
+                        this.settings.set(deepClone(response.body.settings));
                         // Reset rate limit tracking
                         this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
                         this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
@@ -488,7 +489,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                     // Revert on error
                     const currentSettings = this.settings();
                     if (currentSettings) {
-                        this.settings.set(Object.assign({}, currentSettings, { enabled: !enabled }));
+                        this.settings.set(cloneWith(currentSettings, { enabled: !enabled }));
                     }
                 },
             });
@@ -506,9 +507,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
      *
      * Stages the defaults into the `settings` signal, then calls `saveSettings()` so
      * the change is written to the server right away (no separate "Save Changes" step).
-     * Only the General-tab editable fields are reset: `supportLevel` and
-     * `customInstructions`. The `enabled` toggle (auto-saved separately) and the
-     * admin-only `variant` / `rateLimit` fields are left as they are.
+     * Only `supportLevel` and `customInstructions` are reset. The `enabled` toggle
+     * (auto-saved separately), the two proactive toggles and the admin-only
+     * `variant` / `rateLimit` fields are left as they are.
      *
      * No-ops if the General-tab fields already hold their default values, so an
      * idempotent click does not trigger an unnecessary network request.
@@ -524,7 +525,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (sameSupportLevel && sameCustomInstructions) {
             return;
         }
-        this.settings.set(Object.assign({}, currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
+        this.settings.set(cloneWith(currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
         this.saveSettings({ keepPersistedRateLimit: this.isAdmin() && !this.isFormValid() });
     }
 
@@ -534,7 +535,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     updateCustomInstructions(value: string): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set(Object.assign({}, currentSettings, { customInstructions: value }));
+            this.settings.set(cloneWith(currentSettings, { customInstructions: value }));
         }
     }
 
@@ -545,7 +546,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         const level = SLIDER_VALUE_TO_SUPPORT_LEVEL[value] ?? 'moderate';
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set(Object.assign({}, currentSettings, { supportLevel: level }));
+            this.settings.set(cloneWith(currentSettings, { supportLevel: level }));
         }
         this.playHandlePop();
     }
@@ -566,9 +567,57 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     updateVariant(value: IrisPipelineVariant): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set(Object.assign({}, currentSettings, { variant: value }));
+            this.settings.set(cloneWith(currentSettings, { variant: value }));
         }
     }
+
+    /**
+     * Put the admin-only fields back to what the server holds, for a save made by someone who may not change them.
+     * Both save paths go through here: keeping two lists in step failed once already, when an auto-save on the
+     * enabled toggle wrote back whatever the signal happened to hold for a flag this list had forgotten.
+     */
+    private restoreAdminOnlyFields(target: IrisCourseSettingsDTO, original: IrisCourseSettingsDTO): void {
+        target.variant = original.variant;
+        target.rateLimit = original.rateLimit;
+    }
+
+    /**
+     * Update the proactive-struggle flag in the settings signal (saved via the Save button).
+     */
+    updateProactiveStruggleEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { proactiveStruggleEnabled: value }));
+        }
+    }
+
+    /**
+     * Writes an EXPLICIT boolean, which is the point: the field's third state ("nobody ever decided") exists so a
+     * save from a client that does not know the field leaves the stored value alone, and touching the toggle is
+     * exactly the moment that stops being true.
+     */
+    updateLegacyBuildTriggersEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { legacyBuildTriggersEnabled: value }));
+        }
+    }
+
+    /**
+     * Whether this installation serves struggle detection, from the runtime toggle an admin can flip without a
+     * restart. A signal, not a one-time read, so the switch greys out the moment that happens.
+     */
+    readonly struggleAvailable = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.IrisProactiveStruggle), { initialValue: true });
+
+    /**
+     * Both proactive mechanisms armed: Artemis' own build/progress events and this course's struggle detection fire
+     * on the same build, from different pipelines, neither aware of the other. Not blocked, because the combination
+     * has to stay observable, but the instructor should not discover it by reading a chat transcript.
+     */
+    readonly bothProactiveMechanismsActive = computed(() => {
+        const currentSettings = this.settings();
+        return this.struggleAvailable() && !!currentSettings?.proactiveStruggleEnabled && (currentSettings?.legacyBuildTriggersEnabled ?? true);
+    });
 
     /**
      * Builds the rateLimit object for saving, preserving null semantics:

@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
-import { enterDate, setMonacoEditorContent } from '../../utils';
+import { fillDateTimePicker, setMonacoEditorContent } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.
@@ -26,49 +26,60 @@ export class ExamCreationPage {
      * Sets exam to test mode
      */
     async setTestMode() {
-        await this.page.locator('#exam-mode-picker #test-mode').click();
+        await this.page.locator('[data-testid="exam-mode-picker"] [data-testid="test-mode"]').click();
     }
 
     /**
      * @param date the date from when the exam should be visible
      */
     async setVisibleDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#visibleDate', date);
+        await this.setTimelineDate('exam-visibleDate', date);
     }
 
     /**
      * @param date the date when the exam starts
      */
     async setStartDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#startDate', date);
+        await this.setTimelineDate('exam-startDate', date);
     }
 
     /**
      * @param date the date when the exam will end
      */
     async setEndDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#endDate', date);
+        await this.setTimelineDate('exam-endDate', date);
+    }
+
+    private async setTimelineDate(inputId: string, date: dayjs.Dayjs) {
+        await fillDateTimePicker(this.page.locator('jhi-exam-timeline').locator(`#${inputId}`), date);
     }
 
     /**
      * @param date the date when the exam results will be published
      */
     async setPublishResultsDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#publishResultsDate', date);
+        await fillDateTimePicker(this.page.locator('#publishResultsDate'), date);
     }
 
     /**
      * @param date the date when the exam student review starts
      */
     async setStudentReviewStartDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#examStudentReviewStart', date);
+        await fillDateTimePicker(this.page.locator('#examStudentReviewStart'), date);
+    }
+
+    /**
+     * @param date the date from which the submission overview (summary) becomes visible to students
+     */
+    async setExamSummaryPublicationDate(date: dayjs.Dayjs) {
+        await fillDateTimePicker(this.page.locator('#examSummaryPublicationDate'), date);
     }
 
     /**
      * @param date the date when the exam student review ends
      */
     async setStudentReviewEndDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#examStudentReviewEnd', date);
+        await fillDateTimePicker(this.page.locator('#examStudentReviewEnd'), date);
     }
 
     /**

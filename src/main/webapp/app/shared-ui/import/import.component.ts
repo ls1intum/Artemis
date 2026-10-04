@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -9,6 +9,7 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Subject, debounceTime, switchMap, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
@@ -31,6 +32,9 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     // Optional injections for PrimeNG dialog support - components may be opened via DialogService or embedded in other components
     protected dialogRef = inject(DynamicDialogRef, { optional: true });
     protected dialogConfig = inject(DynamicDialogConfig, { optional: true });
+
+    /** Emits the item the user selected for the import, for hosts that embed the component without a PrimeNG dialog reference. */
+    readonly selected = output<T>();
 
     readonly loading = signal(false);
     readonly content = signal<SearchResult<T>>({ resultsOnPage: [], numberOfPages: 0 });
@@ -123,6 +127,13 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
 
         this.performSearch(this.sort, 0);
         this.performSearch(this.search, 300);
+
+        // Trigger an initial load so the table is populated as soon as the dialog opens. The jhiSort
+        // directive used to emit its initial predicate/ascending on init (which triggered `sort.next()`),
+        // but after its migration to signal `model()` inputs it no longer emits on parent-set, which left
+        // the table empty by default. Kick off the first search explicitly via the immediate (0 ms) `sort`
+        // subject so opening any import dialog shows the available entities right away.
+        this.sort.next();
     }
 
     sortRows() {
@@ -148,6 +159,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      * @param item The item which was selected by the user for the import.
      */
     selectImport(item: T) {
+        this.selected.emit(item);
         this.dialogRef?.close(item);
     }
 
@@ -213,7 +225,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected onSearchResult(): void {}
 
     protected setSearchParam(patch: Partial<SearchTermPageableSearch>) {
-        Object.assign(this.state, patch);
+        hydrate(this.state, patch);
         this.sort.next();
     }
 }

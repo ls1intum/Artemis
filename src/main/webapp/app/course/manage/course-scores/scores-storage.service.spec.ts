@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
 
@@ -14,8 +13,6 @@ import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ScoresStorageService', () => {
-    setupTestBed({ zoneless: true });
-
     let scoresStorageService: ScoresStorageService;
 
     beforeEach(() => {
@@ -46,6 +43,21 @@ describe('ScoresStorageService', () => {
         expect(scoresStorageService.getStoredParticipationResult(1)).toBeUndefined();
     });
 
+    it('should store and retrieve achieved variant-group points per course and group', () => {
+        scoresStorageService.setStoredAchievedPointsPerVariantGroup(5, { 10: 13, 11: 0 });
+
+        expect(scoresStorageService.getStoredAchievedGroupPoints(5, 10)).toBe(13);
+        expect(scoresStorageService.getStoredAchievedGroupPoints(5, 11)).toBe(0);
+        // Unknown group id or course id returns undefined.
+        expect(scoresStorageService.getStoredAchievedGroupPoints(5, 99)).toBeUndefined();
+        expect(scoresStorageService.getStoredAchievedGroupPoints(6, 10)).toBeUndefined();
+    });
+
+    it('should treat an undefined achieved-points map as no stored group contributions', () => {
+        scoresStorageService.setStoredAchievedPointsPerVariantGroup(5, undefined);
+        expect(scoresStorageService.getStoredAchievedGroupPoints(5, 10)).toBeUndefined();
+    });
+
     describe('authentication state changes', () => {
         let authState: BehaviorSubject<User | undefined>;
         let scoped: ScoresStorageService;
@@ -65,6 +77,7 @@ describe('ScoresStorageService', () => {
             scoped.setStoredTotalScores(1, {} as CourseScores);
             scoped.setStoredScoresPerExerciseType(1, new Map() as ScoresPerExerciseType);
             scoped.setStoredParticipationResults([{ score: 50, participationId: 7 }]);
+            scoped.setStoredAchievedPointsPerVariantGroup(1, { 10: 5 });
         });
 
         it('should clear stored scores on logout', () => {
@@ -73,6 +86,7 @@ describe('ScoresStorageService', () => {
             expect(scoped.getStoredTotalScores(1)).toBeUndefined();
             expect(scoped.getStoredScoresPerExerciseType(1)).toBeUndefined();
             expect(scoped.getStoredParticipationResult(7)).toBeUndefined();
+            expect(scoped.getStoredAchievedGroupPoints(1, 10)).toBeUndefined();
         });
 
         it('should clear stored scores when a different user logs in', () => {

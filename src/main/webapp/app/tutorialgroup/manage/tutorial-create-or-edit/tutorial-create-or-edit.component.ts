@@ -1,28 +1,33 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { InputTextModule } from 'primeng/inputtext';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SelectModule } from 'primeng/select';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
-import { TooltipModule } from 'primeng/tooltip';
-import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBuilding, faCircleInfo, faCompass, faHashtag, faLanguage, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiInputNumberComponent,
+    TumAetUiSelectComponent,
+    TumAetUiToggleSwitchComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/createOrUpdateTutorialGroupRequest';
-import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/create-or-update-tutorial-group-request';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
 
 enum Mode {
     ONLINE = 'Online',
@@ -43,33 +48,44 @@ export interface UpdateTutorialGroupEvent {
 @Component({
     selector: 'jhi-tutorial-edit',
     imports: [
-        InputGroupModule,
-        InputGroupAddonModule,
-        InputTextModule,
         FormsModule,
-        ToggleSwitchModule,
+        // Contained PrimeNG fallback: a filterable tutor select and three date fields that sit inside an
+        // input group. See the note at the top of the template.
         SelectModule,
-        InputNumberModule,
         DatePickerModule,
-        TooltipModule,
-        ButtonModule,
         RouterLink,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiTooltipDirective,
+        FaIconComponent,
         TutorialEditLanguagesInputComponent,
-        ConfirmDialogModule,
+        TumAetUiInputNumberComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiConfirmDialogComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
-    providers: [ConfirmationService],
+    providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-create-or-edit.component.html',
     styleUrl: './tutorial-create-or-edit.component.scss',
 })
 export class TutorialCreateOrEditComponent {
-    private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
-    protected readonly ValidationStatus = ValidationStatus;
-    private confirmationService = inject(ConfirmationService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private confirmationService = inject(TumAetUiConfirmationService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
+
+    private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
+    protected readonly ValidationStatus = ValidationStatus;
+    protected readonly faHashtag = faHashtag;
+    protected readonly faLanguage = faLanguage;
+    protected readonly faUser = faUser;
+    protected readonly faCompass = faCompass;
+    protected readonly faBuilding = faBuilding;
+    protected readonly faCircleInfo = faCircleInfo;
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     courseId = input.required<number>();
@@ -146,7 +162,7 @@ export class TutorialCreateOrEditComponent {
             }
         });
         effect(() => {
-            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId(), 'body').subscribe({
+            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId()).subscribe({
                 next: (languages) => {
                     this.alreadyUsedLanguages.set(languages);
                 },
@@ -180,8 +196,8 @@ export class TutorialCreateOrEditComponent {
             message: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.message'),
             acceptLabel: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.acceptButtonLabel'),
             rejectLabel: this.translateService.instant('entity.action.cancel'),
-            acceptButtonStyleClass: 'p-button-danger',
-            rejectButtonStyleClass: 'p-button-secondary',
+            acceptSeverity: 'danger',
+            rejectSeverity: 'secondary',
             accept: () => this.onUpdate.emit({ courseId, tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroupRequest }),
         });
     }

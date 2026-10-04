@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { By } from '@angular/platform-browser';
@@ -9,8 +8,6 @@ import { Subject } from 'rxjs';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 describe('ChatStatusBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ChatStatusBarComponent;
     let fixture: ComponentFixture<ChatStatusBarComponent>;
 
@@ -66,12 +63,12 @@ describe('ChatStatusBarComponent', () => {
 
     it('should use literal fallback when the error translation is missing', async () => {
         const translateService = TestBed.inject(TranslateService);
-        vi.spyOn(translateService, 'instant').mockReturnValue('translation-not-found[Raw backend error]');
+        vi.spyOn(translateService, 'instant').mockReturnValue('translation-not-found[Raw server error]');
 
-        fixture.componentRef.setInput('runInfo', { runId: 'run-1', state: IrisRunState.FAILED, error: { message: 'Raw backend error' } });
+        fixture.componentRef.setInput('runInfo', { runId: 'run-1', state: IrisRunState.FAILED, error: { message: 'Raw server error' } });
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.display.error')).nativeElement.textContent).toContain('Raw backend error');
+        expect(fixture.debugElement.query(By.css('.display.error')).nativeElement.textContent).toContain('Raw server error');
     });
 });

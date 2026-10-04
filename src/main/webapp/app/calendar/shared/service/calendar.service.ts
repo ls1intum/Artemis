@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { OnDestroy, Service, computed, effect, inject, signal } from '@angular/core';
 import { Observable, Subscription, catchError, map, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -6,15 +6,13 @@ import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-uti
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { CalendarApiService } from 'app/openapi/api/calendarApi.service';
-import { CalendarEvent } from 'app/openapi/model/calendarEvent';
+import { CalendarApi } from 'app/openapi/api/calendar-api';
+import { CalendarEvent } from 'app/openapi/model/calendar-event';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CalendarService implements OnDestroy {
-    private readonly apiService = inject(CalendarApiService);
+    private readonly apiService = inject(CalendarApi);
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
     private readonly accountService = inject(AccountService);
@@ -173,13 +171,13 @@ export class CalendarService implements OnDestroy {
     }
 
     private eventMatchesFilter(event: IdentifiableCalendarEvent, filterOptions: CalendarEventFilterOption[]): boolean {
-        if (filterOptions.includes(CalendarEventFilterOption.ExamEvents) && event.isOfType(CalendarEvent.TypeEnum.Exam)) {
+        if (filterOptions.includes(CalendarEventFilterOption.ExamEvents) && event.isOfType('EXAM')) {
             return true;
         }
-        if (filterOptions.includes(CalendarEventFilterOption.LectureEvents) && event.isOfType(CalendarEvent.TypeEnum.Lecture)) {
+        if (filterOptions.includes(CalendarEventFilterOption.LectureEvents) && event.isOfType('LECTURE')) {
             return true;
         }
-        if (filterOptions.includes(CalendarEventFilterOption.TutorialEvents) && event.isOfType(CalendarEvent.TypeEnum.Tutorial)) {
+        if (filterOptions.includes(CalendarEventFilterOption.TutorialEvents) && event.isOfType('TUTORIAL')) {
             return true;
         }
         if (filterOptions.includes(CalendarEventFilterOption.ExerciseEvents) && event.isOfExerciseType()) {

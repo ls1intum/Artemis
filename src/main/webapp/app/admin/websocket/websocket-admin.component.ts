@@ -10,12 +10,7 @@ import { Subscription, forkJoin, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
-import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
-import { TableModule } from 'primeng/table';
-
+import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiMessageComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 /**
  * Admin view to monitor and control websocket broker connectivity across Hazelcast nodes.
  * <p>
@@ -34,14 +29,17 @@ import { TableModule } from 'primeng/table';
         FaIconComponent,
         DatePipe,
         AdminTitleBarTitleDirective,
-        ButtonModule,
-        ButtonGroupModule,
-        TagModule,
-        MessageModule,
-        TableModule,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
     ],
 })
 export class WebsocketAdminComponent implements OnInit, OnDestroy {
+    private websocketAdminService = inject(WebsocketAdminService);
+    private alertService = inject(AlertService);
+
     protected readonly faPlug = faPlug;
     protected readonly faSync = faSync;
     protected readonly faPowerOff = faPowerOff;
@@ -49,13 +47,10 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
     nodes = signal<WebsocketNode[]>([]);
     loading = signal(false);
     reconnecting = signal(false);
-    coreNodes = computed(() => this.nodes().filter((node) => !node.liteMember));
+    coreNodes = computed(() => this.nodes());
     sortedNodes = computed(() => {
         const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
         return [...this.nodes()].sort((a, b) => {
-            if (a.liteMember !== b.liteMember) {
-                return a.liteMember ? 1 : -1; // core nodes first
-            }
             const nameA = (a.instanceId ?? a.host ?? a.memberId).trim();
             const nameB = (b.instanceId ?? b.host ?? b.memberId).trim();
             return collator.compare(nameA, nameB);
@@ -64,8 +59,6 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
     lastUpdated = signal<Date | undefined>(undefined);
     lastUpdateFailed = signal(false);
 
-    private websocketAdminService = inject(WebsocketAdminService);
-    private alertService = inject(AlertService);
     private refreshSubscription?: Subscription;
 
     ngOnInit(): void {

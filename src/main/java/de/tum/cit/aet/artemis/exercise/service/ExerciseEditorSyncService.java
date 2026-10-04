@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.exercise.web.ExerciseWebsocketTopics.EDITOR_SYNCHRONIZATION;
 
 import java.time.Instant;
 import java.util.Set;
@@ -42,16 +43,6 @@ public class ExerciseEditorSyncService {
     }
 
     /**
-     * Builds the websocket topic used for exercise editor synchronization.
-     *
-     * @param exerciseId the exercise id
-     * @return the topic for exercise synchronization events
-     */
-    public static String getSynchronizationTopic(long exerciseId) {
-        return "/topic/exercises/" + exerciseId + "/synchronization";
-    }
-
-    /**
      * Retrieves the client session id from the current request, if available.
      *
      * @return the client session id or null if no request context is available
@@ -77,11 +68,15 @@ public class ExerciseEditorSyncService {
      *                                  repository, tests repository)
      * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository
      *                                  associated with this commit
+     * @param clientSessionId       (optional) the session of the client whose commit this is, so that client can filter the
+     *                                  alert out again. Passed in rather than read here, because the caller runs
+     *                                  asynchronously and {@link #getClientSessionId()} only works on a request thread.
      */
-    public void broadcastNewCommitAlert(@NonNull Long exerciseId, @NonNull ExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
-        ExerciseNewCommitAlertDTO payload = new ExerciseNewCommitAlertDTO(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT, target, auxiliaryRepositoryId, getClientSessionId(),
+    public void broadcastNewCommitAlert(@NonNull Long exerciseId, @NonNull ExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
+            @Nullable String clientSessionId) {
+        ExerciseNewCommitAlertDTO payload = new ExerciseNewCommitAlertDTO(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT, target, auxiliaryRepositoryId, clientSessionId,
                 Instant.now().toEpochMilli());
-        websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
+        websocketMessagingService.sendMessage(EDITOR_SYNCHRONIZATION.at(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send new commit alert for exercise {}", exerciseId, exception);
             return null;
         });
@@ -98,7 +93,7 @@ public class ExerciseEditorSyncService {
     public void broadcastNewExerciseVersionAlert(@NonNull Long exerciseId, @NonNull Long exerciseVersionId, @NonNull User author, @NonNull Set<String> changedFields) {
         ExerciseNewVersionAlertDTO payload = new ExerciseNewVersionAlertDTO(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT, ExerciseEditorSyncTarget.EXERCISE_METADATA,
                 exerciseVersionId, new UserPublicInfoDTO(author), changedFields, getClientSessionId(), Instant.now().toEpochMilli());
-        websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
+        websocketMessagingService.sendMessage(EDITOR_SYNCHRONIZATION.at(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send new exercise version alert for exercise {}", exerciseId, exception);
             return null;
         });
@@ -112,7 +107,7 @@ public class ExerciseEditorSyncService {
      */
     public void broadcastReviewThreadUpdate(@NonNull Long exerciseId, @NonNull ReviewThreadSyncDTO reviewUpdate) {
         ExerciseReviewThreadUpdateDTO payload = ExerciseReviewThreadUpdateDTO.fromReviewThreadUpdate(exerciseId, reviewUpdate, getClientSessionId(), Instant.now().toEpochMilli());
-        websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
+        websocketMessagingService.sendMessage(EDITOR_SYNCHRONIZATION.at(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send review thread update for exercise {}", exerciseId, exception);
             return null;
         });

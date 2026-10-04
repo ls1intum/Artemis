@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -8,8 +7,6 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('MultipleChoice', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ReEvaluateMultipleChoiceQuestionComponent;
     let fixture: ComponentFixture<ReEvaluateMultipleChoiceQuestionComponent>;
     const question: MultipleChoiceQuestion = new MultipleChoiceQuestion();

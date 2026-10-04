@@ -77,9 +77,14 @@ public record TextExerciseListItemDTO(Long id, String title, String shortName, S
         // the cross-course import search; resolves the course for both course and exam exercises.
         CourseRefDTO course = CourseRefDTO.from(exercise.getCourseViaExerciseGroupOrCourseMember());
 
+        // categories is a LAZY @ElementCollection: never store the live Hibernate collection in the record. The
+        // dev-profile LoggingAspect calls toString() on the DTO after the loading session closed, which throws
+        // LazyInitializationException (500) for load paths that do not fetch categories.
+        Set<String> categories = exercise.getCategories() != null && Hibernate.isInitialized(exercise.getCategories()) ? Set.copyOf(exercise.getCategories()) : null;
+
         return new TextExerciseListItemDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(),
                 exercise.getReleaseDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getBonusPoints(),
-                exercise.getIncludedInOverallScore(), exercise.getPresentationScoreEnabled(), exercise.getMode() == ExerciseMode.TEAM, exercise.getCategories(),
-                gradingCriterionDTOs, courseId, course, examId, examTitle, exerciseGroup);
+                exercise.getIncludedInOverallScore(), exercise.getPresentationScoreEnabled(), exercise.getMode() == ExerciseMode.TEAM, categories, gradingCriterionDTOs, courseId,
+                course, examId, examTitle, exerciseGroup);
     }
 }

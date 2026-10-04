@@ -35,7 +35,7 @@ class ConductAgreementServiceTest extends AbstractSpringIntegrationIndependentBa
     @Test
     void fetchConductAgreementIfCodeOfConductIsNullOrEmpty() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingMessagingCodeOfConduct(null);
         courseRepository.save(course);
         var resultIfCodeOfConductIsNull = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
@@ -50,7 +50,7 @@ class ConductAgreementServiceTest extends AbstractSpringIntegrationIndependentBa
     @Test
     void fetchAndAgreeAndResetConductAgreement() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         courseRepository.save(course);
         var resultBeforeAgreement = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);

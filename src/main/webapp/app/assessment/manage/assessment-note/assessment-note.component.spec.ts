@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
 
 describe('AssessmentNoteComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: AssessmentNoteComponent;
     let fixture: ComponentFixture<AssessmentNoteComponent>;
 
@@ -173,7 +173,7 @@ describe('AssessmentNoteComponent', () => {
             fixture.detectChanges();
 
             const textarea = fixture.nativeElement.querySelector('textarea');
-            expect(textarea.textContent).toBe('Displayed note');
+            expect(textarea.value).toBe('Displayed note');
         });
 
         it('should display empty text when note is undefined', () => {
@@ -181,7 +181,7 @@ describe('AssessmentNoteComponent', () => {
             fixture.detectChanges();
 
             const textarea = fixture.nativeElement.querySelector('textarea');
-            expect(textarea.textContent).toBe('');
+            expect(textarea.value).toBe('');
         });
 
         it('should have the correct textarea id and name', () => {
@@ -192,11 +192,12 @@ describe('AssessmentNoteComponent', () => {
             expect(textarea.name).toBe('assessment_note');
         });
 
-        it('should have the form-control class on textarea', () => {
+        it('should apply the TUM AET UI textarea directive and the component styling hook', () => {
             fixture.detectChanges();
 
-            const textarea = fixture.nativeElement.querySelector('textarea');
-            expect(textarea.classList).toContain('form-control');
+            const textarea = fixture.debugElement.query(By.directive(TumAetUiInputDirective));
+            expect(textarea.nativeElement).toBeInstanceOf(HTMLTextAreaElement);
+            expect(textarea.nativeElement.classList).toContain('assessment-note__textarea');
         });
     });
 });

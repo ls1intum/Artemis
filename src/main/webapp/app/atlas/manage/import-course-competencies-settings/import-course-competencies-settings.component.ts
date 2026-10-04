@@ -8,6 +8,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export class CourseCompetencyImportSettings {
     importRelations = false;
@@ -34,26 +35,18 @@ export class ImportCourseCompetenciesSettingsComponent {
     readonly isReleaseDate = computed(() => this.importSettings().isReleaseDate);
 
     protected toggleImportSetting(setting: keyof CourseCompetencyImportSettings): void {
-        this.importSettings.update((settings) => ({
-            ...settings,
-            [setting]: !settings[setting],
-        }));
+        this.importSettings.update((settings) => cloneWith(settings, { [setting]: !settings[setting] }));
     }
 
     public setReferenceDate(date?: Date | string | null): void {
         const referenceDate = date instanceof Date ? date : undefined;
-        this.importSettings.update((settings) => ({
-            ...settings,
-            referenceDate,
-            isReleaseDate: referenceDate ? (settings.referenceDate ? settings.isReleaseDate : true) : undefined,
-        }));
+        this.importSettings.update((settings) =>
+            cloneWith(settings, { referenceDate, isReleaseDate: referenceDate ? (settings.referenceDate ? settings.isReleaseDate : true) : undefined }),
+        );
     }
 
     protected setReferenceDateType(event: Event): void {
         const target = event.target as HTMLInputElement;
-        this.importSettings.update((settings) => ({
-            ...settings,
-            isReleaseDate: parseJson<boolean>(target.value),
-        }));
+        this.importSettings.update((settings) => cloneWith(settings, { isReleaseDate: parseJson<boolean>(target.value) }));
     }
 }

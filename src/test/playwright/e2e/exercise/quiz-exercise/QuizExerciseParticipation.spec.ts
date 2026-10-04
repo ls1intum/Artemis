@@ -1,4 +1,5 @@
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, instructor, studentOne } from '../../../support/users';
@@ -7,8 +8,17 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
+
+/**
+ * The answer options of a multiple choice question. `QuizExercise.quizQuestions` is typed as the abstract question,
+ * so the options only become visible once the concrete type is named - which the multiple choice fixtures always are.
+ */
+function answerOptionsOf(quiz: QuizExercise, questionIndex = 0) {
+    return (quiz.quizQuestions![questionIndex] as MultipleChoiceQuestion).answerOptions!;
+}
 
 test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
     test.describe('Quiz exercise participation', () => {
@@ -44,8 +54,8 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // Pin the submit contract end-to-end: the live endpoint must accept the DTO-shaped payload, mark the submission
             // as submitted, and return exactly the answer the student ticked (one MC entry with the right selected ids).
             expect(submitResponse.status()).toBe(200);
-            const submittedExpectedIds = tickedOptionIndices.map((index) => quizExercise.quizQuestions![0].answerOptions![index].id);
-            const responseBody = await submitResponse.json();
+            const submittedExpectedIds = tickedOptionIndices.map((index) => answerOptionsOf(quizExercise)[index].id!);
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted, 'server must flip the submitted flag after final submit').toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the MC question').toHaveLength(1);
             const mcAnswer = responseBody.submittedAnswers[0];
@@ -93,7 +103,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseMultipleChoice.submit();
 
             const mcQuestionId = shortQuiz.quizQuestions![0].id!;
-            const expectedTickedOptionIds = tickedOptionIndices.map((index) => shortQuiz.quizQuestions![0].answerOptions![index].id);
+            const expectedTickedOptionIds = tickedOptionIndices.map((index) => answerOptionsOf(shortQuiz)[index].id!);
             expect(expectedTickedOptionIds).toHaveLength(tickedOptionIndices.length);
 
             /**
@@ -104,7 +114,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 // Bound the response wait to 45s so a single hung request (the multi-node
                 // observation under load) does not consume the entire test budget. On
                 // timeout we re-issue the navigation up to two more times before giving up
-                // — a hung start-participation POST is a backend race that consistently
+                // — a hung start-participation POST is a server-side race that consistently
                 // recovers on subsequent retries within 1-2 attempts.
                 for (let attempt = 0; attempt < 3; attempt++) {
                     const responsePromise = page.waitForResponse(
@@ -115,7 +125,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                     await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
                     let body: any;
                     try {
-                        body = await (await responsePromise).json();
+                        body = await readResponseJson(await responsePromise);
                     } catch {
                         if (attempt === 2) {
                             throw new Error(`reloadAndReadSelectedOptionIds: start-participation never returned after 3 attempts`);
@@ -174,7 +184,9 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             });
 
             // Capture the IDs that the client will send back on submit.
-            const initialOptionIds = (createdQuiz.quizQuestions![0] as any).answerOptions!.map((opt: any) => opt.id).sort((a: number, b: number) => a - b);
+            const initialOptionIds = answerOptionsOf(createdQuiz)
+                .map((option) => option.id!)
+                .sort((a: number, b: number) => a - b);
             expect(initialOptionIds.length).toBeGreaterThan(0);
 
             const readOptionIdsFromServer = async (): Promise<number[]> => {
@@ -206,7 +218,10 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
     test.describe('Quiz exercise scheduled participation', () => {
         let quizExercise: QuizExercise;
-        const timeUntilQuizStartInSeconds = 15;
+        // 15s was too tight: beforeEach API call + login + navigation can consume 10–15s,
+        // leaving zero margin before startOfWorkingTime arrives and the overlay disappears.
+        // 45s gives ~30s of headroom for the "cannot participate" assertion.
+        const timeUntilQuizStartInSeconds = 45;
 
         test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
@@ -216,24 +231,31 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         });
 
         test('Student cannot participate in scheduled quiz before start of working time', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
-            // Wait for the page's initial GET /courses/.../for-dashboard to settle before
-            // looking for the overlay — the overlay is gated on that fetch returning the
-            // quiz's startOfWorkingTime. Without the explicit wait the default 10s expect
-            // timeout can fire under multi-node CI load while the request is still in flight,
-            // even though the overlay would render seconds later.
-            const dashboardResponse = page
-                .waitForResponse((resp) => resp.url().includes(`api/course/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
-                .catch(() => undefined);
+            // The overlay is gated on the quiz load: initLiveMode POSTs start-participation on page load regardless of
+            // whether the quiz has started, and the batch it returns is what flips waitingForQuizStart. Wait for that
+            // response before looking for the overlay, because under multi-node CI load the default 10s expect timeout
+            // can otherwise fire while the request is still in flight. Registered before the navigation so the response
+            // cannot be missed, and deliberately not swallowed: if the page stops issuing it, this must fail pointing
+            // at the cause rather than wait out the budget.
+            const startParticipation = page.waitForResponse(
+                (response) => response.url().includes(`api/quiz/quiz-exercises/${quizExercise.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                { timeout: 30_000 },
+            );
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await dashboardResponse;
+            await startParticipation;
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
+            // timeUntilQuizStartInSeconds is 45s — lift the per-test budget so the fixed
+            // wait below doesn't hit the 60s @fast default.
+            test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            // The quiz page does not push a live update when startOfWorkingTime arrives;
+            // wait for the time to pass, then assert the overlay is gone and the question shows.
             await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000 + 3000);
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible({ timeout: 10000 });
-            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible({ timeout: 10000 });
         });
     });
 
@@ -299,7 +321,11 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.endQuiz(quizExercise);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.practiceExercise();
+            // Started through the dedicated action button, as the other practice tests in this file do. The generic
+            // "click a button containing Practice" helper this used to call does not start a practice attempt: the page
+            // offers several controls whose label contains the word, and the failure snapshot showed the exercise page
+            // still displaying an untouched "Start practice" button while the test waited for a question to appear.
+            await courseOverview.startQuizPractice(quizExercise.id!);
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
     });
@@ -413,7 +439,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // End-to-end submit contract for short-answer: the new DTO-bound endpoint must accept the rich entity-shaped JSON the
             // client sends, persist one submitted-text per filled spot (lifting the text verbatim), and not silently drop any of them.
             expect(submitResponse.status()).toBe(200);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted).toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the SA question').toHaveLength(1);
             const saAnswer = responseBody.submittedAnswers[0];
@@ -432,10 +458,16 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         test.beforeEach('Create DND quiz', async ({ login, courseManagementExercises, exerciseAPIRequests, quizExerciseCreation }) => {
             await login(admin, '/course-management/' + course.id + '/exercises');
             await courseManagementExercises.createQuizExercise();
-            await quizExerciseCreation.setTitle('Cypress Quiz');
+            // Unique per test: three tests in this block each create a quiz and nothing deletes them, so a
+            // fixed title would make the by-title recovery lookup below ambiguous.
+            const quizTitle = 'Cypress Quiz ' + generateUUID();
+            await quizExerciseCreation.setTitle(quizTitle);
             await quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
             const response = await quizExerciseCreation.saveQuiz();
-            quizExercise = await response.json();
+            // The drag-and-drop background image is a disk-backed file, so this create response cannot be held
+            // in Node and Chrome discards it when the editor navigates away on save. Fall back to an idempotent
+            // lookup instead of failing the whole describe block on a body that no longer exists.
+            quizExercise = await readResponseJson<QuizExercise>(response, () => exerciseAPIRequests.getQuizExerciseByTitle(course.id!, quizTitle));
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
         });
@@ -451,7 +483,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // (with full nested DragItem / DropLocation objects) the client sends and persist one mapping per drop the
             // student performed — server-resolved by id, not the client-supplied object.
             expect(submitResponse.status()).toBe(200);
-            const responseBody = await submitResponse.json();
+            const responseBody = await readResponseJson(submitResponse);
             expect(responseBody.submitted).toBe(true);
             expect(responseBody.submittedAnswers, 'server must persist exactly one submitted answer for the DnD question').toHaveLength(1);
             const dndAnswer = responseBody.submittedAnswers[0];
@@ -473,27 +505,50 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await page.setViewportSize({ width: 800, height: 600 });
             const dragItem = page.locator('#drag-item-0');
             await dragItem.waitFor({ state: 'visible' });
-            await dragItem.scrollIntoViewIfNeeded();
-            // Find the scroll container hosting the quiz and record its scroll state and position.
-            const before = await page.evaluate(() => {
-                let el = document.getElementById('drag-item-0')?.parentElement;
-                while (el) {
-                    const style = getComputedStyle(el);
-                    if (el.scrollHeight > el.clientHeight && ['auto', 'scroll'].includes(style.overflowY)) {
-                        break;
+
+            // Wait until the quiz overflows a container that the CDK will actually auto-scroll, then mark that container.
+            //
+            // Two reasons for the wait. The drag items render as soon as the question arrives, but the question's
+            // background image is fetched as a separate blob request and contributes its height only once decoded, so the
+            // overflow appears late. Waiting for the overflow rather than for the image keeps this independent of how the
+            // image is delivered and covers a question that has none.
+            //
+            // The container must also carry cdkScrollable, because that registration is what #13190 added and what this
+            // test exists to protect: the CDK only auto-scrolls containers it knows about. Requiring it here means a
+            // regression that leaves the scrolling element unregistered fails on this wait, naming the cause, instead of
+            // timing out later while watching an element that was never going to move.
+            await page.waitForFunction(
+                () => {
+                    let element = document.getElementById('drag-item-0')?.parentElement;
+                    while (element) {
+                        const style = getComputedStyle(element);
+                        const scrollable = element.scrollHeight > element.clientHeight && ['auto', 'scroll'].includes(style.overflowY);
+                        if (scrollable && element.hasAttribute('cdkscrollable')) {
+                            element.setAttribute('data-e2e-scroll-container', 'true');
+                            return true;
+                        }
+                        element = element.parentElement;
                     }
-                    el = el.parentElement;
-                }
-                if (!el) {
-                    return undefined;
-                }
-                el.setAttribute('data-e2e-scroll-container', 'true');
-                const rect = el.getBoundingClientRect();
-                return { scrollTop: el.scrollTop, top: rect.top, left: rect.left, width: rect.width };
+                    return false;
+                },
+                // The second parameter is the argument handed to the browser callback, so the options belong third.
+                undefined,
+                { timeout: 30_000 },
+            );
+
+            // Scroll the container to the bottom explicitly instead of relying on scrollIntoViewIfNeeded.
+            //
+            // This is what CI was failing on: the container was scrollable, but the drag item happened to be visible
+            // already, so scrollIntoViewIfNeeded had nothing to do and the offset stayed at 0. Whether it has anything to
+            // do depends on how tall the rest of the question renders, which depends on the background image, so the test
+            // was asserting a precondition it had only incidentally arranged. Setting the offset makes the starting state
+            // the test's own decision.
+            const before = await page.evaluate(() => {
+                const element = document.querySelector('[data-e2e-scroll-container]')!;
+                element.scrollTop = element.scrollHeight;
+                const rect = element.getBoundingClientRect();
+                return { scrollTop: element.scrollTop, top: rect.top, left: rect.left, width: rect.width };
             });
-            if (!before) {
-                throw new Error('the drag item must be inside a scrollable container');
-            }
             expect(before.scrollTop, 'precondition: the container must be scrolled down so it can scroll up during the drag').toBeGreaterThan(0);
 
             const box = await dragItem.boundingBox();
@@ -507,22 +562,31 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             const holdX = before.left + before.width / 2;
             const holdY = before.top + 5;
             await page.mouse.move(holdX, holdY, { steps: 10 });
-            const getScrollTop = () =>
-                page.evaluate(() => {
-                    const container = document.querySelector('[data-e2e-scroll-container]');
-                    if (!container) {
-                        throw new Error('scroll container marker not found');
-                    }
-                    return container.scrollTop;
-                });
-            let scrollTopWhileDragging = before.scrollTop;
-            for (let i = 0; i < 30 && scrollTopWhileDragging >= before.scrollTop; i++) {
-                await page.mouse.move(holdX + (i % 2), holdY);
-                await page.waitForTimeout(100);
-                scrollTopWhileDragging = await getScrollTop();
+            // Counted here rather than taken from the callback: expect.poll invokes its callback without arguments, so a
+            // parameter would stay at its default and the pointer would never actually move.
+            let jiggle = 0;
+            try {
+                // Waited for as a condition rather than a fixed number of iterations: the CDK moves the container on
+                // animation frames, which a busy machine delivers late, and a fixed ceiling turns that delay into a
+                // failure of behaviour that is in fact correct.
+                await expect
+                    .poll(
+                        async () => {
+                            // Alternate the pointer position so every poll dispatches a move the drag can react to.
+                            await page.mouse.move(holdX + (jiggle++ % 2), holdY);
+                            return page.evaluate(() => document.querySelector('[data-e2e-scroll-container]')!.scrollTop);
+                        },
+                        {
+                            message: 'holding a dragged item at the top edge must scroll the container upwards',
+                            timeout: 15_000,
+                            intervals: [100],
+                        },
+                    )
+                    .toBeLessThan(before.scrollTop);
+            } finally {
+                // Always release the pointer, so a failure here cannot leave a held drag behind for the next assertion.
+                await page.mouse.up();
             }
-            await page.mouse.up();
-            expect(scrollTopWhileDragging, 'holding a dragged item at the top edge must scroll the container upwards').toBeLessThan(before.scrollTop);
         });
     });
 

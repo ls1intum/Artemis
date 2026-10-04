@@ -4,7 +4,6 @@ import { Component } from '@angular/core';
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO, convertToKnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({ template: '' })
 class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {
@@ -14,7 +13,6 @@ class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {
 }
 
 describe('StandardizedCompetencyFilterPageComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<DummyImportComponent>;
     let component: DummyImportComponent;
     let filterTree: KnowledgeAreaForTree[];

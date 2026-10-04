@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
 
 describe('EmbedPdfPreloadService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: EmbedPdfPreloadService;
     let getEngine: ReturnType<typeof vi.fn>;
     let isAuthenticated: ReturnType<typeof vi.fn>;

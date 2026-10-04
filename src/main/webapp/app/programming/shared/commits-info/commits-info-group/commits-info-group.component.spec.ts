@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommitsInfoGroupComponent } from 'app/programming/shared/commits-info/commits-info-group/commits-info-group.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -14,8 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CommitsInfoGroupComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CommitsInfoGroupComponent;
     let fixture: ComponentFixture<CommitsInfoGroupComponent>;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ScaCategoryDistributionChartComponent } from 'app/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,10 +7,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 
 describe('SCA category distribution chart', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ScaCategoryDistributionChartComponent;
     let fixture: ComponentFixture<ScaCategoryDistributionChartComponent>;
 
@@ -155,7 +153,7 @@ describe('SCA category distribution chart', () => {
     });
 
     describe('test chart interaction', () => {
-        let event: any;
+        let event: TumAetUiChartSelectEvent;
         let emitStub: ReturnType<typeof vi.spyOn>;
         beforeEach(() => (emitStub = vi.spyOn(component.scaCategoryFilter, 'emit').mockImplementation(() => {})));
         afterEach(() => vi.restoreAllMocks());
@@ -165,7 +163,8 @@ describe('SCA category distribution chart', () => {
             programmingExercerise.id = 10;
             fixture.componentRef.setInput('exercise', programmingExercerise);
             const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'scores'];
-            event = {};
+            // a click that carries no penalty segment navigates to the scores page instead of filtering
+            event = { seriesIndex: 0, index: 0 };
 
             component.onSelect(event);
 
@@ -177,7 +176,8 @@ describe('SCA category distribution chart', () => {
             fixture.componentRef.setInput('categories', [category3]);
             fixture.detectChanges();
             // click the first segment of the penalty bar (bar index 0)
-            event = { element: { datasetIndex: 0, index: 0 } };
+            const { series } = component.chartData();
+            event = { seriesIndex: 0, index: 0, meta: series[0].meta?.[0] };
 
             component.onSelect(event);
 

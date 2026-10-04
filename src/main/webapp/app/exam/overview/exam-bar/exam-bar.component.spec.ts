@@ -12,28 +12,17 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamBarComponent>;
     let comp: ExamBarComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                LocalStorageService,
-                SessionStorageService,
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(AlertService),
-                MockProvider(DialogService),
-                provideHttpClient(),
-            ],
+            providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, MockProvider(AlertService), provideHttpClient()],
         }).compileComponents();
         // Required because exam bar uses the ResizeObserver for height calculations
         global.ResizeObserver = MockResizeObserver as any;

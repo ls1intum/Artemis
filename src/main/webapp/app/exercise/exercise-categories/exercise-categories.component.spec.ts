@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { isSignal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { DifficultyLevel, Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,8 +17,6 @@ const exercise = {
 } as Exercise;
 
 describe('ExerciseCategoriesComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExerciseCategoriesComponent;
     let fixture: ComponentFixture<ExerciseCategoriesComponent>;
 
@@ -34,7 +32,7 @@ describe('ExerciseCategoriesComponent', () => {
     });
 
     it('should expose exercise as a signal input', () => {
-        expect(typeof component.exercise).toBe('function');
+        expect(isSignal(component.exercise)).toBe(true);
         expect(component.exercise()).toBe(exercise);
     });
 

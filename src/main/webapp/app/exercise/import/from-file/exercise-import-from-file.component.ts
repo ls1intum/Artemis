@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -13,6 +13,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseImportDialogData } from '../exercise-import.component';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',
@@ -25,6 +26,8 @@ export class ExerciseImportFromFileComponent implements OnInit {
     private alertService = inject(AlertService);
 
     exerciseType = input<ExerciseType | undefined>();
+    /** Emits the exercise read from the file, for hosts that embed the component without a PrimeNG dialog reference. */
+    readonly imported = output<Exercise>();
     private readonly selectedExerciseType = computed(() => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.exerciseType ?? this.exerciseType());
 
     exercise?: Exercise;
@@ -73,7 +76,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
                     // under buildConfig). Those fields are disjoint from Exercise, so we view the parsed exercise as also
                     // carrying the optional legacy build-config fields and copy them across.
                     const raw = exerciseJson as Exercise & Partial<ProgrammingExerciseBuildConfig>;
-                    Object.assign(buildConfig, raw);
+                    hydrate(buildConfig, raw);
                     progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
                 if (progEx.auxiliaryRepositories) {
@@ -123,6 +126,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
     }
 
     openImport(exercise: Exercise) {
+        this.imported.emit(exercise);
         this.dialogRef?.close(exercise);
     }
 }

@@ -3,14 +3,11 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-threads.component';
 
 describe('JvmThreadsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: JvmThreadsComponent;
     let fixture: ComponentFixture<JvmThreadsComponent>;
 

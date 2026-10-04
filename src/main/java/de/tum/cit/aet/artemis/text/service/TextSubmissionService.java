@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.text.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -17,20 +18,23 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.SavedSubmission;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
@@ -54,10 +58,10 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository,
-            Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
-        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
+            ExerciseDateService exerciseDateService, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
+            Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
@@ -66,37 +70,50 @@ public class TextSubmissionService extends SubmissionService {
     /**
      * Handles text submissions sent from the client and saves them in the database.
      *
-     * @param textSubmission the text submission that should be saved
-     * @param exercise       the corresponding text exercise
-     * @param user           the user who initiated the save/submission
+     * @param textSubmission            the text submission that should be saved
+     * @param exercise                  the corresponding text exercise
+     * @param user                      the user who initiated the save/submission
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return the saved text submission
      */
-    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user) {
+    public SavedSubmission<TextSubmission, StudentParticipationDTO> handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user,
+            @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
-        if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
+        // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
+        // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
+        // would return the same row. Every other caller passes null and the participation is resolved here.
+        // A projection, rebuilt with the exercise and the user this method already has: nothing here reads the
+        // participation's submissions, and loading the entity for them pulled the whole eager exercise chain along.
+        final var target = participationFromExamGate != null ? participationFromExamGate
+                : participationService.findSubmitTargetByExerciseAndStudent(exercise, user).orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId()));
+        if (textSubmission.getId() != null && !textSubmissionRepository.existsByIdAndParticipationId(textSubmission.getId(), target.id())) {
+            throw new AccessForbiddenException();
         }
-        final var participation = optionalParticipation.get();
-        final var dueDate = ExerciseDateService.getDueDate(participation);
+        final var dueDate = ExerciseDateService.getDueDate(exercise, target);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
-        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(exercise, target, user) && target.initializationDate().isBefore(dueDate.get())) {
             throw new AccessForbiddenException();
         }
 
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation) || participation.isPracticeMode()) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(exercise, target, user) || target.testRun()) {
             textSubmission.setSubmitted(true);
         }
 
-        // if athena results are present than create new submission on submit
-        if (!textSubmission.getResults().isEmpty()) {
-            log.debug("Creating a new submission due to Athena results for user: {}", user.getLogin());
+        // Once a result exists, the assessed submission must stay unchanged. Clients do not necessarily receive unreleased
+        // results, so this decision must use persisted state rather than the submitted entity.
+        if (textSubmission.getId() != null && resultRepository.existsBySubmissionId(textSubmission.getId())) {
+            log.debug("Creating a new submission because the existing submission has a result for user: {}", user.getLogin());
             textSubmission.setId(null);
         }
 
-        textSubmission = save(textSubmission, participation, exercise, user);
-        return textSubmission;
+        textSubmission = save(textSubmission, target, exercise, user);
+        // Mapped here rather than read back off the submission: its participation is only a foreign key, and reading it
+        // would load the entity this whole path exists to avoid.
+        return new SavedSubmission<>(textSubmission,
+                StudentParticipationDTO.of(target.afterSubmission(), exercise, participationService.findSubmitParticipant(exercise, user), true));
     }
 
     /**
@@ -108,19 +125,33 @@ public class TextSubmissionService extends SubmissionService {
      * @param user           the user who initiated the save
      * @return the textSubmission entity that was saved to the database
      */
-    private TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, User user) {
+    private TextSubmission save(TextSubmission textSubmission, StudentParticipationSubmitTargetDTO target, TextExercise textExercise, User user) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
-        participation.addSubmission(textSubmission);
+        // the foreign key is all the save needs from the participation, and the id gives it that without a load
+        textSubmission.setParticipation(StudentParticipation.idOnlyReference(target.id()));
 
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
-        }
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        textSubmission.setResults(new ArrayList<>());
-        textSubmission = textSubmissionRepository.save(textSubmission);
+        textSubmission.setResults(new HashSet<>());
+        if (textSubmission.getId() != null) {
+            // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
+            // Saving the detached entity would merge it, which reads the submission and its whole eager association graph
+            // back before writing it.
+            int updatedRows = textSubmissionRepository.updateExistingSubmission(textSubmission.getId(), target.id(), textSubmission.getText(), textSubmission.getLanguage(),
+                    textSubmission.isSubmitted(), textSubmission.getSubmissionDate(), textSubmission.getType());
+            if (updatedRows == 0) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Submission changed during save. Please try again.");
+            }
+        }
+        else {
+            textSubmission = textSubmissionRepository.save(textSubmission);
+        }
+
+        if (target.initializationState() != InitializationState.FINISHED) {
+            // Only this one column changes and the row exists, so it is an update by id rather than a save of an entity.
+            studentParticipationRepository.updateInitializationState(target.id(), InitializationState.FINISHED);
+        }
 
         // versioning of submission
         try {
@@ -128,7 +159,7 @@ public class TextSubmissionService extends SubmissionService {
                 submissionVersionService.saveVersionForTeam(textSubmission, user);
             }
             else if (textExercise.isExamExercise()) {
-                submissionVersionService.saveVersionForIndividual(textSubmission, user);
+                submissionVersionService.saveVersionForIndividualAsync(textSubmission, user);
             }
         }
         catch (Exception ex) {

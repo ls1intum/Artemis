@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -26,7 +25,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 describe('BonusComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: BonusComponent;
     let fixture: ComponentFixture<BonusComponent>;
 
@@ -342,6 +340,33 @@ describe('BonusComponent', () => {
 
         expect(setGradePointsSpy).toHaveBeenCalledTimes(1);
         expect(setGradePointsSpy).toHaveBeenCalledWith(examGradeSteps.gradeSteps, examGradeSteps.maxPoints);
+    });
+
+    it('should reconstruct a minimal course from the search DTO so the title and max points are readable', () => {
+        // Load without an existing bonus: setSourceGradingScale would otherwise overwrite the mapped scale's
+        // course/exam from the bonus response and hide the reconstruction this test asserts.
+        findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
+
+        const searchDto: GradingScaleDTO = {
+            id: 99,
+            gradeSteps: {
+                title: 'Awesome Bonus Source',
+                gradeType: GradeType.BONUS,
+                gradeSteps: [],
+                maxPoints: 123,
+                plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+                noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
+            },
+        };
+        findWithBonusSpy.mockReturnValue(of({ body: { resultsOnPage: [searchDto], numberOfPages: 1 } } as HttpResponse<SearchResult<GradingScaleDTO>>));
+
+        component.ngOnInit();
+
+        expect(component.sourceGradingScales()).toHaveLength(1);
+        const mappedScale = component.sourceGradingScales()[0];
+
+        expect(mappedScale.course?.title).toBe('Awesome Bonus Source');
+        expect(mappedScale.course?.maxPoints).toBe(123);
     });
 
     it('should get calculation sign', () => {

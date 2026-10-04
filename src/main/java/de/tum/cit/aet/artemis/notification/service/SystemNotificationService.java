@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.notification.web.NotificationWebsocketTopics.SYSTEM_NOTIFICATIONS;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -62,24 +64,22 @@ public class SystemNotificationService {
         return systemNotificationRepository.findAllActiveAndFutureSystemNotifications(ZonedDateTime.now());
     }
 
-    static final String SYSTEM_NOTIFICATION_TOPIC = "/topic/notification/system-notification";
-
-    // Legacy STOMP destination kept in parallel during the migration to /topic/notification/...
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    static final String LEGACY_SYSTEM_NOTIFICATION_TOPIC = "/topic/system-notification";
+    /**
+     * Finds all active and future system notifications and maps them to DTOs.
+     *
+     * @return the list of notification DTOs
+     */
+    public List<SystemNotificationDTO> findAllActiveAndFutureSystemNotificationDTOs() {
+        return findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList();
+    }
 
     /**
      * Sends the current list of active and future system notifications to all connected clients.
      * Call this method after changing any system notification.
      */
-    @SuppressWarnings("deprecation")
     public void distributeActiveAndFutureNotificationsToClients() {
-        List<SystemNotification> notifications = findAllActiveAndFutureSystemNotifications();
-        websocketMessagingService.sendMessage(SYSTEM_NOTIFICATION_TOPIC, notifications);
-        // Mirror to the legacy destination so older subscribers continue to receive updates during the migration window.
-        websocketMessagingService.sendMessage(LEGACY_SYSTEM_NOTIFICATION_TOPIC, notifications);
+        List<SystemNotificationDTO> notifications = findAllActiveAndFutureSystemNotificationDTOs();
+        websocketMessagingService.sendMessage(SYSTEM_NOTIFICATIONS.at(), notifications);
     }
 
     /**
@@ -129,7 +129,7 @@ public class SystemNotificationService {
             try {
                 String langKey = (recipient.langKey() != null && !recipient.langKey().isBlank()) ? recipient.langKey().strip() : "en";
 
-                var mailRecipient = new MailRecipientDTO(recipient.email(), langKey, null, recipient.firstName(), recipient.lastName(), null, null);
+                var mailRecipient = new MailRecipientDTO(recipient.email(), langKey, null, recipient.firstName(), recipient.lastName());
 
                 String[] formattedDates = formattedDatesByLocale.computeIfAbsent(langKey, lk -> {
                     Locale locale = Locale.forLanguageTag(lk);

@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
@@ -13,10 +12,7 @@ import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calenda
 import { CalendarEventsPerDaySectionComponent } from 'app/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { CalendarEvent } from 'app/openapi/model/calendarEvent';
 describe('CalendarEventsPerDaySectionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CalendarEventsPerDaySectionComponent;
     let fixture: ComponentFixture<CalendarEventsPerDaySectionComponent>;
 
@@ -27,10 +23,10 @@ describe('CalendarEventsPerDaySectionComponent', () => {
     const startOfWednesday = startOfTuesday.add(1, 'day');
     const week = Array.from({ length: 7 }, (_, i) => startOfMonday.add(i, 'day'));
     const events = [
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Exam, 'Exam', startOfTuesday.add(12, 'hour'), startOfTuesday.add(13, 'hour'), undefined, 'Marlon Nienaber'),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Object Design', startOfWednesday.add(10, 'hour'), startOfWednesday.add(12, 'hour'), undefined, undefined),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Tutorial, 'Tutorial', startOfWednesday.add(11, 'hour'), startOfWednesday.add(13, 'hour'), 'Zoom', 'Marlon Nienaber'),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.TextExercise, 'Start: Your aspirations as a programmer', startOfWednesday.add(12, 'hour'), undefined, undefined),
+        new IdentifiableCalendarEvent('EXAM', 'Exam', startOfTuesday.add(12, 'hour'), startOfTuesday.add(13, 'hour'), undefined, 'Marlon Nienaber'),
+        new IdentifiableCalendarEvent('LECTURE', 'Object Design', startOfWednesday.add(10, 'hour'), startOfWednesday.add(12, 'hour'), undefined, undefined),
+        new IdentifiableCalendarEvent('TUTORIAL', 'Tutorial', startOfWednesday.add(11, 'hour'), startOfWednesday.add(13, 'hour'), 'Zoom', 'Marlon Nienaber'),
+        new IdentifiableCalendarEvent('TEXT_EXERCISE', 'Start: Your aspirations as a programmer', startOfWednesday.add(12, 'hour'), undefined, undefined),
     ];
 
     afterEach(() => {

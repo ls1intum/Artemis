@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { WritableSignal } from '@angular/core';
 import { FeedbackLearnerProfileComponent } from './feedback-learner-profile.component';
 import { LearnerProfileApiService } from '../learner-profile-api.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -14,8 +14,6 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('FeedbackLearnerProfileComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FeedbackLearnerProfileComponent;
     let fixture: ComponentFixture<FeedbackLearnerProfileComponent>;
     let learnerProfileApiService: LearnerProfileApiService;
@@ -157,7 +155,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(httpError);
 
             // Act
-            await component.ngOnInit();
+            await component['initializeFeedbackLearnerProfileComponent']();
             await fixture.whenStable();
 
             // Assert
@@ -176,7 +174,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(genericError);
 
             // Act
-            await component.ngOnInit();
+            await component['initializeFeedbackLearnerProfileComponent']();
             await fixture.whenStable();
 
             // Assert
@@ -226,7 +224,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(newProfile);
 
         // Act
-        await component.ngOnInit();
+        await component['initializeFeedbackLearnerProfileComponent']();
         await fixture.whenStable();
 
         // Assert
@@ -245,7 +243,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithUndefinedValues);
 
         // Act
-        await component.ngOnInit();
+        await component['initializeFeedbackLearnerProfileComponent']();
         await fixture.whenStable();
 
         // Assert - Should set default values since DTO constructor converts undefined to DEFAULT_VALUE
@@ -298,7 +296,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profile);
 
             // Act
-            await component.ngOnInit();
+            await component['initializeFeedbackLearnerProfileComponent']();
             await fixture.whenStable();
 
             // Assert
@@ -342,6 +340,71 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             component.disabled.set(true);
             expect(component.disabled()).toBeTruthy();
+        });
+    });
+
+    describe('Segmented control selection', () => {
+        it('should save when an option is chosen in the rendered control', async () => {
+            component.learnerProfile.set(new LearnerProfileDTO({ id: 1, feedbackDetail: 1, feedbackFormality: 3, hasSetupFeedbackPreferences: true }));
+            component.disabled.set(false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            // Covers the template's (changed) binding, which a direct handler call cannot.
+            const options = fixture.nativeElement.querySelectorAll('tumaet-ui-select-button button');
+            expect(options.length).toBeGreaterThan(1);
+            (options[2] as HTMLButtonElement).click();
+
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).toHaveBeenCalled();
+        });
+
+        /** The controls disallow an empty selection, so only a numeric value may reach the profile. */
+        function selectionChange(target: WritableSignal<number | undefined>, value: unknown): void {
+            (component as unknown as { onSelectionChange: (t: WritableSignal<number | undefined>, v: unknown) => void }).onSelectionChange(target, value);
+        }
+
+        it('should apply the chosen feedback detail and save the profile', () => {
+            selectionChange(component.feedbackDetail, 3);
+
+            expect(component.feedbackDetail()).toBe(3);
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).toHaveBeenCalled();
+        });
+
+        it('should apply the chosen feedback formality and save the profile', () => {
+            selectionChange(component.feedbackFormality, 1);
+
+            expect(component.feedbackFormality()).toBe(1);
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).toHaveBeenCalled();
+        });
+
+        it('should ignore a cleared selection rather than writing it to the profile', () => {
+            const before = component.feedbackDetail();
+
+            selectionChange(component.feedbackDetail, undefined);
+
+            expect(component.feedbackDetail()).toBe(before);
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Onboarding modal', () => {
+        it('should open the onboarding modal', () => {
+            expect(component.showOnboardingModal()).toBeFalsy();
+
+            component.openOnboardingModal();
+
+            expect(component.showOnboardingModal()).toBeTruthy();
+        });
+
+        it('should reload the profile once onboarding completes', async () => {
+            const loadSpy = vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser');
+            loadSpy.mockClear();
+
+            component.onOnboardingCompleted();
+            await vi.waitFor(() => expect(loadSpy).toHaveBeenCalled());
+
+            expect(component.learnerProfile()).toEqual(mockProfile);
         });
     });
 });

@@ -10,12 +10,10 @@ import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-route
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { ProgressBar } from 'primeng/progressbar';
 
 describe('CompetencyContributionCardComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CompetencyContributionCardComponent;
     let fixture: ComponentFixture<CompetencyContributionCardComponent>;
 

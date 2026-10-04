@@ -1,16 +1,13 @@
-import { HtmlForPostingMarkdownPipe } from 'app/foundation/pipes/html-for-posting-markdown.pipe';
 import { TestBed } from '@angular/core/testing';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/foundation/pipes/reacting-users-on-posting.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { metisTutor, metisUser1, metisUser2 } from 'test/helpers/sample/metis-sample-data';
-import { MockPipe } from 'ng-mocks';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { communicationTutor, communicationUser1, communicationUser2 } from 'test/helpers/sample/communication-sample-data';
+import { MockDirective } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ReactingUsersOnPostingsPipe', () => {
-    setupTestBed({ zoneless: true });
-
     let reactingUsersPipe: ReactingUsersOnPostingPipe;
     let translateService: TranslateService;
     let updateReactingUsersStringSpy: ReturnType<typeof vi.spyOn>;
@@ -18,7 +15,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockPipe(HtmlForPostingMarkdownPipe)],
+            imports: [MockDirective(MarkdownDirective)],
             providers: [ReactingUsersOnPostingPipe, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
@@ -34,11 +31,11 @@ describe('ReactingUsersOnPostingsPipe', () => {
     });
 
     it('should return string for one user that is not "you"', () => {
-        const reactingUsers = [metisUser1.name!];
+        const reactingUsers = [communicationUser1.name!];
         reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
         });
-        expect(transformedStringWithReactingUsers).toBe(metisUser1.name + 'artemisApp.metis.reactedTooltip');
+        expect(transformedStringWithReactingUsers).toBe(communicationUser1.name + 'artemisApp.communication.reactedTooltip');
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     });
 
@@ -46,44 +43,53 @@ describe('ReactingUsersOnPostingsPipe', () => {
         reactingUsersPipe.transform([PLACEHOLDER_USER_REACTED]).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
         });
-        expect(transformedStringWithReactingUsers).toBe('artemisApp.metis.you');
+        expect(transformedStringWithReactingUsers).toBe('artemisApp.communication.you');
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     });
 
     it('should return string for two users that do not include "you"', () => {
-        const reactingUsers = [metisUser1.name!, metisUser2.name!];
-        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
-            transformedStringWithReactingUsers = transformedReactingUsers;
-        });
-        expect(transformedStringWithReactingUsers).toBe(metisUser1.name! + 'artemisApp.metis.and' + metisUser2.name! + 'artemisApp.metis.reactedTooltip');
-        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should return string for two users that do include "you"', () => {
-        const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED];
-        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
-            transformedStringWithReactingUsers = transformedReactingUsers;
-        });
-        expect(transformedStringWithReactingUsers).toBe('artemisApp.metis.you' + 'artemisApp.metis.and' + metisUser1.name! + 'artemisApp.metis.reactedTooltip');
-        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should return string for three users that do include "you" and separate the first two users with comma', () => {
-        const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED, metisTutor.name!];
+        const reactingUsers = [communicationUser1.name!, communicationUser2.name!];
         reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
         });
         expect(transformedStringWithReactingUsers).toBe(
-            'artemisApp.metis.you' + ', ' + metisUser1.name! + 'artemisApp.metis.and' + metisTutor.name! + 'artemisApp.metis.reactedTooltip',
+            communicationUser1.name! + 'artemisApp.communication.and' + communicationUser2.name! + 'artemisApp.communication.reactedTooltip',
+        );
+        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should return string for two users that do include "you"', () => {
+        const reactingUsers = [communicationUser1.name!, PLACEHOLDER_USER_REACTED];
+        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
+        });
+        expect(transformedStringWithReactingUsers).toBe(
+            'artemisApp.communication.you' + 'artemisApp.communication.and' + communicationUser1.name! + 'artemisApp.communication.reactedTooltip',
+        );
+        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should return string for three users that do include "you" and separate the first two users with comma', () => {
+        const reactingUsers = [communicationUser1.name!, PLACEHOLDER_USER_REACTED, communicationTutor.name!];
+        reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
+            transformedStringWithReactingUsers = transformedReactingUsers;
+        });
+        expect(transformedStringWithReactingUsers).toBe(
+            'artemisApp.communication.you' +
+                ', ' +
+                communicationUser1.name! +
+                'artemisApp.communication.and' +
+                communicationTutor.name! +
+                'artemisApp.communication.reactedTooltip',
         );
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     });
 
     it('should trim list of reacting users but always include "you', () => {
         const reactingUsers = [
-            metisUser1.name!,
-            metisUser2.name!,
-            metisTutor.name!,
+            communicationUser1.name!,
+            communicationUser2.name!,
+            communicationTutor.name!,
             'userA',
             'userB',
             'userC',
@@ -98,13 +104,13 @@ describe('ReactingUsersOnPostingsPipe', () => {
             transformedStringWithReactingUsers = transformedReactingUsers;
         });
         expect(transformedStringWithReactingUsers).toBe(
-            'artemisApp.metis.you' +
+            'artemisApp.communication.you' +
                 ', ' +
-                metisUser1.name! +
+                communicationUser1.name! +
                 ', ' +
-                metisUser2.name! +
+                communicationUser2.name! +
                 ', ' +
-                metisTutor.name! +
+                communicationTutor.name! +
                 ', ' +
                 'userA' +
                 ', ' +
@@ -117,13 +123,13 @@ describe('ReactingUsersOnPostingsPipe', () => {
                 'userE' +
                 ', ' +
                 'userF' +
-                'artemisApp.metis.reactedTooltipTrimmed',
+                'artemisApp.communication.reactedTooltipTrimmed',
         );
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     });
 
     it('should trigger update of reacting users on language change', () => {
-        const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED, metisTutor.name!];
+        const reactingUsers = [communicationUser1.name!, PLACEHOLDER_USER_REACTED, communicationTutor.name!];
         reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
         });

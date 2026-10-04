@@ -3,14 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SplitTranslateLoader } from 'app/core/config/split-translate-loader';
 import { Subject, firstValueFrom } from 'rxjs';
 
 describe('SplitTranslateLoader', () => {
-    setupTestBed({ zoneless: true });
-
     let loader: SplitTranslateLoader;
     let httpMock: HttpTestingController;
     let translateServiceMock: { setTranslation: ReturnType<typeof vi.fn> };

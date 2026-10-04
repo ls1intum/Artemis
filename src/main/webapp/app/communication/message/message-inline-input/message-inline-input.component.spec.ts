@@ -1,15 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FormBuilder } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { directMessageUser1, metisPostToCreateUser1 } from 'test/helpers/sample/metis-sample-data';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { communicationPostToCreateUser1, directMessageUser1 } from 'test/helpers/sample/communication-sample-data';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -17,7 +16,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -25,13 +24,11 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('MessageInlineInputComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: MessageInlineInputComponent;
     let fixture: ComponentFixture<MessageInlineInputComponent>;
-    let metisService: MetisService;
-    let metisServiceCreateStub: ReturnType<typeof vi.spyOn>;
-    let metisServiceUpdateStub: ReturnType<typeof vi.spyOn>;
+    let communicationService: CommunicationService;
+    let communicationServiceCreateStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUpdateStub: ReturnType<typeof vi.spyOn>;
     let draftService: DraftService;
     let accountService: AccountService;
 
@@ -51,8 +48,8 @@ describe('MessageInlineInputComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 FormBuilder,
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: MetisConversationService, useValue: {} },
+                { provide: CommunicationService, useClass: MockCommunicationService },
+                { provide: CourseConversationsService, useValue: {} },
                 LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
@@ -67,15 +64,15 @@ describe('MessageInlineInputComponent', () => {
         });
         fixture = TestBed.createComponent(MessageInlineInputComponent);
         component = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
         draftService = TestBed.inject(DraftService);
         accountService = TestBed.inject(AccountService);
-        metisServiceCreateStub = vi.spyOn(metisService, 'createPost');
-        metisServiceUpdateStub = vi.spyOn(metisService, 'updatePost');
+        communicationServiceCreateStub = vi.spyOn(communicationService, 'createPost');
+        communicationServiceUpdateStub = vi.spyOn(communicationService, 'updatePost');
     });
 
-    it('should invoke metis service with created post', () => {
-        component.posting.set(metisPostToCreateUser1);
+    it('should invoke communication service with created post', () => {
+        component.posting.set(communicationPostToCreateUser1);
         fixture.detectChanges();
 
         const newContent = 'new content';
@@ -85,7 +82,7 @@ describe('MessageInlineInputComponent', () => {
         });
         component.confirm();
         vi.advanceTimersByTime(300);
-        expect(metisServiceCreateStub).toHaveBeenCalledWith({
+        expect(communicationServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting()!,
             content: newContent,
             title: undefined,
@@ -95,11 +92,11 @@ describe('MessageInlineInputComponent', () => {
         expect(onCreateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should stop loading when metis service throws error during message creation', () => {
-        metisServiceCreateStub.mockImplementation(() => throwError(() => new Error('error')));
+    it('should stop loading when communication service throws error during message creation', () => {
+        communicationServiceCreateStub.mockImplementation(() => throwError(() => new Error('error')));
         const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
 
-        component.posting.set(metisPostToCreateUser1);
+        component.posting.set(communicationPostToCreateUser1);
         fixture.detectChanges();
 
         const newContent = 'new content';
@@ -114,7 +111,7 @@ describe('MessageInlineInputComponent', () => {
         expect(onCreateSpy).not.toHaveBeenCalled();
     });
 
-    it('should invoke metis service with edited post', () => {
+    it('should invoke communication service with edited post', () => {
         component.posting.set(directMessageUser1);
         fixture.detectChanges();
 
@@ -127,7 +124,7 @@ describe('MessageInlineInputComponent', () => {
 
         component.confirm();
 
-        expect(metisServiceUpdateStub).toHaveBeenCalledWith({
+        expect(communicationServiceUpdateStub).toHaveBeenCalledWith({
             ...component.posting()!,
             content: editedContent,
             title: undefined,
@@ -137,8 +134,8 @@ describe('MessageInlineInputComponent', () => {
         expect(onEditSpy).toHaveBeenCalledOnce();
     });
 
-    it('should stop loading when metis service throws error during message updating', () => {
-        metisServiceUpdateStub.mockImplementation(() => throwError(() => new Error('error')));
+    it('should stop loading when communication service throws error during message updating', () => {
+        communicationServiceUpdateStub.mockImplementation(() => throwError(() => new Error('error')));
 
         component.posting.set(directMessageUser1);
         fixture.detectChanges();

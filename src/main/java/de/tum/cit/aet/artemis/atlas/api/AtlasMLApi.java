@@ -74,6 +74,17 @@ public class AtlasMLApi extends AbstractAtlasApi {
     }
 
     /**
+     * Suggests competencies using short timeouts, for best-effort / advisory callers that must not block on a
+     * slow or unreachable AtlasML instance (e.g. the orchestrator similarity shortlist).
+     *
+     * @param request the suggestion request containing description and course ID
+     * @return the suggested competencies response
+     */
+    public SuggestCompetencyResponseDTO suggestCompetenciesWithShortTimeout(SuggestCompetencyRequestDTO request) {
+        return atlasMLService.suggestCompetenciesWithShortTimeout(request);
+    }
+
+    /**
      * Suggests competency relations for a given course.
      *
      * @param courseId the course identifier

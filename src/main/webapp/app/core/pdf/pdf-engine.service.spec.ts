@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 
@@ -11,8 +10,6 @@ vi.mock('@embedpdf/engines/pdfium-worker-engine', () => ({
 }));
 
 describe('PdfEngineService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: PdfEngineService;
     const fakeEngine = { id: 'pdfium-engine' };
 

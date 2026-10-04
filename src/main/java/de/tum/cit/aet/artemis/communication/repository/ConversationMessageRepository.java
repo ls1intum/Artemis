@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getPi
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextAndAuthorSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSortSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnresolvedSpecification;
+import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnverifiedIrisAnswersSpecification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
@@ -59,6 +60,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
             .and(getPinnedSpecification(Boolean.TRUE.equals(postContextFilter.pinnedOnly())))
+            .and(getUnverifiedIrisAnswersSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnverifiedIris()), User.IRIS_BOT_LOGIN))
             .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
             // @formatter:on
     }

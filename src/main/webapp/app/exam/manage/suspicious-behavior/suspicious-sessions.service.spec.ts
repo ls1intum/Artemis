@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
@@ -8,8 +7,6 @@ import { SuspiciousExamSessions, SuspiciousSessionReason, SuspiciousSessionsAnal
 import { provideHttpClient } from '@angular/common/http';
 
 describe('SuspiciousSessionsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: SuspiciousSessionsService;
     let httpMock: HttpTestingController;
     const suspiciousSessions = {
@@ -55,6 +52,17 @@ describe('SuspiciousSessionsService', () => {
         const req = httpMock.expectOne({
             method: 'GET',
             url: 'api/exam/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=true&differentStudentExamsSameBrowserFingerprint=true&sameStudentExamDifferentIPAddresses=true&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=false',
+        });
+        req.flush(suspiciousSessions);
+        await Promise.resolve();
+    });
+
+    it('should send the criteria for the IP addresses and the browser fingerprints of the same student exam independently', async () => {
+        const options = new SuspiciousSessionsAnalysisOptions(false, false, false, true, false);
+        service.getSuspiciousSessions(1, 2, options).subscribe((resp) => expect(resp).toEqual(suspiciousSessions));
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: 'api/exam/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=false&differentStudentExamsSameBrowserFingerprint=false&sameStudentExamDifferentIPAddresses=false&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=false',
         });
         req.flush(suspiciousSessions);
         await Promise.resolve();

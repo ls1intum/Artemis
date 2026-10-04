@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ConversationGlobalSearchComponent } from './conversation-global-search.component';
@@ -22,8 +21,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ConversationGlobalSearchComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ConversationGlobalSearchComponent;
     let fixture: ComponentFixture<ConversationGlobalSearchComponent>;
     let courseManagementService: CourseManagementService;

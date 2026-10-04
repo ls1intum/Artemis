@@ -1,7 +1,6 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VirtualScrollComponent } from 'app/shared-ui/virtual-scroll/virtual-scroll.component';
-import { metisCoursePosts, metisGeneralCourseWidePosts } from 'test/helpers/sample/metis-sample-data';
+import { communicationCoursePosts, communicationGeneralCourseWidePosts } from 'test/helpers/sample/communication-sample-data';
 import { ReplaySubject } from 'rxjs';
 import { NavigationStart, Router, RouterEvent } from '@angular/router';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -15,7 +14,6 @@ class MockRouter {
 }
 
 describe('VirtualScrollComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: VirtualScrollComponent<Post>;
     let fixture: ComponentFixture<VirtualScrollComponent<Post>>;
 
@@ -82,18 +80,18 @@ describe('VirtualScrollComponent', () => {
 
     it('should initialize DOM tree with items', () => {
         setInput('forceReload', true);
-        setInput('items', metisCoursePosts);
+        setInput('items', communicationCoursePosts);
 
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(comp.previousItemsHeight).toHaveLength(metisCoursePosts.length);
+        expect(comp.previousItemsHeight).toHaveLength(communicationCoursePosts.length);
         expect(prepareDataItemsSpy).toHaveBeenCalled();
         expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
     });
 
     it('should not re-process items when only forceReload changes', () => {
-        setInput('items', metisCoursePosts);
+        setInput('items', communicationCoursePosts);
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
         prepareDataItemsSpy.mockClear();
@@ -135,7 +133,7 @@ describe('VirtualScrollComponent', () => {
     });
 
     it('should not unintentionally scroll on clicking the text area of posting markdown editor component', () => {
-        setInput('items', metisGeneralCourseWidePosts);
+        setInput('items', communicationGeneralCourseWidePosts);
 
         originalWindow.scrollY = 1500;
         global.window.dispatchEvent(new Event('scroll'));
@@ -185,7 +183,7 @@ describe('VirtualScrollComponent', () => {
         setInput('scrollPaddingTop', SCROLL_PADDING_TOP);
         setInput('minItemHeight', MIN_ITEM_HEIGHT);
         setInput('endOfListReachedItemThreshold', END_OF_LIST_THRESHOLD);
-        setInput('items', metisCoursePosts);
+        setInput('items', communicationCoursePosts);
 
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();

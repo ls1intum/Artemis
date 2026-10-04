@@ -1,10 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class RepositoryService {
     private http = inject(HttpClient);
 
@@ -29,7 +29,7 @@ export class RepositoryService {
      * @param participationId The identifier of the participation.
      */
     pull(participationId: number): Observable<void> {
-        return this.http.get<void>(`api/programming/participations/${participationId}/repository/pull`, {});
+        return this.http.post<void>(`api/programming/participations/${participationId}/repository/pull`, {});
     }
 }
 
@@ -43,7 +43,7 @@ export interface IRepositoryFileService {
     delete: (participationId: number, fileName: string) => Observable<void>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class RepositoryFileService implements IRepositoryFileService {
     private http = inject(HttpClient);
 

@@ -1,5 +1,5 @@
 @if (labelName() && !hideLabelName()) {
-    <label [attr.for]="inputId()" class="font-bold">
+    <label [attr.for]="resolvedInputId()" class="font-bold">
         {{ labelName() }}
     </label>
 }
@@ -14,13 +14,37 @@
         <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-muted-color" />
     </fa-stack>
 }
-<div class="flex relative" data-testid="date-picker-wrapper" [class.invalid-date-input]="showErrorBorder()" (keydown)="onPickerKeydown($event)" (paste)="onPickerPaste($event)">
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- Key events bubble from the native date input; the wrapper itself is not a control. -->
+<div
+    class="flex relative"
+    data-testid="date-picker-wrapper"
+    [attr.data-invalid]="showErrorBorder()"
+    [class.invalid-date-input]="showErrorBorder()"
+    (keydown)="onPickerKeydown($event)"
+    (paste)="onPickerPaste($event)"
+>
+    @if (lockedToGroup()) {
+        <div
+            class="date-lock-overlay"
+            role="button"
+            tabindex="0"
+            (click)="lockedClick.emit()"
+            (keydown.enter)="lockedClick.emit()"
+            (keydown.space)="lockedClick.emit()"
+            [tumAetUiTooltip]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+        >
+            <fa-icon [icon]="faLock" class="date-lock-icon text-muted-color" />
+        </div>
+    }
     <p-datepicker
         #datePicker
-        [inputId]="inputId()"
         styleClass="w-full"
-        [inputStyleClass]="warning() ? 'date-time-picker-warning-border' : ''"
         panelStyleClass="jhi-date-time-picker-panel"
+        [pt]="passThrough()"
+        [inputId]="resolvedInputId()"
+        [fluid]="fluid()"
+        [inputStyleClass]="warning() ? 'date-time-picker-warning-border' : ''"
         [ngModel]="value() ?? null"
         [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="updateField($event)"
@@ -43,7 +67,7 @@
         [minDate]="minDate()"
         [maxDate]="maxDate()"
         [defaultDate]="startDate()"
-        [disabled]="disabled()"
+        [disabled]="effectiveDisabled()"
         [showButtonBar]="showTime() || timeOnly()"
         [invalid]="showErrorBorder()"
     >
@@ -56,16 +80,22 @@
         </ng-template>
     </p-datepicker>
 </div>
-@if (!hideValidationMessage() && (!isInputValid() || (requiredField() && !dateInputValue()))) {
+@if (showValidationMessage()) {
     @if (labelName()) {
         <div
+            [id]="validationMessageId()"
             class="text-state-danger text-sm mt-1 block"
             data-testid="date-picker-validation-message"
             jhiTranslate="entity.dateMissingOrNotValid"
             [translateValues]="{ labelName: labelName() }"
         ></div>
     } @else {
-        <div class="text-state-danger text-sm mt-1 block" data-testid="date-picker-validation-message" jhiTranslate="entity.dateMissingOrNotValidGeneric"></div>
+        <div
+            [id]="validationMessageId()"
+            class="text-state-danger text-sm mt-1 block"
+            data-testid="date-picker-validation-message"
+            jhiTranslate="entity.dateMissingOrNotValidGeneric"
+        ></div>
     }
 }
 @if (warning()) {

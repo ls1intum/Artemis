@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardLargeComponent } from 'app/course/sidebar/sidebar-card-large/sidebar-card-large.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockModule } from 'ng-mocks';
@@ -10,7 +9,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardLargeComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: SidebarCardLargeComponent;
     let fixture: ComponentFixture<SidebarCardLargeComponent>;
     let router: MockRouter;
@@ -48,7 +46,7 @@ describe('SidebarCardLargeComponent', () => {
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         element.click();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem().id);
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem().id, expect.any(MouseEvent));
         expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
@@ -59,7 +57,7 @@ describe('SidebarCardLargeComponent', () => {
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         itemElement.click();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId', expect.any(MouseEvent));
         expect(router.navigate).toHaveBeenCalled();
         const navigationArray = router.navigate.mock.calls[1][0];
         expect(navigationArray).toStrictEqual(['./testId']);
@@ -72,7 +70,7 @@ describe('SidebarCardLargeComponent', () => {
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         itemElement.click();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId', expect.any(MouseEvent));
         expect(router.navigate).toHaveBeenCalled();
         const navigationArray = router.navigate.mock.calls[1][0];
         expect(navigationArray).toStrictEqual(['', 'testId']);

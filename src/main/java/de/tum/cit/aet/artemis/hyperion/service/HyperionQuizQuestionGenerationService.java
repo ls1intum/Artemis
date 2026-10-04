@@ -403,6 +403,7 @@ public class HyperionQuizQuestionGenerationService {
             @JsonProperty(required = false) @JsonPropertyDescription("optional, omit if not needed") @Nullable String explanation) {
     }
 
-    private record RefinedQuestionWithExplanationOutput(GeneratedQuestionOutput question, String reasoning) {
+    private record RefinedQuestionWithExplanationOutput(GeneratedQuestionOutput question,
+            @JsonPropertyDescription("Brief explanation of what was changed, written in the same language as the quiz question text") String reasoning) {
     }
 }

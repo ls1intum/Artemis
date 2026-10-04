@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { QuizTrainingSettingsService } from './quiz-training-settings.service';
@@ -7,8 +6,6 @@ import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course
 import { provideHttpClient } from '@angular/common/http';
 
 describe('QuizTrainingSettingsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: QuizTrainingSettingsService;
     let httpMock: HttpTestingController;
 

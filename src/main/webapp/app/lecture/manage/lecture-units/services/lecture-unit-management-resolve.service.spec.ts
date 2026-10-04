@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
@@ -9,8 +8,6 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/ser
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('AttachmentVideoUnitResolve', () => {
-    setupTestBed({ zoneless: true });
-
     let resolver: AttachmentVideoUnitResolve;
     let service: AttachmentVideoUnitService;
     let route: ActivatedRouteSnapshot;

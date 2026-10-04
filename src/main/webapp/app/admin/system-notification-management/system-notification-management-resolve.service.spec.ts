@@ -4,7 +4,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot } from '@angular/router';
@@ -14,8 +13,6 @@ import { SystemNotification } from 'app/admin/system-notification-management/sys
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 describe('SystemNotificationManagementResolve', () => {
-    setupTestBed({ zoneless: true });
-
     let systemNotificationService: SystemNotificationService;
     let resolver: SystemNotificationManagementResolve;
 

@@ -14,11 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('TextExamSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TextExamSummaryComponent>;
     let component: TextExamSummaryComponent;
 

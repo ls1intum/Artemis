@@ -3,9 +3,9 @@
         "gradingSystem": {
             "title": "Notenschlüssel",
             "titleCourse": "Notenschlüssel für Kurs",
-            "titleExam": "Notenschlüssel für Klausur",
+            "titleExam": "Notenschlüssel",
             "titleBonus": "Notenschlüssel für Bonus",
-            "defaultButton": "Standard Notenschlüssel Generieren",
+            "defaultButton": "Standard Notenschlüssel Setzen",
             "gradeType": {
                 "title": "Notentyp",
                 "grade": "Note",
@@ -33,8 +33,8 @@
                 "weight": "Gesamtgewichtung (%)"
             },
             "csv": {
-                "importButton": "Importieren (.csv)",
-                "exportButton": "Exportieren (.csv)"
+                "importButton": "Importiere CSV",
+                "exportButton": "Exportiere CSV"
             },
             "firstPassingGrade": "Bestanden ab",
             "min": "Min %",
@@ -92,7 +92,11 @@
                 "invalidFirstAndLastStep": "Der Min % der ersten Notenstufe muss 0 sein und der Max % der letzten Notenstufe muss mindestens 100 sein!",
                 "invalidBasicPresentationIsEnabled": "Die Präsentationen sind für diesen Kurs schon definiert!",
                 "invalidPresentationsNumber": "Die Anzahl der Präsentationen muss ganzzahlig größer als 0 sein!",
-                "invalidPresentationsWeight": "Das Gesamtgewicht der Präsentationen muss zwischen 0 und 99 liegen!"
+                "invalidPresentationsWeight": "Das Gesamtgewicht der Präsentationen muss zwischen 0 und 99 liegen!",
+                "maxPointsTooHigh": "Die maximale Punktzahl darf {{ max }} nicht überschreiten.",
+                "maxPointsTooLow": "Die maximale Punktzahl muss mindestens {{ min }} betragen.",
+                "maxPointsWholeNumber": "Die maximale Punktzahl muss eine ganze Zahl sein.",
+                "valueTooHigh": "Der Wert darf {{ max }} nicht überschreiten."
             },
             "overview": {
                 "info": "Der Notenschlüssel basiert auf der erreichbaren Punktzahl. Er kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
@@ -120,6 +124,12 @@
             "deleted": "Notenschlüssel wurde gelöscht",
             "plagiarismGrade": "Plagiatsnote",
             "noParticipationGrade": "Nicht Teilgenommen Note"
+        },
+        "gradingScaleUpdate": {
+            "courseMaxPoints": "Maximale Kurspunktzahl",
+            "coursePresentationScore": "Präsentationswertung des Kurses",
+            "examMaxPoints": "Maximale Klausurpunktzahl",
+            "presentationsNumber": "Anzahl der Präsentationen"
         }
     }
 }

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { CropperPositionService } from 'app/shared-ui/image-cropper/services/cropper-position.service';
@@ -12,10 +11,10 @@ import { CropperPosition } from 'app/shared-ui/image-cropper/interfaces/cropper-
 import { CropperSettings } from 'app/shared-ui/image-cropper/interfaces/cropper.settings';
 import { ElementRef } from '@angular/core';
 import { ImageCroppedEvent } from 'app/shared-ui/image-cropper/interfaces/image-cropped-event.interface';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ImageCropperComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ImageCropperComponent>;
     let comp: ImageCropperComponent;
     let cropperPositionService: CropperPositionService;
@@ -31,7 +30,12 @@ describe('ImageCropperComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [MockProvider(CropService), MockProvider(CropperPositionService), MockProvider(LoadImageService)],
+            providers: [
+                MockProvider(CropService),
+                MockProvider(CropperPositionService),
+                MockProvider(LoadImageService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ImageCropperComponent);

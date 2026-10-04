@@ -1,27 +1,17 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.ImageType;
-import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -33,15 +23,20 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Conditional(LectureEnabled.class)
 @Service
@@ -50,16 +45,19 @@ public class AttachmentVideoUnitService {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitService.class);
 
-    /**
-     * DPI used to render PDF pages for the content fingerprint. Low enough to keep rendering cheap, high enough to detect visual changes (replaced diagrams, vector graphics, ...).
-     */
-    private static final int FINGERPRINT_RENDER_DPI = 50;
-
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final AttachmentRepository attachmentRepository;
 
     private final FileService fileService;
+
+    private final AttachmentFileHashService attachmentFileHashService;
+
+    private final LectureContentUpdateClassifierService lectureContentUpdateClassifierService;
+
+    private final SlideRepository slideRepository;
+
+    private final IrisLectureUnitSyncService irisLectureUnitSyncService;
 
     private final SlideSplitterService slideSplitterService;
 
@@ -71,10 +69,15 @@ public class AttachmentVideoUnitService {
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            Optional<LectureContentProcessingService> contentProcessingService) {
+            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService,
+            LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
+        this.attachmentFileHashService = attachmentFileHashService;
+        this.lectureContentUpdateClassifierService = lectureContentUpdateClassifierService;
+        this.slideRepository = slideRepository;
+        this.irisLectureUnitSyncService = irisLectureUnitSyncService;
         this.slideSplitterService = slideSplitterService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
@@ -94,12 +97,13 @@ public class AttachmentVideoUnitService {
         // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
 
-        if (attachment != null && file != null) {
+        if (attachment != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 
         // Trigger automated content processing (transcription and ingestion)
         contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+        irisLectureUnitSyncService.markVisibilityDirty(buildSnapshot(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }
@@ -120,7 +124,7 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
-        int payloadFingerprintBeforeUpdate = buildIngestionPayloadFingerprint(existingAttachmentVideoUnit);
+        LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
@@ -129,10 +133,13 @@ public class AttachmentVideoUnitService {
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+        AttachmentFileUpdateResult fileUpdateResult = AttachmentFileUpdateResult.unchanged(existingAttachment != null ? existingAttachment.getVersion() : null);
         boolean createdNewAttachment = false;
+        Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber = null;
 
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
+            fileUpdateResult = AttachmentFileUpdateResult.attachmentAdded(existingAttachmentVideoUnit.getAttachment().getVersion());
             createdNewAttachment = true;
         }
 
@@ -145,150 +152,159 @@ public class AttachmentVideoUnitService {
             if (createdNewAttachment) {
                 // Split PDF files into individual slides for easier navigation
                 if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null));
+                    projectedSlideHiddenUntilBySlideNumber = Map.of();
                 }
             }
             else if (existingAttachment != null) {
                 updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
 
-                // Re-uploading a file whose content is unchanged must not bump the version or trigger a re-ingest. The pdf-preview client re-serializes the PDF on every save
-                // (e.g. when only hidden-slide dates change), so the raw bytes always differ; we therefore compare the PDF content (extracted text + page count), which is stable
-                // across re-serialization. Only a genuine content change bumps the version.
-                boolean fileContentChanged = hasUploadedFile && !isUploadedFileContentIdenticalToStored(updateFile, existingAttachment);
-
-                // Update file and increment version number only when the uploaded content actually changed
-                if (fileContentChanged) {
-                    handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
-                    final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
-                    existingAttachment.setVersion(revision);
+                if (hasUploadedFile) {
+                    fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+                    if (fileUpdateResult.fileBytesChanged()) {
+                        log.debug("Updated attachment {} file bytes from version {} to {}", existingAttachment.getId(), fileUpdateResult.oldVersion(),
+                                fileUpdateResult.newVersion());
+                    }
                 }
 
                 Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
-                // Slide splitting is intentionally identical to develop: it runs on every uploaded file, independent of the content fingerprint. The fingerprint only gates the
-                // version bump (and therefore the Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
+                if (!hasUploadedFile && hiddenPages != null) {
+                    slideSplitterService.updateSlideVisibility(savedAttachmentVideoUnit, hiddenPages);
+                }
+
+                // Slide splitting is intentionally identical to develop: it runs on every uploaded file. The SHA-256 comparison only gates the version bump (and therefore the
+                // Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
                 if (updateFile != null) {
                     // Split PDF into slides, respecting custom page order if provided
                     if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                         if (pageOrder == null) {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null));
+                            if (fileUpdateResult.fileBytesChanged()) {
+                                projectedSlideHiddenUntilBySlideNumber = Map.of();
+                            }
                         }
                         else {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder));
+                            projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
                         }
                     }
                 }
             }
         }
+        else if (existingAttachment != null) {
+            keepAttachmentInStepWithUnit(existingAttachment, savedAttachmentVideoUnit);
+        }
 
-        // Trigger content processing if the ingestion payload changed and prepare unit for client response
-        triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
+        LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
+        var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
+        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
     }
 
-    private void triggerContentProcessingBasedOnPayloadChange(int payloadFingerprintBeforeUpdate, AttachmentVideoUnit savedAttachmentVideoUnit) {
-        int payloadFingerprintAfterUpdate = buildIngestionPayloadFingerprint(savedAttachmentVideoUnit);
-        boolean ingestionPayloadChanged = payloadFingerprintBeforeUpdate != payloadFingerprintAfterUpdate;
-
-        if (!ingestionPayloadChanged) {
-            // No changes in the ingestion payload - skip processing entirely
+    private void triggerContentProcessingForUpdateKinds(AttachmentVideoUnit savedAttachmentVideoUnit, LectureContentUpdateSnapshot afterSnapshot,
+            Set<LectureContentUpdateKind> updateKinds) {
+        if (updateKinds.isEmpty()) {
             return;
         }
 
-        // Something changed in the payload (could be metadata or content)
-        // Use triggerProcessingForMetadataChange to force reprocessing even if only metadata changed
-        contentProcessingService.ifPresent(api -> api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit));
+        if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
+            contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit));
+        }
+
+        if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
+            irisLectureUnitSyncService.markMetadataDirty(afterSnapshot);
+        }
+
+        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
+            irisLectureUnitSyncService.markVisibilityDirty(afterSnapshot);
+        }
     }
 
-    private int buildIngestionPayloadFingerprint(AttachmentVideoUnit unit) {
-        var lecture = unit.getLecture();
-        var course = lecture != null ? lecture.getCourse() : null;
-        var attachment = unit.getAttachment();
-        return Objects.hash(unit.getId(), unit.getName(), lecture != null ? lecture.getId() : null, lecture != null ? lecture.getTitle() : null,
-                course != null ? course.getId() : null, course != null ? course.getTitle() : null, course != null && course.getDescription() != null ? course.getDescription() : "",
-                attachment != null ? attachment.getVersion() : -1, attachment != null && attachment.getLink() != null ? attachment.getLink() : "",
-                unit.getVideoSource() != null && !unit.getVideoSource().isBlank() ? unit.getVideoSource() : null);
+    private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit) {
+        return buildSnapshot(unit, null);
     }
 
-    /**
-     * Checks whether the uploaded file has the same content as the file currently stored for the attachment. This is used to avoid bumping the attachment version (and triggering
-     * a costly re-ingest) when a file with unchanged content is re-uploaded. For PDFs the comparison is based on a content fingerprint (extracted text + page count) rather than
-     * the raw bytes, because the pdf-preview client re-serializes the PDF on every save (e.g. when only hidden-slide dates change), which changes the bytes but not the content.
-     *
-     * @param uploadedFile       the newly uploaded file
-     * @param existingAttachment the attachment whose currently stored file the upload is compared against
-     * @return {@code true} if a stored file exists and its content fingerprint matches the uploaded file's fingerprint, {@code false} otherwise
-     */
-    private boolean isUploadedFileContentIdenticalToStored(MultipartFile uploadedFile, Attachment existingAttachment) {
-        if (existingAttachment == null || existingAttachment.getLink() == null) {
-            return false;
+    private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
+        Lecture lecture = unit.getLecture();
+        Course course = lecture != null ? lecture.getCourse() : null;
+        Attachment attachment = unit.getAttachment();
+
+        return new LectureContentUpdateSnapshot(unit.getId(), unit.getName(), lecture != null ? lecture.getTitle() : null, course != null ? course.getTitle() : null,
+                course != null ? course.getDescription() : null, attachment != null ? attachment.getVersion() : null, attachment != null ? attachment.getLink() : null,
+                unit.getVideoSource(), unit.resolveReleaseDate(),
+                projectedSlideHiddenUntilBySlideNumber != null ? projectedSlideHiddenUntilBySlideNumber : buildSlideHiddenUntilBySlideNumber(unit.getId()));
+    }
+
+    private static Map<Integer, ZonedDateTime> buildProjectedSlideHiddenUntilBySlideNumber(List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
+        var hiddenUntilBySlideId = new LinkedHashMap<String, ZonedDateTime>();
+        if (hiddenPages != null) {
+            hiddenPages.forEach(hiddenPage -> hiddenUntilBySlideId.put(hiddenPage.slideId(), hiddenPage.date()));
         }
-        Path existingFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(existingAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
-        if (!Files.exists(existingFilePath)) {
-            return false;
+
+        var hiddenUntilBySlideNumber = new LinkedHashMap<Integer, ZonedDateTime>();
+        pageOrder.forEach(page -> hiddenUntilBySlideNumber.put(page.order(), hiddenUntilBySlideId.get(page.slideId())));
+        return hiddenUntilBySlideNumber;
+    }
+
+    private Map<Integer, ZonedDateTime> buildSlideHiddenUntilBySlideNumber(Long attachmentVideoUnitId) {
+        return SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId));
+    }
+
+    private AttachmentFileUpdateResult updateAttachmentFileIfChanged(MultipartFile uploadedFile, Attachment existingAttachment, boolean keepFilename, Long attachmentVideoUnitId) {
+        Integer oldVersion = existingAttachment.getVersion();
+        String uploadedHash = attachmentFileHashService.sha256(uploadedFile).value();
+        Optional<String> storedHash = getOrBackfillStoredFileSha256Hash(existingAttachment, attachmentVideoUnitId);
+
+        if (storedHash.isPresent() && storedHash.get().equals(uploadedHash)) {
+            existingAttachment.setSha256Hash(uploadedHash);
+            return AttachmentFileUpdateResult.unchanged(oldVersion);
         }
+
+        handleFile(uploadedFile, existingAttachment, keepFilename, attachmentVideoUnitId);
+        int newVersion = oldVersion == null ? 1 : oldVersion + 1;
+        existingAttachment.setVersion(newVersion);
+        existingAttachment.setSha256Hash(uploadedHash);
+        return AttachmentFileUpdateResult.changed(oldVersion, newVersion);
+    }
+
+    private Optional<String> getOrBackfillStoredFileSha256Hash(Attachment existingAttachment, long attachmentVideoUnitId) {
+        String existingHash = existingAttachment.getSha256Hash();
+        if (existingHash != null) {
+            return Optional.of(existingHash);
+        }
+        // Empty for a missing link and for one that points outside this application: in both cases there is no stored file to hash, so the upload counts as changed content.
+        Optional<FileSystemLocation> existingFileLocation = existingAttachment.fileLocation();
+        if (existingFileLocation.isEmpty()) {
+            return Optional.empty();
+        }
+
         try {
-            String uploadedFingerprint = computeContentFingerprint(uploadedFile.getBytes(), uploadedFile.getOriginalFilename());
-            String existingFingerprint = computeContentFingerprint(Files.readAllBytes(existingFilePath), existingFilePath.getFileName().toString());
-            return uploadedFingerprint.equals(existingFingerprint);
+            Path existingFilePath = existingFileLocation.get().path();
+            if (!Files.exists(existingFilePath)) {
+                log.warn("Stored attachment file {} does not exist. Treating uploaded file as changed content.", existingAttachment.getLink());
+                return Optional.empty();
+            }
+
+            String storedHash = attachmentFileHashService.sha256(existingFilePath).value();
+            existingAttachment.setSha256Hash(storedHash);
+            return Optional.of(storedHash);
         }
-        catch (IOException e) {
-            // If the comparison fails for any reason, fall back to treating the upload as changed content so that processing still happens.
-            log.warn("Could not compare uploaded file with the stored attachment file (attachment {}). Treating the upload as changed content: {}", existingAttachment.getId(),
+        catch (AttachmentFileHashException | IllegalArgumentException | SecurityException e) {
+            log.warn("Could not compute stored attachment SHA-256 hash for attachment {}. Treating uploaded file as changed content: {}", existingAttachment.getId(),
                     e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Computes a content fingerprint for the given file. For PDFs this is a SHA-256 hash over the page count and the rendered pixels of every page, so that re-serializing the same
-     * PDF (which changes the raw bytes but not the visual appearance) yields the same fingerprint, while any visual change - text, vector graphics, diagrams, images or annotations
-     * -
-     * is detected because it changes the rendered pixels. For non-PDF files (or PDFs that cannot be rendered) it falls back to a hash of the raw bytes.
-     *
-     * @param fileBytes the file content
-     * @param filename  the original filename, used to detect PDFs
-     * @return a hex-encoded SHA-256 fingerprint of the file content
-     */
-    private String computeContentFingerprint(byte[] fileBytes, String filename) {
-        if (filename != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(filename))) {
-            try (PDDocument document = Loader.loadPDF(fileBytes)) {
-                StringBuilder fingerprintInput = new StringBuilder();
-                fingerprintInput.append(document.getNumberOfPages()).append('\n');
-                PDFRenderer renderer = new PDFRenderer(document);
-                for (int pageIndex = 0; pageIndex < document.getNumberOfPages(); pageIndex++) {
-                    // Render at a low DPI in grayscale: enough to detect visual changes while keeping the rendering cheap. The page order is part of the fingerprint, so reordering
-                    // pages is detected as well.
-                    BufferedImage renderedPage = renderer.renderImageWithDPI(pageIndex, FINGERPRINT_RENDER_DPI, ImageType.GRAY);
-                    fingerprintInput.append(sha256Hex(((DataBufferByte) renderedPage.getRaster().getDataBuffer()).getData())).append('\n');
-                }
-                return sha256Hex(fingerprintInput.toString());
-            }
-            catch (IOException e) {
-                log.warn("Could not render uploaded PDF for content fingerprinting, falling back to raw bytes: {}", e.getMessage());
-            }
-        }
-        return sha256Hex(fileBytes);
-    }
-
-    private static String sha256Hex(String value) {
-        return sha256Hex(value.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private static String sha256Hex(byte[] value) {
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
-        }
-        catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 algorithm not available", e);
+            return Optional.empty();
         }
     }
 
     private void createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {
+        if (file != null && !file.isEmpty()) {
+            attachment.setSha256Hash(attachmentFileHashService.sha256(file).value());
+        }
         handleFile(file, attachment, keepFilename, attachmentVideoUnit.getId());
         // Default attachment
         attachment.setVersion(1);
@@ -307,6 +323,25 @@ public class AttachmentVideoUnitService {
      * @param attachmentVideoUnit the attachment video unit to update
      * @param hiddenPages         the hidden pages in the attachment
      */
+    /**
+     * Gives the attachment the name and the release date of its unit after an update that sends no attachment metadata, such as the automatic save of an item edited in
+     * place. Access to the file and the release date Iris sees are decided on the attachment, so a unit whose release date was cleared or moved would otherwise keep its file
+     * hidden or show it early. The file and its student version stay as they are: the student version leaves out the hidden slides.
+     *
+     * @param existingAttachment  the attachment of the unit
+     * @param attachmentVideoUnit the saved unit
+     */
+    private void keepAttachmentInStepWithUnit(Attachment existingAttachment, AttachmentVideoUnit attachmentVideoUnit) {
+        if (Objects.equals(existingAttachment.getName(), attachmentVideoUnit.getName())
+                && Objects.equals(existingAttachment.getReleaseDate(), attachmentVideoUnit.getReleaseDate())) {
+            return;
+        }
+        existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
+        existingAttachment.setName(attachmentVideoUnit.getName());
+        existingAttachment.setReleaseDate(attachmentVideoUnit.getReleaseDate());
+        attachmentVideoUnit.setAttachment(attachmentRepository.saveAndFlush(existingAttachment));
+    }
+
     private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
@@ -329,7 +364,9 @@ public class AttachmentVideoUnitService {
         if (file != null && !file.isEmpty()) {
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
-            attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnitId).toString());
+            attachment.setLink(savePath.getFileName().toString());
+            // The new file is in the unit's own directory, which is where Attachment.fileLocation looks first, so an attachment whose file the lecture migration left behind
+            // stops resolving to that lecture's directory as soon as it is replaced here.
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
@@ -346,8 +383,7 @@ public class AttachmentVideoUnitService {
         if (studentVersionFile != null) {
             // Delete the old student version
             if (attachment.getStudentVersion() != null) {
-                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                Path localPath = FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
+                Path localPath = new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, attachment.getStudentVersion()).path();
 
                 fileService.schedulePathForDeletion(localPath, 0);
                 this.fileService.evictCacheForPath(localPath);
@@ -356,7 +392,7 @@ public class AttachmentVideoUnitService {
             // Update student version of attachment
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
             Path savePath = FileUtil.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
-            attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
+            attachment.setStudentVersion(savePath.getFileName().toString());
             attachmentRepository.save(attachment);
         }
     }
@@ -369,8 +405,8 @@ public class AttachmentVideoUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
         if (file != null && !file.isEmpty()) {
-            var attachmentUri = URI.create(attachmentVideoUnit.getAttachment().getLink());
-            this.fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(attachmentUri, FilePathType.ATTACHMENT_UNIT));
+            // Nothing of ours is cached for an attachment that links elsewhere.
+            attachmentVideoUnit.getAttachment().fileLocation().ifPresent(location -> this.fileService.evictCacheForPath(location.path()));
         }
     }
 
@@ -386,7 +422,6 @@ public class AttachmentVideoUnitService {
         if (lectureUnits != null && !lectureUnits.isEmpty()) {
             lecture.setLectureUnits(null);
         }
-        lecture.setAttachments(null);
         lectureUnitService.disconnectCompetencyLectureUnitLinks(attachmentVideoUnit);
     }
 }

@@ -20,7 +20,6 @@ import {
     faPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
-import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorFileBrowserCreateNodeComponent } from './create-node/code-editor-file-browser-create-node.component';
@@ -49,6 +48,7 @@ import { CodeEditorFileService } from 'app/programming/shared/code-editor/servic
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type InteractableEvent = {
     // Click event object; contains target information (used to blur the clicked header)
@@ -68,7 +68,6 @@ export interface FileTreeItem extends TreeItem<string> {
     styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal],
     imports: [
-        NgStyle,
         FaIconComponent,
         TranslateDirective,
         CodeEditorFileBrowserCreateNodeComponent,
@@ -226,11 +225,11 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
         // real repository file occupying the identifier must not be clobbered.
         if (this.isProblemStatementVisible() && this.showEditorInstructions()) {
             if (!this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]) {
-                this.repositoryFiles.update((files) => ({ ...files, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
+                this.repositoryFiles.update((files) => cloneWith(files, { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
             }
         } else if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] === FileType.PROBLEM_STATEMENT) {
             this.repositoryFiles.update((files) => {
-                const updated = { ...files };
+                const updated = deepClone(files);
                 delete updated[PROBLEM_STATEMENT_IDENTIFIER];
                 return updated;
             });
@@ -253,7 +252,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
         if (!this.isProblemStatementVisible() || !this.showEditorInstructions()) {
             if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] === FileType.PROBLEM_STATEMENT) {
                 this.repositoryFiles.update((files) => {
-                    const updated = { ...files };
+                    const updated = deepClone(files);
                     delete updated[PROBLEM_STATEMENT_IDENTIFIER];
                     return updated;
                 });
@@ -262,7 +261,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
                 this.selectedFileChange.emit(undefined);
             }
         } else if (!(PROBLEM_STATEMENT_IDENTIFIER in this.repositoryFiles())) {
-            this.repositoryFiles.update((files) => ({ ...files, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
+            this.repositoryFiles.update((files) => cloneWith(files, { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
         }
 
         this.setupTreeview();
@@ -345,7 +344,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      */
     handleFileChange(fileChange: FileChange, isRemote = false) {
         if (fileChange instanceof CreateFileChange) {
-            this.repositoryFiles.set({ ...this.repositoryFiles(), [fileChange.fileName]: fileChange.fileType });
+            this.repositoryFiles.set(cloneWith(this.repositoryFiles(), { [fileChange.fileName]: fileChange.fileType }));
         } else {
             this.repositoryFiles.set(this.fileService.updateFileReferences(this.repositoryFiles(), fileChange));
         }
@@ -493,13 +492,34 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      * @param node Tree node
      */
     compressTree(node: FileTreeItem): FileTreeItem {
+        // The replacement nodes are built field by field rather than copied: compressTree already recurses, so copying
+        // the subtree at every level would be quadratic in the tree depth (a deep Java package chain is the common case).
         // If the node has only one child and that child is a folder, we can compress the tree.
         if (node.children && node.children.length === 1 && this.repositoryFiles()[node.children[0].value] === FileType.FOLDER) {
-            return this.compressTree({ ...node.children[0], text: node.text + '/' + node.children[0].text, folder: node.folder, file: node.file });
+            const onlyChild = node.children[0] as FileTreeItem;
+            return this.compressTree({
+                text: node.text + '/' + onlyChild.text,
+                value: onlyChild.value,
+                disabled: onlyChild.disabled,
+                checked: onlyChild.checked,
+                collapsed: onlyChild.collapsed,
+                children: onlyChild.children,
+                folder: node.folder,
+                file: node.file,
+            });
         }
         // If the node has children, we cannot compress it. However, we can try to compress its children.
         else if (node.children) {
-            return { ...node, children: (node.children as FileTreeItem[]).map(this.compressTree.bind(this)) };
+            return {
+                text: node.text,
+                value: node.value,
+                disabled: node.disabled,
+                checked: node.checked,
+                collapsed: node.collapsed,
+                children: (node.children as FileTreeItem[]).map(this.compressTree.bind(this)),
+                folder: node.folder,
+                file: node.file,
+            };
         }
         // If the node has no children, there is nothing to compress.
         else {
@@ -740,6 +760,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
             }
         }
         return Array.from(folderBadgesMap.entries()).map(([type, count]) => new FileBadge(type, count));
+    }
+
+    /**
+     * Returns the badges for a single file, or an empty array when the file has none.
+     * `fileBadges` is keyed by file path and may not contain an entry for every tree item.
+     */
+    getFileBadges(item: TreeViewItem<string>): FileBadge[] {
+        return this.fileBadges()[item.value] ?? [];
     }
 
     private toSyncFileType(type: FileType): 'FILE' | 'FOLDER' {

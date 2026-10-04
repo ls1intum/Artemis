@@ -81,11 +81,16 @@
                 }
             }
             @if (isAssessor() && (!hasComplaint() || exercise()?.isAtLeastInstructor)) {
-                <span id="assessmentLockedCurrentUser" class="text-danger m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"></span>
+                <span
+                    data-testid="assessmentLockedCurrentUser"
+                    class="text-danger m-2"
+                    style="font-size: 65%"
+                    jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
+                ></span>
             }
             <!-- Highlight the difference between first and second correction -->
             @if (!isProgrammingExercise() && result() && correctionRound() > 0) {
-                <button class="btn ms-2 btn-primary" (click)="toggleHighlightDifferences()" [disabled]="saveBusy() || submitBusy() || cancelBusy()">
+                <button type="button" class="btn ms-2 btn-primary" (click)="toggleHighlightDifferences()" [disabled]="saveBusy() || submitBusy() || cancelBusy()">
                     @if (!highlightDifferences()) {
                         <span
                             ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
@@ -104,6 +109,7 @@
             <div class="d-flex flex-wrap flex-lg-nowrap">
                 @if (!result()?.completionDate) {
                     <button
+                        type="button"
                         class="btn m-1 btn-primary"
                         (click)="save.emit()"
                         [disabled]="saveDisabled"
@@ -116,6 +122,7 @@
                         <span jhiTranslate="entity.action.save"></span>
                     </button>
                     <button
+                        type="button"
                         id="submit"
                         class="btn m-1 btn-success"
                         (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()"
@@ -129,6 +136,8 @@
                     </button>
                     @if (!isTestRun()) {
                         <button
+                            type="button"
+                            id="cancel"
                             class="btn m-1 btn-danger"
                             (click)="onCancel.emit()"
                             [disabled]="!(exercise()?.isAtLeastInstructor || isAssessor()) || saveBusy() || submitBusy() || cancelBusy()"
@@ -142,6 +151,7 @@
                 }
                 @if (overrideVisible) {
                     <button
+                        type="button"
                         class="btn m-1 btn-danger"
                         (click)="onSubmit.emit()"
                         [disabled]="overrideDisabled"
@@ -154,7 +164,7 @@
                     </button>
                 }
                 @if (result()?.completionDate && exercise()?.isAtLeastInstructor && (exercise()!.type === ExerciseType.MODELING || exercise()!.type === ExerciseType.TEXT)) {
-                    <button class="btn m-1 btn-primary" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()">
+                    <button type="button" class="btn m-1 btn-primary" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()">
                         @if (submitBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
@@ -166,8 +176,9 @@
                 </ng-template>
                 @if (assessNextVisible) {
                     <button
+                        type="button"
                         class="btn m-1 btn-success"
-                        id="assessNextButton"
+                        data-testid="assessNextButton"
                         [disabled]="assessNextDisabled"
                         (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
                         [ngbTooltip]="nextSubmissionShortcut"

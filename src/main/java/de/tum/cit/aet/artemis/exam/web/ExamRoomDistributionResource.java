@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -43,6 +45,7 @@ import jodd.util.StringUtil;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.EXAM_ROOMS)
 @RestController
 @RequestMapping("api/exam/")
 public class ExamRoomDistributionResource {
@@ -157,6 +160,7 @@ public class ExamRoomDistributionResource {
      * @param examId   the id of the exam
      * @return 200 (OK) if the retrieval was successful
      */
+    @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping("courses/{courseId}/exams/{examId}/attendance-checker-information")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<AttendanceCheckerAppExamInformationDTO> getAttendanceCheckerAppInformation(@PathVariable long courseId, @PathVariable long examId) {

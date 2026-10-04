@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,8 +22,6 @@ import { BehaviorSubject } from 'rxjs';
 import { ScienceService } from 'app/foundation/science/science.service';
 
 describe('CourseSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseSidebarComponent;
     let fixture: ComponentFixture<CourseSidebarComponent>;
     let layoutService: LayoutService;
@@ -37,16 +33,14 @@ describe('CourseSidebarComponent', () => {
         description: 'Description of course 1',
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         courseIconPath: 'path/to/icon.png',
-        studentCourseAnalyticsDashboardEnabled: true,
     };
 
     const mockSidebarItems: SidebarItem[] = [
         {
-            routerLink: 'dashboard',
+            routerLink: 'iris',
             icon: faListAlt,
-            title: 'Dashboard',
-            translation: 'artemisApp.courseOverview.menu.dashboard',
-            featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
+            title: 'Iris',
+            translation: 'artemisApp.courseOverview.menu.iris',
             hidden: false,
         },
         {

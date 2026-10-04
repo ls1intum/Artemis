@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 
 describe('LinkPreviewService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: LinkPreviewService;
     let httpMock: HttpTestingController;
 

@@ -1,14 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart/doughnut-chart.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('DoughnutChartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<DoughnutChartComponent>;
     let component: DoughnutChartComponent;
     let router: Router;
@@ -105,8 +103,8 @@ describe('DoughnutChartComponent', () => {
     });
 
     it('should show only the value in the tooltip body', () => {
-        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+        const tooltip = component.chartConfig().tooltip as TumAetUiChartTooltipConfig;
 
-        expect(callbacks.label({ parsed: 20 })).toBe('20');
+        expect(tooltip.label!({ seriesIndex: 0, index: 0, label: 'Done', value: 20 })).toBe('20');
     });
 });

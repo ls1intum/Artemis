@@ -1,5 +1,4 @@
 <jhi-assessment-layout
-    (navigateBack)="navigateBack()"
     [isLoading]="isLoading()"
     [isTeamMode]="exercise()?.teamMode || false"
     [isAssessor]="isAssessor()"
@@ -33,8 +32,18 @@
                 <div left-body>
                     <div class="row">
                         @if (submission()?.filePathUrl; as filePathUrl) {
-                            <div class="col-12 card-text" id="e2e-download-file">
-                                <a class="text-primary" (click)="downloadFile(filePathUrl)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
+                            <div class="col-12 card-text" data-testid="e2e-download-file">
+                                <a
+                                    class="text-primary"
+                                    (click)="downloadFile(filePathUrl)"
+                                    jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"
+                                    #keyboardAction36
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+                                ></a>
                                 <span class="ms-2 badge bg-info">{{ attachmentExtension(filePathUrl) | uppercase }}</span>
                             </div>
                         }
@@ -60,11 +69,16 @@
                     [readOnly]="readOnly"
                     [highlightDifferences]="highlightDifferences"
                     [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise()?.gradingCriteria ?? []"
+                    [allFeedbacks]="assessments"
+                    [maxPoints]="getTotalMaxPoints(exercise())"
                 />
             }
         </div>
     } @else {
-        @if (!loadingInitialSubmission()) {
+        @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
+            <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
+        } @else if (!loadingInitialSubmission()) {
             <div class="alert alert-warning text-center mt-4" role="alert">
                 <p jhiTranslate="artemisApp.fileUploadAssessment.notFound"></p>
                 <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">

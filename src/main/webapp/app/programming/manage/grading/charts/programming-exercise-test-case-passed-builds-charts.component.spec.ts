@@ -1,13 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { TestCaseStats } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 
 describe('TestCasePassedBuildsChartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TestCasePassedBuildsChartComponent;
     let fixture: ComponentFixture<TestCasePassedBuildsChartComponent>;
 

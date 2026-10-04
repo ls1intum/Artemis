@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
@@ -13,8 +12,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ChannelService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ChannelService;
     let httpMock: HttpTestingController;
     let elemDefault: ChannelDTO;

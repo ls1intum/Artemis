@@ -3,11 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ExerciseVersionHistoryService } from 'app/exercise/version-history/shared/exercise-version-history.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExerciseVersionHistoryService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExerciseVersionHistoryService;
     let httpMock: HttpTestingController;
 

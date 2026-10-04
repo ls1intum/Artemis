@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -51,8 +50,6 @@ vi.mock('monaco-editor', () => ({
 }));
 
 describe('MultipleChoiceQuestionEditComponent', async () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
     let component: MultipleChoiceQuestionEditComponent;
 
@@ -371,10 +368,13 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
     it('should reset question title', async () => {
         component.backupQuestion = { ...question, title: 'backup-title' };
         component.question().title = 'current-title';
+        const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
 
         component.resetQuestionTitle();
 
         expect(component.question().title).toBe('backup-title');
+        // re-evaluate caches its validity off this event; without it the save button disables unexplained
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should reset question', async () => {
@@ -382,10 +382,13 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
         component.backupQuestion = backup;
         component.question().title = 'current-title';
         component.question().text = 'current-text';
+        const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
 
         component.resetQuestion();
 
         expect(component.question().title).toBe('backup-title');
         expect(component.question().text).toBe('backup-text');
+        // without this the parent keeps the pre-reset validity and calls a restored question invalid
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 });

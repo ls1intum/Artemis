@@ -1,15 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
+import { HttpContext, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { throwError } from 'rxjs';
-import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
+import { ErrorHandlerInterceptor, SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 describe(`ErrorHandlerInterceptor`, () => {
-    setupTestBed({ zoneless: true });
-
     let errorHandlerInterceptor: ErrorHandlerInterceptor;
 
     let eventManagerMock: EventManager;
@@ -48,6 +45,18 @@ describe(`ErrorHandlerInterceptor`, () => {
             name: 'artemisApp.httpError',
             content: error,
         });
+    });
+
+    it('should leave the error to a caller that shows it itself', () => {
+        const mockHandler = {
+            handle: () => throwError(() => new HttpErrorResponse({ status: 400 })),
+        };
+        vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
+        const request = new HttpRequest('PUT', '/api/lecture/lectures/1/text-units', {}, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
+
+        errorHandlerInterceptor.intercept(request, mockHandler).subscribe({ error: () => {} });
+
+        expect(eventManagerMock.broadcast).not.toHaveBeenCalled();
     });
 
     it.each([{ url: '/api/core/public/account' }, { url: '/api/account/basic-information' }])(

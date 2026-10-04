@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
@@ -20,8 +19,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective } from 'ng-mocks';
 
 describe('PasskeyAuthenticationPageComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PasskeyAuthenticationPageComponent;
     let fixture: ComponentFixture<PasskeyAuthenticationPageComponent>;
     let accountService: AccountService;

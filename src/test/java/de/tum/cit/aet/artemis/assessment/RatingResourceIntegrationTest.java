@@ -33,6 +33,9 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private static final String TEST_PREFIX = "ratingresourceintegrationtest"; // only lower case is supported
 
+    /** Instructor not enrolled in the test course; exercises the wrong-course branch. */
+    private static final String OTHER_PREFIX = "ratingresourceother";
+
     @Autowired
     private RatingService ratingService;
 
@@ -53,7 +56,9 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1); // outsider instructor — never enrolled in course
+
+        course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         participationUtilService.createAndSaveParticipationForExercise(exercise, student1.getLogin());
@@ -65,9 +70,6 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
         rating = new Rating();
         rating.setResult(submission.getLatestResult());
         rating.setRating(2);
-
-        // add instructor of other course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
     @Test
@@ -195,7 +197,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }

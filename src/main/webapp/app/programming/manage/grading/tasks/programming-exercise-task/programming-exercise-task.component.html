@@ -7,7 +7,7 @@
             <div class="task__row">
                 <div class="task__row__cell gap-3">
                     <b>{{ index() + 1 }}</b>
-                    <span class="task__field">
+                    <span class="task__field" [pTooltip]="task().taskName" [showOnEllipsis]="true" tooltipPosition="top" appendTo="body">
                         <b>{{ task().taskName }}</b></span
                     >
                 </div>
@@ -60,10 +60,24 @@
                     </select>
                 </div>
                 <div class="task__row__cell">
-                    <span class="task__field">{{ task().resultingPoints }}P ({{ task().resultingPointsPercent }}%)</span>
+                    <span
+                        class="task__field"
+                        [pTooltip]="task().resultingPoints + 'P (' + task().resultingPointsPercent + '%)'"
+                        [showOnEllipsis]="true"
+                        tooltipPosition="top"
+                        appendTo="body"
+                        >{{ task().resultingPoints }}P ({{ task().resultingPointsPercent }}%)</span
+                    >
                 </div>
                 <div class="task__row__cell">
-                    <span class="task__field">{{ 'artemisApp.programmingExerciseTestCase.type.' + (task().type ?? 'DEFAULT') | artemisTranslate }}</span>
+                    <span
+                        class="task__field"
+                        [pTooltip]="'artemisApp.programmingExerciseTestCase.type.' + (task().type ?? 'DEFAULT') | artemisTranslate"
+                        [showOnEllipsis]="true"
+                        tooltipPosition="top"
+                        appendTo="body"
+                        >{{ 'artemisApp.programmingExerciseTestCase.type.' + (task().type ?? 'DEFAULT') | artemisTranslate }}</span
+                    >
                 </div>
                 <div class="task__row__cell">
                     <jhi-test-case-passed-builds-chart class="w-100" [testCaseStats]="task().stats" [totalParticipations]="numParticipations" />
@@ -77,7 +91,7 @@
                 <div class="task__row" [class.bg-secondary]="!test.active">
                     <div class="task__row__cell gap-3">
                         <span class="ps-3">{{ formatTestIndex(index(), j) }}</span>
-                        <span class="task__field">{{ test.testName }}</span>
+                        <span class="task__field" [pTooltip]="test.testName" [showOnEllipsis]="true" tooltipPosition="top" appendTo="body">{{ test.testName }}</span>
                     </div>
                     <div class="task__row__cell task__row__cell--small">
                         <input type="number" class="form-control" min="0" [(ngModel)]="test.weight" name="{{ test.testName }}-name" (change)="testUpdateHandler(test)" />
@@ -112,10 +126,24 @@
                         </select>
                     </div>
                     <div class="task__row__cell">
-                        <span class="task__field">{{ test.resultingPoints }}P ({{ test.resultingPointsPercent }}%)</span>
+                        <span
+                            class="task__field"
+                            [pTooltip]="test.resultingPoints + 'P (' + test.resultingPointsPercent + '%)'"
+                            [showOnEllipsis]="true"
+                            tooltipPosition="top"
+                            appendTo="body"
+                            >{{ test.resultingPoints }}P ({{ test.resultingPointsPercent }}%)</span
+                        >
                     </div>
                     <div class="task__row__cell">
-                        <span class="task__field">{{ 'artemisApp.programmingExerciseTestCase.type.' + (test.type ?? 'DEFAULT') | artemisTranslate }}</span>
+                        <span
+                            class="task__field"
+                            [pTooltip]="'artemisApp.programmingExerciseTestCase.type.' + (test.type ?? 'DEFAULT') | artemisTranslate"
+                            [showOnEllipsis]="true"
+                            tooltipPosition="top"
+                            appendTo="body"
+                            >{{ 'artemisApp.programmingExerciseTestCase.type.' + (test.type ?? 'DEFAULT') | artemisTranslate }}</span
+                        >
                     </div>
                     <div class="task__row__cell">
                         <jhi-test-case-passed-builds-chart class="w-100" [testCaseStats]="test.testCaseStats" [totalParticipations]="numParticipations" />

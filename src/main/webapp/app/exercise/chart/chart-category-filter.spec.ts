@@ -1,6 +1,5 @@
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -319,7 +318,6 @@ let results: Exercise[];
 const courseExercises = [...modelingExercises, programmingExercise, quizExercise, fileUploadExercise];
 
 describe('ChartCategoryFilter', () => {
-    setupTestBed({ zoneless: true });
     let categoryFilter: ChartCategoryFilter;
 
     beforeEach(() => {

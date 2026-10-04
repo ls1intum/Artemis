@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { faComments, faPersonChalkboard, faRectangleList, faRobot, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
@@ -11,15 +11,14 @@ import { CourseNotificationViewingStatus } from 'app/notification/shared/entitie
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Service for managing course notifications.
  * Handles fetching, storing, updating, and tracking notification data for courses.
  * Provides observables for notification counts and content.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseNotificationService implements OnDestroy {
     public static readonly NOTIFICATION_TYPE_ICON_MAP = {
         newPostNotification: faComments,
@@ -47,6 +46,7 @@ export class CourseNotificationService implements OnDestroy {
         registeredToTutorialGroupNotification: faPersonChalkboard,
         deregisteredFromTutorialGroupNotification: faPersonChalkboard,
         tutorialGroupDeletedNotification: faPersonChalkboard,
+        irisResponseNeedsReviewNotification: faComments,
         irisResponseNotification: faRobot,
     };
 
@@ -76,18 +76,19 @@ export class CourseNotificationService implements OnDestroy {
         registeredToTutorialGroupNotification: [],
         deregisteredFromTutorialGroupNotification: [],
         tutorialGroupDeletedNotification: [],
+        // Server only supports the WEBAPP channel for this notification (see IrisResponseNeedsReviewNotification#getSupportedChannels).
+        irisResponseNeedsReviewNotification: [CourseNotificationChannel.EMAIL, CourseNotificationChannel.PUSH],
         // Iris responses are delivered to the native app via push only; email and webapp are unsupported (see IrisResponseNotification.getSupportedChannels).
         irisResponseNotification: [CourseNotificationChannel.EMAIL, CourseNotificationChannel.WEBAPP],
     };
 
     // Parameter keys that should be rendered as markdown
     public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent', 'replyMarkdownContent'];
+    private http = inject(HttpClient);
+    private readonly accountService = inject(AccountService);
 
     private readonly apiEndpoint = '/api/notification/courses/';
     public readonly pageSize = 10;
-
-    private http = inject(HttpClient);
-    private readonly accountService = inject(AccountService);
 
     private courseNotificationMap: Record<number, CourseNotification[]> = {};
     private courseNotificationPageMap: Record<number, boolean> = {};
@@ -212,6 +213,18 @@ export class CourseNotificationService implements OnDestroy {
                 statusType: statusType,
             })
             .subscribe();
+    }
+
+    /**
+     * Marks notifications as seen on the server because the overview displayed them, not because the user acted on them.
+     * Kept apart from {@link setNotificationStatus} so that the server's feature usage report can count the user's own
+     * actions on notifications separately from this automatic update.
+     *
+     * @param courseId - The ID of the course
+     * @param notificationIds - The IDs of the displayed notifications
+     */
+    public markDisplayedNotificationsAsSeen(courseId: number, notificationIds: number[]): void {
+        this.http.put(this.apiEndpoint + courseId + '/seen', { notificationIds }).subscribe();
     }
 
     /**
@@ -346,7 +359,7 @@ export class CourseNotificationService implements OnDestroy {
      * Creates a new object to ensure change detection.
      */
     private notifyCountSubscribers(): void {
-        this.notificationCountSubject.next({ ...this.courseNotificationCountMap });
+        this.notificationCountSubject.next(deepClone(this.courseNotificationCountMap));
     }
 
     /**
@@ -370,7 +383,14 @@ export class CourseNotificationService implements OnDestroy {
      * Creates a new object to ensure change detection.
      */
     private notifyNotificationSubscribers(): void {
-        this.notificationSubject.next({ ...this.courseNotificationMap });
+        // A new outer record so subscribers see a changed reference, with the per-course arrays carried over as they
+        // are: consumers render the notifications with `track` by identity, so those objects must stay the same
+        // instances across emissions.
+        const notificationsByCourse: Record<number, CourseNotification[]> = {};
+        for (const courseId of Object.keys(this.courseNotificationMap)) {
+            notificationsByCourse[Number(courseId)] = this.courseNotificationMap[Number(courseId)];
+        }
+        this.notificationSubject.next(notificationsByCourse);
     }
 
     /**
@@ -492,7 +512,8 @@ export class CourseNotificationService implements OnDestroy {
 
     /**
      * Converts server response notification data to the expected format.
-     * Parses dates and enums, and extracts metadata from parameters.
+     * Parses the creation date and the category and status enums; every other value is read from the payload where
+     * it is needed.
      *
      * @param res - The HTTP response from the server
      * @returns The processed HTTP response
@@ -503,12 +524,6 @@ export class CourseNotificationService implements OnDestroy {
                 notification.creationDate = convertDateFromServer(notification.creationDate);
                 notification.category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
                 notification.status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
-                if (notification.parameters && notification.parameters['courseTitle']) {
-                    notification.courseName = notification.parameters['courseTitle'] as string;
-                }
-                if (notification.parameters && notification.parameters['courseIconUrl']) {
-                    notification.courseIconUrl = notification.parameters['courseIconUrl'] as string;
-                }
             });
         }
         return res;

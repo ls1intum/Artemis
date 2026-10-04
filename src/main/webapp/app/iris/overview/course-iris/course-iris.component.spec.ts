@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -23,8 +22,6 @@ class MockCourseChatbotComponent {
 type CourseIrisInternals = { courseChatbot: () => { isChatHistoryOpen: () => boolean; toggleChatHistory: () => void } | undefined };
 
 describe('CourseIrisComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseIrisComponent;
     let fixture: ComponentFixture<CourseIrisComponent>;
     let paramMapSubject: BehaviorSubject<ReturnType<typeof convertToParamMap>>;

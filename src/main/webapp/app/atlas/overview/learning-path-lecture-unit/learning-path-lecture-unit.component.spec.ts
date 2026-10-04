@@ -24,12 +24,10 @@ import { ElementRef, signal } from '@angular/core';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 
 describe('LearningPathLectureUnitComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathLectureUnitComponent;
     let fixture: ComponentFixture<LearningPathLectureUnitComponent>;
 
@@ -75,7 +73,7 @@ describe('LearningPathLectureUnitComponent', () => {
                     provide: AlertService,
                     useClass: MockAlertService,
                 },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
             ],
         })
             .overrideComponent(LearningPathLectureUnitComponent, {

@@ -19,7 +19,6 @@ import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'a
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
-import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -31,9 +30,8 @@ import { ExamGeneralInformationComponent } from '../general-information/exam-gen
 import { ExamResultOverviewComponent } from './result-overview/exam-result-overview.component';
 import { CollapsibleCardComponent } from './collapsible-card/collapsible-card.component';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
-import { NgClass } from '@angular/common';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
@@ -45,6 +43,7 @@ import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -69,7 +68,7 @@ type StateBeforeResetting = {
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
-    styleUrls: ['../../../course/manage/course-exercise-card/course-exercise-card.component.scss', '../../../quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
+    styleUrl: 'exam-result-summary.component.scss',
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -77,10 +76,11 @@ type StateBeforeResetting = {
         ExamResultOverviewComponent,
         CollapsibleCardComponent,
         ExamResultSummaryExerciseCardHeaderComponent,
-        NgClass,
         RouterLink,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
-        NgbTooltip,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         ExampleSolutionComponent,
         TextExamSummaryComponent,
         ModelingExamSummaryComponent,
@@ -291,9 +291,9 @@ export class ExamResultSummaryComponent implements OnInit {
 
     private expandExercisesAndGradingKeysBeforePrinting() {
         const stateBeforeResetting = {
-            exerciseInfos: cloneDeep(this.exerciseInfos()),
-            isGradingKeyCollapsed: cloneDeep(this.isGradingKeyCollapsed()),
-            isBonusGradingKeyCollapsed: cloneDeep(this.isBonusGradingKeyCollapsed()),
+            exerciseInfos: deepClone(this.exerciseInfos()),
+            isGradingKeyCollapsed: deepClone(this.isGradingKeyCollapsed()),
+            isBonusGradingKeyCollapsed: deepClone(this.isBonusGradingKeyCollapsed()),
         };
 
         this.expandExercises();
@@ -509,7 +509,7 @@ export class ExamResultSummaryComponent implements OnInit {
         // icon stay consistent with the displayed achieved percentage.
         const achievedScore = this.getExerciseResultByExerciseId(exercise.id)?.achievedScore;
         if (result && achievedScore !== undefined) {
-            result = { ...result, score: achievedScore };
+            result = cloneWith(result, { score: achievedScore });
         }
 
         const isBuilding = false;

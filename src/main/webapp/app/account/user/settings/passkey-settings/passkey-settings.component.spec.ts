@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
+import { DialogService } from 'primeng/dynamicdialog';
+import { By } from '@angular/platform-browser';
 import { PasskeySettingsComponent } from 'app/account/user/settings/passkey-settings/passkey-settings.component';
 import { PasskeySettingsApiService } from 'app/account/user/settings/passkey-settings/passkey-settings-api.service';
 import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
@@ -14,16 +16,13 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PasskeyDTO } from 'app/account/user/settings/passkey-settings/dto/passkey.dto';
 
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 describe('PasskeySettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PasskeySettingsComponent;
     let fixture: ComponentFixture<PasskeySettingsComponent>;
     let passkeySettingsApiService: PasskeySettingsApiService;
@@ -56,7 +55,7 @@ describe('PasskeySettingsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                DialogService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 WebauthnApiService,
@@ -256,13 +255,10 @@ describe('PasskeySettingsComponent', () => {
         component.currentUser.set(adminUser);
         fixture.detectChanges();
 
-        // Check that badge exists
-        const badge = fixture.nativeElement.querySelector('p-badge');
-        expect(badge).not.toBeNull();
-
-        // Check badge has success class (PrimeNG badges use classes for severity)
-        const badgeElement = fixture.nativeElement.querySelector('.p-badge-success');
-        expect(badgeElement).not.toBeNull();
+        // The approval state is carried by the tag's severity, which is a component input rather than a class.
+        const tag = fixture.debugElement.query(By.directive(TumAetUiTagComponent));
+        expect(tag).not.toBeNull();
+        expect(tag.componentInstance.severity()).toBe('success');
     });
 
     it('should display not approved badge for admin when passkey is not super admin approved', () => {
@@ -282,13 +278,9 @@ describe('PasskeySettingsComponent', () => {
         component.currentUser.set(adminUser);
         fixture.detectChanges();
 
-        // Check that badge exists
-        const badge = fixture.nativeElement.querySelector('p-badge');
-        expect(badge).not.toBeNull();
-
-        // Check badge has danger class (PrimeNG badges use classes for severity)
-        const badgeElement = fixture.nativeElement.querySelector('.p-badge-danger');
-        expect(badgeElement).not.toBeNull();
+        const tag = fixture.debugElement.query(By.directive(TumAetUiTagComponent));
+        expect(tag).not.toBeNull();
+        expect(tag.componentInstance.severity()).toBe('danger');
     });
 
     it('should not display badge for non-admin users', () => {
@@ -308,8 +300,7 @@ describe('PasskeySettingsComponent', () => {
         component.currentUser.set(regularUser);
         fixture.detectChanges();
 
-        // Check that badge does not exist
-        const badge = fixture.nativeElement.querySelector('p-badge');
-        expect(badge).toBeNull();
+        // Check that the approval tag does not exist
+        expect(fixture.debugElement.query(By.directive(TumAetUiTagComponent))).toBeNull();
     });
 });

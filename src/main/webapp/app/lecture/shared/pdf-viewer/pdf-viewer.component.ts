@@ -92,6 +92,14 @@ const INITIAL_EAGER_PAGES = 3;
 })
 export class PdfViewerComponent {
     private static instanceCounter = 0;
+    private readonly themeService = inject(ThemeService);
+    private readonly http = inject(HttpClient);
+    private readonly pdfEngineService = inject(PdfEngineService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly injector = inject(Injector);
+    private readonly hostElementRef = inject(ElementRef<HTMLElement>);
+    private readonly translateService = inject(TranslateService);
+
     private readonly docId = `pdf-viewer-${++PdfViewerComponent.instanceCounter}`;
 
     // Inputs
@@ -142,14 +150,6 @@ export class PdfViewerComponent {
     protected readonly faExpand = faExpand;
     protected readonly faXmark = faXmark;
 
-    private readonly themeService = inject(ThemeService);
-    private readonly http = inject(HttpClient);
-    private readonly pdfEngineService = inject(PdfEngineService);
-    private readonly destroyRef = inject(DestroyRef);
-    private readonly injector = inject(Injector);
-    private readonly hostElementRef = inject(ElementRef<HTMLElement>);
-    private readonly translateService = inject(TranslateService);
-
     protected readonly isDarkMode = computed(() => this.themeService.currentTheme() === Theme.DARK);
     protected readonly scaleValue = this.scale.asReadonly();
     protected readonly effectiveUploadDate = computed(() => this.uploadDate());
@@ -158,7 +158,9 @@ export class PdfViewerComponent {
     // Track the active language as a signal. The impure translate pipe does not re-run on a language switch in an
     // OnPush, zoneless component (no change detection is scheduled), so bindings computed from a signal are used
     // instead to keep translated text such as the search placeholder in sync with the selected language.
-    private readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), { initialValue: this.translateService.getCurrentLang() });
+    private readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
+        initialValue: this.translateService.getCurrentLang() ?? 'en',
+    });
     protected readonly searchPlaceholder = computed(() => {
         this.currentLanguage();
         return this.translateService.instant('artemisApp.attachmentVideoUnit.pdfViewer.searchPlaceholder');
@@ -587,17 +589,46 @@ export class PdfViewerComponent {
         return this.currentPage();
     }
 
-    goToPage(page: number): void {
+    /**
+     * Number of pages of the loaded document, or 0 while none is loaded. Callers that navigate on behalf of someone
+     * else (Iris point-out) use this to tell "the document is not up yet, wait" apart from "this target does not exist".
+     */
+    getTotalPages(): number {
+        return this.totalPages();
+    }
+
+    /** {@link goToPage}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
+    canGoToPage(page: number): boolean {
+        return this.getPageElement(page) !== undefined;
+    }
+
+    private getPageElement(page: number): HTMLElement | undefined {
         if (!Number.isInteger(page) || page < 1 || page > this.totalPages()) {
-            return;
+            return undefined;
         }
-        const element = this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === page - 1);
+        return this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === page - 1)?.nativeElement;
+    }
+
+    /**
+     * Scrolls the given page into view.
+     *
+     * @param page the 1-based page to navigate to
+     * @return whether the page was accepted; {@code false} for a non-integral, out-of-range, or not-yet-rendered
+     *         target, which leaves the viewer where it was. Callers that report the outcome onwards (Iris point-out)
+     *         must not treat the call as navigation having happened.
+     */
+    goToPage(page: number): boolean {
+        const element = this.getPageElement(page);
+        if (!element) {
+            return false;
+        }
         // Suppress observer-driven page tracking while the smooth-scroll animates past intermediate pages.
         this.programmaticScrollUntil = Date.now() + 700;
-        element?.nativeElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        element.scrollIntoView({ block: 'start', behavior: 'smooth' });
         // Emit the target page once via setCurrentPage; the observer suppression above prevents intermediate
         // pages from emitting during the scroll, and the same-page guard prevents a duplicate when it settles.
         this.setCurrentPage(page);
+        return true;
     }
 
     protected onPageInputEnter(event: Event): void {

@@ -78,9 +78,6 @@ skinparam defaultFontSize       12
 skinparam dpi                   100
 skinparam shadowing             false
 skinparam roundcorner           8
-skinparam ParticipantPadding    40
-skinparam BoxPadding            40
-skinparam Padding               5
 skinparam ArrowColor            $WHITE
 skinparam ArrowFontSize 16
 skinparam classAttributeIconSize 0

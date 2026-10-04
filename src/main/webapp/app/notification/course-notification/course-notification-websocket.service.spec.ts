@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -14,8 +13,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 
 describe('CourseNotificationWebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseNotificationWebsocketService;
     let websocketServiceMock: { subscribe: ReturnType<typeof vi.fn> };
     let courseNotificationServiceMock: { addNotification: ReturnType<typeof vi.fn> };
@@ -112,7 +109,7 @@ describe('CourseNotificationWebsocketService', () => {
                 status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
                 // @ts-ignore
                 creationDate: new Date('2024-01-15T10:00:00'),
-                parameters: { key: 'value' },
+                payload: { postId: 42 },
             };
 
             websocketReceiveSubject.next(incomingNotification);
@@ -126,7 +123,7 @@ describe('CourseNotificationWebsocketService', () => {
             expect(processedNotification.courseId).toBe(1);
             expect(processedNotification.notificationType).toBe('newPostNotification');
             expect(processedNotification.creationDate).toBeDefined();
-            expect(processedNotification.parameters).toEqual({ key: 'value' });
+            expect(processedNotification.payload).toEqual({ postId: 42 });
         });
 
         it('should drop notifications whose category or status does not map to a known enum', () => {
@@ -144,7 +141,7 @@ describe('CourseNotificationWebsocketService', () => {
                 status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
                 // @ts-ignore
                 creationDate: new Date('2024-01-15T10:00:00'),
-                parameters: {},
+                payload: {},
             };
 
             websocketReceiveSubject.next(malformedNotification);
@@ -168,7 +165,7 @@ describe('CourseNotificationWebsocketService', () => {
                 status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
                 // @ts-ignore
                 creationDate: new Date('2024-01-15T10:00:00'),
-                parameters: { key: 'value' },
+                payload: { postId: 42 },
             };
 
             websocketReceiveSubject.next(incomingNotification);

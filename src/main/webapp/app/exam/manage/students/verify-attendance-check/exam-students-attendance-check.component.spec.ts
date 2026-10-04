@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,7 +23,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {
-    setupTestBed({ zoneless: true });
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
@@ -73,6 +71,22 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
         expect(component.hasExamStarted()).toBe(true);
+    });
+
+    it('should not load and not wait forever when the exam has not started', () => {
+        const startDate = examWithCourse.startDate;
+        examWithCourse.startDate = dayjs().add(1, 'hour');
+        try {
+            const examServiceSpy = vi.spyOn(examManagementService, 'verifyExamUserAttendance');
+
+            fixture.detectChanges();
+
+            expect(component.hasExamStarted()).toBe(false);
+            expect(examServiceSpy).not.toHaveBeenCalled();
+            expect(component.isLoading()).toBe(false);
+        } finally {
+            examWithCourse.startDate = startDate;
+        }
     });
 
     it('should test on error', () => {

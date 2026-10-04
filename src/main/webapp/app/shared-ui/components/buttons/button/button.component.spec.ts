@@ -10,11 +10,9 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockInstance, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ButtonComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ButtonComponent;
     let fixture: ComponentFixture<ButtonComponent>;
     let debugElement: DebugElement;

@@ -32,6 +32,13 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
+    void absentProviderUsageDoesNotCreateZeroCostRecord() {
+        llmTokenUsageService.trackChatResponseTokenUsage(new org.springframework.ai.chat.model.ChatResponse(java.util.List.of()),
+                de.tum.cit.aet.artemis.admin.domain.LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(1L));
+        org.mockito.Mockito.verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
+    }
+
+    @Test
     void buildLLMRequest_withDashedDateSuffix_usesConfiguredCost() {
         LLMRequest request = llmTokenUsageService.buildLLMRequest("gpt-5-mini-2025-08-07", 11, 7, "PIPE");
 
@@ -52,11 +59,28 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
-    void buildLLMRequest_withDashlessVariant_usesDashlessFallback() {
+    void buildLLMRequest_withDashlessVariant_usesStrippedFallback() {
         LLMRequest request = llmTokenUsageService.buildLLMRequest("gpt5mini-2025-08-07", 11, 7, "PIPE");
 
         assertThat(request.costPerMillionInputToken()).isEqualTo(0.23f);
         assertThat(request.costPerMillionOutputToken()).isEqualTo(1.84f);
+    }
+
+    @Test
+    void buildLLMRequest_withDottedModel_andEnvStyleStrippedKey_usesStrippedFallback() {
+        // Env-var configuration strips dots and dashes, so "gpt-5.4" is configured as the key "gpt54".
+        // The runtime model name "gpt-5.4" must still resolve to that cost via the stripped fallback.
+        LLMModelCostConfiguration configuration = new LLMModelCostConfiguration();
+        LLMModelCostConfiguration.ModelCostProperties dottedModel = new LLMModelCostConfiguration.ModelCostProperties();
+        dottedModel.setInputCostPerMillionEur(2.30f);
+        dottedModel.setOutputCostPerMillionEur(13.80f);
+        configuration.setModelCosts(Map.of("gpt54", dottedModel));
+        LLMTokenUsageService service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, configuration);
+
+        LLMRequest request = service.buildLLMRequest("gpt-5.4", 11, 7, "PIPE");
+
+        assertThat(request.costPerMillionInputToken()).isEqualTo(2.30f);
+        assertThat(request.costPerMillionOutputToken()).isEqualTo(13.80f);
     }
 
     @Test
@@ -68,7 +92,7 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
-    void constructor_withDashlessModelCostCollision_throwsIllegalStateException() {
+    void constructor_withStrippedModelCostCollision_throwsIllegalStateException() {
         LLMModelCostConfiguration configuration = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties dashedModel = new LLMModelCostConfiguration.ModelCostProperties();
         dashedModel.setInputCostPerMillionEur(0.23f);

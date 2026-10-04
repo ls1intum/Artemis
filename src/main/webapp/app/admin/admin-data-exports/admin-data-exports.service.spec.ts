@@ -10,15 +10,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
 import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 
 describe('AdminDataExportsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: AdminDataExportsService;
     let httpMock: HttpTestingController;
 

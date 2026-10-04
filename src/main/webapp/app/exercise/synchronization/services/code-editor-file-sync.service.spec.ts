@@ -1,7 +1,6 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
@@ -21,7 +20,6 @@ import {
 import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
 
 describe('CodeEditorFileSyncService', () => {
-    setupTestBed({ zoneless: true });
     let service: CodeEditorFileSyncService;
     let syncService: Mocked<ExerciseEditorSyncService>;
     let incomingMessages$: Subject<ExerciseEditorSyncEvent>;

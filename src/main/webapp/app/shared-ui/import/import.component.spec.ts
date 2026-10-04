@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +24,6 @@ class DummyImportComponent extends ImportComponent<BaseEntity> {
     }
 }
 describe('ImportComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<DummyImportComponent>;
     let comp: DummyImportComponent;
     let pagingService: DummyPagingService;
@@ -49,7 +47,9 @@ describe('ImportComponent', () => {
             onClose: new Subject<any>(),
         } as unknown as DynamicDialogRef;
 
-        TestBed.configureTestingModule({
+        // Return the promise so the test framework awaits setup; otherwise `comp`/`searchStub` can be stale
+        // across tests, which - now that ngOnInit performs a search - leaks spurious paging-service calls.
+        return TestBed.configureTestingModule({
             imports: [FormsModule, DummyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
             providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: DynamicDialogRef, useValue: dialogRef }],
         })
@@ -66,6 +66,9 @@ describe('ImportComponent', () => {
     });
 
     afterEach(() => {
+        // Destroy the fixture so its (takeUntilDestroyed) search subscriptions are torn down and cannot fire
+        // into a later test.
+        fixture?.destroy();
         vi.restoreAllMocks();
         vi.useRealTimers();
     });
@@ -101,11 +104,30 @@ describe('ImportComponent', () => {
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
         comp.state = { ...state };
         comp.ngOnInit();
+        // ngOnInit now performs an initial load (see the initial-search regression test below). Flush and
+        // ignore it here so the assertions in each test only observe the search caused by their own action.
+        vi.advanceTimersByTime(300);
+        searchStub.mockClear();
         middleExpectation();
         expect(comp.content()).toEqual(searchResult);
         comp.sortRows();
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
+
+    it('should perform a single initial search on init so the table is not empty by default', () => {
+        // Regression test for #13266: opening an import dialog must load the available entities immediately
+        // (previously the table stayed empty until the user interacted with search/sort/pagination), and it
+        // must do so with exactly one request. Drive it through the Angular lifecycle (detectChanges) so
+        // ngOnInit runs exactly once, mirroring production.
+        comp.state = { ...state };
+
+        fixture.detectChanges();
+        vi.advanceTimersByTime(300);
+
+        expect(searchStub).toHaveBeenCalledOnce();
+        expect(searchStub).toHaveBeenCalledWith(comp.state, undefined);
+        expect(comp.content()).toEqual(searchResult);
+    });
 
     it('should set content to paging result on sort', () => {
         expect(comp.listSorting).toBe(false);

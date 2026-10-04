@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -16,12 +15,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
-import { MockProvider } from 'ng-mocks';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExercise Edit Selected Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseEditSelectedComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditSelectedComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
@@ -33,7 +28,6 @@ describe('ProgrammingExercise Edit Selected Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                MockProvider(NgbActiveModal),
                 provideHttpClient(),
             ],
         })
@@ -46,6 +40,18 @@ describe('ProgrammingExercise Edit Selected Component', () => {
     });
 
     describe('saveAll', () => {
+        it('should not save when the timeline is invalid', () => {
+            comp.newProgrammingExercise.releaseDate = dayjs();
+            fixture.componentRef.setInput('selectedProgrammingExercises', [new ProgrammingExercise(new Course(), undefined)]);
+            comp.timelineStatus.set({ valid: false, empty: false, invalidItems: [] });
+            const updateSpy = vi.spyOn(programmingExerciseService, 'updateTimeline');
+
+            comp.saveAll();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.isSaving()).toBe(false);
+        });
+
         it('should update each selected exercise', () => {
             // GIVEN
             // the exercise containing the values to update the selected ones
@@ -61,7 +67,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             entityTwo.releaseDate = dayjs().add(1, 'days');
             selectedProgrammingExercises.push(entityOne);
             selectedProgrammingExercises.push(entityTwo);
-            comp.selectedProgrammingExercises = selectedProgrammingExercises;
+            fixture.componentRef.setInput('selectedProgrammingExercises', selectedProgrammingExercises);
             comp.newProgrammingExercise = newProgrammingExercise;
             comp.notificationText = 'A Notification Text';
 
@@ -74,10 +80,10 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             // THEN
             expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityOne, { notificationText: comp.notificationText });
             expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityTwo, { notificationText: comp.notificationText });
-            expect(comp.selectedProgrammingExercises[0].dueDate).toEqual(newProgrammingExercise.dueDate);
-            expect(comp.selectedProgrammingExercises[1].dueDate).toEqual(newProgrammingExercise.dueDate);
-            expect(comp.selectedProgrammingExercises[0].releaseDate).toEqual(newProgrammingExercise.releaseDate);
-            expect(comp.selectedProgrammingExercises[1].releaseDate).toEqual(newProgrammingExercise.releaseDate);
+            expect(comp.selectedProgrammingExercises()[0].dueDate).toEqual(newProgrammingExercise.dueDate);
+            expect(comp.selectedProgrammingExercises()[1].dueDate).toEqual(newProgrammingExercise.dueDate);
+            expect(comp.selectedProgrammingExercises()[0].releaseDate).toEqual(newProgrammingExercise.releaseDate);
+            expect(comp.selectedProgrammingExercises()[1].releaseDate).toEqual(newProgrammingExercise.releaseDate);
             expect(comp.isSaving()).toBe(false);
         });
 
@@ -91,7 +97,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             entityOne.id = 123;
             entityOne.releaseDate = dayjs().add(1, 'days');
             selectedProgrammingExercises.push(entityOne);
-            comp.selectedProgrammingExercises = selectedProgrammingExercises;
+            fixture.componentRef.setInput('selectedProgrammingExercises', selectedProgrammingExercises);
             comp.newProgrammingExercise = newProgrammingExercise;
 
             vi.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));

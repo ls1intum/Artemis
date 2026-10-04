@@ -8,11 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamTimerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamTimerComponent;
     let fixture: ComponentFixture<ExamTimerComponent>;
     let dateService: ArtemisServerDateService;

@@ -3,13 +3,10 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 
 describe('ArtemisServerDateService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ArtemisServerDateService;
     let httpMock: HttpTestingController;
 

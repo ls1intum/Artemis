@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -20,8 +19,6 @@ vi.mock('@fingerprintjs/fingerprintjs', () => ({
 }));
 
 describe('BrowserFingerprintService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: BrowserFingerprintService;
     let localStorageService: LocalStorageService;
     let sessionStorageService: SessionStorageService;
@@ -91,7 +88,7 @@ describe('BrowserFingerprintService', () => {
         it('should still initialize without throwing when crypto.randomUUID is unavailable (insecure-context bootstrap)', () => {
             // Reproduces the fatal E2E bootstrap error: over a plain-HTTP origin window.crypto.randomUUID is undefined.
             const realCrypto = window.crypto;
-            vi.stubGlobal('crypto', { getRandomValues: (array: Uint8Array) => realCrypto.getRandomValues(array) });
+            vi.stubGlobal('crypto', { getRandomValues: (array: Uint8Array<ArrayBuffer>) => realCrypto.getRandomValues(array) });
             vi.spyOn(sessionStorageService, 'retrieve').mockReturnValue(undefined);
             try {
                 expect(() => service.initialize(false)).not.toThrow();

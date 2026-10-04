@@ -1,6 +1,5 @@
 import { Component, TemplateRef, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ExtensionPointDirective } from 'app/foundation/extension-point/extension-point.directive';
 
@@ -21,8 +20,6 @@ class HostComponent {
 }
 
 describe('ExtensionPointDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<HostComponent>;
 
     beforeEach(async () => {

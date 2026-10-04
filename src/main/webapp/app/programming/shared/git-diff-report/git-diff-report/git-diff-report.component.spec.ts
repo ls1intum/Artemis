@@ -5,7 +5,6 @@ vi.mock('@sentry/angular', () => ({
     captureException: vi.fn(),
 }));
 
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -59,8 +58,6 @@ class MockIntersectionObserver {
 }
 
 describe('ProgrammingExerciseGitDiffReport Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: GitDiffReportComponent;
     let fixture: ComponentFixture<GitDiffReportComponent>;
 

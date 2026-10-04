@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,16 +11,14 @@ import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import dayJs from 'dayjs/esm';
 
 describe('FooterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FooterComponent;
     let fixture: ComponentFixture<FooterComponent>;
     let profileService: ProfileService;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FooterComponent, MockPipe(ArtemisTranslatePipe), TranslateModule.forRoot(), RouterModule.forRoot([])],
-            providers: [{ provide: ProfileService, useClass: MockProfileService }],
+            imports: [FooterComponent, MockPipe(ArtemisTranslatePipe), RouterModule.forRoot([])],
+            providers: [{ provide: ProfileService, useClass: MockProfileService }, provideTranslateService()],
         });
         await TestBed.compileComponents();
 

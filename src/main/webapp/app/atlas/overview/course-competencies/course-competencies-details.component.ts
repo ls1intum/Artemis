@@ -37,10 +37,11 @@ import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.componen
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-competencies-details',
@@ -62,7 +63,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
         HelpIconComponent,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
@@ -195,7 +196,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     this.competencyProgress.set(resp.body!);
                     // Publish a new competency reference (a same-reference update would not notify zoneless change detection).
                     this.competency.update((competency) =>
-                        competency ? Object.assign(Object.create(Object.getPrototypeOf(competency)), competency, { userProgress: [resp.body!] }) : competency,
+                        competency ? hydrate(Object.create(Object.getPrototypeOf(competency)), competency, { userProgress: [resp.body!] }) : competency,
                     );
                     this.showFireworksIfMastered();
                 },
@@ -214,10 +215,10 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             }
             const lectureUnitLinks = competency.lectureUnitLinks.map((link) =>
                 link.lectureUnit?.id === lectureUnitId
-                    ? Object.assign(Object.create(Object.getPrototypeOf(link)), link, { lectureUnit: Object.assign({}, link.lectureUnit, { completed }) })
+                    ? hydrate(Object.create(Object.getPrototypeOf(link)), link, { lectureUnit: cloneWith(link.lectureUnit, { completed }) })
                     : link,
             );
-            return Object.assign(Object.create(Object.getPrototypeOf(competency)), competency, { lectureUnitLinks });
+            return hydrate(Object.create(Object.getPrototypeOf(competency)), competency, { lectureUnitLinks });
         });
     }
 

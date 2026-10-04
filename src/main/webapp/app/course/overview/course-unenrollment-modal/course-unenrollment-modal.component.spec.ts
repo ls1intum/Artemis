@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of, throwError } from 'rxjs';
@@ -17,8 +16,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseUnenrollmentModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseUnenrollmentModalComponent>;
     let component: CourseUnenrollmentModalComponent;
     let courseService: CourseManagementService;
@@ -44,7 +41,7 @@ describe('CourseUnenrollmentModalComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('course', testCourse);
         courseService = TestBed.inject(CourseManagementService);
-        unenrollFromCourseStub = vi.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
+        unenrollFromCourseStub = vi.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse<void>()));
         alertService = TestBed.inject(AlertService);
         successAlertStub = vi.spyOn(alertService, 'success');
         errorAlertStub = vi.spyOn(alertService, 'error');

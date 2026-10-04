@@ -1,9 +1,6 @@
 import { FeedbackItemService } from 'app/exercise/feedback/item/feedback-item-service';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import {
-    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackType,
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
@@ -13,12 +10,12 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
 import { getAllFeedbackGroups } from 'app/exercise/feedback/group/programming-feedback-groups';
-import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
+import { FeedbackItem, type FeedbackItemCodeReference } from 'app/exercise/feedback/item/feedback-item';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
     private translateService = inject(TranslateService);
 
@@ -111,22 +108,22 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      */
     private createFeedbackSuggestionItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         // A feedback suggestion should look like a manual feedback
-        let titleWithoutIdentifier = feedback.text ?? '';
-        // Remove prefix if it exists
-        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
-            if (titleWithoutIdentifier.startsWith(prefix)) {
-                titleWithoutIdentifier = titleWithoutIdentifier.substring(prefix.length);
-                break;
-            }
-        }
+        const titleWithoutIdentifier = Feedback.stripSuggestionPrefix(feedback.text ?? '');
+        const codeReference = this.getAiFeedbackCodeReference(feedback);
+        // Athena may have matched the suggestion to a structured grading instruction; its own feedback text is the
+        // criterion's canned wording and must be shown alongside Athena's free-text detail, exactly like a manually
+        // linked grading instruction (see createGradingInstructionFeedbackItem).
+        const gradingInstructionText = feedback.gradingInstruction?.feedback;
+        const text = gradingInstructionText ? gradingInstructionText + (feedback.detailText ? `\n${feedback.detailText}` : '') : feedback.detailText;
         return {
             type: 'Reviewer', // Treat it like normal feedback from the TA
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: titleWithoutIdentifier,
-            text: feedback.detailText,
+            text,
             positive: feedback.positive,
             credits: feedback.credits,
             feedbackReference: feedback,
+            codeReference,
         };
     }
 
@@ -158,6 +155,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     }
 
     private createNonGradedFeedbackItem(feedback: Feedback): FeedbackItem {
+        const codeReference = this.getAiFeedbackCodeReference(feedback);
         return {
             type: 'Reviewer',
             name: this.translateService.instant('artemisApp.result.detail.feedback'),
@@ -166,6 +164,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             positive: feedback.positive,
             credits: feedback.credits,
             feedbackReference: feedback,
+            codeReference,
         };
     }
 
@@ -228,5 +227,34 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             return `${issue.filePath} ${lineText} ${columnText}`;
         }
         return `${issue.filePath} ${lineText}`;
+    }
+
+    private getAiFeedbackCodeReference(feedback: Feedback): FeedbackItemCodeReference | undefined {
+        const filePath = Feedback.getReferenceFilePath(feedback);
+        const lineRange = Feedback.getReferenceLineRange(feedback);
+        if (!filePath || !lineRange) {
+            return undefined;
+        }
+        const legacyLineEnd = Feedback.isNonGradedFeedbackSuggestion(feedback) ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;
+        const lineEnd = legacyLineEnd ?? lineRange.end;
+        const codeReference: FeedbackItemCodeReference = { filePath, line: lineRange.start };
+        if (lineEnd !== lineRange.start) {
+            codeReference.lineEnd = lineEnd;
+        }
+        return codeReference;
+    }
+
+    private getLegacyAiFeedbackLineEnd(feedback: Feedback, filePath: string, lineStart: number): number | undefined {
+        const titlePrefix = `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File ${filePath} at lines `;
+        if (!feedback.text?.startsWith(titlePrefix)) {
+            return undefined;
+        }
+        const titleRange = feedback.text.slice(titlePrefix.length).match(/^(\d+)-(\d+)$/);
+        const titleStart = Number(titleRange?.[1]);
+        const titleEnd = Number(titleRange?.[2]);
+        if (!titleRange || titleStart !== lineStart || titleEnd < titleStart) {
+            return undefined;
+        }
+        return titleEnd;
     }
 }

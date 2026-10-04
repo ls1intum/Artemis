@@ -1,30 +1,31 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
-import { NgbDropdownButtonItem, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
-import { Subject } from 'rxjs';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupExportData } from 'app/openapi/model/tutorialGroupExportData';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupExportData } from 'app/openapi/model/tutorial-group-export-data';
 import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-groups-export-button',
     templateUrl: './tutorial-groups-export-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, FormsModule, DialogModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, DialogModule, FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
-export class TutorialGroupsExportButtonComponent implements OnDestroy {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+export class TutorialGroupsExportButtonComponent {
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
-
-    ngUnsubscribe = new Subject<void>();
 
     readonly dialogVisible = signal<boolean>(false);
 
-    courseId = input.required<number>();
+    protected readonly faFileExport = faFileExport;
+
+    readonly courseId = input.required<number>();
 
     readonly exportFinished = output<void>();
 
@@ -77,24 +78,34 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportCSV() {
-        this.tutorialGroupApiService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields()).subscribe({
-            next: (blob: Blob) => {
-                const a = document.createElement('a');
-                const objectUrl = URL.createObjectURL(blob);
-                a.href = objectUrl;
-                a.download = 'tutorial-groups.csv';
-                a.click();
-                URL.revokeObjectURL(objectUrl);
-                this.resetSelections();
-                this.closeDialog();
-                this.exportFinished.emit();
-            },
-            error: () => {
-                this.alertService.error('artemisApp.tutorialGroupExportDialog.failedCSV');
-                this.resetSelections();
-                this.closeDialog();
-            },
-        });
+        this.tutorialGroupApiService
+            .exportTutorialGroupsToCSV(this.courseId(), this.selectedFields())
+            .pipe(
+                map((response) => {
+                    if (!response.body) {
+                        throw new Error('The export response carried no file.');
+                    }
+                    return response.body;
+                }),
+            )
+            .subscribe({
+                next: (blob: Blob) => {
+                    const a = document.createElement('a');
+                    const objectUrl = URL.createObjectURL(blob);
+                    a.href = objectUrl;
+                    a.download = 'tutorial-groups.csv';
+                    a.click();
+                    URL.revokeObjectURL(objectUrl);
+                    this.resetSelections();
+                    this.closeDialog();
+                    this.exportFinished.emit();
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.tutorialGroupExportDialog.failedCSV');
+                    this.resetSelections();
+                    this.closeDialog();
+                },
+            });
     }
 
     exportJSON() {
@@ -126,10 +137,5 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
         this.selectedFields.set([]);
         this.availableFields.forEach((field) => (field.selected = false));
         this.selectAll.set(false);
-    }
-
-    ngOnDestroy(): void {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
     }
 }

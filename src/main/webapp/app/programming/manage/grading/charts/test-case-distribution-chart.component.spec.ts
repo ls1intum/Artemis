@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { TestCaseDistributionChartComponent } from 'app/programming/manage/grading/charts/test-case-distribution-chart.component';
@@ -11,8 +10,6 @@ import { TestCaseStatsMap } from 'app/programming/shared/entities/programming-ex
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('Test case distribution chart', () => {
-    setupTestBed({ zoneless: true });
-
     const programmingExercise = new ProgrammingExercise(undefined, undefined);
     let component: TestCaseDistributionChartComponent;
     let fixture: ComponentFixture<TestCaseDistributionChartComponent>;
@@ -198,7 +195,8 @@ describe('Test case distribution chart', () => {
         const emitStub = vi.spyOn(component.testCaseRowFilter, 'emit').mockImplementation(() => {});
 
         // click on the first segment (test case) of the first bar
-        component.onSelectWeight({ element: { datasetIndex: 0, index: 0 } });
+        const chartData = component.weightChartData();
+        component.onSelectWeight({ seriesIndex: 0, index: 0, seriesLabel: chartData.series[0].label, meta: chartData.series[0].meta?.[0] });
 
         expect(emitStub).toHaveBeenCalledWith(testCase.id);
         expect(component.tableFiltered).toBe(true);

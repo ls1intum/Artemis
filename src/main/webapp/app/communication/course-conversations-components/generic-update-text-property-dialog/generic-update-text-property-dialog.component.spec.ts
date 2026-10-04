@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
@@ -13,8 +12,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('GenericUpdateTextPropertyDialog', () => {
-    setupTestBed({ zoneless: true });
-
     let component: GenericUpdateTextPropertyDialogComponent;
     let fixture: ComponentFixture<GenericUpdateTextPropertyDialogComponent>;
 
@@ -32,7 +29,6 @@ describe('GenericUpdateTextPropertyDialog', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(GenericUpdateTextPropertyDialogComponent);
         component = fixture.componentInstance;
-        fixture.detectChanges();
     });
 
     beforeEach(() => {

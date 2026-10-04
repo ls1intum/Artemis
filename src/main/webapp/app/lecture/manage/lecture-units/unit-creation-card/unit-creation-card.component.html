@@ -1,35 +1,17 @@
-<div class="container" id="unit-creation">
-    <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
-        <div class="text-center text-primary me-2">{{ 'artemisApp.lectureUnit.unitCreationCard.title' | artemisTranslate }}:</div>
-        <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
-            @if (!emitEvents()) {
-                <a type="button" id="createTextUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'text-units', 'create']">
-                    <fa-icon [icon]="faScroll" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text"></span>
-                </a>
-                <a type="button" id="createExerciseUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'exercise-units', 'create']">
-                    <fa-icon [icon]="faCheck" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise"></span>
-                </a>
-                <a type="button" id="createOnlineUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'online-units', 'create']">
-                    <fa-icon [icon]="faLink" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online"></span>
-                </a>
-                <a type="button" id="createAttachmentVideoUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'attachment-video-units', 'create']">
-                    <fa-icon [icon]="faFileVideo" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachmentVideo"></span>
-                </a>
-            } @else {
-                <button type="button" id="createTextUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.TEXT)">
-                    <fa-icon [icon]="faScroll" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text"></span>
-                </button>
-                <button type="button" id="createExerciseUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.EXERCISE)">
-                    <fa-icon [icon]="faCheck" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise"></span>
-                </button>
-                <button type="button" id="createOnlineUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.ONLINE)">
-                    <fa-icon [icon]="faLink" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online"></span>
-                </button>
-                <button type="button" id="createAttachmentVideoUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.ATTACHMENT_VIDEO)">
-                    <fa-icon [icon]="faFileVideo" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachmentVideo"></span>
-                </button>
-            }
-        </div>
-        <jhi-documentation-button [type]="documentationType" />
-    </div>
+<div class="flex flex-wrap items-center gap-2" data-testid="unit-creation" role="group" aria-labelledby="unit-creation-label">
+    <span id="unit-creation-label" class="me-1 font-medium" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.title"></span>
+    @for (option of options; track option.type) {
+        @if (emitEvents()) {
+            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" [id]="option.buttonId" (click)="onButtonClicked(option.type)">
+                <fa-icon [icon]="option.icon" />
+                <span [jhiTranslate]="option.label"></span>
+            </button>
+        } @else {
+            <a tumAetUiButton severity="secondary" variant="outlined" size="small" [id]="option.buttonId" [routerLink]="['./', option.route, 'create']">
+                <fa-icon [icon]="option.icon" />
+                <span [jhiTranslate]="option.label"></span>
+            </a>
+        }
+    }
+    <jhi-documentation-button [type]="documentationType" />
 </div>

@@ -1,7 +1,6 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { AssessmentLocksComponent } from 'app/assessment/manage/assessment-locks/assessment-locks.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
@@ -26,7 +25,6 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('AssessmentLocksComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: AssessmentLocksComponent;
     let fixture: ComponentFixture<AssessmentLocksComponent>;
     let courseService: CourseManagementService;
@@ -43,14 +41,7 @@ describe('AssessmentLocksComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                AssessmentLocksComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockRouterLinkDirective,
-                MockHasAnyAuthorityDirective,
-                MockPipe(ArtemisDatePipe),
-            ],
+            imports: [AssessmentLocksComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockHasAnyAuthorityDirective, MockPipe(ArtemisDatePipe)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -64,6 +55,7 @@ describe('AssessmentLocksComponent', () => {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ id: 123 }),
                 },
+                provideTranslateService(),
             ],
         })
             .compileComponents()

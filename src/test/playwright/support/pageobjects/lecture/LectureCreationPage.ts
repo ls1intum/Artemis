@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Locator, Page } from '@playwright/test';
 import dayjs from 'dayjs';
 import { BASE_API } from '../../constants';
 import { fillDateTimePicker, setMonacoEditorContentByLocator } from '../../utils';
@@ -42,19 +42,11 @@ export class LectureCreationPage {
     }
 
     /**
-     * Sets the visibility date of the lecture to the provided date.
-     * @param date - The date when the lecture should become visible.
-     */
-    async setVisibleDate(date: dayjs.Dayjs) {
-        await fillDateTimePicker(this.page.locator('#visible-date #date-input-field'), date);
-    }
-
-    /**
      * Sets the start date of the lecture to the provided date.
      * @param date - The start date for the lecture.
      */
     async setStartDate(date: dayjs.Dayjs) {
-        await fillDateTimePicker(this.page.locator('#start-date #date-input-field'), date);
+        await fillDateTimePicker(this.page.getByTestId('lecture-start-date').getByRole('combobox'), date);
     }
 
     /**
@@ -62,6 +54,20 @@ export class LectureCreationPage {
      * @param date - The end date for the lecture.
      */
     async setEndDate(date: dayjs.Dayjs) {
-        await fillDateTimePicker(this.page.locator('#end-date #date-input-field'), date);
+        await fillDateTimePicker(this.page.getByTestId('lecture-end-date').getByRole('combobox'), date);
+    }
+
+    /**
+     * The footer status, which names unsaved sections or confirms the last save.
+     */
+    getSaveStatus(): Locator {
+        return this.page.getByTestId('lecture-edit-footer-status');
+    }
+
+    /**
+     * The footer button that leaves the editor: Close while nothing needs saving, Cancel otherwise.
+     */
+    getLeaveButton(): Locator {
+        return this.page.getByTestId('lecture-edit-leave');
     }
 }

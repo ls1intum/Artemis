@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 import { admin } from '../../../support/users';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { SEED_COURSES } from '../../../support/seedData';
@@ -19,17 +19,22 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
 
         // Fill out file upload exercise form
         const exerciseTitle = 'file upload exercise' + generateUUID();
+        const releaseDate = dayjs().second(0).millisecond(0);
+        const startDate = releaseDate.add(1, 'hour');
+        const dueDate = releaseDate.add(1, 'day');
+        const assessmentDueDate = releaseDate.add(2, 'days');
         await fileUploadExerciseCreation.setTitle(exerciseTitle);
-        await fileUploadExerciseCreation.setReleaseDate(dayjs());
-        await fileUploadExerciseCreation.setDueDate(dayjs().add(1, 'days'));
-        await fileUploadExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+        await fileUploadExerciseCreation.setReleaseDate(releaseDate);
+        await fileUploadExerciseCreation.setStartDate(startDate);
+        await fileUploadExerciseCreation.setDueDate(dueDate);
+        await fileUploadExerciseCreation.setAssessmentDueDate(assessmentDueDate);
         await fileUploadExerciseCreation.typeMaxPoints(10);
         const problemStatement = 'This is a problem statement';
         const exampleSolution = 'E = mc^2';
         await fileUploadExerciseCreation.typeProblemStatement(problemStatement);
         await fileUploadExerciseCreation.typeExampleSolution(exampleSolution);
         const exerciseCreationResponse = await fileUploadExerciseCreation.create();
-        const exercise: FileUploadExercise = await exerciseCreationResponse.json();
+        const exercise: FileUploadExercise = await readResponseJson(exerciseCreationResponse);
 
         // Verify the exercise was actually persisted by fetching it from the API. This is the
         // test's real contract — "creating a file-upload exercise via the UI produces a
@@ -43,6 +48,10 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
         const fetched: FileUploadExercise = await fetchResponse.json();
         expect(fetched.title).toBe(exerciseTitle);
         expect(fetched.exampleSolution).toBe(exampleSolution);
+        expect(dayjs(fetched.releaseDate).isSame(releaseDate)).toBeTruthy();
+        expect(dayjs(fetched.startDate).isSame(startDate)).toBeTruthy();
+        expect(dayjs(fetched.dueDate).isSame(dueDate)).toBeTruthy();
+        expect(dayjs(fetched.assessmentDueDate).isSame(assessmentDueDate)).toBeTruthy();
     });
 
     test.describe('File upload exercise deletion', () => {

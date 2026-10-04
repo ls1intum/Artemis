@@ -6,7 +6,7 @@ import { User } from 'app/account/user/user.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamResultOverviewComponent } from 'app/exam/overview/summary/result-overview/exam-result-overview.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -20,7 +20,7 @@ import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-
 import { CollapsibleCardComponent } from 'app/exam/overview/summary/collapsible-card/collapsible-card.component';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgClass } from '@angular/common';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -28,7 +28,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockDirective } from 'ng-mocks';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
@@ -134,8 +133,6 @@ const textExerciseResult = {
 } as ExerciseResult;
 
 describe('ExamResultOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExamResultOverviewComponent],
@@ -152,7 +149,7 @@ describe('ExamResultOverviewComponent', () => {
                         MockComponent(FaIconComponent),
                         MockPipe(ArtemisTranslatePipe),
                         MockDirective(TranslateDirective),
-                        NgClass,
+                        TumAetUiTableDirective,
                         MockComponent(NoDataComponent),
                         MockComponent(GradingKeyTableComponent),
                         MockComponent(CollapsibleCardComponent),
@@ -384,6 +381,24 @@ describe('ExamResultOverviewComponent', () => {
 
             expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
             expect(component.overallAchievedPercentageRoundedByCourseSettings()).toBe(76.67);
+        });
+    });
+
+    describe('rowClass', () => {
+        it('should dim and color exercises that are not included in the score', () => {
+            const classes = component.rowClass({ includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED } as Exercise);
+            expect(classes).toContain('opacity-50');
+            expect(classes).toContain('text-state-danger');
+        });
+
+        it('should color bonus exercises', () => {
+            const classes = component.rowClass({ includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS } as Exercise);
+            expect(classes).toContain('text-state-warning');
+            expect(classes).not.toContain('opacity-50');
+        });
+
+        it('should not style regular exercises', () => {
+            expect(component.rowClass({ includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY } as Exercise)).toBe('');
         });
     });
 });

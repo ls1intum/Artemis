@@ -39,8 +39,8 @@ import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
-import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.IrisResponseNotification;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationParameterDTO;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 
@@ -234,8 +234,8 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
     private String latestNotificationParameter(String key) {
         CourseNotification latest = courseNotificationTestRepository.findAll().stream().filter(notification -> IRIS_RESPONSE_TYPE.equals(notification.getType()))
                 .max(Comparator.comparing(CourseNotification::getId)).orElseThrow();
-        Set<CourseNotificationParameter> parameters = courseNotificationParameterRepository.findByCourseNotificationIdEquals(latest.getId());
-        return parameters.stream().filter(parameter -> parameter.getKey().equals(key)).map(CourseNotificationParameter::getValue).findFirst().orElseThrow();
+        Set<CourseNotificationParameterDTO> parameters = courseNotificationParameterRepository.findByCourseNotificationIdEquals(latest.getId());
+        return parameters.stream().filter(parameter -> parameter.key().equals(key)).map(CourseNotificationParameterDTO::value).findFirst().orElseThrow();
     }
 
     private HttpHeaders userAgentHeaders(String userAgent) {

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -204,6 +205,78 @@ class HttpRequestUtilsTest {
             assertThat(operatingSystem).isNull();
         }
 
+    }
+
+    /**
+     * Tests for {@link HttpRequestUtils#getPeerIpString}, which resolves the address that decides an authorization
+     * outcome and therefore may not be taken from a header any client can set.
+     * <p>
+     * The distinction from {@link HttpRequestUtils#getIpStringFromRequest} is the whole point of the method: that one
+     * returns the first {@code X-Forwarded-For} entry whenever the header is present, so a caller could name whatever
+     * address an allowlist happens to permit.
+     */
+    @Nested
+    class PeerIpTests {
+
+        private static final Predicate<String> TRUSTS_NOBODY = _ -> false;
+
+        private static final Predicate<String> TRUSTS_THE_PROXY = "10.0.0.1"::equals;
+
+        @Test
+        void shouldIgnoreForwardedHeaderFromAnUntrustedPeer() {
+            HttpServletRequest request = requestFrom("203.0.113.9", "192.168.1.5");
+
+            assertThat(HttpRequestUtils.getPeerIpString(request, TRUSTS_NOBODY))
+                    .as("a client that sets X-Forwarded-For itself must not be able to choose the address it is judged by").isEqualTo("203.0.113.9");
+        }
+
+        @Test
+        void shouldUseForwardedHeaderFromATrustedProxy() {
+            HttpServletRequest request = requestFrom("10.0.0.1", "192.168.1.5");
+
+            assertThat(HttpRequestUtils.getPeerIpString(request, TRUSTS_THE_PROXY)).isEqualTo("192.168.1.5");
+        }
+
+        /**
+         * A proxy appends to whatever the client sent rather than replacing it, so only the entries added by trusted
+         * proxies can be believed. Walking from the right stops at the first one that a trusted proxy did not add.
+         */
+        @Test
+        void shouldTakeTheLastEntryNotAddedByATrustedProxy() {
+            HttpServletRequest request = requestFrom("10.0.0.1", "9.9.9.9, 203.0.113.9, 10.0.0.1");
+
+            assertThat(HttpRequestUtils.getPeerIpString(request, TRUSTS_THE_PROXY)).as("entries to the left of the last untrusted hop were supplied by the client")
+                    .isEqualTo("203.0.113.9");
+        }
+
+        @Test
+        void shouldFallBackToThePeerWhenEveryForwardedEntryIsATrustedProxy() {
+            HttpServletRequest request = requestFrom("10.0.0.1", "10.0.0.1, 10.0.0.1");
+
+            assertThat(HttpRequestUtils.getPeerIpString(request, TRUSTS_THE_PROXY)).isEqualTo("10.0.0.1");
+        }
+
+        @Test
+        void shouldFallBackToThePeerWithoutAForwardedHeader() {
+            HttpServletRequest request = requestFrom("10.0.0.1", null);
+
+            assertThat(HttpRequestUtils.getPeerIpString(request, TRUSTS_THE_PROXY)).isEqualTo("10.0.0.1");
+        }
+
+        @Test
+        void shouldTolerateABlankForwardedHeader() {
+            HttpServletRequest request = requestFrom("10.0.0.1", " , ");
+
+            assertThat(HttpRequestUtils.getPeerIpString(request, TRUSTS_THE_PROXY)).isEqualTo("10.0.0.1");
+        }
+
+        private HttpServletRequest requestFrom(String remoteAddress, String forwardedFor) {
+            final HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getRemoteAddr()).thenReturn(remoteAddress);
+            when(request.getHeader(anyString())).thenReturn(null);
+            when(request.getHeader("X-Forwarded-For")).thenReturn(forwardedFor);
+            return request;
+        }
     }
 
     private HttpServletRequest httpRequestMockWithIp(String ipAddress) {

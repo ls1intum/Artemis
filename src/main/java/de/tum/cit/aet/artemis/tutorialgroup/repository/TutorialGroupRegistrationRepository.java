@@ -81,9 +81,8 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
                     student.registrationNumber
             )
             FROM User student
-                JOIN student.groups groupName
-            WHERE groupName = :studentGroupName
-                AND (student.login LIKE %:loginOrName% OR CONCAT(student.firstName, ' ', student.lastName) LIKE %:loginOrName%)
+            WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = student AND ucr.course.id = :courseId AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
+                AND (LOWER(student.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%') OR LOWER(CONCAT(student.firstName, ' ', student.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%'))
                 AND NOT EXISTS (
                     SELECT 1
                     FROM TutorialGroupRegistration registration
@@ -94,6 +93,6 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
                 CONCAT(COALESCE(student.firstName, ''), ' ', COALESCE(student.lastName, '')) ASC,
                 student.id ASC
             """)
-    List<TutorialGroupStudentDTO> searchUnregisteredStudents(@Param("tutorialGroupId") long tutorialGroupId, @Param("studentGroupName") String studentGroupName,
+    List<TutorialGroupStudentDTO> searchUnregisteredStudents(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId,
             @Param("loginOrName") String loginOrName, Pageable pageable);
 }

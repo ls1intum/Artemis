@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
@@ -12,7 +11,6 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
 import { HttpErrorResponse } from '@angular/common/http';
 
 describe('Tutor Participation Service', () => {
-    setupTestBed({ zoneless: true });
     let service: TutorParticipationService;
     let httpMock: HttpTestingController;
 

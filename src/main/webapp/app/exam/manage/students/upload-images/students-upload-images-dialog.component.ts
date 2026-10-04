@@ -1,10 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
-import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
@@ -13,34 +11,35 @@ import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-student-upload-images-dialog',
     templateUrl: './students-upload-images-dialog.component.html',
-    encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, ArtemisTranslatePipe],
+    imports: [NgOptimizedImage, FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
-export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+export class StudentsUploadImagesDialogComponent {
     private alertService = inject(AlertService);
     private examManagementService = inject(ExamManagementService);
 
-    readonly ActionType = ActionType;
+    readonly visible = model(false);
+    readonly courseId = input.required<number>();
+    readonly exam = input.required<Exam>();
+    /** Emitted when the user finishes after the images were saved, so the parent can reload the students. */
+    readonly finished = output<void>();
 
     notFoundUsers = signal<ExamUsersNotFoundDTO | undefined>(undefined);
     file = signal<File | undefined>(undefined);
 
-    courseId = signal<number | undefined>(undefined);
-    exam = signal<Exam | undefined>(undefined);
+    private uploadSubscription: Subscription | undefined;
 
     isParsing = signal(false);
     hasParsed = signal(false);
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    readonly usersNotFound = computed(() => this.notFoundUsers()?.numberOfUsersNotFound ?? 0);
+    readonly imagesSaved = computed(() => this.notFoundUsers()?.numberOfImagesSaved ?? 0);
 
     // Icons
     faBan = faBan;
@@ -49,28 +48,31 @@ export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
 
-    ngOnInit(): void {
-        const data = this.dialogConfig?.data;
-        if (data) {
-            if (data.courseId !== undefined) {
-                this.courseId.set(data.courseId);
+    constructor() {
+        // Every opening starts with an empty form, since the dialog stays mounted in the page. The form is cleared on closing, so nothing resets input made right after opening.
+        effect(() => {
+            if (!this.visible()) {
+                untracked(() => {
+                    // A response that arrives after closing must not restore the results into the next opening.
+                    this.uploadSubscription?.unsubscribe();
+                    this.resetDialog();
+                    this.file.set(undefined);
+                });
             }
-            if (data.exam !== undefined) {
-                this.exam.set(data.exam);
-            }
-        }
+        });
     }
 
-    ngOnDestroy(): void {
-        this.dialogErrorSource.unsubscribe();
+    open() {
+        this.visible.set(true);
     }
 
     clear() {
-        this.dialogRef.close();
+        this.visible.set(false);
     }
 
     onFinish() {
-        this.dialogRef.close('finished');
+        this.visible.set(false);
+        this.finished.emit();
     }
 
     private resetDialog() {
@@ -97,7 +99,7 @@ export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
             const formData: FormData = new FormData();
             formData.append('file', this.file()!);
 
-            this.examManagementService.saveImages(this.courseId()!, exam.id, formData).subscribe({
+            this.uploadSubscription = this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
                 next: (res: HttpResponse<ExamUsersNotFoundDTO>) => {
                     if (res) {
                         this.notFoundUsers.set(res.body ?? undefined);

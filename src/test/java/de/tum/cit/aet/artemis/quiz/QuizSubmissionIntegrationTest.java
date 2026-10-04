@@ -1,14 +1,16 @@
 package de.tum.cit.aet.artemis.quiz;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -16,7 +18,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,14 +37,20 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.multipart.MultipartFile;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -68,16 +82,23 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
-import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import liquibase.changelog.ChangeLogParameters;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.parser.ChangeLogParserFactory;
+import liquibase.resource.ClassLoaderResourceAccessor;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -90,6 +111,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private static final int NUMBER_OF_TUTORS = 1;
 
     @Autowired
+    private JsonMapper jsonMapper;
+
+    @Autowired
     private QuizExerciseService quizExerciseService;
 
     @Autowired
@@ -97,6 +121,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
+
+    @Autowired
+    private ResultTestRepository resultTestRepository;
 
     @Autowired
     private ParticipationTestRepository participationRepository;
@@ -108,16 +135,22 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private QuizBatchService quizBatchService;
 
     @Autowired
+    private QuizSubmissionService quizSubmissionService;
+
+    @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
 
     @Autowired
-    QuizStatisticService quizStatisticService;
+    ParticipationUtilService participationUtilService;
 
     @Autowired
-    ParticipationUtilService participationUtilService;
+    private ResultTestRepository resultRepository;
+
+    @Autowired
+    private DataSource dataSource;
 
     @BeforeEach
     void init() {
@@ -159,53 +192,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // all submission are saved to the database
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(NUMBER_OF_STUDENTS);
 
-        // update the statistics
-        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-        quizStatisticService.recalculateStatistics(quizExerciseWithStatistic);
-
-        // Test the statistics
-        assertThat(quizExerciseWithStatistic).isNotNull();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
-        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
-        assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
-        // check general statistics
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            log.debug(pointCounter.toString());
-            if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 6.0));
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            else if (pointCounter.getPoints() == 7.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 12.0));
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-        }
-        // check statistic for each question
-        for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            log.debug(question.getQuizQuestionStatistic().toString());
-            if (question instanceof MultipleChoiceQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 2.0));
-            }
-            else if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
-            }
-            else {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
-            }
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
-            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
-        }
+        double questionScore = quizExercise.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
+        assertThat(quizExercise.getMaxPoints()).isEqualTo(questionScore);
     }
 
     @Test
@@ -271,27 +259,165 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             participationUtilService.addResultToSubmission(submissions.get(i), AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(submissions.get(i)), true);
         }
 
-        // update the statistics
-        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-        quizStatisticService.recalculateStatistics(quizExerciseWithStatistic);
+        QuizExercise savedQuizExercise = quizExercise;
+        List<Long> roundedScores = submissions.stream().map(savedQuizExercise::getScoreForSubmission)
+                .map(score -> Math.round(savedQuizExercise.getOverallQuizPoints() * score / 100.0)).toList();
+        assertThat(roundedScores).containsExactly(1L, 0L, 6L);
+    }
 
-        var quizPointStatistic = quizExerciseWithStatistic.getQuizPointStatistic();
-        assertThat(quizExerciseWithStatistic).isNotNull();
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldBackfillLegacyCompletionDateThroughMigrationWhenCalculatingStatisticsOnDemand() throws Exception {
+        QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        ZonedDateTime submissionDate = ZonedDateTime.now().minusDays(1);
+        QuizSubmission quizSubmission = createScoredSubmission(quizExercise, true, submissionDate);
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        Result legacyResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, quizSubmission, true, true, 100);
+        resultRepository.flush();
+        assertThat(legacyResult.getCompletionDate()).isNull();
 
-        for (var pointCounter : quizPointStatistic.getPointCounters()) {
-            assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
-            if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(1);
-            }
-            else if (pointCounter.getPoints() == 1.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 1.0 contains 1 rated submission -> 1 point").isEqualTo(1);
-            }
-            else if (pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 6.0 contains 1 rated submission -> 6 points").isEqualTo(1);
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).as("All other buckets contain 0 rated submissions").isZero();
-            }
+        String pointStatisticsPath = "/api/quiz/quiz-exercises/" + quizExercise.getId() + "/statistics/points";
+        JsonNode statisticsBeforeMigration = request.get(pointStatisticsPath, HttpStatus.OK, JsonNode.class).path("quizPointStatistic");
+        assertThat(statisticsBeforeMigration.path("participantsRated").asInt()).isZero();
+
+        executeResultCompletionDateBackfill();
+
+        JsonNode statisticsAfterMigration = request.get(pointStatisticsPath, HttpStatus.OK, JsonNode.class).path("quizPointStatistic");
+        assertThat(statisticsAfterMigration.path("participantsRated").asInt()).isOne();
+        JsonNode fullPointCounter = findNodeByDouble(statisticsAfterMigration.path("pointCounters"), "points", quizExercise.getOverallQuizPoints());
+        assertThat(fullPointCounter.path("ratedCounter").asInt()).isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldUseLatestResultPerRatingAndTreatNullRatedAsUnratedWhenCalculatingStatisticsOnDemand() throws Exception {
+        QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        ZonedDateTime tiedCompletionDate = ZonedDateTime.now().minusMinutes(1);
+
+        QuizSubmission supersededSubmission = createScoredSubmission(quizExercise, false, tiedCompletionDate);
+        participationUtilService.addSubmission(quizExercise, supersededSubmission, TEST_PREFIX + "student1");
+        Result supersededResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate, supersededSubmission, true, false, 0);
+
+        QuizSubmission latestSubmission = createScoredSubmission(quizExercise, true, tiedCompletionDate);
+        participationUtilService.addSubmission((StudentParticipation) supersededSubmission.getParticipation(), latestSubmission);
+        Result latestResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate, latestSubmission, true, false, 100);
+        assertThat(latestResult.getId()).isGreaterThan(supersededResult.getId());
+
+        QuizSubmission newerUnscoredSubmission = createScoredSubmission(quizExercise, false, tiedCompletionDate.plusSeconds(3));
+        participationUtilService.addSubmission((StudentParticipation) latestSubmission.getParticipation(), newerUnscoredSubmission);
+        Result newerUnscoredResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(3), newerUnscoredSubmission, true,
+                false, 0);
+        newerUnscoredResult.score(null);
+        resultRepository.saveAndFlush(newerUnscoredResult);
+
+        QuizSubmission nullRatedSubmission = createScoredSubmission(quizExercise, false, tiedCompletionDate.plusSeconds(1));
+        participationUtilService.addSubmission(quizExercise, nullRatedSubmission, TEST_PREFIX + "student2");
+        Result nullRatedResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(1), nullRatedSubmission, true, false, 0);
+        assertThat(resultRepository.setRatedToNull(nullRatedResult.getId())).isOne();
+
+        QuizSubmission ratedSubmission = createScoredSubmission(quizExercise, true, tiedCompletionDate.plusSeconds(2));
+        participationUtilService.addSubmission(quizExercise, ratedSubmission, TEST_PREFIX + "student3");
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(2), ratedSubmission, true, true, 100);
+
+        QuizSubmission unansweredSubmission = new QuizSubmission();
+        unansweredSubmission.setSubmitted(true);
+        unansweredSubmission.setSubmissionDate(tiedCompletionDate.plusSeconds(3));
+        participationUtilService.addSubmission(quizExercise, unansweredSubmission, TEST_PREFIX + "student4");
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(3), unansweredSubmission, true, true, 0);
+
+        String statisticsPath = "/api/quiz/quiz-exercises/" + quizExercise.getId() + "/statistics";
+        JsonNode pointResponse = request.get(statisticsPath + "/points", HttpStatus.OK, JsonNode.class);
+        JsonNode pointStatistic = pointResponse.path("quizPointStatistic");
+        assertThat(pointStatistic.path("participantsRated").asInt()).isEqualTo(2);
+        assertThat(pointStatistic.path("participantsUnrated").asInt()).isEqualTo(2);
+
+        JsonNode zeroPointCounter = findNodeByDouble(pointStatistic.path("pointCounters"), "points", 0);
+        assertThat(zeroPointCounter.path("ratedCounter").asInt()).isOne();
+        assertThat(zeroPointCounter.path("unRatedCounter").asInt()).isOne();
+        JsonNode fullPointCounter = findNodeByDouble(pointStatistic.path("pointCounters"), "points", quizExercise.getOverallQuizPoints());
+        assertThat(fullPointCounter.path("ratedCounter").asInt()).isOne();
+        assertThat(fullPointCounter.path("unRatedCounter").asInt()).isOne();
+
+        MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+        JsonNode overviewResponse = request.get(statisticsPath + "/overview", HttpStatus.OK, JsonNode.class);
+        assertThat(overviewResponse.path("participantsRated").asInt()).isEqualTo(2);
+        JsonNode overviewQuestionStatistic = findNodeByLong(overviewResponse.path("quizQuestions"), "id", multipleChoiceQuestion.getId()).path("quizQuestionStatistic");
+        assertThat(overviewQuestionStatistic.path("participantsRated").asInt()).isOne();
+        assertThat(overviewQuestionStatistic.path("participantsUnrated").asInt()).isEqualTo(2);
+        assertThat(overviewQuestionStatistic.path("ratedCorrectCounter").asInt()).isOne();
+        assertThat(overviewQuestionStatistic.path("unRatedCorrectCounter").asInt()).isOne();
+
+        JsonNode questionResponse = request.get(statisticsPath + "/questions/" + multipleChoiceQuestion.getId(), HttpStatus.OK, JsonNode.class);
+        JsonNode questionStatistic = questionResponse.path("quizQuestionStatistic");
+        AnswerOption correctAnswer = multipleChoiceQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().orElseThrow();
+        AnswerOption incorrectAnswer = multipleChoiceQuestion.getAnswerOptions().stream().filter(answer -> !answer.isIsCorrect()).findFirst().orElseThrow();
+        JsonNode correctAnswerCounter = findNodeByLong(questionStatistic.path("answerCounters"), "answerId", correctAnswer.getId());
+        assertThat(correctAnswerCounter.path("ratedCounter").asInt()).isOne();
+        assertThat(correctAnswerCounter.path("unRatedCounter").asInt()).isOne();
+        JsonNode incorrectAnswerCounter = findNodeByLong(questionStatistic.path("answerCounters"), "answerId", incorrectAnswer.getId());
+        assertThat(incorrectAnswerCounter.path("ratedCounter").asInt()).isZero();
+        assertThat(incorrectAnswerCounter.path("unRatedCounter").asInt()).isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldIncludeCoursePracticeAndExcludeExamTestRunsWhenCalculatingStatisticsOnDemand() throws Exception {
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(1);
+        QuizExercise coursePracticeQuizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        QuizSubmission coursePracticeSubmission = createScoredSubmission(coursePracticeQuizExercise, true, completionDate);
+        participationUtilService.addSubmission(coursePracticeQuizExercise, coursePracticeSubmission, TEST_PREFIX + "student1");
+        StudentParticipation coursePracticeParticipation = (StudentParticipation) coursePracticeSubmission.getParticipation();
+        coursePracticeParticipation.setTestRun(true);
+        participationRepository.saveAndFlush(coursePracticeParticipation);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, completionDate, coursePracticeSubmission, true, true, 100);
+
+        String courseStatisticsPath = "/api/quiz/quiz-exercises/" + coursePracticeQuizExercise.getId() + "/statistics";
+        JsonNode coursePointStatistic = request.get(courseStatisticsPath + "/points", HttpStatus.OK, JsonNode.class).path("quizPointStatistic");
+        assertThat(coursePointStatistic.path("participantsRated").asInt()).isOne();
+        JsonNode courseOverview = request.get(courseStatisticsPath + "/overview", HttpStatus.OK, JsonNode.class);
+        assertThat(courseOverview.path("participantsRated").asInt()).isOne();
+        MultipleChoiceQuestion courseQuestion = (MultipleChoiceQuestion) coursePracticeQuizExercise.getQuizQuestions().getFirst();
+        JsonNode courseQuestionStatistic = request.get(courseStatisticsPath + "/questions/" + courseQuestion.getId(), HttpStatus.OK, JsonNode.class).path("quizQuestionStatistic");
+        assertThat(courseQuestionStatistic.path("participantsRated").asInt()).isOne();
+        AnswerOption correctCourseAnswer = courseQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().orElseThrow();
+        JsonNode correctCourseAnswerCounter = findNodeByLong(courseQuestionStatistic.path("answerCounters"), "answerId", correctCourseAnswer.getId());
+        assertThat(correctCourseAnswerCounter.path("ratedCounter").asInt()).isOne();
+
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        userUtilService.addInstructorToCourse(TEST_PREFIX + "instructor1", exerciseGroup.getExam().getCourse());
+        QuizExercise examQuizExercise = quizExerciseService.save(QuizExerciseFactory.createQuizForExam(exerciseGroup));
+        QuizSubmission examQuizSubmission = createScoredSubmission(examQuizExercise, true, completionDate);
+        participationUtilService.addSubmission(examQuizExercise, examQuizSubmission, TEST_PREFIX + "instructor1");
+        StudentParticipation testRunParticipation = (StudentParticipation) examQuizSubmission.getParticipation();
+        testRunParticipation.setTestRun(true);
+        participationRepository.saveAndFlush(testRunParticipation);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, completionDate, examQuizSubmission, true, true, 100);
+
+        String examStatisticsPath = "/api/quiz/quiz-exercises/" + examQuizExercise.getId() + "/statistics";
+        JsonNode pointStatistic = request.get(examStatisticsPath + "/points", HttpStatus.OK, JsonNode.class).path("quizPointStatistic");
+        assertThat(pointStatistic.path("participantsRated").asInt()).isZero();
+        assertThat(pointStatistic.path("participantsUnrated").asInt()).isZero();
+        for (JsonNode pointCounter : pointStatistic.path("pointCounters")) {
+            assertThat(pointCounter.path("ratedCounter").asInt()).isZero();
+            assertThat(pointCounter.path("unRatedCounter").asInt()).isZero();
+        }
+
+        MultipleChoiceQuestion examQuestion = (MultipleChoiceQuestion) examQuizExercise.getQuizQuestions().getFirst();
+        JsonNode overviewResponse = request.get(examStatisticsPath + "/overview", HttpStatus.OK, JsonNode.class);
+        assertThat(overviewResponse.path("participantsRated").asInt()).isZero();
+        assertThat(overviewResponse.path("participantsUnrated").asInt()).isZero();
+        JsonNode overviewQuestionStatistic = findNodeByLong(overviewResponse.path("quizQuestions"), "id", examQuestion.getId()).path("quizQuestionStatistic");
+        assertThat(overviewQuestionStatistic.path("participantsRated").asInt()).isZero();
+        assertThat(overviewQuestionStatistic.path("participantsUnrated").asInt()).isZero();
+        assertThat(overviewQuestionStatistic.path("ratedCorrectCounter").asInt()).isZero();
+        assertThat(overviewQuestionStatistic.path("unRatedCorrectCounter").asInt()).isZero();
+
+        JsonNode questionStatistic = request.get(examStatisticsPath + "/questions/" + examQuestion.getId(), HttpStatus.OK, JsonNode.class).path("quizQuestionStatistic");
+        assertThat(questionStatistic.path("participantsRated").asInt()).isZero();
+        assertThat(questionStatistic.path("participantsUnrated").asInt()).isZero();
+        for (JsonNode answerCounter : questionStatistic.path("answerCounters")) {
+            assertThat(answerCounter.path("ratedCounter").asInt()).isZero();
+            assertThat(answerCounter.path("unRatedCounter").asInt()).isZero();
         }
     }
 
@@ -310,7 +436,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource
     void testQuizStartParticipationCorrectDataWhileActive_asStudent(QuizMode quizMode) throws Exception {
-        var quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(20), ZonedDateTime.now().plusHours(1), quizMode);
+        var quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(20), ZonedDateTime.now().plusHours(1), quizMode);
         quizExercise.setDuration(500);
         quizExercise = exerciseRepository.save(quizExercise);
 
@@ -354,7 +480,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void testQuizSubmitEmptyQuizInLiveMode() throws Exception {
         int invalidExerciseId = -1;
 
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setDuration(350);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
@@ -370,7 +496,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
         quizExerciseService.save(quizExercise);
 
@@ -392,58 +518,17 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // all submission are saved to the database
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
         assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
+        // exactly one result per submission: the submission is saved with the result already attached, so the cascade
+        // and the explicit save of the result must not each write a row of their own
+        assertThat(resultTestRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
 
-        // update the statistics
-        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-        quizStatisticService.recalculateStatistics(quizExerciseWithStatistic);
-
-        // Test the statistics
-        assertThat(quizExerciseWithStatistic).isNotNull();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(NUMBER_OF_STUDENTS);
-        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
-        assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
-        // check general statistics
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
-            }
-            else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 6.0));
-            }
-            else if (pointCounter.getPoints() == 7.0) {
-                assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 12.0));
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-        }
-        // check statistic for each question
-        for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            if (question instanceof MultipleChoiceQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 2.0));
-            }
-            else if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
-            }
-            else {
-                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
-            }
-            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(NUMBER_OF_STUDENTS);
-            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isZero();
-        }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPractice_badRequest() throws Exception {
-        QuizExercise quizExerciseServer = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), ZonedDateTime.now().minusSeconds(2), QuizMode.SYNCHRONIZED);
+        QuizExercise quizExerciseServer = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), ZonedDateTime.now().minusSeconds(2),
+                QuizMode.SYNCHRONIZED);
         quizExerciseServer.setDuration(2);
         quizExerciseService.save(quizExerciseServer);
 
@@ -499,9 +584,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPractice_forbidden() throws Exception {
+        // createCourse() enrolls only no-prefix users; TEST_PREFIX + "student1" has no UCR entry → FORBIDDEN
         Course course = courseUtilService.createCourse();
-        course.setStudentGroupName("abc");
-        courseRepository.save(course);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -513,9 +597,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testQuizSubmitPreview_forbidden_otherTa() throws Exception {
+        // createCourse() enrolls only no-prefix users; TEST_PREFIX + "tutor1" has no UCR entry → FORBIDDEN
         Course course = courseUtilService.createCourse();
-        course.setTeachingAssistantGroupName("tutor2");
-        courseRepository.save(course);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -540,7 +623,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        quizExercise = quizExerciseService.save(quizExercise);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
         request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
@@ -550,7 +634,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
 
         int numberOfParticipants = 10;
@@ -568,37 +652,13 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // in the preview the submission will not be saved to the database
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
 
-        // update the statistics
-        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-        quizStatisticService.recalculateStatistics(quizExerciseWithStatistic);
-
-        // all stats must be 0 because we have a preview here
-        // Test the statistics
-        assertThat(quizExerciseWithStatistic).isNotNull();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
-        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
-        assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            assertThat(pointCounter.getRatedCounter()).isZero();
-            assertThat(pointCounter.getUnRatedCounter()).isZero();
-        }
-        // check statistic for each question
-        for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isZero();
-        }
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice_badRequest_missingSubmittedAnswer(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
         quizExerciseService.save(quizExercise);
 
@@ -617,7 +677,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview_badRequest_missingSubmittedAnswer(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -635,7 +695,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice_badRequest_duplicateSubmittedAnswer(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
         quizExerciseService.save(quizExercise);
 
@@ -655,7 +715,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview_badRequest_duplicateSubmittedAnswer(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -673,7 +733,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitScheduledAndDeleted() throws Exception {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
         log.debug("// Creating the quiz exercise 2s in the future");
         var initialReleaseDate = ZonedDateTime.now().plusSeconds(2);
@@ -712,7 +772,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // set the quiz end to now and ...
         log.debug("// End the quiz and delete it");
-        quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
@@ -734,11 +794,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void testQuizScoringTypes() throws IOException {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
         quizExercise = quizExerciseService.save(quizExercise);
-        quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
 
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExercise.getQuizQuestions()) {
@@ -776,12 +836,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @EnumSource(ScoringType.class)
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void testQuizScoringType(ScoringType scoringType) throws IOException {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
         quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).toList());
         quizExercise = quizExerciseService.save(quizExercise);
-        quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
 
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExercise.getQuizQuestions()) {
@@ -814,13 +874,14 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
      * <p>
      * Previously, refresh-path queries relied on Hibernate's EAGER fetch for {@code MultipleChoiceSubmittedAnswer.selectedOptions},
      * which was not reliably initialized when the polymorphic {@code submittedAnswers} collection was loaded alongside a join-table
-     * {@code ManyToMany} with a second-level cache — leading to different options appearing deselected across refreshes and (once
-     * re-evaluation read the same partial state) the stored score flipping between 0 and its true value.
+     * {@code ManyToMany} that was then cached in the Hibernate second-level cache, leading to different options appearing deselected
+     * across refreshes and (once re-evaluation read the same partial state) the stored score flipping between 0 and its true value.
+     * That cache has since been disabled cluster-wide, but the explicit fetch this test guards is what makes the result deterministic.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMultipleChoiceSelectedOptionsFullyLoadedAfterSubmission() throws IOException {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
         MultipleChoiceQuestion builtMcQuestion = quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).map(MultipleChoiceQuestion.class::cast)
@@ -830,7 +891,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         builtMcQuestion.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
         builtMcQuestion.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
         quizExercise = quizExerciseService.save(quizExercise);
-        quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
 
         MultipleChoiceQuestion mcQuestion = quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).map(MultipleChoiceQuestion.class::cast)
                 .findFirst().orElseThrow();
@@ -849,7 +910,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         Submission submissionWithResult = participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null,
                 quizExercise.getScoreForSubmission(quizSubmission), true);
-        Result result = submissionWithResult.getResults().getFirst();
+        Result result = submissionWithResult.getFirstResult();
 
         QuizSubmission loadedByResult = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
         assertLoadedSubmissionHasAllSelectedOptions(loadedByResult, mcQuestion.getId(), expectedSelectedOptionIds);
@@ -896,7 +957,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void submitExercise_shortAnswer_tooLarge(boolean tooLarge) throws Exception {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED,
                 course);
         quizExercise.addQuestion(QuizExerciseFactory.createShortAnswerQuestion());
@@ -926,7 +987,59 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private void checkQuizNotStarted(String path) {
         // check that quiz has not started now
         log.debug("// Check that the quiz has not started and submissions are not allowed");
-        verify(websocketMessagingService, never()).sendMessage(eq(path), any());
+        verify(websocketMessagingService, never()).sendMessage(topic(path), any());
+    }
+
+    private QuizSubmission createScoredSubmission(QuizExercise quizExercise, boolean correct, ZonedDateTime submissionDate) {
+        QuizSubmission submission = new QuizSubmission();
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(submissionDate);
+        quizExercise.getQuizQuestions().stream().map(question -> QuizExerciseFactory.generateSubmittedAnswerFor(question, correct)).forEach(submission::addSubmittedAnswers);
+        submission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+        return submission;
+    }
+
+    private void executeResultCompletionDateBackfill() throws Exception {
+        String changeLogPath = "config/liquibase/history/v10/20260827174007_changelog.xml";
+        try (Connection connection = dataSource.getConnection(); ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor()) {
+            var database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+            var changeLog = ChangeLogParserFactory.getInstance().getParser(changeLogPath, resourceAccessor).parse(changeLogPath, new ChangeLogParameters(database),
+                    resourceAccessor);
+            String changeSetId = "20260827174007-00-backfill-result-completion-date-" + database.getShortName();
+            var changeSet = changeLog.getChangeSets().stream().filter(candidate -> candidate.getId().equals(changeSetId)).findFirst().orElseThrow();
+            changeSet.execute(changeLog, database);
+        }
+    }
+
+    private JsonNode withStaleSelection(QuizSubmission submission, SubmittedAnswer answer, String field, Object staleSelection) {
+        JsonNode payload = jsonMapper.valueToTree(submission);
+        for (JsonNode submittedAnswer : payload.path("submittedAnswers")) {
+            if (submittedAnswer.path("quizQuestion").path("id").asLong() == answer.getQuizQuestion().getId()) {
+                // Mutate the wire payload after serialization: entity getters intentionally filter unresolved references.
+                ArrayNode selections = (ArrayNode) submittedAnswer.path(field);
+                selections.add(jsonMapper.valueToTree(staleSelection));
+                return payload;
+            }
+        }
+        throw new AssertionError("Submitted answer missing from serialized quiz submission");
+    }
+
+    private static JsonNode findNodeByLong(JsonNode nodes, String fieldName, long value) {
+        for (JsonNode node : nodes) {
+            if (node.hasNonNull(fieldName) && node.path(fieldName).asLong() == value) {
+                return node;
+            }
+        }
+        throw new AssertionError("No node with " + fieldName + "=" + value);
+    }
+
+    private static JsonNode findNodeByDouble(JsonNode nodes, String fieldName, double value) {
+        for (JsonNode node : nodes) {
+            if (node.hasNonNull(fieldName) && Double.compare(node.path(fieldName).asDouble(), value) == 0) {
+                return node;
+            }
+        }
+        throw new AssertionError("No node with " + fieldName + "=" + value);
     }
 
     private void setupShortAnswerSubmission(ShortAnswerQuestion saQuestion, QuizSubmission submission, int amountOfCorrectAnswers) {
@@ -960,16 +1073,16 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private QuizExercise setupQuizExerciseParameters() {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
         return quizExercise;
     }
 
     private void verifyNoWebsocketMessageForExercise(QuizExercise exercise) {
-        String topic = EXERCISE_TOPIC_ROOT + exercise.getId() + "/newResults";
-        verify(websocketMessagingService, never()).sendMessage(eq(topic), any());
-        verify(websocketMessagingService, never()).sendMessageToUser(any(), eq(topic), any());
+        String topic = "/topic/exercise/" + exercise.getId() + "/newResults";
+        verify(websocketMessagingService, never()).sendMessage(topic(topic), any());
+        verify(websocketMessagingService, never()).sendMessageToUser(any(), userTopic(topic), any());
     }
 
     @Nested
@@ -980,7 +1093,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         @EnumSource(QuizMode.class)
         void testQuizSubmitLiveMode(QuizMode quizMode) throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, quizMode);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, quizMode);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1010,11 +1123,174 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             assertThat(updatedSubmission.getSubmissionDate()).isNotNull();
         }
 
+        /**
+         * A student who changes an answer and submits right after: the save and the submit reach the server together. Both of them replace the answers of the
+         * submission, and used to insert theirs side by side, so that the submission held several answers to a question and any of them could be scored.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void testQuizSubmitLiveMode_saveAndSubmitTogether_keepOneAnswerPerQuestion() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            var payload = jsonMapper.readValue(jsonMapper.writeValueAsString(QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null)),
+                    QuizSubmissionFromLiveClientDTO.class);
+            long exerciseId = quizExercise.getId();
+
+            int requests = 8;
+            var executor = Executors.newFixedThreadPool(requests);
+            var start = new CountDownLatch(1);
+            try {
+                // the last request is the submit, the ones before it are saves
+                var futures = new ArrayList<Future<?>>();
+                for (int i = 0; i < requests; i++) {
+                    boolean submit = i == requests - 1;
+                    futures.add(executor.submit(() -> {
+                        start.await();
+                        try {
+                            quizSubmissionService.saveSubmissionForLiveMode(exerciseId, payload, student, submit);
+                        }
+                        catch (QuizSubmissionException e) {
+                            // a save that comes after the submit is rejected, as the quiz has been submitted
+                            assertThat(submit).isFalse();
+                            assertThat(e).hasMessage("You have already submitted the quiz");
+                        }
+                        return null;
+                    }));
+                }
+                start.countDown();
+                for (var future : futures) {
+                    future.get(30, TimeUnit.SECONDS);
+                }
+            }
+            finally {
+                executor.shutdownNow();
+            }
+
+            var submission = quizSubmissionTestRepository
+                    .findWithEagerSubmittedAnswersByParticipationId(participationRepository.findByExerciseId(exerciseId).iterator().next().getId()).getFirst();
+            assertThat(submission.isSubmitted()).isTrue();
+            assertThat(submission.getSubmittedAnswers()).hasSameSizeAs(payload.submittedAnswers());
+            assertThat(submission.getSubmittedAnswers().stream().map(answer -> answer.getQuizQuestion().getId())).doesNotHaveDuplicates();
+        }
+
+        /**
+         * Saving again writes to the stored answers instead of replacing them: an answer to a question that is still answered keeps its row, so nothing is deleted and
+         * inserted for it, and only the answer to a question that is not answered any more goes.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void testQuizSaveLiveMode_updatesTheStoredAnswersInPlace() throws Throwable {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            long exerciseId = quizExercise.getId();
+            long unansweredQuestionId = quizExercise.getQuizQuestions().get(2).getId();
+
+            var firstPayload = jsonMapper.readValue(jsonMapper.writeValueAsString(QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null)),
+                    QuizSubmissionFromLiveClientDTO.class);
+            quizSubmissionService.saveSubmissionForLiveMode(exerciseId, firstPayload, student, false);
+            var answerIdsBefore = storedAnswerIdByQuestionId(exerciseId);
+
+            // the second save changes the answers and leaves the third question unanswered
+            var changedSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 12, false, null);
+            changedSubmission.getSubmittedAnswers().removeIf(answer -> answer.getQuizQuestion().getId().equals(unansweredQuestionId));
+            var secondPayload = jsonMapper.readValue(jsonMapper.writeValueAsString(changedSubmission), QuizSubmissionFromLiveClientDTO.class);
+            quizSubmissionService.saveSubmissionForLiveMode(exerciseId, secondPayload, student, false);
+            var answerIdsAfter = storedAnswerIdByQuestionId(exerciseId);
+
+            assertThat(answerIdsBefore).hasSize(3);
+            assertThat(answerIdsAfter).as("the answers to the questions that are still answered keep their rows").hasSize(2).containsAllEntriesOf(
+                    answerIdsBefore.entrySet().stream().filter(entry -> entry.getKey() != unansweredQuestionId).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+            assertThat(answerIdsAfter).as("and the answer to the question that is not answered any more is gone").doesNotContainKey(unansweredQuestionId);
+        }
+
+        /**
+         * The exam mode marks every save as submitted and lets the student save again, so unlike the live mode it must not reject a save of a submitted submission. It
+         * still has to keep one answer per question when saves arrive together.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void testQuizExamModeSave_savesTogether_keepOneAnswerPerQuestion() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            long exerciseId = quizExercise.getId();
+            var participation = participationRepository.findByExerciseId(exerciseId).iterator().next();
+            long storedSubmissionId = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).getFirst().getId();
+            QuizExercise exercise = quizExercise;
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+
+            int requests = 4;
+            var executor = Executors.newFixedThreadPool(requests);
+            var start = new CountDownLatch(1);
+            try {
+                var futures = new ArrayList<Future<?>>();
+                for (int i = 0; i < requests; i++) {
+                    futures.add(executor.submit(() -> {
+                        var saved = QuizExerciseFactory.generateSubmissionForThreeQuestions(exercise, 1, true, ZonedDateTime.now());
+                        saved.setId(storedSubmissionId);
+                        start.await();
+                        // none of the saves may fail: the ones that lose against another one are repeated, and the submission has no answers yet, so all of them insert the same
+                        // three
+                        quizSubmissionService.saveSubmissionForExamMode(exercise, saved, student, null);
+                        return null;
+                    }));
+                }
+                start.countDown();
+                for (var future : futures) {
+                    future.get(30, TimeUnit.SECONDS);
+                }
+            }
+            finally {
+                executor.shutdownNow();
+            }
+
+            var answers = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).getFirst().getSubmittedAnswers();
+            assertThat(answers).hasSize(3);
+            assertThat(answers.stream().map(answer -> answer.getQuizQuestion().getId())).doesNotHaveDuplicates();
+        }
+
+        /**
+         * The server keeps one answer per question, and the database refuses a second one as well, so that no writer can store it by mistake.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void testQuizSubmission_secondAnswerToAQuestionIsRefusedByTheDatabase() throws Throwable {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            var payload = jsonMapper.readValue(jsonMapper.writeValueAsString(QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null)),
+                    QuizSubmissionFromLiveClientDTO.class);
+            quizSubmissionService.saveSubmissionForLiveMode(quizExercise.getId(), payload, student, false);
+            var participationId = participationRepository.findByExerciseId(quizExercise.getId()).iterator().next().getId();
+            var submission = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).getFirst();
+            var answeredQuestion = submission.getSubmittedAnswers().iterator().next().getQuizQuestion();
+
+            submission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerFor(answeredQuestion, true));
+
+            assertThatThrownBy(() -> quizSubmissionTestRepository.save(submission)).isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        private Map<Long, Long> storedAnswerIdByQuestionId(long exerciseId) {
+            var participationId = participationRepository.findByExerciseId(exerciseId).iterator().next().getId();
+            return quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).getFirst().getSubmittedAnswers().stream()
+                    .collect(Collectors.toMap(answer -> answer.getQuizQuestion().getId(), SubmittedAnswer::getId));
+        }
+
         @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
         @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
         @EnumSource(QuizMode.class)
         void testQuizSubmitLiveMode_badRequest_alreadySubmitted(QuizMode quizMode) throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
             quizExercise.setDuration(10);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1041,7 +1317,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_ignoresStaleAnswerOptionIds() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1053,12 +1329,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             // ObjectNotFoundException; now it must be silently dropped and the remaining valid selections must still be persisted.
             MultipleChoiceSubmittedAnswer mcAnswer = quizSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
                     .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
-            AnswerOption staleOption = new AnswerOption();
-            staleOption.setId(Long.MAX_VALUE);
-            mcAnswer.addSelectedOptions(staleOption);
-            int validSelectionCount = mcAnswer.getSelectedOptions().size() - 1;
+            int validSelectionCount = mcAnswer.getSelectedOptions().size();
+            JsonNode payload = withStaleSelection(quizSubmission, mcAnswer, "selectedOptions", Map.of("id", Long.MAX_VALUE));
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", payload,
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
@@ -1074,7 +1348,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_dropsAnswerWithStaleQuizQuestionId() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1104,7 +1378,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_dropsAnswerWithMismatchedType() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1137,7 +1411,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_ignoresStaleDragItemIds() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1150,15 +1424,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             DragAndDropSubmittedAnswer dndAnswer = quizSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
                     .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
             DragAndDropQuestion dndQuestion = (DragAndDropQuestion) dndAnswer.getQuizQuestion();
-            DragAndDropMapping staleMapping = new DragAndDropMapping();
-            DragItem staleDragItem = new DragItem();
-            staleDragItem.setId(Long.MAX_VALUE);
-            staleMapping.setDragItem(staleDragItem);
-            staleMapping.setDropLocation(dndQuestion.getDropLocations().getFirst());
-            dndAnswer.getMappings().add(staleMapping);
-            int validMappingCount = dndAnswer.getMappings().size() - 1;
+            int validMappingCount = dndAnswer.getMappings().size();
+            JsonNode payload = withStaleSelection(quizSubmission, dndAnswer, "mappings",
+                    Map.of("dragItem", Map.of("id", Long.MAX_VALUE), "dropLocation", Map.of("id", dndQuestion.getDropLocations().getFirst().getId())));
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", payload,
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
@@ -1175,7 +1445,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_ignoresStaleDropLocationIds() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1186,15 +1456,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             DragAndDropSubmittedAnswer dndAnswer = quizSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
                     .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
             DragAndDropQuestion dndQuestion = (DragAndDropQuestion) dndAnswer.getQuizQuestion();
-            DragAndDropMapping staleMapping = new DragAndDropMapping();
-            staleMapping.setDragItem(dndQuestion.getDragItems().getFirst());
-            DropLocation staleDropLocation = new DropLocation();
-            staleDropLocation.setId(Long.MAX_VALUE);
-            staleMapping.setDropLocation(staleDropLocation);
-            dndAnswer.getMappings().add(staleMapping);
-            int validMappingCount = dndAnswer.getMappings().size() - 1;
+            int validMappingCount = dndAnswer.getMappings().size();
+            JsonNode payload = withStaleSelection(quizSubmission, dndAnswer, "mappings",
+                    Map.of("dragItem", Map.of("id", dndQuestion.getDragItems().getFirst().getId()), "dropLocation", Map.of("id", Long.MAX_VALUE)));
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", payload,
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
@@ -1211,7 +1477,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_ignoresStaleSpotIds() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1221,15 +1487,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
             ShortAnswerSubmittedAnswer saAnswer = quizSubmission.getSubmittedAnswers().stream().filter(ShortAnswerSubmittedAnswer.class::isInstance)
                     .map(ShortAnswerSubmittedAnswer.class::cast).findFirst().orElseThrow();
-            ShortAnswerSubmittedText staleText = new ShortAnswerSubmittedText();
-            ShortAnswerSpot staleSpot = new ShortAnswerSpot();
-            staleSpot.setId(Long.MAX_VALUE);
-            staleText.setSpot(staleSpot);
-            staleText.setText("text-with-stale-spot-id");
-            saAnswer.getSubmittedTexts().add(staleText);
-            int validTextCount = saAnswer.getSubmittedTexts().size() - 1;
+            int validTextCount = saAnswer.getSubmittedTexts().size();
+            JsonNode payload = withStaleSelection(quizSubmission, saAnswer, "submittedTexts", Map.of("spot", Map.of("id", Long.MAX_VALUE), "text", "text-with-stale-spot-id"));
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", payload,
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
@@ -1250,7 +1511,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
         @EnumSource(QuizMode.class)
         void testQuizSubmitLiveMode_persistsAllAnswerTypesCorrectly(QuizMode quizMode) throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, quizMode);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, quizMode);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 

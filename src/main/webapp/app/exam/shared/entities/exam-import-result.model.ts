@@ -8,7 +8,8 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
  * server when empty (NON_EMPTY serialization), hence optional.
  */
 export interface ExamImportResultDTO {
-    exam: Exam;
+    // The server returns only the imported exam's id/title; the client navigates to it by id.
+    exam: Pick<Exam, 'id' | 'title'>;
     skippedExercises?: string[];
     incompleteExercises?: string[];
 }

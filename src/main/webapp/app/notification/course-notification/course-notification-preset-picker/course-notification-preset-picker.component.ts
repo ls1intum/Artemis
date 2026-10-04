@@ -2,8 +2,8 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faBell, faBellSlash, faBullhorn, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonModule } from 'primeng/button';
@@ -25,10 +25,13 @@ export class CourseNotificationPresetPickerComponent {
 
     readonly onPresetSelected = output<number>();
 
-    // Icons
-    protected readonly farEye = faEye;
-    protected readonly farEyeSlash = faEyeSlash;
-    protected readonly faCheck = faCheck;
+    // Custom preset (no `identifier`) falls back to the sliders icon; unknown identifiers use the default bell.
+    private static readonly presetIcons: Record<string, IconDefinition> = {
+        defaultUserCourseNotificationSettingPreset: faBell,
+        allActivityUserCourseNotificationSettingPreset: faBullhorn,
+        ignoreUserCourseNotificationSettingPreset: faBellSlash,
+        customUserCourseNotificationSettingPreset: faSliders,
+    };
 
     private recentlySelectedTimeout?: NodeJS.Timeout;
     // `isRecentlySelected` is flipped back to false inside a setTimeout callback, and the lang key derives
@@ -38,6 +41,22 @@ export class CourseNotificationPresetPickerComponent {
         const identifier = this.selectedCourseSettingPreset()?.identifier ?? 'customUserCourseNotificationSettingPreset';
         return 'artemisApp.courseNotification.preset.' + identifier + '.title';
     });
+
+    /**
+     * The icon shown on the toggle button, reflecting the currently selected preset
+     * (or the custom preset when none is selected).
+     */
+    protected readonly selectedPresetIcon = computed(() => this.getPresetIcon(this.selectedCourseSettingPreset()?.identifier));
+
+    /**
+     * Returns the dedicated icon for a preset identifier so each option is visually distinguishable.
+     *
+     * @param identifier - The preset identifier, or undefined for the custom preset
+     * @returns The FontAwesome icon representing the preset
+     */
+    protected getPresetIcon(identifier: string | undefined): IconDefinition {
+        return CourseNotificationPresetPickerComponent.presetIcons[identifier ?? 'customUserCourseNotificationSettingPreset'] ?? faBell;
+    }
 
     /**
      * Handles preset selection from the dropdown.

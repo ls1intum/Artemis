@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "tutorial_group_free_period")
@@ -20,8 +21,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 public class TutorialGroupFreePeriod extends DomainObject {
 
     @ManyToOne
-    @JoinColumn(name = "tutorial_groups_configuration_id")
+    @JoinColumn(name = "tutorial_groups_configuration_id", nullable = false)
     @JsonIgnoreProperties(value = "tutorialFreePeriods", allowSetters = true)
+    @Parent
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
     /**

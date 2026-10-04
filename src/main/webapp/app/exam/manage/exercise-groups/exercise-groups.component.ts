@@ -1,52 +1,35 @@
-import { Component, OnInit, Type, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/foundation/util/global.utils';
+import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import {
-    faAngleDown,
-    faAngleUp,
-    faCheckDouble,
-    faFileImport,
-    faFileUpload,
-    faFont,
-    faKeyboard,
-    faPlus,
-    faProjectDiagram,
-    faTrash,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
-import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
-import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
+import { faAngleDown, faAngleUp, faFileImport, faLayerGroup, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExamExerciseImportDialogComponent } from 'app/exam/manage/exercise-groups/exercise-import-dialog/exam-exercise-import-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ProgrammingExerciseGroupCellComponent } from './programming-exercise-cell/programming-exercise-group-cell.component';
-import { QuizExerciseGroupCellComponent } from './quiz-exercise-cell/quiz-exercise-group-cell.component';
-import { ModelingExerciseGroupCellComponent } from './modeling-exercise-cell/modeling-exercise-group-cell.component';
-import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { LowerCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
-import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+
+import { ExamExerciseTableComponent, ExamTableGroupChange } from 'app/exam/manage/exercise-groups/exercise-table/exam-exercise-table.component';
+import { ExamExerciseGroupEditModalComponent } from 'app/exam/manage/exercise-groups/group-edit-modal/exam-exercise-group-edit-modal.component';
+import { ExamExerciseTypePickerComponent, ExamExerciseTypePickerMode } from 'app/exam/manage/exercise-groups/exercise-type-picker/exam-exercise-type-picker.component';
+import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -55,67 +38,100 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
     imports: [
         TranslateDirective,
         FaIconComponent,
-        RouterLink,
-        HelpIconComponent,
-        DeleteButtonDirective,
-        ProgrammingExerciseGroupCellComponent,
-        QuizExerciseGroupCellComponent,
-        ModelingExerciseGroupCellComponent,
-        FileUploadExerciseGroupCellComponent,
-        ExamExerciseRowButtonsComponent,
-        LowerCasePipe,
         ArtemisTranslatePipe,
-        FeatureOverlayComponent,
+        TumAetUiPanelComponent,
+        TumAetUiButtonComponent,
+        TumAetUiDialogComponent,
+        ExamImportComponent,
+        ExamExerciseImportDialogComponent,
+        ExamDeleteDialogComponent,
+        ExamExerciseTableComponent,
+        ExamExerciseGroupEditModalComponent,
+        ExamExerciseTypePickerComponent,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
     ],
 })
 export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private exerciseGroupService = inject(ExerciseGroupService);
-    exerciseService = inject(ExerciseService);
     private examManagementService = inject(ExamManagementService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
 
-    courseId!: number;
+    readonly courseId = signal<number>(undefined!);
     course = signal<Course | undefined>(undefined);
     readonly examId = signal<number>(undefined!);
     exam = signal<Exam | undefined>(undefined);
     exerciseGroups = signal<ExerciseGroup[] | undefined>(undefined);
+    readonly exerciseGroupCount = computed(() => this.exerciseGroups()?.length ?? 0);
     dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
-    exerciseType = ExerciseType;
     latestIndividualEndDate = signal<dayjs.Dayjs | undefined>(undefined);
-    exerciseGroupToExerciseTypesDict = signal<Map<number, ExerciseType[]>>(new Map<number, ExerciseType[]>());
+
+    // Guards against reorder-response races: every arrow click fires an independent PUT, and a stale response
+    // arriving after a newer one would re-apply an older order. While a save is in flight, further reorder actions
+    // are ignored (no queueing) so responses can never interleave.
+    orderSavePending = signal(false);
 
     localCIEnabled = signal(true);
-    textExerciseEnabled = signal(false);
-    modelingExerciseEnabled = signal(false);
-    fileUploadExerciseEnabled = signal(false);
-    disabledExerciseTypes: string[] = [];
+    disabledExerciseTypes: ExerciseType[] = [];
+
+    /** Ids of every group's drop list, so exercises can be dragged between any two group tables. */
+    readonly dropListIds = computed(() => (this.exerciseGroups() ?? []).map((group) => this.groupDropListId(group.id)));
+
+    groupDropListId(groupId: number | undefined): string {
+        return `exercise-group-${groupId}`;
+    }
+
+    readonly typePickerVisible = signal(false);
+    readonly typePickerGroupId = signal<number | undefined>(undefined);
+    readonly typePickerMode = signal<ExamExerciseTypePickerMode>('create');
+
+    readonly groupEditVisible = signal(false);
+    protected readonly groupImportVisible = signal(false);
+
+    protected readonly exerciseImportVisible = signal(false);
+    protected readonly exerciseImportType = signal<ExerciseType | undefined>(undefined);
+    private readonly exerciseImportGroup = signal<ExerciseGroup | undefined>(undefined);
+
+    protected readonly deleteGroupVisible = signal(false);
+    protected readonly groupToDelete = signal<ExerciseGroup | undefined>(undefined);
+    protected readonly deleteGroupQuestion = computed(() =>
+        this.groupToDelete() && this.containsProgrammingExercise(this.groupToDelete()!)
+            ? 'artemisApp.examManagement.exerciseGroup.delete.questionLocalVC'
+            : 'artemisApp.examManagement.exerciseGroup.delete.question',
+    );
+    /** Groups with a programming exercise also offer to clean up build plans, unless LocalCI is active, which needs none. */
+    protected readonly deleteGroupChecks = computed<Record<string, string>>(() => {
+        const group = this.groupToDelete();
+        const checks: Record<string, string> = {};
+        if (group && this.containsProgrammingExercise(group) && !this.localCIEnabled()) {
+            checks['deleteStudentReposBuildPlans'] = 'artemisApp.programmingExercise.delete.studentReposBuildPlans';
+            checks['deleteBaseReposBuildPlans'] = 'artemisApp.programmingExercise.delete.baseReposBuildPlans';
+        }
+        return checks;
+    });
+    readonly groupEditTarget = signal<ExerciseGroup | undefined>(undefined);
+    /** Selects the create vs. update persistence path in {@link onGroupEditSaved}. */
+    readonly groupEditIsNew = signal(false);
 
     // Icons
     faPlus = faPlus;
     faTrash = faTrash;
-    faFont = faFont;
-    faWrench = faWrench;
-    faCheckDouble = faCheckDouble;
-    faFileUpload = faFileUpload;
-    faKeyboard = faKeyboard;
-    faProjectDiagram = faProjectDiagram;
+    faPen = faPen;
+    faFileImport = faFileImport;
+    faLayerGroup = faLayerGroup;
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
-    faFileImport = faFileImport;
 
     /**
-     * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
-     * See {@link setupExerciseGroupToExerciseTypesDict}.
+     * Initialize the courseId and examId. Get all exercise groups for the exam.
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.examId.set(Number(this.route.snapshot.paramMap.get('examId')));
         // Only take action when a response was received for both requests
         forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
@@ -124,21 +140,17 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups.set(this.exam()!.exerciseGroups);
                 this.course.set(this.exam()!.course);
                 this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
-                this.setupExerciseGroupToExerciseTypesDict();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
         this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
-        this.textExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT));
-        this.modelingExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING));
-        this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD));
-        if (!this.textExerciseEnabled()) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT)) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
         }
-        if (!this.modelingExerciseEnabled()) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING)) {
             this.disabledExerciseTypes.push(ExerciseType.MODELING);
         }
-        if (!this.fileUploadExerciseEnabled()) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD)) {
             this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
     }
@@ -148,7 +160,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * null will be returned
      */
     loadLatestIndividualEndDateOfExam() {
-        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId()).pipe(
+        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId(), this.examId()).pipe(
             // When the exam start date was not set properly an error will be thrown.
             // Catch this in the inner observable otherwise forkJoin won't return data
             catchError(() => {
@@ -161,27 +173,30 @@ export class ExerciseGroupsComponent implements OnInit {
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        return this.examManagementService.find(this.courseId, this.examId(), true);
+        return this.examManagementService.find(this.courseId(), this.examId(), true);
     }
 
     /**
-     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId. In case the removed exercise was a Programming Exercise,
-     * it calls {@link setupExerciseGroupToExerciseTypesDict} to update the dictionary
+     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId.
      * @param exerciseId
      * @param exerciseGroupId
      */
     removeExercise(exerciseId: number, exerciseGroupId: number) {
         const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            exerciseGroups.forEach((exerciseGroup) => {
-                if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
-                    exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
-                    // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
-                    this.exerciseGroups.set([...exerciseGroups]);
-                    this.setupExerciseGroupToExerciseTypesDict();
-                }
-            });
+        if (!exerciseGroups) {
+            return;
         }
+        // Replace the affected group with a clone rather than mutating it: the signal only notifies on a new reference.
+        this.exerciseGroups.set(
+            exerciseGroups.map((group) => {
+                if (group.id !== exerciseGroupId) {
+                    return group;
+                }
+                const updated = deepClone(group);
+                updated.exercises = (updated.exercises ?? []).filter((exercise) => exercise.id !== exerciseId);
+                return updated;
+            }),
+        );
     }
 
     /**
@@ -190,7 +205,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId, this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+        this.exerciseGroupService.delete(this.courseId(), this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
@@ -198,75 +213,130 @@ export class ExerciseGroupsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 this.exerciseGroups.set(this.exerciseGroups()!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
-                const dict = new Map(this.exerciseGroupToExerciseTypesDict());
-                dict.delete(exerciseGroupId);
-                this.exerciseGroupToExerciseTypesDict.set(dict);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
     /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    exerciseIcon(exercise: Exercise): IconProp {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return faCheckDouble;
-            case ExerciseType.FILE_UPLOAD:
-                return faFileUpload;
-            case ExerciseType.MODELING:
-                return faProjectDiagram;
-            case ExerciseType.PROGRAMMING:
-                return faKeyboard;
-            default:
-                return faFont;
-        }
-    }
-
-    /**
-     * Opens the import module for a specific exercise type
+     * Opens the import dialog for a specific exercise type
      * @param exerciseGroup The current exercise group
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
-        const dialogData: ExerciseImportDialogData = { exerciseType };
+        this.exerciseImportGroup.set(exerciseGroup);
+        this.exerciseImportType.set(exerciseType);
+        this.exerciseImportVisible.set(true);
+    }
 
-        // Determine the header key based on exercise type
-        const headerKey = exerciseType === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${exerciseType}Exercise.home.importLabel`;
+    /**
+     * Closes the exercise import dialog and continues on the import route of the exercise type: with the chosen exercise, or with
+     * the exercise read from a file.
+     * @param result the exercise to import
+     */
+    protected onExerciseImported(result: Exercise): void {
+        const exerciseGroup = this.exerciseImportGroup();
+        const exerciseType = this.exerciseImportType();
+        this.exerciseImportVisible.set(false);
+        if (!exerciseGroup || !exerciseType) {
+            return;
+        }
+        const importBaseRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
+        if (result.id) {
+            importBaseRoute.push('import', result.id);
+            void this.router.navigate(importBaseRoute);
+        } else {
+            // we know it must be a programming exercise, because only programming exercises can be imported from a file
+            importBaseRoute.push('import-from-file');
+            void this.router.navigate(importBaseRoute, {
+                state: {
+                    programmingExerciseForImportFromFile: result,
+                },
+            });
+        }
+    }
 
-        // For programming exercises, use tabs component (allows import from file), otherwise use direct import
-        const componentToOpen: Type<ExerciseImportTabsComponent | ExerciseImportComponent> =
-            exerciseType === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
+    /**
+     * Opens the per-group exercise-type picker, either to create a new exercise or to import one.
+     * @param groupId the id of the exercise group the exercise should be created/imported into
+     * @param mode 'create' opens the type picker on the create routes, 'import' delegates to the import dialog
+     */
+    openTypePicker(groupId: number, mode: ExamExerciseTypePickerMode): void {
+        this.typePickerGroupId.set(groupId);
+        this.typePickerMode.set(mode);
+        this.typePickerVisible.set(true);
+    }
 
-        const dialogRef = this.dialogService.open(componentToOpen, {
-            header: this.translateService.instant(headerKey),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: dialogData,
-        });
+    /** Forwards the type picker's import request to the existing import dialog for the remembered group. */
+    onTypePickerImport(exerciseType: ExerciseType): void {
+        const group = this.exerciseGroups()?.find((g) => g.id === this.typePickerGroupId());
+        if (group) {
+            this.openImportModal(group, exerciseType);
+        }
+    }
 
-        dialogRef?.onClose.subscribe((result: Exercise | undefined) => {
-            if (result) {
-                if (result.id) {
-                    importBaseRoute.push('import', result.id);
-                    void this.router.navigate(importBaseRoute);
-                } else {
-                    // we know it must be a programming exercise, because only programming exercises can be imported from a file
-                    importBaseRoute.push('import-from-file');
-                    void this.router.navigate(importBaseRoute, {
-                        state: {
-                            programmingExerciseForImportFromFile: result,
-                        },
-                    });
+    /**
+     * Opens the title/mandatory-only group-edit dialog for the given group.
+     * @param groupId the id of the exercise group to edit
+     */
+    openGroupEditModal(groupId: number): void {
+        const group = this.exerciseGroups()?.find((g) => g.id === groupId);
+        if (group) {
+            this.groupEditTarget.set(group);
+            this.groupEditIsNew.set(false);
+            this.groupEditVisible.set(true);
+        }
+    }
+
+    /** Opens the same dialog with a blank draft to create a new exercise group. */
+    openCreateGroupModal(): void {
+        this.groupEditTarget.set({ title: '', isMandatory: true });
+        this.groupEditIsNew.set(true);
+        this.groupEditVisible.set(true);
+    }
+
+    /** Persists the group-edit dialog's result (create or update, per {@link groupEditIsNew}) and updates the local list. */
+    onGroupEditSaved(edited: ExerciseGroup): void {
+        if (this.groupEditIsNew()) {
+            // Only the exam id is read server-side; sending the loaded exam would ship every group and exercise with it.
+            const exam = new Exam();
+            exam.id = this.examId();
+            const newGroup: ExerciseGroup = { title: edited.title, isMandatory: edited.isMandatory, exam };
+            this.exerciseGroupService.create(this.courseId(), this.examId(), newGroup).subscribe({
+                next: (res) => this.exerciseGroups.set([...(this.exerciseGroups() ?? []), res.body!]),
+                error: (res: HttpErrorResponse) => {
+                    if (!isErrorAlert(res)) {
+                        onError(this.alertService, res);
+                    }
+                },
+            });
+            return;
+        }
+        // Only these three fields are read server-side (ExerciseGroupUpdateDTO); `edited` still carries the group's
+        // whole exercise list, which would otherwise be shipped on every rename.
+        const update: ExerciseGroup = { id: edited.id, title: edited.title, isMandatory: edited.isMandatory };
+        this.exerciseGroupService.update(this.courseId(), this.examId(), update).subscribe({
+            next: (res) => {
+                const saved = res.body!;
+                // The response carries the group without its exercises, so copy the two edited fields onto a clone of
+                // the local group rather than replacing it wholesale.
+                this.exerciseGroups.set(
+                    (this.exerciseGroups() ?? []).map((group) => {
+                        if (group.id !== saved.id) {
+                            return group;
+                        }
+                        const updated = deepClone(group);
+                        updated.title = saved.title;
+                        updated.isMandatory = saved.isMandatory;
+                        return updated;
+                    }),
+                );
+            },
+            error: (res: HttpErrorResponse) => {
+                if (!isErrorAlert(res)) {
+                    onError(this.alertService, res);
                 }
-            }
+            },
         });
     }
 
@@ -275,13 +345,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveUp(index: number): void {
-        const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            [exerciseGroups[index], exerciseGroups[index - 1]] = [exerciseGroups[index - 1], exerciseGroups[index]];
-            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
-            this.exerciseGroups.set([...exerciseGroups]);
-        }
-        this.saveOrder();
+        this.move(index, -1);
     }
 
     /**
@@ -289,73 +353,112 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveDown(index: number): void {
-        const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            [exerciseGroups[index], exerciseGroups[index + 1]] = [exerciseGroups[index + 1], exerciseGroups[index]];
-            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
-            this.exerciseGroups.set([...exerciseGroups]);
-        }
-        this.saveOrder();
+        this.move(index, 1);
     }
 
-    private saveOrder(): void {
-        this.examManagementService.updateOrder(this.courseId, this.examId(), this.exerciseGroups()!).subscribe({
-            next: (res) => this.exerciseGroups.set(res.body!),
-            error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
+    private move(index: number, offset: -1 | 1): void {
+        // Ignore further reorder actions while a save is in flight: concurrent PUTs could otherwise arrive at the
+        // server out of order and an earlier order would overwrite a later one.
+        if (this.orderSavePending()) {
+            return;
+        }
+        const exerciseGroups = this.exerciseGroups();
+        if (!exerciseGroups) {
+            return;
+        }
+        const previousOrder = [...exerciseGroups];
+        [exerciseGroups[index], exerciseGroups[index + offset]] = [exerciseGroups[index + offset], exerciseGroups[index]];
+        // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+        this.exerciseGroups.set([...exerciseGroups]);
+        this.saveOrder(previousOrder);
+    }
+
+    private saveOrder(previousOrder: ExerciseGroup[]): void {
+        this.orderSavePending.set(true);
+        this.examManagementService.updateOrder(this.courseId(), this.examId(), this.exerciseGroups()!).subscribe({
+            // The response has no body; the already-applied optimistic order is the persisted order.
+            next: () => this.orderSavePending.set(false),
+            error: () => {
+                // The server rejected the order (e.g. a stale tab whose groups no longer match the exam), so the
+                // optimistic swap must not stay visible.
+                this.exerciseGroups.set(previousOrder);
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
+                this.orderSavePending.set(false);
+            },
         });
     }
 
     /**
-     * sets up {@link exerciseGroupToExerciseTypesDict} that maps the exercise group id to whether the said exercise group contains a specific exercise type.
-     * Used to show the correct modal for deleting exercises and to show only relevant information in the exercise tables.
-     * E.g. in case programming exercises are present, the user must decide whether they want to delete the build plans.
+     * Moves an exercise into a different exercise group, triggered by dragging its row into another group's table.
+     * Rejected by the server once student exams have been generated for the exam.
      */
-    setupExerciseGroupToExerciseTypesDict() {
-        const dict = new Map<number, ExerciseType[]>();
-        const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            for (const exerciseGroup of exerciseGroups) {
-                dict.set(exerciseGroup.id!, []);
-                if (exerciseGroup.exercises) {
-                    for (const exercise of exerciseGroup.exercises) {
-                        dict.get(exerciseGroup.id!)!.push(exercise.type!);
-                    }
-                }
-            }
+    onTableGroupChange(event: ExamTableGroupChange): void {
+        const exerciseId = event.exercise.id;
+        const targetGroupId = event.group.id;
+        if (exerciseId === undefined || targetGroupId === undefined) {
+            return;
         }
-        this.exerciseGroupToExerciseTypesDict.set(dict);
+        this.exerciseGroupService.moveExerciseToGroup(this.courseId(), this.examId(), exerciseId, targetGroupId).subscribe({
+            next: () => {
+                const exerciseGroups = this.exerciseGroups();
+                if (!exerciseGroups) {
+                    return;
+                }
+                // Clone the whole list once, then move the exercise inside the clone: the signal only notifies on a new
+                // reference, and cloning keeps the detached exercises (with their dayjs dates) intact.
+                const updatedGroups = deepClone(exerciseGroups);
+                const moved = updatedGroups.flatMap((group) => group.exercises ?? []).find((exercise) => exercise.id === exerciseId);
+                const targetGroup = updatedGroups.find((group) => group.id === targetGroupId);
+                if (!moved || !targetGroup) {
+                    return;
+                }
+                for (const group of updatedGroups) {
+                    group.exercises = (group.exercises ?? []).filter((exercise) => exercise.id !== exerciseId);
+                }
+                // Empty groups arrive without an `exercises` property (the DTO omits empty collections).
+                targetGroup.exercises ??= [];
+                targetGroup.exercises.push(moved);
+                this.exerciseGroups.set(updatedGroups);
+            },
+            // Nothing is applied optimistically, so a rejected move leaves the groups untouched and only needs an alert.
+            error: (res: HttpErrorResponse) => {
+                if (!isErrorAlert(res)) {
+                    onError(this.alertService, res);
+                }
+            },
+        });
     }
 
     /**
-     * Opens the import module for an exam import
+     * Opens the import dialog for an import of the exercise groups of another exam
      */
     openExerciseGroupImportModal() {
-        const dialogData: ExamImportDialogData = {
-            subsequentExerciseGroupSelection: true,
-            targetCourseId: this.courseId,
-            targetExamId: this.examId(),
-        };
-
-        const dialogRef = this.dialogService.open(ExamImportComponent, {
-            header: this.translateService.instant('artemisApp.examManagement.importExam'),
-            width: '70rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: dialogData,
-        });
-
-        dialogRef?.onClose.subscribe((exerciseGroups: ExerciseGroup[] | undefined) => {
-            if (exerciseGroups) {
-                this.exerciseGroups.set(exerciseGroups);
-                this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
-            }
-        });
+        this.groupImportVisible.set(true);
     }
 
-    protected isExerciseTypeDisabled(exerciseType: ExerciseType) {
-        return this.disabledExerciseTypes.includes(exerciseType);
+    /**
+     * Closes the import dialog and shows the exercise groups of the exam after the import
+     * @param exerciseGroups all exercise groups of the exam after the import
+     */
+    protected onExerciseGroupsImported(exerciseGroups: ExerciseGroup[]): void {
+        this.groupImportVisible.set(false);
+        this.exerciseGroups.set(exerciseGroups);
+        this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
+    }
+
+    protected containsProgrammingExercise(exerciseGroup: ExerciseGroup): boolean {
+        return (exerciseGroup.exercises ?? []).some((exercise) => exercise.type === ExerciseType.PROGRAMMING);
+    }
+
+    /**
+     * Opens the delete-confirmation dialog for an exercise group, mirroring the course-side exercise-group card's delete button.
+     * The actual deletion runs on confirm via {@link deleteExerciseGroup}.
+     */
+    protected confirmDeleteGroup(exerciseGroup: ExerciseGroup): void {
+        if (exerciseGroup.id === undefined) {
+            return;
+        }
+        this.groupToDelete.set(exerciseGroup);
+        this.deleteGroupVisible.set(true);
     }
 }

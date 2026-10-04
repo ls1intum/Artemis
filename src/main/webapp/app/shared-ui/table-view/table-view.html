@@ -63,7 +63,7 @@
                         }
                     </div>
                     @if (col?.filterType && col?.field) {
-                        <p-columnFilter [type]="col.filterType" [field]="col?.field" display="menu" class="ms-auto" />
+                        <p-columnfilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
                     }
                 </div>
             </ng-template>
@@ -132,11 +132,11 @@
                 }
                 @for (col of columns; track col; let colIndex = $index) {
                     @if (col?.frozen) {
-                        <td pFrozenColumn [alignFrozen]="col?.alignFrozen ?? 'left'">
+                        <td pFrozenColumn [alignFrozen]="col?.alignFrozen ?? 'left'" data-testid="table-cell" [attr.data-column]="col?.field">
                             <ng-container [ngTemplateOutlet]="cellContent" [ngTemplateOutletContext]="{ col, colIndex, rowParams }" />
                         </td>
                     } @else {
-                        <td>
+                        <td data-testid="table-cell" [attr.data-column]="col?.field">
                             <ng-container [ngTemplateOutlet]="cellContent" [ngTemplateOutletContext]="{ col, colIndex, rowParams }" />
                         </td>
                     }

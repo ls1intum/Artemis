@@ -43,6 +43,13 @@
                 "showSampleSolution": "Show Sample Solution",
                 "hideSampleSolution": "Hide Sample Solution"
             },
+            "tooltip": {
+                "participantShare": "{{ count }} of {{ participants }} participants ({{ percent }}%)",
+                "correctSolutions": "{{ count }} of {{ participants }} participants answered this question correctly ({{ percent }}%)",
+                "average": "Average: {{ count }} correct solutions ({{ percent }}% of participants)",
+                "pointRange": "{{ count }} of {{ participants }} participants scored in this range ({{ percent }}%)",
+                "correctOverall": "{{ count }} of {{ participants }} participants answered the whole question correctly ({{ percent }}%)"
+            },
             "invalid": "(invalid)",
             "quizHasEnded": "Quiz has ended!",
             "now": "Now"

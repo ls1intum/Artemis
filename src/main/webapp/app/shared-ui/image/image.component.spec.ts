@@ -1,12 +1,10 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageComponent, ImageLoadingStatus } from './image.component';
 import { vi } from 'vitest';
 
 describe('ImageComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: any;
     let component: ImageComponent;
     let httpMock: HttpTestingController;
@@ -21,7 +19,7 @@ describe('ImageComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ImageComponent],
-            providers: [provideHttpClient(withFetch()), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ImageComponent);

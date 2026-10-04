@@ -1,12 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { BreakpointsService } from './breakpoints.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LayoutService {
     private breakpointObserver = inject(BreakpointObserver);
     private breakpointService = inject(BreakpointsService);

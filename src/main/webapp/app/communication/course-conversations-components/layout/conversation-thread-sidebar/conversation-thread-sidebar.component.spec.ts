@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
@@ -8,7 +7,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostComponent } from 'app/communication/post/post.component';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { post } from 'test/helpers/sample/metis-sample-data';
+import { post } from 'test/helpers/sample/communication-sample-data';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -17,8 +16,6 @@ import { TutorSuggestionComponent } from 'app/communication/course-conversations
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ConversationThreadSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ConversationThreadSidebarComponent;
     let fixture: ComponentFixture<ConversationThreadSidebarComponent>;
     let componentRef: ComponentRef<ConversationThreadSidebarComponent>;

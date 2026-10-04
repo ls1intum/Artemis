@@ -1,12 +1,13 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DeleteDialogService {
     private dialogService = inject(DialogService);
     private alertService = inject(AlertService);
@@ -35,7 +36,7 @@ export class DeleteDialogService {
             data: {
                 entityTitle: deleteDialogData.entityTitle,
                 deleteQuestion: deleteDialogData.deleteQuestion,
-                translateValues: { ...deleteDialogData.translateValues, title: deleteDialogData.entityTitle },
+                translateValues: cloneWith(deleteDialogData.translateValues, { title: deleteDialogData.entityTitle }),
                 deleteConfirmationText: deleteDialogData.deleteConfirmationText,
                 additionalChecks: deleteDialogData.additionalChecks,
                 entitySummaryTitle: deleteDialogData.entitySummaryTitle,

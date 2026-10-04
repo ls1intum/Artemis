@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -15,8 +14,6 @@ import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 
 describe('AttachmentVideoUnitService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;
@@ -117,7 +114,7 @@ describe('AttachmentVideoUnitService', () => {
                 attachment: {
                     id: 1,
                     name: 'Unit1',
-                    link: '/api/lecture/files/attachments/attachment-unit/235/Unit_1_.pdf',
+                    link: 'attachments/attachment-video-units/235/Unit_1_.pdf',
                     version: 1,
                     attachmentType: 'FILE',
                 },
@@ -229,8 +226,10 @@ describe('AttachmentVideoUnitService', () => {
             .pipe(take(1))
             .subscribe((r) => (resp = r));
 
-        const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42?keepFilename=true');
+        const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42');
         expect(req.request.headers.get('ngsw-bypass')).toBe('true');
+        expect(req.request.params.get('keepFilename')).toBe('true');
+        expect(req.request.params.has('notificationText')).toBe(false);
         req.flush({ id: 42 });
         expect(resp.body).toEqual({ id: 42 });
     });
@@ -245,12 +244,24 @@ describe('AttachmentVideoUnitService', () => {
             .pipe(take(1))
             .subscribe((r) => (resp = r));
 
-        const req = httpMock.expectOne(
-            (r) => r.method === 'PUT' && r.url === `api/lecture/lectures/7/attachment-video-units/42?keepFilename=true&notificationText=${notificationText}`,
-        );
+        const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42');
         expect(req.request.headers.get('ngsw-bypass')).toBe('true');
+        expect(req.request.params.get('keepFilename')).toBe('true');
+        expect(req.request.params.get('notificationText')).toBe(notificationText);
         req.flush({ id: 42, note: notificationText });
         expect(resp.body).toEqual({ id: 42, note: notificationText });
+    });
+
+    it('update(): encodes the notification text and sends an empty one, which also notifies', async () => {
+        service.update(7, 42, new FormData(), 'Q&A #2').pipe(take(1)).subscribe();
+        const withText = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42');
+        expect(withText.request.urlWithParams).toContain('notificationText=Q%26A%20%232');
+        withText.flush({ id: 42 });
+
+        service.update(7, 42, new FormData(), '').pipe(take(1)).subscribe();
+        const empty = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42');
+        expect(empty.request.params.get('notificationText')).toBe('');
+        empty.flush({ id: 42 });
     });
 
     it('updateStudentVersion(): calls correct URL with ngsw-bypass header', async () => {

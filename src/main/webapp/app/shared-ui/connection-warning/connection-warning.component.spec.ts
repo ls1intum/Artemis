@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
@@ -9,7 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 
 describe('ConnectionWarning', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<JhiConnectionWarningComponent>;
     let component: JhiConnectionWarningComponent;
     let subject: BehaviorSubject<ConnectionState>;
@@ -50,6 +48,7 @@ describe('ConnectionWarning', () => {
         const warningDiv = fixture.debugElement.query(By.css('.connection-warning'));
         expect(warningDiv).not.toBeNull();
         expect(warningDiv.classes['disconnected']).not.toBeTruthy();
+        expect(warningDiv.nativeElement.getAttribute('aria-expanded')).toBe('false');
 
         subject.next(new ConnectionState(false, true));
         fixture.changeDetectorRef.detectChanges();
@@ -58,14 +57,35 @@ describe('ConnectionWarning', () => {
         expect(warningDiv.classes['disconnected']).toBe(true);
 
         vi.advanceTimersByTime(300);
+        fixture.detectChanges();
         expect(component.popover.isOpen()).toBe(true);
+        expect(warningDiv.nativeElement.getAttribute('aria-expanded')).toBe('true');
 
         subject.next(new ConnectionState(true, true));
         fixture.changeDetectorRef.detectChanges();
 
         vi.advanceTimersByTime(100);
+        fixture.detectChanges();
         expect(component.disconnected()).toBe(false);
         expect(component.popover.isOpen()).toBe(false);
+        expect(warningDiv.nativeElement.getAttribute('aria-expanded')).toBe('false');
         expect(warningDiv.classes['disconnected']).not.toBeTruthy();
+    });
+
+    it('should expose the popover state after keyboard toggles', () => {
+        fixture.detectChanges();
+        const warning = fixture.nativeElement.querySelector('.connection-warning') as HTMLElement;
+        expect(warning.getAttribute('aria-expanded')).toBe('false');
+
+        warning.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(component.popover.isOpen()).toBe(true);
+        expect(warning.getAttribute('aria-expanded')).toBe('true');
+
+        warning.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        vi.advanceTimersByTime(100);
+        fixture.detectChanges();
+        expect(component.popover.isOpen()).toBe(false);
+        expect(warning.getAttribute('aria-expanded')).toBe('false');
     });
 });

@@ -1,5 +1,4 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock Monaco Editor at the top before imports
 vi.mock('monaco-editor', () => ({
@@ -13,8 +12,6 @@ import * as monaco from 'monaco-editor';
 import { DiffInformation, FileStatus, __diffUtilsTesting, convertMonacoLineChanges, processRepositoryDiff } from './diff.utils';
 
 describe('DiffUtils', () => {
-    setupTestBed({ zoneless: true });
-
     let mockOriginalModel: monaco.editor.ITextModel;
     let mockModifiedModel: monaco.editor.ITextModel;
     let mockDiffListener: monaco.IDisposable;

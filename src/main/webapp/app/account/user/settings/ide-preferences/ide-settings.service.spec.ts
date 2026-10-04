@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -8,8 +7,6 @@ import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/id
 import { Ide, IdeMappingDTO } from 'app/account/user/settings/ide-preferences/ide.model';
 
 describe('IdeSettingsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: IdeSettingsService;
     let httpMock: HttpTestingController;
 

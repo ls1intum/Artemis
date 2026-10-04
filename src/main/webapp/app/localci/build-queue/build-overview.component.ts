@@ -11,13 +11,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { DialogService } from 'primeng/dynamicdialog';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
-import { InputTextModule } from 'primeng/inputtext';
-import { Tag } from 'primeng/tag';
-import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -35,6 +29,7 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/enti
 import { RunningJobsTableComponent } from './tables/running-jobs-table/running-jobs-table.component';
 import { QueuedJobsTableComponent } from './tables/queued-jobs-table/queued-jobs-table.component';
 import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finished-jobs-table.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component that provides an overview of the build queue system.
@@ -65,11 +60,12 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
         RunningJobsTableComponent,
         QueuedJobsTableComponent,
         FinishedJobsTableComponent,
-        DialogModule,
-        ButtonModule,
-        ButtonGroupModule,
-        InputTextModule,
-        Tag,
+        FinishedBuildsFilterModalComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
@@ -79,8 +75,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     private buildQueueService = inject(BuildOverviewService);
     private buildAgentsService = inject(BuildAgentsService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
 
     /** Reference to the statistics component for real-time updates */
     statisticsComponent = viewChild<BuildJobStatisticsComponent>('statisticsComponent');
@@ -154,6 +148,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     /** Filter configuration for finished build jobs */
     readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter());
 
+    /** Number of applied finished-build-job filters, or 0 when the filter is unset. */
+    readonly appliedFilterCount = computed(() => this.finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0);
+
     /**
      * Course ID from route params. When 0, operates in admin mode showing all courses.
      * When > 0, filters to show only build jobs for that specific course.
@@ -174,6 +171,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     /** Controls the visibility of the inline build logs dialog */
     buildLogsModalVisible = signal(false);
+
+    /** Controls the visibility of the finished-build-jobs filter dialog */
+    readonly filterModalVisible = signal(false);
 
     ngOnInit() {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
@@ -333,7 +333,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             const start = dayjs(buildJob.buildStartDate);
             const end = dayjs(buildJob.buildCompletionDate);
             const durationSeconds = end.diff(start, 'milliseconds') / 1000;
-            return { ...buildJob, buildDuration: this.formatFinishedDuration(durationSeconds) };
+            return cloneWith(buildJob, { buildDuration: this.formatFinishedDuration(durationSeconds) });
         }
         return buildJob;
     }
@@ -556,30 +556,21 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
             // This is necessary to update the view when the build job duration is updated
-            return { ...buildJob };
+            return deepClone(buildJob);
         });
     }
 
     openFilterModal() {
-        const dialogRef = this.dialogService.open(FinishedBuildsFilterModalComponent, {
-            header: this.translateService.instant('artemisApp.buildQueue.filter.title'),
-            width: '60rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-            data: {
-                finishedBuildJobFilter: this.finishedBuildJobFilter(),
-                buildAgentFilterable: true,
-                finishedBuildJobs: this.finishedBuildJobs(),
-            },
-        });
-        dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
-            if (result) {
-                this.finishedBuildJobFilter.set(result);
-                this.loadFinishedBuildJobs();
-            }
-        });
+        this.filterModalVisible.set(true);
+    }
+
+    /**
+     * Applies the filter edited in the filter modal and reloads the finished build jobs.
+     * @param result the edited filter returned by the modal
+     */
+    onFilterConfirmed(result: FinishedBuildJobFilter) {
+        this.finishedBuildJobFilter.set(result);
+        this.loadFinishedBuildJobs();
     }
 
     /**

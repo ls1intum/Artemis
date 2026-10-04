@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -32,8 +31,6 @@ class MockFeatureToggleServiceWithPluralMethod extends MockFeatureToggleService 
 }
 
 describe('JhiResetRepoButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ResetRepoButtonComponent;
     let fixture: ComponentFixture<ResetRepoButtonComponent>;
 
@@ -130,5 +127,62 @@ describe('JhiResetRepoButtonComponent', () => {
         resetSubject.next();
 
         expect(resetRepositoryStub).toHaveBeenCalledWith(expectedResetId, gradedParticipationId);
+    });
+
+    it('should ignore a second reset while a reset is in flight and allow a new one afterwards', () => {
+        const resetSubject = new Subject<void>();
+
+        fixture.componentRef.setInput('participations', [gradedParticipation, practiceParticipation]);
+        fixture.componentRef.setInput('exercise', { id: 3 } as ProgrammingExercise);
+        fixture.componentRef.setInput('smallButtons', false);
+        TestBed.tick();
+
+        resetRepositoryStub.mockReturnValue(resetSubject);
+        comp.resetRepository();
+        comp.resetRepository(gradedParticipation.id);
+
+        expect(resetRepositoryStub).toHaveBeenCalledOnce();
+        expect(comp.isLoading()).toBe(true);
+
+        resetSubject.complete();
+        expect(comp.isLoading()).toBe(false);
+
+        resetRepositoryStub.mockReturnValue(of(undefined));
+        comp.resetRepository();
+        expect(resetRepositoryStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should disable the confirm buttons while a reset is in flight', async () => {
+        const resetSubject = new Subject<void>();
+
+        fixture.componentRef.setInput('participations', [
+            { ...gradedParticipation, initializationState: InitializationState.INITIALIZED },
+            { ...practiceParticipation, initializationState: InitializationState.INITIALIZED },
+        ]);
+        fixture.componentRef.setInput('exercise', { id: 3 } as ProgrammingExercise);
+        fixture.componentRef.setInput('smallButtons', false);
+        TestBed.tick();
+        fixture.detectChanges();
+
+        comp.popover()!.open();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const confirmButtons = (): HTMLButtonElement[] => Array.from(document.body.querySelectorAll<HTMLButtonElement>('.button-footer button[type="submit"]'));
+        expect(confirmButtons()).toHaveLength(2);
+        confirmButtons().forEach((button) => expect(button.disabled).toBe(false));
+
+        resetRepositoryStub.mockReturnValue(resetSubject);
+        confirmButtons()[0].click();
+        fixture.detectChanges();
+
+        expect(comp.isLoading()).toBe(true);
+        confirmButtons().forEach((button) => expect(button.disabled).toBe(true));
+        confirmButtons()[1].click();
+        expect(resetRepositoryStub).toHaveBeenCalledOnce();
+
+        resetSubject.complete();
+        expect(comp.isLoading()).toBe(false);
     });
 });

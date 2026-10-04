@@ -23,7 +23,7 @@
                     <div>
                         <span
                             class="badge bg-primary mb-2"
-                            id="word-count"
+                            data-testid="word-count"
                             [hidden]="submission() && !submission().submitted && isExamSummary()"
                             jhiTranslate="artemisApp.textExercise.wordCount"
                             [translateValues]="{ count: wordCount }"
@@ -31,7 +31,7 @@
                         </span>
                         <span
                             class="badge bg-primary mb-2"
-                            id="character-count"
+                            data-testid="character-count"
                             [hidden]="submission() && !submission().submitted && isExamSummary()"
                             jhiTranslate="artemisApp.textExercise.characterCount"
                             [translateValues]="{ count: characterCount }"
@@ -122,7 +122,7 @@
             <ng-container right-body>
                 @if (textExercise()!.problemStatement) {
                     <p class="markdown-preview mb-3">
-                        <span [innerHTML]="textExercise()!.problemStatement! | htmlForMarkdown"></span>
+                        <span [jhiMarkdown]="textExercise()!.problemStatement!"></span>
                     </p>
                 }
             </ng-container>

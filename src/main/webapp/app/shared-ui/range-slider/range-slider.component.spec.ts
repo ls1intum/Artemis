@@ -1,11 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 
 describe('RangeSliderComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: RangeSliderComponent;
     let fixture: ComponentFixture<RangeSliderComponent>;
 

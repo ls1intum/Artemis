@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { NavigationEnd, Router } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,8 +7,6 @@ import { getCurrentRouteSignal } from './getCurrentRouteSignal';
 import { getSignalBasedOnRoute } from './getSignalBasedOnRoute';
 
 describe('getSignalBasedOnRouteChange', () => {
-    setupTestBed({ zoneless: true });
-
     let routerEvents: Subject<NavigationEnd>;
     let router: Router;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
@@ -28,8 +27,6 @@ import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 
 describe('CourseNotificationOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseNotificationOverviewComponent;
     let fixture: ComponentFixture<CourseNotificationOverviewComponent>;
     let courseNotificationService: CourseNotificationService;
@@ -60,7 +57,7 @@ describe('CourseNotificationOverviewComponent', () => {
         category: CourseNotificationCategory,
         status: CourseNotificationViewingStatus = CourseNotificationViewingStatus.UNSEEN,
     ): CourseNotification => {
-        return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' }, '/');
+        return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), 'Test Course', 'test-icon-url', {}, '/');
     };
 
     const waitForPresetInitialization = async () => {
@@ -81,6 +78,7 @@ describe('CourseNotificationOverviewComponent', () => {
             getNotificationCountForCourse$: vi.fn().mockReturnValue(notificationCountSubject.asObservable()),
             getNotificationsForCourse$: vi.fn().mockReturnValue(notificationsSubject.asObservable()),
             setNotificationStatus: vi.fn(),
+            markDisplayedNotificationsAsSeen: vi.fn(),
             setNotificationStatusInMap: vi.fn(),
             decreaseNotificationCountBy: vi.fn(),
             removeNotificationFromMap: vi.fn(),
@@ -323,7 +321,9 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.markAllAsReadClicked();
 
+        // A click, so it goes to the status endpoint as an action and not to the automatic seen update
         expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
         expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
         expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(101, 2);
     });
@@ -335,6 +335,40 @@ describe('CourseNotificationOverviewComponent', () => {
 
         expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1], CourseNotificationViewingStatus.ARCHIVED);
         expect(courseNotificationService.removeNotificationFromMap).toHaveBeenCalledWith(101, notification);
+    });
+
+    it('should keep the current scroll position (not jump to the saved bottom) when the list changes outside pagination', () => {
+        vi.useFakeTimers();
+        const scrollElement = { scrollTop: 120 };
+        componentAsAny.scrollContainer = () => ({ nativeElement: scrollElement });
+        componentAsAny.isShown.set(true);
+        componentAsAny.isLoading.set(false);
+        componentAsAny.pagesFinished = true;
+        // Stale saved position from a previous scroll-to-bottom; the old behaviour would jump here.
+        componentAsAny.savedScrollPosition = 500;
+
+        componentAsAny.handleNotificationsUpdate([createMockNotification(1, 101, CourseNotificationCategory.GENERAL)]);
+        vi.runAllTimers();
+
+        expect(scrollElement.scrollTop).toBe(120);
+        vi.useRealTimers();
+    });
+
+    it('should restore the saved pagination position on a loading (pagination) update, not the live (0) position', () => {
+        vi.useFakeTimers();
+        // During pagination the list is replaced by the loading spinner, so the live scrollTop reads 0.
+        const scrollElement = { scrollTop: 0 };
+        componentAsAny.scrollContainer = () => ({ nativeElement: scrollElement });
+        componentAsAny.isShown.set(true);
+        componentAsAny.isLoading.set(true); // a pagination fetch is in progress
+        componentAsAny.pagesFinished = true; // ensures we reach the restore (else) branch
+        componentAsAny.savedScrollPosition = 500; // position captured when pagination was triggered
+
+        componentAsAny.handleNotificationsUpdate([createMockNotification(1, 101, CourseNotificationCategory.GENERAL)]);
+        vi.runAllTimers();
+
+        expect(scrollElement.scrollTop).toBe(500);
+        vi.useRealTimers();
     });
 
     it('should update unseen notifications to seen on client side', () => {
@@ -359,7 +393,9 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.updateCurrentCategoryNotificationsToSeenOnServer();
 
-        expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        // Displaying notifications is not an action of the user, so it uses the automatic seen update
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).toHaveBeenCalledWith(101, [1, 2]);
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
     });
 
     it('should correctly identify visible unseen notification IDs', () => {
@@ -384,6 +420,7 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
         expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
         expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
     });
 
     it('should query for more notifications from service', () => {

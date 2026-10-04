@@ -1,6 +1,7 @@
 .course-notification-preset-picker {
     & .dropdown-menu {
         padding: 0;
+        min-width: 18rem;
         max-width: 30rem;
         border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -9,6 +10,25 @@
     & .dropdown-item {
         text-wrap: auto;
     }
+}
+
+// Each option is prefixed with its dedicated icon; the icon aligns with the title while the
+// description is indented to line up with the title text.
+.course-notification-preset-picker-item-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.course-notification-preset-picker-item-icon {
+    width: 1rem;
+    flex-shrink: 0;
+    text-align: center;
+    color: var(--secondary);
+}
+
+.course-notification-preset-picker-item.is-selected .course-notification-preset-picker-item-icon {
+    color: var(--primary);
 }
 
 .course-notification-preset-picker-item {
@@ -32,6 +52,9 @@
 
 .course-notification-preset-picker-item-description {
     display: block;
+
+    // Indent to align with the title text (icon width + gap).
+    margin-left: 1.6rem;
     margin-top: 0.25rem;
     color: var(--secondary);
     font-size: 0.85em;
@@ -61,16 +84,12 @@
     opacity: 0.1;
 }
 
-.course-notification-preset-picker-eye-icon {
+.course-notification-preset-picker-toggle-icon {
     margin-right: 0.25rem;
 }
 
 .course-notification-preset-picker.is-small-button {
     position: relative;
-
-    & .course-notification-preset-picker-eye-icon {
-        display: none;
-    }
 
     & .p-button {
         white-space: nowrap;
@@ -90,8 +109,8 @@
         top: calc(100% + 0.25rem) !important;
         transform: none !important;
         z-index: 1100;
-        width: auto;
-        max-width: 20rem;
+        width: 18rem;
+        max-width: calc(100vw - 2rem);
         max-height: 22rem;
         overflow-y: auto;
         font-size: 0.875rem;

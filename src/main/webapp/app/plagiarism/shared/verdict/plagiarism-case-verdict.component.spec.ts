@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -9,17 +8,15 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockPipe } from 'ng-mocks';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Plagiarism Case Verdict Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismCaseVerdictComponent;
     let fixture: ComponentFixture<PlagiarismCaseVerdictComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbModule, PlagiarismCaseVerdictComponent, MockPipe(ArtemisDatePipe)],
+            imports: [NgbTooltip, PlagiarismCaseVerdictComponent, MockPipe(ArtemisDatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

@@ -17,10 +17,8 @@ import { CreatePrerequisiteComponent } from 'app/atlas/manage/create/create-prer
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CreatePrerequisite', () => {
-    setupTestBed({ zoneless: true });
     let createPrerequisiteComponentFixture: ComponentFixture<CreatePrerequisiteComponent>;
     let createPrerequisiteComponent: CreatePrerequisiteComponent;
 

@@ -45,6 +45,27 @@ describe('WeekGroupingUtil', () => {
         expect(groups[0].items.map((i) => i.title)).toEqual(expect.arrayContaining(['Exercise 1', 'Exercise 2', 'Exercise 3', 'Exercise 4', 'Exercise 5', 'Exercise 6']));
     });
 
+    it('keeps a variant group whose member matches the search', () => {
+        const items: SidebarCardElement[] = [
+            {
+                title: 'Variant group',
+                id: 'g1',
+                size: 'M',
+                startDate: dayjs('2024-01-01'),
+                groupedItems: [
+                    { title: 'Sorting algorithms', id: 'e1', size: 'M', type: 'programming' },
+                    { title: 'Binary trees', id: 'e2', size: 'M', type: 'modeling' },
+                ],
+            },
+            { title: 'Standalone', id: 'e3', size: 'M', type: 'text', startDate: dayjs('2024-01-02') },
+        ];
+
+        // The group card has no type of its own, so both searches must hit through its members.
+        expect(WeekGroupingUtil.getGroupedByWeek(items, 'exercise', 'current', 'Binary')[0].items.map((i) => i.title)).toEqual(['Variant group']);
+        expect(WeekGroupingUtil.getGroupedByWeek(items, 'exercise', 'current', 'programming')[0].items.map((i) => i.title)).toEqual(['Variant group']);
+        expect(WeekGroupingUtil.getGroupedByWeek(items, 'exercise', 'current', 'quiz')[0].items).toHaveLength(0);
+    });
+
     it('displays correct week range title', () => {
         const items: SidebarCardElement[] = [
             { title: 'L1', id: 'm1', size: 'M', startDate: dayjs('2024-01-01') },

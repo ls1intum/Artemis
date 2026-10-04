@@ -1,18 +1,20 @@
 import dayjs from 'dayjs/esm';
-import { Component, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface OnlineUnitFormData {
     name?: string;
@@ -37,10 +39,23 @@ function urlValidator(control: AbstractControl) {
 @Component({
     selector: 'jhi-online-unit-form',
     templateUrl: './online-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, CompetencySelectionComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        TumAetUiButtonDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        CompetencySelectionComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class OnlineUnitFormComponent {
-    protected readonly faArrowLeft = faArrowLeft;
+    private readonly formBuilder = inject(FormBuilder);
+    private readonly onlineUnitService = inject(OnlineUnitService);
+
     protected readonly faTimes = faTimes;
 
     formData = input<OnlineUnitFormData>();
@@ -51,12 +66,16 @@ export class OnlineUnitFormComponent {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
-    datePickerComponent = viewChild(FormDateTimePickerComponent);
+    /** Reports every change instead of offering Submit, for an item that is edited in place and saved automatically. */
+    readonly autosave = input<boolean>(false);
+    readonly formChanged = output<UnitFormChange<OnlineUnitFormData>>();
+    /** Set while the form takes over the data of the item, which is not a change of the user. */
+    private applyingFormData = false;
+
+    /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
+    readonly isReleaseDateTextValid = signal(true);
 
     urlValidator = urlValidator;
-
-    private readonly formBuilder = inject(FormBuilder);
-    private readonly onlineUnitService = inject(OnlineUnitService);
 
     form: FormGroup = this.formBuilder.group({
         name: [undefined, [Validators.required, Validators.maxLength(255)]],
@@ -67,7 +86,7 @@ export class OnlineUnitFormComponent {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isReleaseDateTextValid());
 
     // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
     private appliedFormData?: OnlineUnitFormData;
@@ -86,6 +105,17 @@ export class OnlineUnitFormComponent {
                 this.setFormValues(data);
             }
         });
+
+        for (const typedField of ['name', 'description', 'source']) {
+            this.form
+                .get(typedField)!
+                .valueChanges.pipe(takeUntilDestroyed())
+                .subscribe(() => this.reportChange(false));
+        }
+        this.form
+            .get('competencyLinks')!
+            .valueChanges.pipe(takeUntilDestroyed())
+            .subscribe(() => this.reportChange(true));
     }
 
     get nameControl() {
@@ -100,12 +130,38 @@ export class OnlineUnitFormComponent {
         return this.form.get('releaseDate');
     }
 
+    onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
+        this.releaseDateControl?.setValue(releaseDate);
+        this.releaseDateControl?.markAsDirty();
+        this.reportChange(true);
+    }
+
+    onReleaseDateTextValidityChange(valid: boolean): void {
+        // The picker also reports the validity it starts with, which is no change of the user.
+        if (valid === this.isReleaseDateTextValid()) {
+            return;
+        }
+        this.isReleaseDateTextValid.set(valid);
+        this.reportChange(false);
+    }
+
+    private reportChange(immediate: boolean): void {
+        if (!this.autosave() || this.applyingFormData) {
+            return;
+        }
+        // A control reports its change before the form takes it over, so the form's own value and validity lag one change behind here.
+        const valid = Object.values(this.form.controls).every((control) => !control.invalid) && this.isReleaseDateTextValid();
+        this.formChanged.emit({ data: deepClone(this.form.getRawValue()), immediate, valid });
+    }
+
     get sourceControl() {
         return this.form.get('source');
     }
 
     private setFormValues(formData: OnlineUnitFormData) {
+        this.applyingFormData = true;
         this.form.patchValue(formData);
+        this.applyingFormData = false;
     }
 
     /**
@@ -126,9 +182,11 @@ export class OnlineUnitFormComponent {
                 .pipe(map((response: HttpResponse<OnlineResourceDTO>) => response.body!))
                 .subscribe({
                     next: (onlineResource) => {
+                        // An item that saves itself keeps the name and description it has, so only empty fields are filled in.
+                        const keepCurrent = this.autosave();
                         const updateForm = {
-                            name: onlineResource.title || undefined,
-                            description: onlineResource.description || undefined,
+                            name: (keepCurrent && this.nameControl?.value) || onlineResource.title || undefined,
+                            description: (keepCurrent && this.descriptionControl?.value) || onlineResource.description || undefined,
                         };
                         this.form.patchValue(updateForm);
                     },
@@ -137,7 +195,7 @@ export class OnlineUnitFormComponent {
     }
 
     submitForm() {
-        const onlineUnitFormData: OnlineUnitFormData = { ...this.form.value };
+        const onlineUnitFormData: OnlineUnitFormData = deepClone(this.form.value);
         this.formSubmitted.emit(onlineUnitFormData);
     }
 

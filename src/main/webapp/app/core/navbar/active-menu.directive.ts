@@ -15,10 +15,11 @@ export class ActiveMenuDirective implements OnInit {
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event: LangChangeEvent) => {
             this.updateActiveFlag(event.lang);
         });
-        this.updateActiveFlag(this.translateService.getCurrentLang());
+        this.updateActiveFlag(this.translateService.getCurrentLang() ?? 'en');
     }
 
     updateActiveFlag(selectedLanguage: string) {
+        this.renderer.setAttribute(this.element.nativeElement, 'aria-pressed', String(this.jhiActiveMenu() === selectedLanguage));
         if (this.jhiActiveMenu() === selectedLanguage) {
             this.renderer.addClass(this.element.nativeElement, 'active');
         } else {

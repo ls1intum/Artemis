@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { Subject, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -12,8 +11,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { HttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseGradingService', () => {
-    setupTestBed({ zoneless: true });
-
     let websocketService: WebsocketService;
     let httpService: HttpClient;
     let exercise1TestCaseSubject: Subject<Result>;

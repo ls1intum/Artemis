@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -15,8 +14,6 @@ import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 describe('LoginService', () => {
-    setupTestBed({ zoneless: true });
-
     let accountService: AccountService;
     let authServerProvider: AuthServerProvider;
     let router: Router;
@@ -95,7 +92,8 @@ describe('LoginService', () => {
             await expect(loginService.login(credentials)).rejects.toThrow('Invalid credentials');
 
             // Verify logout was called (forceful = false)
-            expect(authenticateStub).toHaveBeenCalledWith(undefined);
+            expect(loginService.lastLogoutWasForceful()).toBe(false);
+            expect(authServerProviderClearStub).toHaveBeenCalled();
         });
     });
 
@@ -129,6 +127,31 @@ describe('LoginService', () => {
 
             // Verify logout was called (forceful = false)
             expect(authenticateStub).toHaveBeenCalledWith(undefined);
+        });
+    });
+
+    describe('test loginOIDC', () => {
+        beforeEach(() => {
+            if (!authServerProvider.loginOIDC) {
+                authServerProvider.loginOIDC = () => of({});
+            }
+        });
+        it('should login via OIDC successfully and resolve identity profile', async () => {
+            const loginSpy = vi.spyOn(authServerProvider, 'loginOIDC').mockReturnValue(of({}));
+
+            await loginService.loginOIDC(true);
+            // Verify that loginService firtly calls AuthServerProvider
+            expect(loginSpy).toHaveBeenCalledWith(true);
+        });
+
+        it('should reject and reset forceful flag on OIDC login error', async () => {
+            const loginError = new Error('OIDC handshake protocol failed');
+            vi.spyOn(authServerProvider, 'loginOIDC').mockImplementation(() => {
+                throw loginError;
+            });
+
+            await expect(loginService.loginOIDC(true)).rejects.toThrow('OIDC handshake protocol failed');
+            expect(loginService.lastLogoutWasForceful()).toBe(false);
         });
     });
 

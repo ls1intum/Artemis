@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti.service;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -17,11 +18,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -52,13 +53,16 @@ public class LtiDeepLinkingService {
 
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
+    private final Optional<IrisSettingsApi> irisSettingsApi;
+
     private final Lti13TokenRetriever tokenRetriever;
 
     public LtiDeepLinkingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            Lti13TokenRetriever tokenRetriever) {
+            Optional<IrisSettingsApi> irisSettingsApi, Lti13TokenRetriever tokenRetriever) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
+        this.irisSettingsApi = irisSettingsApi;
         this.tokenRetriever = tokenRetriever;
     }
 
@@ -158,16 +162,16 @@ public class LtiDeepLinkingService {
     }
 
     /**
-     * Prepares a content item for launching the Iris analytics dashboard.
+     * Prepares a content item for launching the Iris course chat.
      */
     private List<LtiContentItem> populateIrisContentItems(long courseId) {
-        Optional<Course> courseOpt = courseRepository.findById(courseId);
-        if (courseOpt.isPresent() && courseOpt.get().getStudentCourseAnalyticsDashboardEnabled()) {
-            String launchUrl = buildContentUrl(courseId, "dashboard");
+        boolean irisEnabled = irisSettingsApi.map(api -> api.isIrisEnabledForCourse(courseId)).orElse(false);
+        if (irisEnabled) {
+            String launchUrl = buildContentUrl(courseId, "iris");
             return List.of(createSingleUnitContentItem(launchUrl));
         }
         else {
-            throw new BadRequestAlertException("Course Analytics Dashboard not activated", "LTI", "noCourseAnalyticsDashboard");
+            throw new BadRequestAlertException("Iris is not enabled for this course", "LTI", "irisNotEnabled");
         }
     }
 
@@ -265,7 +269,7 @@ public class LtiDeepLinkingService {
      */
     private void validateUnitIds(Set<Long> unitIds, DeepLinkingType type) {
         if (unitIds == null || unitIds.isEmpty()) {
-            throw new BadRequestAlertException("No " + type.name().toLowerCase() + " IDs provided for deep linking", "LTI", "no" + type.name() + "Ids");
+            throw new BadRequestAlertException("No " + type.name().toLowerCase(Locale.ROOT) + " IDs provided for deep linking", "LTI", "no" + type.name() + "Ids");
         }
     }
 

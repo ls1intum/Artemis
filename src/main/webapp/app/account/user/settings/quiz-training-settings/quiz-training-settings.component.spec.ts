@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -18,8 +17,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizTrainingSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: QuizTrainingSettingsComponent;
     let fixture: ComponentFixture<QuizTrainingSettingsComponent>;
     let alertService: AlertService;
@@ -61,11 +58,9 @@ describe('QuizTrainingSettingsComponent', () => {
 
     it('should update leaderboard settings when toggled', async () => {
         mockService.updateSettings.mockReturnValue(of({}));
-        component.isVisibleInLeaderboard.set(true);
-
         vi.spyOn(alertService, 'success');
 
-        component.toggleLeaderboardVisibility();
+        component.onLeaderboardVisibilityChange(true);
         await firstValueFrom(mockService.updateSettings());
 
         const expectedDto = new LeaderboardSettingsDTO();
@@ -80,7 +75,7 @@ describe('QuizTrainingSettingsComponent', () => {
         vi.spyOn(globalUtils, 'onError');
         mockService.updateSettings.mockReturnValue(throwError(() => error));
 
-        component.toggleLeaderboardVisibility();
+        component.onLeaderboardVisibilityChange(true);
         await vi.waitFor(() => {
             expect(globalUtils.onError).toHaveBeenCalledWith(alertService, error);
         });
@@ -105,12 +100,12 @@ describe('QuizTrainingSettingsComponent', () => {
         await firstValueFrom(mockService.getSettings());
         fixture.detectChanges();
 
-        const infoMessage = fixture.debugElement.query(By.css('.alert-info'));
+        const infoMessage = fixture.debugElement.query(By.css('tumaet-ui-message'));
         expect(infoMessage).toBeTruthy();
         expect(component.isVisibleInLeaderboard()).toBeUndefined();
     });
 
-    it('should call toggleLeaderboardVisibility when toggle is changed', async () => {
+    it('should save the new visibility when the toggle is changed', async () => {
         mockService.getSettings.mockReturnValue(of(new HttpResponse({ body: mockSettingsResponse })));
         mockService.updateSettings.mockReturnValue(of({}));
 
@@ -118,13 +113,17 @@ describe('QuizTrainingSettingsComponent', () => {
         await firstValueFrom(mockService.getSettings());
         fixture.detectChanges();
 
-        const spy = vi.spyOn(component, 'toggleLeaderboardVisibility');
+        // ngModel writes the initial value in a microtask, so let it settle before toggling it off again.
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const spy = vi.spyOn(component, 'onLeaderboardVisibilityChange');
         const toggleElement = fixture.debugElement.query(By.css('#leaderboardVisibilityToggle'));
 
         toggleElement.nativeElement.click();
         await firstValueFrom(mockService.updateSettings());
 
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith(false);
         expect(mockService.updateSettings).toHaveBeenCalled();
     });
 

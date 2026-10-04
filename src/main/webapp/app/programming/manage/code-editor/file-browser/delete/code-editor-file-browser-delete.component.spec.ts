@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
@@ -10,8 +9,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CodeEditorFileBrowserDeleteComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CodeEditorFileBrowserDeleteComponent>;
     let comp: CodeEditorFileBrowserDeleteComponent;
     let activeModal: { dismiss: ReturnType<typeof vi.fn> };

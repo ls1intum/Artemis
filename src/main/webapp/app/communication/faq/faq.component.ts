@@ -24,9 +24,11 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { CommonModule } from '@angular/common';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
@@ -35,7 +37,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
         CustomExerciseCategoryBadgeComponent,
         SearchFilterComponent,
         NgbDropdownModule,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         TranslateDirective,
         FontAwesomeModule,
         DeleteButtonDirective,
@@ -44,13 +46,25 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
         SortDirective,
         CommonModule,
         CourseTitleBarActionsDirective,
+        ArtemisTranslatePipe,
+        TumAetUiEmptyStateComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
+    private faqService = inject(FaqService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
+
     protected readonly FaqState = FaqState;
     faqs?: Faq[]; // undefined until loaded; code distinguishes "not loaded / load failed" from an empty result
     course!: Course; // set in ngOnInit() from the route data resolver
     readonly filteredFaqs = signal<Faq[]>([]);
+    readonly loaded = signal(false);
+    readonly hasFaqs = signal(false);
     readonly existingCategories = signal<FaqCategory[]>([]);
     readonly courseId = signal<number>(undefined!);
     readonly hasCategories = signal(false);
@@ -77,14 +91,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faFileExport = faFileExport;
     protected readonly faQuestion = faQuestion;
-
-    private faqService = inject(FaqService);
-    private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private sortService = inject(SortService);
-    private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
 
     private profileInfoSubscription?: Subscription;
 
@@ -131,6 +137,9 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     private handleDeleteSuccess(faqId: number) {
         this.faqs = this.faqs?.filter((faq) => faq.id !== faqId);
+        this.hasFaqs.set((this.faqs?.length ?? 0) > 0);
+        this.refreshFaqList(this.searchInput.getValue());
+        this.sortRows();
         this.dialogErrorSource.next('');
         this.loadCourseFaqCategories(this.courseId());
     }
@@ -157,8 +166,10 @@ export class FaqComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res: Faq[]) => {
                     this.faqs = res;
+                    this.hasFaqs.set(res.length > 0);
                     this.applyFilters();
                     this.sortRows();
+                    this.loaded.set(true);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

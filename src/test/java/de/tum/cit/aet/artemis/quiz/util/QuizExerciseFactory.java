@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,7 +29,6 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
@@ -45,7 +45,10 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
  */
 public class QuizExerciseFactory {
 
-    public static final String DRAG_ITEM_PATH_PREFIX = "drag-and-drop/drag-items/";
+    /** The filenames the drag item pictures of the generated question are stored under. They are also the names the multipart parts of a create request carry. */
+    public static final String DRAG_ITEM_IMAGE_2 = "dragItemImage2.png";
+
+    public static final String DRAG_ITEM_IMAGE_4 = "dragItemImage4.png";
 
     /**
      * Creates a quiz exercise with the given dates and adds it to the course.
@@ -151,7 +154,7 @@ public class QuizExerciseFactory {
 
         var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
         sa.addCorrectMapping(mapping1);
-        assertThat(sa).isEqualTo(mapping1.getQuestion());
+        assertThat(mapping1.getId()).isNotNull();
         sa.removeCorrectMapping(mapping1);
         sa.addCorrectMapping(mapping1);
         sa.addCorrectMapping(mapping2);
@@ -186,11 +189,11 @@ public class QuizExerciseFactory {
         dnd.addDropLocation(dropLocation4);
 
         var dragItem1 = new DragItem().text("D1");
-        var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage2.png");
+        var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_IMAGE_2);
         var dragItem3 = new DragItem().text("D3");
-        var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage4.png");
+        var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_IMAGE_4);
         dnd.addDragItem(dragItem1);
-        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
+        assertThat(dragItem1.getId()).isNotNull();
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
@@ -316,28 +319,14 @@ public class QuizExerciseFactory {
             submittedAnswer.setQuizQuestion(question);
 
             DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().getFirst();
-            dragItem1.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
-            dragItem2.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
-            dragItem3.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem4 = ((DragAndDropQuestion) question).getDragItems().get(3);
-            dragItem4.setQuestion((DragAndDropQuestion) question);
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().getFirst();
-            dropLocation1.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
-            dropLocation2.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
-            dropLocation3.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation4 = ((DragAndDropQuestion) question).getDropLocations().get(3);
-            dropLocation4.setQuestion((DragAndDropQuestion) question);
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
@@ -366,7 +355,7 @@ public class QuizExerciseFactory {
                     submittedText.setText(correctText);
                 }
                 else {
-                    submittedText.setText(correctText.toUpperCase());
+                    submittedText.setText(correctText.toUpperCase(Locale.ROOT));
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once
@@ -392,7 +381,6 @@ public class QuizExerciseFactory {
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
-        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise.setRandomizeQuestionOrder(true);
 
         return quizExercise;
@@ -467,16 +455,16 @@ public class QuizExerciseFactory {
         var dragItem3 = new DragItem().text("D3");
         var dragItem4 = new DragItem().text("invalid drag item");
         try {
-            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
-                    FilePathConverter.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
+            // Every drag item picture lives in the one drag item directory, so the file backing the stored filename goes there and nowhere else.
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathConverter.getDragItemFilePath().resolve("drag_item.jpg").toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        var dragItem5 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "10/drag_item.jpg");
+        var dragItem5 = new DragItem().pictureFilePath("drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
-        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
+        assertThat(dragItem1.getId()).isNotNull();
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
@@ -581,22 +569,12 @@ public class QuizExerciseFactory {
             submittedAnswer.setQuizQuestion(question);
 
             DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().getFirst();
-            dragItem1.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
-            dragItem2.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
-            dragItem3.setQuestion((DragAndDropQuestion) question);
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().getFirst();
-            dropLocation1.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
-            dropLocation2.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
-            dropLocation3.setQuestion((DragAndDropQuestion) question);
 
             submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
             submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));

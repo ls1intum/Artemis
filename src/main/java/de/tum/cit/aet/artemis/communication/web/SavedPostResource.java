@@ -30,15 +30,18 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
-import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.dto.PostingDTO;
+import de.tum.cit.aet.artemis.communication.dto.SavedPostDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.service.SavedPostService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
@@ -46,6 +49,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.MESSAGE_INTERACTIONS)
 @RestController
 @RequestMapping("api/communication/")
 public class SavedPostResource {
@@ -62,11 +66,15 @@ public class SavedPostResource {
 
     private final UserRepository userRepository;
 
-    public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository, UserRepository userRepository) {
+    private final AnswerMessageService answerMessageService;
+
+    public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository, UserRepository userRepository,
+            AnswerMessageService answerMessageService) {
         this.savedPostService = savedPostService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.userRepository = userRepository;
+        this.answerMessageService = answerMessageService;
     }
 
     /**
@@ -86,22 +94,24 @@ public class SavedPostResource {
 
         var savedPosts = savedPostService.getSavedPostsForCurrentUserByStatus(savedPostStatus);
 
-        List<Post> posts = postRepository.findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.POST).map(SavedPost::getPostId).toList())
-                .stream().filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
-        List<AnswerPost> answerPosts = answerPostRepository
-                .findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.ANSWER).map(SavedPost::getPostId).toList()).stream()
+        List<Post> posts = postRepository.findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.postType() == PostingType.POST).map(SavedPostDTO::postId).toList()).stream()
+                .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
+        // findVisibleByIdIn drops unverified Iris replies for non-tutors, so a student cannot read pending Iris content
+        // by bookmarking a guessed answer id and re-reading it here.
+        List<AnswerPost> answerPosts = answerMessageService
+                .findVisibleByIdIn(courseId, savedPosts.stream().filter(savedPost -> savedPost.postType() == PostingType.ANSWER).map(SavedPostDTO::postId).toList()).stream()
                 .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
         List<PostingDTO> postingList = new ArrayList<>();
 
-        for (SavedPost savedPost : savedPosts) {
+        for (SavedPostDTO savedPost : savedPosts) {
             Optional<? extends Posting> optionalPosting;
-            if (savedPost.getPostType() == PostingType.ANSWER) {
-                optionalPosting = answerPosts.stream().filter(answerPost -> answerPost.getId().equals(savedPost.getPostId())).findFirst();
+            if (savedPost.postType() == PostingType.ANSWER) {
+                optionalPosting = answerPosts.stream().filter(answerPost -> answerPost.getId().equals(savedPost.postId())).findFirst();
             }
             else {
-                optionalPosting = posts.stream().filter(post -> post.getId().equals(savedPost.getPostId())).findFirst();
+                optionalPosting = posts.stream().filter(post -> post.getId().equals(savedPost.postId())).findFirst();
             }
-            optionalPosting.ifPresent(posting -> postingList.add(new PostingDTO(posting, true, savedPost.getStatus())));
+            optionalPosting.ifPresent(posting -> postingList.add(new PostingDTO(posting, true, savedPost.status())));
         }
 
         log.info("getSavedPosts took {}", TimeLogUtil.formatDurationFrom(start));

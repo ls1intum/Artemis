@@ -9,13 +9,13 @@ import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exer
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
     selector: 'jhi-problem-statement',
     templateUrl: './problem-statement.component.html',
     styleUrls: ['../../course-overview/course-overview.scss'],
-    imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, HtmlForMarkdownPipe, NgClass],
+    imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, MarkdownDirective, NgClass],
 })
 export class ProblemStatementComponent implements OnInit {
     private route = inject(ActivatedRoute);

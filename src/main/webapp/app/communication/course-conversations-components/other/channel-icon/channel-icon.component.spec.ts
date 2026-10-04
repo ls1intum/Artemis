@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 
 describe('ChannelIconComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ChannelIconComponent;
     let fixture: ComponentFixture<ChannelIconComponent>;
 

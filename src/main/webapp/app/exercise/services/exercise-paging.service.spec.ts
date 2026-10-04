@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,8 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';
 
 describe('Exercise Paging Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExercisePagingService<any>;
     let httpMock: HttpTestingController;
 
@@ -24,8 +21,7 @@ describe('Exercise Paging Service', () => {
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }, SessionStorageService, LocalStorageService],
         });
         httpMock = TestBed.inject(HttpTestingController);
-        const httpClient = TestBed.inject(HttpClient);
-        service = new DummyPagingService(httpClient);
+        service = TestBed.inject(DummyPagingService);
     });
 
     it('should find an element', () => {

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
@@ -65,8 +64,6 @@ type MonacoInternals = Omit<
 const internals = (c: CodeEditorMonacoComponent): MonacoInternals => c as unknown as MonacoInternals;
 
 describe('CodeEditorMonacoComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let originalResizeObserver: typeof ResizeObserver | undefined;
 
     let comp: CodeEditorMonacoComponent;
@@ -921,30 +918,6 @@ describe('CodeEditorMonacoComponent', () => {
         // The feedback has been saved -> no longer new
         expect(comp.newFeedbackLines()).toHaveLength(0);
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(expectedFeedbacks);
-    });
-
-    it('should correctly accept a feedback suggestion and notify', () => {
-        const updateFeedbackStub = vi.spyOn(comp, 'updateFeedback').mockImplementation(() => {});
-        const acceptSuggestionCallbackStub = vi.fn();
-        const suggestionToAccept: Feedback = exampleFeedbacks[0];
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestionToAccept]);
-        comp.onAcceptSuggestion.subscribe(acceptSuggestionCallbackStub);
-        fixture.changeDetectorRef.detectChanges();
-        comp.acceptSuggestion(suggestionToAccept);
-        expect(comp.feedbackSuggestionsInternal()).toHaveLength(0);
-        expect(updateFeedbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToAccept);
-        expect(acceptSuggestionCallbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToAccept);
-    });
-
-    it('should correctly discard a suggestion and notify', () => {
-        const discardSuggestionCallbackStub = vi.fn();
-        const suggestionToDiscard = exampleFeedbacks[0];
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestionToDiscard]);
-        comp.onDiscardSuggestion.subscribe(discardSuggestionCallbackStub);
-        fixture.changeDetectorRef.detectChanges();
-        comp.discardSuggestion(suggestionToDiscard);
-        expect(comp.feedbackSuggestionsInternal()).toHaveLength(0);
-        expect(discardSuggestionCallbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToDiscard);
     });
 
     it('should update file session when a file is renamed', async () => {

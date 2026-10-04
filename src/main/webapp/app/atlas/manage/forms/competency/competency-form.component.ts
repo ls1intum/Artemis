@@ -6,6 +6,7 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-competency-form',
@@ -26,7 +27,7 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent {
     competency = input.required<Competency>();
 
     submitForm() {
-        const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
+        const competencyFormData: CourseCompetencyFormData = deepClone(this.form.value);
         this.formSubmitted.emit(competencyFormData);
     }
 }

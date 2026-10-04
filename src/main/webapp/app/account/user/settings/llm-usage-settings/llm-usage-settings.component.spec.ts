@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LlmUsageSettingsComponent } from './llm-usage-settings.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -15,8 +14,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LlmUsageSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LlmUsageSettingsComponent;
     let fixture: ComponentFixture<LlmUsageSettingsComponent>;
     let irisChatService: IrisChatService;

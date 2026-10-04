@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -52,15 +52,15 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     void initTestCase() {
         // student1, tutor1, editor1, instructor1 are all members of the course that owns the exercise
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        // OTHER_EDITOR_LOGIN has EDITOR authority but is in a group that no course uses,
+        // OTHER_EDITOR_LOGIN has EDITOR authority but no UCR entry for any course created here,
         // so checkHasAtLeastRoleForExerciseElseThrow will deny them for every exercise here.
-        userUtilService.addEditor("other-editor-group", OTHER_EDITOR_LOGIN);
+        userUtilService.addEditor(OTHER_EDITOR_LOGIN);
 
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         courseExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         courseExercise.setDueDate(BASE_TIME.plusDays(3));
 
-        examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
     }
 
     @Test
@@ -212,13 +212,9 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
      * This ensures {@code getAutomaticBuildAndTestDate} returns a non-null value when called with
      * the exercise's ID.
      */
-    private void attachAfterDueDateBuildPhase(ProgrammingExercise exercise) throws JsonProcessingException {
+    private void attachAfterDueDateBuildPhase(ProgrammingExercise exercise) throws JacksonException {
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, java.util.List.of("build/test-results/*.xml"));
-        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        if (buildConfig == null) {
-            buildConfig = new ProgrammingExerciseBuildConfig();
-            buildConfig.setProgrammingExercise(exercise);
-        }
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId());
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(java.util.List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }

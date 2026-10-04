@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -29,15 +29,14 @@ import {
     toCompetency,
     toPrerequisite,
 } from 'app/atlas/shared/dto/course-competency-response.dto';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityArrayResponseType = HttpResponse<CourseCompetency[]>;
 type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
 type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
 type CompetencyProgressResponseDTOType = HttpResponse<CompetencyProgressDTO>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseCompetencyService {
     protected httpClient = inject(HttpClient);
     protected entityTitleService = inject(EntityTitleService);
@@ -55,7 +54,7 @@ export class CourseCompetencyService {
                     const emptyResult: SearchResult<CourseCompetency> = { resultsOnPage: [], numberOfPages: 0 };
                     return emptyResult;
                 }
-                return Object.assign({}, body, {
+                return cloneWith(body, {
                     resultsOnPage: body.resultsOnPage.map((dto) => this.toCourseCompetency(dto)),
                 });
             }),
@@ -253,7 +252,7 @@ export class CourseCompetencyService {
     }
 
     protected convertCompetencyFromClient(courseCompetency: CourseCompetency): CourseCompetency {
-        const copy = Object.assign({}, courseCompetency, {
+        const copy = cloneWith(courseCompetency, {
             softDueDate: convertDateFromClient(courseCompetency.softDueDate),
         });
 

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
@@ -10,7 +9,6 @@ import { MockComponent } from 'ng-mocks';
 import { SidebarCardSize } from 'app/foundation/types/sidebar';
 
 describe('SidebarCardItemComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: SidebarCardItemComponent;
     let fixture: ComponentFixture<SidebarCardItemComponent>;
     let sidebarItemMock: any;
@@ -48,7 +46,7 @@ describe('SidebarCardItemComponent', () => {
     it('should display item title', () => {
         fixture.detectChanges();
         const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('#test-sidebar-card-title').textContent).toContain(sidebarItemMock.title);
+        expect(compiled.querySelector('[data-testid="sidebar-card-title"]').textContent).toContain(sidebarItemMock.title);
     });
 
     it('should format unreadCount correctly when count is less than 99', () => {
@@ -90,7 +88,7 @@ describe('SidebarCardItemComponent', () => {
         const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
         expect(unreadCountElem?.textContent).toContain('5');
 
-        const titleElem = fixture.nativeElement.querySelector('#test-sidebar-card-title');
+        const titleElem = fixture.nativeElement.querySelector('[data-testid="sidebar-card-title"]');
         expect(titleElem?.classList).toContain('fw-bold');
     });
 
@@ -106,7 +104,7 @@ describe('SidebarCardItemComponent', () => {
         const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
         expect(unreadCountElem).toBeNull();
 
-        const titleElem = fixture.nativeElement.querySelector('#test-sidebar-card-title');
+        const titleElem = fixture.nativeElement.querySelector('[data-testid="sidebar-card-title"]');
         expect(titleElem?.classList).not.toContain('fw-bold');
     });
 });

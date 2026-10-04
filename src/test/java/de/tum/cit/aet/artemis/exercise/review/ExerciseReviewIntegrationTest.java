@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.review;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -19,8 +19,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
@@ -75,7 +75,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     private CommentThreadGroupRepository commentThreadGroupRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @BeforeEach
     void initTest() {
@@ -178,7 +178,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(inlineFix.applied()).isTrue();
 
         ArgumentCaptor<Object> websocketPayloadCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), websocketPayloadCaptor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), websocketPayloadCaptor.capture());
         ExerciseReviewThreadUpdateDTO websocketPayload = (ExerciseReviewThreadUpdateDTO) websocketPayloadCaptor.getValue();
         assertThat(websocketPayload.action()).isEqualTo(ReviewThreadSyncAction.COMMENT_UPDATED);
         assertThat(websocketPayload.comment().id()).isEqualTo(consistencyComment.id());
@@ -266,7 +266,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(threads.stream().filter(thread -> thread.id().equals(ungrouped.id())).findFirst().orElseThrow().resolved()).isFalse();
 
         ArgumentCaptor<Object> websocketPayloadCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, times(2)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), websocketPayloadCaptor.capture());
+        verify(websocketMessagingService, times(2)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), websocketPayloadCaptor.capture());
         List<ExerciseReviewThreadUpdateDTO> websocketPayloads = websocketPayloadCaptor.getAllValues().stream().map(ExerciseReviewThreadUpdateDTO.class::cast).toList();
         assertThat(websocketPayloads).allMatch(payload -> payload.action() == ReviewThreadSyncAction.THREAD_UPDATED).extracting(payload -> payload.thread().id())
                 .containsExactlyInAnyOrder(first.id(), second.id());
@@ -568,7 +568,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
                 HttpStatus.CREATED);
 
-        var otherCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        var otherCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         TextExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, TextExercise.class);
         exerciseVersionService.createExerciseVersion(otherExercise);
         CommentThreadDTO otherThread = request.postWithResponseBody(reviewThreadsPath(otherExercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
@@ -663,7 +663,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private TextExercise createExerciseWithVersion() {
-        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         TextExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         exerciseVersionService.createExerciseVersion(exercise);
         return exercise;

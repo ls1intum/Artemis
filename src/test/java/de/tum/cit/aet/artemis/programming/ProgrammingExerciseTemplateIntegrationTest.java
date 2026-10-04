@@ -8,15 +8,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +69,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 // ExecutionMode.SAME_THREAD ensures that all tests within this class are executed sequentially in the same thread, rather than in parallel or in a different thread.
@@ -78,7 +82,23 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
     private static final String TEST_PREFIX = "progextemplate";
 
-    private static File java17Home;
+    /**
+     * Maven Central mirror the template builds resolve through. Maven Central rate-limits CI runners (HTTP 429), which
+     * fails or even stalls these builds; see the "Maven Central rate limiting" section of the programming exercise
+     * documentation, which recommends the same mirror to instructors.
+     */
+    private static final String MAVEN_CENTRAL_MIRROR_URL = "https://reposilite.aet.cit.tum.de/releases";
+
+    /**
+     * Upper bound for a single forked template build. Generous, because slow CI runners still have to download
+     * dependencies, but bounded so a stalled repository fails this test instead of hanging the whole test suite.
+     */
+    private static final Duration EXTERNAL_BUILD_TIMEOUT = Duration.ofMinutes(5);
+
+    /**
+     * The JDK the template builds run on. The Java templates compile for Java 25, which is the JDK this test runs on as well.
+     */
+    private static final File JAVA_HOME = new File(System.getProperty("java.home"));
 
     private ProgrammingExercise exercise;
 
@@ -101,7 +121,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
             var lines = runProcess(new ProcessBuilder(mvnExecutable, "-version"));
             String prefix = "maven home:";
-            Optional<String> home = lines.stream().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
+            Optional<String> home = lines.stream().filter(line -> line.toLowerCase(Locale.ROOT).startsWith(prefix)).findFirst();
             home.ifPresent(homeLocation -> System.setProperty("maven.home", homeLocation.substring(prefix.length()).strip()));
         }
         catch (Exception e) {
@@ -114,67 +134,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         String mavenHome = System.getProperty("maven.home");
 
         return m2Home != null || mavenHome != null;
-    }
-
-    @BeforeAll
-    static void findAndSetJava17Home() throws Exception {
-        if (Os.isFamily(Os.FAMILY_UNIX) || Os.isFamily(Os.FAMILY_MAC)) {
-            findAndSetJava17UnixSystems();
-        }
-        else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            findAndSetJava17Windows();
-        }
-    }
-
-    private static void findAndSetJava17UnixSystems() throws Exception {
-        // Use which to find all java installations on Linux
-        var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
-        for (String path : javaInstallations) {
-            File binFolder = Path.of(path).toFile().getParentFile();
-            if (checkJavaVersion(binFolder, "./java", "-version")) {
-                return;
-            }
-        }
-
-        // Mac systems have additional locations where Java could potentially be
-        if (Os.isFamily(Os.FAMILY_MAC)) {
-            findAndSetJava17Mac();
-        }
-    }
-
-    private static void findAndSetJava17Mac() throws Exception {
-        var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
-        for (String path : alternativeInstallations) {
-            File binFolder = Path.of(path).toFile().getParentFile();
-            binFolder = binFolder.toPath().resolve("Home/bin").toFile();
-            if (checkJavaVersion(binFolder, "./java", "-version")) {
-                return;
-            }
-        }
-    }
-
-    private static void findAndSetJava17Windows() {
-        // Use PATH to find all java installations on windows
-        String[] path = System.getenv("PATH").split(";");
-        Arrays.stream(path).map(Path::of).filter(p -> p.endsWith("bin")).filter(Files::isDirectory).filter(binDir -> Files.exists(binDir.resolve("java.exe"))).forEach(binDir -> {
-            try {
-                checkJavaVersion(binDir.toFile(), "cmd", "/c", "java.exe", "-version");
-            }
-            catch (Exception e) {
-                // ignore: we still continue to find another Java installation
-            }
-        });
-    }
-
-    private static boolean checkJavaVersion(File binFolder, String... command) throws Exception {
-        ProcessBuilder processBuilder = new ProcessBuilder(command).directory(binFolder);
-        var version = runProcess(processBuilder);
-        if (!version.isEmpty() && version.getFirst().contains("version \"17")) {
-            java17Home = binFolder.getParentFile(); // JAVA_HOME/bin/java
-            log.debug("Using {} as JAVA_HOME.", java17Home);
-            return true;
-        }
-        return false;
     }
 
     private static List<String> runProcess(ProcessBuilder processBuilder) throws Exception {
@@ -225,7 +184,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @BeforeEach
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests();
     }
@@ -496,7 +455,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         if (projectType == null || projectType.isMaven()) {
             assumeTrue(isMavenHomeSet(), "Could not find Maven. Skipping execution of template tests.");
         }
-        assumeTrue(java17Home != null, "Could not find Java 17. Skipping execution of template tests.");
     }
 
     /**
@@ -513,8 +471,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class,
-                        HttpStatus.CREATED);
+                ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                        CreateProgrammingExerciseDTO.of(exercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
                 log.info("Successfully created exercise on attempt {}/{}", attempt, maxAttempts);
                 return createdExercise;
             }
@@ -581,6 +539,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         String uniqueId = UUID.randomUUID().toString().substring(0, 8).replace("-", "");
         String originalShortName = exercise.getShortName();
         exercise.setShortName(originalShortName + uniqueId);
+        // The factory already derived a project key (and the test repository URI) from the original short name. The
+        // server derives the key from course and short name itself and never takes it from the request body, so the
+        // fixture has to re-derive it here or the connector mocks below would be registered for the stale key.
+        exercise.forceNewProjectKey();
         log.debug("Running test with unique exercise short name: {}", exercise.getShortName());
 
         exercise.setProgrammingLanguage(language);
@@ -670,11 +632,16 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         log.info("Using isolated Maven local repository: {}", localMavenRepo);
 
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
-        mvnRequest.setJavaHome(java17Home);
+        mvnRequest.setJavaHome(JAVA_HOME);
         mvnRequest.setPomFile(testRepositoryPath.toFile());
         mvnRequest.addArgs(List.of("clean", "test", "-Dmaven.repo.local=" + localMavenRepo.toAbsolutePath(), "-B"));
         mvnRequest.setShowVersion(true);
         mvnRequest.setBatchMode(true);
+        // Resolve through the Maven Central mirror instead of Maven Central itself, which rate-limits CI runners.
+        mvnRequest.setUserSettingsFile(writeMavenSettingsUsingMirror(testRepositoryPath));
+        // Without a timeout a stalled repository blocks this forked process indefinitely, which hangs the whole server
+        // test suite instead of failing this test (the Gradle path below has the same guard).
+        mvnRequest.setTimeoutInSeconds((int) EXTERNAL_BUILD_TIMEOUT.toSeconds());
 
         // Capture Maven output for debugging
         StringBuilder mavenOutput = new StringBuilder();
@@ -707,6 +674,69 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         return result.getExitCode();
     }
 
+    /**
+     * Writes a Maven {@code settings.xml} that mirrors Maven Central to the AET Reposilite instance and returns it.
+     * <p>
+     * A mirror is used rather than a {@code <repositories>} entry in the template's pom, because plugins are resolved
+     * through the plugin repositories and would keep going to Maven Central directly - the rate-limited requests that
+     * broke this test in CI included {@code maven-clean-plugin}. A mirror covers both.
+     *
+     * @param directory the test repository directory the settings file is written to
+     * @return the generated settings file
+     * @throws IOException if the settings file cannot be written
+     */
+    private File writeMavenSettingsUsingMirror(Path directory) throws IOException {
+        Path settingsFile = directory.resolve("artemis-test-settings.xml");
+        FileUtils.writeStringToFile(settingsFile.toFile(), """
+                <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+                    <mirrors>
+                        <mirror>
+                            <id>reposilite-repository-releases</id>
+                            <name>AET Reposilite (Maven Central mirror)</name>
+                            <url>%s</url>
+                            <mirrorOf>central</mirrorOf>
+                        </mirror>
+                    </mirrors>
+                </settings>
+                """.formatted(MAVEN_CENTRAL_MIRROR_URL), StandardCharsets.UTF_8);
+        return settingsFile.toFile();
+    }
+
+    /**
+     * Writes a Gradle init script that resolves dependencies and plugins through the AET Reposilite Maven Central mirror
+     * and returns it.
+     * <p>
+     * The mirror is injected here instead of in the exercise templates, so that the templates keep shipping the
+     * repositories an instructor gets. {@code PREFER_SETTINGS} makes these repositories win over the ones the template's
+     * {@code build.gradle} declares; Maven Central stays as a fallback behind the mirror. The {@code pluginManagement}
+     * block is required as well, because the {@code plugins} block resolves through the Gradle Plugin Portal, which falls
+     * back to Maven Central and would otherwise bypass the mirror.
+     *
+     * @param directory the test repository directory the init script is written to
+     * @return the generated init script
+     * @throws IOException if the init script cannot be written
+     */
+    private File writeGradleInitScriptUsingMirror(Path directory) throws IOException {
+        Path initScript = directory.resolve("artemis-test-mirror-init.gradle");
+        FileUtils.writeStringToFile(initScript.toFile(), """
+                beforeSettings { settings ->
+                    settings.pluginManagement.repositories {
+                        maven { url = uri("%1$s") }
+                        gradlePluginPortal()
+                    }
+                    settings.dependencyResolutionManagement {
+                        repositoriesMode.set(org.gradle.api.initialization.resolve.RepositoriesMode.PREFER_SETTINGS)
+                        repositories {
+                            maven { url = uri("%1$s") }
+                            mavenCentral()
+                            mavenLocal()
+                        }
+                    }
+                }
+                """.formatted(MAVEN_CENTRAL_MIRROR_URL), StandardCharsets.UTF_8);
+        return initScript.toFile();
+    }
+
     private String listDirectoryContents(Path directory) {
         try (Stream<Path> paths = Files.walk(directory, 2)) {
             return paths.map(p -> directory.relativize(p).toString()).collect(Collectors.joining(", "));
@@ -737,9 +767,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             future = executor.submit(() -> {
                 try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepositoryPath.toFile()).useBuildDistribution().connect()) {
                     BuildLauncher launcher = connector.newBuild();
-                    launcher.setJavaHome(java17Home);
+                    launcher.setJavaHome(JAVA_HOME);
                     // Isolate Gradle user home to avoid transform cache corruption from parallel builds
                     launcher.addArguments("-g", gradleUserHome.toAbsolutePath().toString());
+                    // Resolve through the Maven Central mirror instead of Maven Central itself, which rate-limits CI runners.
+                    launcher.addArguments("-I", writeGradleInitScriptUsingMirror(testRepositoryPath).getAbsolutePath());
                     String[] tasks = new String[] { "clean", "test" };
                     launcher.forTasks(tasks);
                     launcher.run();
@@ -753,12 +785,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                 }
             });
 
-            // Wait up to 5 minutes for Gradle build to complete
-            // This is generous but necessary for slow CI environments with dependency downloads
-            return future.get(5, TimeUnit.MINUTES);
+            // Bounded wait: generous for slow CI environments that still download dependencies, but never indefinite
+            return future.get(EXTERNAL_BUILD_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
         }
         catch (TimeoutException e) {
-            log.error("Gradle build timed out after 5 minutes in directory: {}", testRepositoryPath);
+            log.error("Gradle build timed out after {} in directory: {}", EXTERNAL_BUILD_TIMEOUT, testRepositoryPath);
             if (future != null) {
                 future.cancel(true);
             }

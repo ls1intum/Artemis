@@ -1,23 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { of, throwError } from 'rxjs';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { DebugElement, signal } from '@angular/core';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockComponent, MockDirective, MockPipe, ngMocks } from 'ng-mocks';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MockComponent, MockDirective, ngMocks } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { metisPostExerciseUser1, metisResolvingAnswerPostUser1, post } from 'test/helpers/sample/metis-sample-data';
+import { communicationPostExerciseUser1, communicationResolvingAnswerPostUser1, post } from 'test/helpers/sample/communication-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -28,19 +30,19 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { provideRouter } from '@angular/router';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('AnswerPostComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AnswerPostComponent;
     let fixture: ComponentFixture<AnswerPostComponent>;
     let debugElement: DebugElement;
     let mainContainer: HTMLElement;
+    let communicationService: CommunicationService;
 
     beforeEach(async () => {
         mainContainer = document.createElement('div');
@@ -52,7 +54,7 @@ describe('AnswerPostComponent', () => {
                 OverlayModule,
                 AnswerPostComponent,
                 FaIconComponent,
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostingHeaderComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
@@ -64,11 +66,12 @@ describe('AnswerPostComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
                 { provide: DOCUMENT, useValue: document },
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DialogService, useValue: { open: vi.fn() } },
             ],
@@ -80,6 +83,7 @@ describe('AnswerPostComponent', () => {
         fixture = TestBed.createComponent(AnswerPostComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
+        communicationService = TestBed.inject(CommunicationService);
     });
 
     afterEach(() => {
@@ -88,7 +92,7 @@ describe('AnswerPostComponent', () => {
 
     it('should contain the posting header when isConsecutive is false', () => {
         fixture.componentRef.setInput('isConsecutive', false);
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -97,7 +101,7 @@ describe('AnswerPostComponent', () => {
 
     it('should not contain the posting header when isConsecutive is true', () => {
         fixture.componentRef.setInput('isConsecutive', true);
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -105,14 +109,14 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         expect(component.containerRef).not.toBeNull();
     });
 
     it('should contain component to edit answer post', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const answerPostCreateEditModal = debugElement.query(By.css('jhi-answer-post-create-edit-modal'));
@@ -120,7 +124,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain an answer post reactions bar', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const reactionsBar = debugElement.query(By.css('jhi-posting-reactions-bar'));
@@ -128,13 +132,13 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should have correct content in posting-content component', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const postingContentDebugElement = debugElement.query(By.directive(PostingContentComponent));
         expect(postingContentDebugElement).not.toBeNull();
         const content = ngMocks.input(postingContentDebugElement, 'content');
-        expect(content).toEqual(metisResolvingAnswerPostUser1.content);
+        expect(content).toEqual(communicationResolvingAnswerPostUser1.content);
     });
 
     it('should close previous dropdown when another is opened', () => {
@@ -195,14 +199,14 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should update the posting when onPostingUpdated is called', () => {
-        const updatedPosting = { ...metisResolvingAnswerPostUser1, content: 'Updated content' };
+        const updatedPosting = { ...communicationResolvingAnswerPostUser1, content: 'Updated content' };
         component.onPostingUpdated(updatedPosting);
 
         expect(component.posting()).toEqual(updatedPosting);
     });
 
     it('should update reactions when onReactionsUpdated is called', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
         const updatedReactions = [{ id: 1, emojiId: 'smile', userId: 2 } as Reaction];
         component.onReactionsUpdated(updatedReactions);
 
@@ -267,7 +271,7 @@ describe('AnswerPostComponent', () => {
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
+        component.posting.set({ ...communicationPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
@@ -283,7 +287,7 @@ describe('AnswerPostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
+        component.posting.set({ ...communicationPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.changeDetectorRef.detectChanges();
@@ -298,10 +302,248 @@ describe('AnswerPostComponent', () => {
         component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
-        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
+        const forwardButton = debugElement.query(By.css('[data-testid="posting-menu-forward"]'));
         expect(forwardButton).not.toBeNull();
 
         forwardButton.nativeElement.click();
         expect(forwardMessageSpy).toHaveBeenCalled();
+    });
+
+    it('should return true for isUnverifiedIris when posting is from a bot and unverified', () => {
+        const botPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        component.posting.set(botPost);
+        expect(component.isUnverifiedIris()).toBe(true);
+    });
+
+    it('should return false for isUnverifiedIris when posting is from a human author', () => {
+        const humanPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 1, bot: false }, verified: false });
+        component.posting.set(humanPost);
+        expect(component.isUnverifiedIris()).toBe(false);
+    });
+
+    it('should return false for isUnverifiedIris when posting is verified', () => {
+        const verifiedBotPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: true });
+        component.posting.set(verifiedBotPost);
+        expect(component.isUnverifiedIris()).toBe(false);
+    });
+
+    it('should return false for isUnverifiedIris when posting is undefined', () => {
+        component.posting.set(undefined as any);
+        expect(component.isUnverifiedIris()).toBe(false);
+    });
+
+    it('should delegate mayVerify to communicationService.currentUserIsAtLeastTutorInCourse', () => {
+        const spy = vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(false);
+        expect(component.mayVerify).toBe(false);
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('should render the PrimeNG verify actions for an unverified Iris reply a tutor may verify', () => {
+        vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        const botPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        component.posting.set(botPost);
+        fixture.changeDetectorRef.detectChanges();
+
+        const approve = debugElement.query(By.css('p-button[data-testid="iris-approve-button"]'));
+        const edit = debugElement.query(By.css('p-button[data-testid="iris-edit-button"]'));
+        const reject = debugElement.query(By.css('p-button[data-testid="iris-reject-button"]'));
+        expect(approve).not.toBeNull();
+        expect(edit).not.toBeNull();
+        expect(reject).not.toBeNull();
+
+        const approveSpy = vi.spyOn(component, 'approveAnswer').mockImplementation(() => {});
+        approve.query(By.css('button')).nativeElement.click();
+        expect(approveSpy).toHaveBeenCalled();
+    });
+
+    it('should render the PrimeNG textarea and save/cancel buttons in Iris edit mode', () => {
+        vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        const botPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        component.posting.set(botPost);
+        component.isEditingIrisReply.set(true);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(debugElement.query(By.css('textarea[pTextarea]'))).not.toBeNull();
+        expect(debugElement.query(By.css('p-button[data-testid="iris-save-approve-button"]'))).not.toBeNull();
+        expect(debugElement.query(By.css('p-button[data-testid="iris-cancel-button"]'))).not.toBeNull();
+    });
+
+    it('should set mayDelete when onMayDelete is called', () => {
+        component.onMayDelete(true);
+        expect(component.mayDelete()).toBe(true);
+        component.onMayDelete(false);
+        expect(component.mayDelete()).toBe(false);
+    });
+
+    it('should set mayEdit when onMayEdit is called', () => {
+        component.onMayEdit(true);
+        expect(component.mayEdit()).toBe(true);
+        component.onMayEdit(false);
+        expect(component.mayEdit()).toBe(false);
+    });
+
+    it('should call communicationService.verifyAnswerPost on approveAnswer and update posting on success', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
+        const verifiedPost = Object.assign(new AnswerPost(), { ...answerPost, verified: true });
+        component.posting.set(answerPost);
+        const verifySpy = vi.spyOn(communicationService, 'verifyAnswerPost').mockReturnValue(of(verifiedPost));
+
+        component.approveAnswer();
+
+        expect(verifySpy).toHaveBeenCalledWith(answerPost, undefined);
+        expect(component.isVerifying()).toBe(false);
+        expect(component.isEditingIrisReply()).toBe(false);
+        expect(component.posting()!.verified).toBe(true);
+    });
+
+    it('should preserve the parent post context after approval so later actions route to the messaging API', () => {
+        // the posting carries a full parent post including its conversation
+        const parentWithConversation = { id: 42, conversation: { id: 7 } as Conversation } as Post;
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1, post: parentWithConversation });
+        // the server verify response drops the parent conversation (AnswerMessageDTO -> ParentPostDTO carries only the id)
+        const verifiedResponse = Object.assign(new AnswerPost(), { ...answerPost, verified: true, post: { id: 42 } as Post });
+        component.posting.set(answerPost);
+        vi.spyOn(communicationService, 'verifyAnswerPost').mockReturnValue(of(verifiedResponse));
+
+        component.approveAnswer();
+
+        expect(component.posting()!.verified).toBe(true);
+        // the full parent post (incl. conversation) is retained, so getResourceEndpoint keeps routing edit/delete to the messaging endpoint
+        expect(component.posting()!.post?.conversation).toBeDefined();
+        expect(component.posting()!.post?.conversation?.id).toBe(7);
+    });
+
+    it('should pass trimmed content to verifyAnswerPost when content is provided', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        const verifySpy = vi.spyOn(communicationService, 'verifyAnswerPost').mockReturnValue(of(answerPost));
+
+        component.approveAnswer('  edited content  ');
+
+        expect(verifySpy).toHaveBeenCalledWith(answerPost, 'edited content');
+    });
+
+    it('should reset isVerifying on approveAnswer error', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        vi.spyOn(communicationService, 'verifyAnswerPost').mockReturnValue(throwError(() => new Error('network error')));
+
+        component.approveAnswer();
+
+        expect(component.isVerifying()).toBe(false);
+    });
+
+    it('should not call verifyAnswerPost when posting has no id', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: undefined });
+        component.posting.set(answerPost);
+        const verifySpy = vi.spyOn(communicationService, 'verifyAnswerPost');
+
+        component.approveAnswer();
+
+        expect(verifySpy).not.toHaveBeenCalled();
+    });
+
+    it('should not call verifyAnswerPost when already verifying', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        component.isVerifying.set(true);
+        const verifySpy = vi.spyOn(communicationService, 'verifyAnswerPost');
+
+        component.approveAnswer();
+
+        expect(verifySpy).not.toHaveBeenCalled();
+    });
+
+    it('should set isEditingIrisReply and copy content on editAnswer', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, content: 'iris content' });
+        component.posting.set(answerPost);
+
+        component.editAnswer();
+
+        expect(component.isEditingIrisReply()).toBe(true);
+        expect(component.editedIrisContent).toBe('iris content');
+    });
+
+    it('should use empty string in editAnswer when posting content is undefined', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, content: undefined });
+        component.posting.set(answerPost);
+
+        component.editAnswer();
+
+        expect(component.editedIrisContent).toBe('');
+    });
+
+    it('should reset editing state on cancelEditAnswer', () => {
+        component.isEditingIrisReply.set(true);
+        component.editedIrisContent = 'some text';
+
+        component.cancelEditAnswer();
+
+        expect(component.isEditingIrisReply()).toBe(false);
+        expect(component.editedIrisContent).toBe('');
+    });
+
+    it('should call deleteAnswerPost on rejectAnswer', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        const deleteSpy = vi.spyOn(communicationService, 'deleteAnswerPost');
+
+        component.rejectAnswer();
+
+        expect(deleteSpy).toHaveBeenCalledWith(answerPost);
+        expect(component.isVerifying()).toBe(false);
+    });
+
+    it('should not call deleteAnswerPost when posting has no id', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: undefined });
+        component.posting.set(answerPost);
+        const deleteSpy = vi.spyOn(communicationService, 'deleteAnswerPost');
+
+        component.rejectAnswer();
+
+        expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not call deleteAnswerPost when already verifying', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        component.isVerifying.set(true);
+        const deleteSpy = vi.spyOn(communicationService, 'deleteAnswerPost');
+
+        component.rejectAnswer();
+
+        expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not update reactions when posting is undefined', () => {
+        component.posting.set(undefined as any);
+        component.onReactionsUpdated([{ id: 1 } as Reaction]);
+
+        expect(component.posting()).toBeUndefined();
+    });
+
+    it('should clean up activeDropdownPost on ngOnDestroy when this component is active', () => {
+        component.posting.set(communicationResolvingAnswerPostUser1);
+        fixture.changeDetectorRef.detectChanges();
+        AnswerPostComponent.activeDropdownPost = component;
+        component.showDropdown.set(true);
+
+        component.ngOnDestroy();
+
+        expect(AnswerPostComponent.activeDropdownPost).toBeUndefined();
+        expect(component.showDropdown()).toBe(false);
+    });
+
+    it('should not clean up activeDropdownPost on ngOnDestroy when another component is active', () => {
+        const otherComponent = {
+            showDropdown: signal(true),
+            enableBodyScroll: vi.fn(),
+            changeDetector: { detectChanges: vi.fn() },
+        } as any as AnswerPostComponent;
+        AnswerPostComponent.activeDropdownPost = otherComponent;
+
+        component.ngOnDestroy();
+
+        expect(AnswerPostComponent.activeDropdownPost).toBe(otherComponent);
     });
 });

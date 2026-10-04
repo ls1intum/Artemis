@@ -10,7 +10,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
     selector: 'jhi-competency-recommendation',
@@ -25,7 +25,7 @@ import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe
         NgbCollapse,
         MarkdownEditorMonacoComponent,
         TaxonomySelectComponent,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class CompetencyRecommendationDetailComponent {

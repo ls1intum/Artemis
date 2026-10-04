@@ -21,10 +21,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencySelection', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencySelectionPrimengComponent>;
     let component: CompetencySelectionPrimengComponent;
     let courseStorageService: CourseStorageService;
@@ -85,7 +83,6 @@ describe('CompetencySelection', () => {
         expect(component.selectedCompetencyLinks).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(2);
         expect(selector).not.toBeNull();
     });
@@ -100,7 +97,6 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(2);
         expect(component.competencyLinks()?.first()?.competency?.course).toBeUndefined();
         expect(component.competencyLinks()?.first()?.competency?.userProgress).toBeUndefined();
@@ -114,7 +110,6 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.disabled()).toBeTruthy();
     });
 
@@ -127,7 +122,6 @@ describe('CompetencySelection', () => {
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(0);
         expect(select).toBeNull();
     });

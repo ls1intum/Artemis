@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,9 +52,21 @@ public class TokenProvider {
 
     private static final String AUTHENTICATION_METHOD = "auth-method";
 
+    public static final String IS_AUTHENTICATED_WITH_PASSKEY = "is-authenticated-with-passkey";
+
     public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-super-admin-approved";
 
+    /**
+     * Identifies the passkey a token was issued for, so that a later silent rotation can check whether that passkey still
+     * exists. Without it a token outlives the credential that created it: deleting a passkey would not stop the sessions
+     * it had already produced from being extended.
+     */
+    public static final String PASSKEY_CREDENTIAL_ID = "passkey-credential-id";
+
     private static final String TOOLS_KEY = "tools";
+
+    /** Whether the session was established with "remember me", which is what makes it eligible for extension at all. */
+    public static final String REMEMBER_ME = "remember-me";
 
     private SecretKey key;
 
@@ -109,7 +122,8 @@ public class TokenProvider {
      */
     @NonNull
     public String createToken(Authentication authentication, boolean rememberMe) {
-        return createToken(authentication, getTokenValidity(rememberMe), null);
+        Date now = new Date();
+        return createToken(authentication, now, new Date(now.getTime() + getTokenValidity(rememberMe)), null, null, null, false, rememberMe);
     }
 
     /**
@@ -122,8 +136,30 @@ public class TokenProvider {
      */
     @NonNull
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
+        return createToken(authentication, duration, tool, false);
+    }
+
+    /**
+     * Create JWT Token a fully populated <code>Authentication</code> object.
+     *
+     * @param authentication Authentication Object
+     * @param duration       the Token lifetime in milliseconds
+     * @param tool           tool this token is used for. If null, it's a general access token
+     * @param rememberMe     whether the session was established with "remember me", which is what makes it extendable
+     * @return JWT Token
+     */
+    @NonNull
+    public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool, boolean rememberMe) {
         long validity = System.currentTimeMillis() + duration;
-        return createToken(authentication, null, new Date(validity), tool, null);
+        boolean isPasskeyApproved = false;
+        String passkeyCredentialId = null;
+        if (authentication.getDetails() instanceof Map<?, ?> details) {
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
+            if (details.get(PASSKEY_CREDENTIAL_ID) instanceof String credentialId) {
+                passkeyCredentialId = credentialId;
+            }
+        }
+        return createToken(authentication, null, new Date(validity), tool, null, passkeyCredentialId, isPasskeyApproved, rememberMe);
     }
 
     /**
@@ -138,6 +174,55 @@ public class TokenProvider {
      */
     @NonNull
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
+        boolean isPasskeyApproved = false;
+        String passkeyCredentialId = null;
+        if (authentication.getDetails() instanceof Map<?, ?> details) {
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
+            if (details.get(PASSKEY_CREDENTIAL_ID) instanceof String credentialId) {
+                passkeyCredentialId = credentialId;
+            }
+        }
+        return createToken(authentication, issuedAt, expiration, tool, authenticatedWithPasskey, passkeyCredentialId, isPasskeyApproved);
+    }
+
+    /**
+     * Creates a token with the passkey claims supplied explicitly rather than read from the authentication details.
+     * <p>
+     * Silent rotation needs this: the {@link Authentication} it works with was rebuilt from the expiring token and carries
+     * no details, so deriving the passkey claims from it would drop them. Losing the credential id would defeat the check
+     * that the passkey still exists, and losing the approval flag would silently downgrade a super admin.
+     *
+     * @param authentication              the authentication to create the token for
+     * @param issuedAt                    when the token was originally issued, preserved across rotations
+     * @param expiration                  when the token expires
+     * @param tool                        the tool the token is scoped to, if any
+     * @param authenticatedWithPasskey    whether the session was established with a passkey
+     * @param passkeyCredentialId         the passkey the session belongs to, or {@code null} if it is not a passkey session
+     * @param isPasskeySuperAdminApproved whether the passkey is approved for super-admin access
+     * @return the signed token
+     */
+    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
+            @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved) {
+        return createToken(authentication, issuedAt, expiration, tool, authenticatedWithPasskey, passkeyCredentialId, isPasskeySuperAdminApproved, false);
+    }
+
+    /**
+     * Creates a token that also records whether the session is a "remember me" session, which is what makes it eligible
+     * for silent extension at all. How long such a session may live is bounded by the absolute ceiling applied while
+     * rotating, measured from {@code issuedAt}, rather than by counting extensions.
+     *
+     * @param authentication              the authentication to create the token for
+     * @param issuedAt                    when the session was originally established, preserved across rotations
+     * @param expiration                  when this token expires
+     * @param tool                        the tool the token is scoped to, if any
+     * @param authenticatedWithPasskey    whether the session was established with a passkey
+     * @param passkeyCredentialId         the passkey the session belongs to, or {@code null}
+     * @param isPasskeySuperAdminApproved whether the passkey is approved for super-admin access
+     * @param rememberMe                  whether the session was established with "remember me"
+     * @return the signed token
+     */
+    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
+            @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved, boolean rememberMe) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
@@ -145,10 +230,7 @@ public class TokenProvider {
             authenticationMethod = AuthenticationMethod.PASSKEY;
         }
 
-        boolean isPasskeyApproved = false;
-        if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
-            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
-        }
+        boolean isPasskeyApproved = authenticationMethod == AuthenticationMethod.PASSKEY && isPasskeySuperAdminApproved;
 
         // @formatter:off
         JwtBuilder jwtBuilder = Jwts.builder()
@@ -158,6 +240,14 @@ public class TokenProvider {
             .claim(IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved)
             .issuedAt(issuedAt != null ? issuedAt : new Date());
         // @formatter:on
+
+        if (passkeyCredentialId != null) {
+            jwtBuilder.claim(PASSKEY_CREDENTIAL_ID, passkeyCredentialId);
+        }
+
+        if (rememberMe) {
+            jwtBuilder.claim(REMEMBER_ME, true);
+        }
 
         if (tool != null) {
             jwtBuilder.claim(TOOLS_KEY, tool);
@@ -183,7 +273,19 @@ public class TokenProvider {
         List<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(SimpleGrantedAuthority::new).toList();
 
         User principal = new User(claims.getSubject(), "", authorities);
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        var authentication = new UsernamePasswordAuthenticationToken(principal, token, authorities);
+
+        // Keep the already verified authentication claims with the request authentication. Consumers such as JWTFilter
+        // can derive request-scoped capabilities without parsing and verifying the signed token again.
+        Map<String, Object> details = new HashMap<>();
+        details.put(IS_AUTHENTICATED_WITH_PASSKEY, getAuthenticationMethod(claims) == AuthenticationMethod.PASSKEY);
+        details.put(IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeySuperAdminApproved(claims));
+        String passkeyCredentialId = claims.get(PASSKEY_CREDENTIAL_ID, String.class);
+        if (passkeyCredentialId != null) {
+            details.put(PASSKEY_CREDENTIAL_ID, passkeyCredentialId);
+        }
+        authentication.setDetails(Map.copyOf(details));
+        return authentication;
     }
 
     /**
@@ -232,9 +334,55 @@ public class TokenProvider {
         return false;
     }
 
+    /**
+     * Verifies the signature and returns the claims.
+     * <p>
+     * Every accessor below goes through this, so each one is a full signature verification. A caller that needs more than
+     * one claim of the same token should parse once and use the {@link Claims} overloads instead of calling several of the
+     * {@code String} accessors - {@link JWTFilter} does that on the request path, where the accessors would otherwise
+     * verify the same token several times per request.
+     *
+     * @param authToken the token to read
+     * @return the verified claims
+     */
     @NonNull
-    private Claims parseClaims(String authToken) {
+    Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
+    }
+
+    /**
+     * @param authToken the token to read
+     * @return whether the session was established with "remember me"
+     */
+    public boolean isRememberMeSession(String authToken) {
+        return isRememberMeSession(parseClaims(authToken));
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return whether the session was established with "remember me"
+     */
+    boolean isRememberMeSession(Claims claims) {
+        return Boolean.TRUE.equals(claims.get(REMEMBER_ME, Boolean.class));
+    }
+
+    /**
+     * @param authToken the token to read
+     * @return the passkey this token was issued for, or {@code null} for tokens that are not passkey tokens and for
+     *         passkey tokens issued before the claim was introduced
+     */
+    @Nullable
+    public String getPasskeyCredentialId(String authToken) {
+        return getPasskeyCredentialId(parseClaims(authToken));
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return the passkey this token was issued for, or {@code null} if it carries no credential id
+     */
+    @Nullable
+    String getPasskeyCredentialId(Claims claims) {
+        return claims.get(PASSKEY_CREDENTIAL_ID, String.class);
     }
 
     @NonNull
@@ -259,7 +407,15 @@ public class TokenProvider {
      */
     @Nullable
     public ToolTokenType getTools(String authToken) {
-        Claims claims = parseClaims(authToken);
+        return getTools(parseClaims(authToken));
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return {@link ToolTokenType} if the token contains a tool, null otherwise
+     */
+    @Nullable
+    ToolTokenType getTools(Claims claims) {
         String toolString = claims.get(TOOLS_KEY, String.class);
 
         if (toolString == null) {
@@ -276,10 +432,28 @@ public class TokenProvider {
     @Nullable
     public AuthenticationMethod getAuthenticationMethod(String authToken) {
         try {
-            String method = parseClaims(authToken).get(AUTHENTICATION_METHOD, String.class);
-            return method != null ? AuthenticationMethod.fromMethod(method) : null;
+            return getAuthenticationMethod(parseClaims(authToken));
         }
         catch (UnsupportedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse authentication method from token: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return {@link AuthenticationMethod} that was used to create the token, or null if it carries none or one this
+     *         version does not recognise
+     */
+    @Nullable
+    AuthenticationMethod getAuthenticationMethod(Claims claims) {
+        try {
+            String method = claims.get(AUTHENTICATION_METHOD, String.class);
+            return method != null ? AuthenticationMethod.fromMethod(method) : null;
+        }
+        catch (IllegalArgumentException e) {
+            // Same tolerance as the String accessor: an unrecognised or wrongly typed claim must not fail the request it
+            // arrived on, and JWTFilter reads this on every authenticated request.
             log.warn("Failed to parse authentication method from token: {}", e.getMessage());
             return null;
         }
@@ -291,10 +465,23 @@ public class TokenProvider {
      */
     public boolean isPasskeySuperAdminApproved(String authToken) {
         try {
-            Boolean isApproved = parseClaims(authToken).get(IS_PASSKEY_SUPER_ADMIN_APPROVED, Boolean.class);
-            return Boolean.TRUE.equals(isApproved);
+            return isPasskeySuperAdminApproved(parseClaims(authToken));
         }
         catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse passkey super admin approval status from token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return true if the passkey was super admin approved, false otherwise
+     */
+    boolean isPasskeySuperAdminApproved(Claims claims) {
+        try {
+            return Boolean.TRUE.equals(claims.get(IS_PASSKEY_SUPER_ADMIN_APPROVED, Boolean.class));
+        }
+        catch (IllegalArgumentException e) {
             log.warn("Failed to parse passkey super admin approval status from token: {}", e.getMessage());
             return false;
         }

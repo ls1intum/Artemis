@@ -18,7 +18,7 @@ import {
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -39,7 +39,7 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
         NgbDropdown,
         NgbDropdownMenu,
         NgbDropdownToggle,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         TranslateDirective,
         FontAwesomeModule,
         DeleteButtonDirective,
@@ -54,6 +54,12 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
     ],
 })
 export class CompetencyManagementTableComponent {
+    private readonly competencyService: CompetencyService = inject(CompetencyService);
+    private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
+    private readonly alertService: AlertService = inject(AlertService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
+
     courseId = input.required<number>();
     courseCompetencies = input<CourseCompetency[]>([]);
     competencyType = input.required<CourseCompetencyType>();
@@ -65,12 +71,6 @@ export class CompetencyManagementTableComponent {
     service!: CompetencyService | PrerequisiteService; // set by the constructor effect (runs on first CD) before any event handler reads it
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
-
-    private readonly competencyService: CompetencyService = inject(CompetencyService);
-    private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
-    private readonly alertService: AlertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
 
     readonly faFileImport = faFileImport;
     readonly faMagnifyingGlass = faMagnifyingGlass;

@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ButtonModule } from 'primeng/button';
@@ -9,7 +9,7 @@ import { ButtonModule } from 'primeng/button';
     selector: 'jhi-standardized-competency-detail',
     templateUrl: './standardized-competency-detail.component.html',
     styleUrls: ['./standardized-competency-detail.component.scss'],
-    imports: [HtmlForMarkdownPipe, TranslateDirective, ArtemisTranslatePipe, ButtonModule],
+    imports: [MarkdownDirective, TranslateDirective, ArtemisTranslatePipe, ButtonModule],
 })
 export class StandardizedCompetencyDetailComponent {
     // values for the knowledge area select

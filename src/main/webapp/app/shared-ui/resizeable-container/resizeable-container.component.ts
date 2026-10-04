@@ -1,4 +1,4 @@
-import { Component, input, model } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
@@ -28,6 +28,14 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
 export class ResizeableContainerComponent {
     readonly collapsed = model<boolean>(false);
     readonly isExerciseParticipation = input<boolean>(false);
+    /**
+     * Whether the left body drops its padding so its content can reach the card's
+     * edges. Defaults to {@link isExerciseParticipation}, which historically decided
+     * both this and the header — but a full-bleed surface under a visible header,
+     * like the exam's modeling canvas, needs the one without the other.
+     */
+    readonly flushLeftBody = input<boolean | undefined>(undefined);
+    protected readonly leftBodyIsFlush = computed(() => this.flushLeftBody() ?? this.isExerciseParticipation());
     readonly examTimeline = input<boolean>(false);
     readonly showRightPanel = input<boolean>(true);
 
@@ -45,12 +53,10 @@ export class ResizeableContainerComponent {
      */
     readonly expandProblemStatement = input<boolean>(false);
 
-    // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
 
-    // Make right side always expanded for smaller screens
     onWindowResize(event: UIEvent) {
         if ((event.target as Window).innerWidth <= 992) {
             this.collapsed.set(false);

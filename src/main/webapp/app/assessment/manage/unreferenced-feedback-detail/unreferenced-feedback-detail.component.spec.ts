@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -9,9 +8,10 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Unreferenced Feedback Detail Component', () => {
-    setupTestBed({ zoneless: true });
     let comp: UnreferencedFeedbackDetailComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackDetailComponent>;
     let feedbackService: FeedbackService;
@@ -19,7 +19,12 @@ describe('Unreferenced Feedback Detail Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(StructuredGradingCriterionService),
+                MockProvider(FeedbackService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -30,17 +35,44 @@ describe('Unreferenced Feedback Detail Component', () => {
             });
     });
 
+    it('should render with its required inputs', () => {
+        fixture.componentRef.setInput('feedback', { id: 1, detailText: 'some feedback' } as Feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', false);
+
+        expect(() => fixture.detectChanges()).not.toThrow();
+    });
+
     it('should call getLongFeedbackText on init if feedback has long text', async () => {
         const feedbackId = 42;
-        const resultId = 1;
         const exampleText = 'This is a long feedback text';
 
         fixture.componentRef.setInput('feedback', { id: feedbackId, hasLongFeedbackText: true } as Feedback);
-        fixture.componentRef.setInput('resultId', resultId);
+        fixture.componentRef.setInput('resultId', 1);
         const getLongFeedbackTextSpy = vi.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
 
         comp.ngOnInit();
         expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(feedbackId);
+    });
+
+    it('should clear hasLongFeedbackText on the hydrated clone so a remount does not refetch indefinitely', async () => {
+        const feedbackId = 42;
+        const exampleText = 'This is a long feedback text';
+
+        fixture.componentRef.setInput('feedback', { id: feedbackId, hasLongFeedbackText: true } as Feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        const getLongFeedbackTextSpy = vi.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
+
+        await comp.loadLongFeedback();
+
+        expect(comp.feedback().hasLongFeedbackText).toBeFalsy();
+        expect(comp.feedback().detailText).toBe(exampleText);
+
+        // Simulate the parent remounting the component with the hydrated feedback it just received.
+        fixture.componentRef.setInput('feedback', comp.feedback());
+        await comp.loadLongFeedback();
+
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledOnce();
     });
 
     it('should update feedback with SGI and emit to parent', () => {
@@ -70,19 +102,39 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should emit the assessment change after deletion', () => {
-        fixture.componentRef.setInput('feedback', {
+    it('should mark an accepted suggestion as adapted when a grading instruction is dropped onto it', () => {
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+        const feedback = {
             id: 1,
+            text: 'FeedbackSuggestion:accepted:Missing null check',
             detailText: 'feedback1',
             credits: 1.5,
-        } as Feedback);
-        const emitSpy = vi.spyOn(comp.onFeedbackDelete, 'emit');
-        comp.delete();
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
 
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((currentFeedback) => {
+            currentFeedback.gradingInstruction = instruction;
+            currentFeedback.credits = instruction.credits;
+        });
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        comp.updateFeedbackOnDrop(new Event(''));
+
+        expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ text: 'FeedbackSuggestion:adapted:Missing null check' }));
+        expect(comp.feedback().text).toBe('FeedbackSuggestion:adapted:Missing null check');
     });
 
-    it('should mark automatic feedback and feedback suggestions as adapted when they are modified', () => {
+    it('exposes delete() as the sole deletion entry point for the unified feedback card', () => {
+        fixture.componentRef.setInput('feedback', { id: 1, detailText: 'feedback1', credits: 1.5 } as Feedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackDelete, 'emit');
+
+        comp.delete();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith(comp.feedback());
+    });
+
+    it('should mark automatic feedback as AUTOMATIC_ADAPTED when modified, without touching the suggestion badge text', () => {
         fixture.componentRef.setInput('feedback', {
             id: 1,
             type: FeedbackType.AUTOMATIC,
@@ -95,7 +147,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledWith({
             id: 1,
             type: FeedbackType.AUTOMATIC_ADAPTED,
-            text: 'FeedbackSuggestion:adapted:feedback1',
+            text: 'FeedbackSuggestion:accepted:feedback1',
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback);

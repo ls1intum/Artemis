@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
@@ -7,14 +6,13 @@ import { By } from '@angular/platform-browser';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBell, faBellSlash, faBullhorn, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseNotificationPresetPickerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseNotificationPresetPickerComponent;
     let fixture: ComponentFixture<CourseNotificationPresetPickerComponent>;
 
@@ -64,6 +62,22 @@ describe('CourseNotificationPresetPickerComponent', () => {
         fixture.detectChanges();
     });
 
+    it('announces the selected preset including the custom choice', () => {
+        const options = Array.from(fixture.nativeElement.querySelectorAll('.course-notification-preset-picker-item')) as HTMLElement[];
+        const selected = vi.spyOn(component.onPresetSelected, 'emit');
+        expect(options.map((option) => option.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
+        options[1].dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(selected).toHaveBeenCalledWith(mockPresets[1].typeId);
+        fixture.componentRef.setInput('selectedCourseSettingPreset', mockPresets[1]);
+        fixture.detectChanges();
+        expect(options.map((option) => option.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+        options[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(selected).toHaveBeenLastCalledWith(0);
+        fixture.componentRef.setInput('selectedCourseSettingPreset', undefined);
+        fixture.detectChanges();
+        expect(options.map((option) => option.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'true']);
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
@@ -101,18 +115,40 @@ describe('CourseNotificationPresetPickerComponent', () => {
         expect(emitSpy).toHaveBeenCalledWith(0);
     });
 
-    it('should show checkmark icon for the selected preset', () => {
+    it('should render a dedicated icon for each option and the toggle', () => {
         fixture.componentRef.setInput('selectedCourseSettingPreset', mockPresets[0]);
         fixture.detectChanges();
 
         const iconComponents = fixture.debugElement.queryAll(By.directive(FaIconComponent));
 
-        expect(iconComponents.length).toBeGreaterThan(0);
+        // One toggle icon plus one icon per option (two presets + the custom option).
+        expect(iconComponents.length).toBe(4);
 
         expect(component.selectedCourseSettingPreset()).toBe(mockPresets[0]);
-
         expect(component.selectedCourseSettingPreset()?.identifier).toBe('preset1');
-        expect(component.selectedCourseSettingPreset() !== null).toBe(true);
+    });
+
+    it('should map each preset identifier to its dedicated icon and fall back to the bell', () => {
+        expect(component['getPresetIcon']('defaultUserCourseNotificationSettingPreset')).toBe(faBell);
+        expect(component['getPresetIcon']('allActivityUserCourseNotificationSettingPreset')).toBe(faBullhorn);
+        expect(component['getPresetIcon']('ignoreUserCourseNotificationSettingPreset')).toBe(faBellSlash);
+        expect(component['getPresetIcon']('customUserCourseNotificationSettingPreset')).toBe(faSliders);
+        // Custom preset (no identifier) and unknown identifiers fall back gracefully.
+        expect(component['getPresetIcon'](undefined)).toBe(faSliders);
+        expect(component['getPresetIcon']('somethingUnknown')).toBe(faBell);
+    });
+
+    it('should reflect the selected preset in the toggle icon', () => {
+        fixture.componentRef.setInput(
+            'selectedCourseSettingPreset',
+            new CourseNotificationSettingPreset('ignoreUserCourseNotificationSettingPreset', 3, createMockSettingsMap(false, false, false)),
+        );
+        fixture.detectChanges();
+        expect(component['selectedPresetIcon']()).toBe(faBellSlash);
+
+        fixture.componentRef.setInput('selectedCourseSettingPreset', undefined);
+        fixture.detectChanges();
+        expect(component['selectedPresetIcon']()).toBe(faSliders);
     });
 
     it('should only bold the selected preset title in the dropdown', () => {

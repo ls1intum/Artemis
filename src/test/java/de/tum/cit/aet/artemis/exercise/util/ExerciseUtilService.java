@@ -236,20 +236,22 @@ public class ExerciseUtilService {
         Exercise exercise;
         switch (exerciseType) {
             case "modeling" -> {
-                course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+                course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", userPrefix);
                 exercise = exerciseTestRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, userPrefix + "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
                     var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
-                    modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user);
+                    submission = modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user, null).submission();
+                    // the save wrote the foreign key from an id; this utility holds the participation itself
+                    submission.setParticipation(participation);
                     studentParticipationRepo.save(participation);
                 }
                 return course;
             }
             case "programming" -> {
-                course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+                course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
                 exercise = exerciseTestRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -258,7 +260,7 @@ public class ExerciseUtilService {
                 return course;
             }
             case "text" -> {
-                course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
+                course = textExerciseUtilService.addEnrolledCourseWithOneFinishedTextExercise(userPrefix);
                 exercise = exerciseTestRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Text" + j + j, null, true);
@@ -267,7 +269,7 @@ public class ExerciseUtilService {
                 return course;
             }
             case "file-upload" -> {
-                course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+                course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(userPrefix);
                 exercise = exerciseTestRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");

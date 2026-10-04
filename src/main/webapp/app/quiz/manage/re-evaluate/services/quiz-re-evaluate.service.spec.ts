@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,8 +11,6 @@ import * as blobUtil from 'app/foundation/util/blob-util';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizReEvaluateService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: QuizReEvaluateService;
     let httpMock: HttpTestingController;
     beforeEach(() => {

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
@@ -57,9 +58,14 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         assertThat(settings.rateLimit()).isEqualTo(customRateLimit);
     }
 
+    /**
+     * The null-ness of the parameter is a static contract now, expressed with {@code @NonNull} rather than a
+     * {@code requireNonNull} call, so there is no message of ours to assert. What is still worth pinning is that the
+     * method fails rather than quietly answering with the default settings for no course at all.
+     */
     @Test
     void getSettingsForCourse_throwsOnNullCourse() {
-        assertThatThrownBy(() -> irisSettingsService.getSettingsForCourse((Course) null)).isInstanceOf(NullPointerException.class).hasMessageContaining("course must not be null");
+        assertThatThrownBy(() -> irisSettingsService.getSettingsForCourse((Course) null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -77,7 +83,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
 
     @Test
     void isEnabledForCourse_throwsOnNullCourse() {
-        assertThatThrownBy(() -> irisSettingsService.isEnabledForCourse((Course) null)).isInstanceOf(NullPointerException.class).hasMessageContaining("course must not be null");
+        assertThatThrownBy(() -> irisSettingsService.isEnabledForCourse((Course) null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -100,6 +106,63 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         assertThat(dto.settings().customInstructions()).isEqualTo("keep trimmed");
         assertThat(dto.settings().rateLimit().requests()).isEqualTo(100);
         assertThat(dto.settings().rateLimit().timeframeHours()).isEqualTo(24);
+    }
+
+    /**
+     * The reason the legacy-trigger field is nullable at all. Two of the three Angular components that PUT these
+     * settings never touch the switch and send whatever they read back, and a full PUT overwrites everything. Without
+     * the merge, saving the enabled toggle from the onboarding page would quietly re-arm Artemis' own proactive
+     * events on a course whose admin had turned them off.
+     */
+    @Test
+    void updateCourseSettings_aPayloadWithoutTheLegacyFlagKeepsTheStoredDecision() {
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), true);
+
+        var unaware = IrisCourseSettings.of(true, "changed by a client that does not know the flag", null, null, null, false, null);
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), unaware, true);
+
+        assertThat(dto.settings().legacyBuildTriggersEnabled()).isFalse();
+        assertThat(dto.settings().customInstructions()).isEqualTo("changed by a client that does not know the flag");
+    }
+
+    @Test
+    void updateCourseSettings_anExplicitLegacyDecisionIsPersisted() {
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), true);
+        assertThat(dto.settings().legacyBuildTriggersEffective()).isFalse();
+
+        var reEnabled = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, true), true);
+        assertThat(reEnabled.settings().legacyBuildTriggersEffective()).isTrue();
+    }
+
+    @Test
+    void updateCourseSettings_anUntouchedCourseReadsAsOn() {
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null), true);
+
+        assertThat(dto.settings().legacyBuildTriggersEnabled()).isNull();
+        assertThat(dto.settings().legacyBuildTriggersEffective()).isTrue();
+    }
+
+    @Test
+    void updateCourseSettings_anInstructorOwnsBothProactiveToggles() {
+        // Both flags are course-scoped teaching decisions, so a non-admin save may set either one.
+        var saved = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, "instructor edit", null, null, null, true, false), false);
+
+        assertThat(saved.settings().proactiveStruggleEnabled()).isTrue();
+        assertThat(saved.settings().legacyBuildTriggersEnabled()).isFalse();
+        assertThat(saved.settings().customInstructions()).isEqualTo("instructor edit");
+    }
+
+    @Test
+    void updateCourseSettings_aClientThatOmitsTheProactiveFlagsLeavesThemAlone() {
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, true, false), false);
+
+        // Null is "this client does not edit the field", not "reset it": both stored decisions have to survive a
+        // save from the two clients that only ever touch `enabled`, and from a browser predating the fields.
+        var saved = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, "later edit", null, null, null, null, null), false);
+
+        assertThat(saved.settings().proactiveStruggleEnabled()).isTrue();
+        assertThat(saved.settings().legacyBuildTriggersEnabled()).isFalse();
+        assertThat(saved.settings().customInstructions()).isEqualTo("later edit");
     }
 
     @Test
@@ -361,6 +424,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisSettingsService createServiceWithDefaults(int defaultLimit, int defaultTimeframeHours) {
-        return new IrisSettingsService(mock(IrisCourseSettingsRepository.class), mock(CourseRepository.class), defaultLimit, defaultTimeframeHours);
+        return new IrisSettingsService(mock(IrisCourseSettingsRepository.class), mock(CourseRepository.class), defaultLimit, defaultTimeframeHours,
+                mock(FeatureToggleService.class));
     }
 }

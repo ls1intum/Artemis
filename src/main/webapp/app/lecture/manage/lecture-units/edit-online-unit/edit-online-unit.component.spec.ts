@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -22,8 +21,6 @@ import { ProfileService } from '../../../../core/layouts/profiles/shared/profile
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('EditOnlineUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let editOnlineUnitComponentFixture: ComponentFixture<EditOnlineUnitComponent>;
     let editOnlineUnitComponent: EditOnlineUnitComponent;
 

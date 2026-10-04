@@ -1,11 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
     faBullseye,
     faCalendarDays,
     faChalkboardTeacher,
-    faChartBar,
     faChartColumn,
     faCode,
     faCog,
@@ -26,9 +25,7 @@ import {
 /**
  * Service for creating common sidebar items used in both course overview and course management components
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseSidebarItemService {
     getManagementDefaultItems(courseId: number): SidebarItem[] {
         return [
@@ -67,13 +64,8 @@ export class CourseSidebarItemService {
         };
     }
 
-    getStudentDefaultItems(hasDashboard = false, questionsAvailable = false): SidebarItem[] {
-        const items = [];
+    getStudentDefaultItems(questionsAvailable = false): SidebarItem[] {
         const training = [];
-
-        if (hasDashboard) {
-            items.push(this.getDashboardItem());
-        }
 
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
@@ -104,7 +96,7 @@ export class CourseSidebarItemService {
             hidden: false,
         };
 
-        return [...items, exercisesItem, ...training, statisticsItem, calendarItem];
+        return [exercisesItem, ...training, statisticsItem, calendarItem];
     }
 
     getTrainingItem(): SidebarItem {
@@ -200,17 +192,6 @@ export class CourseSidebarItemService {
             title: 'Learning Path',
             translation: 'artemisApp.courseOverview.menu.learningPath',
             featureToggle: FeatureToggle.LearningPaths,
-            hidden: false,
-        };
-    }
-
-    getDashboardItem(): SidebarItem {
-        return {
-            routerLink: 'dashboard',
-            icon: faChartBar,
-            title: 'Dashboard',
-            translation: 'artemisApp.courseOverview.menu.dashboard',
-            featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
             hidden: false,
         };
     }

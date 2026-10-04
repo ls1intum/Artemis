@@ -1,7 +1,6 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { EventEmitter } from '@angular/core';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -15,7 +14,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('DeleteDialogComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: DeleteDialogComponent;
     let fixture: ComponentFixture<DeleteDialogComponent>;
     let dialogRef: DynamicDialogRef;
@@ -49,13 +47,14 @@ describe('DeleteDialogComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, DeleteDialogComponent],
+            imports: [ReactiveFormsModule, FormsModule, DeleteDialogComponent],
             providers: [
                 JhiLanguageHelper,
                 AlertService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DynamicDialogRef, useValue: mockDialogRef },
                 { provide: DynamicDialogConfig, useValue: createMockDialogConfig() },
+                provideTranslateService(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(DeleteDialogComponent);

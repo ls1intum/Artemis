@@ -1,11 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { HttpResponse } from '@angular/common/http';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogModule } from 'primeng/dialog';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import * as readUsersFromCsv from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -16,10 +13,11 @@ import { ImportFlowStep, TutorialRegistrationsImportModalComponent } from './tut
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { LoadingIndicatorOverlayStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/loading-indicator-overlay-stub.component';
-import { PrimeNgDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { DialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/dialog-stub.component';
 import { TutorialRegistrationsImportModalTableStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/tutorial-registrations-import-modal-table-stub.component';
 import { TutorialRegistrationsImportModalTableRow } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 interface AlertServiceMock {
     addErrorAlert: ReturnType<typeof vi.fn>;
@@ -40,8 +38,6 @@ enum ResultsStepCase {
 }
 
 describe('TutorialRegistrationsImportModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsImportModalComponent;
     let fixture: ComponentFixture<TutorialRegistrationsImportModalComponent>;
 
@@ -74,7 +70,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         const table = fixture.debugElement.query(By.directive(TutorialRegistrationsImportModalTableStubComponent))?.componentInstance ?? null;
 
         expect(component.flowStep()).toBe(ImportFlowStep.EXPLANATION);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.header()).toBe(
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.header()).toBe(
             'artemisApp.pages.tutorialGroupRegistrations.importModal.explanationHeader',
         );
         expect(fixture.nativeElement.querySelector('[data-testid="choose-file-button"]')).not.toBeNull();
@@ -96,7 +92,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         const table = fixture.debugElement.query(By.directive(TutorialRegistrationsImportModalTableStubComponent))?.componentInstance ?? null;
 
         expect(component.flowStep()).toBe(ImportFlowStep.CONFIRMATION);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.header()).toBe(
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.header()).toBe(
             'artemisApp.pages.tutorialGroupRegistrations.importModal.confirmImportHeader',
         );
         expect(fixture.nativeElement.querySelector('[data-testid="choose-file-button"]')).toBeNull();
@@ -117,7 +113,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
     function expectResultsStep(resultCase: ResultsStepCase, expectedRows?: TutorialRegistrationsImportModalTableRow[]) {
         const table = fixture.debugElement.query(By.directive(TutorialRegistrationsImportModalTableStubComponent))?.componentInstance ?? null;
         expect(component.flowStep()).toBe(ImportFlowStep.RESULTS);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.header()).toBe(
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.header()).toBe(
             'artemisApp.pages.tutorialGroupRegistrations.importModal.importResultsHeader',
         );
         expect(fixture.nativeElement.querySelector('[data-testid="finish-button"]')).not.toBeNull();
@@ -166,17 +162,17 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             imports: [TutorialRegistrationsImportModalComponent],
             providers: [
                 { provide: AlertService, useValue: alertServiceMock },
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
                 { provide: TutorialGroupRegisteredStudentsService, useValue: tutorialGroupRegisteredStudentsServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideComponent(TutorialRegistrationsImportModalComponent, {
                 remove: {
-                    imports: [DialogModule, TutorialRegistrationsImportModalTableComponent, LoadingIndicatorOverlayComponent],
+                    imports: [TumAetUiDialogComponent, TutorialRegistrationsImportModalTableComponent, LoadingIndicatorOverlayComponent],
                 },
                 add: {
-                    imports: [PrimeNgDialogStubComponent, TutorialRegistrationsImportModalTableStubComponent, LoadingIndicatorOverlayStubComponent],
+                    imports: [DialogStubComponent, TutorialRegistrationsImportModalTableStubComponent, LoadingIndicatorOverlayStubComponent],
                 },
             })
             .compileComponents();
@@ -204,7 +200,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const dialog = fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance;
+        const dialog = fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance;
 
         expect(dialog.visible()).toBe(true);
         expectExplanationStep();
@@ -324,7 +320,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             ok: true,
             students: [firstParsedStudent, secondParsedStudent],
         });
-        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(of(new HttpResponse({ status: 200, body: [] })));
+        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(of([]));
 
         component.open();
         fixture.detectChanges();
@@ -344,7 +340,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         await fixture.whenStable();
 
         expect(component.isOpen()).toBe(false);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.visible()).toBe(false);
     });
 
     it('should import parsed students and show the positive results state when all students are registered', async () => {
@@ -352,7 +348,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             ok: true,
             students: [firstParsedStudent, secondParsedStudent],
         });
-        const response$ = new Subject<HttpResponse<TutorialGroupRegisterStudentRequest[]>>();
+        const response$ = new Subject<TutorialGroupRegisterStudentRequest[]>();
         tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(response$.asObservable());
 
         component.open();
@@ -368,11 +364,11 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(tutorialGroupApiServiceMock.importRegistrations).toHaveBeenCalledWith(7, 11, [firstStudent, secondStudent], 'response');
+        expect(tutorialGroupApiServiceMock.importRegistrations).toHaveBeenCalledWith(7, 11, [firstStudent, secondStudent]);
         expect(component.isLoading()).toBe(true);
         expect(fixture.nativeElement.querySelector('jhi-loading-indicator-overlay')).not.toBeNull();
 
-        response$.next(new HttpResponse({ status: 200, body: [] }));
+        response$.next([]);
         response$.complete();
         fixture.detectChanges();
         await fixture.whenStable();
@@ -389,7 +385,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             ok: true,
             students: [firstParsedStudent, secondParsedStudent, thirdParsedStudent],
         });
-        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(of(new HttpResponse({ status: 200, body: [secondStudent, thirdStudent] })));
+        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(of([secondStudent, thirdStudent]));
 
         component.open();
         fixture.detectChanges();

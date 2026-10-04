@@ -10,7 +10,6 @@ import { RouterModule } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({
     selector: 'jhi-statistics',
@@ -27,7 +26,6 @@ class DummyStatisticsComponent {}
 class DummyManagementComponent {}
 
 describe('CompetencyPopoverComponent', () => {
-    setupTestBed({ zoneless: true });
     let competencyPopoverComponentFixture: ComponentFixture<CompetenciesPopoverComponent>;
     let competencyPopoverComponent: CompetenciesPopoverComponent;
 

@@ -3,14 +3,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivateService } from 'app/account/activate/activate.service';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 
 describe('ActivateService', () => {
-    setupTestBed({ zoneless: true });
-
     let activateService: ActivateService;
     let httpService: HttpClient;
     let getStub: ReturnType<typeof vi.spyOn>;

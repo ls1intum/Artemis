@@ -1,0 +1,153 @@
+---
+id: keycloak-oidc-setup
+title: Keycloak OIDC Setup for Local Development
+sidebar_label: Keycloak OIDC Setup
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+In production, Artemis signs users in through the university's OpenID Connect provider. To work on anything that
+touches that flow, you need a provider locally, and this setup gives you one: a Keycloak container that imports a
+ready-made `artemis-oidc` realm with 21 test accounts.
+
+<Callout variant={CalloutVariant.info}>
+
+    You only need this if you are changing OIDC login itself. Everything else works with the normal local setup.
+
+</Callout>
+
+## Start Keycloak
+
+<Callout variant={CalloutVariant.warning}>
+
+    Start your database first. Keycloak will happily sign you in without one, and the failure then surfaces at the
+    end of the flow, as a `Communications link failure` from Artemis while it handles the callback, which does not
+    look like a missing database at all.
+
+</Callout>
+
+Keycloak on its own needs no variables, because the compose file pins its version inline:
+
+```bash
+docker compose -f docker/oidc-test.yml up -d
+```
+
+Together with a database, pass `--env-file .env`, since those compose files take their image versions from it and
+have no fallbacks:
+
+```bash
+docker compose --env-file .env -f docker/artemis-dev-mysql.yml -f docker/oidc-test.yml up -d
+```
+
+You now have:
+
+| What | Where |
+|---|---|
+| Keycloak admin console | `http://localhost:9080`, sign in with `admin` / `admin` |
+| Realm | `artemis-oidc` |
+| Discovery document | `http://localhost:9080/realms/artemis-oidc/.well-known/openid-configuration` |
+
+The realm is imported from `docker/oidc-test/artemis-oidc-realm.json` on every start, so anything you change in the
+admin console is gone when you recreate the container. Edit that file instead if you need a change to stick.
+
+## Point Artemis at it
+
+Copy `docker/oidc-test/application-oidc-test.yml` into your `src/main/resources/config/application-local.yml`. That
+file holds everything needed: the `artemis.user-management.oidc.enabled` flag, the claim mappings, and the client and
+provider blocks aimed at `localhost:9080`.
+
+Then start Artemis with the `oidc` profile:
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev,artemis,localci,localvc,core,oidc,local'
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+    **Keep `local` last in that list.** Spring Boot applies profiles left to right and the last one wins, and
+    `application-oidc.yml` defaults its endpoints to the real TUM identity provider at `login.tum.de`. Put `local`
+    before `oidc` and those production endpoints win, so your browser is sent to the university login page instead
+    of your container. Nothing warns you; the redirect just goes somewhere unexpected.
+
+</Callout>
+
+An alternative that sidesteps the ordering question altogether: `application-oidc.yml` reads every endpoint from an
+environment variable (`ARTEMIS_OIDC_ISSUER_URI`, `ARTEMIS_OIDC_AUTHORIZATION_URI` and so on), and environment
+variables outrank profile files whatever their order. Setting those is a reasonable option if you switch between the
+local and the real provider often.
+
+## Check the client proxy
+
+If you run the client through the Angular dev server on port 9000, the login redirects have to reach the server
+through the proxy. `proxy.conf.mjs` already forwards them:
+
+```javascript
+context: [
+    // ...
+    "/oauth2/",
+    "/login/oauth2/",
+],
+target: "http://localhost:8080",
+```
+
+Nothing to do here unless you have changed that file.
+
+## Sign in
+
+The realm imports one administrator and 20 test users. Every password equals the username, so `artemis_test_user_7`
+signs in with `artemis_test_user_7`.
+
+| Keycloak account | Keycloak group |
+|---|---|
+| `artemis_admin` | `artemis-admins`, `artemis-instructors` |
+| `artemis_test_user_1` to `_5` | `artemis-students` |
+| `artemis_test_user_6` to `_10` | `artemis-tutors` |
+| `artemis_test_user_11` to `_15` | `artemis-editors` |
+| `artemis_test_user_16` to `_20` | `artemis-instructors` |
+
+<Callout variant={CalloutVariant.warning}>
+
+    **The Keycloak groups do not give these accounts their Artemis permissions.** The realm defines the groups so the
+    names match the Artemis test data, but the client maps only one custom claim, `matriculation_number`, so no group
+    claim is ever sent. Artemis would ignore it anyway: OIDC login looks the account up by `preferred_username` and
+    takes its roles from the Artemis database.
+
+    What that means in practice:
+
+    - `artemis_admin` is an administrator because it is the `internal-admin` account Artemis creates on startup.
+    - `artemis_test_user_1` to `_20` and their roles come from the `e2e` Liquibase context. Without that seed data,
+      signing in as one of them creates a fresh account with the student role, whatever its Keycloak group says.
+
+    So if a tutor account behaves like a student, the seed data is missing. Changing the group in Keycloak will not
+    fix it.
+
+</Callout>
+
+## Troubleshooting
+
+**The browser goes to `login.tum.de` instead of my container.**
+The `local` profile is not last in `--spring.profiles.active`, so `application-oidc.yml` and its production defaults
+won. Move `local` to the end, or set the `ARTEMIS_OIDC_*` environment variables.
+
+**Login succeeds, then Artemis fails with `Communications link failure`.**
+Keycloak is up but the Artemis database is not. Start the database compose file and try again.
+
+**An account signs in but has the wrong role.**
+Its roles come from the Artemis database, not from Keycloak. Check that the database was migrated with the `e2e`
+Liquibase context, which is what seeds `artemis_test_user_1` to `_20` and their authorities.
+
+**Keycloak is unreachable, or the container sits in `Created`.**
+Read the container log with `docker logs artemis-keycloak-oidc`. A realm import that fails leaves the container in
+exactly that state, and the log names the offending part of the JSON.
+
+**My admin-console change disappeared.**
+The realm is re-imported on every container start. Put the change in
+`docker/oidc-test/artemis-oidc-realm.json` and recreate the container.
+
+## Related pages
+
+- [OIDC Login and Registration](/admin/oidc-login-registration): configuring OIDC on a real deployment
+- [Keycloak SAML2 Setup](./keycloak-saml2-setup.mdx): the same idea for the SAML2 flow
+- [User Management](/admin/user-registration): how a first OIDC login provisions an account
+- [Docker Compose Setup](./docker-compose.mdx): the local infrastructure this builds on

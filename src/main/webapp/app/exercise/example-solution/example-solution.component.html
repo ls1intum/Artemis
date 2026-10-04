@@ -5,24 +5,24 @@
                 <span pagetitle>{{ exercise.exerciseGroup ? exercise.exerciseGroup.title : exercise.title }}</span>
             </jhi-header-exercise-page-with-details>
         }
-        <div class="row">
-            <div class="col pe-0 flex-grow-1">
+        <div>
+            <div class="min-w-0 grow">
                 <!-- PROBLEM STATEMENT START -->
-                <div class="row mt-2 mb-2 align-items-baseline" id="problem-statement">
-                    <div class="col-12 col-md-12 markdown-preview problem-statement">
+                <div class="my-2" id="problem-statement">
+                    <div class="markdown-preview problem-statement">
                         <h3 jhiTranslate="artemisApp.exercise.problemStatement"></h3>
-                        <p
-                            [innerHTML]="
-                                exercise.problemStatement ? (exercise.problemStatement | htmlForMarkdown) : ('artemisApp.exercise.emptyProblemStatement' | artemisTranslate)
-                            "
-                        ></p>
+                        @if (exercise.problemStatement) {
+                            <p [jhiMarkdown]="exercise.problemStatement"></p>
+                        } @else {
+                            <p>{{ 'artemisApp.exercise.emptyProblemStatement' | artemisTranslate }}</p>
+                        }
                     </div>
                 </div>
                 <!-- PROBLEM STATEMENT END -->
-                <div class="row mb-2 mt-2 align-items-baseline">
+                <div class="my-2">
                     <h3 class="pe-2" jhiTranslate="artemisApp.exercise.exampleSolution"></h3>
                 </div>
-                <dl class="row-md jh-entity-details markdown-preview">
+                <dl class="jh-entity-details markdown-preview">
                     @if (exampleSolutionInfo()?.exampleSolutionUML || exampleSolutionInfo()?.exampleSolution) {
                         @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
                             <dd class="editor-outline-background">

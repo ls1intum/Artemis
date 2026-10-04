@@ -34,8 +34,8 @@ import { captureException } from '@sentry/angular';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 vi.mock('@sentry/angular', () => ({
@@ -43,8 +43,6 @@ vi.mock('@sentry/angular', () => ({
 }));
 
 describe('QuizExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
 
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -106,6 +104,23 @@ describe('QuizExamSubmissionComponent', () => {
         expect(component.dragAndDropMappings().has(2)).toBe(true);
         expect(component.dragAndDropMappings().size).toBe(1);
         expect(component.shortAnswerSubmittedTexts().size).toBe(0);
+    });
+
+    it('should show a navigation button per question that marks answered questions', () => {
+        const quizConfiguration: QuizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] };
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
+        fixture.detectChanges();
+
+        const buttons = fixture.debugElement.queryAll(By.css('button.quiz-nav-step'));
+        expect(buttons.map((button) => button.nativeElement.textContent.trim())).toEqual(['MC', 'DD', 'SA']);
+        expect(buttons.some((button) => button.nativeElement.classList.contains('changed-question'))).toBe(false);
+
+        component.onSelectedAnswerOptionsChange(multipleChoiceQuestion.id!, [new AnswerOption()]);
+        fixture.detectChanges();
+
+        const multipleChoiceButton = fixture.debugElement.query(By.css('button.multiplechoicecolor-question'));
+        expect(multipleChoiceButton.nativeElement.classList.contains('changed-question')).toBe(true);
     });
 
     it('should update view from submission and fill the dictionary accordingly when submitted answer', () => {
@@ -275,7 +290,7 @@ describe('QuizExamSubmissionComponent', () => {
     it('should parse the answers from the submission version', () => {
         const submissionVersion = {
             content:
-                '[ {\r\n  "quizQuestion" : {\r\n    "type" : "drag-and-drop",\r\n    "id" : 2,\r\n    "title" : "dnd image",\r\n    "text" : "Enter your long question if needed",\r\n    "hint" : "Add a hint here (visible during the quiz via ?-Button)",\r\n    "points" : 1,\r\n    "scoringType" : "PROPORTIONAL_WITH_PENALTY",\r\n    "randomizeOrder" : true,\r\n    "invalid" : false,\r\n    "backgroundFilePath" : "/api/core/files/drag-and-drop/backgrounds/14/DragAndDropBackground_2023-07-08T19-35-26-953_a3265da6.jpg",\r\n    "dropLocations" : [ {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    } ],\r\n    "dragItems" : [ {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    } ]\r\n  },\r\n  "mappings" : [ {\r\n    "invalid" : false,\r\n    "dragItem" : {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    },\r\n    "dropLocation" : {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    }\r\n  } ]\r\n} ]',
+                '[ {\r\n  "quizQuestion" : {\r\n    "type" : "drag-and-drop",\r\n    "id" : 2,\r\n    "title" : "dnd image",\r\n    "text" : "Enter your long question if needed",\r\n    "hint" : "Add a hint here (visible during the quiz via ?-Button)",\r\n    "points" : 1,\r\n    "scoringType" : "PROPORTIONAL_WITH_PENALTY",\r\n    "randomizeOrder" : true,\r\n    "invalid" : false,\r\n    "backgroundFilePath" : "drag-and-drop/questions/2/backgrounds/DragAndDropBackground_2023-07-08T19-35-26-953_a3265da6.jpg",\r\n    "dropLocations" : [ {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    } ],\r\n    "dragItems" : [ {\r\n      "id" : 11,\r\n      "pictureFilePath" : "DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    } ]\r\n  },\r\n  "mappings" : [ {\r\n    "invalid" : false,\r\n    "dragItem" : {\r\n      "id" : 11,\r\n      "pictureFilePath" : "DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    },\r\n    "dropLocation" : {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    }\r\n  } ]\r\n} ]',
         } as unknown as SubmissionVersion;
         const quizExercise = new QuizExercise(new Course(), undefined);
         quizExercise.quizQuestions = [dragAndDropQuestion];
@@ -293,7 +308,7 @@ describe('QuizExamSubmissionComponent', () => {
     it('should call triggerSave if save exercise button is clicked', () => {
         const submissionVersion = {
             content:
-                '[ {\r\n  "quizQuestion" : {\r\n    "type" : "drag-and-drop",\r\n    "id" : 2,\r\n    "title" : "dnd image",\r\n    "text" : "Enter your long question if needed",\r\n    "hint" : "Add a hint here (visible during the quiz via ?-Button)",\r\n    "points" : 1,\r\n    "scoringType" : "PROPORTIONAL_WITH_PENALTY",\r\n    "randomizeOrder" : true,\r\n    "invalid" : false,\r\n    "backgroundFilePath" : "/api/core/files/drag-and-drop/backgrounds/14/DragAndDropBackground_2023-07-08T19-35-26-953_a3265da6.jpg",\r\n    "dropLocations" : [ {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    } ],\r\n    "dragItems" : [ {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    } ]\r\n  },\r\n  "mappings" : [ {\r\n    "invalid" : false,\r\n    "dragItem" : {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    },\r\n    "dropLocation" : {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    }\r\n  } ]\r\n} ]',
+                '[ {\r\n  "quizQuestion" : {\r\n    "type" : "drag-and-drop",\r\n    "id" : 2,\r\n    "title" : "dnd image",\r\n    "text" : "Enter your long question if needed",\r\n    "hint" : "Add a hint here (visible during the quiz via ?-Button)",\r\n    "points" : 1,\r\n    "scoringType" : "PROPORTIONAL_WITH_PENALTY",\r\n    "randomizeOrder" : true,\r\n    "invalid" : false,\r\n    "backgroundFilePath" : "drag-and-drop/questions/2/backgrounds/DragAndDropBackground_2023-07-08T19-35-26-953_a3265da6.jpg",\r\n    "dropLocations" : [ {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    } ],\r\n    "dragItems" : [ {\r\n      "id" : 11,\r\n      "pictureFilePath" : "DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    } ]\r\n  },\r\n  "mappings" : [ {\r\n    "invalid" : false,\r\n    "dragItem" : {\r\n      "id" : 11,\r\n      "pictureFilePath" : "DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    },\r\n    "dropLocation" : {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    }\r\n  } ]\r\n} ]',
         } as unknown as SubmissionVersion;
         const quizExercise = new QuizExercise(new Course(), undefined);
         quizExercise.quizQuestions = [dragAndDropQuestion];
@@ -306,5 +321,20 @@ describe('QuizExamSubmissionComponent', () => {
         const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
         saveButton.triggerEventHandler('save', null);
         expect(saveExerciseSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the sync-state version whenever it marks the submission unsaved', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if this notification fires. Without it a
+        // student editing this exercise type during an exam sees no unsaved-changes indicator.
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
+        fixture.componentRef.setInput('quizConfiguration', { quizQuestions: [multipleChoiceQuestion] } as QuizConfiguration);
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        component.onSelectionChanged();
+
+        expect(component.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledTimes(1);
     });
 });

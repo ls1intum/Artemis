@@ -36,9 +36,9 @@ import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -61,12 +61,10 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -115,9 +113,6 @@ public class CourseUtilService {
 
     @Autowired
     private LectureTestRepository lectureRepo;
-
-    @Autowired
-    private AttachmentRepository attachmentRepo;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -206,26 +201,41 @@ public class CourseUtilService {
     @Autowired
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     /**
      * Creates and saves a course (`id` is automatically generated).
      *
      * @return The created course.
      */
+    /**
+     * Writes a build configuration for an exercise a fixture just stored, unless it already has one. The exercise does
+     * not carry it: the configuration is a row of its own that names the exercise.
+     *
+     * @param programmingExercise the stored exercise the configuration belongs to
+     */
+    private void saveBuildConfigIfMissing(ProgrammingExercise programmingExercise) {
+        if (programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).isEmpty()) {
+            programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        }
+    }
+
     public Course createCourse() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         return courseRepo.save(course);
     }
 
     /**
-     * Creates and saves a course with the given id and user prefix.
+     * Creates and saves a course (`id` is automatically generated) and enrolls users by login prefix.
      *
-     * @param userPrefix The prefix of the course user groups.
-     * @return The newly created course.
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
      */
-    public Course createCourseWithUserPrefix(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        return courseRepo.save(course);
+    public Course createEnrolledCourse(String userPrefix) {
+        Course course = createCourse();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
@@ -234,22 +244,45 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course createCourseWithMessagingEnabled() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), true);
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         return courseRepo.save(course);
     }
 
     /**
-     * Creates and saves a course with the given short name and student group name.
+     * Creates and saves a course with messaging enabled and enrolls users by login prefix.
      *
-     * @param studentGroupName The student group name of the course.
-     * @param shortName        The short name of the course.
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The newly created course.
+     */
+    public Course createEnrolledCourseWithMessagingEnabled(String userPrefix) {
+        Course course = createCourseWithMessagingEnabled();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course whose short name starts with the given prefix.
+     *
+     * @param shortName The short name prefix of the course.
      * @return The new course.
      */
-    public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
-        Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
-                500, 500, true, true, 7);
+    public Course createCourseWithShortName(String shortName) {
+        Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), 3, 3, 7, 500, 500, true, true, 7);
         return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves a course whose short name starts with the given prefix, enrolling users by login prefix.
+     *
+     * @param shortName  The short name prefix of the course.
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The new course.
+     */
+    public Course createEnrolledCourseWithShortName(String shortName, String userPrefix) {
+        Course course = createCourseWithShortName(shortName);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
@@ -260,7 +293,7 @@ public class CourseUtilService {
     public Course createCourseWithExercisesAndLecturesAndCompetencies() {
         Course course = createCourse();
 
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise(course);
         course.addExercises(programmingExercise);
 
         Lecture lecture = lectureUtilService.createLecture(course);
@@ -272,8 +305,21 @@ public class CourseUtilService {
 
         lectureRepo.save(lecture);
         exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
 
         return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise, lecture, and competency with default values, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
+     */
+    public Course createEnrolledCourseWithExercisesAndLecturesAndCompetencies(String userPrefix) {
+        Course course = createCourseWithExercisesAndLecturesAndCompetencies();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
@@ -316,9 +362,9 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
+    public List<Course> createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
             int numberOfTutorParticipations) throws IOException {
-        List<Course> courses = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        List<Course> courses = createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             var competency = competencyUtilService.orElseThrow().createCompetency(course);
@@ -337,9 +383,9 @@ public class CourseUtilService {
      * @return A List of the created Courses
      * @throws IOException If a file cannot be loaded from resources
      */
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
-            throws IOException {
-        List<Course> courses = createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+    public List<Course> createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles,
+            int numberOfTutorParticipations) throws IOException {
+        List<Course> courses = createEnrolledCoursesWithExercisesAndLectures(userPrefix, withParticipations, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
@@ -354,38 +400,21 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves two courses with exercises and lectures. Lecture unit attachments without files are generated.
-     *
-     * @param userPrefix                  The prefix of the course user groups.
-     * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
-     * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
-     * @return The list of created and saved courses.
-     * @throws IOException If a file cannot be loaded from resources.
-     */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
-        return createCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
-    }
-
-    /**
      * Creates and saves two courses with exercises and lectures. Requires at least two students.
      *
      * @param userPrefix                  The prefix of the course user groups.
      * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
-     * @param withFiles                   True, if lecture unit attachments with files should be generated. If false, attachments without files are generated.
      * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
-            throws IOException {
+    public List<Course> createEnrolledCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor",
-                userPrefix + "editor", userPrefix + "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>());
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
                 course1);
@@ -420,42 +449,32 @@ public class CourseUtilService {
         programmingExercise.getCategories().add("Quiz");
         course1.addExercises(quizExercise);
 
+        // A lecture row names its course, so the lectures are built here and written after the course exists, below.
         ZonedDateTime lecture1Start = ZonedDateTime.now().minusDays(1);
         ZonedDateTime lecture1End = lecture1Start.plusHours(2);
         Lecture lecture1 = LectureFactory.generateLecture(lecture1Start, lecture1End, course1);
-        lecture1.setCourse(null);
-        lecture1 = lectureRepo.save(lecture1); // Save early to receive lecture ID
-        Attachment attachment1 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture1.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
-        attachment1.setLecture(lecture1);
-        lecture1.addAttachments(attachment1);
-        lecture1.setCourse(course1);
         course1.addLectures(lecture1);
 
         ZonedDateTime lecture2Start = lecture1Start.plusWeeks(1);
         ZonedDateTime lecture2End = lecture2Start.plusHours(2);
         Lecture lecture2 = LectureFactory.generateLecture(lecture2Start, lecture2End, course1);
-        lecture2.setCourse(null);
-        lecture2 = lectureRepo.save(lecture2); // Save early to receive lecture ID
-        Attachment attachment2 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture2.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
-        attachment2.setLecture(lecture2);
-        lecture2.addAttachments(attachment2);
-        lecture2.setCourse(course1);
         course1.addLectures(lecture2);
 
         course1 = courseRepo.save(course1);
+        lecture1.setCourse(course1);
+        lecture2.setCourse(course1);
+        userUtilService.enrollPrefixedUsersInCourse(course1, userPrefix);
         course2 = courseRepo.save(course2);
+        userUtilService.enrollPrefixedUsersInCourse(course2, userPrefix);
 
         lectureRepo.save(lecture1);
         lectureRepo.save(lecture2);
 
-        attachmentRepo.save(attachment1);
-        attachmentRepo.save(attachment2);
-
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
         exerciseRepository.save(quizExercise);
 
         if (withParticipations) {
@@ -559,7 +578,7 @@ public class CourseUtilService {
      */
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
@@ -583,11 +602,12 @@ public class CourseUtilService {
 
         // Save course and exercises to database
         Course courseSaved = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(courseSaved, userPrefix);
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExercise);
         quizExercise = exerciseRepository.save(quizExercise);
 
         // Get user and setup participations
@@ -675,6 +695,16 @@ public class CourseUtilService {
         programmingSubmission.addResult(resultProgramming);
         resultProgramming.setSubmission(programmingSubmission);
 
+        // Save the results before the submissions. A result owns the foreign key to its submission, so saving it here
+        // is what creates the row. Saving the submission first would create it through the cascade on its results
+        // instead, and because a merge does not write the generated id back to the detached result, the save below
+        // would then insert a second copy of every result.
+        resultModeling = resultRepo.save(resultModeling);
+        resultText = resultRepo.save(resultText);
+        resultFileUpload = resultRepo.save(resultFileUpload);
+        resultQuiz = resultRepo.save(resultQuiz);
+        resultProgramming = resultRepo.save(resultProgramming);
+
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);
         textSubmission = submissionRepository.save(textSubmission);
@@ -688,18 +718,12 @@ public class CourseUtilService {
         resultQuiz.setSubmission(quizSubmission);
         resultProgramming.setSubmission(programmingSubmission);
 
-        // Save results
-        resultRepo.save(resultModeling);
-        resultRepo.save(resultText);
-        resultRepo.save(resultFileUpload);
-        resultRepo.save(resultQuiz);
-        resultRepo.save(resultProgramming);
-
         // Save exercises
         exerciseRepository.save(modelingExercise);
         exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
         exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
         exerciseRepository.save(quizExercise);
 
         // Connect participations with submissions
@@ -729,7 +753,7 @@ public class CourseUtilService {
      */
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
-        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
 
         var modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram, course);
         var textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
@@ -752,11 +776,12 @@ public class CourseUtilService {
 
         // Save course and exercises to database
         Course courseSaved = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(courseSaved, userPrefix);
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExercise);
         quizExercise = exerciseRepository.save(quizExercise);
 
         // Get user and setup participations
@@ -878,6 +903,7 @@ public class CourseUtilService {
         exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
         exerciseRepository.save(programmingExercise);
+        saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
         exerciseRepository.save(quizExercise);
 
         // Connect participations with submissions
@@ -913,33 +939,35 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves an active empty course with default user group names.
-     *
-     * @return An empty course.
-     */
-    public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
-                instructorGroupName);
-        return courseRepo.save(course);
-    }
-
-    /**
-     * Creates and saves an active empty course with default user group names.
+     * Creates and saves an active empty course.
      *
      * @return An empty course.
      */
     public Course addEmptyCourse() {
-        return addEmptyCourse("tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
+        return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves an active empty course and enrolls users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return An empty course with the prefix users enrolled.
+     */
+    public Course addEnrolledEmptyCourse(String userPrefix) {
+        Course course = addEmptyCourse();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
      * Creates and saves a course with the corresponding exercise.
      *
-     * @param title The title reflect the type of exercise to be added to the course
+     * @param title The title of the exercise to be added to the course (e.g. "Programming", "Text", "ClassDiagram")
      * @return The newly created course.
      */
-    public Course addCourseInOtherInstructionGroupAndExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
+    public Course addCourseWithExercise(String title) {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         if ("Programming".equals(title)) {
             course = courseRepo.save(course);
 
@@ -947,9 +975,8 @@ public class CourseUtilService {
             ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
             programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
-            var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-            programmingExercise.setBuildConfig(savedBuildConfig);
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            saveBuildConfigIfMissing(programmingExercise);
             course.addExercises(programmingExercise);
             programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -960,7 +987,7 @@ public class CourseUtilService {
             TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
             textExercise.setTitle("Text");
             course.addExercises(textExercise);
-            courseRepo.save(course);
+            course = courseRepo.save(course);
             exerciseRepository.save(textExercise);
         }
         else if (title.startsWith("ClassDiagram")) {
@@ -968,10 +995,23 @@ public class CourseUtilService {
                     DiagramType.ClassDiagram, course);
             modelingExercise.setTitle(title);
             course.addExercises(modelingExercise);
-            courseRepo.save(course);
+            course = courseRepo.save(course);
             exerciseRepository.save(modelingExercise);
         }
 
+        return course;
+    }
+
+    /**
+     * Creates and saves a course with the corresponding exercise, enrolling users by login prefix.
+     *
+     * @param title      The title reflect the type of exercise to be added to the course
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The newly created course with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithExercise(String title, String userPrefix) {
+        Course course = addCourseWithExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -981,7 +1021,7 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course addCourseWithModelingAndTextExercise() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
         modelingExercise.setTitle("Modeling");
@@ -996,12 +1036,24 @@ public class CourseUtilService {
     }
 
     /**
+     * Creates and saves a course with both modeling and text exercise, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithModelingAndTextExercise(String userPrefix) {
+        Course course = addCourseWithModelingAndTextExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a course with one modeling, one text, and one file upload exercise.
      *
      * @return The created course.
      */
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
@@ -1024,6 +1076,18 @@ public class CourseUtilService {
     }
 
     /**
+     * Creates and saves a course with one modeling, one text, and one file upload exercise, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithModelingAndTextAndFileUploadExercise(String userPrefix) {
+        Course course = addCourseWithModelingAndTextAndFileUploadExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a course with exercises and submissions. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and
      * text exercises in a cyclic manner.
      *
@@ -1040,9 +1104,9 @@ public class CourseUtilService {
      * @param validModel                    Model for the modeling submission
      * @return The generated course
      */
-    public Course addCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
+    public Course addEnrolledCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
             int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) throws IOException {
-        return addCourseWithExercisesAndSubmissions("short", userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
+        return addEnrolledCourseWithExercisesAndSubmissions("short", userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
                 typeComplaint, numberComplaintResponses, validModel, true);
     }
 
@@ -1066,11 +1130,11 @@ public class CourseUtilService {
      * @param validModel                    Model for the modeling submission.
      * @return The generated course.
      */
-    public Course addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
+    public Course addEnrolledCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
             int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel)
             throws IOException {
-        return addCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
-                typeComplaint, numberComplaintResponses, validModel, false);
+        return addEnrolledCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments,
+                numberOfComplaints, typeComplaint, numberComplaintResponses, validModel, false);
     }
 
     /**
@@ -1094,11 +1158,10 @@ public class CourseUtilService {
      * @param assessmentDueDateInThePast    If the assessment due date of all exercises is in the past (true) or not (false).
      * @return The generated course.
      */
-    public Course addCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
+    public Course addEnrolledCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
             int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast)
             throws IOException {
-        Course course = CourseFactory.generateCourse(null, courseShortName, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), userPrefix + "student" + suffix,
-                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        Course course = CourseFactory.generateCourse(null, courseShortName, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         ZonedDateTime assessmentDueDate;
         ZonedDateTime releaseDate = PAST_TIMESTAMP;
         ZonedDateTime dueDate = PAST_TIMESTAMP.plusHours(1);
@@ -1109,8 +1172,11 @@ public class CourseUtilService {
             assessmentDueDate = FUTURE_TIMESTAMP.plusHours(2);
 
         }
-        var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        // getTutors must be called AFTER the course is saved AND users are enrolled so that
+        // the UCR table has entries and the query returns the expected tutors.
+        var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         course.setExercises(new HashSet<>()); // avoid lazy init issue
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
@@ -1126,7 +1192,9 @@ public class CourseUtilService {
                     StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student" + j);
                     ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
                     var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
-                    modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user);
+                    submission = modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user, null).submission();
+                    // the save wrote the foreign key from an id; this utility holds the participation itself and reads it below
+                    submission.setParticipation(participation);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
@@ -1169,7 +1237,7 @@ public class CourseUtilService {
                     var savedSubmission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     var filePath = FilePathConverter.buildFileUploadSubmissionPath(fileUploadExercise.getId(), savedSubmission.getId()).resolve("file.pdf");
                     FileUtils.write(filePath.toFile(), "test content", Charset.defaultCharset());
-                    savedSubmission.setFilePath(FilePathConverter.externalUriForFileSystemPath(filePath, FilePathType.FILE_UPLOAD_SUBMISSION, submission.getId()).toString());
+                    savedSubmission.setFilePath(new PublicFileUrl.FileUploadSubmission(fileUploadExercise.getId(), savedSubmission.getId(), "file.pdf").clientPath());
                     fileUploadSubmissionRepo.save(savedSubmission);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
@@ -1190,8 +1258,8 @@ public class CourseUtilService {
      * @return The created course.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public Course createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(String userPrefix) throws IOException {
-        Course course = addCourseWithModelingAndTextAndFileUploadExercise();
+    public Course createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(String userPrefix) throws IOException {
+        Course course = addEnrolledCourseWithModelingAndTextAndFileUploadExercise(userPrefix);
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
 
@@ -1218,41 +1286,41 @@ public class CourseUtilService {
      * @return The created course.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public Course createCourseWithExamExercisesAndSubmissions(String userPrefix) throws IOException {
-        var course = addEmptyCourse();
+    public Course createEnrolledCourseWithExamExercisesAndSubmissions(String userPrefix) throws IOException {
+        var course = addEnrolledEmptyCourse(userPrefix);
+
+        // The exam comes first: an exercise group belongs to an exam, and it is the exam's own collection that writes
+        // both the foreign key and the order column, so the groups are stored through the exam and not on their own.
+        Exam exam = examUtilService.addExam(course);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam.addExerciseGroup(new ExerciseGroup());
+        exam.addExerciseGroup(new ExerciseGroup());
+        exam = examRepository.save(exam);
+        var exerciseGroup1 = exam.getExerciseGroups().get(0);
+        var exerciseGroup2 = exam.getExerciseGroups().get(1);
 
         // Create a file upload exercise with a dummy submission file
-        var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
         var fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
         fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(userPrefix, fileUploadExercise, "uploaded-file.png");
         exerciseGroup1.addExercise(fileUploadExercise);
-        exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
 
         // Create a text exercise with a dummy submission file
-        var exerciseGroup2 = exerciseGroupRepository.save(new ExerciseGroup());
         var textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup2);
         textExercise = exerciseRepository.save(textExercise);
         var textSubmission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, userPrefix + "student1");
         exerciseGroup2.addExercise(textExercise);
-        exerciseGroup2 = exerciseGroupRepository.save(exerciseGroup2);
 
-        // Create a modeling exercise with a dummy submission file
-        var exerciseGroup3 = exerciseGroupRepository.save(new ExerciseGroup());
+        // Create a modeling exercise with a dummy submission file. It has always belonged to the second group: the
+        // exercise carries the group, and it was generated for exerciseGroup2. There used to be a third group here that
+        // the modeling exercise never actually ended up in and that was never added to the exam, so it is gone.
         var modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup2);
         modelingExercise = exerciseRepository.save(modelingExercise);
         String emptyActivityModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         var modelingSubmission = ParticipationFactory.generateModelingSubmission(emptyActivityModel, true);
         participationUtilService.addSubmission(modelingExercise, modelingSubmission, userPrefix + "student1");
-        exerciseGroup3.addExercise(modelingExercise);
-        exerciseGroupRepository.save(exerciseGroup3);
-
-        Exam exam = examUtilService.addExam(course);
-        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
-        exam.addExerciseGroup(exerciseGroup1);
-        exam.addExerciseGroup(exerciseGroup2);
-        examRepository.save(exam);
+        exerciseGroup2.addExercise(modelingExercise);
 
         return course;
     }
@@ -1275,12 +1343,13 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves a course with text exercise and a tutor.
+     * Creates and saves a course with text exercise and a tutor, enrolling users by login prefix.
      *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
      * @param tutorLogin The login of the tutor to be created.
      * @return The created course.
      */
-    public Course createCourseWithTextExerciseAndTutor(String tutorLogin) {
+    public Course createEnrolledCourseWithTextExercise(String userPrefix) {
         Course course = this.createCourse();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
         StudentParticipation participation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
@@ -1289,22 +1358,22 @@ public class CourseUtilService {
         textSubmission.setParticipation(participation);
         textSubmissionRepo.saveAndFlush(textSubmission);
         course.addExercises(textExercise);
-        User user = userUtilService.createAndSaveUser(tutorLogin);
-        user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-        userRepo.save(user);
+
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
-    public Course createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor() {
+    public Course createEnrolledCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor(String userPrefix) {
         Course course = this.createCourse();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
-        ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise();
-        ProgrammingExercise programmingExercise2 = programmingExerciseUtilService.createSampleProgrammingExercise("Title1", "shortnameone");
+        ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise(course);
+        ProgrammingExercise programmingExercise2 = programmingExerciseUtilService.createSampleProgrammingExercise(course, "Title1", "shortnameone");
 
         course.addExercises(textExercise);
         course.addExercises(programmingExercise1);
         course.addExercises(programmingExercise2);
 
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -1335,38 +1404,38 @@ public class CourseUtilService {
     }
 
     /**
-     * Updates course groups with the passed prefix and suffix.
-     *
-     * @param userPrefix The new prefix of the course user groups.
-     * @param course     The course to be updated.
-     * @param suffix     The new suffix of the course user groups.
-     */
-    public void updateCourseGroups(String userPrefix, Course course, String suffix) {
-        course.setStudentGroupName(userPrefix + "student" + suffix);
-        course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
-        course.setEditorGroupName(userPrefix + "editor" + suffix);
-        course.setInstructorGroupName(userPrefix + "instructor" + suffix);
-        courseRepo.save(course);
-    }
-
-    /**
-     * Creates and saves a course with custom student group name and exam with exercises including grading scale.
+     * Creates and saves a course with an exam, exercise groups, and grading scale.
      *
      * @param user                     The student to be added to the exam.
-     * @param studentGroupName         The new student group name.
-     * @param shortName                The short name of the course.
+     * @param shortName                The short name prefix of the course.
      * @param withProgrammingExercise  True, if the exam should include programming exercises. False, if the exam does not include programming exercises.
      * @param withAllQuizQuestionTypes True, if the exam should include all quiz question types. False, if they are not needed.
      * @return The created course.
      */
-    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(User user, String studentGroupName, String shortName,
-            boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
-        Course course = createCourseWithCustomStudentGroupName(studentGroupName, shortName);
+    public Course createCourseWithExamAndExerciseGroupsAndGradingScale(User user, String shortName, boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
+        Course course = createCourseWithShortName(shortName);
         Exam exam = examUtilService.addExam(course, user, ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2),
                 ZonedDateTime.now().minusMinutes(1));
         gradingScaleUtilService.generateAndSaveGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), exam);
         course.addExam(exam);
         examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
         return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves a course with an exam, exercise groups, and grading scale, enrolling users by login prefix.
+     *
+     * @param user                     The student to be added to the exam.
+     * @param shortName                The short name prefix of the course.
+     * @param withProgrammingExercise  True, if the exam should include programming exercises.
+     * @param withAllQuizQuestionTypes True, if the exam should include all quiz question types.
+     * @param userPrefix               The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
+     */
+    public Course createEnrolledCourseWithExamAndExerciseGroupsAndGradingScale(User user, String shortName, boolean withProgrammingExercise, boolean withAllQuizQuestionTypes,
+            String userPrefix) {
+        Course course = createCourseWithExamAndExerciseGroupsAndGradingScale(user, shortName, withProgrammingExercise, withAllQuizQuestionTypes);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 }

@@ -1,9 +1,7 @@
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
 import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Subscription } from 'rxjs';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,11 +12,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-exam-edit-working-time',
     templateUrl: './exam-edit-working-time.component.html',
-    imports: [FaIconComponent, TranslateDirective],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective, ExamEditWorkingTimeDialogComponent],
 })
 export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
     alertService = inject(AlertService);
 
     exam = input.required<Exam>();
@@ -27,9 +23,8 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     faHourglassHalf = faHourglassHalf;
     readonly workingTimeChangeAllowed = signal(false);
 
-    private dialogRef: DynamicDialogRef | null | undefined;
+    readonly dialogVisible = signal(false);
     private timeoutRef: ReturnType<typeof setTimeout> | undefined;
-    private subscription: Subscription | undefined;
 
     ngOnInit() {
         this.checkWorkingTimeChangeAllowed();
@@ -39,7 +34,6 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
         if (this.timeoutRef) {
             clearTimeout(this.timeoutRef);
         }
-        this.subscription?.unsubscribe();
     }
 
     private checkWorkingTimeChangeAllowed() {
@@ -56,23 +50,6 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     openDialog(event: MouseEvent) {
         event.preventDefault();
         this.alertService.closeAll();
-        this.dialogRef = this.dialogService.open(ExamEditWorkingTimeDialogComponent, {
-            header: this.translateService.instant('artemisApp.examManagement.editWorkingTime.title'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            data: {
-                exam: this.exam(),
-            },
-        });
-
-        this.subscription = this.dialogRef?.onClose.subscribe((updatedExam: Exam | undefined) => {
-            if (updatedExam) {
-                this.examChange.emit(updatedExam);
-            }
-            this.dialogRef = undefined;
-        });
+        this.dialogVisible.set(true);
     }
 }

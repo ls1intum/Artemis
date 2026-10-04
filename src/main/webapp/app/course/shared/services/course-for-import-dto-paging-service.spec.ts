@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
@@ -11,8 +10,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 
 describe('CourseForImportDtoPagingService', () => {
-    setupTestBed({ zoneless: true });
-
     let pagingService: CourseForImportDTOPagingService;
     let httpTestingController: HttpTestingController;
 

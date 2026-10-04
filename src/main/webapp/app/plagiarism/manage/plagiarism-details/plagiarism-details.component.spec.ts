@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { PlagiarismDetailsComponent } from './plagiarism-details.component';
@@ -8,8 +7,6 @@ import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison
 import { Exercise } from '../../../exercise/shared/entities/exercise/exercise.model';
 
 describe('PlagiarismDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PlagiarismDetailsComponent;
     let fixture: ComponentFixture<PlagiarismDetailsComponent>;
 

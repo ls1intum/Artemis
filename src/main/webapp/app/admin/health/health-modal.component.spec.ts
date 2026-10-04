@@ -3,13 +3,10 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 
 describe('HealthModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<HealthModalComponent>;
     let comp: HealthModalComponent;
 

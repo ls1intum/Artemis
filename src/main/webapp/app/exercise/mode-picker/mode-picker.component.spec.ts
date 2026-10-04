@@ -1,14 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Mode Picker Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ModePickerComponent<string>;
     let fixture: ComponentFixture<ModePickerComponent<string>>;
 
@@ -67,10 +64,14 @@ describe('Mode Picker Component', () => {
     it('should not set mode when disabled', () => {
         fixture.componentRef.setInput('disabled', true);
         fixture.componentRef.setInput('value', 'old mode');
+        fixture.componentRef.setInput('options', modePickerOptions);
         let valueChangeCalledWith: string | undefined;
         comp.valueChange.subscribe((value) => (valueChangeCalledWith = value));
 
-        comp.setMode('new mode');
+        fixture.detectChanges();
+        const option = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        expect(option.disabled).toBe(true);
+        option.click();
 
         expect(valueChangeCalledWith).toBeUndefined();
     });

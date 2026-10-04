@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
 /**
@@ -18,8 +17,6 @@ type ModalInternals = Omit<AffectedStudentsModalComponent, keyof ModalInternalsO
 const internals = (c: AffectedStudentsModalComponent): ModalInternals => c as unknown as ModalInternals;
 
 describe('AffectedStudentsModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<AffectedStudentsModalComponent>;
     let component: AffectedStudentsModalComponent;
     const feedbackDetailMock: FeedbackDetail = {
@@ -40,7 +37,7 @@ describe('AffectedStudentsModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), AffectedStudentsModalComponent],
+            imports: [AffectedStudentsModalComponent],
             providers: [
                 provideHttpClient(),
                 NgbActiveModal,
@@ -50,6 +47,7 @@ describe('AffectedStudentsModalComponent', () => {
                         getParticipationForFeedbackDetailText: vi.fn().mockReturnValue(participationMock),
                     },
                 },
+                provideTranslateService(),
             ],
         }).compileComponents();
 

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -163,7 +163,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
  * Synchronizes exercise metadata changes from other editors into the current
  * exercise editor session.
  *
- * This service is intentionally `providedIn: 'root'` (singleton) because it
+ * This service is intentionally a root `@Service()` (singleton) because it
  * shares the WebSocket subscription managed by {@link ExerciseEditorSyncService},
  * which is also root-scoped. Only one exercise can be edited at a time, so the
  * singleton holds mutable state for the active exercise. Calling {@link initialize}
@@ -172,7 +172,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
  * Consumers MUST call {@link destroy} in their `ngOnDestroy` to clean up
  * the WebSocket subscription and reset internal state before navigating away.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseMetadataSyncService {
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly http = inject(HttpClient);

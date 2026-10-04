@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { LLMSelectionModalService } from './llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('LLMSelectionModalService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: LLMSelectionModalService;
 
     beforeEach(() => {

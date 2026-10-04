@@ -68,6 +68,15 @@ export default defineConfig({
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
+        /* Block the Angular service worker (ngsw-worker.js) in every test context. The production WAR
+         * registers it unconditionally, and once it controls a page it handles the app's /api fetches.
+         * That breaks E2E in two ways: Chromium's DevTools protocol frequently cannot return bodies of
+         * SW-served responses (`Network.getResponseBody: No data found for resource` — the source of the
+         * deferred `response.json()` flake), and Playwright's `page.route()` never sees SW-handled
+         * requests, so route-based interception (e.g. injecting a failed save) is silently bypassed.
+         * The SW only adds caching/update checks the tests don't exercise, so blocking it makes runs
+         * deterministic without changing what is tested. */
+        serviceWorkers: 'block',
         launchOptions: {
             args: [
                 '--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator',
@@ -111,9 +120,24 @@ export default defineConfig({
         },
         // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and
         // are skipped by the single-node fast pipeline. The multi-node runner opts in explicitly.
+        // grepInvert excludes @kubernetes, because those tests need a Kubernetes cluster rather than
+        // the Docker-based multi-node stack and would fail there on the configured build runner.
         {
             name: 'multi-node-tests',
             grep: /@multi-node/,
+            grepInvert: /@kubernetes/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
+        },
+        // Tests with @kubernetes tag. These need an Artemis installation whose build agents use the
+        // Kubernetes build runner, which only run-localci-kubernetes.sh sets up. No other pipeline
+        // selects this project.
+        {
+            name: 'kubernetes-tests',
+            grep: /@kubernetes/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',

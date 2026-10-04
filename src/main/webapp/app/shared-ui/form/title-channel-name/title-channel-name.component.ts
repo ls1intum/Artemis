@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, input, model, signal, viewChild } from '@angular/core';
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
@@ -6,9 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 
-/**
- * @deprecated Use {@link TitleChannelNamePrimengComponent} instead.
- */
+/** @deprecated */
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
@@ -31,6 +29,8 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     alreadyUsedTitles = input<Set<string>>(new Set());
+    /** Renders a * next to the title and channel-name labels. Opt-in so lectures and exams are unaffected. */
+    showRequiredMarker = input<boolean>(false);
 
     titleOnPageLoad = signal<string | undefined>(undefined);
 
@@ -44,9 +44,6 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     get field_channel_name(): NgModel {
         return this.fieldChannelName()!;
     }
-
-    titleChange = output<string>();
-    channelNameChange = output<string>();
 
     isValid = signal<boolean>(false);
 
@@ -106,7 +103,6 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     updateTitle(newTitle: string) {
         this.title.set(newTitle);
-        this.titleChange.emit(this.title() ?? '');
         this.updateChannelName();
     }
 
@@ -132,6 +128,5 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
         const formattedName = removeTrailingHyphens ? nameWithoutSpecialCharacters.replace(TRAILING_HYPHENS, '') : nameWithoutSpecialCharacters;
 
         this.channelName.set(formattedName.slice(0, 30));
-        this.channelNameChange.emit(this.channelName() ?? '');
     }
 }

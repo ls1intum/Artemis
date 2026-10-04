@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -56,12 +57,16 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.COMPETENCY_MANAGEMENT)
 @RestController
 @RequestMapping("api/atlas/")
 public class CompetencyResource {
@@ -115,11 +120,12 @@ public class CompetencyResource {
      * @param courseId the id of the course for which the competencies should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/competencies")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getCompetenciesWithProgress(@PathVariable long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final var competencies = competencyService.findCompetenciesWithProgressForUserByCourseId(courseId, user.getId());
         return ResponseEntity.ok(competencies.stream().map(CourseCompetencyResponseDTO::of).toList());
     }
@@ -132,11 +138,12 @@ public class CompetencyResource {
      * @param courseId     the id of the course to which the competency belongs
      * @return the ResponseEntity with status 200 (OK) and with body the competency, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/competencies/{competencyId}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> getCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to get Competency : {}", competencyId);
-        var currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        var currentUser = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = competencyService.findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(competencyId, currentUser.getId());
         checkCourseForCompetency(course, competency);
@@ -257,7 +264,9 @@ public class CompetencyResource {
 
         Set<CourseCompetency> competenciesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        // Pre-load the current user's course roles so the per-item checkHasAtLeastRoleInCourseElseThrow check below
+        // resolves in memory instead of one EXISTS query per imported competency's source course.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         competenciesToImport.forEach(competencyToImport -> {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), user);
             if (competencyToImport.getCourse().getId().equals(courseId)) {
@@ -310,6 +319,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.STANDARDIZED_COMPETENCIES)
     @PostMapping("courses/{courseId}/competencies/import-standardized")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport)
@@ -385,6 +395,7 @@ public class CompetencyResource {
      * @param request the request containing the description and the target course id for competency suggestions
      * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
      */
+    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
     @PostMapping("competencies/suggest")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.AtlasML)
@@ -410,6 +421,8 @@ public class CompetencyResource {
      * @param courseId the course identifier
      * @return the ResponseEntity with status 200 (OK) and with body the suggested competency relations
      */
+    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("courses/{courseId}/competencies/relations/suggest")
     @EnforceAtLeastEditorInCourse
     @FeatureToggle(Feature.AtlasML)

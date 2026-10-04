@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.plagiarism.domain;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.ContinuousPlagiarismControlService;
 
 /**
@@ -51,6 +53,33 @@ public final class PlagiarismDetectionConfigHelper {
         config.setMinimumScore(minimumScore);
         config.setMinimumSize(minimumSize);
         exercise.setPlagiarismDetectionConfig(config);
+    }
+
+    /**
+     * Applies the submitted plagiarism detection config to the given managed exercise before validation and persistence.
+     *
+     * Semantics:
+     * - a null DTO leaves the existing config untouched (an omitted field preserves the current value);
+     * - an existing config is updated in place, preserving its identity and avoiding orphan-removal DELETE/INSERT churn;
+     * - a missing config is created from the DTO and attached (persisted via the exercise cascade).
+     *
+     * No repository is used: the caller persists the (already managed) exercise, and Hibernate dirty checking picks up the
+     * in-place scalar changes.
+     *
+     * @param exercise  the managed exercise to update
+     * @param configDto the submitted plagiarism detection config (or {@code null})
+     */
+    public static void applyToExercise(Exercise exercise, @Nullable PlagiarismDetectionConfigDTO configDto) {
+        if (configDto == null) {
+            return;
+        }
+        PlagiarismDetectionConfig existingConfig = exercise.getPlagiarismDetectionConfig();
+        if (existingConfig != null) {
+            configDto.applyTo(existingConfig);
+        }
+        else {
+            exercise.setPlagiarismDetectionConfig(configDto.toEntity());
+        }
     }
 
     /**

@@ -8,10 +8,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions: {}  # default-deny; the job grants only what it needs
+
 jobs:
   validate-pr-title:
     runs-on: ubuntu-latest
     timeout-minutes: 1
+    permissions:
+      contents: read
     steps:
       - uses: Slashgear/action-check-pr-title@161cede0311ec624ae3ee76a2c27522f7b6fa2d8  # v5.0.1
         with:

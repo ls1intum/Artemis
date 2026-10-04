@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -16,7 +16,7 @@ export interface IProgrammingExerciseParticipationService {
     checkIfParticipationHasResult: (participationId: number) => Observable<boolean>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);
@@ -134,6 +134,25 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
                 return res && new Map(Object.entries(res));
             }),
         );
+    }
+
+    /**
+     * Get selected repository files for a participation at a specific commit.
+     * @param exerciseId of the exercise to get the files for
+     * @param participationId of the participation to get the files for
+     * @param commitId of the commit to get the files for
+     * @param filePaths repository-relative paths to retrieve
+     */
+    getSelectedParticipationRepositoryFilesAtCommit(
+        exerciseId: number,
+        participationId: number,
+        commitId: string,
+        filePaths: string[],
+    ): Observable<Map<string, string> | undefined> {
+        const params = { commitId, participationId };
+        return this.http
+            .post<Record<string, string>>(`${this.resourceUrl}${exerciseId}/files-content-commit-details/selected`, filePaths, { params })
+            .pipe(map((res: Record<string, string>) => res && new Map(Object.entries(res))));
     }
 
     /**

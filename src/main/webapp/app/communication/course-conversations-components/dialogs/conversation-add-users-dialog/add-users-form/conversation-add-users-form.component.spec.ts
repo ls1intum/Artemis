@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -23,8 +22,6 @@ import {
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersFormComponent with ' + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationAddUsersFormComponent;
         let fixture: ComponentFixture<ConversationAddUsersFormComponent>;
         const course = { id: 1 } as Course;
@@ -114,7 +111,7 @@ examples.forEach((activeConversation) => {
             }
         });
 
-        it('should submit valid form in individual mode', () => {
+        it('should submit valid form in individual mode', async () => {
             setValidIndividualModeFormValues();
             fixture.changeDetectorRef.detectChanges();
             expect(component.form.valid).toBe(true);
@@ -128,10 +125,10 @@ examples.forEach((activeConversation) => {
                 addAllInstructors: false,
             };
 
-            clickSubmitButton(true, expectedAddUsersFormData);
+            await clickSubmitButton(true, expectedAddUsersFormData);
         });
 
-        it('should submit valid form in group mode', () => {
+        it('should submit valid form in group mode', async () => {
             if (isChannelDTO(activeConversation)) {
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
                 fixture.changeDetectorRef.detectChanges();
@@ -147,7 +144,7 @@ examples.forEach((activeConversation) => {
                     selectedUsers: [],
                 };
 
-                clickSubmitButton(true, expectedAddUsersFormData);
+                await clickSubmitButton(true, expectedAddUsersFormData);
             }
         });
 
@@ -182,6 +179,11 @@ examples.forEach((activeConversation) => {
             const submitFormSpy = vi.spyOn(component, 'submitForm');
             const submitFormEventSpy = vi.spyOn(component.formSubmitted, 'emit');
 
+            // Flush the reactive form status and the [disabled]="!isSubmitPossible" binding before
+            // clicking: under zoneless change detection a form-control setValue() does not mark the
+            // view dirty, so without this the submit button can stay disabled and the click is a no-op.
+            await fixture.whenStable();
+            fixture.detectChanges();
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
             submitButton.click();
 

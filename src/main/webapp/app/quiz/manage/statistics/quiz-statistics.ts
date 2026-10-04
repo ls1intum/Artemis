@@ -1,19 +1,16 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { round } from 'app/foundation/util/utils';
 import { QuizStatistic } from 'app/quiz/shared/entities/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiBarChartConfig, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
 
 @Component({
     template: '',
 })
 export abstract class AbstractQuizStatisticComponent {
     protected translateService = inject(TranslateService);
-    protected chartColorService = inject(ChartColorService);
 
     data: number[] = [];
     ratedData: number[] = [];
@@ -22,7 +19,6 @@ export abstract class AbstractQuizStatisticComponent {
     participants = 0;
 
     chartLabels: string[] = [];
-    totalParticipants = 0;
 
     /** The current bar entries; updated via {@link updateChartData}. */
     protected chartEntries = signal<ChartSeriesEntry[]>([]);
@@ -32,19 +28,13 @@ export abstract class AbstractQuizStatisticComponent {
     protected xAxisLabel = signal('');
     protected yAxisLabel = signal('');
 
-    private resolvedChartColors = this.chartColorService.resolvedColors(() => this.chartColors());
-
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedChartColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            xAxis: { label: this.xAxisLabel() },
-            yAxis: { label: this.yAxisLabel(), max: this.maxScale() },
-            tooltip: false,
-            dataLabels: { formatter: (value) => this.formatDataLabel(value) },
-        }),
-    );
-    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
-    readonly dataLabelsPlugin = [ChartDataLabels];
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.chartColors()));
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
+        xAxis: { label: this.xAxisLabel() },
+        yAxis: { label: this.yAxisLabel(), max: this.maxScale() },
+        tooltip: { label: (item) => this.formatTooltipLabel(item) },
+        dataLabels: { formatter: (value) => this.formatDataLabel(value) },
+    }));
 
     /**
      * Depending on if the rated or unrated results should be displayed,
@@ -91,10 +81,36 @@ export abstract class AbstractQuizStatisticComponent {
      * @returns string of the following pattern: absolute value (relative value)
      */
     protected formatDataLabel(absoluteValue: number): string {
-        if (!this.totalParticipants || !this.participants) {
-            return absoluteValue + ' (0%)';
-        }
-        return absoluteValue + ' (' + round((absoluteValue / this.participants) * 100, 1) + '%)';
+        return absoluteValue + ' (' + this.percentageOfParticipants(absoluteValue) + '%)';
+    }
+
+    /**
+     * Returns the given value as a percentage of the current participants, rounded to one decimal.
+     * Falls back to 0 when there are no participants (avoids division by zero).
+     * @param value the absolute value represented by a bar
+     */
+    private percentageOfParticipants(value: number): number {
+        return this.participants ? round((value / this.participants) * 100, 1) : 0;
+    }
+
+    /**
+     * Builds the explanatory tooltip line for a hovered bar. The default states how many of the
+     * participants a bar represents; subclasses override it to describe their specific metric
+     * (e.g. correct answers, point ranges).
+     * @param item the hovered bar
+     */
+    protected formatTooltipLabel(item: TumAetUiChartDatumContext): string {
+        return this.tooltipLine('artemisApp.showStatistic.tooltip.participantShare', item.value);
+    }
+
+    /**
+     * Resolves a tooltip translation key, filling in the bar's absolute value, the participant count,
+     * and the value's percentage of the participants.
+     * @param key the translation key of the tooltip line
+     * @param value the absolute value represented by the bar
+     */
+    protected tooltipLine(key: string, value: number): string {
+        return this.translateService.instant(key, { count: value, participants: this.participants, percent: this.percentageOfParticipants(value) });
     }
 
     /**

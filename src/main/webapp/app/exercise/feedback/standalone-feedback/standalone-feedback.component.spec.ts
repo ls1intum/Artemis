@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -17,8 +16,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('StandaloneFeedbackComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: StandaloneFeedbackComponent;
     let fixture: ComponentFixture<StandaloneFeedbackComponent>;
 

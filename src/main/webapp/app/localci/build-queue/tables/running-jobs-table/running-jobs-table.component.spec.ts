@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { RunningJobsTableComponent } from './running-jobs-table.component';
 import { BuildJob } from 'app/localci/shared/entities/build-job.model';
@@ -12,8 +11,6 @@ import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('RunningJobsTableComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: RunningJobsTableComponent;
     let fixture: ComponentFixture<RunningJobsTableComponent>;
 

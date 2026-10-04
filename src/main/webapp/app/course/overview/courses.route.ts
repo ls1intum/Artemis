@@ -9,7 +9,6 @@ import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-
 import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
 
 export enum CourseOverviewRoutePath {
-    DASHBOARD = 'dashboard',
     IRIS = 'iris',
     EXERCISES = 'exercises',
     EXAMS = 'exams',
@@ -30,13 +29,12 @@ export enum CourseOverviewRoutePath {
 
 /**
  * The child route paths of /courses/:courseId that carry the {@link CourseOverviewGuard} in their
- * canActivate below — keep in sync with the route definitions. Note that the guard's handleReturn
+ * canActivate below — keep in sync with the route definitions. Note that the guard's decideAccess
  * contains rules for additional paths (e.g. communication) that are intentionally NOT guarded here.
  * Child routes outside this set (e.g. statistics, settings, calendar) have no access rule and must
  * never be subjected to the guard's access check.
  */
 export const COURSE_OVERVIEW_GUARDED_ROUTE_PATHS: ReadonlySet<string> = new Set([
-    CourseOverviewRoutePath.DASHBOARD,
     CourseOverviewRoutePath.IRIS,
     CourseOverviewRoutePath.EXAMS,
     CourseOverviewRoutePath.COMPETENCIES,
@@ -103,24 +101,42 @@ export const courseRoutes: Routes = [
         canActivate: [UserRouteAccessService],
         children: [
             {
+                path: 'exercises/:exerciseId/teams/:teamId',
+                loadComponent: () => import('app/exercise/team/team.component').then((m) => m.TeamComponent),
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'artemisApp.team.detail.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
                 path: CourseOverviewRoutePath.EXERCISES,
                 loadComponent: () => import('app/course/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exercises',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService],
-
                 children: [
+                    {
+                        // Exercise-group detail page. Declared before :exerciseId so 'group' is not parsed as an id.
+                        path: 'group/:groupId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () =>
+                            import('app/course/overview/course-exercises/group-detail/course-exercise-group-detail.component').then((m) => m.CourseExerciseGroupDetailComponent),
+                    },
                     {
                         path: ':exerciseId',
                         data: {
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -132,7 +148,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -144,7 +159,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -156,7 +170,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -168,7 +181,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -180,7 +192,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -203,7 +214,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.lectures',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard, LectureGuard],
                 children: [
@@ -213,7 +223,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
@@ -226,7 +235,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.statistics',
-                    showRefreshButton: true,
                 },
             },
 
@@ -235,7 +243,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.competencies',
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
                 children: [
@@ -262,17 +269,6 @@ export const courseRoutes: Routes = [
                 ],
             },
             {
-                path: CourseOverviewRoutePath.DASHBOARD,
-                pathMatch: 'full',
-                loadComponent: () => import('app/course/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'overview.dashboard',
-                    hasSidebar: true,
-                },
-                canActivate: [UserRouteAccessService, CourseOverviewGuard],
-            },
-            {
                 path: CourseOverviewRoutePath.IRIS,
                 pathMatch: 'full',
                 loadComponent: () => import('app/iris/overview/course-iris/course-iris.component').then((m) => m.CourseIrisComponent),
@@ -289,7 +285,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.learningPath',
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -301,7 +296,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.communication',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
             },
             {
@@ -312,7 +306,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.settings',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
             },
             {
@@ -322,7 +315,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.tutorialGroups',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
@@ -332,7 +324,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
@@ -347,7 +338,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.tutorialGroups',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -360,7 +350,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exams',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
@@ -371,7 +360,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exams',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         canDeactivate: [PendingChangesGuard],
@@ -396,7 +384,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.faq',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -407,7 +394,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.training',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -422,7 +408,7 @@ export const courseRoutes: Routes = [
             },
             {
                 path: '',
-                redirectTo: CourseOverviewRoutePath.DASHBOARD, // dashboard will redirect to exercises if not enabled
+                redirectTo: CourseOverviewRoutePath.EXERCISES,
                 pathMatch: 'full',
             },
             {
@@ -432,7 +418,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.calendar',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
             },
         ],

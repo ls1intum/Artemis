@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationSettingsComponent } from 'app/course/overview/course-settings/notification-settings/notification-settings.component';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
@@ -24,8 +23,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('NotificationSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: NotificationSettingsComponent;
     let fixture: ComponentFixture<NotificationSettingsComponent>;
     let courseNotificationServiceMock: {
@@ -200,8 +197,8 @@ describe('NotificationSettingsComponent', () => {
         const presetPicker = fixture.debugElement.query(By.directive(CourseNotificationPresetPickerComponent));
         expect(presetPicker).not.toBeNull();
 
-        expect(presetPicker.componentInstance.availableCourseSettingPresets).toEqual(mockPresets);
-        expect(presetPicker.componentInstance.selectedCourseSettingPreset).toEqual(mockPresets[0]);
+        expect(presetPicker.componentInstance.availableCourseSettingPresets()).toEqual(mockPresets);
+        expect(presetPicker.componentInstance.selectedCourseSettingPreset()).toEqual(mockPresets[0]);
     });
 
     it('should render specification cards when not loading', () => {
@@ -214,7 +211,7 @@ describe('NotificationSettingsComponent', () => {
         const specificationCards = fixture.debugElement.queryAll(By.directive(CourseNotificationSettingSpecificationCardComponent));
         expect(specificationCards).toHaveLength(1);
 
-        expect(specificationCards[0].componentInstance.settingSpecification).toEqual(component['notificationSpecifications']()[0]);
+        expect(specificationCards[0].componentInstance.settingSpecification()).toEqual(component['notificationSpecifications']()[0]);
     });
 
     it('should correctly update specifications from notification map', () => {

@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -65,6 +66,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "textsubmissionintegration";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @Autowired
     private TextSubmissionTestRepository testSubmissionTestRepository;
@@ -117,8 +120,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        Course course1 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        Course course2 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
+        Course course1 = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        Course course2 = textExerciseUtilService.addEnrolledCourseWithOneFinishedTextExercise(TEST_PREFIX);
         releasedTextExercise = ExerciseUtilService.findTextExerciseWithTitle(course1.getExercises(), "Text");
         finishedTextExercise = ExerciseUtilService.findTextExerciseWithTitle(course2.getExercises(), "Finished");
         lateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedTextExercise, TEST_PREFIX + "student1");
@@ -131,12 +134,12 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         notSubmittedTextSubmission = ParticipationFactory.generateTextSubmission("example text 2", Language.ENGLISH, false);
 
         // Add users that are not in exercise/course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student3");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3")
+    @WithMockUser(username = OTHER_PREFIX + "student42")
     void testRepositoryMethods() {
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> testSubmissionTestRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
@@ -167,6 +170,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void getTextSubmissionWithResult_involved_allowed() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
+        // A comparison belongs to the plagiarism result it came out of, which the database now requires.
+        plagiarismComparison.setPlagiarismResult(textExerciseUtilService.createPlagiarismResultForExercise(finishedTextExercise));
         PlagiarismSubmission submissionA = new PlagiarismSubmission();
         submissionA.setStudentLogin(TEST_PREFIX + "student1");
         submissionA.setSubmissionId(this.textSubmission.getId());
@@ -239,7 +244,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor42", roles = "TA")
     void getAllTextSubmission_notTutorInExercise() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         request.getList("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmissionResponseDTO.class);
@@ -324,7 +329,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor42", roles = "TA")
     void getTextSubmissionWithoutAssessment_notTutorInExercise() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         request.get("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmissionWithoutAssessmentDTO.class);
@@ -353,8 +358,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         ExerciseDetailsDTO returnedExerciseDetails = request.get("/api/exercise/exercises/" + finishedTextExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-        StudentParticipation studentParticipation = returnedExerciseDetails.exercise().getStudentParticipations().iterator().next();
-        assertThat(participationUtilService.getResultsForParticipation(studentParticipation).iterator().next().getAssessor()).as("assessor is null").isNull();
+        DetailedResultDTO result = returnedExerciseDetails.exercise().studentParticipations().getFirst().submissions().getFirst().results().getFirst();
+        assertThat(result.assessor()).as("assessor is null").isNull();
     }
 
     @Test
@@ -466,7 +471,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(submission.participation().initializationState()).isEqualTo(InitializationState.FINISHED);
         // The save/submit response must carry the (owning) student so the client can verify participation ownership.
         assertThat(submission.participation().student()).as("submit response includes the owning student").isNotNull();
-        assertThat(submission.participation().student().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(submission.participation().student().getLogin()).isEqualTo(TEST_PREFIX + "student1");
     }
 
     @Test
@@ -492,7 +497,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateExamTextSubmissionWithExistingResultForksNewSubmission() throws Exception {
-        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Exam exam = examTextExercise.getExerciseGroup().getExam();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(10));
         exam.setEndDate(ZonedDateTime.now().plusMinutes(60));
@@ -581,7 +586,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void submitExercise_notStudentInCourse() throws Exception {
         request.post("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.FORBIDDEN);
     }

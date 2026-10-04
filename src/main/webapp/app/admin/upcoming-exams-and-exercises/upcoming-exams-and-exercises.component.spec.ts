@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
@@ -14,8 +13,6 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { MockExamManagementService } from 'test/helpers/mocks/service/mock-exam-management.service';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UpcomingExamsAndExercisesComponent;
     let fixture: ComponentFixture<UpcomingExamsAndExercisesComponent>;
     let exerciseService: ExerciseService;

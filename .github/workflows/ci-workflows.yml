@@ -10,6 +10,34 @@ on:
 permissions: {}
 
 jobs:
+  # Deploy-gating logic lives in checked-in scripts (not inline YAML) so it can be linted and
+  # unit-tested. shellcheck runs strictly on them (unlike actionlint's repo-wide `-shellcheck=`,
+  # disabled for legacy inline blocks), and bats exercises the run-resolution / image-verify logic.
+  deploy-scripts:
+    name: deploy scripts (shellcheck + bats)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - name: Install bats
+        run: |
+          set -Eeuo pipefail
+          sudo apt-get update
+          sudo apt-get install -y bats
+      - name: shellcheck deploy action scripts
+        run: |
+          set -Eeuo pipefail
+          shellcheck .github/actions/verify-image-build/verify-image-build.sh \
+                     .github/actions/resolve-artifact-run/resolve-artifact-run.sh
+      - name: bats unit tests
+        run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests
+      - name: Verify LocalCI installer safety
+        run: |
+          shellcheck -e SC1091 install-localci-kubernetes-ubuntu.sh supporting_scripts/update_python_dependency_locks.sh
+          python3 supporting_scripts/test_verified_installers.py
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
@@ -17,17 +45,23 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Run actionlint
-        # Pin the install script to a release tag, not `main` — it executes a downloaded
-        # binary. `-shellcheck=` disables integrated shellcheck, which flags pre-existing
-        # style issues in the legacy deploy workflows.
+        # The install script is pinned to a release tag AND to its SHA-256, because piping it
+        # straight into bash would execute whatever that URL returns. A tag can be moved; the
+        # checksum cannot, so verify before running. Bump both together when raising the version.
+        # `-shellcheck=` disables integrated shellcheck, which flags pre-existing style issues
+        # in the legacy deploy workflows.
         env:
           ACTIONLINT_VERSION: '1.7.12'
+          ACTIONLINT_INSTALLER_SHA256: '72fa3e45ac20f3c3a512d6747b4fcf719e21f890e8c43e78d48a41fdfb900c4e'
         run: |
-          bash <(curl --silent --location \
-            "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") \
-            "${ACTIONLINT_VERSION}"
+          curl --silent --show-error --fail --location \
+            "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash" \
+            --output download-actionlint.bash
+          echo "${ACTIONLINT_INSTALLER_SHA256}  download-actionlint.bash" | sha256sum --check --strict
+          bash download-actionlint.bash "${ACTIONLINT_VERSION}"
+          rm download-actionlint.bash
           ./actionlint -color -shellcheck=
 
       - name: Check version pins are in sync
@@ -81,6 +115,11 @@ jobs:
               "has_gradle": {".github/workflows/ci.yml", ".github/workflows/ci-gradle-wrapper.yml"},
               "has_version": {".github/workflows/ci.yml", ".github/workflows/ci-version-consistency.yml", "supporting_scripts/update_version.sh"},
               "has_beans": {".github/workflows/ci.yml", ".github/workflows/ci-bean-instantiations.yml"},
+              "has_skills": {
+                  ".github/workflows/ci.yml",
+                  ".github/workflows/ci-skills.yml",
+                  "supporting_scripts/check_skill_references.py",
+              },
           }
 
           failed = False

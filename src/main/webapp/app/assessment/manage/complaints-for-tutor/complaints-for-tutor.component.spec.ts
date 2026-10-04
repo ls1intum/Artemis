@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -25,7 +24,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('ComplaintsForTutorComponent', () => {
-    setupTestBed({ zoneless: true });
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
     let fixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
@@ -306,9 +304,15 @@ describe('ComplaintsForTutorComponent', () => {
         fixture.detectChanges();
 
         const responseTextArea = fixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        // Drive the value through the [(ngModel)] input event so the (zoneless) change detection
+        // re-evaluates the buttons' [disabled] bindings; directly mutating the DOM value no longer
+        // marks those bindings dirty in Angular's zoneless reactivity model.
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
+        responseTextArea.dispatchEvent(new Event('input'));
         expect(responseTextArea.value).toHaveLength(26);
         expect(complaintsForTutorComponent.maxComplaintResponseTextLimit()).toBe(26);
+
+        fixture.changeDetectorRef.detectChanges();
 
         const rejectComplaintButton = fixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = fixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
@@ -316,6 +320,7 @@ describe('ComplaintsForTutorComponent', () => {
         expect(acceptComplaintButton.disabled).toBe(false);
 
         responseTextArea.value = responseTextArea.value + 'A';
+        responseTextArea.dispatchEvent(new Event('input'));
         expect(responseTextArea.value).toHaveLength(27);
 
         // Update fixture

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card/lti-course-card.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
@@ -14,7 +13,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('LtiCourseCardComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LtiCourseCardComponent;
     let fixture: ComponentFixture<LtiCourseCardComponent>;
 

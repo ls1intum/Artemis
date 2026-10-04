@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -7,14 +7,13 @@ import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class SavedPostService {
-    private resourceUrl = 'api/communication/saved-posts';
-
     private readonly http: HttpClient = inject(HttpClient);
+
+    private resourceUrl = 'api/communication/saved-posts';
 
     /**
      * saves a post
@@ -66,7 +65,7 @@ export class SavedPostService {
      * @return the converted post or answer post
      */
     public convertPostingToCorrespondingType(post: Posting) {
-        return Object.assign(post.postingType === PostingType.POST ? new Post() : new AnswerPost(), post);
+        return hydrate(post.postingType === PostingType.POST ? new Post() : new AnswerPost(), post);
     }
 
     /**

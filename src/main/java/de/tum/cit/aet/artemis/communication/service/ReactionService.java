@@ -13,8 +13,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismPostApi;
@@ -32,7 +34,7 @@ import de.tum.cit.aet.artemis.plagiarism.exception.PlagiarismApiNotPresentExcept
 @Service
 public class ReactionService {
 
-    private static final String METIS_REACTION_ENTITY_NAME = "posting reaction";
+    private static final String REACTION_ENTITY_NAME = "posting reaction";
 
     private final UserRepository userRepository;
 
@@ -69,33 +71,69 @@ public class ReactionService {
      */
     public Reaction createReaction(Long courseId, ReactionDTO reactionDTO) {
         if (reactionDTO.id() != null) {
-            throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idExists");
+            throw new BadRequestAlertException("A new reaction cannot already have an ID", REACTION_ENTITY_NAME, "idExists");
         }
 
         if (reactionDTO.emojiId() == null || reactionDTO.emojiId().isBlank()) {
-            throw new BadRequestAlertException("emojiId must be set", METIS_REACTION_ENTITY_NAME, "emojiIdMissing");
+            throw new BadRequestAlertException("emojiId must be set", REACTION_ENTITY_NAME, "emojiIdMissing");
         }
 
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User user = this.userRepository.getUserWithAuthorities();
         final long targetId = reactionDTO.relatedPostId();
 
         Reaction reaction = new Reaction();
         reaction.setEmojiId(reactionDTO.emojiId());
         reaction.setUser(user);
 
-        var answerPostOpt = answerPostRepository.findById(targetId);
-        if (answerPostOpt.isPresent()) {
-            var answerPost = answerPostOpt.get();
-            checkThatCourseHasCourseIdElseThrow(course.getId(), answerPost.getCoursePostingBelongsTo());
-            reaction.setAnswerPost(answerPost);
-            return createReactionForAnswer(reaction, answerPost, user, course);
+        if (reactionDTO.postingType() == PostingType.ANSWER) {
+            return reactToAnswerPost(reaction, answerPostRepository.findByIdElseThrow(targetId), user, course);
+        }
+        if (reactionDTO.postingType() == PostingType.POST) {
+            return reactToPost(reaction, postRepository.findByIdElseThrow(targetId), user, course);
         }
 
-        var post = postRepository.findByIdElseThrow(targetId);
+        // No type given, so the id has to be resolved on its own. Posts and answer posts are numbered independently, which means the same value
+        // regularly denotes one of each; the course tells them apart in every case except the one where both happen to live in it.
+        Optional<AnswerPost> answerPostById = answerPostRepository.findById(targetId);
+        Optional<Post> postById = postRepository.findById(targetId);
+
+        Optional<AnswerPost> answerPost = answerPostById.filter(candidate -> belongsToCourse(candidate.getCoursePostingBelongsTo(), courseId));
+        Optional<Post> post = postById.filter(candidate -> belongsToCourse(candidate.getCoursePostingBelongsTo(), courseId));
+
+        if (answerPost.isPresent() && post.isPresent()) {
+            throw new BadRequestAlertException("The id " + targetId + " denotes both a post and an answer post in this course, so postingType is required", REACTION_ENTITY_NAME,
+                    "ambiguousPostingId");
+        }
+        if (answerPost.isPresent()) {
+            return reactToAnswerPost(reaction, answerPost.get(), user, course);
+        }
+        if (post.isPresent()) {
+            return reactToPost(reaction, post.get(), user, course);
+        }
+
+        // Nothing in this course carries the id, so the request fails either way. Which way matters to the caller: an id that denotes no posting
+        // at all is a 404, while one that denotes a posting in another course is the same wrongCourse rejection the typed paths give.
+        if (answerPostById.isEmpty() && postById.isEmpty()) {
+            throw new EntityNotFoundException("Posting", targetId);
+        }
+        throw new BadRequestAlertException("Reaction does not belong to the given course", REACTION_ENTITY_NAME, "wrongCourse");
+    }
+
+    private boolean belongsToCourse(Course postingCourse, Long courseId) {
+        return postingCourse != null && Objects.equals(postingCourse.getId(), courseId);
+    }
+
+    private Reaction reactToPost(Reaction reaction, Post post, User user, Course course) {
         checkThatCourseHasCourseIdElseThrow(course.getId(), post.getCoursePostingBelongsTo());
         reaction.setPost(post);
         return createReactionForPost(reaction, post, user, course);
+    }
+
+    private Reaction reactToAnswerPost(Reaction reaction, AnswerPost answerPost, User user, Course course) {
+        checkThatCourseHasCourseIdElseThrow(course.getId(), answerPost.getCoursePostingBelongsTo());
+        reaction.setAnswerPost(answerPost);
+        return createReactionForAnswer(reaction, answerPost, user, course);
     }
 
     /**
@@ -105,7 +143,7 @@ public class ReactionService {
      * @param courseId   id of the course the according posting belongs to
      */
     public void deleteReactionByIdIfAllowedElseThrow(Long reactionId, Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
 
@@ -139,7 +177,7 @@ public class ReactionService {
 
         PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
         api.preparePostForBroadcast(updatedPost);
-        api.broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
+        api.broadcastForPost(updatedPost, CommunicationCrudAction.UPDATE, course.getId(), null);
         reactionRepository.deleteById(reactionId);
     }
 
@@ -201,7 +239,7 @@ public class ReactionService {
         updatedPost.setConversation(post.getConversation());
 
         api.preparePostForBroadcast(post);
-        api.broadcastForPost(post, MetisCrudAction.UPDATE, course.getId(), null);
+        api.broadcastForPost(post, CommunicationCrudAction.UPDATE, course.getId(), null);
         return savedReaction;
     }
 
@@ -219,7 +257,7 @@ public class ReactionService {
         if (reaction.getAnswerPost() != null) {
             return reaction.getAnswerPost().getCoursePostingBelongsTo();
         }
-        throw new BadRequestAlertException("Reaction could not be found", METIS_REACTION_ENTITY_NAME, "reactionNotFound");
+        throw new BadRequestAlertException("Reaction could not be found", REACTION_ENTITY_NAME, "reactionNotFound");
     }
 
     /**
@@ -231,7 +269,7 @@ public class ReactionService {
      */
     private void checkThatCourseHasCourseIdElseThrow(Long expectedCourseId, Course actual) {
         if (actual == null || !Objects.equals(actual.getId(), expectedCourseId)) {
-            throw new BadRequestAlertException("Reaction does not belong to the given course", METIS_REACTION_ENTITY_NAME, "wrongCourse");
+            throw new BadRequestAlertException("Reaction does not belong to the given course", REACTION_ENTITY_NAME, "wrongCourse");
         }
     }
 }

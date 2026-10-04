@@ -2,7 +2,6 @@ import { Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
@@ -26,8 +25,6 @@ const rootRouteGuard = (): boolean | UrlTree => {
 };
 
 describe('Landing page route guard', () => {
-    setupTestBed({ zoneless: true });
-
     let accountService: AccountService;
     let router: Router;
 

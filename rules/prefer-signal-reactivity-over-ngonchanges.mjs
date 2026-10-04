@@ -4,8 +4,8 @@ const createRule = ESLintUtils.RuleCreator(() => '');
 
 /**
  * @fileoverview
- * Discourage `ngOnChanges` on signal-based components and directives in favour of
- * `computed()` (for derived state) and `effect()` (for genuine side effects).
+ * Ban `ngOnChanges` in client code in favour of `computed()` (for derived state) and `effect()`
+ * (for genuine side effects).
  *
  * ## Why this rule exists
  *
@@ -19,8 +19,20 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * So `ngOnChanges` is **not** dead code and **not** a correctness bug — but the Angular docs
  * still recommend `computed`/`effect` over it for signal-based components, and a signal-first code
  * base is more consistent and less error-prone (no manually-maintained derived fields that can go
- * stale). This rule is therefore a **warning**, not an error. The config keeps the baseline clean by
- * excluding the known migration-backlog files until those hooks are migrated or explicitly justified.
+ * stale).
+ *
+ * The client is now completely free of the hook (PR #12951), so the rule is configured as an **error**
+ * to keep it that way: `pnpm run lint` runs without `--max-warnings`, so at warning severity a
+ * reintroduced hook would pass CI unnoticed.
+ *
+ * ## Why it does not require an `@Component` / `@Directive` decorator
+ *
+ * Angular invokes `ngOnChanges` on the component *instance*, so a hook inherited from an undecorated
+ * base class runs exactly like one declared on the component itself. Requiring the decorator would
+ * therefore leave a hole big enough to smuggle the hook back in through any of the client's abstract
+ * base classes. The rule matches the member wherever it is declared; interface declarations
+ * (`TSMethodSignature`) and object-literal properties (`Property`) are a different AST node and stay
+ * unmatched, so `OnChanges` type declarations and literal-based mocks are unaffected.
  *
  * ## What to use instead
  *
@@ -35,7 +47,7 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  *  - The logic must run **before** child components initialise. `ngOnChanges` runs before `ngOnInit`
  *    and before child rendering; an `effect()` runs afterwards, which can change behaviour.
  *
- * In those cases keep `ngOnChanges` and silence this warning on the line with a short justification:
+ * In those cases keep `ngOnChanges` and silence this rule on the line with a short justification:
  *
  * ```ts
  * // eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges.previousValue
@@ -45,12 +57,17 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * The full rationale and a decision table live in
  * `documentation/docs/developer/guidelines/client-development.mdx`.
  *
- * Examples **flagged** by this rule (inside an `@Component` / `@Directive`):
+ * Examples **flagged** by this rule:
  * ```ts
  * @Component({ ... })
  * export class ExampleComponent {
  *   value = input.required<number>();
- *   ngOnChanges() { this.recompute(); }   // ⚠️ prefer computed()/effect()
+ *   ngOnChanges() { this.recompute(); }   // ❌ prefer computed()/effect()
+ * }
+ *
+ * // Also flagged: an undecorated base class a component extends — Angular still calls the hook.
+ * export abstract class ExampleBase {
+ *   ngOnChanges() { this.recompute(); }   // ❌
  * }
  * ```
  *
@@ -64,24 +81,36 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * ```
  */
 
-const ANGULAR_CLASS_DECORATORS = new Set(['Component', 'Directive']);
+const HOOK_NAME = 'ngOnChanges';
 
-/** Resolves a decorator's identifier name, handling both `@Component(...)` and a bare `@Component`. */
-function getDecoratorName(decorator) {
-    const expression = decorator.expression;
-    if (expression.type === 'CallExpression' && expression.callee.type === 'Identifier') {
-        return expression.callee.name;
+/**
+ * Whether a class-member key names the `ngOnChanges` lifecycle hook.
+ *
+ * All of these declare the very same prototype member, and Angular invokes each of them identically, so the ban has
+ * to recognise every spelling — matching only `key.name` would let the quoted and computed forms straight through:
+ *
+ * ```ts
+ * ngOnChanges() {}        // Identifier
+ * 'ngOnChanges'() {}      // Literal (quoted, not computed)
+ * ['ngOnChanges']() {}    // Literal (computed)
+ * [`ngOnChanges`]() {}    // TemplateLiteral without substitutions
+ * ```
+ *
+ * A key computed from a variable (`[hookName]() {}`) cannot be resolved statically and is therefore out of reach for
+ * any lint rule; nobody writes a lifecycle hook that way by accident, and doing it deliberately to dodge this rule is
+ * indistinguishable from disabling it.
+ */
+function isNgOnChangesKey(key) {
+    switch (key?.type) {
+        case 'Identifier':
+            return key.name === HOOK_NAME;
+        case 'Literal':
+            return key.value === HOOK_NAME;
+        case 'TemplateLiteral':
+            return key.expressions.length === 0 && key.quasis[0]?.value.cooked === HOOK_NAME;
+        default:
+            return false;
     }
-    if (expression.type === 'Identifier') {
-        return expression.name;
-    }
-    return undefined;
-}
-
-/** True if the class carries an `@Component` or `@Directive` decorator. */
-function isAngularComponentOrDirective(classNode) {
-    const decorators = classNode.decorators ?? [];
-    return decorators.some((decorator) => ANGULAR_CLASS_DECORATORS.has(getDecoratorName(decorator)));
 }
 
 export default createRule({
@@ -90,37 +119,41 @@ export default createRule({
         type: 'suggestion',
         docs: {
             description:
-                'Discourage `ngOnChanges` on signal-based components/directives. Prefer `computed()` for derived state and `effect()` for genuine side effects; keep `ngOnChanges` only when `SimpleChanges.previousValue` / `isFirstChange()` or pre-child-initialisation timing is genuinely required (silence the rule on that line with a justification).',
+                'Ban `ngOnChanges` in client code. Prefer `computed()` for derived state and `effect()` for genuine side effects; keep `ngOnChanges` only when `SimpleChanges.previousValue` / `isFirstChange()` or pre-child-initialisation timing is genuinely required (silence the rule on that line with a justification).',
         },
         messages: {
             preferSignalReactivity:
-                "Avoid 'ngOnChanges' in signal-based components. Prefer computed() for derived state, and effect() only for genuine side effects. ngOnChanges still works in Angular 21 (it fires for signal inputs), but computed()/effect() are the idiomatic, consistent choice. If you specifically need SimpleChanges.previousValue / isFirstChange(), or logic that must run before child components initialise, keep ngOnChanges and disable this rule for the line with a short justification.",
+                "Avoid 'ngOnChanges'. Prefer computed() for derived state, and effect() only for genuine side effects. ngOnChanges still works in Angular 21 (it fires for signal inputs), but computed()/effect() are the idiomatic, consistent choice, and the client is otherwise free of the hook. This also applies to undecorated base classes, because Angular calls an inherited ngOnChanges just like one declared on the component. If you specifically need SimpleChanges.previousValue / isFirstChange(), or logic that must run before child components initialise, keep ngOnChanges and disable this rule for the line with a short justification.",
         },
         schema: [],
     },
     defaultOptions: [],
     create(context) {
         const report = (node) => {
+            if (!isNgOnChangesKey(node.key)) {
+                return;
+            }
             // Static members are never Angular lifecycle hooks (Angular only invokes the instance `ngOnChanges`),
             // so an unrelated `static ngOnChanges` helper must not be flagged.
             if (node.static) {
                 return;
             }
-            // node.parent is the ClassBody; node.parent.parent is the class declaration/expression.
+            // node.parent is the ClassBody; node.parent.parent is the class declaration/expression. No decorator
+            // check: Angular calls the hook on the instance, so one inherited from an undecorated base class runs
+            // just the same — requiring `@Component`/`@Directive` would leave that route open.
             const classNode = node.parent?.parent;
             if (!classNode || (classNode.type !== 'ClassDeclaration' && classNode.type !== 'ClassExpression')) {
-                return;
-            }
-            if (!isAngularComponentOrDirective(classNode)) {
                 return;
             }
             context.report({ node: node.key, messageId: 'preferSignalReactivity' });
         };
 
         return {
-            // Covers both `ngOnChanges() {}` (method) and the rare `ngOnChanges = (changes) => {}` (property).
-            "MethodDefinition[key.name='ngOnChanges']": report,
-            "PropertyDefinition[key.name='ngOnChanges']": report,
+            // Every class member is visited and its key resolved by isNgOnChangesKey(), rather than filtering on
+            // `key.name` in the selector: that would only match the plain identifier form and silently let the
+            // string-literal and computed-literal spellings through.
+            MethodDefinition: report,
+            PropertyDefinition: report,
         };
     },
 });

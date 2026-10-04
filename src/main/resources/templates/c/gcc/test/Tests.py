@@ -1,3 +1,5 @@
+import os
+
 from tests.TestASan import TestASan
 from tests.TestCompile import TestCompile
 from tests.TestLSan import TestLSan
@@ -6,7 +8,27 @@ from tests.TestUBSan import TestUBSan
 from testUtils.Tester import Tester
 
 
+def configureSanitizerRuntime():
+    """
+    Disables AddressSanitizer's exit-time leak scan for the programs started by this tester.
+
+    GCC's AddressSanitizer runs LeakSanitizer when an instrumented program exits. That leak scan
+    stops the world via ptrace, which Docker's default seccomp profile denies (the build containers
+    intentionally do not get CAP_SYS_PTRACE, because they execute untrusted student code). Without
+    ptrace the scan does not fail fast: it stalls, so a correct `asan.out` never reaches exit and the
+    test is reported as a timeout. That is why `TestOutputASan` was flaky while `TestOutputUBSan` --
+    same instrumentation cost, no leak scan -- always passed.
+
+    Leak coverage is not lost: leaks are checked by the dedicated `-fsanitize=leak` test, which reads
+    LSAN_OPTIONS rather than ASAN_OPTIONS and is unaffected by this setting. `setdefault` keeps an
+    explicit ASAN_OPTIONS from the environment authoritative.
+    """
+    os.environ.setdefault("ASAN_OPTIONS", "detect_leaks=0")
+
+
 def main():
+    configureSanitizerRuntime()
+
     # Makefile location:
     # Artemis expects it to be located in ../assignment
     makefileLocation: str = "../assignment"

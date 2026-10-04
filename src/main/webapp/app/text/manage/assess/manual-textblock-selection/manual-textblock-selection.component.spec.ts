@@ -6,7 +6,6 @@
  * - Manual text selection handling
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
@@ -25,7 +24,6 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 
 describe('ManualTextblockSelectionComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ManualTextblockSelectionComponent;
     let fixture: ComponentFixture<ManualTextblockSelectionComponent>;
 

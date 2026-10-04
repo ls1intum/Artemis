@@ -42,6 +42,23 @@ tasks.register("initPaths", {
     }
 })
 
+// The schema verification in supporting_scripts/liquibase drives the Liquibase CLI from its Docker image,
+// which ships without JDBC drivers. Exporting them from the build rather than downloading them keeps the
+// driver versions the checks run against the same ones the application runs against.
+tasks.register("exportLiquibaseDrivers", Copy) {
+    group = "liquibase"
+    description = "Copies the MySQL and PostgreSQL JDBC drivers into build/liquibase-drivers"
+    // Copy adds, it does not replace. After a driver version bump the previous jar would stay behind and
+    // the verification would find two candidates for one engine, which it refuses rather than guess between.
+    doFirst {
+        delete(layout.buildDirectory.dir("liquibase-drivers"))
+    }
+    from(configurations.liquibaseRuntime.filter { file ->
+        file.name.startsWith("mysql-connector-j-") || file.name.startsWith("postgresql-")
+    })
+    into(layout.buildDirectory.dir("liquibase-drivers"))
+}
+
 def liquibaseCommand(command) {
     tasks.register("runLiquibaseCommand", JavaExec) {
         if (isWindows) {

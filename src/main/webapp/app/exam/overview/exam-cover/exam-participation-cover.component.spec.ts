@@ -30,11 +30,8 @@ import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-ex
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamParticipationCoverComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 456 } as Course;
     let exam: Exam;
     let studentExam: StudentExam;
@@ -119,6 +116,25 @@ describe('ExamParticipationCoverComponent', () => {
 
         fixture.componentRef.setInput('startView', false);
         component.updateConfirmation();
+        expect(component.endEnabled()).toBe(false);
+    });
+
+    it('should enable the end of the exam as soon as the confirmation checkbox is ticked', async () => {
+        flushInputs();
+        const checkbox = fixture.nativeElement.querySelector('#confirmBox') as HTMLInputElement;
+        expect(checkbox).toBeTruthy();
+        expect(component.endEnabled()).toBe(false);
+
+        checkbox.click();
+        await fixture.whenStable();
+
+        expect(component.confirmed).toBe(true);
+        expect(component.endEnabled()).toBe(true);
+
+        checkbox.click();
+        await fixture.whenStable();
+
+        expect(component.confirmed).toBe(false);
         expect(component.endEnabled()).toBe(false);
     });
 

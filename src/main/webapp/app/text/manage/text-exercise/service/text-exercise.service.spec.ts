@@ -3,7 +3,6 @@
  * Tests CRUD operations, plagiarism detection, and tutor effort calculations for text exercises.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -24,7 +23,6 @@ import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 describe('TextExercise Service', () => {
-    setupTestBed({ zoneless: true });
     let service: TextExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: TextExercise;
@@ -83,13 +81,22 @@ describe('TextExercise Service', () => {
         });
 
         it('should update a TextExercise', () => {
-            const returnedFromService = Object.assign({ exampleSolution: 'BBBBBB' }, elemDefault);
+            const plagiarismDetectionConfig = {
+                continuousPlagiarismControlEnabled: true,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 14,
+                similarityThreshold: 42,
+                minimumScore: 7,
+                minimumSize: 13,
+            };
+            const returnedFromService = Object.assign({}, elemDefault, { exampleSolution: 'BBBBBB', plagiarismDetectionConfig });
             const expected = Object.assign({}, returnedFromService);
             service
                 .update(expected)
                 .pipe(take(1))
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
+            expect(req.request.body.plagiarismDetectionConfig).toEqual(plagiarismDetectionConfig);
             req.flush(returnedFromService);
             expect(requestResult.body).toEqual(expected);
         });

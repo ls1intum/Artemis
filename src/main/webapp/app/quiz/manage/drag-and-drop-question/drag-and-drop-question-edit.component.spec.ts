@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -86,8 +85,6 @@ function setupCanvasAndImageMocks(toDataURLValue: string) {
 }
 
 describe('DragAndDropQuestionEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
     let component: DragAndDropQuestionEditComponent;
     let createObjectURLStub: Mock;
@@ -610,10 +607,30 @@ describe('DragAndDropQuestionEditComponent', () => {
             scoringType: ScoringType.ALL_OR_NOTHING,
         } as DragAndDropQuestion;
         component.backupQuestion = backupQuestion;
+        fixture.detectChanges();
+        questionUpdatedSpy.mockClear();
 
         component.resetQuestion();
 
         expect(component.question()).toEqual(backupQuestion);
+        // without this the parent keeps the pre-reset validity and calls a restored question invalid
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the parent after resetting the question text', () => {
+        const currentQuestion = new DragAndDropQuestion();
+        currentQuestion.text = 'edited text';
+        fixture.componentRef.setInput('question', currentQuestion);
+        fixture.changeDetectorRef.detectChanges();
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.text = 'backupText';
+        fixture.detectChanges();
+        questionUpdatedSpy.mockClear();
+
+        component.resetQuestionText();
+
+        expect(component.question().text).toBe('backupText');
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
     });
 
     it('should reset drag item', () => {

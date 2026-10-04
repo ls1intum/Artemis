@@ -3,7 +3,7 @@
  * Tests text submission, participation management, and editor functionality.
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -33,7 +33,6 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
@@ -51,7 +50,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FormsModule } from '@angular/forms';
 import { Component, input } from '@angular/core';
 
@@ -61,17 +59,10 @@ class MockRequestFeedbackButtonComponent {
     exercise = input<any>();
     pendingChanges = input<any>();
     hasAthenaResultForLatestSubmission = input<any>();
-    isGeneratingFeedback = input<any>();
     isSubmitted = input<any>();
 }
 
-@Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
-class MockIrisExerciseChatbotButtonComponent {
-    mode = input<any>();
-}
-
 describe('TextEditorComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let textService: TextEditorService;
@@ -101,7 +92,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsFormComponent),
                 MockComponent(ComplaintsStudentViewComponent),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamParticipateInfoBoxComponent),
@@ -125,10 +116,10 @@ describe('TextEditorComponent', () => {
         })
             .overrideComponent(TextEditorComponent, {
                 remove: {
-                    imports: [RequestFeedbackButtonComponent, IrisExerciseChatbotButtonComponent],
+                    imports: [RequestFeedbackButtonComponent],
                 },
                 add: {
-                    imports: [MockRequestFeedbackButtonComponent, MockIrisExerciseChatbotButtonComponent, FormsModule],
+                    imports: [MockRequestFeedbackButtonComponent, FormsModule],
                 },
             })
             .compileComponents();
@@ -316,14 +307,14 @@ describe('TextEditorComponent', () => {
     it('should not submit while saving', () => {
         comp.isSaving.set(true);
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
     it('should not submit without submission', () => {
         comp.submission.set(undefined!);
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
@@ -333,7 +324,7 @@ describe('TextEditorComponent', () => {
         comp.textExercise.set({ id: 1 } as TextExercise);
         comp.answer.set('abc');
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(comp.isSaving()).toBeFalsy();
     });
@@ -347,7 +338,7 @@ describe('TextEditorComponent', () => {
         comp.answer.set('abc');
         comp.isAllowedToSubmitAfterDueDate.set(false);
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
@@ -361,7 +352,7 @@ describe('TextEditorComponent', () => {
         comp.answer.set('abc');
         comp.isAllowedToSubmitAfterDueDate.set(true);
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });

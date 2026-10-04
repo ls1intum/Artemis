@@ -15,11 +15,8 @@ import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('FileUploadExamSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
     let component: FileUploadExamSummaryComponent;
 

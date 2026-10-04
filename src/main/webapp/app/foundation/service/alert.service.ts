@@ -1,4 +1,4 @@
-import { Injectable, SecurityContext, inject, signal } from '@angular/core';
+import { SecurityContext, Service, inject, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -9,6 +9,7 @@ import { captureException } from '@sentry/angular';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /** PrimeNG `p-button` severities used by alert action buttons. */
 export type AlertButtonSeverity = 'success' | 'danger' | 'warn' | 'info';
@@ -56,9 +57,7 @@ export type Alert = Readonly<AlertInternal>;
 const DEFAULT_TIMEOUT = 15000;
 const DEFAULT_DISMISSIBLE = true;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class AlertService {
     private sanitizer = inject(DomSanitizer);
     private translateService = inject(TranslateService);
@@ -105,7 +104,7 @@ export class AlertService {
                     });
                     if (errorHeader && !this.translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
                         const entityName = this.translateService.instant('global.menu.entities.' + entityKey);
-                        this.addErrorAlert(errorHeader, errorHeader, { entityName, ...httpErrorResponse.error?.params });
+                        this.addErrorAlert(errorHeader, errorHeader, cloneWith({ entityName }, httpErrorResponse.error?.params ?? {}));
                     } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
                         for (const fieldError of fieldErrors) {

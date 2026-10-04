@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.athena.service;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -45,6 +47,8 @@ public class AthenaRepositoryExportService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     private final RepositoryService repositoryService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -52,8 +56,10 @@ public class AthenaRepositoryExportService {
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public AthenaRepositoryExportService(ProgrammingExerciseRepository programmingExerciseRepository, RepositoryService repositoryService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.repositoryService = repositoryService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -66,6 +72,7 @@ public class AthenaRepositoryExportService {
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
     private void checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(Exercise exercise) {
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         if (!(exercise.areFeedbackSuggestionsEnabled() || exercise.getAllowFeedbackRequests())) {
             log.error("Feedback suggestions are not enabled for exercise {}", exercise.getId());
             throw new ServiceUnavailableException("Feedback suggestions are not enabled for exercise");
@@ -142,9 +149,9 @@ public class AthenaRepositoryExportService {
 
         LocalVCRepositoryUri repoUri = programmingExercise.getRepositoryURI(repositoryType);
         if (repoUri == null) {
-            String errorKey = "invalid." + repositoryType.name().toLowerCase() + ".repository.url";
+            String errorKey = "invalid." + repositoryType.name().toLowerCase(Locale.ROOT) + ".repository.url";
             throw new BadRequestAlertException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
-                    + repositoryType.name().toLowerCase() + " repository has not been set up yet.", ENTITY_NAME, errorKey);
+                    + repositoryType.name().toLowerCase(Locale.ROOT) + " repository has not been set up yet.", ENTITY_NAME, errorKey);
         }
         return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repoUri);
     }

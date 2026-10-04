@@ -25,19 +25,18 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { Component as NgComponent } from '@angular/core';
+import { Component as NgComponent, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @NgComponent({
     template: `
         <jhi-competency-management-table
             [courseId]="1"
-            [courseCompetencies]="courseCompetencies"
-            [competencyType]="competencyType"
+            [courseCompetencies]="courseCompetencies()"
+            [competencyType]="competencyType()"
             [standardizedCompetenciesEnabled]="true"
             (competencyDeleted)="competencyDeleted($event)"
             (competenciesAdded)="competenciesAdded($event)"
@@ -47,9 +46,9 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 })
 class WrappedComponent {
     protected readonly CourseCompetencyType = CourseCompetencyType;
-    courseCompetencies: CourseCompetency[] = [];
+    courseCompetencies = signal<CourseCompetency[]>([]);
     allCompetencies: CourseCompetency[] = [];
-    competencyType = CourseCompetencyType.COMPETENCY;
+    competencyType = signal(CourseCompetencyType.COMPETENCY);
 
     competencyDeleted(competencyId: number) {}
     competenciesAdded(added: CourseCompetency[]) {
@@ -58,7 +57,6 @@ class WrappedComponent {
 }
 
 describe('CompetencyManagementTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<WrappedComponent>;
     let component: WrappedComponent;
     let competencyManagementTableComponent: CompetencyManagementTableComponent;
@@ -100,11 +98,11 @@ describe('CompetencyManagementTableComponent', () => {
     });
 
     it('should initialize values', () => {
-        component.competencyType = CourseCompetencyType.COMPETENCY;
+        component.competencyType.set(CourseCompetencyType.COMPETENCY);
         fixture.changeDetectorRef.detectChanges();
         expect(competencyManagementTableComponent.service).toEqual(competencyService);
 
-        component.competencyType = CourseCompetencyType.PREREQUISITE;
+        component.competencyType.set(CourseCompetencyType.PREREQUISITE);
         fixture.changeDetectorRef.detectChanges();
         expect(competencyManagementTableComponent.service).toEqual(prerequisiteService);
     });
@@ -139,7 +137,7 @@ describe('CompetencyManagementTableComponent', () => {
         const competency1 = { id: 1, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
         const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
         competencyManagementTableComponent.service = competencyService;
-        component.courseCompetencies = [competency1, competency2];
+        component.courseCompetencies.set([competency1, competency2]);
         fixture.changeDetectorRef.detectChanges();
 
         competencyManagementTableComponent.deleteCompetency(1);
@@ -152,7 +150,7 @@ describe('CompetencyManagementTableComponent', () => {
             const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
             const competency2 = { id: 2, title: 'Biology' } as CourseCompetency;
             const competency3 = { id: 3, title: 'Analysis' } as CourseCompetency;
-            component.courseCompetencies = [competency1, competency2, competency3];
+            component.courseCompetencies.set([competency1, competency2, competency3]);
             fixture.changeDetectorRef.detectChanges();
 
             competencyManagementTableComponent.filterText.set('al');
@@ -165,7 +163,7 @@ describe('CompetencyManagementTableComponent', () => {
 
         it('should return empty list when filter matches nothing', () => {
             const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
-            component.courseCompetencies = [competency1];
+            component.courseCompetencies.set([competency1]);
             fixture.changeDetectorRef.detectChanges();
 
             competencyManagementTableComponent.filterText.set('zzz');
@@ -176,7 +174,7 @@ describe('CompetencyManagementTableComponent', () => {
         it('should show all competencies when filter is cleared', () => {
             const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
             const competency2 = { id: 2, title: 'Biology' } as CourseCompetency;
-            component.courseCompetencies = [competency1, competency2];
+            component.courseCompetencies.set([competency1, competency2]);
             fixture.changeDetectorRef.detectChanges();
 
             competencyManagementTableComponent.filterText.set('Algebra');
@@ -192,8 +190,8 @@ describe('CompetencyManagementTableComponent', () => {
             const competency1 = { id: 1, title: 'Zoology' } as CourseCompetency;
             const competency2 = { id: 2, title: 'Algebra' } as CourseCompetency;
             const competency3 = { id: 3, title: 'Biology' } as CourseCompetency;
-            component.courseCompetencies = [competency1, competency2, competency3];
-            fixture.changeDetectorRef.detectChanges();
+            component.courseCompetencies.set([competency1, competency2, competency3]);
+            fixture.detectChanges();
 
             const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
             expect(result.map((c) => c.title)).toEqual(['Algebra', 'Biology', 'Zoology']);
@@ -203,7 +201,7 @@ describe('CompetencyManagementTableComponent', () => {
             const competency1 = { id: 1, title: 'Zoology' } as CourseCompetency;
             const competency2 = { id: 2, title: 'Algebra' } as CourseCompetency;
             const competency3 = { id: 3, title: 'Biology' } as CourseCompetency;
-            component.courseCompetencies = [competency1, competency2, competency3];
+            component.courseCompetencies.set([competency1, competency2, competency3]);
             fixture.changeDetectorRef.detectChanges();
 
             competencyManagementTableComponent.sortAscending = false;
@@ -216,7 +214,7 @@ describe('CompetencyManagementTableComponent', () => {
             const competency1 = { id: 1, title: 'A', taxonomy: CompetencyTaxonomy.REMEMBER } as CourseCompetency;
             const competency2 = { id: 2, title: 'B', taxonomy: CompetencyTaxonomy.ANALYZE } as CourseCompetency;
             const competency3 = { id: 3, title: 'C', taxonomy: CompetencyTaxonomy.APPLY } as CourseCompetency;
-            component.courseCompetencies = [competency1, competency2, competency3];
+            component.courseCompetencies.set([competency1, competency2, competency3]);
             fixture.changeDetectorRef.detectChanges();
 
             competencyManagementTableComponent.sortPredicate = 'taxonomy';
@@ -229,7 +227,7 @@ describe('CompetencyManagementTableComponent', () => {
             const competency1 = { id: 1, title: 'A', softDueDate: dayjs('2025-06-01') } as CourseCompetency;
             const competency2 = { id: 2, title: 'B', softDueDate: dayjs('2025-01-01') } as CourseCompetency;
             const competency3 = { id: 3, title: 'C', softDueDate: dayjs('2025-03-15') } as CourseCompetency;
-            component.courseCompetencies = [competency1, competency2, competency3];
+            component.courseCompetencies.set([competency1, competency2, competency3]);
             fixture.changeDetectorRef.detectChanges();
 
             competencyManagementTableComponent.sortPredicate = 'softDueDate';
@@ -245,7 +243,7 @@ describe('CompetencyManagementTableComponent', () => {
             const competency1 = { id: 1, title: 'A', courseProgress: progress1 } as CourseCompetency;
             const competency2 = { id: 2, title: 'B', courseProgress: progress2 } as CourseCompetency;
             const competency3 = { id: 3, title: 'C', courseProgress: progress3 } as CourseCompetency;
-            component.courseCompetencies = [competency1, competency2, competency3];
+            component.courseCompetencies.set([competency1, competency2, competency3]);
             fixture.changeDetectorRef.detectChanges();
 
             competencyManagementTableComponent.sortPredicate = 'masteredStudents';
@@ -258,7 +256,7 @@ describe('CompetencyManagementTableComponent', () => {
             const progress = { numberOfStudents: 10, numberOfMasteredStudents: 3 } as CourseCompetencyProgress;
             const competency1 = { id: 1, title: 'A', courseProgress: progress } as CourseCompetency;
             const competency2 = { id: 2, title: 'B' } as CourseCompetency;
-            component.courseCompetencies = [competency1, competency2];
+            component.courseCompetencies.set([competency1, competency2]);
             fixture.changeDetectorRef.detectChanges();
 
             competencyManagementTableComponent.sortPredicate = 'masteredStudents';

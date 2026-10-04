@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -16,8 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PostingSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostingSummaryComponent;
     let fixture: ComponentFixture<PostingSummaryComponent>;
 
@@ -63,6 +60,30 @@ describe('PostingSummaryComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it.each([true, false])('should keep post navigation separate from rich content and saved actions (conversation: %s)', (showConversation) => {
+        fixture.componentRef.setInput('post', { ...mockPost, conversation: showConversation ? mockPost.conversation : undefined });
+        fixture.componentRef.setInput('isShowSavedPostOptions', true);
+        fixture.detectChanges();
+        const navigation = fixture.nativeElement.querySelector('[data-testid="posting-summary-open"]') as HTMLButtonElement;
+        const richContent = fixture.nativeElement.querySelector('jhi-posting-content') as HTMLElement;
+        const savedActions = fixture.nativeElement.querySelector('[role="group"]') as HTMLElement;
+        const navigate = vi.spyOn(component.onNavigateToPost, 'emit');
+        const remove = vi.spyOn(component.onRemoveBookmark, 'emit');
+        expect(navigation).not.toBeNull();
+        expect(navigation.type).toBe('button');
+        expect(navigation.querySelector('button, input, a, jhi-posting-content')).toBeNull();
+        expect(richContent.closest('button, [role="button"]')).toBeNull();
+        expect(savedActions.closest('button, [role="button"]')).toBeNull();
+        savedActions.querySelector('button')!.click();
+        expect(remove).toHaveBeenCalledOnce();
+        expect(navigate).not.toHaveBeenCalled();
+        navigation.click();
+        expect(navigate).toHaveBeenCalledExactlyOnceWith(component.post());
+        navigate.mockClear();
+        richContent.click();
+        expect(navigate).toHaveBeenCalledExactlyOnceWith(component.post());
     });
 
     describe('Input handling', () => {

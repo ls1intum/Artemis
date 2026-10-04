@@ -4,7 +4,6 @@
  */
 import { Component, input } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -74,7 +73,6 @@ class MockDocumentationButtonComponent {
 }
 
 describe('TextExercise Management Detail Component', () => {
-    setupTestBed({ zoneless: true });
     let comp: TextExerciseDetailComponent;
     let fixture: ComponentFixture<TextExerciseDetailComponent>;
     let exerciseService: TextExerciseService;
@@ -201,6 +199,28 @@ describe('TextExercise Management Detail Component', () => {
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(comp.isExamExercise()).toBe(true);
             expect(comp.textExercise()).toEqual(textExerciseWithExerciseGroup);
+        });
+    });
+
+    describe('ngOnDestroy', () => {
+        const course: Course = { id: 123 } as Course;
+        const textExerciseWithCourse: TextExercise = new TextExercise(course, undefined);
+        textExerciseWithCourse.id = 123;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ exerciseId: textExerciseWithCourse.id });
+            const headers = new HttpHeaders().append('link', 'link;link');
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExerciseWithCourse, headers })));
+            vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
+        });
+
+        it('should not throw when the route subscription was already cleared', () => {
+            fixture.detectChanges();
+
+            (comp as any).subscription = undefined;
+
+            expect(() => comp.ngOnDestroy()).not.toThrow();
         });
     });
 

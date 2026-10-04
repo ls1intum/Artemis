@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
@@ -9,8 +9,9 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -29,21 +31,27 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentInputDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadComplaintResponseInputDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadFeedbackDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadFeedbackInputDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadResultDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadSubmissionDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
@@ -61,15 +69,84 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
-        course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         afterReleaseFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
     }
 
     private List<Feedback> exerciseWithSGI() throws Exception {
         exerciseUtilService.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
-        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
-                UpdateFileUploadExerciseDTO.of(afterReleaseFileUploadExercise), FileUploadExercise.class, HttpStatus.OK);
-        return ParticipationFactory.applySGIonFeedback(receivedFileUploadExercise);
+        FileUploadExerciseDTO receivedFileUploadExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
+                UpdateFileUploadExerciseDTO.of(afterReleaseFileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK);
+        assertThat(receivedFileUploadExercise.id()).isEqualTo(afterReleaseFileUploadExercise.getId());
+        afterReleaseFileUploadExercise
+                .setGradingCriteria(receivedFileUploadExercise.gradingCriteria().stream().map(gradingCriterionDTO -> gradingCriterionDTO.toEntity()).collect(Collectors.toSet()));
+        return ParticipationFactory.applySGIonFeedback(afterReleaseFileUploadExercise);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentRejectsForeignGradingInstruction(boolean submit) throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise,
+                ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var originalResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
+        var originalFeedbackIds = originalResult.getFeedbacks().stream().map(Feedback::getId).toList();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", Boolean.toString(submit));
+
+        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/feedback", assessmentInput(feedbackWithForeignInstruction(), "changed note"),
+                FileUploadResultDTO.class, HttpStatus.BAD_REQUEST, params);
+
+        var unchangedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(originalResult.getId());
+        assertThat(unchangedResult.getFeedbacks()).extracting(Feedback::getId).containsExactlyInAnyOrderElementsOf(originalFeedbackIds);
+        assertThat(unchangedResult.getScore()).isEqualTo(originalResult.getScore());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveFirstAssessmentRejectsForeignFeedbackWithoutCreatingResult() throws Exception {
+        // a submission that has not been assessed yet, so the save would create a new result
+        var submission = fileUploadExerciseUtilService.addFileUploadSubmission(afterReleaseFileUploadExercise, ParticipationFactory.generateFileUploadSubmission(true),
+                TEST_PREFIX + "student1");
+        // a feedback stored on the result of another submission
+        var otherSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise,
+                ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        var otherFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("detail of the other result");
+        participationUtilService.addFeedbackToResult(otherFeedback, otherSubmission.getLatestResult());
+
+        var foreignFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("changed");
+        foreignFeedback.setId(otherFeedback.getId());
+        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/feedback", assessmentInput(List.of(foreignFeedback), "note"),
+                FileUploadResultDTO.class, HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResults())
+                .as("the refused first assessment leaves no result on the submission").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void complaintUpdateRejectsForeignGradingInstructionBeforeResolvingComplaint() throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise,
+                ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var complaint = complaintRepository.save(new Complaint().result(submission.getLatestResult()).complaintText("Please review"));
+        var response = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        var update = new FileUploadAssessmentUpdateDTO(feedbackInputDTOs(feedbackWithForeignInstruction()),
+                new FileUploadComplaintResponseInputDTO(response.getId(), "Accepted", true), null);
+
+        request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/assessment-after-complaint", update, FileUploadResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        var unchangedComplaint = complaintRepository.findWithEagerComplaintResponseByResultSubmissionId(submission.getId()).orElseThrow();
+        assertThat(unchangedComplaint.isAccepted()).isNull();
+        assertThat(unchangedComplaint.getComplaintResponse().getSubmittedTime()).isNull();
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResults()).hasSize(1);
+    }
+
+    private List<Feedback> feedbackWithForeignInstruction() {
+        var otherExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(otherExercise));
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("foreign grading instruction");
+        feedback.setGradingInstruction(criteria.getFirst().getStructuredGradingInstructions().iterator().next());
+        return List.of(feedback);
     }
 
     @Test
@@ -81,24 +158,26 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
         List<Feedback> feedbacks = exerciseWithSGI();
-        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
+        FileUploadAssessmentInputDTO body = assessmentInput(feedbacks, "text");
 
-        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
+        FileUploadResultDTO result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, FileUploadResultDTO.class,
+                HttpStatus.OK, params);
 
         assertThat(result).as("submitted result found").isNotNull();
-        assertThat(result.isRated()).isTrue();
-        assertThat(result.getScore()).isEqualTo(60); // total score 3P (60%) because gradingInstructionWithLimit was applied twice but only counts once
-        assertThat(result.getFeedbacks()).hasSize(4);
-        assertThat(findByReference(result.getFeedbacks(), feedbacks.getFirst().getReference()).getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
-        assertThat(findByReference(result.getFeedbacks(), feedbacks.get(1).getReference()).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
-        assertThat(result.getAssessmentNote().getNote()).isEqualTo("text");
-        assertThat(result.getAssessor()).isEqualTo(result.getAssessmentNote().getCreator());
+        assertThat(result.rated()).isTrue();
+        assertThat(result.score()).isEqualTo(60); // total score 3P (60%) because gradingInstructionWithLimit was applied twice but only counts once
+        assertThat(result.feedbacks()).hasSize(4);
+        assertThat(findByReference(result.feedbacks(), feedbacks.getFirst().getReference()).credits()).isEqualTo(feedbacks.getFirst().getCredits());
+        assertThat(findByReference(result.feedbacks(), feedbacks.get(1).getReference()).credits()).isEqualTo(feedbacks.get(1).getCredits());
+        assertThat(result.assessmentNote().note()).isEqualTo("text");
+        assertThat(result.assessor()).isEqualTo(result.assessmentNote().creator());
 
-        Course course = request.get("/api/course/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard",
-                HttpStatus.OK, Course.class);
-        Exercise exercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
+        CourseAssessmentDashboardDTO dashboard = request.get(
+                "/api/course/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
+                CourseAssessmentDashboardDTO.class);
+        CourseAssessmentDashboardDTO.AssessmentExerciseDTO exercise = dashboard.exercises().stream().filter(e -> "released".equals(e.title())).findFirst().orElseThrow();
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds().getFirst().inTime()).isEqualTo(1L);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -131,9 +210,10 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
-        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
-        Result response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
-        assertThat(response.getScore()).isEqualTo(expectedScore);
+        FileUploadAssessmentInputDTO body = assessmentInput(feedbacks, "text");
+        FileUploadResultDTO response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body,
+                FileUploadResultDTO.class, HttpStatus.OK, params);
+        assertThat(response.score()).isEqualTo(expectedScore);
     }
 
     @Test
@@ -149,17 +229,19 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         // Check that result is over 100% -> 105
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
-        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
-        Result response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
+        FileUploadAssessmentInputDTO body = assessmentInput(feedbacks, "text");
+        FileUploadResultDTO response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body,
+                FileUploadResultDTO.class, HttpStatus.OK, params);
 
-        assertThat(response.getScore()).isEqualTo(105);
+        assertThat(response.score()).isEqualTo(105);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
-        body = new FileUploadAssessmentDTO(feedbacks, "text");
-        response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
+        body = assessmentInput(feedbacks, "text");
+        response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, FileUploadResultDTO.class, HttpStatus.OK,
+                params);
         Double offsetByTenThousandth = 0.0001;
-        assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
+        assertThat(response.score()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
 
     @Test
@@ -178,14 +260,16 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         complaintResponse.setResponseText("rejected");
 
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
-        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
+        final var assessmentUpdate = new FileUploadAssessmentUpdateDTO(feedbackInputDTOs(feedbacks),
+                new FileUploadComplaintResponseInputDTO(complaintResponse.getId(), complaintResponse.getResponseText(), complaintResponse.getComplaint().isAccepted()), null);
 
-        Result updatedResult = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
-                Result.class, HttpStatus.OK);
+        FileUploadResultDTO updatedResult = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/assessment-after-complaint",
+                assessmentUpdate, FileUploadResultDTO.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(((StudentParticipation) updatedResult.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
-        assertThat(updatedResult.getFeedbacks()).hasSize(3);
+        assertThat(updatedResult.submission().participation().participantName()).as("student name is hidden").isNull();
+        assertThat(updatedResult.submission().participation().participantIdentifier()).as("student identifier is hidden").isNull();
+        assertThat(updatedResult.feedbacks()).hasSize(3);
     }
 
     @Test
@@ -194,12 +278,14 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
-        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(new ArrayList<>(), "text");
-        Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK);
+        FileUploadAssessmentInputDTO body = assessmentInput(new ArrayList<>(), "text");
+        FileUploadResultDTO result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, FileUploadResultDTO.class,
+                HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(result.isRated()).isFalse();
-        assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(result.rated()).isFalse();
+        assertThat(result.submission().participation().participantName()).as("student name is hidden").isNull();
+        assertThat(result.submission().participation().participantIdentifier()).as("student identifier is hidden").isNull();
     }
 
     @Test
@@ -211,16 +297,18 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
-        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
+        FileUploadAssessmentInputDTO body = assessmentInput(feedbacks, "text");
 
-        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
+        FileUploadResultDTO result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, FileUploadResultDTO.class,
+                HttpStatus.OK, params);
 
         assertThat(result).as("submitted result found").isNotNull();
-        assertThat(result.isRated()).isTrue();
-        assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
-        assertThat(result.getFeedbacks()).hasSize(3);
-        assertThat(findByReference(result.getFeedbacks(), feedbacks.getFirst().getReference()).getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
-        assertThat(findByReference(result.getFeedbacks(), feedbacks.get(1).getReference()).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+        assertThat(result.rated()).isTrue();
+        assertThat(result.submission().participation().participantName()).as("student name is hidden").isNull();
+        assertThat(result.submission().participation().participantIdentifier()).as("student identifier is hidden").isNull();
+        assertThat(result.feedbacks()).hasSize(3);
+        assertThat(findByReference(result.feedbacks(), feedbacks.getFirst().getReference()).credits()).isEqualTo(feedbacks.getFirst().getCredits());
+        assertThat(findByReference(result.feedbacks(), feedbacks.get(1).getReference()).credits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
     @Test
@@ -332,8 +420,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
-        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
-        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, httpStatus, params);
+        FileUploadAssessmentInputDTO body = assessmentInput(feedbacks, "text");
+        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, FileUploadResultDTO.class, httpStatus, params);
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
@@ -378,8 +466,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        Result result = request.get(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/result", HttpStatus.OK, Result.class);
-        assertThat(result.getScore()).isEqualTo(100D);
+        FileUploadResultDTO result = request.get(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/result", HttpStatus.OK, FileUploadResultDTO.class);
+        assertThat(result.score()).isEqualTo(100D);
     }
 
     @Test
@@ -389,7 +477,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        request.get(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+        request.get(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, FileUploadResultDTO.class);
     }
 
     @Test
@@ -421,47 +509,47 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
-        FileUploadSubmission submissionWithoutFirstAssessment = request.get("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submission-without-assessment",
-                HttpStatus.OK, FileUploadSubmission.class, params);
+        FileUploadSubmissionDTO submissionWithoutFirstAssessment = request.get("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submission-without-assessment",
+                HttpStatus.OK, FileUploadSubmissionDTO.class, params);
         // verify that no new submission was created
-        assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
+        assertThat(submissionWithoutFirstAssessment.id()).isEqualTo(submission.getId());
         // verify that the lock has been set
-        assertThat(submissionWithoutFirstAssessment.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
-        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(submissionWithoutFirstAssessment.results()).hasSize(1);
+        assertThat(submissionWithoutFirstAssessment.results().getFirst().assessor().login()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(submissionWithoutFirstAssessment.results().getFirst().assessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // make sure that new result correctly appears inside the continue box
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
+        var assessedSubmissionList = request.getList("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmissionDTO.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+        assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionWithoutFirstAssessment.id());
+        assertThat(assessedSubmissionList.getFirst().results().getFirst().id()).isEqualTo(submissionWithoutFirstAssessment.results().getFirst().id());
 
         // assess submission and submit
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
-        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
+        FileUploadAssessmentInputDTO body = assessmentInput(feedbacks, "text");
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
-        final Result firstSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback", body,
-                Result.class, HttpStatus.OK, params);
+        final FileUploadResultDTO firstSubmittedManualResult = request.putWithResponseBodyAndParams(
+                API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.id() + "/feedback", body, FileUploadResultDTO.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
+        assessedSubmissionList = request.getList("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmissionDTO.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isNotNull();
-        assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionWithoutFirstAssessment.id());
+        assertThat(assessedSubmissionList.getFirst().results().getFirst()).isNotNull();
+        assertThat(firstSubmittedManualResult.assessor().login()).isEqualTo(TEST_PREFIX + "tutor1");
 
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
-        assertThat(firstSubmittedManualResult.getSubmission().getParticipation()).isEqualTo(studentParticipation);
+        assertThat(firstSubmittedManualResult.submission().participation().id()).isEqualTo(studentParticipation.getId());
 
         // verify that the relationship between student participation,
         var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
@@ -469,8 +557,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestSubmission())
+                .hasValueSatisfying(fetchedSubmission -> assertThat(fetchedSubmission.getId()).isEqualTo(submissionWithoutFirstAssessment.id()));
+        assertThat(fetchedParticipation.findLatestResult().getId()).isEqualTo(firstSubmittedManualResult.id());
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
@@ -480,7 +569,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult().getId()).isEqualTo(firstSubmittedManualResult.id());
 
         // SECOND ROUND OF CORRECTION
 
@@ -490,14 +579,14 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         paramsSecondCorrection.add("correction-round", "1");
 
         final var submissionWithoutSecondAssessment = request.get("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
-                FileUploadSubmission.class, paramsSecondCorrection);
+                FileUploadSubmissionDTO.class, paramsSecondCorrection);
 
         // verify that the submission is not new
-        assertThat(submissionWithoutSecondAssessment).isEqualTo(submission);
+        assertThat(submissionWithoutSecondAssessment.id()).isEqualTo(submission.getId());
         // verify that the lock has been set
-        assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor2");
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(submissionWithoutSecondAssessment.results()).hasSize(2);
+        assertThat(submissionWithoutSecondAssessment.results().getLast().assessor().login()).isEqualTo(TEST_PREFIX + "tutor2");
+        assertThat(submissionWithoutSecondAssessment.results().getLast().assessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // verify that the relationship between student participation,
         databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
@@ -505,9 +594,10 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
+        assertThat(fetchedParticipation.findLatestSubmission())
+                .hasValueSatisfying(fetchedSubmission -> assertThat(fetchedSubmission.getId()).isEqualTo(submissionWithoutSecondAssessment.id()));
         assertThat(participationUtilService.getResultsForParticipation(fetchedParticipation).stream().filter(result -> result.getCompletionDate() == null).findFirst())
-                .contains(submissionWithoutSecondAssessment.getLatestResult());
+                .hasValueSatisfying(result -> assertThat(result.getId()).isEqualTo(submissionWithoutSecondAssessment.results().getLast().id()));
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
@@ -515,15 +605,15 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
-        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult().getId()).isEqualTo(submissionWithoutSecondAssessment.results().getLast().id());
 
         // assess submission and submit
         feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toCollection(ArrayList::new));
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
-        body = new FileUploadAssessmentDTO(feedbacks, "text");
-        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback", body,
-                Result.class, HttpStatus.OK, params);
+        body = assessmentInput(feedbacks, "text");
+        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.id() + "/feedback", body,
+                FileUploadResultDTO.class, HttpStatus.OK, params);
 
         assertThat(secondSubmittedManualResult).isNotNull();
 
@@ -531,24 +621,27 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
+        assessedSubmissionList = request.getList("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmissionDTO.class,
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
-        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
+        assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionWithoutSecondAssessment.id());
+        // Only the result of the requested correction round comes back. The results used to be an ordered list whose
+        // position carried the round, so a tutor who had assessed only the second round produced a null at index 0.
+        assertThat(assessedSubmissionList.getFirst().results()).hasSize(1);
+        assertThat(assessedSubmissionList.getFirst().results().getFirst().id()).isEqualTo(secondSubmittedManualResult.id());
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
+        assessedSubmissionList = request.getList("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmissionDTO.class,
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(ResultDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"), isA(ResultDTO.class));
     }
 
     @Test
@@ -563,14 +656,14 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(3);
-        Result firstResult = submission.getResults().getFirst();
+        Result firstResult = submission.getFirstResult();
         Result lastResult = submission.getLatestResult();
         request.delete(
                 "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+        assertThat(resultsInCreationOrder(submission).get(1)).isEqualTo(lastResult);
     }
 
     @Test
@@ -595,7 +688,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 + resultOfOtherSubmission.getId(), HttpStatus.BAD_REQUEST);
         submission1 = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission1.getId());
         assertThat(submission1.getResults()).hasSize(3);
-        assertThat(submission1.getResults().get(2)).isEqualTo(lastResult);
+        assertThat(resultsInCreationOrder(submission1).get(2)).isEqualTo(lastResult);
     }
 
     @Test
@@ -618,10 +711,30 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 HttpStatus.BAD_REQUEST);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+        assertThat(resultsInCreationOrder(submission).get(1)).isEqualTo(lastResult);
     }
 
-    private static Feedback findByReference(Collection<Feedback> feedbacks, String reference) {
-        return feedbacks.stream().filter(f -> reference.equals(f.getReference())).findFirst().orElseThrow();
+    private static FileUploadAssessmentInputDTO assessmentInput(List<Feedback> feedbacks, String assessmentNote) {
+        return new FileUploadAssessmentInputDTO(feedbackInputDTOs(feedbacks), assessmentNote);
+    }
+
+    private static List<FileUploadFeedbackInputDTO> feedbackInputDTOs(List<Feedback> feedbacks) {
+        return feedbacks.stream()
+                .map(feedback -> new FileUploadFeedbackInputDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getReference(), feedback.getCredits(),
+                        feedback.isPositive(), feedback.getType(), feedback.getVisibility(),
+                        feedback.getGradingInstruction() != null ? GradingInstructionDTO.of(feedback.getGradingInstruction()) : null))
+                .toList();
+    }
+
+    private static FileUploadFeedbackDTO findByReference(List<FileUploadFeedbackDTO> feedbacks, String reference) {
+        return feedbacks.stream().filter(f -> reference.equals(f.reference())).findFirst().orElseThrow();
+    }
+
+    /**
+     * The results of a submission in the order they were created. The submission's results are an unordered set, so a
+     * test that cares about the order of creation has to say so; ids ascend with creation.
+     */
+    private static List<Result> resultsInCreationOrder(Submission submission) {
+        return submission.getResults().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Result::getId)).toList();
     }
 }

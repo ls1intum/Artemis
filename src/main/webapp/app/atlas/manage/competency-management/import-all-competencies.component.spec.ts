@@ -14,11 +14,9 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PaginatorState } from 'primeng/paginator';
 
 describe('ImportAllCompetenciesComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
     let component: ImportAllCompetenciesComponent;
     let dialogRef: DynamicDialogRef;

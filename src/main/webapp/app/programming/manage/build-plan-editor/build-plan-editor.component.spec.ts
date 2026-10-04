@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BuildPlanEditorComponent } from 'app/programming/manage/build-plan-editor/build-plan-editor.component';
 import { BuildPlanService } from 'app/programming/manage/services/build-plan.service';
@@ -23,8 +22,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Build Plan Editor', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
     let comp: BuildPlanEditorComponent;
 

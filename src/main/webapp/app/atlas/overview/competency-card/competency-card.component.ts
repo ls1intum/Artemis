@@ -10,13 +10,13 @@ import { NgClass } from '@angular/common';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
     selector: 'jhi-competency-card',
     templateUrl: './competency-card.component.html',
     styleUrls: ['../../../course/overview/course-exercises/course-exercise-row/course-exercise-row.scss'],
-    imports: [RouterLink, FaIconComponent, NgbTooltip, TranslateDirective, NgClass, CompetencyRingsComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, HtmlForMarkdownPipe],
+    imports: [RouterLink, FaIconComponent, NgbTooltip, TranslateDirective, NgClass, CompetencyRingsComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, MarkdownDirective],
 })
 export class CompetencyCardComponent {
     translateService = inject(TranslateService);

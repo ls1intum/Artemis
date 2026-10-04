@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import { IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS, IrisSearchAnswerService } from './iris-search-answer.service';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
@@ -11,8 +10,6 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 const MOCK_RUN_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 describe('IrisSearchAnswerService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: IrisSearchAnswerService;
     let httpTesting: HttpTestingController;
     let wsSubject: Subject<IrisSearchStatusUpdate>;

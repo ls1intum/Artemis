@@ -1,17 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('FeedbackModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FeedbackModalComponent>;
     let component: FeedbackModalComponent;
     let activeModal: NgbActiveModal;
@@ -35,8 +32,14 @@ describe('FeedbackModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), FeedbackModalComponent],
-            providers: [NgbActiveModal, { provide: LongFeedbackTextService, useValue: mockLongFeedbackTextService }, provideHttpClient(), provideHttpClientTesting()],
+            imports: [FeedbackModalComponent],
+            providers: [
+                NgbActiveModal,
+                { provide: LongFeedbackTextService, useValue: mockLongFeedbackTextService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(FeedbackModalComponent);
         component = fixture.componentInstance;

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -23,8 +22,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import dayjs from 'dayjs/esm';
 
 describe('OpenCodeEditorButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: OpenCodeEditorButtonComponent;
     let fixture: ComponentFixture<OpenCodeEditorButtonComponent>;
     let debugElement: DebugElement;

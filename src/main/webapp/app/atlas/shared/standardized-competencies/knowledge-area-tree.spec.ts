@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
@@ -35,7 +34,6 @@ function ka(partial: Partial<KnowledgeAreaForTree> & { id: number }): KnowledgeA
 }
 
 describe('KnowledgeAreaTreeComponent', () => {
-    setupTestBed({ zoneless: true });
     let hostFixture: ComponentFixture<HostComponent>;
     let host: HostComponent;
 
@@ -75,6 +73,29 @@ describe('KnowledgeAreaTreeComponent', () => {
 
         const knowledgeAreaNodes = hostFixture.debugElement.queryAll(By.css('[data-testid="knowledge-area-node"]'));
         expect(knowledgeAreaNodes).toHaveLength(1);
+    });
+
+    it('should expose expansion on the focusable title for keyboard and programmatic changes', () => {
+        host.dataSource = { data: [ka({ id: 1 })] };
+        hostFixture.detectChanges();
+        const title = () => hostFixture.nativeElement.querySelector('[data-testid="knowledge-area-node"] h5') as HTMLElement;
+        expect(title().getAttribute('aria-expanded')).toBe('false');
+
+        title().dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        hostFixture.detectChanges();
+        expect(title().getAttribute('aria-expanded')).toBe('true');
+
+        title().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        hostFixture.detectChanges();
+        expect(title().getAttribute('aria-expanded')).toBe('false');
+
+        host.tree().expandAll();
+        hostFixture.detectChanges();
+        expect(title().getAttribute('aria-expanded')).toBe('true');
+
+        host.tree().collapseAll();
+        hostFixture.detectChanges();
+        expect(title().getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should render an empty-state node for a knowledge area without children or competencies', () => {

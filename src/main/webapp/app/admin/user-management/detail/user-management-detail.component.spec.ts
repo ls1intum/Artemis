@@ -4,7 +4,6 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
@@ -13,13 +12,11 @@ import { User } from 'app/account/user/user.model';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
 describe('UserManagementDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UserManagementDetailComponent;
     let fixture: ComponentFixture<UserManagementDetailComponent>;
 
     /** Sample user data provided through the route resolver */
-    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT], ['admin']);
+    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT]);
 
     /** Mock ActivatedRoute with user data in the route's data observable */
     const mockRoute = {
@@ -53,7 +50,6 @@ describe('UserManagementDetailComponent', () => {
                     activated: true,
                     langKey: 'en',
                     authorities: [Authority.STUDENT],
-                    groups: ['admin'],
                 }),
             );
         });

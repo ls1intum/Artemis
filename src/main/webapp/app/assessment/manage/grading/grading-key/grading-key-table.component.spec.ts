@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -24,7 +23,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 describe('GradingKeyTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingKeyTableComponent>;
     let component: GradingKeyTableComponent;
     let gradingService: GradingService;
@@ -218,7 +216,7 @@ describe('GradingKeyTableComponent', () => {
                     vi.spyOn(gradingService, 'setGradePoints').mockImplementation(() => {});
                     vi.spyOn(gradingService, 'hasPointsSet').mockReturnValue(false);
                     vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
-                        new CourseScores(200, 200, 0, { absoluteScore: 150, relativeScore: 75, currentRelativeScore: 80, presentationScore: 0 }),
+                        new CourseScores(200, 200, 0, { absoluteScore: 150, absoluteScoreTotal: 150, relativeScore: 75, currentRelativeScore: 80, presentationScore: 0 }),
                     );
 
                     fixture = TestBed.createComponent(GradingKeyTableComponent);

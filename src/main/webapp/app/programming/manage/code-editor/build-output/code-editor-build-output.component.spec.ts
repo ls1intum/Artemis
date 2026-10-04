@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
@@ -26,8 +25,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorBuildOutputComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorBuildOutputComponent;
     let fixture: ComponentFixture<CodeEditorBuildOutputComponent>;
     let debugElement: DebugElement;
@@ -108,6 +105,22 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('announces the owning grid collapse state after keyboard activation', () => {
+        fixture.componentRef.setInput('participation', {});
+        fixture.detectChanges();
+        const header = fixture.nativeElement.querySelector('[role="button"]') as HTMLElement;
+        const toggle = vi.spyOn(comp.onToggleCollapse, 'emit');
+        expect(header.getAttribute('aria-expanded')).toBe('true');
+        header.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(toggle).toHaveBeenCalledOnce();
+        fixture.componentRef.setInput('collapsed', true);
+        fixture.detectChanges();
+        expect(header.getAttribute('aria-expanded')).toBe('false');
+        fixture.componentRef.setInput('collapsed', false);
+        fixture.detectChanges();
+        expect(header.getAttribute('aria-expanded')).toBe('true');
     });
 
     it('should setup result websocket, fetch result details and build logs on participation change', () => {

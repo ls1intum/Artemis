@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -18,12 +17,10 @@ import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-p
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 describe('ForwardMessageDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ForwardMessageDialogComponent;
     let fixture: ComponentFixture<ForwardMessageDialogComponent>;
     let searchInput: any;
@@ -50,8 +47,8 @@ describe('ForwardMessageDialogComponent', () => {
                 add: { imports: [MockComponent(PostingContentComponent)] },
             })
             .overrideComponent(ForwardMessageDialogComponent, {
-                remove: { providers: [MetisService] },
-                add: { providers: [MockProvider(MetisService)] },
+                remove: { providers: [CommunicationService] },
+                add: { providers: [MockProvider(CommunicationService)] },
             });
 
         global.ResizeObserver = class extends MockResizeObserver {

@@ -6,6 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-admin-title-bar',
     templateUrl: './admin-title-bar.component.html',
+    styleUrl: './admin-title-bar.component.scss',
     imports: [NgTemplateOutlet, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

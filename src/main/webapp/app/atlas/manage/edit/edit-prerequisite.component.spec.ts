@@ -18,10 +18,8 @@ import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/p
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('EditPrerequisiteComponent', () => {
-    setupTestBed({ zoneless: true });
     let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;
     let editPrerequisiteComponent: EditPrerequisiteComponent;
     beforeEach(async () => {
@@ -106,7 +104,7 @@ describe('EditPrerequisiteComponent', () => {
             description: competencyOfResponse.description,
             optional: competencyOfResponse.optional,
         });
-        expect(competencyFormComponent.formData).toEqual(editPrerequisiteComponent.formData());
+        expect(competencyFormComponent.formData()).toEqual(editPrerequisiteComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {

@@ -5,34 +5,6 @@ Course Info Bar
     position: relative;
 }
 
-.refresh-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    opacity: 0;
-    pointer-events: none;
-    transition: 0.1s ease-out opacity;
-
-    &.active {
-        background-color: var(--overview-refresh-overlay-bg-color);
-        opacity: 1;
-        pointer-events: auto;
-        transition: 0.2s ease-in opacity;
-    }
-
-    .ng-fa-icon {
-        position: relative;
-        top: calc(50vh - 150px - 2.5vh);
-        transform: translateY(-50%);
-        color: var(--overview-refresh-overlay-color);
-    }
-}
-
 .back-button {
     cursor: pointer;
 }
@@ -194,8 +166,7 @@ canvas#complete-chart {
 }
 
 .content-sidebar-width {
-    // magic number is 255px sidebar width + 8px margin
-    width: calc(100% - 263px) !important;
+    width: calc(100% - var(--sidebar-width) - var(--spacing-divider)) !important;
     transition: width 0.1s 0s ease-in-out;
 }
 

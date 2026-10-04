@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.Duplicate
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseUpdatedNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.IrisResponseNeedsReviewNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.IrisResponseNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
@@ -85,6 +86,8 @@ public class AllActivityUserCourseNotificationSettingPreset extends UserCourseNo
                         Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
                 Map.entry(TutorialGroupDeletedNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(IrisResponseNeedsReviewNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)),
                 Map.entry(IrisResponseNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, true)));
     }

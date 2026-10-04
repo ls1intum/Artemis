@@ -1,25 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { LinkPreviewComponent } from 'app/communication/link-preview/components/link-preview/link-preview.component';
 
 describe('LinkPreviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LinkPreviewComponent;
     let fixture: ComponentFixture<LinkPreviewComponent>;
-    let metisService: MetisService;
+    let communicationService: CommunicationService;
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -27,9 +24,9 @@ describe('LinkPreviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [LinkPreviewComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ConfirmIconComponent)],
+            imports: [LinkPreviewComponent, MockPipe(ArtemisTranslatePipe), ConfirmIconComponent],
             providers: [
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 LocalStorageService,
@@ -37,7 +34,7 @@ describe('LinkPreviewComponent', () => {
         });
 
         fixture = TestBed.createComponent(LinkPreviewComponent);
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('posting', new Post());
         fixture.componentRef.setInput('showLoadingsProgress', false);
@@ -71,6 +68,27 @@ describe('LinkPreviewComponent', () => {
         expect(previewTitle.textContent).toBe('Test Title');
         expect(previewDescription.textContent).toBe('Test Description');
         expect(previewImage.src).toContain('test-image.jpg');
+    });
+
+    it('should keep the close button reachable and enabled when focused via keyboard', () => {
+        vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
+        fixture.componentRef.setInput('linkPreview', {
+            title: 'Test Title',
+            description: 'Test Description',
+            url: 'https://example.com',
+            shouldPreviewBeShown: true,
+        });
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        const closeButton = fixture.nativeElement.querySelector('.close-button button');
+        expect(closeButton).toBeTruthy();
+
+        closeButton.focus();
+
+        expect(document.activeElement).toBe(closeButton);
+        expect(closeButton.disabled).toBe(false);
+        expect(closeButton.hidden).toBe(false);
     });
 
     it('should render link preview without image when multiple links are provided', () => {
@@ -136,12 +154,12 @@ describe('LinkPreviewComponent', () => {
     });
 
     it('should initialize isAuthorOfOriginalPost', () => {
-        const metisServiceSpy = vi.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        const communicationServiceSpy = vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
 
         component.ngOnInit();
 
         expect(component.isAuthorOfOriginalPost()).toBe(true);
-        expect(metisServiceSpy).toHaveBeenCalled();
+        expect(communicationServiceSpy).toHaveBeenCalled();
     });
 
     it('should remove link preview from message', () => {
@@ -154,14 +172,14 @@ describe('LinkPreviewComponent', () => {
         posting.content = 'This is a sample post with a link: https://example.com';
         fixture.componentRef.setInput('posting', posting);
 
-        const metisServiceSpy = vi.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
-        const metisServiceUpdatePostSpy = vi.spyOn(metisService, 'updatePost');
+        const communicationServiceSpy = vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
+        const communicationServiceUpdatePostSpy = vi.spyOn(communicationService, 'updatePost');
 
         component.ngOnInit();
         component.removeLinkPreview(linkPreview);
 
-        expect(metisServiceSpy).toHaveBeenCalled();
-        expect(metisServiceUpdatePostSpy).toHaveBeenCalled();
+        expect(communicationServiceSpy).toHaveBeenCalled();
+        expect(communicationServiceUpdatePostSpy).toHaveBeenCalled();
         expect(posting.content).toContain('<https://example.com>');
     });
 
@@ -175,14 +193,14 @@ describe('LinkPreviewComponent', () => {
         posting.content = 'This is a sample answer post with a link: https://example.com';
         fixture.componentRef.setInput('posting', posting);
 
-        const metisServiceSpy = vi.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
-        const metisServiceUpdateAnswerPostSpy = vi.spyOn(metisService, 'updateAnswerPost');
+        const communicationServiceSpy = vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
+        const communicationServiceUpdateAnswerPostSpy = vi.spyOn(communicationService, 'updateAnswerPost');
 
         component.ngOnInit();
         component.removeLinkPreview(linkPreview);
 
-        expect(metisServiceSpy).toHaveBeenCalled();
-        expect(metisServiceUpdateAnswerPostSpy).toHaveBeenCalled();
+        expect(communicationServiceSpy).toHaveBeenCalled();
+        expect(communicationServiceUpdateAnswerPostSpy).toHaveBeenCalled();
         expect(posting.content).toContain('<https://example.com>');
     });
 });

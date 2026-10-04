@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -12,8 +11,6 @@ import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { MockPdfEngineService, createMockPdfDocument } from 'test/helpers/mocks/service/mock-pdf-engine.service';
 
 describe('PdfPreviewThumbnailGridComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfPreviewThumbnailGridComponent;
     let fixture: ComponentFixture<PdfPreviewThumbnailGridComponent>;
     let engineService: MockPdfEngineService;
@@ -64,6 +61,31 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     it('should create', () => {
         fixture.detectChanges();
         expect(component).toBeTruthy();
+    });
+
+    it.each([true, false])('should separate preview, selection and visibility controls (attachment video: %s)', async (isAttachmentVideoUnit) => {
+        fixture.componentRef.setInput('isAttachmentVideoUnit', isAttachmentVideoUnit);
+        await setPages();
+        const preview = fixture.nativeElement.querySelector('#pdf-page-slide1') as HTMLButtonElement;
+        const checkbox = fixture.nativeElement.querySelector('#checkbox-slide1') as HTMLInputElement;
+        const enlarge = vi.spyOn(component, 'displayEnlargedCanvas');
+        expect(preview.tagName).toBe('BUTTON');
+        expect(preview.type).toBe('button');
+        expect(preview.querySelector('canvas')).not.toBeNull();
+        expect(preview.querySelector('input, button, [role="button"]')).toBeNull();
+        expect(checkbox.closest('button, [role="button"]')).toBeNull();
+        checkbox.click();
+        expect(Array.from(component.selectedPages()).map((page) => page.slideId)).toEqual(['slide1']);
+        if (isAttachmentVideoUnit) {
+            const visibility = fixture.nativeElement.querySelector('#hide-show-button-slide1') as HTMLButtonElement;
+            expect(visibility.parentElement!.closest('button, [role="button"]')).toBeNull();
+            visibility.click();
+            expect(component.activeButtonPage()?.slideId).toBe('slide1');
+        }
+        expect(enlarge).not.toHaveBeenCalled();
+        preview.click();
+        expect(enlarge).toHaveBeenCalledExactlyOnceWith(1, 'slide1');
+        expect(component.originalCanvas()).toBe(preview.querySelector('canvas'));
     });
 
     it('should render every ordered page through the engine', async () => {

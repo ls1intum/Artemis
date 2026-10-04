@@ -21,4 +21,8 @@ export class Complaint implements BaseEntity {
     public team?: Team;
     public complaintType?: ComplaintType;
     public complaintResponse?: ComplaintResponse;
+    /** Privacy-safe stable assessor id for tutor All-scope filtering (not login). */
+    public assessorKey?: string;
+    /** Privacy-safe assessor display name (first/last only; no login). */
+    public assessorLabel?: string;
 }

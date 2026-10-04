@@ -3,8 +3,7 @@
  * Verifies the component's behavior for creating, editing, and assessing example text submissions.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -49,7 +48,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExampleTextSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
     let debugElement: DebugElement;
     let comp: ExampleTextSubmissionComponent;
@@ -171,7 +169,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
@@ -207,7 +205,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
         await fixture.whenStable();
 
         // THEN
@@ -237,7 +235,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
         expect(comp.result()).not.toBeNull();
@@ -253,7 +251,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
@@ -272,7 +270,7 @@ describe('ExampleTextSubmissionComponent', () => {
             exerciseId: EXERCISE_ID,
             exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
         };
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.exercise = exercise;
         comp.exercise!.isAtLeastInstructor = true;
@@ -293,7 +291,7 @@ describe('ExampleTextSubmissionComponent', () => {
             exerciseId: EXERCISE_ID,
             exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
         };
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
@@ -397,7 +395,7 @@ describe('ExampleTextSubmissionComponent', () => {
         submission.text = '123456789';
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
@@ -448,15 +446,14 @@ describe('ExampleTextSubmissionComponent', () => {
             type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
         };
         const errorResponse = new HttpErrorResponse({
-            error: { title: JSON.stringify({ errors: [feedbackError] }) },
-            headers: new HttpHeaders().append('x-artemisapp-error', 'error.invalid_assessment'),
+            error: { errorKey: 'invalid_assessment', skipAlert: true, errors: [feedbackError] },
             status: 400,
         });
 
         vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => errorResponse));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
         await fixture.whenStable();
 
         comp.checkAssessment();
@@ -540,7 +537,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.exercise = examExercise;
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.toComplete.set(true);
 

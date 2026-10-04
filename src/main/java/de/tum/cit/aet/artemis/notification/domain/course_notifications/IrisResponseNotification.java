@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.IrisResponsePayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user Iris has answered their chat message while the chat was not open
@@ -16,20 +18,14 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(26)
 public class IrisResponseNotification extends CourseNotification {
 
-    protected Long sessionId;
-
-    protected String messagePreview;
-
-    protected String chatTitle;
+    private final IrisResponsePayloadDTO payload;
 
     /**
      * Default constructor used when creating a new notification.
      */
     public IrisResponseNotification(Long courseId, String courseTitle, String courseImageUrl, Long sessionId, String messagePreview, String chatTitle) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.sessionId = sessionId;
-        this.messagePreview = messagePreview;
-        this.chatTitle = chatTitle;
+        this.payload = new IrisResponsePayloadDTO(sessionId, messagePreview, chatTitle);
     }
 
     /**
@@ -37,6 +33,7 @@ public class IrisResponseNotification extends CourseNotification {
      */
     public IrisResponseNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, IrisResponsePayloadDTO.class);
     }
 
     @Override
@@ -56,6 +53,11 @@ public class IrisResponseNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/iris?sessionId=" + sessionId;
+        return "/courses/" + courseId + "/iris?sessionId=" + payload.sessionId();
+    }
+
+    @Override
+    public IrisResponsePayloadDTO payload() {
+        return payload;
     }
 }

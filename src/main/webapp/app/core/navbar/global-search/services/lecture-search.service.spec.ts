@@ -2,13 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LectureSearchService } from './lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 
 describe('LectureSearchService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: LectureSearchService;
     let httpTesting: HttpTestingController;
 
@@ -43,6 +40,52 @@ describe('LectureSearchService', () => {
 
         const req = httpTesting.expectOne('api/iris/lecture-search');
         expect(req.request.body).toEqual({ query: 'spring boot', limit: 25 });
+
+        req.flush([]);
+    });
+
+    it('should include courseIds in the body when a non-empty array is passed', () => {
+        service.search('signals', 10, [3, 7]).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10, courseIds: [3, 7] });
+
+        req.flush([]);
+    });
+
+    it('should include excludeCourseIds in the body when a non-empty array is passed', () => {
+        service.search('signals', 10, undefined, [5]).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10, excludeCourseIds: [5] });
+
+        req.flush([]);
+    });
+
+    it('should omit excludeCourseIds from the body when an empty array is passed', () => {
+        service.search('signals', 10, undefined, []).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10 });
+
+        req.flush([]);
+    });
+
+    it('should omit courseIds from the body when an empty array is passed', () => {
+        service.search('signals', 10, []).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).not.toHaveProperty('courseIds');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10 });
+
+        req.flush([]);
+    });
+
+    it('should omit courseIds from the body when the argument is omitted', () => {
+        service.search('signals').subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).not.toHaveProperty('courseIds');
 
         req.flush([]);
     });

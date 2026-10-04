@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,8 +9,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { PROFILE_DEV, PROFILE_TEST } from 'app/app.constants';
 
 describe('PageRibbonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PageRibbonComponent;
     let fixture: ComponentFixture<PageRibbonComponent>;
     let profileService: ProfileService;

@@ -5,11 +5,10 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import cBuildErrorSubmission from '../../fixtures/exercise/programming/c/build_error/submission.json';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, readResponseJson } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { expect } from '@playwright/test';
-import { Commands } from '../../support/commands';
 import { SEED_COURSES } from '../../support/seedData';
 
 // Common primitives
@@ -58,7 +57,7 @@ test.describe('Exam test run', { tag: '@slow' }, () => {
         await examTestRun.setWorkingTimeMinutes(minutes);
         await examTestRun.setWorkingTimeSeconds(seconds);
         const testRunResponse = await examTestRun.confirmTestRun();
-        const testRun: StudentExam = await testRunResponse.json();
+        const testRun: StudentExam = await readResponseJson(testRunResponse);
         expect(testRunResponse.status()).toBe(200);
         expect(testRun.testRun).toBe(true);
         expect(testRun.submitted).toBe(false);
@@ -85,7 +84,7 @@ test.describe('Exam test run', { tag: '@slow' }, () => {
             await examTestRun.setWorkingTimeMinutes(minutes);
             await examTestRun.setWorkingTimeSeconds(seconds);
             const testRunResponse = await examTestRun.saveTestRun();
-            const updatedTestRun: StudentExam = await testRunResponse.json();
+            const updatedTestRun: StudentExam = await readResponseJson(testRunResponse);
 
             expect(testRunResponse.status()).toBe(200);
             expect(updatedTestRun.id).toBe(testRun.id);
@@ -134,11 +133,15 @@ test.describe('Exam test run', { tag: '@slow' }, () => {
         test('Deletes a test run', async ({ login, page, examTestRun }) => {
             await login(instructor);
             await examTestRun.openTestRunPage(course, exam);
-            // The test run was created via API in beforeEach, but the page may load
-            // before the data is available. Reload until the test run element appears.
-            await Commands.reloadUntilFound(page, examTestRun.getTestRun(testRun.id!), 10000, 60000);
-            await examTestRun.deleteTestRun(testRun.id!);
+            // The test run was created through the API before the page opened, so it is listed right away.
+            await expect(examTestRun.getTestRun(testRun.id!)).toBeVisible();
+            const response = await examTestRun.deleteTestRun(testRun.id!);
+            expect(response.status()).toBe(200);
             await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
+            // The server no longer lists it either, while the exam itself is untouched.
+            const remaining = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/test-runs`);
+            expect(((await remaining.json()) as { id: number }[]).map((run) => run.id)).not.toContain(testRun.id);
+            expect((await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}`)).status()).toBe(200);
         });
     });
 

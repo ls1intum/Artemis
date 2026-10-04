@@ -1,23 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import * as writeUsersToCsv from 'app/shared-ui/user-import/util/write-users-to-csv';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TutorialRegistrationsImportModalMockComponent } from 'src/test/javascript/spec/helpers/mocks/tutorialgroup/tutorial-registrations-import-modal-mock.component';
 import { TutorialRegistrationsRegisterModalMockComponent } from 'src/test/javascript/spec/helpers/mocks/tutorialgroup/tutorial-registrations-register-modal-mock.component';
 import { TutorialRegistrationsStudentsTableMockComponent } from 'src/test/javascript/spec/helpers/mocks/tutorialgroup/tutorial-registrations-students-table-mock.component';
-import { PrimeNgConfirmDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
+import { ConfirmDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/confirm-dialog-stub.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal/tutorial-registrations-import-modal.component';
 import { TutorialRegistrationsRegisterModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-modal/tutorial-registrations-register-modal.component';
 import { TutorialRegistrationsStudentsTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialRegistrationsComponent } from './tutorial-registrations.component';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 interface ConfirmationServiceMock {
     confirm: ReturnType<typeof vi.fn>;
@@ -28,8 +26,6 @@ interface TutorialGroupRegisteredStudentsServiceMock {
 }
 
 describe('TutorialRegistrationsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsComponent;
     let fixture: ComponentFixture<TutorialRegistrationsComponent>;
 
@@ -75,7 +71,7 @@ describe('TutorialRegistrationsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialRegistrationsComponent],
             providers: [
-                { provide: ConfirmationService, useValue: confirmationServiceMock },
+                { provide: TumAetUiConfirmationService, useValue: confirmationServiceMock },
                 { provide: TutorialGroupRegisteredStudentsService, useValue: tutorialGroupRegisteredStudentsServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -83,21 +79,21 @@ describe('TutorialRegistrationsComponent', () => {
             .overrideComponent(TutorialRegistrationsComponent, {
                 remove: {
                     imports: [
-                        ConfirmDialogModule,
+                        TumAetUiConfirmDialogComponent,
                         TutorialRegistrationsImportModalComponent,
                         TutorialRegistrationsRegisterModalComponent,
                         TutorialRegistrationsStudentsTableComponent,
                     ],
-                    providers: [ConfirmationService],
+                    providers: [TumAetUiConfirmationService],
                 },
                 add: {
                     imports: [
-                        PrimeNgConfirmDialogStubComponent,
+                        ConfirmDialogStubComponent,
                         TutorialRegistrationsImportModalMockComponent,
                         TutorialRegistrationsRegisterModalMockComponent,
                         TutorialRegistrationsStudentsTableMockComponent,
                     ],
-                    providers: [{ provide: ConfirmationService, useValue: confirmationServiceMock }],
+                    providers: [{ provide: TumAetUiConfirmationService, useValue: confirmationServiceMock }],
                 },
             })
             .compileComponents();

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -51,8 +50,6 @@ const examples: ConversationDTO[] = [
 
 examples.forEach((activeConversation) => {
     describe('ConversationMemberRowComponent with ' + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationMemberRowComponent;
         let fixture: ComponentFixture<ConversationMemberRowComponent>;
         const course = { id: 1 } as Course;
@@ -335,10 +332,10 @@ examples.forEach((activeConversation) => {
 
         it.each`
             role                           | isInstructor | isEditor | isTeachingAssistant | expectedIcon      | expectedTooltip
-            ${'instructor'}                | ${true}      | ${false} | ${false}            | ${faUserGraduate} | ${'artemisApp.metis.userAuthorityTooltips.instructor'}
-            ${'editor (tutor)'}            | ${false}     | ${true}  | ${false}            | ${faUserCheck}    | ${'artemisApp.metis.userAuthorityTooltips.tutor'}
-            ${'teachingAssistant (tutor)'} | ${false}     | ${false} | ${true}             | ${faUserCheck}    | ${'artemisApp.metis.userAuthorityTooltips.tutor'}
-            ${'regular student (default)'} | ${false}     | ${false} | ${false}            | ${faUser}         | ${'artemisApp.metis.userAuthorityTooltips.student'}
+            ${'instructor'}                | ${true}      | ${false} | ${false}            | ${faUserGraduate} | ${'artemisApp.communication.userAuthorityTooltips.instructor'}
+            ${'editor (tutor)'}            | ${false}     | ${true}  | ${false}            | ${faUserCheck}    | ${'artemisApp.communication.userAuthorityTooltips.tutor'}
+            ${'teachingAssistant (tutor)'} | ${false}     | ${false} | ${true}             | ${faUserCheck}    | ${'artemisApp.communication.userAuthorityTooltips.tutor'}
+            ${'regular student (default)'} | ${false}     | ${false} | ${false}            | ${faUser}         | ${'artemisApp.communication.userAuthorityTooltips.student'}
         `('should set correct icon and tooltip when role = $role', ({ isInstructor, isEditor, isTeachingAssistant, expectedIcon, expectedTooltip }) => {
             const updatedMember: ConversationUserDTO = {
                 id: 123,

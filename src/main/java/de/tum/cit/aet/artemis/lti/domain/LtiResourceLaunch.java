@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lti.domain;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -8,6 +9,7 @@ import org.jspecify.annotations.NonNull;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.dto.Lti13LaunchRequest;
 
@@ -34,6 +36,8 @@ public class LtiResourceLaunch extends DomainObject {
 
     @NonNull
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     private User user;
 
     @ManyToOne

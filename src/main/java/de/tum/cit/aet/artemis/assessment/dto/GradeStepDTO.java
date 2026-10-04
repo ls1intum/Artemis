@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.Objects;
-
 import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -40,8 +40,7 @@ public record GradeStepDTO(Long id, double lowerBoundPercentage, boolean lowerBo
      * @param gradeStep the grade step entity to convert
      * @return the corresponding grade step DTO
      */
-    public static GradeStepDTO of(GradeStep gradeStep) {
-        Objects.requireNonNull(gradeStep, "GradeStep must be set");
+    public static GradeStepDTO of(@NonNull GradeStep gradeStep) {
 
         return new GradeStepDTO(gradeStep.getId(), gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(), gradeStep.getUpperBoundPercentage(),
                 gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade());

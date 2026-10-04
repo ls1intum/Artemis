@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
@@ -16,16 +16,15 @@ import { ConversationMessagesComponent } from 'app/communication/course-conversa
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
-import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -50,7 +49,7 @@ import {
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -63,8 +62,6 @@ const examples: (ConversationDTO | undefined)[] = [
 
 examples.forEach((activeConversation) => {
     describe('CourseConversationComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
-        setupTestBed({ zoneless: true });
-
         let component: CourseConversationsComponent;
         let fixture: ComponentFixture<CourseConversationsComponent>;
         const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
@@ -73,7 +70,7 @@ examples.forEach((activeConversation) => {
         let postsSubject: BehaviorSubject<Post[]>;
         let acceptCodeOfConductSpy: ReturnType<typeof vi.spyOn>;
         let setActiveConversationSpy: ReturnType<typeof vi.spyOn>;
-        let metisConversationService: MetisConversationService;
+        let courseConversationsService: CourseConversationsService;
         let courseOverviewService: CourseOverviewService;
         let dialogService: DialogService;
         let courseSidebarService: CourseSidebarService;
@@ -115,12 +112,11 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationGlobalSearchComponent),
                     MockComponent(SidebarAccordionComponent),
                     MockPipe(ArtemisTranslatePipe),
-                    MockPipe(HtmlForMarkdownPipe),
+                    MockDirective(MarkdownDirective),
                     FormsModule,
                     ReactiveFormsModule,
                     FontAwesomeModule,
-                    NgbModule,
-                    TranslateModule.forRoot(),
+                    NgbTooltip,
                 ],
                 declarations: [LoadingIndicatorContainerStubComponent],
                 providers: [
@@ -152,7 +148,7 @@ examples.forEach((activeConversation) => {
                     },
                     MockProvider(CourseOverviewService),
                     MockProvider(DialogService),
-                    MockProvider(MetisConversationService),
+                    MockProvider(CourseConversationsService),
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
@@ -161,14 +157,15 @@ examples.forEach((activeConversation) => {
                     }),
                     provideHttpClient(),
                     provideHttpClientTesting(),
+                    provideTranslateService(),
                 ],
             });
 
-            const metisService = new MockMetisService();
+            const communicationService = new MockCommunicationService();
 
             TestBed.overrideComponent(CourseConversationsComponent, {
                 set: {
-                    providers: [{ provide: MetisService, useValue: metisService }],
+                    providers: [{ provide: CommunicationService, useValue: communicationService }],
                 },
             });
 
@@ -199,36 +196,36 @@ examples.forEach((activeConversation) => {
                 },
             });
 
-            metisConversationService = TestBed.inject(MetisConversationService);
+            courseConversationsService = TestBed.inject(CourseConversationsService);
             courseOverviewService = TestBed.inject(CourseOverviewService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
             activatedRoute = TestBed.inject(ActivatedRoute);
 
-            Object.defineProperty(metisConversationService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
-            Object.defineProperty(metisConversationService, 'conversationsOfUser$', { get: () => new BehaviorSubject([new GroupChatDTO()]).asObservable() });
-            Object.defineProperty(metisConversationService, 'isLoading$', { get: () => new BehaviorSubject(false).asObservable() });
-            Object.defineProperty(metisConversationService, 'isCodeOfConductAccepted$', { get: () => new BehaviorSubject(true).asObservable() });
-            Object.defineProperty(metisConversationService, 'isCodeOfConductPresented$', { get: () => new BehaviorSubject(false).asObservable() });
-            metisConversationService.checkIsCodeOfConductAccepted = vi.fn();
-            metisConversationService.setActiveConversation = vi.fn();
-            metisConversationService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.markAsRead = vi.fn();
-            metisConversationService.acceptCodeOfConduct = vi.fn();
-            metisConversationService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.createChannel = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.markAllChannelsAsRead = vi.fn().mockReturnValue(of());
+            Object.defineProperty(courseConversationsService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
+            Object.defineProperty(courseConversationsService, 'conversationsOfUser$', { get: () => new BehaviorSubject([new GroupChatDTO()]).asObservable() });
+            Object.defineProperty(courseConversationsService, 'isLoading$', { get: () => new BehaviorSubject(false).asObservable() });
+            Object.defineProperty(courseConversationsService, 'isCodeOfConductAccepted$', { get: () => new BehaviorSubject(true).asObservable() });
+            Object.defineProperty(courseConversationsService, 'isCodeOfConductPresented$', { get: () => new BehaviorSubject(false).asObservable() });
+            courseConversationsService.checkIsCodeOfConductAccepted = vi.fn();
+            courseConversationsService.setActiveConversation = vi.fn();
+            courseConversationsService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.markAsRead = vi.fn();
+            courseConversationsService.acceptCodeOfConduct = vi.fn();
+            courseConversationsService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.createChannel = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.markAllChannelsAsRead = vi.fn().mockReturnValue(of());
 
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
 
             postsSubject = new BehaviorSubject<Post[]>([]);
-            vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
-            vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
-            setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation');
-            acceptCodeOfConductSpy = vi.spyOn(metisConversationService, 'acceptCodeOfConduct');
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
+            vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
+            vi.spyOn(courseConversationsService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
+            setActiveConversationSpy = vi.spyOn(courseConversationsService, 'setActiveConversation');
+            acceptCodeOfConductSpy = vi.spyOn(courseConversationsService, 'acceptCodeOfConduct');
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
             dialogService = TestBed.inject(DialogService);
             component.sidebarConversations.set([]);
 
@@ -299,8 +296,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('Dialog Opening', () => {
-            setupTestBed({ zoneless: true });
-
             const mockOnClose = new Subject<any>();
             const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
 
@@ -487,14 +482,12 @@ examples.forEach((activeConversation) => {
         });
 
         it('onConversationSelected should change active conversation', () => {
-            const setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation').mockImplementation(() => {});
+            const setActiveConversationSpy = vi.spyOn(courseConversationsService, 'setActiveConversation').mockImplementation(() => {});
             component.onConversationSelected(activeConversation?.id ?? 1);
             expect(setActiveConversationSpy).toHaveBeenCalled();
         });
 
         describe('performChannelAction', () => {
-            setupTestBed({ zoneless: true });
-
             let channelAction: ChannelAction;
             let channel: ChannelDTO;
 
@@ -555,7 +548,7 @@ examples.forEach((activeConversation) => {
             });
 
             it('should correctly populate the recents group in accordionConversationGroups using existing mocks', () => {
-                (metisConversationService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
 
                 component.prepareSidebarData();
                 const recentsGroup = component.accordionConversationGroups().recents;
@@ -566,8 +559,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('query parameter handling', () => {
-            setupTestBed({ zoneless: true });
-
             it('should handle SavedPostStatus in conversationId', () => {
                 const queryParams = {
                     conversationId: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
@@ -654,8 +645,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('navigate to post functionality', () => {
-            setupTestBed({ zoneless: true });
-
             it('should handle answer post navigation correctly', () => {
                 const answerPost: Posting = {
                     referencePostId: 123,
@@ -716,8 +705,8 @@ examples.forEach((activeConversation) => {
 
         it('should mark all channels as read', () => {
             fixture.detectChanges();
-            const markAllChannelsAsRead = vi.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
-            const forceRefresh = vi.spyOn(metisConversationService, 'forceRefresh');
+            const markAllChannelsAsRead = vi.spyOn(courseConversationsService, 'markAllChannelsAsRead').mockReturnValue(of());
+            const forceRefresh = vi.spyOn(courseConversationsService, 'forceRefresh');
             forceRefresh.mockClear();
             component.markAllChannelAsRead();
             expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
@@ -725,8 +714,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('conversation selection', () => {
-            setupTestBed({ zoneless: true });
-
             it('should handle numeric conversationId', () => {
                 fixture.detectChanges();
                 component.onConversationSelected(123);
@@ -790,8 +777,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('CourseConversationsComponent onTriggerNavigateToPost Tests', () => {
-            setupTestBed({ zoneless: true });
-
             let component: CourseConversationsComponent;
 
             beforeEach(() => {
@@ -872,8 +857,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('Search Clear and Conversation Restoration', () => {
-            setupTestBed({ zoneless: true });
-
             beforeEach(() => {
                 fixture.detectChanges();
             });
@@ -946,7 +929,7 @@ examples.forEach((activeConversation) => {
 
             it('should track last known conversation ID when active conversation changes', () => {
                 const newConversation = { id: 123, type: 'channel' } as ConversationDTO;
-                vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
+                vi.spyOn(courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
 
                 component.ngOnInit();
                 vi.advanceTimersByTime(0);

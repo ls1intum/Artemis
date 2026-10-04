@@ -5,7 +5,7 @@ import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutoria
 import { LegacyTutorialGroupSession, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
 
 export class TutorialGroup implements BaseEntity {
     public id?: number;
@@ -69,9 +69,7 @@ export class TutorialGroupDetailData {
 }
 
 export type TutorialGroupRegisterStudentRequest =
-    | { login: undefined; registrationNumber: string }
-    | { login: string; registrationNumber: undefined }
-    | { login: string; registrationNumber: string };
+    { login: undefined; registrationNumber: string } | { login: string; registrationNumber: undefined } | { login: string; registrationNumber: string };
 
 export interface TutorialGroupTutor {
     id: number;

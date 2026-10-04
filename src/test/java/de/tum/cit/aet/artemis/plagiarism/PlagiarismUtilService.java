@@ -70,7 +70,7 @@ public class PlagiarismUtilService {
     private ParticipationUtilService participationUtilService;
 
     private Course createCourseWithUsers(String userPrefix, int studentsAmount) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         userUtilService.addUsers(userPrefix, studentsAmount, 1, 1, 1);
         return course;
     }
@@ -81,6 +81,7 @@ public class PlagiarismUtilService {
         exercise.setMode(mode);
         course.addExercises(exercise);
         courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return exerciseRepository.save(exercise);
     }
 
@@ -90,6 +91,7 @@ public class PlagiarismUtilService {
         exercise.setMode(mode);
         course.addExercises(exercise);
         courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return exerciseRepository.save(exercise);
     }
 

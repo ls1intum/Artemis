@@ -2,26 +2,44 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 
@@ -39,7 +57,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
@@ -47,7 +65,9 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
         localRepoPath = tempFileUtilService.createTempDirectory("repo");
-        localGit = LocalRepository.initialize(localRepoPath, defaultBranch, false);
+        // This is the one place that still creates a plain git repository instead of using a LocalVC repository: the tests below exercise GitService's checkout paths
+        // against an arbitrary local repository, so there is no exercise or participation the repository could belong to.
+        localGit = Git.init().setDirectory(localRepoPath.toFile()).setInitialBranch(defaultBranch).call();
 
         // create commits
         // the following 2 lines prepare the generation of the structural test oracle
@@ -99,19 +119,27 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testGetOrCheckoutRepositoryWithNullUriThrowsEntityNotFoundException() {
+        // A participation without a repository URI (e.g. because the repository was never created) must lead to a
+        // meaningful EntityNotFoundException (404) instead of a NullPointerException (500), see GitService.getLocalPathOfRepo
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> gitService.getOrCheckoutRepository(null, true, defaultBranch, false));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void testGitOperationsWithLocalVC() throws Exception {
         // Create a LocalVC repository (acts as remote) and seed with an initial commit
         var projectKey = "PROGEXGIT";
-        var repoSlug = projectKey.toLowerCase() + "-tests";
+        var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
 
-        LocalRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repoSlug));
+        LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
 
         // Write a file and commit on the remote working copy, then push to origin
-        var readmePath = remoteRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
+        var readmePath = remoteRepo.workingCopyPath().resolve("README.md");
         FileUtils.writeStringToFile(readmePath.toFile(), "Initial commit", java.nio.charset.StandardCharsets.UTF_8);
-        remoteRepo.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(remoteRepo.workingCopyGitRepo).setMessage("Initial commit").call();
-        remoteRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        remoteRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(remoteRepo.workingCopy()).setMessage("Initial commit").call();
+        remoteRepo.workingCopy().push().setRemote("origin").call();
 
         // Build the LocalVC URI and checkout to a separate target path
         LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
@@ -129,7 +157,14 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
             Files.createDirectories(localFile.getParent());
             FileUtils.writeStringToFile(localFile.toFile(), "hello world", java.nio.charset.StandardCharsets.UTF_8);
             gitService.stageAllChanges(checkedOut);
-            gitService.commitAndPush(checkedOut, "Add hello.txt", true, null);
+            String createdCommitHash = gitService.commitAndPush(checkedOut, "Add hello.txt", true, null);
+
+            // The returned id has to be the commit just created, because that identity is what attributes a new commit alert
+            // to the client that made the commit. Re-reading the head instead would be a race: the online editor shares one
+            // working copy per repository, so a concurrent commit can move the head before it is read.
+            assertThat(createdCommitHash).as("commitAndPush should return the id of the commit it created").isNotNull().hasSize(40);
+            assertThat(createdCommitHash).as("the created commit must be the new head, not the commit it replaced").isNotEqualTo(lastHash);
+            assertThat(gitService.getLastCommitHash(repoUri)).as("the created commit must be what the remote now stands at").isEqualTo(createdCommitHash);
 
             // Pull and reset operations should not throw
             gitService.pullIgnoreConflicts(checkedOut);
@@ -141,6 +176,140 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
                 checkedOut.close();
             }
             RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+        }
+    }
+
+    /**
+     * Regression test for #13537: an LTI-provisioned account whose platform sent no given_name/family_name has null names. Committing from
+     * the online editor stamps that user as the git committer, and JGit rejects a null committer name with "Name of PersonIdent must not be
+     * null". The commit has to succeed with the login as the committer name instead.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testCommitAndPushWithUserWithoutName() throws Exception {
+        var projectKey = "PROGEXGITNONAME";
+        var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-student";
+        LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
+        FileUtils.writeStringToFile(remoteRepo.workingCopyPath().resolve("README.md").toFile(), "Initial commit", StandardCharsets.UTF_8);
+        remoteRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(remoteRepo.workingCopy()).setMessage("Initial commit").call();
+        remoteRepo.workingCopy().push().setRemote("origin").call();
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student.setFirstName(null);
+        student.setLastName(null);
+
+        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
+        Path targetPath = tempPath.resolve("lcvc-checkout").resolve("no-name-checkout");
+        var checkedOut = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, true);
+        try {
+            FileUtils.writeStringToFile(targetPath.resolve("hello.txt").toFile(), "hello world", StandardCharsets.UTF_8);
+            gitService.stageAllChanges(checkedOut);
+
+            String commitHash = gitService.commitAndPush(checkedOut, "Submit from online editor", true, student);
+
+            try (var revWalk = new RevWalk(checkedOut)) {
+                var committer = revWalk.parseCommit(checkedOut.resolve(commitHash)).getCommitterIdent();
+                assertThat(committer.getName()).isEqualTo(student.getLogin());
+                assertThat(committer.getEmailAddress()).isEqualTo(student.getEmail());
+            }
+            assertThat(gitService.getLastCommitHash(repoUri)).isEqualTo(commitHash);
+        }
+        finally {
+            if (checkedOut != null) {
+                checkedOut.close();
+            }
+            RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testFailedPullClosesRepositoryBeforeCleanupAndRecovers() throws Exception {
+        var projectKey = "PROGEXGITPULL";
+        var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-tests";
+
+        LocalVCTestRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repoSlug));
+
+        var readmePath = remoteRepo.workingCopyPath().resolve("README.md");
+        FileUtils.writeStringToFile(readmePath.toFile(), "Initial commit", StandardCharsets.UTF_8);
+        remoteRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(remoteRepo.workingCopy()).setMessage("Initial commit").call();
+        remoteRepo.workingCopy().push().setRemote("origin").call();
+
+        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
+        Path targetPath = tempPath.resolve("lcvc-failed-pull").resolve("student-checkout");
+        Path localPath = gitService.getLocalPathOfRepo(targetPath, repoUri);
+
+        // Check the repository out once so a working copy exists, then release the handle
+        var checkedOut = gitService.getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true, true);
+        checkedOut.close();
+
+        // Add a new commit on the remote so the next pull has to update the working copy
+        FileUtils.writeStringToFile(readmePath.toFile(), "Updated content", StandardCharsets.UTF_8);
+        remoteRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(remoteRepo.workingCopy()).setMessage("Update README").call();
+        remoteRepo.workingCopy().push().setRemote("origin").call();
+
+        // A leftover index.lock makes the merge step of the pull fail with a JGitInternalException (LockFailedException)
+        Files.createFile(localPath.resolve(".git").resolve("index.lock"));
+
+        // Wrap the repository handle the production code opens in a spy so we can verify it gets closed before the cleanup
+        AtomicReference<Repository> openedRepository = new AtomicReference<>();
+        doAnswer(invocation -> {
+            Repository repository = (Repository) invocation.callRealMethod();
+            if (repository == null) {
+                return null;
+            }
+            Repository repositorySpy = spy(repository);
+            openedRepository.set(repositorySpy);
+            return repositorySpy;
+        }).when(gitServiceSpy).getExistingCheckedOutRepositoryByLocalPath(any(Path.class), any(), anyString(), anyBoolean());
+
+        assertThatExceptionOfType(GitException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true, true));
+
+        assertThat(openedRepository.get()).as("the working copy should have been opened before the pull").isNotNull();
+        // Open file handles prevent the directory deletion on network file systems, so the handle must be released first
+        verify(openedRepository.get()).closeBeforeDelete();
+        assertThat(localPath).as("the corrupt working copy should have been cleaned up").doesNotExist();
+
+        // The next access must recover on its own by cloning a fresh working copy
+        var recovered = gitService.getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true, true);
+        try {
+            assertThat(recovered).isNotNull();
+            assertThat(localPath.resolve("README.md")).exists();
+        }
+        finally {
+            if (recovered != null) {
+                recovered.close();
+            }
+            RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testFailedCloneOfMissingRepositoryDoesNotLogSpuriousDeletionError() {
+        var projectKey = "PROGEXGITCLONE";
+        var repoSlug = projectKey.toLowerCase(Locale.ROOT) + "-doesnotexist";
+
+        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
+        Path targetPath = tempPath.resolve("lcvc-failed-clone").resolve("missing-checkout");
+
+        Logger gitServiceLogger = (Logger) LoggerFactory.getLogger(GitService.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        gitServiceLogger.addAppender(listAppender);
+        try {
+            assertThatExceptionOfType(GitException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryWithLocalPath(repoUri, targetPath, true, true));
+
+            // JGit's CloneCommand cleans up its own directory on failure; there is nothing left to delete, so no error must be logged
+            assertThat(listAppender.list)
+                    .noneMatch(event -> event.getLevel() == Level.ERROR && event.getFormattedMessage().startsWith("Could not delete directory after failed clone"));
+        }
+        finally {
+            gitServiceLogger.detachAppender(listAppender);
+            listAppender.stop();
         }
     }
 }

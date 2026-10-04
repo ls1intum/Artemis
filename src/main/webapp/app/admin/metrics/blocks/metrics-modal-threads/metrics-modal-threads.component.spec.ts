@@ -3,14 +3,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 
 describe('MetricsModalThreadsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let runnableThreads: Thread[];
     let waitingThreads: Thread[];
 

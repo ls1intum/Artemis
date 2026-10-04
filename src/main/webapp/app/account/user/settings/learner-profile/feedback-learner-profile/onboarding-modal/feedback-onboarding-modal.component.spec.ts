@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackOnboardingModalComponent } from './feedback-onboarding-modal.component';
 import { LearnerProfileApiService } from '../../learner-profile-api.service';
@@ -8,7 +7,7 @@ import { LearnerProfileDTO } from '../../dto/learner-profile-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 class MockAlertService {
     addAlert = vi.fn();
@@ -16,8 +15,6 @@ class MockAlertService {
 }
 
 describe('FeedbackOnboardingModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FeedbackOnboardingModalComponent;
     let fixture: ComponentFixture<FeedbackOnboardingModalComponent>;
     let learnerProfileApiService: LearnerProfileApiService;
@@ -25,8 +22,14 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FeedbackOnboardingModalComponent, TranslateModule.forRoot()],
-            providers: [MockProvider(LearnerProfileApiService), { provide: AlertService, useClass: MockAlertService }, provideHttpClient(), provideHttpClientTesting()],
+            imports: [FeedbackOnboardingModalComponent],
+            providers: [
+                MockProvider(LearnerProfileApiService),
+                { provide: AlertService, useClass: MockAlertService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackOnboardingModalComponent);
@@ -42,7 +45,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-        expect(component.selected).toEqual([undefined, undefined]);
+        expect(component.selected()).toEqual([undefined, undefined]);
         expect(component.step()).toBe(0);
     });
 
@@ -60,13 +63,13 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     it('should select and deselect choices', () => {
         component.select(0, 1);
-        expect(component.selected[0]).toBe(1);
+        expect(component.selected()[0]).toBe(1);
         component.select(0, 1);
-        expect(component.selected[0]).toBeUndefined();
+        expect(component.selected()[0]).toBeUndefined();
         component.select(1, 0);
-        expect(component.selected[1]).toBe(0);
+        expect(component.selected()[1]).toBe(0);
         component.select(1, 1);
-        expect(component.selected[1]).toBe(1);
+        expect(component.selected()[1]).toBe(1);
     });
 
     it('should close the modal by setting visible to false', () => {
@@ -77,7 +80,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     describe('finish', () => {
         it('should PUT updated profile and emit completed', async () => {
-            component.selected = [1, 0];
+            component.selected.set([1, 0]);
             const completedSpy = vi.fn();
             component.completed.subscribe(completedSpy);
             const getSpy = vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
@@ -103,7 +106,7 @@ describe('FeedbackOnboardingModalComponent', () => {
         });
 
         it('should handle non-HTTP error and close modal', async () => {
-            component.selected = [undefined, undefined];
+            component.selected.set([undefined, undefined]);
             vi.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('fail'));
             component.visible.set(true);
             await component.finish();

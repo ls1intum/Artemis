@@ -37,11 +37,15 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
  * @param hasForwardedMessages whether this answer has forwarded messages attached
  * @param post                 cycle-free parent-post reference (id + conversation) for client routing
  * @param reactions            reactions on the answer
+ * @param verified             whether an Iris-generated answer has been verified by a tutor; the client uses this to gate the tutor approve/edit/reject controls.
+ *                                 Unverified Iris replies are stripped before they reach students, so this only ever surfaces a pending reply to tutors. The
+ *                                 confidence score, verifier and verification timestamp are intentionally not exposed here — they are only needed by the tutor
+ *                                 review notification ({@code IrisResponseNeedsReviewNotification}), not the thread, so they are kept off the per-answer wire shape.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AnswerPostResponseDTO(Long id, @Nullable UserSummaryDTO author, @Nullable UserRole authorRole, @Nullable ZonedDateTime creationDate,
         @Nullable ZonedDateTime updatedDate, @Nullable String content, boolean resolvesPost, @JsonProperty("isSaved") boolean isSaved, boolean hasForwardedMessages,
-        @Nullable AnswerParentPostRefDTO post, Set<ReactionResponseDTO> reactions) {
+        @Nullable AnswerParentPostRefDTO post, Set<ReactionResponseDTO> reactions, boolean verified) {
 
     /**
      * Build an {@link AnswerPostResponseDTO} from an {@link AnswerPost} entity.
@@ -54,6 +58,6 @@ public record AnswerPostResponseDTO(Long id, @Nullable UserSummaryDTO author, @N
                 : answerPost.getReactions().stream().map(ReactionResponseDTO::from).collect(Collectors.toUnmodifiableSet());
         return new AnswerPostResponseDTO(answerPost.getId(), UserSummaryDTO.from(answerPost.getAuthor()), answerPost.getAuthorRole(), answerPost.getCreationDate(),
                 answerPost.getUpdatedDate(), answerPost.getContent(), Boolean.TRUE.equals(answerPost.doesResolvePost()), answerPost.getIsSaved(),
-                answerPost.getHasForwardedMessages(), AnswerParentPostRefDTO.from(answerPost.getPost()), reactions);
+                answerPost.getHasForwardedMessages(), AnswerParentPostRefDTO.from(answerPost.getPost()), reactions, answerPost.isVerified());
     }
 }

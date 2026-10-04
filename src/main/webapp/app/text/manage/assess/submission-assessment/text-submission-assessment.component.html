@@ -1,5 +1,4 @@
 <jhi-assessment-layout
-    (navigateBack)="navigateBack()"
     [isLoading]="isLoading()"
     [saveBusy]="saveBusy()"
     [submitBusy]="submitBusy()"
@@ -66,13 +65,17 @@
                     [highlightDifferences]="highlightDifferences()"
                     (feedbacksChange)="validateFeedback($event)"
                     [readOnly]="readOnly"
-                    [useDefaultFeedbackSuggestionBadgeText]="true"
                     [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise?.gradingCriteria ?? []"
+                    [allFeedbacks]="allAssessmentFeedbacks()"
+                    [maxPoints]="getTotalMaxPoints(exercise)"
                 />
             }
         </div>
     } @else {
-        @if (!loadingInitialSubmission()) {
+        @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
+            <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
+        } @else if (!loadingInitialSubmission()) {
             <div>
                 @if (noNewSubmissions()) {
                     <div class="alert alert-warning text-center mt-4" role="alert">

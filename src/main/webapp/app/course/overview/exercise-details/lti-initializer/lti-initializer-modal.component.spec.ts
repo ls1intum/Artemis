@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LtiInitializerModalComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer-modal.component';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -14,8 +13,6 @@ import { FormsModule } from '@angular/forms';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 
 describe('LtiInitializerModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<LtiInitializerModalComponent>;
     let component: LtiInitializerModalComponent;
     let alertService: AlertService;

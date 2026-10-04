@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.notification.service.notifications;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -100,7 +99,7 @@ public class SingleUserNotificationService {
             return;
         }
 
-        Double score = Objects.requireNonNull(studentParticipation.get().findLatestResult()).getScore();
+        Double score = studentParticipation.get().findLatestResult().getScore();
 
         Long examId = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam().getId() : null;
         var exerciseAssessedNotification = new ExerciseAssessedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),

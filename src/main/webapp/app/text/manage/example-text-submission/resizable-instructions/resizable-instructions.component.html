@@ -1,7 +1,16 @@
 <div>
     <!-- Inject resizing bar -->
     <ng-content select="[resizingbar]" />
-    <div class="card-header text-white bg-primary" (click)="toggleCollapse()($event, toggleCollapseId())">
+    <div
+        class="card-header text-white bg-primary"
+        (click)="toggleCollapse()($event, toggleCollapseId())"
+        #keyboardAction4
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+    >
         <span class="float-end"><fa-icon [icon]="faChevronRight" /></span>
         <h3 class="card-title">
             <fa-icon [icon]="farListAlt" />
@@ -12,21 +21,21 @@
         @if (problemStatement()) {
             <div>
                 <h4 jhiTranslate="artemisApp.exercise.problemStatement"></h4>
-                <p class="markdown-preview" [innerHTML]="problemStatement() | htmlForMarkdown"></p>
+                <p class="markdown-preview" [jhiMarkdown]="problemStatement()"></p>
                 <hr />
             </div>
         }
         @if (sampleSolution()) {
             <div>
                 <h4 jhiTranslate="artemisApp.exercise.exampleSolution"></h4>
-                <p class="markdown-preview" [innerHTML]="sampleSolution() | htmlForMarkdown"></p>
+                <p class="markdown-preview" [jhiMarkdown]="sampleSolution()"></p>
                 <hr />
             </div>
         }
         @if (gradingInstructions()) {
             <div>
                 <h4 jhiTranslate="artemisApp.exercise.assessmentInstructions"></h4>
-                <p class="markdown-preview" [innerHTML]="gradingInstructions() | htmlForMarkdown"></p>
+                <p class="markdown-preview" [jhiMarkdown]="gradingInstructions()"></p>
             </div>
         }
         <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly()" [criteria]="criteria()" />

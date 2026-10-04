@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.lti.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,9 +31,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -60,6 +62,8 @@ import de.tum.cit.aet.artemis.lti.dto.Lti13LaunchRequest;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 @Lazy
 @Service
@@ -72,13 +76,23 @@ public class Lti13Service {
 
     private static final String COMPETENCY_PATH_PATTERN = "/courses/{courseId}/competencies";
 
-    private static final String IRIS_PATH_PATTERN = "/courses/{courseId}/dashboard";
+    private static final String IRIS_PATH_PATTERN = "/courses/{courseId}/iris";
+
+    /**
+     * Legacy Iris deep-link path. Deep links issued before the student course analytics dashboard was removed still
+     * point to {@code /courses/{courseId}/dashboard} in external LMSes. They must keep launching Iris, so the pattern
+     * stays recognized and legacy launch targets are normalized to {@link #IRIS_PATH_PATTERN} (see {@link #normalizeLegacyIrisTargetLink}).
+     */
+    private static final String IRIS_LEGACY_DASHBOARD_PATH_PATTERN = "/courses/{courseId}/dashboard";
 
     private static final String LEARNING_PATH_PATH_PATTERN = "/courses/{courseId}/learning-path";
 
     private static final String COURSE_PATH_PATTERN = "/courses/{courseId}/**";
 
     private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
+
+    /** A carriage return or a line feed, removed so that a logged user name cannot forge a second log line. */
+    private static final Pattern LINE_BREAK = Pattern.compile("[\r\n]");
 
     private final UserRepository userRepository;
 
@@ -94,6 +108,8 @@ public class Lti13Service {
 
     private final ResultRepository resultRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private final Lti13TokenRetriever tokenRetriever;
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
@@ -105,12 +121,14 @@ public class Lti13Service {
     private final RestTemplate restTemplate;
 
     private static final Map<String, DeepLinkingType> TARGET_LINK_PATTERNS = Map.of(COMPETENCY_PATH_PATTERN, DeepLinkingType.COMPETENCY, LEARNING_PATH_PATH_PATTERN,
-            DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS, LECTURE_PATH_PATTERN, DeepLinkingType.LECTURE);
+            DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS, IRIS_LEGACY_DASHBOARD_PATH_PATTERN, DeepLinkingType.IRIS, LECTURE_PATH_PATTERN,
+            DeepLinkingType.LECTURE);
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository,
             Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
@@ -118,6 +136,7 @@ public class Lti13Service {
         this.ltiService = ltiService;
         this.launchRepository = launchRepository;
         this.resultRepository = resultRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
@@ -161,7 +180,7 @@ public class Lti13Service {
         }
 
         String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
+        User user = userRepository.findOneWithAuthoritiesByLogin(username).orElseThrow();
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
         if (targetExercise.isPresent()) {
@@ -200,7 +219,10 @@ public class Lti13Service {
         }
         username = username.replace(" ", "");
 
-        return onlineCourseConfiguration.getUserPrefix() + "_" + username;
+        // Every source of this value is external (a claim, the user's own name, the local part of their address) and the
+        // instructor-configured prefix is free text, so any of them may carry an uppercase letter. The callers look the
+        // account up by an exact match, so canonicalize here, at the one place the login is derived.
+        return User.canonicalLogin(onlineCourseConfiguration.getUserPrefix() + "_" + username);
     }
 
     private Lti13LaunchRequest launchRequestFrom(OidcIdToken ltiIdToken, String clientRegistrationId) {
@@ -225,30 +247,37 @@ public class Lti13Service {
             return;
         }
 
-        participation.getStudents().forEach(student -> {
-            // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
-            // to launch the exercise (for example multiple lms)
-            Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
+        // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
+        // to launch the exercise (for example multiple lms); for team participations, every student may have launches
+        List<LtiResourceLaunch> launches = participation.getStudents().stream()
+                .flatMap(student -> launchRepository.findByUserAndExercise(student, participation.getExercise()).stream()).toList();
 
-            if (launches.isEmpty()) {
-                return;
-            }
+        if (launches.isEmpty()) {
+            return;
+        }
 
-            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        // the result (and its synthesized feedback) is identical for all launches - load and synthesize it once
+        Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-            if (result.isEmpty()) {
-                log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
-                return;
-            }
+        if (result.isEmpty()) {
+            log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
+            return;
+        }
 
-            String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+        if (participation.getExercise() instanceof ProgrammingExercise programmingExercise) {
+            // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized
+            // legacy views so the LMS score comment keeps containing it (explicit exercise context, the
+            // loaded result graph is detached)
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result.get(), programmingExercise, false);
+        }
 
-            launches.forEach(launch -> {
-                LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
-                ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
-                submitScore(launch, returnClient, concatenatedFeedbacks, result.get().getScore());
+        String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+        Double score = result.get().getScore();
 
-            });
+        launches.forEach(launch -> {
+            LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
+            ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
+            submitScore(launch, returnClient, concatenatedFeedbacks, score);
         });
     }
 
@@ -274,7 +303,7 @@ public class Lti13Service {
             restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
             log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
         }
-        catch (HttpClientErrorException | JsonProcessingException e) {
+        catch (HttpClientErrorException | JacksonException e) {
             String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + clientRegistration.getClientId() + ": " + e.getMessage();
             log.error(message);
         }
@@ -292,8 +321,8 @@ public class Lti13Service {
         return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
     }
 
-    private String getScoreBody(String userId, String comment, Double score) throws JsonProcessingException {
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+    private String getScoreBody(String userId, String comment, Double score) {
+        JsonMapper objectMapper = JsonObjectMapper.get();
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.put("userId", userId);
         requestBody.put("timestamp", new DateTime().toString());
@@ -335,7 +364,7 @@ public class Lti13Service {
         }
 
         Map<String, String> pathVariables = matcher.extractUriTemplateVariables(pathPattern, targetLinkPath);
-        String entityId = pathVariables.get(entityName.toLowerCase() + "Id");
+        String entityId = pathVariables.get(entityName.toLowerCase(Locale.ROOT) + "Id");
 
         try {
             return repositoryFinder.apply(entityId);
@@ -409,6 +438,33 @@ public class Lti13Service {
         throw new BadRequestAlertException("Content type not found", "LTI", "ltiContentTypeNotFound");
     }
 
+    /**
+     * Normalizes a legacy Iris deep-link target that still points to the removed course dashboard route
+     * ({@code /courses/{courseId}/dashboard}) to the current Iris route ({@code /courses/{courseId}/iris}). Deep links
+     * issued before the dashboard removal are persisted in external LMSes and must keep launching Iris. Non-legacy or
+     * malformed target links are returned unchanged.
+     *
+     * @param targetLinkUri the target link URI from the LTI launch
+     * @return the normalized target link URI, or the original one if it is not a legacy dashboard link
+     */
+    public String normalizeLegacyIrisTargetLink(String targetLinkUri) {
+        if (targetLinkUri == null) {
+            return null;
+        }
+        try {
+            URI uri = new URI(targetLinkUri);
+            String path = uri.getPath();
+            if (path != null && new AntPathMatcher().match(IRIS_LEGACY_DASHBOARD_PATH_PATTERN, path)) {
+                String normalizedPath = path.substring(0, path.length() - "/dashboard".length()) + "/iris";
+                return UriComponentsBuilder.fromUri(uri).replacePath(normalizedPath).build().toUriString();
+            }
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL while normalizing legacy Iris link: {}", targetLinkUri);
+        }
+        return targetLinkUri;
+    }
+
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
         Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.iss(), launchRequest.sub(),
                 launchRequest.deploymentId(), launchRequest.resourceLinkId());
@@ -469,7 +525,7 @@ public class Lti13Service {
 
     private String getSanitizedUsername(String username) {
         // Remove \r and LF \n characters to prevent HTTP response splitting
-        return username.replaceAll("[\r\n]", "");
+        return LINE_BREAK.matcher(username).replaceAll("");
     }
 
     public boolean hasTargetLinkWithoutExercise(String targetLinkUrl, Optional<Lecture> targetLecture) {

@@ -1,21 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CopyToClipboardButtonComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CopyToClipboardButtonComponent;
     let fixture: ComponentFixture<CopyToClipboardButtonComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ClipboardModule, MockDirective(NgbCollapse), MockDirective(NgbTooltip), CopyToClipboardButtonComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ClipboardModule, CopyToClipboardButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(TranslateService)],
         }).compileComponents();
 

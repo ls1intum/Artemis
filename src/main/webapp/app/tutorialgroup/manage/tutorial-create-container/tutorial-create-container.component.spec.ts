@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialCreateContainerComponent } from 'app/tutorialgroup/manage/tutorial-create-container/tutorial-create-container.component';
 import { CreateTutorialGroupEvent, TutorialCreateOrEditComponent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
@@ -18,8 +17,6 @@ import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-ac
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('TutorialCreateContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialCreateContainerComponent>;
     let component: TutorialCreateContainerComponent;
 
@@ -54,7 +51,7 @@ describe('TutorialCreateContainerComponent', () => {
             providers: [
                 mockedActivatedRoute({}, {}, {}, { courseId: '2' }),
                 { provide: Router, useClass: MockRouter },
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiService },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiService },
                 { provide: TutorialGroupTutorsService, useValue: tutorialGroupTutorsService },
                 { provide: AlertService, useValue: alertService },
             ],

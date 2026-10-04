@@ -1,4 +1,4 @@
-import type { PluginSimple } from 'markdown-it';
+import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 
 /**
  * markdown-it plugin that converts GitHub-style alert blockquotes (e.g. `> [!NOTE]`) into
@@ -45,12 +45,17 @@ const ALERT_ICONS: Record<string, string> = {
         '<svg class="octicon octicon-stop mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>',
 };
 
-/** Metadata attached to an `alert_open` token and read back by its renderer rule. */
-interface AlertMeta {
+/**
+ * Metadata attached to an `alert_open` token and read back by its renderer rule.
+ *
+ * Declared as a type alias rather than an interface so that it stays structurally compatible with
+ * markdown-it's `Token.meta` bag (`Record<string, unknown> | null`), which only type aliases satisfy.
+ */
+type AlertMeta = {
     title: string;
     type: string;
     icon: string;
-}
+};
 
 const ALERT_MARKERS = ['TIP', 'NOTE', 'IMPORTANT', 'WARNING', 'CAUTION'];
 const CLASS_PREFIX = 'markdown-alert';
@@ -60,7 +65,7 @@ function capitalize(value: string): string {
     return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export const markdownItGitHubAlerts: PluginSimple = (md) => {
+export const markdownItGitHubAlerts: MarkdownItPlugin = (md) => {
     md.core.ruler.after('block', 'github-alerts', (state) => {
         const tokens = state.tokens;
         for (let i = 0; i < tokens.length; i++) {

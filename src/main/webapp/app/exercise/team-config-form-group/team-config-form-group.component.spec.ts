@@ -3,7 +3,6 @@ import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
@@ -13,8 +12,6 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Team Config Form Group Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TeamConfigFormGroupComponent>;
     let component: TeamConfigFormGroupComponent;
     let exercise: Exercise;

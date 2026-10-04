@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import org.jspecify.annotations.NonNull;
+
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 public class RoundingUtil {
@@ -28,7 +30,7 @@ public class RoundingUtil {
      * @param course The course that specifies the amount of decimal places in the attribute {@link Course#getAccuracyOfScores()}
      * @return The rounded number
      */
-    public static double roundScoreSpecifiedByCourseSettings(double score, Course course) {
+    public static double roundScoreSpecifiedByCourseSettings(double score, @NonNull Course course) {
         return roundToNDecimalPlaces(score, course.getAccuracyOfScores());
     }
 
@@ -55,6 +57,22 @@ public class RoundingUtil {
      */
     public static double roundToNDecimalPlaces(double number, int numberOfDecimalPlaces) {
         return new BigDecimal(String.valueOf(number)).setScale(numberOfDecimalPlaces, RoundingMode.HALF_UP).doubleValue();
+    }
+
+    /**
+     * Checks whether two doubles are equal within a given tolerance.
+     * <p>
+     * Returns {@code true} if the values are exactly equal (including identical infinities) or differ by at most
+     * {@code epsilon}. This mirrors the semantics of {@code Precision.equals(a, b, epsilon)} for the finite,
+     * non-NaN score values used across Artemis.
+     *
+     * @param a       the first value
+     * @param b       the second value
+     * @param epsilon the maximum allowed absolute difference (inclusive)
+     * @return {@code true} if the values are equal within the tolerance
+     */
+    public static boolean equalsWithinEpsilon(double a, double b, double epsilon) {
+        return a == b || Math.abs(a - b) <= epsilon;
     }
 
 }

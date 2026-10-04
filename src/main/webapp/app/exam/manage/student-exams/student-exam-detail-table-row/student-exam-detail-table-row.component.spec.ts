@@ -1,10 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -29,8 +27,6 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StudentExamDetailTableRowComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
     let studentExamDetailTableRowComponent: StudentExamDetailTableRowComponent;
     let course: Course;
@@ -53,16 +49,8 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [
-                NgbModule,
-                ReactiveFormsModule,
-                TranslateModule.forRoot(),
-                FaIconComponent,
-                StudentExamDetailTableRowComponent,
-                MockTranslateValuesDirective,
-                MockPipe(ArtemisTranslatePipe),
-            ],
-            providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective)],
+            imports: [ReactiveFormsModule, FaIconComponent, StudentExamDetailTableRowComponent, MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
+            providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective), provideTranslateService()],
         })
             .compileComponents()
             .then(() => {

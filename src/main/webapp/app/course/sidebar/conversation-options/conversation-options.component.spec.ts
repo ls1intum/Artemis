@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -16,9 +15,9 @@ import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.co
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-communication.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideRouter } from '@angular/router';
@@ -38,7 +37,6 @@ examples.forEach((conversation) => {
     const testDescription = conversation();
 
     describe('ConversationOptionsComponent with ' + (testDescription instanceof ChannelDTO ? testDescription.subType + ' ' : '') + testDescription.type, () => {
-        setupTestBed({ zoneless: true });
         let component: ConversationOptionsComponent;
         let fixture: ComponentFixture<ConversationOptionsComponent>;
         let conversationService: ConversationService;
@@ -57,10 +55,10 @@ examples.forEach((conversation) => {
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
                     MockProvider(ConversationService),
-                    MockProvider(MetisConversationService),
+                    MockProvider(CourseConversationsService),
                     MockProvider(AlertService),
                     MockProvider(DialogService),
-                    { provide: MetisService, useClass: MockMetisService },
+                    { provide: CommunicationService, useClass: MockCommunicationService },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();

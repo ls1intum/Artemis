@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
@@ -13,8 +14,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,6 +29,7 @@ import java.util.function.Supplier;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +42,7 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 
@@ -68,9 +75,9 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
  * <strong>Failure handling</strong>
  * </p>
  * <ul>
- * <li>Timeouts: stop unresponsive containers and log guidance for students and instructors.</li>
- * <li>Exceptions: log details (incl. stack trace), stop containers, and complete futures exceptionally.</li>
- * <li>Cancellation: interrupt job execution (if running), stop containers, and clean up state.</li>
+ * <li>Timeouts: stop unresponsive executions and log guidance for students and instructors.</li>
+ * <li>Exceptions: log details (incl. stack trace), stop executions, and complete futures exceptionally.</li>
+ * <li>Cancellation: interrupt job execution (if running), stop it, and clean up state.</li>
  * </ul>
  */
 @Lazy(false)
@@ -81,16 +88,29 @@ public class BuildJobManagementService {
     private static final Logger log = LoggerFactory.getLogger(BuildJobManagementService.class);
 
     /**
+     * Upper bound for waiting on a cancelled execution to leave its cleanup block, so that a build callable that ignores the interrupt cannot block a build-result thread.
+     */
+    private static final Duration CANCELLATION_TERMINATION_TIMEOUT = Duration.ofSeconds(30);
+
+    /**
      * Interval between retries when waiting for cluster connection during startup.
      * Uses the same interval as the availability check in SharedQueueProcessingService for consistency.
      */
     private static final java.time.Duration CLUSTER_CONNECTION_RETRY_INTERVAL = java.time.Duration.ofSeconds(5);
 
+    /**
+     * How long a single wait slice for the build result lasts. The build timeout is enforced in slices of this length so
+     * that slices spent pulling the Docker image can be excluded from the build budget, see
+     * {@link #awaitBuildResult(Future, String, int)}. Short enough to report a timeout promptly, long enough to keep the
+     * polling overhead negligible over a multi-minute build.
+     */
+    private static final long BUILD_TIMEOUT_POLL_INTERVAL_MILLIS = 250;
+
     private final BuildJobExecutionService buildJobExecutionService;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
-    private final BuildJobContainerService buildJobContainerService;
+    private final BuildJobRunner buildJobRunner;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
@@ -153,13 +173,6 @@ public class BuildJobManagementService {
     private boolean runBuildJobsAsynchronously;
 
     /**
-     * Prefix for Docker container names. Each build job's container is named "{prefix}{buildJobId}".
-     * This allows easy identification and management of build containers.
-     */
-    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
-    private String buildContainerPrefix;
-
-    /**
      * A map that contains all build jobs that are currently running.
      * The key is the id of the build job, the value is the future that will be completed with the build result.
      * This map is unique for each node and contains only the build jobs that are running on this node.
@@ -172,6 +185,12 @@ public class BuildJobManagementService {
      */
     private final Map<String, CompletableFuture<BuildResult>> runningFuturesWrapper = new ConcurrentHashMap<>();
 
+    /** Tracks when the submitted callable has actually left its cleanup block after cancellation. */
+    private final Map<String, BuildExecutionTracker> runningExecutionTrackers = new ConcurrentHashMap<>();
+
+    /** Keeps exact attempt resources available for conditional cleanup after a same-id handoff. */
+    private final Map<CompletableFuture<BuildResult>, BuildAttemptResources> buildAttemptResources = new ConcurrentHashMap<>();
+
     /**
      * A set that contains all build jobs that were cancelled by the user.
      * This set is unique for each node and contains only the build jobs that were cancelled on this node.
@@ -179,10 +198,10 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(DistributedDataAccessService distributedDataAccessService, BuildJobExecutionService buildJobExecutionService,
-            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler) {
+            BuildAgentConfiguration buildAgentConfiguration, BuildJobRunner buildJobRunner, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.buildAgentConfiguration = buildAgentConfiguration;
-        this.buildJobContainerService = buildJobContainerService;
+        this.buildJobRunner = buildJobRunner;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildLogsMap = buildLogsMap;
         this.taskScheduler = taskScheduler;
@@ -210,7 +229,7 @@ public class BuildJobManagementService {
         distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
             if (!isInitialConnection) {
                 // This is a reconnection - reset the initialized flag so listeners are re-registered
-                log.info("Hazelcast client reconnected to cluster. Re-initializing BuildJobManagementService listeners.");
+                log.info("Reconnected to the distributed data provider. Re-initializing BuildJobManagementService listeners.");
                 initialized.set(false);
             }
             boolean initSucceeded = tryInitialize();
@@ -223,7 +242,8 @@ public class BuildJobManagementService {
         // If already connected, tryInitialize was called by the listener above.
         // If not connected yet, schedule periodic retries as a fallback.
         if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
-            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+            log.info("Not connected to the distributed data provider yet. Scheduling periodic initialization retries every {} seconds.",
+                    CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
             scheduleConnectionRetryIfNeeded();
         }
     }
@@ -265,7 +285,7 @@ public class BuildJobManagementService {
         }
 
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Cannot initialize BuildJobManagementService: not connected to Hazelcast cluster yet");
+            log.debug("Cannot initialize BuildJobManagementService: not connected to the distributed data provider yet");
             return false;
         }
 
@@ -317,17 +337,25 @@ public class BuildJobManagementService {
      */
     public CompletableFuture<BuildResult> executeBuildJob(BuildJobQueueItem buildJobItem) throws LocalCIException {
 
-        // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerName = buildContainerPrefix + buildJobItem.id();
-
+        BuildExecutionTracker executionTracker = new BuildExecutionTracker();
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<BuildResult> buildJob = () -> buildJobExecutionService.runBuildJob(buildJobItem, containerName);
+        Callable<BuildResult> buildJob = () -> {
+            if (!executionTracker.beginExecution()) {
+                throw new CancellationException("Build execution was cancelled before it started");
+            }
+            try {
+                return buildJobExecutionService.runBuildJob(buildJobItem);
+            }
+            finally {
+                executionTracker.finishExecution();
+            }
+        };
 
         /*
          * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
          * createCompletableFuture() is only used to provide a way to run build jobs synchronously for testing and debugging purposes and depends on the
          * artemis.continuous-integration.asynchronous environment variable.
-         * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
+         * Usually, when using asynchronous build jobs, it runs on the dedicated build result executor.
          * The future is stored in the runningFutures map so that it can be cancelled if needed.
          * We add a lock to prevent the job from being submitted even though it was cancelled.
          */
@@ -335,13 +363,33 @@ public class BuildJobManagementService {
         Future<BuildResult> future;
         try {
             if (cancelledBuildJobs.contains(buildJobItem.id())) {
-                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
+                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id());
                 String msg = "Build job with id " + buildJobItem.id() + " was cancelled before it was submitted to the executor service.";
                 buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
-            future = buildAgentConfiguration.getBuildExecutor().submit(buildJob);
-            runningFutures.put(buildJobItem.id(), future);
+            // Refuse before anything is registered when the executors are gone, which is what a pause leaves behind.
+            // Discovering it only after the build has been submitted would leave a build running that nothing waits
+            // for, so nothing would ever complete its public future or release the attempt.
+            rejectIfExecutorsAreUnavailable(buildJobItem.id());
+            // Register the job before it can start running. submit() hands the task to a worker thread before it
+            // returns, so registering afterwards left a window in which the build was already executing while
+            // runningFutures was still empty. A cancel or pause arriving in that window concluded that nothing was
+            // running: the pause then skipped its grace period and closed the build agent services underneath the
+            // job, which kept running until it hit the build timeout and was reported to the student as a failure.
+            // Executing the task only after the registration keeps "registered" strictly ahead of "running".
+            FutureTask<BuildResult> task = new FutureTask<>(buildJob);
+            runningFutures.put(buildJobItem.id(), task);
+            runningExecutionTrackers.put(buildJobItem.id(), executionTracker);
+            try {
+                buildAgentConfiguration.getBuildExecutor().execute(task);
+            }
+            catch (RuntimeException notAccepted) {
+                runningFutures.remove(buildJobItem.id());
+                runningExecutionTrackers.remove(buildJobItem.id());
+                throw notAccepted;
+            }
+            future = task;
         }
         finally {
             jobLifecycleLock.unlock();
@@ -355,9 +403,9 @@ public class BuildJobManagementService {
             buildJobTimeoutSeconds = this.timeoutSeconds;
         }
 
-        CompletableFuture<BuildResult> futureResult = createCompletableFuture(() -> {
+        CompletableFuture<BuildResult> futureResult = createResultFutureOrReleaseJob(buildJobItem.id(), future, executionTracker, () -> {
             try {
-                return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
+                return awaitBuildResult(future, buildJobItem.id(), buildJobTimeoutSeconds);
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -368,14 +416,17 @@ public class BuildJobManagementService {
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 if (cancelledBuildJobs.contains(buildJobItem.id())) {
-                    finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
+                    if (!executionTracker.awaitTermination(CANCELLATION_TERMINATION_TIMEOUT)) {
+                        log.warn("Build job {} did not release its execution resources within {}", buildJobItem.id(), CANCELLATION_TERMINATION_TIMEOUT);
+                    }
+                    finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id());
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
                     String stackTrace = stackTraceToString(ex);
                     buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
                     throw new CompletionException(msg, ex);
                 }
                 else {
-                    finishBuildJobExceptionally(buildJobItem.id(), containerName, ex);
+                    finishBuildJobExceptionally(buildJobItem.id(), ex);
                     if (ex instanceof TimeoutException) {
                         // Cancel the underlying future to interrupt the build job that's still running.
                         // Without this, the build job continues running in the background and may create
@@ -388,11 +439,122 @@ public class BuildJobManagementService {
             }
         });
 
+        buildAttemptResources.put(futureResult, new BuildAttemptResources(buildJobItem.id(), future, executionTracker));
         runningFuturesWrapper.put(buildJobItem.id(), futureResult);
-        return futureResult.whenComplete(((result, throwable) -> {
-            runningFutures.remove(buildJobItem.id());
-            runningFuturesWrapper.remove(buildJobItem.id());
-        }));
+        return futureResult;
+    }
+
+    /**
+     * Refuses a submission the build agent cannot see through, before it changes any state.
+     * <p>
+     * A build needs two threads: one to run it and one to wait for its result. Pausing the agent closes both executors,
+     * and a build submitted afterwards would either not run at all or run with nothing waiting for it, so its public
+     * future would never complete and the queue processor would neither publish a result nor release the attempt.
+     * <p>
+     * Rejecting here rather than at the executor keeps the failure an ordinary rejected submission, which the caller
+     * already handles by putting the job back on the queue. Reaching the executor with a closed one would instead raise
+     * a {@link NullPointerException}, which no caller expects.
+     *
+     * @param buildJobId the job that is about to be submitted
+     * @throws RejectedExecutionException if either executor is unavailable
+     */
+    private void rejectIfExecutorsAreUnavailable(String buildJobId) {
+        if (!runBuildJobsAsynchronously) {
+            return;
+        }
+        if (isUnavailable(buildAgentConfiguration.getBuildExecutor()) || isUnavailable(buildAgentConfiguration.getBuildResultExecutor())) {
+            throw new RejectedExecutionException("Build job " + buildJobId + " was not submitted because the build executors of this build agent are closed");
+        }
+    }
+
+    private static boolean isUnavailable(@Nullable ThreadPoolExecutor executor) {
+        return executor == null || executor.isShutdown();
+    }
+
+    /**
+     * Creates the public result future and undoes the submission if that fails.
+     * <p>
+     * The build is already registered and running by this point. Leaving it there after a failure here would leave a
+     * build nothing waits for, so the registration is rolled back and the build is interrupted, which turns the failure
+     * into an ordinary rejected submission for the caller.
+     *
+     * @param buildJobId       the job being submitted
+     * @param future           the submitted build task
+     * @param executionTracker the tracker registered for that task
+     * @param supplier         produces the build result by waiting for the submitted task
+     * @return the public future for this attempt
+     */
+    private CompletableFuture<BuildResult> createResultFutureOrReleaseJob(String buildJobId, Future<BuildResult> future, BuildExecutionTracker executionTracker,
+            Supplier<BuildResult> supplier) {
+        try {
+            return createCompletableFuture(supplier);
+        }
+        catch (RuntimeException notAccepted) {
+            future.cancel(true);
+            runningFutures.remove(buildJobId, future);
+            runningExecutionTrackers.remove(buildJobId, executionTracker);
+            throw notAccepted;
+        }
+    }
+
+    /**
+     * Releases local tracking after the queue processor has atomically claimed and handled the
+     * terminal result. Keeping the attempt registered until then allows a concurrent external
+     * cancellation to race against completion through {@link Future#cancel(boolean)} instead of
+     * falling into a gap between future completion and result publication.
+     *
+     * @param futureResult the exact result future returned for this attempt
+     */
+    void releaseBuildJob(CompletableFuture<BuildResult> futureResult) {
+        BuildAttemptResources resources = buildAttemptResources.remove(futureResult);
+        if (resources != null) {
+            runningFuturesWrapper.remove(resources.buildJobId(), futureResult);
+            runningFutures.remove(resources.buildJobId(), resources.future());
+            runningExecutionTrackers.remove(resources.buildJobId(), resources.executionTracker());
+        }
+    }
+
+    /**
+     * Waits for the build result, without letting the time spent pulling the Docker image consume the build timeout.
+     * <p>
+     * Pulling the image is the first step of {@link BuildJobExecutionService#runBuildJob}, so it runs inside the window
+     * guarded by the build timeout. A cold pull of a large image can easily take longer than
+     * {@code artemis.continuous-integration.build-timeout-seconds.max} (240 seconds by default), which would cancel the
+     * job and report it as a build timeout even though the build itself never started. The pull has its own, much longer
+     * budget ({@code artemis.continuous-integration.image-pull-timeout-seconds}) and must therefore be excluded here.
+     * <p>
+     * Rather than starting the timer after image preparation, the wait is sliced: only slices during which no pull is in
+     * progress count against the build budget. That keeps the accounting correct for images that are already present
+     * locally (no pull, so the full budget applies from the start) as well as for pulls that finish mid-build.
+     *
+     * Package-private for testing.
+     *
+     * @param future                 the future of the running build job
+     * @param buildJobId             the ID of the build job, used to check whether its image pull is still running
+     * @param buildJobTimeoutSeconds the build budget in seconds, excluding any time spent pulling the image
+     * @return the build result
+     * @throws TimeoutException if the build itself, not counting image pulls, exceeded the build budget
+     */
+    BuildResult awaitBuildResult(Future<BuildResult> future, String buildJobId, int buildJobTimeoutSeconds) throws Exception {
+        final long budgetNanos = TimeUnit.SECONDS.toNanos(buildJobTimeoutSeconds);
+        long consumedNanos = 0;
+
+        while (true) {
+            final long sliceStartNanos = System.nanoTime();
+            try {
+                return future.get(BUILD_TIMEOUT_POLL_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+            }
+            catch (TimeoutException timeout) {
+                if (buildJobRunner.isFetchingImage(buildJobId)) {
+                    // The fetch is bounded by the image pull timeout, so this slice does not count against the build budget.
+                    continue;
+                }
+                consumedNanos += System.nanoTime() - sliceStartNanos;
+                if (consumedNanos >= budgetNanos) {
+                    throw timeout;
+                }
+            }
+        }
     }
 
     private void logTimedOutBuildJob(BuildJobQueueItem buildJobItem, int buildJobTimeoutSeconds) {
@@ -440,8 +602,7 @@ public class BuildJobManagementService {
      */
     private CompletableFuture<BuildResult> createCompletableFuture(Supplier<BuildResult> supplier) {
         if (runBuildJobsAsynchronously) {
-            // Just use the normal supplyAsync.
-            return CompletableFuture.supplyAsync(supplier);
+            return CompletableFuture.supplyAsync(supplier, buildAgentConfiguration.getBuildResultExecutor());
         }
         else {
             // Use a synchronous CompletableFuture, e.g. in the test environment.
@@ -463,11 +624,10 @@ public class BuildJobManagementService {
      * This method logs the error, provides user-friendly messaging for infrastructure issues,
      * and ensures the container is properly stopped.
      *
-     * @param buildJobId    The id of the build job that failed.
-     * @param containerName The name of the Docker container that was used to execute the build job.
-     * @param exception     The exception that occurred while building and testing the repository.
+     * @param buildJobId The id of the build job that failed.
+     * @param exception  The exception that occurred while building and testing the repository.
      */
-    private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
+    private void finishBuildJobExceptionally(String buildJobId, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
 
@@ -484,15 +644,7 @@ public class BuildJobManagementService {
             log.error(msg, exception);
         }
 
-        log.info("Getting ID of running container {} for cleanup after build job {} failure", containerName, buildJobId);
-        String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
-        if (containerId != null) {
-            log.info("Stopping container with ID {} after build job {} failed", containerId, buildJobId);
-            buildJobContainerService.stopUnresponsiveContainer(containerId);
-        }
-        else {
-            log.debug("No running container found with name {} for build job {}", containerName, buildJobId);
-        }
+        buildJobRunner.cancel(buildJobId);
     }
 
     /**
@@ -517,20 +669,43 @@ public class BuildJobManagementService {
      * Cancel the build job for the given buildJobId.
      *
      * @param buildJobId The id of the build job that should be cancelled.
+     * @return {@code true} if the job was still running and this call stopped it, {@code false} if there was nothing
+     *         left to stop because it had already finished or was never registered. A caller that puts cancelled
+     *         jobs back on the queue has to check this: re-queueing a job that finished on its own would run the
+     *         same build a second time.
      */
-    void cancelBuildJob(String buildJobId) {
-        Future<BuildResult> future = runningFutures.get(buildJobId);
-        if (future != null) {
+    boolean cancelBuildJob(String buildJobId) {
+        jobLifecycleLock.lock();
+        try {
+            Future<BuildResult> future = runningFutures.get(buildJobId);
+            if (future == null) {
+                log.warn("Could not cancel build job with id {} as it was not found in the running build jobs", buildJobId);
+                return false;
+            }
             try {
-                cancelledBuildJobs.add(buildJobId);
-                future.cancel(true); // Attempt to interrupt the build job
+                boolean markerAdded = cancelledBuildJobs.add(buildJobId);
+                // A future that is already cancelled returns false, but the job is still being cancelled. Treating that as accepted keeps repeated cancel signals
+                // idempotent; otherwise the second signal would drop the marker set by the first one and the job would be reported as FAILED instead of CANCELLED.
+                boolean cancellationAccepted = future.cancel(true) || future.isCancelled(); // Attempt to interrupt the build job
+                if (cancellationAccepted) {
+                    BuildExecutionTracker executionTracker = runningExecutionTrackers.get(buildJobId);
+                    if (executionTracker != null) {
+                        executionTracker.cancelBeforeStart();
+                    }
+                    buildJobRunner.cancel(buildJobId);
+                }
+                else if (markerAdded) {
+                    cancelledBuildJobs.remove(buildJobId);
+                }
+                return cancellationAccepted;
             }
             catch (CancellationException e) {
                 log.warn("Build job already cancelled or completed for id {}", buildJobId);
+                return false;
             }
         }
-        else {
-            log.warn("Could not cancel build job with id {} as it was not found in the running build jobs", buildJobId);
+        finally {
+            jobLifecycleLock.unlock();
         }
     }
 
@@ -539,12 +714,11 @@ public class BuildJobManagementService {
      *
      * @param repositoryUri the URI of the repository for which the build job was cancelled
      * @param buildJobId    The id of the cancelled build job
-     * @param containerName The name of the Docker container that was used to execute the build job.
      */
-    private void finishCancelledBuildJob(String repositoryUri, String buildJobId, String containerName) {
+    private void finishCancelledBuildJob(String repositoryUri, String buildJobId) {
         log.debug("Build job with id {} in repository {} was cancelled", buildJobId, repositoryUri);
 
-        buildJobContainerService.stopContainer(containerName);
+        buildJobRunner.cancel(buildJobId);
 
         cancelledBuildJobs.remove(buildJobId);
     }
@@ -562,5 +736,61 @@ public class BuildJobManagementService {
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         return sw.toString();
+    }
+
+    static final class BuildExecutionTracker {
+
+        private final AtomicReference<ExecutionState> state = new AtomicReference<>(ExecutionState.NOT_STARTED);
+
+        private final CompletableFuture<Void> termination = new CompletableFuture<>();
+
+        boolean beginExecution() {
+            return state.compareAndSet(ExecutionState.NOT_STARTED, ExecutionState.RUNNING);
+        }
+
+        void finishExecution() {
+            state.set(ExecutionState.FINISHED);
+            termination.complete(null);
+        }
+
+        void cancelBeforeStart() {
+            if (state.compareAndSet(ExecutionState.NOT_STARTED, ExecutionState.CANCELLED_BEFORE_START)) {
+                termination.complete(null);
+            }
+        }
+
+        /**
+         * Waits until the execution left its cleanup block, but never longer than the given timeout.
+         * <p>
+         * A build callable that ignores the interrupt would otherwise block a build-result thread forever, so the public future would never complete and the queue
+         * bookkeeping in {@code SharedQueueProcessingService} would never release the attempt.
+         *
+         * @param timeout the maximum time to wait for the execution to terminate
+         * @return {@code true} if the execution terminated within the timeout, {@code false} otherwise
+         */
+        boolean awaitTermination(Duration timeout) {
+            try {
+                termination.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+                return true;
+            }
+            catch (TimeoutException e) {
+                return false;
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            catch (ExecutionException e) {
+                // The execution terminated, the outcome itself is handled by the caller of the public future.
+                return true;
+            }
+        }
+
+        private enum ExecutionState {
+            NOT_STARTED, RUNNING, FINISHED, CANCELLED_BEFORE_START,
+        }
+    }
+
+    private record BuildAttemptResources(String buildJobId, Future<BuildResult> future, BuildExecutionTracker executionTracker) {
     }
 }

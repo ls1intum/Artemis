@@ -15,6 +15,10 @@ import { NgTemplateOutlet } from '@angular/common';
     providers: [FeedbackAnalysisService],
 })
 export class AffectedStudentsModalComponent {
+    activeModal = inject(NgbActiveModal);
+    feedbackService = inject(FeedbackAnalysisService);
+    alertService = inject(AlertService);
+
     courseId = input.required<number>();
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
@@ -23,10 +27,6 @@ export class AffectedStudentsModalComponent {
 
     readonly faSpinner = faSpinner;
     readonly isLoading = signal<boolean>(false);
-
-    activeModal = inject(NgbActiveModal);
-    feedbackService = inject(FeedbackAnalysisService);
-    alertService = inject(AlertService);
 
     constructor() {
         effect(() => {

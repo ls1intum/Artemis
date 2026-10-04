@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,8 +12,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ChannelItemComponent } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 
 describe('ChannelItemComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ChannelItemComponent;
     let fixture: ComponentFixture<ChannelItemComponent>;
     const canJoinChannel = vi.fn();
@@ -47,18 +45,26 @@ describe('ChannelItemComponent', () => {
     });
 
     it('should show buttons only if user has the required permissions', () => {
+        // `canJoinChannel` / `canLeaveConversation` are plain functions (not signals); under zoneless change
+        // detection a changed return value does not mark the component's view dirty, so the view's
+        // ChangeDetectorRef must be marked for check before re-rendering. `fixture.changeDetectorRef` refers to
+        // the test host wrapper, not the component view, so resolve the component view's ChangeDetectorRef.
+        const componentCdr = fixture.componentRef.injector.get(ChangeDetectorRef);
+
         expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeTruthy();
         expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeTruthy();
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeTruthy();
 
         canJoinChannel.mockReturnValue(false);
-        fixture.changeDetectorRef.detectChanges();
+        componentCdr.markForCheck();
+        fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeTruthy();
         expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeTruthy();
 
         canLeaveConversation.mockReturnValue(false);
-        fixture.changeDetectorRef.detectChanges();
+        componentCdr.markForCheck();
+        fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeTruthy();
         expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();

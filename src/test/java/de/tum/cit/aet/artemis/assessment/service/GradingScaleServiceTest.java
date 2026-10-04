@@ -64,7 +64,6 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     @BeforeEach
     void init() {
         gradingScale = new GradingScale();
-        gradingScale.setId(1L);
         gradeSteps = new HashSet<>();
         course = courseUtilService.addEmptyCourse();
         exam = examUtilService.addExam(course);
@@ -79,6 +78,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     @ValueSource(doubles = { -60, -1.3, -0.0002 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testMatchPercentageToGradeStepInvalidPercentage(double invalidPercentage) {
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         var savedGradingScale = gradingScaleRepository.save(gradingScale);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> gradingScaleRepository.matchPercentageToGradeStep(invalidPercentage, savedGradingScale))
@@ -95,6 +96,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testMatchPercentageToGradeStepNoValidMapping() {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         double percentage = 85;
@@ -249,6 +252,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     @Test
     void testGradeStepMatchingForRoundingErrors1() {
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(3, new double[] { 0, 40.005, 80, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(40, gradingScale);
@@ -270,6 +275,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     @Test
     void testGradeStepMatchingForRoundingErrors2() {
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(3, new double[] { 0, 40, 63.9901, 100 }, false, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(64, gradingScale);
@@ -287,6 +294,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     @Test
     void testGradeStepMatchingForRoundingErrors3() {
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, 50.010101, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(50, gradingScale);
@@ -305,6 +314,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors4() {
         double boundary = 60 + 1d / 7d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(60.142857, gradingScale);
@@ -323,6 +334,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors5() {
         double boundary = 33 + 1d / 3d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(33.33, gradingScale);
@@ -341,6 +354,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors6() {
         double boundary = 55 + 2d / 3d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, false, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(55.67, gradingScale);
@@ -359,6 +374,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors7() {
         double boundary = 70 + 1d / 6d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(70.16, gradingScale);
@@ -377,6 +394,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors8() {
         double boundary = 45 + 5d / 6d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(45.83, gradingScale);
@@ -395,6 +414,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors9() {
         double boundary = 50 + 1d / 9d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(50.11, gradingScale);
@@ -413,6 +434,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors10() {
         double boundary = 35 + 1d / 11d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(35.09, gradingScale);
@@ -431,6 +454,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors11() {
         double boundary = 25 + 1d / 12d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(25.08, gradingScale);
@@ -449,6 +474,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
     void testGradeStepMatchingForRoundingErrors12() {
         double boundary = 42 + 1d / 13d;
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(42.07, gradingScale);
@@ -468,6 +495,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
         double[] gradeBoundaries = { 0, 28.3, 34.2, 40, 45.8, 51.7, 57.5, 63.3, 69.2, 75, 80.8, 86.7, 92.5, 100 };
         String[] gradeNames = { "5.0", "4.7", "4.3", "4.0", "3.7", "3.3", "3.0", "2.7", "2.3", "2.0", "1.7", "1.3", "1.0" };
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(13, gradeBoundaries, true, 3, Optional.of(gradeNames));
+        // A grading scale grades a course or an exam, and the row has to name one of the two.
+        gradingScale.setCourse(course);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
         List<String[]> results = gradingScaleUtilService.loadPercentagesAndGrades("test-data/student-grades/grades.csv");

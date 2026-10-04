@@ -6,7 +6,6 @@ import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
@@ -17,8 +16,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Example Solution Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ExampleSolutionComponent;
     let fixture: ComponentFixture<ExampleSolutionComponent>;
     let exerciseService: ExerciseService;

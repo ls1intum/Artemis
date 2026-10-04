@@ -34,14 +34,14 @@ public interface GroupChatRepository extends ArtemisJpaRepository<GroupChat, Lon
                 LEFT JOIN groupChat.conversationParticipants conversationParticipant
                 LEFT JOIN FETCH groupChat.conversationParticipants conversationParticipants
                 LEFT JOIN FETCH conversationParticipants.user user
-                LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH user.courseRoles
                 LEFT JOIN FETCH groupChat.course
                 LEFT JOIN FETCH groupChat.creator
             WHERE groupChat.course.id = :courseId
                 AND conversationParticipant.user.id = :userId
             ORDER BY groupChat.lastMessageDate DESC
             """)
-    List<GroupChat> findGroupChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<GroupChat> findGroupChatsOfUserWithParticipantsAndUserCourseRoles(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     /**
      * Find an existing group chat in a given course with the exact set of participants.

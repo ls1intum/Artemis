@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 // @formatter:off
 @JsonSubTypes({
     @JsonSubTypes.Type(value = OneToOneChatDTO.class, name = "oneToOneChat"),
@@ -78,7 +78,12 @@ public class ConversationDTO {
         // default constructor
     }
 
-    // TODO: in json, this value is inserted twice, add @JsonIgnore
+    /**
+     * Doubles as the polymorphic discriminator: the class is mapped with {@code As.EXISTING_PROPERTY}, so this one
+     * property carries the type id instead of Jackson writing a second copy of it next to this one.
+     *
+     * @return the conversation type, one of {@code channel}, {@code groupChat} or {@code oneToOneChat}
+     */
     public String getType() {
         return type;
     }

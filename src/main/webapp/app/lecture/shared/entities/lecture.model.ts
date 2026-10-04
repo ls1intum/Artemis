@@ -1,6 +1,5 @@
 import { Dayjs } from 'dayjs/esm';
 import { BaseEntity } from 'app/foundation/model/base-entity';
-import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -11,7 +10,6 @@ export class Lecture implements BaseEntity {
     description?: string;
     startDate?: Dayjs;
     endDate?: Dayjs;
-    attachments?: Attachment[];
     posts?: Post[];
     lectureUnits?: LectureUnit[];
     course?: Course;

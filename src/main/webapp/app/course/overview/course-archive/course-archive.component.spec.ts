@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -36,8 +35,6 @@ const course7 = { id: 7, semester: 'WS22/23' } as CourseForArchiveDTO;
 const courses: CourseForArchiveDTO[] = [course1, course2, course3, course4, course5, course6, course7];
 
 describe('CourseArchiveComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseArchiveComponent;
     let fixture: ComponentFixture<CourseArchiveComponent>;
     let courseService: CourseManagementService;
@@ -95,8 +92,44 @@ describe('CourseArchiveComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.courses()).toEqual(courses);
+            expect(component.courses()).toEqual(expect.arrayContaining(courses));
             expect(component.courses()).toHaveLength(7);
+        });
+
+        it('should separate archived test courses from regular courses', () => {
+            const archivedTestCourse = { id: 8, title: 'Test Course', semester: 'WS23/24', testCourse: true, color: '', icon: '', canManage: false } as CourseForArchiveDTO;
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
+            getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: [...courses, archivedTestCourse], headers: new HttpHeaders() })));
+
+            component.ngOnInit();
+
+            expect(component.courses()).not.toContain(archivedTestCourse);
+            expect(component.testCourses()).toEqual([archivedTestCourse]);
+            expect(component.coursesBySemester()['WS23/24']).not.toContain(archivedTestCourse);
+            expect(component.coursesBySemester().testCourses).toEqual([archivedTestCourse]);
+            expect(component.archiveGroups().at(-1)).toBe('testCourses');
+
+            fixture.changeDetectorRef.detectChanges();
+            const testCourseGroup = fixture.debugElement.nativeElement.querySelector('#semester-group-5');
+            testCourseGroup.click();
+
+            expect(component.semesterCollapsed().testCourses).toBe(true);
+        });
+
+        it('should group semester-independent courses after all semester groups', () => {
+            const semesterIndependentCourse = { id: 8, title: 'Independent Course', testCourse: false } as CourseForArchiveDTO;
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
+            getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: [...courses, semesterIndependentCourse], headers: new HttpHeaders() })));
+
+            component.ngOnInit();
+
+            expect(component.semesters().at(-1)).toBe('');
+            expect(component.coursesBySemester()['']).toEqual([semesterIndependentCourse]);
+            expect(component.fullFormOfSemesterStrings()['']).toBe('artemisApp.course.archive.semesterIndependent');
+
+            component.onSort();
+
+            expect(component.semesters().at(-1)).toBe('');
         });
 
         it('should handle an empty response body correctly when fetching all courses for archive', () => {

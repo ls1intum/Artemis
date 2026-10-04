@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { TemplateRef, signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
@@ -14,8 +13,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('AdminTitleBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AdminTitleBarComponent;
     let fixture: ComponentFixture<AdminTitleBarComponent>;
     let mockTitleTemplate: ReturnType<typeof signal<TemplateRef<any> | undefined>>;

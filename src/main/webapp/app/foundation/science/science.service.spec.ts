@@ -10,12 +10,9 @@ import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-togg
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { of } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ScienceService', () => {
-    setupTestBed({ zoneless: true });
-
     let scienceService: ScienceService;
     let httpService: HttpClient;
     let featureToggleService: FeatureToggleService;

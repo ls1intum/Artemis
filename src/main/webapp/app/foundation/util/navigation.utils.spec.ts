@@ -1,14 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
 import { Location } from '@angular/common';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('Navigation Util Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ArtemisNavigationUtilService;
 
     const router = new MockRouter();

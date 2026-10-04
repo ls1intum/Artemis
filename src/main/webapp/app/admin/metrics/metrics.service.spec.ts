@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -11,8 +10,6 @@ import { MetricsService } from 'app/admin/metrics/metrics.service';
 import { NodeInfo, ThreadDump, ThreadState } from 'app/admin/metrics/metrics.model';
 
 describe('MetricsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: MetricsService;
     let httpMock: HttpTestingController;
 

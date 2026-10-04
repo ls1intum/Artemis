@@ -1,46 +1,33 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/overlay/exam-live-events-overlay.component';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Subject, of } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import dayjs from 'dayjs/esm';
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ExamLiveEventsOverlayComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamLiveEventsOverlayComponent;
     let fixture: ComponentFixture<ExamLiveEventsOverlayComponent>;
     let mockLiveEventsService: ExamParticipationLiveEventsService;
     let mockExamExerciseUpdateService: ExamExerciseUpdateService;
-    let mockDialogRef: DynamicDialogRef;
-    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    let closedSpy: Mock<() => void>;
 
     beforeEach(async () => {
-        dialogRefCloseSpy = vi.fn();
-        mockDialogRef = {
-            close: dialogRefCloseSpy,
-            onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
+        closedSpy = vi.fn<() => void>();
 
         await TestBed.configureTestingModule({
-            providers: [
-                SessionStorageService,
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: DynamicDialogRef, useValue: mockDialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
-            ],
+            providers: [SessionStorageService, provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
     });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(ExamLiveEventsOverlayComponent);
         component = fixture.componentInstance;
+        component.closed.subscribe(closedSpy);
         mockLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
         mockExamExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
         fixture.detectChanges();
@@ -62,6 +49,20 @@ describe('ExamLiveEventsOverlayComponent', () => {
 
         expect(component.events()).toEqual(mockEvents);
         expect(component.unacknowledgedEvents()).toEqual([mockEvents[0]]);
+    });
+
+    it('should hide problem statement updates that were made before the start of the exam', () => {
+        const examStart = dayjs('2026-01-01T10:00:00Z');
+        fixture.componentRef.setInput('examStartDate', examStart);
+        const before = { id: 1, eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE, createdDate: examStart.subtract(1, 'hour') } as any as ExamLiveEvent;
+        const after = { id: 2, eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE, createdDate: examStart.add(1, 'hour') } as any as ExamLiveEvent;
+        const announcement = { id: 3, eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, createdDate: examStart.subtract(1, 'hour') } as any as ExamLiveEvent;
+        vi.spyOn(mockLiveEventsService, 'observeAllEvents').mockReturnValue(of([before, after, announcement]));
+        vi.spyOn(mockLiveEventsService, 'observeNewEventsAsUser').mockReturnValue(new Subject<ExamLiveEvent>());
+
+        component.ngOnInit();
+
+        expect(component.events()).toEqual([after, announcement]);
     });
 
     it('should acknowledge an event', () => {
@@ -96,7 +97,7 @@ describe('ExamLiveEventsOverlayComponent', () => {
     it('should close overlay', () => {
         component.closeOverlay();
 
-        expect(dialogRefCloseSpy).toHaveBeenCalledWith('cancel');
+        expect(closedSpy).toHaveBeenCalledOnce();
     });
 
     it('should update events to display based on unacknowledgedEvents', () => {

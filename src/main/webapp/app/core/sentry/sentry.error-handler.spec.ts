@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock @sentry/angular before importing anything else
 vi.mock('@sentry/angular', async (importOriginal) => {
@@ -22,8 +21,6 @@ import { PROFILE_PROD, PROFILE_TEST } from 'app/app.constants';
 import { MockProvider } from 'ng-mocks';
 
 describe('SentryErrorHandler', () => {
-    setupTestBed({ zoneless: true });
-
     let service: SentryErrorHandler;
     let localStorageService: LocalStorageService;
     let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
@@ -110,6 +107,28 @@ describe('SentryErrorHandler', () => {
             expect(Sentry.init).toHaveBeenCalledOnce();
             const callArgs = (Sentry.init as ReturnType<typeof vi.fn>).mock.calls[0][0];
             expect(callArgs.environment).toBe('local');
+        });
+
+        it('should keep the restrictive Sentry data collection baseline', async () => {
+            const profileInfo = createProfileInfo({ testServer: false });
+
+            await service.initSentry(profileInfo);
+
+            // Sentry 11 collects far more when `dataCollection` is unset, so every category has to stay switched off or filtered.
+            const deniedPatterns = ['authorization', 'forwarded', '-ip', 'remote-', 'via', '-user'];
+            const callArgs = (Sentry.init as ReturnType<typeof vi.fn>).mock.calls[0][0];
+            expect(callArgs.dataCollection).toEqual({
+                userInfo: false,
+                cookies: false,
+                httpHeaders: { request: { deny: deniedPatterns }, response: { deny: deniedPatterns } },
+                httpBodies: [],
+                urlQueryParams: { deny: deniedPatterns },
+                genAI: { inputs: false, outputs: false },
+                databaseQueryData: false,
+                queues: false,
+                graphQL: { document: false, variables: false },
+            });
+            expect(callArgs).not.toHaveProperty('sendDefaultPii');
         });
 
         it('should configure tracesSampler correctly', async () => {

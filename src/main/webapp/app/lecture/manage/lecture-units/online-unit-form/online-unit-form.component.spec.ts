@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
 import dayjs from 'dayjs/esm';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -21,8 +21,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('OnlineUnitFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
     let onlineUnitFormComponent: OnlineUnitFormComponent;
 
@@ -178,5 +176,48 @@ describe('OnlineUnitFormComponent', () => {
         expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://example.com');
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(resourceDto.title);
         expect(onlineUnitFormComponent.descriptionControl?.value).toEqual(resourceDto.description);
+    });
+
+    describe('when the item saves itself', () => {
+        let changes: UnitFormChange<OnlineUnitFormData>[];
+
+        beforeEach(() => {
+            changes = [];
+            onlineUnitFormComponent.formChanged.subscribe((change) => changes.push(change));
+            onlineUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            onlineUnitFormComponentFixture.componentRef.setInput('autosave', true);
+            onlineUnitFormComponentFixture.componentRef.setInput('formData', { name: 'Artemis', description: 'Start here', source: 'https://artemis.tum.de' });
+            onlineUnitFormComponentFixture.detectChanges();
+        });
+
+        it('should report typed text for saving after a pause and choices for saving at once, but not the data of the item', () => {
+            expect(changes).toEqual([]);
+
+            onlineUnitFormComponent.descriptionControl!.setValue('Read this first');
+            onlineUnitFormComponent.sourceControl!.setValue('https://docs.artemis.tum.de');
+            onlineUnitFormComponent.onReleaseDateChange(dayjs('2026-10-01T10:00:00Z'));
+
+            expect(changes.map((change) => change.immediate)).toEqual([false, false, true]);
+            expect(changes[2].data).toEqual(expect.objectContaining({ name: 'Artemis', description: 'Read this first', source: 'https://docs.artemis.tum.de' }));
+            expect(changes[2].valid).toBe(true);
+        });
+
+        it('should offer no Submit button, since Enter in an item that saves itself saves through the page', () => {
+            expect(onlineUnitFormComponentFixture.nativeElement.querySelector('#submitButton')).toBeNull();
+        });
+
+        it('should keep the name and description when the link changes and fill in only empty fields', () => {
+            const resourceDto = new OnlineResourceDTO();
+            resourceDto.title = 'Artemis documentation';
+            resourceDto.description = 'Guides for students and instructors';
+            vi.spyOn(TestBed.inject(OnlineUnitService), 'getOnlineResource').mockReturnValue(of(new HttpResponse({ body: resourceDto, status: 200 })));
+            onlineUnitFormComponent.descriptionControl!.setValue('');
+
+            onlineUnitFormComponent.sourceControl!.setValue('docs.artemis.tum.de');
+            onlineUnitFormComponent.onLinkChanged();
+
+            expect(onlineUnitFormComponent.nameControl?.value).toBe('Artemis');
+            expect(onlineUnitFormComponent.descriptionControl?.value).toBe(resourceDto.description);
+        });
     });
 });

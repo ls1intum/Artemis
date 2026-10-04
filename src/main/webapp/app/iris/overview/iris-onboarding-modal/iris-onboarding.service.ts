@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { Subject, firstValueFrom } from 'rxjs';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,9 +11,7 @@ export type OnboardingEvent = { type: 'contextChanged' } | { type: 'chipClicked'
 
 const IRIS_ONBOARDING_KEY_PREFIX = 'iris-onboarding-completed';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class IrisOnboardingService {
     private dialogService = inject(DialogService);
     private accountService = inject(AccountService);

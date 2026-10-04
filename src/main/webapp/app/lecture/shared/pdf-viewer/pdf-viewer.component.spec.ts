@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -13,8 +12,6 @@ import { MockPdfEngineService, createMockPdfDocument } from 'test/helpers/mocks/
 import { PdfActionType, PdfAnnotationSubtype } from '@embedpdf/models';
 
 describe('PdfViewerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfViewerComponent;
     let fixture: ComponentFixture<PdfViewerComponent>;
     let httpMock: HttpTestingController;
@@ -293,16 +290,37 @@ describe('PdfViewerComponent', () => {
         const emitted = vi.fn();
         component.currentPageChange.subscribe(emitted);
 
-        component.goToPage(2);
+        expect(component.getTotalPages()).toBe(3);
+        expect(component.canGoToPage(2)).toBe(true);
+
+        expect(component.goToPage(2)).toBe(true);
         expect(component.getCurrentPage()).toBe(2);
         expect(emitted).toHaveBeenCalledWith(2);
-        component.goToPage(99); // out of range -> ignored
+        // Out of range and non-integral targets are rejected; callers acting for someone else (Iris point-out) rely on
+        // the returned false to report that no navigation happened.
+        expect(component.goToPage(99)).toBe(false);
+        expect(component.goToPage(0)).toBe(false);
+        expect(component.goToPage(1.5)).toBe(false);
         expect(component.getCurrentPage()).toBe(2);
 
         // An invalid page-input value resets to the current page.
         component['pageInputValue'].set(42);
         component['confirmPageNavigation']();
         expect(component['pageInputValue']()).toBe(2);
+    });
+
+    it('should reject navigation while the target page element is not rendered', () => {
+        component['totalPages'].set(3);
+        const emitted = vi.fn();
+        component.currentPageChange.subscribe(emitted);
+        const scrollIntoViewSpy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+        expect(component.canGoToPage(2)).toBe(false);
+        expect(component.goToPage(2)).toBe(false);
+        expect(component.getCurrentPage()).toBe(1);
+        expect(component['programmaticScrollUntil']).toBe(0);
+        expect(emitted).not.toHaveBeenCalled();
+        expect(scrollIntoViewSpy).not.toHaveBeenCalled();
     });
 
     it('should emit currentPageChange when the current page changes', async () => {
@@ -633,6 +651,8 @@ describe('PdfViewerComponent', () => {
         await loadPdf();
         const blur = vi.fn();
         const select = vi.fn();
+        // PrimeNG 21 InputNumber.input is a plain ElementRef property, so the
+        // component reads it as .input; the mock exposes .input. as the ref object directly.
         vi.spyOn(component, 'pageInputElement').mockReturnValue({ input: { nativeElement: { blur, select } } } as any);
         const preventDefault = vi.fn();
 

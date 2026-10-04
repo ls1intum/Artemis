@@ -1,16 +1,19 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.RecordComponent;
-import java.util.ArrayList;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -56,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -73,10 +77,13 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionServiceTest.class);
 
     @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
     private ExerciseVersionTestRepository exerciseVersionRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;
@@ -162,7 +169,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(snapshot).isNotNull();
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise,
+                programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(fetchedExercise.getId()).orElse(null),
+                ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
         // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
         assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
         assertThat(objectMapper.writeValueAsString(snapshot)).isNotEqualTo(objectMapper.writeValueAsString(previousVersion.getExerciseSnapshot()));
@@ -177,7 +186,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
 
         // save again to db without changing versionable data
-        Course newCourse = courseUtilService.addEmptyCourse();
+        Course newCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exercise.setCourse(newCourse);
         saveExerciseByType(exercise);
         exerciseVersionService.createExerciseVersion(exercise);
@@ -192,7 +201,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(snapshot).isNotNull();
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise,
+                programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(fetchedExercise.getId()).orElse(null),
+                ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
         // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
         assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
     }
@@ -228,6 +239,39 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(afterCount).isEqualTo(previousCount);
     }
 
+    /**
+     * {@code findForVersioningById} was changed from a single {@code @EntityGraph} (which produced a Cartesian product of
+     * the independent {@code @OneToMany} collections) to a base query plus one lean query per large collection, merged in
+     * Java. This test guards that refactor: it asserts every collection that versioning relies on is fully loaded, using
+     * ground-truth counts from the setup helpers (not another {@code findForVersioningById} call), so a collection that the
+     * multi-query fetch failed to load or merge would fail here rather than silently drop data from the version snapshot.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFindForVersioningByIdLoadsAllIndependentCollections() {
+        // Set up a programming exercise with the independent collections that previously formed the Cartesian product:
+        // test cases, tasks (each linked to its test cases) and static code analysis categories.
+        ProgrammingExercise exercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        var createdTestCases = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
+        // Reload so the in-memory exercise carries its test cases; addTasksToProgrammingExercise builds one task per test case.
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);
+
+        ProgrammingExercise fetched = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+
+        // Each independent collection is fully loaded; the counts are ground truth from the setup, so a short/dropped
+        // collection fails here.
+        assertThat(fetched.getTestCases()).hasSize(createdTestCases.size());
+        assertThat(fetched.getTasks()).hasSize(createdTestCases.size());
+        // tasks.testCases must be loaded too (the deepest part of the former Cartesian product): exactly one test case per task.
+        assertThat(fetched.getTasks()).allSatisfy(task -> assertThat(task.getTestCases()).hasSize(1));
+        assertThat(fetched.getTasks().stream().mapToLong(task -> task.getTestCases().size()).sum()).isEqualTo(createdTestCases.size());
+        // The static code analysis categories created by the helper are loaded as well.
+        assertThat(fetched.getStaticCodeAnalysisCategories()).isNotEmpty();
+        // A to-one association from the base query is present, confirming the base query still loads its own attribute paths.
+        assertThat(programmingExerciseUtilService.buildConfigOf(fetched)).isNotNull();
+    }
+
     private Exercise createExerciseByType(ExerciseType exerciseType) {
         return switch (exerciseType) {
             case TEXT -> createTextExercise();
@@ -239,13 +283,13 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     private TextExercise createTextExercise() {
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         return (TextExercise) course.getExercises().iterator().next();
     }
 
     private ProgrammingExercise createProgrammingExercise() {
 
-        ProgrammingExercise newProgrammingExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise newProgrammingExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(TEST_PREFIX);
         newProgrammingExercise = programmingExerciseRepository.findForVersioningById(newProgrammingExercise.getId()).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(newProgrammingExercise);
 
@@ -261,7 +305,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         try {
             newProgrammingExercise = programmingExerciseRepository.findForVersioningById(newProgrammingExercise.getId()).orElseThrow();
 
-            newProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
+            newProgrammingExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
             RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, newProgrammingExercise);
             templateProgrammingExerciseParticipationRepository.save(newProgrammingExercise.getTemplateParticipation());
@@ -284,20 +328,20 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     private ModelingExercise createModelingExercise() {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         // Create a modeling exercise
         Exercise exercise = course.getExercises().iterator().next();
         return modelingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
     }
 
     private QuizExercise createQuizExercise() {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         quizExerciseRepository.flush();
         return (QuizExercise) course.getExercises().iterator().next();
     }
 
     private FileUploadExercise createFileUploadExercise() {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         fileUploadExerciseRepository.flush();
         return (FileUploadExercise) course.getExercises().iterator().next();
     }
@@ -338,7 +382,12 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
                 ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(newProgrammingExercise, exercise.getShortName(), "Updated Title", true, ProgrammingLanguage.SWIFT);
                 yield newProgrammingExercise;
             case QuizExercise quizExercise:
+                // emptyOutQuizExercise prepares a quiz for an import request and clears its course on the way. This
+                // test saves the entity instead of posting it, so the course is put back: an exercise row belongs to a
+                // course or to an exercise group, never to neither.
+                Course quizCourse = quizExercise.getCourseViaExerciseGroupOrCourseMember();
                 quizExerciseUtilService.emptyOutQuizExercise(quizExercise);
+                quizExercise.setCourse(quizCourse);
                 yield quizExercise;
             case ModelingExercise modelingExercise:
                 modelingExercise.setExampleSolutionModel("Updated example solution");
@@ -366,7 +415,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         // No synchronization should be broadcast for the initial version
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), any());
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), any());
     }
 
     /**
@@ -388,7 +437,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         // Metadata synchronization should be broadcast when no commits have changed
         var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
         assertThat(payload.exerciseVersionId()).isNotNull();
         assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);
@@ -418,7 +467,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
         assertThat(payload.changedFields()).contains("channelName");
     }
@@ -442,7 +491,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
         assertThat(payload.changedFields()).contains("programmingData.auxiliaryRepositories");
     }
@@ -477,7 +526,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
 
         assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
@@ -500,9 +549,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         // Fields covered by addIfChanged calls in ExerciseVersionService.collectChangedFields
         Set<String> coveredFields = Set.of("title", "shortName", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate",
-                "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "difficulty", "mode", "allowComplaintsForAutomaticAssessments", "allowFeedbackRequests",
-                "includedInOverallScore", "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled",
-                "feedbackSuggestionModule", "gradingCriteria", "plagiarismDetectionConfig");
+                "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "difficulty", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore",
+                "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig");
 
         // Fields intentionally excluded from metadata sync change detection
         Set<String> excludedFields = Set.of("id", // structural identifier, not editable metadata
@@ -550,6 +598,110 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         Set<String> accountedFor = new java.util.HashSet<>(coveredFields);
         accountedFor.addAll(excludedFields);
         assertThat(accountedFor).as("Every ProgrammingExerciseSnapshotDTO field must be either covered or explicitly excluded in collectProgrammingChanges").isEqualTo(allFields);
+    }
+
+    /**
+     * Guard for the Atlas auto-orchestration trigger filter: every top-level {@link ExerciseSnapshotDTO}
+     * field must be explicitly classified as either competency-relevant (content-bearing, SHOULD
+     * trigger) or irrelevant (administrative, must NOT trigger). If a new field is added to the
+     * snapshot DTO without classifying it here the test fails, forcing a deliberate decision about
+     * whether it should re-arm the orchestrator.
+     * <p>
+     * The competency-relevant top-level fields must equal the non-{@code programmingData.*} entries of
+     * {@link ExerciseVersionService#COMPETENCY_RELEVANT_FIELDS}, so the allowlist stays the single
+     * source of truth.
+     */
+    @Test
+    void testCompetencyRelevantClassificationCoversAllExerciseSnapshotFields() {
+        Set<String> allFields = Arrays.stream(ExerciseSnapshotDTO.class.getRecordComponents()).map(RecordComponent::getName).collect(Collectors.toSet());
+
+        // Content-bearing fields that SHOULD trigger an orchestration run. textData / fileUploadData
+        // qualify whole because ContentExtractionService extracts every field they carry.
+        Set<String> competencyRelevant = Set.of("title", "shortName", "difficulty", "categories", "problemStatement", "textData", "fileUploadData");
+
+        // Administrative / structural fields that must NOT trigger. competencyLinks is intentionally
+        // here (not content-bearing): an orchestrator-driven link edit must not re-arm the pipeline.
+        Set<String> competencyIrrelevant = Set.of("id", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate", "dueDate",
+                "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore", "gradingInstructions",
+                "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig",
+                // classified per-field via the dotted allowlist entries: repo commits for programmingData,
+                // the extracted components for modelingData / quizData.
+                "programmingData", "modelingData", "quizData");
+
+        Set<String> classified = new HashSet<>(competencyRelevant);
+        classified.addAll(competencyIrrelevant);
+        assertThat(classified).as("Every ExerciseSnapshotDTO field must be classified competency-relevant or irrelevant for the Atlas trigger filter").isEqualTo(allFields);
+
+        // The relevant top-level fields must match the allowlist (minus the per-component dotted entries).
+        Set<String> allowlistTopLevel = ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS.stream().filter(field -> !field.contains(".")).collect(Collectors.toSet());
+        assertThat(competencyRelevant).as("COMPETENCY_RELEVANT_FIELDS must be the single source of truth for content-bearing top-level fields").isEqualTo(allowlistTopLevel);
+
+        // competencyLinks must be excluded from the allowlist (documented non-triggering decision).
+        assertThat(ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS).doesNotContain("competencyLinks");
+    }
+
+    /**
+     * Ensures the changed-field set carried on {@link de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent}
+     * includes the content-bearing fields the Atlas filter needs (problemStatement, title) and the
+     * orchestrator-irrelevant administrative changes too (so consumers can filter), while a no-op
+     * change yields an empty set.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCollectChangedFieldsForEventIncludesContentFields() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exercise.setProblemStatement("Original problem statement");
+        programmingExerciseRepository.saveAndFlush(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        ExerciseSnapshotDTO previousSnapshot = ExerciseSnapshotDTO.of(exercise, programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null),
+                ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService));
+
+        exercise.setProblemStatement("Rewritten problem statement covering new content");
+        exercise.setTitle("Updated Title");
+        exercise.setDueDate(ZonedDateTime.now().plusDays(3));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        ExerciseSnapshotDTO newSnapshot = ExerciseSnapshotDTO.of(exercise, programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null),
+                ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService));
+
+        Set<String> changedFields = exerciseVersionService.collectChangedFieldsForEvent(newSnapshot, previousSnapshot);
+
+        // Content-bearing fields are present and intersect the allowlist (so the orchestrator triggers).
+        assertThat(changedFields).contains("problemStatement", "title", "dueDate");
+        assertThat(Collections.disjoint(changedFields, ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS)).isFalse();
+
+        // No-op: identical snapshots yield an empty changed-field set (and never trigger the orchestrator).
+        Set<String> noChange = exerciseVersionService.collectChangedFieldsForEvent(newSnapshot, newSnapshot);
+        assertThat(noChange).isEmpty();
+        assertThat(Collections.disjoint(noChange, ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS)).isTrue();
+    }
+
+    /**
+     * Non-trigger coverage for the type-specific fields {@code ContentExtractionService} does not
+     * extract: the modeling example-solution model and the quiz delivery settings. Editing them cannot
+     * change Atlas' orchestration input, so they must not consume the course's capped daily budget.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCollectChangedFieldsForEventDoesNotTriggerOnUnextractedTypeSpecificFields() {
+        ModelingExercise modelingExercise = createModelingExercise();
+        ExerciseSnapshotDTO previousModeling = ExerciseSnapshotDTO.of(fetchExerciseForComparison(modelingExercise), null, null);
+        modelingExercise.setExampleSolutionModel("{\"updated\": \"model\"}");
+        modelingExerciseRepository.saveAndFlush(modelingExercise);
+        ExerciseSnapshotDTO newModeling = ExerciseSnapshotDTO.of(fetchExerciseForComparison(modelingExercise), null, null);
+
+        assertThat(Collections.disjoint(exerciseVersionService.collectChangedFieldsForEvent(newModeling, previousModeling), ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS))
+                .as("example-solution model is not extracted, so it must not arm orchestration").isTrue();
+
+        QuizExercise quizExercise = createQuizExercise();
+        ExerciseSnapshotDTO previousQuiz = ExerciseSnapshotDTO.of(fetchExerciseForComparison(quizExercise), null, null);
+        quizExercise.setDuration(quizExercise.getDuration() == null ? 600 : quizExercise.getDuration() + 600);
+        quizExercise.setRandomizeQuestionOrder(!Boolean.TRUE.equals(quizExercise.isRandomizeQuestionOrder()));
+        quizExerciseRepository.saveAndFlush(quizExercise);
+        ExerciseSnapshotDTO newQuiz = ExerciseSnapshotDTO.of(fetchExerciseForComparison(quizExercise), null, null);
+
+        assertThat(Collections.disjoint(exerciseVersionService.collectChangedFieldsForEvent(newQuiz, previousQuiz), ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS))
+                .as("quiz delivery settings are not extracted, so they must not arm orchestration").isTrue();
     }
 
 }

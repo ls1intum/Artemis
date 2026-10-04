@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TaskCountWarningComponent } from 'app/programming/manage/instructions-editor/analysis/task-count-warning/task-count-warning.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TaskCountWarningComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TaskCountWarningComponent>;
 
     beforeEach(() => {

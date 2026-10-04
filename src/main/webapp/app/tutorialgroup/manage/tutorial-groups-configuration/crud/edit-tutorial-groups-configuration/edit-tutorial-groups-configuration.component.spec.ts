@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -25,8 +24,6 @@ import { expectComponentRendered } from 'test/helpers/sample/tutorialgroup/tutor
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 describe('EditTutorialGroupsConfigurationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<EditTutorialGroupsConfigurationComponent>;
     let component: EditTutorialGroupsConfigurationComponent;
     let configurationService: TutorialGroupsConfigurationService;

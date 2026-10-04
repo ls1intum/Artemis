@@ -46,8 +46,8 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -64,7 +64,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     private Exam exam2;
 
-    private final List<LocalRepository> studentRepos = new ArrayList<>();
+    private final List<LocalVCTestRepository> studentRepos = new ArrayList<>();
 
     private static final int NUMBER_OF_STUDENTS = 4;
 
@@ -77,7 +77,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var student3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
         var student4 = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         // same registration number as in test pdf file
         student1.setRegistrationNumber("03756882");
@@ -102,8 +102,8 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     @AfterEach
     void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
-        for (LocalRepository studentRepo : studentRepos) {
-            studentRepo.resetLocalRepo();
+        for (LocalVCTestRepository studentRepo : studentRepos) {
+            studentRepo.deleteWorkingCopy();
         }
     }
 

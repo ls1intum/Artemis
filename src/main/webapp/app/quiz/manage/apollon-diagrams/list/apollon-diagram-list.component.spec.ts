@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -25,8 +24,6 @@ import { isEqual } from 'lodash-es';
 import { UMLDiagramType } from '@tumaet/apollon';
 
 describe('ApollonDiagramList Component', () => {
-    setupTestBed({ zoneless: true });
-
     let apollonDiagramService: ApollonDiagramService;
     let courseService: CourseManagementService;
     let dialogService: DialogService;
@@ -130,6 +127,46 @@ describe('ApollonDiagramList Component', () => {
         const emitOpenDiagramSpy = vi.spyOn(fixture.componentInstance.openDiagram, 'emit');
         fixture.componentInstance.handleOpenDialogClick(1);
         expect(emitOpenDiagramSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should sort the loaded diagrams so the rows match the header sort indicator', () => {
+        const sortService = fixture.debugElement.injector.get(SortService);
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty');
+        const apollonDiagrams: ApollonDiagram[] = [new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!)];
+        vi.spyOn(apollonDiagramService, 'getDiagramsByCourse').mockReturnValue(of(new HttpResponse({ body: apollonDiagrams })));
+        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+
+        fixture.detectChanges();
+
+        expect(sortSpy).toHaveBeenCalledWith(expect.any(Array), 'id', true);
+        expect(fixture.componentInstance.apollonDiagrams()).not.toBe(apollonDiagrams);
+    });
+
+    it('sortRows should adopt the requested field and direction', () => {
+        const sortService = fixture.debugElement.injector.get(SortService);
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty');
+        const diagrams = [new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!)];
+        fixture.componentInstance.apollonDiagrams.set(diagrams);
+
+        fixture.componentInstance.sortRows({ field: 'title', order: -1 });
+
+        expect(fixture.componentInstance.predicate()).toBe('title');
+        expect(fixture.componentInstance.ascending()).toBe(false);
+        expect(sortSpy).toHaveBeenCalledWith(expect.any(Array), 'title', false);
+
+        fixture.componentInstance.sortRows({ field: 'title', order: 1 });
+
+        expect(fixture.componentInstance.ascending()).toBe(true);
+        expect(sortSpy).toHaveBeenLastCalledWith(expect.any(Array), 'title', true);
+    });
+
+    it('sortRows should replace the array reference so the signal notifies', () => {
+        const diagrams = [new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!)];
+        fixture.componentInstance.apollonDiagrams.set(diagrams);
+
+        fixture.componentInstance.sortRows({ field: 'id', order: 1 });
+
+        expect(fixture.componentInstance.apollonDiagrams()).not.toBe(diagrams);
     });
 
     it('handleCloseDiagramClick', () => {

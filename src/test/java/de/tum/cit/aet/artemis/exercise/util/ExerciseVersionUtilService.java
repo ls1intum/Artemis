@@ -25,9 +25,12 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionCommitHashResolver;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -53,6 +56,9 @@ public class ExerciseVersionUtilService {
             return false;
         }
     };
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ExerciseVersionTestRepository exerciseVersionRepository;
@@ -91,7 +97,6 @@ public class ExerciseVersionUtilService {
         exercise.setProblemStatement("Updated problem statement");
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
-        exercise.setAllowFeedbackRequests(true);
         exercise.setAllowComplaintsForAutomaticAssessments(true);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setGradingInstructions("Updated grading instructions");
@@ -163,7 +168,10 @@ public class ExerciseVersionUtilService {
         assertThat(version.getExerciseSnapshot()).isNotNull();
 
         // Verify snapshot contains exercise specific data
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(savedExercise, gitService);
+        // The build configuration is a row of its own that names the exercise, so the expected snapshot reads it here.
+        var buildConfig = savedExercise instanceof ProgrammingExercise ? programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(savedExercise.getId())
+                : null;
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(savedExercise, buildConfig, ExerciseVersionCommitHashResolver.resolveForExercise(savedExercise, gitService));
         ExerciseSnapshotDTO actualSnapshot = version.getExerciseSnapshot();
         assertThat(actualSnapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(expectedSnapshot);
 

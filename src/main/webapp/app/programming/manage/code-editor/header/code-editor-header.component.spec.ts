@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 
 import { MAX_TAB_SIZE } from 'app/editor/monaco-editor/monaco-editor.component';
 
 describe('CodeEditorHeaderComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CodeEditorHeaderComponent>;
     let comp: CodeEditorHeaderComponent;
 

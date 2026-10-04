@@ -1,47 +1,30 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
- * A AnswerOption.
+ * An AnswerOption of a {@link MultipleChoiceQuestion}.
+ * <p>
+ * Formerly a JPA entity backed by the {@code answer_option} table; it is now a plain POJO stored inside the question's {@code content} JSON column (see
+ * {@link MultipleChoiceQuestionContent}). It no longer holds a back-reference to the question. Mirrors {@link DropLocation} / {@link DragItem}.
+ * <p>
+ * It still extends {@link DomainObject} to reuse the {@code id} field and its id-based {@code equals}/{@code hashCode}; the inherited JPA annotations are inert because this class
+ * is no longer an {@code @Entity}. The {@code id} is question-scoped (unique within the owning question, not globally).
  */
-// No @Cache here on purpose: resolved via internalLoad during quiz-submission merge cascade. A stale L2 cache entry
-// (NONSTRICT_READ_WRITE on clustered Hazelcast) could return not-found for an existing row, producing the exact
-// ObjectNotFoundException seen in #12584. The answer_option table is small; always hitting the DB is fine.
-@Entity
-@Table(name = "answer_option")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerOption extends DomainObject implements QuizQuestionComponent<MultipleChoiceQuestion> {
+public class AnswerOption extends DomainObject {
 
-    @Column(name = "text")
     private String text;
 
-    @Column(name = "hint")
     private String hint;
 
-    @Column(name = "explanation", length = 500)
     private String explanation;
 
-    @Column(name = "is_correct")
     private Boolean isCorrect;
 
-    @Column(name = "invalid")
     private Boolean invalid = false;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
-    @JsonIgnore
-    private MultipleChoiceQuestion question;
 
     public String getText() {
         return text;
@@ -106,15 +89,6 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
 
     public void setInvalid(Boolean invalid) {
         this.invalid = invalid;
-    }
-
-    public MultipleChoiceQuestion getQuestion() {
-        return question;
-    }
-
-    @Override
-    public void setQuestion(MultipleChoiceQuestion multipleChoiceQuestion) {
-        this.question = multipleChoiceQuestion;
     }
 
     @Override

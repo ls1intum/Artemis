@@ -1,19 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogModule } from 'primeng/dialog';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { PrimeNgDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
+import { TumAetUiDatePickerComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { DialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/dialog-stub.component';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ValidationStatus } from 'app/foundation/util/validation';
 import { TutorialSessionCreateOrEditModalComponent } from './tutorial-session-create-or-edit-modal.component';
 
 describe('TutorialSessionCreateOrEditModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialSessionCreateOrEditModalComponent;
     let fixture: ComponentFixture<TutorialSessionCreateOrEditModalComponent>;
 
@@ -36,8 +33,8 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(TutorialSessionCreateOrEditModalComponent, {
-                remove: { imports: [DialogModule] },
-                add: { imports: [PrimeNgDialogStubComponent] },
+                remove: { imports: [TumAetUiDialogComponent] },
+                add: { imports: [DialogStubComponent] },
             })
             .compileComponents();
 
@@ -52,43 +49,54 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
     });
 
     function expectDialogHeader(expectedHeader: string) {
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.header()).toBe(expectedHeader);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.header()).toBe(expectedHeader);
     }
 
     function setValidCreateInputs() {
-        component.date.set(new Date(2026, 3, 22));
-        component.startTime.set(new Date(2026, 3, 22, 10, 15));
-        component.endTime.set(new Date(2026, 3, 22, 11, 45));
+        component.date.set(dayjs('2026-04-22'));
+        component.startTime.set(dayjs('2026-04-22T10:15:00'));
+        component.endTime.set(dayjs('2026-04-22T11:45:00'));
         component.location.set('Room 102');
         component.attendance.set(12);
     }
 
     function expectClearedState() {
-        expect(component.date()).toBeNull();
+        expect(component.date()).toBeUndefined();
         expect(component.dateInputTouched()).toBe(false);
-        expect(component.startTime()).toBeNull();
+        expect(component.startTime()).toBeUndefined();
         expect(component.startTimeInputTouched()).toBe(false);
-        expect(component.endTime()).toBeNull();
+        expect(component.endTime()).toBeUndefined();
         expect(component.endTimeInputTouched()).toBe(false);
         expect(component.location()).toBe('');
         expect(component.locationInputTouched()).toBe(false);
         expect(component.attendance()).toBeNull();
     }
 
-    it('should open in create mode with empty inputs, create header, and disabled save button', async () => {
+    it('should open in create mode with empty inputs, create header, and an enabled save button', async () => {
         component.open();
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(component.isOpen()).toBe(true);
         expectDialogHeader('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.header.create');
-        expect(component.date()).toBeNull();
-        expect(component.startTime()).toBeNull();
-        expect(component.endTime()).toBeNull();
+        expect(component.date()).toBeUndefined();
+        expect(component.startTime()).toBeUndefined();
+        expect(component.endTime()).toBeUndefined();
         expect(component.location()).toBe('');
         expect(component.attendance()).toBeNull();
-        expect(component.saveButtonDisabled()).toBe(true);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(true);
+        // Create mode keeps Save reachable: a click validates and reveals what is missing (see save()).
+        expect(component.saveButtonDisabled()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.visible()).toBe(true);
+    });
+
+    it('should render the date field as a date-only picker that opens on click', () => {
+        component.open();
+        fixture.detectChanges();
+
+        // The first picker is the date field; the two time steppers follow.
+        const datePicker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance;
+        expect(datePicker.dateOnly()).toBe(true);
+        expect(datePicker.openOnClick()).toBe(true);
     });
 
     it('should open in edit mode with session data, edit header, and disabled save button', async () => {
@@ -98,13 +106,13 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
 
         expect(component.isOpen()).toBe(true);
         expectDialogHeader('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.header.edit');
-        expect(component.date()).toEqual(existingSession.start.toDate());
-        expect(component.startTime()).toEqual(existingSession.start.toDate());
-        expect(component.endTime()).toEqual(existingSession.end.toDate());
+        expect(component.date()).toEqual(existingSession.start);
+        expect(component.startTime()).toEqual(existingSession.start);
+        expect(component.endTime()).toEqual(existingSession.end);
         expect(component.location()).toBe('Room 101');
         expect(component.attendance()).toBe(9);
         expect(component.saveButtonDisabled()).toBe(true);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(true);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.visible()).toBe(true);
     });
 
     it('should expose the correct date validation state based on the date signal', () => {
@@ -113,7 +121,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.dateRequired',
         });
 
-        component.date.set(new Date(2026, 3, 22));
+        component.date.set(dayjs('2026-04-22'));
 
         expect(component.dateValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
@@ -124,7 +132,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.startTimeRequired',
         });
 
-        component.startTime.set(new Date(2026, 3, 22, 10, 15));
+        component.startTime.set(dayjs('2026-04-22T10:15:00'));
 
         expect(component.startTimeValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
@@ -135,15 +143,15 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.endTimeRequired',
         });
 
-        component.startTime.set(new Date(2026, 3, 22, 10, 15));
-        component.endTime.set(new Date(2026, 3, 22, 10, 15));
+        component.startTime.set(dayjs('2026-04-22T10:15:00'));
+        component.endTime.set(dayjs('2026-04-22T10:15:00'));
 
         expect(component.endTimeValidationResult()).toEqual({
             status: ValidationStatus.INVALID,
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.endTimeNotAfterStartTime',
         });
 
-        component.endTime.set(new Date(2026, 3, 22, 11, 45));
+        component.endTime.set(dayjs('2026-04-22T11:45:00'));
 
         expect(component.endTimeValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
@@ -173,21 +181,50 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         expect(component.locationValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
-    it('should enable the save button in create mode only when all inputs are valid', () => {
+    it('should not submit while the typed date text does not parse, even with a value set', async () => {
+        const onCreateSpy = vi.fn();
+        component.onCreate.subscribe(onCreateSpy);
+
         component.open();
+        setValidCreateInputs();
 
-        expect(component.saveButtonDisabled()).toBe(true);
+        // The picker keeps its last value but reports the visible text no longer parses (e.g. a half-typed date).
+        component.dateTextValid.set(false);
+        fixture.detectChanges();
 
-        component.date.set(new Date(2026, 3, 22));
-        component.startTime.set(new Date(2026, 3, 22, 10, 15));
-        component.endTime.set(new Date(2026, 3, 22, 10, 15));
-        component.location.set('Room 102');
+        expect(component.dateValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.dateInvalid',
+        });
 
-        expect(component.saveButtonDisabled()).toBe(true);
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        component.endTime.set(new Date(2026, 3, 22, 11, 45));
+        expect(onCreateSpy).not.toHaveBeenCalled();
+        expect(component.isOpen()).toBe(true);
+    });
 
+    it('should reveal the missing required fields on save instead of submitting an incomplete new session', async () => {
+        const onCreateSpy = vi.fn();
+        component.onCreate.subscribe(onCreateSpy);
+
+        component.open();
+        fixture.detectChanges();
+
+        // Nothing is filled in yet, but Save stays reachable so the click can point out what is missing.
         expect(component.saveButtonDisabled()).toBe(false);
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(onCreateSpy).not.toHaveBeenCalled();
+        expect(component.isOpen()).toBe(true);
+        expect(component.dateInputTouched()).toBe(true);
+        expect(component.startTimeInputTouched()).toBe(true);
+        expect(component.endTimeInputTouched()).toBe(true);
+        expect(component.locationInputTouched()).toBe(true);
     });
 
     it('should enable the save button in edit mode only for real changes', () => {
@@ -212,12 +249,12 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        fixture.nativeElement.querySelector('.p-button-secondary').click();
+        fixture.nativeElement.querySelector('[data-testid="cancel-button"]').click();
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(component.isOpen()).toBe(false);
-        expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance.visible()).toBe(false);
         expectClearedState();
     });
 
@@ -230,7 +267,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        fixture.nativeElement.querySelector('.p-button-primary').click();
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -255,7 +292,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        fixture.nativeElement.querySelector('.p-button-primary').click();
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
         fixture.detectChanges();
         await fixture.whenStable();
 

@@ -1,5 +1,4 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { Dialog } from 'primeng/dialog';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
@@ -8,22 +7,21 @@ import {
     TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
 } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
-import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',
     imports: [
-        Dialog,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
         TutorialRegistrationsRegisterSearchBarComponent,
         TutorialRegistrationsStudentsTableComponent,
         TranslateDirective,
-        ButtonDirective,
         LoadingIndicatorOverlayComponent,
     ],
     templateUrl: './tutorial-registrations-register-modal.component.html',
@@ -32,7 +30,7 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 export class TutorialRegistrationsRegisterModalComponent {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -77,7 +75,7 @@ export class TutorialRegistrationsRegisterModalComponent {
                 this.selectedStudents().map((student) => student.login),
             )
             .subscribe({
-                next: (_: HttpResponse<void>) => {
+                next: () => {
                     this.tutorialGroupRegisteredStudentsService.addStudentsToRegisteredStudentsState(this.selectedStudents());
                     this.isLoading.set(false);
                     this.selectedStudents.set([]);

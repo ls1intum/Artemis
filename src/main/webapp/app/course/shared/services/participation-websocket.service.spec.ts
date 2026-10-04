@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { BehaviorSubject, Subject, distinctUntilChanged } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -15,10 +14,9 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ParticipationWebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let websocketService: WebsocketService;
     let receiveParticipationSubject: Subject<Participation>;
     let receiveParticipation2Subject: Subject<Participation>;
@@ -181,6 +179,135 @@ describe('ParticipationWebsocketService', () => {
         const cached = participationWebsocketService.cachedParticipations.get(participation.id!);
         expect(cached).toBeDefined();
         expect(cached!.id).toBe(participation.id);
+    });
+
+    it('should replace unfinished Athena placeholder when persisted Athena result arrives through websocket', () => {
+        const participationWithPlaceholder: StudentParticipation = { id: 91, exercise: exercise1 } as StudentParticipation;
+        const submission: Submission = { id: 91, participation: participationWithPlaceholder } as Submission;
+        const previousResult: Result = { id: 90, score: 60, submission } as Result;
+        const placeholderResult: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: undefined,
+            submission,
+        } as Result;
+        submission.results = [previousResult, placeholderResult];
+        participationWithPlaceholder.submissions = [submission];
+        const persistedAthenaResult: Result = {
+            id: 92,
+            score: 80,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            submission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithPlaceholder.id!, true);
+        participationWebsocketService.addParticipation(participationWithPlaceholder);
+
+        receiveResultForParticipationSubject.next(persistedAthenaResult);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithPlaceholder.id!);
+        const cachedResults = cached?.submissions?.[0].results ?? [];
+        expect(cachedResults).toHaveLength(2);
+        expect(cachedResults.map((result) => result.id).sort()).toEqual([90, 92]);
+        expect(cachedResults.some((result) => result.id === undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)).toBe(false);
+    });
+
+    it('should remove stale failed Athena placeholders when a later persisted Athena result arrives for another submission', () => {
+        const participationWithFailedPlaceholder: StudentParticipation = { id: 93, exercise: exercise1 } as StudentParticipation;
+        const firstSubmission: Submission = { id: 93, participation: participationWithFailedPlaceholder } as Submission;
+        const secondSubmission: Submission = { id: 94, participation: participationWithFailedPlaceholder } as Submission;
+        const failedPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: false,
+            submission: firstSubmission,
+        } as Result;
+        firstSubmission.results = [failedPlaceholder];
+        participationWithFailedPlaceholder.submissions = [firstSubmission, secondSubmission];
+        const persistedAthenaResult: Result = {
+            id: 95,
+            score: 80,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            submission: secondSubmission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithFailedPlaceholder.id!, true);
+        participationWebsocketService.addParticipation(participationWithFailedPlaceholder);
+
+        receiveResultForParticipationSubject.next(persistedAthenaResult);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithFailedPlaceholder.id!);
+        const cachedResults = cached?.submissions?.flatMap((submission) => submission.results ?? []) ?? [];
+        expect(cachedResults).toHaveLength(1);
+        expect(cachedResults[0].id).toBe(95);
+        expect(cachedResults.some((result) => result.id === undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)).toBe(false);
+    });
+
+    it('should keep Athena placeholders when an incoming Athena websocket update is not persisted', () => {
+        const participationWithPlaceholders: StudentParticipation = { id: 96, exercise: exercise1 } as StudentParticipation;
+        const firstSubmission: Submission = { id: 96, participation: participationWithPlaceholders } as Submission;
+        const secondSubmission: Submission = { id: 97, participation: participationWithPlaceholders } as Submission;
+        const existingPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: undefined,
+            submission: firstSubmission,
+        } as Result;
+        firstSubmission.results = [existingPlaceholder];
+        participationWithPlaceholders.submissions = [firstSubmission, secondSubmission];
+        const incomingPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: false,
+            submission: secondSubmission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithPlaceholders.id!, true);
+        participationWebsocketService.addParticipation(participationWithPlaceholders);
+
+        receiveResultForParticipationSubject.next(incomingPlaceholder);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithPlaceholders.id!);
+        expect(cached?.submissions?.find((submission) => submission.id === firstSubmission.id)?.results).toHaveLength(1);
+        expect(cached?.submissions?.find((submission) => submission.id === firstSubmission.id)?.results?.[0].successful).toBeUndefined();
+        expect(cached?.submissions?.find((submission) => submission.id === secondSubmission.id)?.results).toHaveLength(1);
+        expect(cached?.submissions?.find((submission) => submission.id === secondSubmission.id)?.results?.[0].successful).toBe(false);
+    });
+
+    it('should propagate participation initialization state from a websocket result payload', () => {
+        const cachedParticipation: StudentParticipation = {
+            id: 98,
+            exercise: exercise1,
+            initializationState: InitializationState.INITIALIZED,
+        } as StudentParticipation;
+        const cachedSubmission: Submission = { id: 98, participation: cachedParticipation, results: [] } as Submission;
+        cachedParticipation.submissions = [cachedSubmission];
+        const finishedParticipationPayload: Participation = {
+            id: cachedParticipation.id,
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            initializationState: InitializationState.FINISHED,
+            submissionCount: 1,
+            exercise: exercise1,
+        } as Participation;
+        const incomingSubmission: Submission = { id: cachedSubmission.id, participation: finishedParticipationPayload } as Submission;
+        const incomingResult: Result = { id: 99, score: 80, submission: incomingSubmission } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(cachedParticipation.id!, true);
+        participationWebsocketService.addParticipation(cachedParticipation);
+        const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
+        const participationSpy = vi.spyOn(participationObservable, 'next');
+        participationWebsocketService.participationObservable = participationObservable;
+
+        receiveResultForParticipationSubject.next(incomingResult);
+
+        expect(participationSpy).toHaveBeenCalledOnce();
+        const emittedParticipation = participationSpy.mock.calls[0][0] as StudentParticipation;
+        expect(emittedParticipation.initializationState).toBe(InitializationState.FINISHED);
+        expect(emittedParticipation.submissions?.[0].results?.map((result) => result.id)).toEqual([99]);
+        expect(participationWebsocketService.cachedParticipations.get(cachedParticipation.id!)?.initializationState).toBe(InitializationState.FINISHED);
     });
 
     it('should attach the result to participation if the participation has undefined for results value', () => {

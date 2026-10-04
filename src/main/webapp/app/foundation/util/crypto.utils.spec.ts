@@ -19,7 +19,7 @@ describe('CryptoUtils', () => {
 
         it('should return a valid v4 UUID when crypto.randomUUID is absent (insecure context, getRandomValues present)', () => {
             // Reproduces the bootstrap failure over plain-HTTP origins: randomUUID is undefined, getRandomValues remains.
-            vi.stubGlobal('crypto', { getRandomValues: (array: Uint8Array) => realCrypto.getRandomValues(array) });
+            vi.stubGlobal('crypto', { getRandomValues: (array: Uint8Array<ArrayBuffer>) => realCrypto.getRandomValues(array) });
             expect(generateUuid()).toMatch(UUID_V4);
         });
 

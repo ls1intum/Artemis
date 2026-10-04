@@ -35,8 +35,8 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DomainChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CodeGenerationJobStart } from 'app/openapi/model/codeGenerationJobStart';
-import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
+import { CodeGenerationJobStartRepositoryTypeEnum } from 'app/openapi/model/code-generation-job-start';
+import { CodeGenerationRequest } from 'app/openapi/model/code-generation-request';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -50,9 +50,9 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
-import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { HyperionCodeGenerationApi } from 'app/openapi/api/hyperion-code-generation-api';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -71,11 +71,12 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
-    [ConsistencyIssue.SeverityEnum.High]: 0,
-    [ConsistencyIssue.SeverityEnum.Medium]: 1,
-    [ConsistencyIssue.SeverityEnum.Low]: 2,
+const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
+    ['HIGH']: 0,
+    ['MEDIUM']: 1,
+    ['LOW']: 2,
 };
 
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
@@ -94,7 +95,7 @@ type CodeGenerationRepositoryTranslationKey = `artemisApp.programmingExercise.co
 type CodeGenerationStateTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${CodeGenerationExecutionState}`;
 type CodeGenerationFileActionTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${'fileCreated' | 'fileUpdated' | 'fileDeleted'}`;
 // The generated OpenAPI CodeGenerationRequest.repositoryType uses lowercase repository names (exercise, ...),
-// but the backend deserializes RepositoryType enum names (TEMPLATE, SOLUTION, TESTS). This payload type lets the
+// but the server deserializes RepositoryType enum names (TEMPLATE, SOLUTION, TESTS). This payload type lets the
 // request be built type-safely with the client RepositoryType enum; only repositoryType differs from the generated type.
 type CodeGenerationRequestPayload = Omit<CodeGenerationRequest, 'repositoryType'> & { repositoryType?: RepositoryType };
 
@@ -165,8 +166,8 @@ interface ConsistencyIssueNavigationIssue {
     filePath?: string;
     lineNumber?: number;
     auxiliaryRepositoryId?: number;
-    severity: ConsistencyIssue.SeverityEnum;
-    category: ConsistencyIssue.CategoryEnum;
+    severity: ConsistencyIssueSeverityEnum;
+    category: ConsistencyIssueCategoryEnum;
 }
 
 @Component({
@@ -204,6 +205,26 @@ interface ConsistencyIssueNavigationIssue {
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
+    /** Shared helper that encapsulates all AI-powered problem statement operations. */
+    readonly aiOps = new ProblemStatementAiOperationsHelper(
+        inject(ProblemStatementService),
+        inject(AlertService),
+        inject(ArtemisIntelligenceService),
+        inject(ProfileService),
+        inject(DestroyRef),
+        inject(Injector),
+    );
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+    private codeGenAlertService = inject(AlertService);
+    private sessionStorageService = inject(SessionStorageService);
+    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private hyperionWs = inject(HyperionWebsocketService);
+    private repoService = inject(CodeEditorRepositoryService);
+    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApi);
+
     readonly codeGenerationRunningModal = viewChild.required<TemplateRef<unknown>>('codeGenerationRunningModal');
     readonly resultComp = viewChild(UpdatingResultComponent);
     readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
@@ -217,21 +238,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .filter((thread) => thread.resolved !== true)
             .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
             .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
-            .sort(
-                (a, b) =>
-                    (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) -
-                        (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) || a.threadId - b.threadId,
-            ),
-    );
-
-    /** Shared helper that encapsulates all AI-powered problem statement operations. */
-    readonly aiOps = new ProblemStatementAiOperationsHelper(
-        inject(ProblemStatementService),
-        inject(AlertService),
-        inject(ArtemisIntelligenceService),
-        inject(ProfileService),
-        inject(DestroyRef),
-        inject(Injector),
+            .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER['MEDIUM']) - (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER['MEDIUM']) || a.threadId - b.threadId),
     );
 
     // Delegate signals for template binding compatibility
@@ -254,10 +261,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /** Prompt bound to the refinement popover textarea — aliased to aiOps.userPrompt. */
     readonly refinementPrompt = this.aiOps.userPrompt;
     protected readonly faPaperPlane = faPaperPlane;
-
-    private consistencyCheckService = inject(ConsistencyCheckService);
-    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
@@ -284,13 +287,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
-    private codeGenAlertService = inject(AlertService);
-    private sessionStorageService = inject(SessionStorageService);
-    private modalService = inject(NgbModal);
-    private dialogService = inject(DialogService);
-    private hyperionWs = inject(HyperionWebsocketService);
-    private repoService = inject(CodeEditorRepositoryService);
-    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
@@ -462,14 +458,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         this.activeCodeGenerationRepository = repositoryType;
-        this.updateCodeGenerationStatus(repositoryType, (status) => ({
-            ...status,
-            state: 'running',
-            attempts: undefined,
-            message: undefined,
-        }));
+        this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: 'running', attempts: undefined, message: undefined }));
 
-        const request = this.createCodeGenerationRequest(repositoryType, false, this.currentCodeGenerationUsesInitialIterationLimit);
+        const request = this.createCodeGenerationRequest(repositoryType, this.currentCodeGenerationUsesInitialIterationLimit);
         const exerciseId = this.exercise.id;
         this.hyperionCodeGenerationApi.generateCode(exerciseId, request).subscribe({
             next: (res) => {
@@ -566,10 +557,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.clearCodeGenerationStatusSubscription();
-        const request = this.createCheckOnlyCodeGenerationRequest();
         const requestId = this.restoreRequestId;
         const persistedState = this.loadPersistedCodeGenerationState();
-        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, request).subscribe({
+        this.statusSubscription = this.hyperionCodeGenerationApi.getActiveCodeGenerationJob(this.exercise.id).subscribe({
             next: (res) => {
                 if (requestId !== this.restoreRequestId) {
                     return;
@@ -608,18 +598,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param repositoryType currently selected repository in the editor or the repository type returned by the API
      * @returns the matching supported generation repository, or `undefined` for unsupported tabs
      */
-    private mapRepositoryTypeToCodeGenerationRequest(
-        repositoryType: RepositoryType | CodeGenerationJobStart.RepositoryTypeEnum,
-    ): SupportedCodeGenerationRepositoryType | undefined {
+    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType | CodeGenerationJobStartRepositoryTypeEnum): SupportedCodeGenerationRepositoryType | undefined {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
-            case CodeGenerationJobStart.RepositoryTypeEnum.Exercise:
+            case 'exercise':
                 return RepositoryType.TEMPLATE;
             case RepositoryType.SOLUTION:
-            case CodeGenerationJobStart.RepositoryTypeEnum.Solution:
+            case 'solution':
                 return RepositoryType.SOLUTION;
             case RepositoryType.TESTS:
-            case CodeGenerationJobStart.RepositoryTypeEnum.Tests:
+            case 'tests':
                 return RepositoryType.TESTS;
             default:
                 return undefined;
@@ -627,36 +615,26 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Creates the request payload used to start code generation or perform a slot/check-only probe.
+     * Creates the request payload used to start code generation.
      * @param repositoryType repository to generate
-     * @param checkOnly whether the request should only query the current generation status
-     * @returns a request object matching the backend's runtime contract
+     * @param initialAutoGeneration whether this is the first automatically triggered end-to-end generation
+     * @returns a request object matching the server's runtime contract
      */
-    private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false, initialAutoGeneration = false): CodeGenerationRequest {
+    private createCodeGenerationRequest(repositoryType: RepositoryType, initialAutoGeneration = false): CodeGenerationRequest {
         // Built with the client RepositoryType enum so the whole construction is type-checked; see CodeGenerationRequestPayload.
-        const request: CodeGenerationRequestPayload = { repositoryType, checkOnly };
+        const request: CodeGenerationRequestPayload = { repositoryType };
         if (initialAutoGeneration) {
             request.initialAutoGeneration = true;
         }
-        if (!checkOnly) {
-            const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
-                repositoryType,
-                repositoryType === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
-            );
-            if (selectedFeedbackThreadIds.length > 0) {
-                request.selectedFeedbackThreadIds = selectedFeedbackThreadIds;
-            }
+        const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
+            repositoryType,
+            repositoryType === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
+        );
+        if (selectedFeedbackThreadIds.length > 0) {
+            request.selectedFeedbackThreadIds = selectedFeedbackThreadIds;
         }
         // Single boundary assertion to the generated OpenAPI type: only repositoryType differs (enum names vs repository names).
         return request as CodeGenerationRequest;
-    }
-
-    /**
-     * Creates a request that checks whether a generation job is active without starting a new one.
-     * @returns check-only request payload for the Hyperion endpoint
-     */
-    private createCheckOnlyCodeGenerationRequest(): CodeGenerationRequest {
-        return { checkOnly: true };
     }
 
     /**
@@ -759,7 +737,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         this.hasCustomCodeGenerationSelection = true;
-        this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, enabled }));
+        this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { enabled }));
     }
 
     /**
@@ -836,12 +814,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             const completionState = this.getCodeGenerationExecutionState(event);
             this.flushCodeGenerationRepositoryPull(repositoryType);
             this.codeEditorContainer()?.actions()?.executeRefresh();
-            this.updateCodeGenerationStatus(repositoryType, (status) => ({
-                ...status,
-                state: completionState,
-                attempts: event.attempts,
-                message: event.message,
-            }));
+            this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: completionState, attempts: event.attempts, message: event.message }));
             this.showCodeGenerationCompletionAlert(repositoryType, completionState);
             this.finishCurrentCodeGeneration(true);
             return;
@@ -884,11 +857,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         alertTranslationKey: 'artemisApp.programmingExercise.codeGeneration.error' | 'artemisApp.programmingExercise.codeGeneration.timeout',
         showAlert = true,
     ) {
-        this.updateCodeGenerationStatus(repositoryType, (status) => ({
-            ...status,
-            state: 'error',
-            message,
-        }));
+        this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: 'error', message }));
         this.markQueuedCodeGenerationRepositoriesSkipped(repositoryType);
         this.queuedCodeGenerationRepositories = [];
         this.activeCodeGenerationRepository = undefined;
@@ -920,15 +889,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.codeGenerationStatuses.update((statuses) =>
-            statuses.map((status) =>
-                queuedRepositories.has(status.repositoryType)
-                    ? {
-                          ...status,
-                          state: 'skipped',
-                          message: skippedMessage,
-                      }
-                    : status,
-            ),
+            statuses.map((status) => (queuedRepositories.has(status.repositoryType) ? cloneWith(status, { state: 'skipped', message: skippedMessage }) : status)),
         );
     }
 
@@ -946,10 +907,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             iteration,
             timestamp: Date.now(),
         };
-        this.updateCodeGenerationStatus(repositoryType, (status) => ({
-            ...status,
-            fileActivities: [activity, ...status.fileActivities],
-        }));
+        this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { fileActivities: [activity, ...status.fileActivities] }));
     }
 
     getCodeGenerationIterationActivityGroups(fileActivities: CodeGenerationFileActivity[]): CodeGenerationIterationActivityGroup[] {
@@ -1184,12 +1142,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private syncCodeGenerationSelectionWithSelectedRepository() {
         const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
-        this.codeGenerationStatuses.update((statuses) =>
-            statuses.map((status) => ({
-                ...status,
-                enabled: repositoryType === status.repositoryType,
-            })),
-        );
+        this.codeGenerationStatuses.update((statuses) => statuses.map((status) => cloneWith(status, { enabled: repositoryType === status.repositoryType })));
     }
 
     /**
@@ -1220,21 +1173,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private restorePersistedCodeGenerationStatuses(repositoryType: SupportedCodeGenerationRepositoryType, persistedState?: PersistedCodeGenerationState) {
         if (persistedState) {
             this.codeGenerationStatuses.set(
-                persistedState.statuses.map((status) =>
-                    status.repositoryType === repositoryType
-                        ? {
-                              ...status,
-                              enabled: true,
-                              state: 'running',
-                          }
-                        : status,
-                ),
+                persistedState.statuses.map((status) => (status.repositoryType === repositoryType ? cloneWith(status, { enabled: true, state: 'running' }) : status)),
             );
             this.queuedCodeGenerationRepositories = [...persistedState.queuedRepositories];
             this.currentCodeGenerationUsesInitialIterationLimit = persistedState.initialAutoGeneration;
         } else {
             this.initializeCodeGenerationRunStatuses([repositoryType]);
-            this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, state: 'running' }));
+            this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: 'running' }));
             this.queuedCodeGenerationRepositories = [];
             this.currentCodeGenerationUsesInitialIterationLimit = false;
         }
@@ -1289,13 +1234,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             const activeRepository = this.sanitizePersistedCodeGenerationRepositoryType(persistedState.activeRepository);
             const queuedRepositories = this.sanitizePersistedCodeGenerationQueuedRepositories(persistedState.queuedRepositories, activeRepository);
 
-            return {
-                ...persistedState,
-                statuses,
-                queuedRepositories,
-                activeRepository,
-                initialAutoGeneration: !!persistedState.initialAutoGeneration,
-            };
+            return cloneWith(persistedState, { statuses, queuedRepositories, activeRepository, initialAutoGeneration: !!persistedState.initialAutoGeneration });
         } catch {
             this.sessionStorageService.remove(key);
             return;
@@ -1397,6 +1336,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private scheduleCodeGenerationStatusPopoverRealign() {
         const popover = this.codeGenerationStatusPopover();
+        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
         if (!popover?.overlayVisible) {
             return;
         }
@@ -1444,7 +1384,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Polls the backend until the previous exercise-level generation slot has been released.
+     * Polls the server until the previous exercise-level generation slot has been released.
      * @param attempt current poll attempt number, starting at 1
      */
     private waitForCodeGenerationSlotRelease(attempt = 1) {
@@ -1454,7 +1394,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         this.clearCodeGenerationStatusSubscription();
-        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, this.createCheckOnlyCodeGenerationRequest()).subscribe({
+        this.statusSubscription = this.hyperionCodeGenerationApi.getActiveCodeGenerationJob(this.exercise.id).subscribe({
             next: (res) => {
                 if (!res?.jobId) {
                     this.clearCodeGenerationStatusSubscription();
@@ -1586,19 +1526,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Returns the appropriate FontAwesome icon for the given severity.
      *
-     * @param {ConsistencyIssue.SeverityEnum} severity
+     * @param {ConsistencyIssueSeverityEnum} severity
      *        The severity that determines the returned icon.
      *
      * @returns
      *          A FontAwesome icon representing high, medium, or low severity.
      */
-    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum | undefined) {
+    getSeverityIcon(severity: ConsistencyIssueSeverityEnum | undefined) {
         switch (severity) {
-            case ConsistencyIssue.SeverityEnum.High:
+            case 'HIGH':
                 return this.faCircleExclamation;
-            case ConsistencyIssue.SeverityEnum.Medium:
+            case 'MEDIUM':
                 return this.faTriangleExclamation;
-            case ConsistencyIssue.SeverityEnum.Low:
+            case 'LOW':
                 return this.faCircleInfo;
             default:
                 return this.faCircleInfo;
@@ -1657,19 +1597,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Returns a Bootstrap text color class based on an issue's severity.
      *
-     * @param {ConsistencyIssue.SeverityEnum} severity
+     * @param {ConsistencyIssueSeverityEnum} severity
      *        The severity that determines the color.
      *
      * @returns
      *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
      */
-    getSeverityColor(severity: ConsistencyIssue.SeverityEnum | undefined) {
+    getSeverityColor(severity: ConsistencyIssueSeverityEnum | undefined) {
         switch (severity) {
-            case ConsistencyIssue.SeverityEnum.High:
+            case 'HIGH':
                 return 'text-danger';
-            case ConsistencyIssue.SeverityEnum.Medium:
+            case 'MEDIUM':
                 return 'text-warning';
-            case ConsistencyIssue.SeverityEnum.Low:
+            case 'LOW':
                 return 'text-info';
             default:
                 return 'text-secondary';

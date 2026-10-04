@@ -24,12 +24,15 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
 import de.tum.cit.aet.artemis.communication.service.ReactionService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for Reaction on Postings.
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.MESSAGE_INTERACTIONS)
 @RestController
 @RequestMapping("api/communication/")
 public class ReactionResource {
@@ -48,7 +51,7 @@ public class ReactionResource {
      * @param courseId    id of the course the posting that is reacted on belongs to
      * @param reactionDto reaction to create
      * @return a 201 (Created) with the created ReactionDTO in the body,
-     *         or 200 (OK) if an identical reaction was already present,
+     *         or 204 (No Content) if an identical reaction was already present,
      *         or 400 (Bad Request) if validation of the DTO, courseId or postingId fails
      */
     @PostMapping("courses/{courseId}/postings/reactions")
@@ -62,7 +65,7 @@ public class ReactionResource {
         catch (DataIntegrityViolationException ex) {
             // this error can occur when multiple reactions are created at the exact same time, we log it, but doe not send it to the client
             log.warn(ex.getMessage(), ex);
-            return ResponseEntity.ok(null);
+            return ResponseEntity.noContent().build();
         }
     }
 

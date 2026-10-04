@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -104,8 +103,6 @@ const makeExamQuiz = () => {
 };
 
 describe('QuizExercise Service', () => {
-    setupTestBed({ zoneless: true });
-
     const fileMap = new Map<string, Blob>();
     fileMap.set('file.jpg', new Blob());
 
@@ -141,6 +138,17 @@ describe('QuizExercise Service', () => {
         const result = firstValueFrom(service.find(123));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+        expect((await result)?.body).toEqual(elemDefault);
+    });
+
+    it.each([
+        ['overview', () => service.findStatisticsOverview(123), 'api/quiz/quiz-exercises/123/statistics/overview'],
+        ['point', () => service.findPointStatistic(123), 'api/quiz/quiz-exercises/123/statistics/points'],
+        ['question', () => service.findQuestionStatistic(123, 456), 'api/quiz/quiz-exercises/123/statistics/questions/456'],
+    ])('should load the %s statistics endpoint', async (_name, request: () => Observable<HttpResponse<unknown>>, url) => {
+        const result = firstValueFrom(request());
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(elemDefault);
         expect((await result)?.body).toEqual(elemDefault);
     });
 
@@ -261,7 +269,6 @@ describe('QuizExercise Service', () => {
         ['findForStudent', [123], quizEx, 'GET', '/for-student'],
         ['findForExam', [123], [quizEx], 'GET', '/quiz-exercises'],
         ['findForCourse', [123], [quizEx], 'GET', '/quiz-exercises'],
-        ['recalculate', [123], quizEx, 'GET', '/recalculate-statistics'],
         ['find', [123], quizEx, 'GET', ''],
     ])('should perform a http request for %p', async (method, args, response, httpMethod, urlSuffix) => {
         const functionToCall = service[method as keyof QuizExerciseService] as (...args: unknown[]) => Observable<HttpResponse<unknown>>;

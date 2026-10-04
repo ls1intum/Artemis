@@ -4,13 +4,10 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ParseLinks } from 'app/admin/system-notification-management/parse-links.service';
 
 describe('ParseLinks Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ParseLinks;
 
     beforeEach(async () => {

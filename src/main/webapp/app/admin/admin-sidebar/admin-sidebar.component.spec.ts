@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -15,8 +14,6 @@ import { AdminSidebarComponent } from './admin-sidebar.component';
 class MockEmptyComponent {}
 
 describe('AdminSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AdminSidebarComponent;
     let fixture: ComponentFixture<AdminSidebarComponent>;
 
@@ -46,6 +43,7 @@ describe('AdminSidebarComponent', () => {
         expect(component.examEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
+        expect(component.weaviateEnabled()).toBe(false);
     });
 
     it('should generate sidebar groups', () => {
@@ -73,6 +71,21 @@ describe('AdminSidebarComponent', () => {
         const groups = component.sidebarGroups();
         const buildSystemGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.buildSystem');
         expect(buildSystemGroup).toBeFalsy();
+    });
+
+    it('should include the ingestion dashboard item only when weaviateEnabled is true', () => {
+        const findIngestionItem = () =>
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .find((item) => item.testId === 'admin-course-ingestion-dashboard');
+
+        expect(findIngestionItem()).toBeFalsy();
+
+        fixture.componentRef.setInput('weaviateEnabled', true);
+        fixture.detectChanges();
+
+        expect(findIngestionItem()).toBeTruthy();
     });
 
     it('should emit toggleCollapseState when called', () => {

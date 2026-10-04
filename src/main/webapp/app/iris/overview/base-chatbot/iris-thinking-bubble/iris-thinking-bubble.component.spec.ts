@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisThinkingBubbleComponent } from './iris-thinking-bubble.component';
 import { By } from '@angular/platform-browser';
 
 describe('IrisThinkingBubbleComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisThinkingBubbleComponent;
     let fixture: ComponentFixture<IrisThinkingBubbleComponent>;
 

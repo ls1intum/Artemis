@@ -4,7 +4,7 @@ import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
-import { generateUUID, getExamBuildAndTestAfterDueDate } from '../../utils';
+import { generateUUID, getExamBuildAndTestAfterDueDate, readResponseJson } from '../../utils';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -22,7 +22,7 @@ export class ExamExerciseGroupCreationPage {
     }
 
     async typeTitle(title: string) {
-        const titleField = this.page.locator('#title');
+        const titleField = this.page.locator('#exam-group-edit-title');
         await titleField.clear();
         await titleField.fill(title);
     }
@@ -40,19 +40,19 @@ export class ExamExerciseGroupCreationPage {
     }
 
     private getMandatoryBoxLocator() {
-        return this.page.locator('#isMandatory');
+        return this.page.locator('#exam-group-edit-mandatory');
     }
 
     async clickSave(): Promise<ExerciseGroup> {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
-        await this.page.locator('#save-group').click();
+        await this.page.locator('[data-testid="save-group"]').click();
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 
     async update() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
-        await this.page.locator('#save-group').click();
+        await this.page.locator('[data-testid="save-group"]').click();
         await responsePromise;
     }
 
@@ -97,6 +97,9 @@ export class ExamExerciseGroupCreationPage {
                 break;
             case ExerciseType.MODELING:
                 exercise = await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                exercise = await this.exerciseAPIRequests.createFileUploadExercise({ exerciseGroup }, title);
                 break;
             case ExerciseType.QUIZ:
                 exercise = await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });

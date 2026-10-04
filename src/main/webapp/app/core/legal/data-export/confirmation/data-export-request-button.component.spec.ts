@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
@@ -18,8 +17,6 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 class TestComponent {}
 
 describe('DataExportRequestButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TestComponent>;
     let debugElement: DebugElement;
     let translateService: TranslateService;

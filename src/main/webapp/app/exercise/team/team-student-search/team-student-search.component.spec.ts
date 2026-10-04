@@ -1,6 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
 import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
@@ -12,8 +11,6 @@ import { MockTeamService, mockExercise, mockNonTeamStudents, mockTeam, mockTeamS
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TeamStudentSearchComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TeamStudentSearchComponent;
     let fixture: ComponentFixture<TeamStudentSearchComponent>;
     let teamService: TeamService;

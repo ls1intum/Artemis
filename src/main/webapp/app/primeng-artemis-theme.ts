@@ -13,6 +13,18 @@ import Aura from '@primeuix/themes/aura';
 export const AuraArtemis = definePreset(Aura, {
     semantic: {
         colorScheme: {
+            light: {
+                formField: {
+                    background: 'var(--artemis-control-background)',
+                    disabledBackground: 'var(--artemis-control-disabled-background)',
+                    borderColor: 'var(--artemis-control-border)',
+                    hoverBorderColor: 'var(--artemis-control-border-hover)',
+                    color: 'var(--artemis-control-color)',
+                    disabledColor: 'var(--artemis-control-disabled-color)',
+                    placeholderColor: 'var(--artemis-control-muted)',
+                    iconColor: 'var(--artemis-control-muted)',
+                },
+            },
             // Bind PrimeNG's DARK surface ramp to the Artemis slate family (hue ~213, low saturation,
             // lightness-only steps) so PrimeNG components match the chrome by construction. surface-900 IS
             // --module-bg, so a PrimeNG card/table sitting inside an Artemis panel has no temperature seam.
@@ -38,6 +50,16 @@ export const AuraArtemis = definePreset(Aura, {
                 // p-card / p-panel borders and the global Tailwind default border-color (see tailwind.css) all use.
                 content: {
                     borderColor: '{surface.800}',
+                },
+                formField: {
+                    background: 'var(--artemis-control-background)',
+                    disabledBackground: 'var(--artemis-control-disabled-background)',
+                    borderColor: 'var(--artemis-control-border)',
+                    hoverBorderColor: 'var(--artemis-control-border-hover)',
+                    color: 'var(--artemis-control-color)',
+                    disabledColor: 'var(--artemis-control-disabled-color)',
+                    placeholderColor: 'var(--artemis-control-muted)',
+                    iconColor: 'var(--artemis-control-muted)',
                 },
             },
         },

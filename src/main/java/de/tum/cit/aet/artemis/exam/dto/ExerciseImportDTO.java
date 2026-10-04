@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -76,6 +77,7 @@ public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exercise
         else if (type == ExerciseType.QUIZ) {
             return new QuizExercise();
         }
-        throw new IllegalArgumentException("Unknown exercise type: " + type);
+        // A body without a usable type used to fail polymorphic entity binding with 400; keep that a client error, not a 500.
+        throw new BadRequestAlertException("Unknown exercise type: " + type, "exercise", "exerciseTypeMissing");
     }
 }

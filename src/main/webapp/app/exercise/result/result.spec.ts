@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -12,7 +11,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
-import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
@@ -32,9 +30,9 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ResultComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ResultComponent>;
     let component: ResultComponent;
 
@@ -110,7 +108,7 @@ describe('ResultComponent', () => {
     it('should set results for programming exercise', () => {
         const submission1: Submission = { id: 1, participation: programmingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 1 };
-        const participation1 = cloneDeep(programmingParticipation);
+        const participation1 = deepClone(programmingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
 
@@ -129,7 +127,7 @@ describe('ResultComponent', () => {
     it('should set results for modeling exercise', () => {
         const submission1: Submission = { id: 1, participation: modelingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 1 };
-        const participation1 = cloneDeep(modelingParticipation);
+        const participation1 = deepClone(modelingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
         fixture.componentRef.setInput('participation', participation1);
@@ -148,7 +146,7 @@ describe('ResultComponent', () => {
     it('should set (automatic athena) results for modeling exercise', () => {
         const submission1: Submission = { id: 1, participation: modelingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
-        const participation1 = cloneDeep(modelingParticipation);
+        const participation1 = deepClone(modelingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
         fixture.componentRef.setInput('participation', participation1);
@@ -167,7 +165,7 @@ describe('ResultComponent', () => {
     it('should set (automatic athena) results for programming exercise', () => {
         const submission1: Submission = { id: 1, participation: programmingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
-        const participation1 = cloneDeep(programmingParticipation);
+        const participation1 = deepClone(programmingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
         fixture.componentRef.setInput('participation', participation1);
@@ -186,7 +184,7 @@ describe('ResultComponent', () => {
     it('should set (automatic athena) results for text exercise', () => {
         const submission1: Submission = { id: 1, participation: textParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
-        const participation1 = cloneDeep(textParticipation);
+        const participation1 = deepClone(textParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
         fixture.componentRef.setInput('participation', participation1);
@@ -225,7 +223,7 @@ describe('ResultComponent', () => {
             completionDate: dayjs().subtract(2, 'minutes'),
         };
         submission = { ...submission, results: [result] };
-        const participation = cloneDeep(programmingParticipation);
+        const participation = deepClone(programmingParticipation);
         participation.submissions = [submission];
         fixture.componentRef.setInput('short', short);
         fixture.componentRef.setInput('participation', participation);
@@ -247,7 +245,7 @@ describe('ResultComponent', () => {
         const submission: Submission = { id: 1, participation: programmingParticipation };
         const ratedResult: Result = { id: 7, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(2, 'minutes') };
         submission.results = [ratedResult];
-        const participation = cloneDeep(programmingParticipation);
+        const participation = deepClone(programmingParticipation);
         participation.submissions = [submission];
 
         fixture.componentRef.setInput('participation', participation);
@@ -282,7 +280,7 @@ describe('ResultComponent', () => {
         const submission: Submission = { id: 1, participation: programmingParticipation };
         const ratedResult: Result = { id: 8, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(2, 'minutes') };
         submission.results = [ratedResult];
-        const participation = cloneDeep(programmingParticipation);
+        const participation = deepClone(programmingParticipation);
         participation.submissions = [submission];
 
         fixture.componentRef.setInput('participation', participation);
@@ -393,7 +391,7 @@ describe('ResultComponent', () => {
             const submission: Submission = { id: 1, participation: programmingParticipation };
             const result: Result = { id: 1, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(1, 'minute') };
             submission.results = [result];
-            const participation = cloneDeep(programmingParticipation);
+            const participation = deepClone(programmingParticipation);
             participation.submissions = [submission];
             fixture.componentRef.setInput('participation', participation);
             fixture.componentRef.setInput('result', result);
@@ -407,10 +405,10 @@ describe('ResultComponent', () => {
         it('demotes a non-displayable SUBMITTED status to NO_RESULT (component only renders LATE, MISSING, or a displayable result)', () => {
             // evaluateTemplateStatus computes SUBMITTED here, but with no displayable result the component renders the
             // generic "no (graded) result" instead — the "Submitted" wording comes from jhi-submission-result-status.
-            const exercise = cloneDeep(textExercise);
+            const exercise = deepClone(textExercise);
             exercise.dueDate = dayjs().add(1, 'day');
             const submission: Submission = { id: 1, submissionDate: dayjs().subtract(1, 'hour') };
-            const participation = cloneDeep(textParticipation);
+            const participation = deepClone(textParticipation);
             participation.exercise = exercise;
             participation.submissions = [submission];
             fixture.componentRef.setInput('exercise', exercise);
@@ -421,13 +419,13 @@ describe('ResultComponent', () => {
         });
 
         it('SUBMITTED_WAITING_FOR_GRADING (text, manual result, assessment period active) → waiting text', () => {
-            const exercise = cloneDeep(textExercise);
+            const exercise = deepClone(textExercise);
             exercise.dueDate = dayjs().add(1, 'day');
             exercise.assessmentDueDate = dayjs().add(2, 'day');
             const submission: Submission = { id: 1, submissionDate: dayjs().subtract(1, 'hour') };
             const result: Result = { id: 1, submission, score: 80, assessmentType: AssessmentType.MANUAL };
             submission.results = [result];
-            const participation = cloneDeep(textParticipation);
+            const participation = deepClone(textParticipation);
             participation.exercise = exercise;
             participation.submissions = [submission];
             fixture.componentRef.setInput('exercise', exercise);
@@ -439,12 +437,12 @@ describe('ResultComponent', () => {
         });
 
         it('LATE (text, submitted after due date, has result) → late text', () => {
-            const exercise = cloneDeep(textExercise);
+            const exercise = deepClone(textExercise);
             exercise.dueDate = dayjs().subtract(1, 'day');
             const submission: Submission = { id: 1, submissionDate: dayjs().subtract(2, 'hour') };
             const result: Result = { id: 1, submission, score: 80, assessmentType: AssessmentType.MANUAL };
             submission.results = [result];
-            const participation = cloneDeep(textParticipation);
+            const participation = deepClone(textParticipation);
             participation.exercise = exercise;
             participation.submissions = [submission];
             fixture.componentRef.setInput('exercise', exercise);
@@ -458,10 +456,10 @@ describe('ResultComponent', () => {
         it('demotes a non-displayable LATE_NO_FEEDBACK status to NO_RESULT', () => {
             // evaluateTemplateStatus computes LATE_NO_FEEDBACK (late submission, no feedback); with no displayable
             // result the component renders the generic "no (graded) result".
-            const exercise = cloneDeep(textExercise);
+            const exercise = deepClone(textExercise);
             exercise.dueDate = dayjs().subtract(1, 'day');
             const submission: Submission = { id: 1, submissionDate: dayjs().subtract(2, 'hour') };
-            const participation = cloneDeep(textParticipation);
+            const participation = deepClone(textParticipation);
             participation.exercise = exercise;
             participation.submissions = [submission];
             fixture.componentRef.setInput('exercise', exercise);

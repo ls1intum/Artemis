@@ -7,6 +7,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { getSubmissionResultByCorrectionRound } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
@@ -61,6 +62,18 @@ export class ManageAssessmentButtonsComponent implements OnInit {
         this.correctionRoundIndices.set([...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
     }
 
+    /**
+     * The result of the given correction round, matched on the round the result belongs to.
+     *
+     * Indexing the results by the round only worked while a submission's results were an ordered list whose position was
+     * the round. They are a set now and the round lives on the result, so it is matched instead. The scores view is fed
+     * one entry per round for exactly this lookup.
+     */
+    resultForRound(correctionRound: number): Result | undefined {
+        const submission = this.participation().submissions?.[0];
+        return submission ? getSubmissionResultByCorrectionRound(submission, correctionRound) : undefined;
+    }
+
     getAssessmentLink(correctionRound = 0) {
         const exercise = this.exercise();
         const course = this.course();
@@ -80,18 +93,17 @@ export class ManageAssessmentButtonsComponent implements OnInit {
             exercise.exerciseGroup?.exam?.id,
             exercise.exerciseGroup?.id,
             // TODO do we need to handle this differently for programming exercises?
-            submission.results?.[correctionRound]?.id,
+            this.resultForRound(correctionRound)?.id,
         );
     }
 
     getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
         // TODO do we need to handle this differently for programming exercises?
-        const submission = this.participation().submissions![0];
-        const result = submission.results?.[correctionRound];
+        const result = this.resultForRound(correctionRound);
         if (!result) {
             return correctionRound;
         }
-        if (result.hasComplaint && !!submission.results?.[correctionRound + 1]) {
+        if (result.hasComplaint && !!this.resultForRound(correctionRound + 1)) {
             // If there is a complaint and the complaint got accepted (additional result)
             // open this next result.
             return correctionRound + 1;
@@ -100,25 +112,32 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     }
 
     /**
-     * Cancel the current assessment and reload the submissions to reflect the change.
+     * Cancels the assessment the clicked button belongs to and reloads the submissions to reflect the change. The result is passed on explicitly: a submission holds one
+     * result per correction round, and without it the server released the newest round, so cancelling correction round 1
+     * released round 2 and round 1 stayed locked (#13396).
      */
     cancelAssessment(result: Result, participation: Participation) {
+        // Take the submission from the participation, not from the result. The scores overview builds its rows from
+        // ParticipationScoreDTO (ExerciseScoresComponent#toParticipation), and those results carry no back reference to
+        // their submission, so `result.submission?.id` was always undefined here and the guard below silently swallowed
+        // every click: no request ever left the client and the lock was never released (#13396).
+        const submissionId = participation.submissions?.[0]?.id;
         const confirmCancel = window.confirm(this.cancelConfirmationText);
 
-        if (confirmCancel && result.submission?.id) {
+        if (confirmCancel && submissionId) {
             let cancelSubscription;
             switch (this.exercise().type) {
                 case ExerciseType.PROGRAMMING:
-                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(submissionId, result?.id);
                     break;
                 case ExerciseType.MODELING:
-                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(submissionId, result?.id);
                     break;
                 case ExerciseType.TEXT:
-                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, result.submission.id);
+                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, submissionId, result?.id);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(submissionId, result?.id);
                     break;
             }
             cancelSubscription?.subscribe(() => {

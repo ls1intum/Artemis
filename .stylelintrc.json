@@ -2,8 +2,36 @@
     "plugins": ["stylelint-scss"],
     "extends": ["stylelint-config-standard-scss", "stylelint-config-html"],
     "overrides": [
-        { "files": ["**/*.scss"], "customSyntax": "postcss-scss" },
-        { "files": ["**/*.html"], "customSyntax": "postcss-html" },
+        {
+            "files": ["**/*.scss"],
+            "customSyntax": "postcss-scss"
+        },
+        {
+            "files": ["**/*.html"],
+            "customSyntax": "postcss-html"
+        },
+        {
+            "files": ["documentation/**/*.module.css"],
+            "rules": {
+                "selector-pseudo-class-no-unknown": [
+                    true,
+                    {
+                        "ignorePseudoClasses": ["global"]
+                    }
+                ]
+            }
+        },
+        {
+            "files": ["src/main/webapp/tailwind.css", "packages/tum-aet-ui/tailwind.css", "packages/tum-aet-ui/tailwind-theme.css"],
+            "rules": {
+                "scss/at-rule-no-unknown": [
+                    true,
+                    {
+                        "ignoreAtRules": ["custom-variant", "plugin", "source", "theme"]
+                    }
+                ]
+            }
+        },
         {
             "files": [
                 "src/main/webapp/app/admin/**/*.scss",
@@ -18,6 +46,8 @@
                 "src/main/webapp/app/shared-ui/confirm-entity-name/**/*.scss",
                 "src/main/webapp/app/shared-ui/delete-dialog/**/*.scss",
                 "src/main/webapp/app/core/alert/**/*.scss",
+                "src/main/webapp/app/core/about-us/**/*.scss",
+                "src/main/webapp/app/core/feature-overview/**/*.scss",
                 "src/main/webapp/app/core/layouts/footer/**/*.scss",
                 "src/main/webapp/app/course/overview/setup-passkey-modal/**/*.scss",
                 "src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.scss",
@@ -25,20 +55,41 @@
                 "src/main/webapp/app/localci/build-agent-details/**/*.scss",
                 "src/main/webapp/app/localci/build-job-statistics/**/*.scss",
                 "src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.scss",
-                "src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.scss"
+                "src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.scss",
+                "src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.scss",
+                "src/main/webapp/app/exam/**/*.scss",
+                "src/main/webapp/app/exercise/example-solution/**/*.scss",
+                "src/main/webapp/app/exercise/exercise-action-bar/**/*.scss",
+                "src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.scss",
+                "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",
+                "src/main/webapp/app/course/manage/update/**/*.scss",
+                "src/main/webapp/app/account/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-update/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-period/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-units/**/*.scss",
+                "src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.scss",
+                "src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.scss",
+                "packages/tum-aet-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {
                 "color-no-hex": true,
-                "declaration-property-value-disallowed-list": { "/.+/": ["/--bs-/"] }
+                "declaration-property-value-disallowed-list": {
+                    "/.+/": ["/--bs-/", "/(?:rgb|hsl)a?\\(/"]
+                }
             }
         }
     ],
-
     "rules": {
         "alpha-value-notation": "number",
         "media-feature-range-notation": "prefix",
-        "selector-pseudo-element-no-unknown": [true, { "ignorePseudoElements": ["ng-deep"] }],
+        "selector-pseudo-element-no-unknown": [
+            true,
+            {
+                "ignorePseudoElements": ["ng-deep"]
+            }
+        ],
         "at-rule-empty-line-before": [
             "always",
             {
@@ -46,17 +97,14 @@
                 "ignore": ["after-comment", "inside-block"]
             }
         ],
-
         "font-family-no-missing-generic-family-keyword": [
             true,
             {
                 "ignoreFontFamilies": ["codicon"]
             }
         ],
-
         "color-function-alias-notation": null,
         "color-function-notation": null,
-
         "no-descending-specificity": null,
         "selector-class-pattern": null,
         "selector-id-pattern": null,
@@ -75,7 +123,6 @@
         "custom-property-pattern": null,
         "value-no-vendor-prefix": null,
         "selector-no-vendor-prefix": null,
-
         "no-duplicate-selectors": null,
         "selector-not-notation": null
     }

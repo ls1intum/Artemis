@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -11,8 +10,6 @@ import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-i
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 
 describe('BuildAgentsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: BuildAgentsService;
     let httpMock: HttpTestingController;
     let element: BuildAgentInformation;
@@ -40,6 +37,18 @@ describe('BuildAgentsService', () => {
         const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agents`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse); // Flush an array of elements
+    });
+
+    it('should return the registered build agent addresses', () => {
+        const expectedResponse = [{ agentName: 'buildAgent1', addresses: ['10.0.0.5'], withinAllowlist: true }];
+
+        service.getBuildAgentAddresses().subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agent-addresses`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
     });
 
     it('should return build agent details', () => {

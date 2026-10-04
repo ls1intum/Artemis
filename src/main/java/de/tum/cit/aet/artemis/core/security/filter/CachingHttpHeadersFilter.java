@@ -21,17 +21,34 @@ import jakarta.servlet.http.HttpServletResponse;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 
 /**
- * This filter is used in production, to put HTTP cache headers with a long (4 years) expiration time.
+ * Sets long-lived HTTP cache headers on the client bundle.
+ * <p>
+ * Registered in {@code WebConfigurer} for {@code *.js}, {@code *.css} and {@code /i18n/*}. Every one of those is
+ * versioned in its URL — Angular emits content-hashed filenames, and the translation loader appends the build's
+ * {@code I18N_HASH} as a query parameter — so a new build is a new URL and a cached response can never go stale. That
+ * is what makes caching them for weeks safe, and why they do not share the conservative lifetime that
+ * {@code StaticResourcesConfiguration} applies to the mutable files under {@code /public}.
  */
 public class CachingHttpHeadersFilter implements Filter {
 
-    /** Constant <code>DEFAULT_DAYS_TO_LIVE=1461</code> */
-    public static final int DEFAULT_DAYS_TO_LIVE = 1461; // 4 years
+    /**
+     * How long a versioned asset may be cached when nothing is configured.
+     * <p>
+     * A response here is immutable for the life of its URL, so this is a trade-off about how long a returning browser
+     * may skip asking, not about how long a mistake would persist.
+     */
+    public static final int DEFAULT_DAYS_TO_LIVE = 30;
 
-    /** Constant <code>DEFAULT_SECONDS_TO_LIVE=TimeUnit.DAYS.toMillis(DEFAULT_DAYS_TO_LIVE)</code> */
-    public static final long DEFAULT_SECONDS_TO_LIVE = TimeUnit.DAYS.toMillis(DEFAULT_DAYS_TO_LIVE);
-
-    private long cacheTimeToLive = DEFAULT_SECONDS_TO_LIVE;
+    /**
+     * Seconds, because that is the unit {@code Cache-Control: max-age} is defined in.
+     * <p>
+     * This used to be computed with {@code TimeUnit.DAYS.toMillis}, inherited from JHipster, whose constant was
+     * already named "seconds" while holding milliseconds. The configured seven days was therefore served as
+     * {@code max-age=604800000} — a little over nineteen years — and disagreed with the {@code Expires} header beside
+     * it, which was correct. {@code Cache-Control} wins where the two differ, so browsers held the bundle
+     * indefinitely.
+     */
+    private long cacheTimeToLiveSeconds = TimeUnit.DAYS.toSeconds(DEFAULT_DAYS_TO_LIVE);
 
     private final ArtemisProperties jHipsterProperties;
 
@@ -49,7 +66,7 @@ public class CachingHttpHeadersFilter implements Filter {
     /** {@inheritDoc} */
     @Override
     public void init(FilterConfig filterConfig) {
-        cacheTimeToLive = TimeUnit.DAYS.toMillis(jHipsterProperties.getHttp().getCache().getTimeToLiveInDays());
+        cacheTimeToLiveSeconds = TimeUnit.DAYS.toSeconds(jHipsterProperties.getHttp().getCache().getVersionedAssetsTimeToLiveInDays());
     }
 
     /** {@inheritDoc} */
@@ -64,11 +81,12 @@ public class CachingHttpHeadersFilter implements Filter {
 
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        httpResponse.setHeader("Cache-Control", "max-age=" + cacheTimeToLive + ", public");
+        httpResponse.setHeader("Cache-Control", "max-age=" + cacheTimeToLiveSeconds + ", public");
         httpResponse.setHeader("Pragma", "cache");
 
-        // Setting Expires header, for proxy caching
-        httpResponse.setDateHeader("Expires", cacheTimeToLive + System.currentTimeMillis());
+        // Setting Expires header, for proxy caching. It takes milliseconds since the epoch, so the lifetime has to be
+        // converted back out of seconds; mixing those two units up is what produced the nineteen-year max-age above.
+        httpResponse.setDateHeader("Expires", System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(cacheTimeToLiveSeconds));
 
         chain.doFilter(request, response);
     }

@@ -8,10 +8,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseCompetencyImportSettings } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
 import { Course } from 'app/course/shared/entities/course.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportAllCourseCompetenciesModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ImportAllCourseCompetenciesModalComponent;
     let fixture: ComponentFixture<ImportAllCourseCompetenciesModalComponent>;
 

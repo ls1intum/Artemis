@@ -1,6 +1,6 @@
 <div class="resizable-container" [style.display]="isBeingPrinted() ? 'block' : 'flex'">
     <!--region LEFT SIDE-->
-    <div class="left card" [class.border-0]="isExerciseParticipation()">
+    <div class="left card" data-testid="resizeable-container-left" [class.border-0]="isExerciseParticipation()">
         @if (!isExerciseParticipation()) {
             <div class="card-header bg-primary text-white">
                 <ng-content select="span[left-header]" />
@@ -8,7 +8,7 @@
                 <ng-content select="jhi-score-display[left-header]" />
             </div>
         }
-        <div class="left-body card-body" [class.p-0]="isExerciseParticipation()">
+        <div class="left-body card-body" [class.p-0]="leftBodyIsFlush()">
             <ng-content select="[left-body]" />
         </div>
     </div>
@@ -16,7 +16,17 @@
     <!--region RIGHT SIDE-->
     @if (!examTimeline() && showRightPanel()) {
         @if (collapsed() && !expandProblemStatement()) {
-            <div class="collapsed right text-white bg-primary" (click)="collapsed.set(!collapsed())">
+            <div
+                class="collapsed right text-white bg-primary"
+                (click)="collapsed.set(!collapsed())"
+                [attr.aria-expanded]="!collapsed()"
+                #keyboardAction19
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+            >
                 <fa-icon [icon]="faChevronLeft" />
                 <div class="header">
                     <ng-container *ngTemplateOutlet="rightHeaderSpan" />
@@ -34,8 +44,18 @@
                 <div class="draggable-left">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>
-                <div class="card">
-                    <div class="card-header text-white bg-primary" (click)="collapsed.set(!collapsed())">
+                <div class="card" data-testid="resizeable-container-right">
+                    <div
+                        class="card-header text-white bg-primary"
+                        (click)="collapsed.set(!collapsed())"
+                        [attr.aria-expanded]="!collapsed()"
+                        #keyboardAction38
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction38.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction38.click() : undefined"
+                    >
                         <h3 class="card-title">
                             <span class="me-1">
                                 <ng-content select="fa-icon[right-header]" />

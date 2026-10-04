@@ -12,9 +12,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
@@ -31,7 +30,7 @@ export enum ExerciseButtonStatus {
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
-    imports: [ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule, TranslateDirective],
+    imports: [ArtemisTranslatePipe, FontAwesomeModule, TumAetUiTooltipDirective, TranslateDirective],
     templateUrl: './exam-navigation-sidebar.component.html',
     styleUrl: './exam-navigation-sidebar.component.scss',
 })
@@ -45,7 +44,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly sidebarData = input<SidebarData>(undefined!);
     readonly exercises = input<Exercise[]>([]);
     readonly exerciseIndex = input(0);
-    readonly overviewPageOpen = input<boolean>(undefined!);
     readonly examSessions = input<ExamSession[] | undefined>([]);
     readonly examTimeLineView = input(false);
     readonly isTestRun = input(0);
@@ -56,10 +54,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
 
-    /**
-     * Index indicating that the content is exercise overview
-     */
-    readonly EXERCISE_OVERVIEW_INDEX = -1;
     subscriptionToLiveExamExerciseUpdates?: Subscription;
 
     // Icons
@@ -67,10 +61,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly faChevronRight = faChevronRight;
 
     readonly isCollapsed = signal(false);
-    exerciseId?: string;
-    // Bumped whenever submission sync state is mutated in place (async callbacks) so the pure
-    // template methods below re-evaluate under zoneless change detection.
-    private readonly syncStateVersion = signal(0);
 
     ngOnInit(): void {
         if (!this.examTimeLineView()) {
@@ -103,7 +93,10 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                         if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
                             // If there are uncommitted changes: set isSynced to false.
                             submission.isSynced = false;
-                            this.syncStateVersion.update((version) => version + 1);
+                            // Use the service-wide notifier rather than a private signal: the exercise overview
+                            // page and the exam save button observe only that one, so a private bump would leave
+                            // them showing a stale saved icon for this resumed-session case.
+                            this.examParticipationService.notifySubmissionSyncStateChanged();
                         }
                     });
             });
@@ -154,8 +147,26 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     savedExercisesCount(): number {
-        this.syncStateVersion();
+        this.trackSyncState();
         return this.exercises().filter((exercise) => ExamParticipationService.getSubmissionForExercise(exercise)?.submitted).length;
+    }
+
+    /**
+     * Read the signal that marks a submission's sync state as changed, so the template bindings here
+     * re-evaluate under zoneless change detection.
+     *
+     * `isSynced` and `submitted` are mutated in place on a plain submission object, which schedules no
+     * change detection on its own. Every producer therefore calls
+     * {@link ExamParticipationService.notifySubmissionSyncStateChanged}: each exam submission editor on
+     * an `isSynced` transition, the participation component on save success/failure, and this
+     * component's own repository-status subscription above. Reading that one signal used to be missing
+     * here, which left the sidebar blind to ordinary edits: after typing into a text exercise the status
+     * icon kept showing the "not started" hourglass and the "Exercise not saved" tooltip never appeared,
+     * until some unrelated interaction happened to trigger change detection. During an exam that hid the
+     * unsaved-changes warning from students.
+     */
+    private trackSyncState(): void {
+        this.examParticipationService.submissionSyncVersion();
     }
 
     /**
@@ -166,7 +177,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     getExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
-        this.syncStateVersion();
+        this.trackSyncState();
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView()) {

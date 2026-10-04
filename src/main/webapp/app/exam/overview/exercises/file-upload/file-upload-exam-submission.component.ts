@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, inject, input, model, signal, viewChild } from '@angular/core';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
@@ -24,6 +25,7 @@ import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
@@ -38,10 +40,13 @@ import { FileService } from 'app/foundation/service/file.service';
         ExamExerciseUpdateHighlighterComponent,
         UpperCasePipe,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private examParticipationService = inject(ExamParticipationService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private fileService = inject(FileService);
@@ -103,6 +108,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             } else {
                 this.submissionFile = submissionFile;
                 this.studentSubmission().isSynced = false;
+                // isSynced is mutated in place; notify sync-state-dependent UI (exam navigation sidebar, exercise
+                // overview, save button) so it re-evaluates under zoneless change detection.
+                this.examParticipationService.notifySubmissionSyncStateChanged();
             }
         }
     }
@@ -167,6 +175,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
                 this.studentSubmission().filePathUrl = addPublicFilePrefix(submissionFromServer.filePath);
                 this.studentSubmission().isSynced = true;
                 this.studentSubmission().submitted = true;
+                this.examParticipationService.notifySubmissionSyncStateChanged();
                 this.updateViewFromSubmission();
             },
             error: () => this.onError(),

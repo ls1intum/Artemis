@@ -25,21 +25,24 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
-import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
-import { TableModule } from 'primeng/table';
-import { SortEvent } from 'primeng/api';
-import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
-import { InputTextModule } from 'primeng/inputtext';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiIconFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
+} from '@tumaet/ui-angular';
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type SbomSource = 'all' | 'server' | 'client';
-type PrimeNgSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
 /**
  * Admin component for viewing Software Bill of Materials (SBOM).
@@ -57,14 +60,15 @@ type PrimeNgSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'c
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
         HelpIconComponent,
-        ButtonModule,
-        ButtonGroupModule,
-        TableModule,
-        TagModule,
-        MessageModule,
-        InputTextModule,
-        IconFieldModule,
-        InputIconModule,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
+        TumAetUiIconFieldComponent,
     ],
 })
 export class AdminSbomComponent implements OnInit {
@@ -152,20 +156,12 @@ export class AdminSbomComponent implements OnInit {
         const source = this.selectedSource();
         if ((source === 'all' || source === 'server') && sbom.server?.components) {
             components = components.concat(
-                sbom.server.components.map((c) => ({
-                    ...c,
-                    source: 'server' as const,
-                    componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData),
-                })),
+                sbom.server.components.map((c) => cloneWith(c, { source: 'server' as const, componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData) })),
             );
         }
         if ((source === 'all' || source === 'client') && sbom.client?.components) {
             components = components.concat(
-                sbom.client.components.map((c) => ({
-                    ...c,
-                    source: 'client' as const,
-                    componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData),
-                })),
+                sbom.client.components.map((c) => cloneWith(c, { source: 'client' as const, componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData) })),
             );
         }
 
@@ -381,7 +377,7 @@ export class AdminSbomComponent implements OnInit {
         return 'UNKNOWN';
     }
 
-    getSeverityLevel(severity: string): PrimeNgSeverity {
+    getSeverityLevel(severity: string): TumAetUiTagSeverity {
         switch (severity) {
             case 'CRITICAL':
                 return 'danger';
@@ -411,16 +407,16 @@ export class AdminSbomComponent implements OnInit {
     }
 
     /**
-     * Handles a PrimeNG table sort event. PrimeNG already resolves the toggled field/order
-     * (the table runs in `[customSort]` mode), so the handler only mirrors that state onto the
-     * `sortField`/`sortAscending` signals that drive the client-side sort in `filteredComponents()`.
+     * Handles a table sort event. The table runs in controlled-sort mode and already resolves the
+     * toggled field/order, so the handler only mirrors that state onto the `sortField`/`sortAscending`
+     * signals that drive the client-side sort in `filteredComponents()`.
      */
-    onTableSort(event: SortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         const field = event.field;
         if (field === 'name' || field === 'group' || field === 'version' || field === 'type') {
             this.sortField.set(field);
         }
-        this.sortAscending.set((event.order ?? 1) === 1);
+        this.sortAscending.set(event.order === 1);
     }
 
     /**

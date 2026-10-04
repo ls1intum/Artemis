@@ -8,10 +8,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencySearchComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<CompetencySearchComponent>;
     let component: CompetencySearchComponent;
 

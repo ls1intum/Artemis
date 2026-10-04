@@ -1,15 +1,25 @@
-@if (informationBoxData()) {
+@if (informationBoxData(); as data) {
+    <!--
+        One element for both layouts, and one `ng-content`: content is projected into the first matching slot only, so
+        a second `ng-content` in an `@else` branch would render nothing. The layout therefore changes classes, not
+        structure — `.information-box-inline` turns the label and the value into one row (see the stylesheet), and the
+        Bootstrap spacing utilities the stacked box needs are bound off, because they carry `!important` and would
+        otherwise overrule the row's own height and padding.
+    -->
     <div
         id="test-information-box"
-        class="mw-content text-nowrap rounded-3 py-1 px-2 border border-1 bg-module small fw-semibold h-100"
-        ngbTooltip="{{ informationBoxData()!.tooltip | artemisTranslate: informationBoxData()!.tooltipParams }}"
+        class="mw-content text-nowrap rounded-3 px-2 border border-1 bg-module small fw-semibold"
+        [class.information-box-inline]="layout() === 'inline'"
+        [class.py-1]="layout() === 'stacked'"
+        [class.h-100]="layout() === 'stacked'"
+        ngbTooltip="{{ data.tooltip | artemisTranslate: data.tooltipParams }}"
     >
-        <div id="test-title" class="text-body-tertiary" [jhiTranslate]="informationBoxData()!.title"></div>
-        @if (informationBoxData()!.isContentComponent) {
+        <div id="test-title" class="text-body-tertiary" [jhiTranslate]="data.title"></div>
+        @if (data.isContentComponent) {
             <ng-content select="[contentComponent]" />
         } @else {
-            <div id="test-text" [ngClass]="informationBoxData()!.contentColor ? 'text-' + informationBoxData()!.contentColor : 'text-body'">
-                {{ informationBoxData()!.content.value }}
+            <div id="test-text" [ngClass]="data.contentColor ? 'text-' + data.contentColor : 'text-body'">
+                {{ data.content.value }}
             </div>
         }
     </div>

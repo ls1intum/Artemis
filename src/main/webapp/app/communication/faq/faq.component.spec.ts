@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaqService } from 'app/communication/faq/faq.service';
@@ -37,8 +36,6 @@ function createFaq(id: number, category: string, color: string): Faq {
 }
 
 describe('FaqComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let faqComponentFixture: ComponentFixture<FaqComponent>;
     let faqComponent: FaqComponent;
 
@@ -177,6 +174,16 @@ describe('FaqComponent', () => {
         expect(toggleFilterSpy).toHaveBeenCalledOnce();
         expect(faqComponent.filteredFaqs()).toHaveLength(2);
         expect(faqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(faqComponent.filteredFaqs()).toEqual([faq2, faq3]);
+    });
+
+    it('should refresh the filtered faqs immediately after deletion', () => {
+        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(NEVER);
+        faqComponentFixture.detectChanges();
+        faqComponent.filteredFaqs.set([faq1, faq2, faq3]);
+
+        faqComponent.deleteFaq(courseId, faq1.id!);
+
         expect(faqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 

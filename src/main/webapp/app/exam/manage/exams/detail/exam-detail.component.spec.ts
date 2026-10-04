@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -41,9 +41,6 @@ import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-compon
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 @Component({
     template: '',
@@ -51,8 +48,6 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 class DummyComponent {}
 
 describe('ExamDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamDetailComponent>;
     let component: ExamDetailComponent;
     let service: ExamManagementService;
@@ -65,15 +60,8 @@ describe('ExamDetailComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([
-                    { path: 'course-management/:courseId/exams/:examId/edit', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
-                    {
-                        path: 'course-management/:courseId/exams/:examId/assessment-dashboard',
-                        component: DummyComponent,
-                    },
-                    { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams/:examId/bonus', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams/:examId/plagiarism-cases', component: DummyComponent },
                     { path: 'course-management/:courseId/exams', component: DummyComponent },
                 ]),
                 MockComponent(NoDataComponent),
@@ -92,7 +80,6 @@ describe('ExamDetailComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockDirective(FeatureToggleLinkDirective),
                 MockDirective(ExerciseDetailDirective),
@@ -121,7 +108,6 @@ describe('ExamDetailComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ArtemisDurationFromSecondsPipe),
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 
@@ -157,58 +143,24 @@ describe('ExamDetailComponent', () => {
         expect(fixture.debugElement.nativeElement.innerHTML).toContain(exam.title!);
     });
 
-    it('should correctly route to edit subpage', async () => {
+    it('should correctly route to bonus', async () => {
         const location = TestBed.inject(Location);
+        component.canHaveBonus.set(true);
         fixture.detectChanges();
-        const editButton = fixture.debugElement.query(By.css('#editButton')).nativeElement;
-        editButton.click();
+        const bonusButton = fixture.debugElement.query(By.css('a[href="/course-management/1/exams/1/bonus"]')).nativeElement;
+        bonusButton.click();
         await fixture.whenStable();
-        expect(location.path()).toBe('/course-management/1/exams/1/edit');
+        expect(location.path()).toBe('/course-management/1/exams/1/bonus');
     });
 
-    it('should correctly route to dashboard', async () => {
+    it('should correctly route to plagiarism cases', async () => {
         const location = TestBed.inject(Location);
+        component.plagiarismEnabled.set(true);
         fixture.detectChanges();
-        const dashboardButton = fixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
-        dashboardButton.click();
+        const plagiarismButton = fixture.debugElement.query(By.css('a[href="/course-management/1/exams/1/plagiarism-cases"]')).nativeElement;
+        plagiarismButton.click();
         await fixture.whenStable();
-        expect(location.path()).toBe('/course-management/1/exams/1/assessment-dashboard');
-    });
-
-    it('should correctly route to exercise groups', async () => {
-        const location = TestBed.inject(Location);
-        fixture.detectChanges();
-        const dashboardButton = fixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
-        dashboardButton.click();
-        await fixture.whenStable();
-        expect(location.path()).toBe('/course-management/1/exams/1/exercise-groups');
-    });
-
-    it('should correctly route to scores', async () => {
-        const location = TestBed.inject(Location);
-        fixture.detectChanges();
-        const scoresButton = fixture.debugElement.query(By.css('#scores-button')).nativeElement;
-        scoresButton.click();
-        await fixture.whenStable();
-        expect(location.path()).toBe('/course-management/1/exams/1/scores');
-    });
-
-    it('should correctly route to students', async () => {
-        const location = TestBed.inject(Location);
-        fixture.detectChanges();
-        const studentsButton = fixture.debugElement.query(By.css('#students-button')).nativeElement;
-        studentsButton.click();
-        await fixture.whenStable();
-        expect(location.path()).toBe('/course-management/1/exams/1/students');
-    });
-
-    it('should correctly route to test runs', async () => {
-        const location = TestBed.inject(Location);
-        fixture.detectChanges();
-        const studentsButton = fixture.debugElement.query(By.css('#testrun-button')).nativeElement;
-        studentsButton.click();
-        await fixture.whenStable();
-        expect(location.path()).toBe('/course-management/1/exams/1/test-runs');
+        expect(location.path()).toBe('/course-management/1/exams/1/plagiarism-cases');
     });
 
     it('should return general routes correctly', () => {
@@ -237,6 +189,9 @@ describe('ExamDetailComponent', () => {
     });
 
     it('should delete an exam when delete exam is called', () => {
+        const eventManager = TestBed.inject(EventManager);
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+
         // GIVEN
         component.exam.set(exam);
         const responseFakeDelete = new HttpResponse<void>({ status: 200 });
@@ -250,6 +205,8 @@ describe('ExamDetailComponent', () => {
 
         // THEN
         expect(service.delete).toHaveBeenCalledOnce();
+        expect(broadcastSpy).toHaveBeenCalledOnce();
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
         expect(router.navigate).toHaveBeenCalledOnce();
     });
 

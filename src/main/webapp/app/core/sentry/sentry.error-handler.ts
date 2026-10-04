@@ -1,4 +1,4 @@
-import { ErrorHandler, Injectable, inject } from '@angular/core';
+import { ErrorHandler, Service, inject } from '@angular/core';
 import { Event as SentryEvent, browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -6,13 +6,19 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 
 // `@sentry/angular` re-exports the public Sentry API but not the bare `Integration` type
 // (that lives in `@sentry/core`, which we intentionally do not depend on directly).
-// Derive it from an integration factory's return type instead of importing `@sentry/core`.
-type Integration = ReturnType<typeof dedupeIntegration>;
+// Derive it from an integration factory's return type, widening the narrow `name` literal
+// (e.g. "Dedupe") back to `string` so a mixed integration array stays assignable.
+type Integration = Omit<ReturnType<typeof dedupeIntegration>, 'name'> & { name: string };
 
-@Injectable({ providedIn: 'root' })
+// Header and query parameter names that can identify a user or the network path. These are the patterns Sentry 10 denied
+// by default, plus `authorization` so credentials are excluded regardless of Sentry's built-in sensitive-data filtering.
+const SENTRY_DENIED_HEADER_PATTERNS = ['authorization', 'forwarded', '-ip', 'remote-', 'via', '-user'];
+
+@Service()
 export class SentryErrorHandler extends ErrorHandler {
-    private environment!: string; // assigned in initSentry() during app bootstrap before Sentry captures errors
     private localStorageService = inject(LocalStorageService);
+
+    private environment!: string; // assigned in initSentry() during app bootstrap before Sentry captures errors
 
     /**
      * Initialize Sentry with profile information.
@@ -44,7 +50,22 @@ export class SentryErrorHandler extends ErrorHandler {
             release: VERSION,
             environment: this.environment,
             integrations: integrations,
-            sendDefaultPii: false,
+            // Sentry 11 replaced `sendDefaultPii` with `dataCollection` and collects more when it is unset, so the
+            // restrictive baseline of Sentry 10 (the former `sendDefaultPii: false`) has to be spelled out.
+            dataCollection: {
+                userInfo: false,
+                cookies: false,
+                httpHeaders: {
+                    request: { deny: SENTRY_DENIED_HEADER_PATTERNS },
+                    response: { deny: SENTRY_DENIED_HEADER_PATTERNS },
+                },
+                httpBodies: [],
+                urlQueryParams: { deny: SENTRY_DENIED_HEADER_PATTERNS },
+                genAI: { inputs: false, outputs: false },
+                databaseQueryData: false,
+                queues: false,
+                graphQL: { document: false, variables: false },
+            },
             tracesSampler: (samplingContext) => {
                 const { name, inheritOrSampleWith } = samplingContext;
 

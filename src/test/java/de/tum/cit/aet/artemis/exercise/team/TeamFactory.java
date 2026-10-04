@@ -30,8 +30,8 @@ public class TeamFactory {
      * @return The generated Team
      */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String registrationPrefix) {
-        List<User> students = UserFactory.generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
-                Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, shortName + registrationPrefix);
+        List<User> students = UserFactory.generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, Set.of(new Authority(Role.STUDENT.getAuthority())),
+                numberOfStudents, shortName + registrationPrefix);
 
         Team team = new Team();
         team.setName(name);

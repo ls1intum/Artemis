@@ -5,10 +5,12 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { convertToHtmlLinebreaks, escapeString } from 'app/foundation/util/text.utils';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { GradingInstructionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
-    CYAN = 'rgba(23, 162, 184, 0.3)',
+    // Apollon paints this behind an element's own white body, so a low alpha washed out to nothing on the canvas.
+    CYAN = 'rgba(23, 162, 184, 0.6)',
     BLUE = 'rgba(0, 123, 255, 0.6)',
     YELLOW = 'rgba(255, 193, 7, 0.6)',
     GREEN = 'rgba(40, 167, 69, 0.6)',
@@ -25,7 +27,7 @@ export enum FeedbackSuggestionType {
     NO_SUGGESTION = 'NO_SUGGESTION', // No suggestion at all
     SUGGESTED = 'SUGGESTED', // Suggestion is made, but not accepted yet
     ACCEPTED = 'ACCEPTED', // Suggestion is accepted
-    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the TA
+    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the assessor
 }
 
 // Prefixes for the feedback text to identify the feedback type more specifically without having to change the database schema:
@@ -118,11 +120,12 @@ export class Feedback implements BaseEntity {
         return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
     }
 
-    public static isFeedbackSuggestion(that: Feedback): boolean {
-        if (!that.text) {
+    public static isFeedbackSuggestion(that: Feedback | string | undefined): boolean {
+        const text = typeof that === 'object' ? that.text : that;
+        if (!text) {
             return false;
         }
-        return that.text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
+        return text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
     }
 
     public static isNonGradedFeedbackSuggestion(that: Feedback): boolean {
@@ -134,20 +137,48 @@ export class Feedback implements BaseEntity {
 
     /**
      * Determine the type of the feedback suggestion. See FeedbackSuggestionType for more details on the meanings.
-     * @param that feedback to determine the type of
+     * @param that feedback (or its bare `text`) to determine the type of
      */
-    public static getFeedbackSuggestionType(that: Feedback): FeedbackSuggestionType {
+    public static getFeedbackSuggestionType(that: Feedback | string | undefined): FeedbackSuggestionType {
         if (!Feedback.isFeedbackSuggestion(that)) {
             return FeedbackSuggestionType.NO_SUGGESTION;
         }
-        // that.text is guaranteed to be defined here because the feedback is a suggestion, which must have a text
-        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
-            return FeedbackSuggestionType.ACCEPTED;
-        }
-        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
+        // guaranteed to be defined here because isFeedbackSuggestion returned true, which requires non-empty text
+        const text = typeof that === 'object' ? that.text! : that!;
+        if (text.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
             return FeedbackSuggestionType.ADAPTED;
         }
+        if (text.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+            return FeedbackSuggestionType.ACCEPTED;
+        }
         return FeedbackSuggestionType.SUGGESTED;
+    }
+
+    /**
+     * Strips the internal `FeedbackSuggestion:(suggested|accepted|adapted):` marker off a feedback's `text`, if
+     * present. That marker exists only to tag the suggestion state in the database `text` column without a schema
+     * change; it must never reach a tutor or a student as literal text.
+     */
+    public static stripSuggestionPrefix(text: string): string {
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+            if (text.startsWith(prefix)) {
+                return text.slice(prefix.length);
+            }
+        }
+        return text;
+    }
+
+    /**
+     * Rewrites an accepted feedback suggestion's `text` prefix to adapted, leaving everything else unchanged. A
+     * suggestion transitions to adapted the moment it is edited in any way; every other state (already adapted,
+     * not a suggestion, or the unreachable bare "suggested") is returned as-is. This is a one-way, sticky
+     * transition - it never reverts even if the edit is undone later.
+     */
+    public static markAdaptedIfAcceptedSuggestion(text: string): string {
+        if (!text.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+            return text;
+        }
+        return `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}${text.slice(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER.length)}`;
     }
 
     public static hasDetailText(that: Feedback): boolean {
@@ -190,17 +221,32 @@ export class Feedback implements BaseEntity {
      * Example output in this case: 13
      */
     public static getReferenceLine(feedback: Feedback): number | undefined {
+        return Feedback.getReferenceLineRange(feedback)?.start;
+    }
+
+    /**
+     * Get the referenced line range for referenced programming feedbacks, or undefined.
+     * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13-15`.
+     * Example output in this case: `{ start: 13, end: 15 }`
+     */
+    public static getReferenceLineRange(feedback: Feedback): { start: number; end: number } | undefined {
         if (!feedback.reference?.startsWith(this.PROGRAMMING_REFERENCE_PREFIX)) {
             // Find "file:" prefix
             // No programming feedback
             return undefined;
         }
         const indexOfLine = feedback.reference.lastIndexOf(this.PROGRAMMING_REFERENCE_LINE_SEPERATOR); // Split before "_line:"
-        const line = parseInt(feedback.reference.substring(indexOfLine + this.PROGRAMMING_REFERENCE_LINE_SEPERATOR.length));
-        if (isNaN(line)) {
+        const filePath = feedback.reference.substring(this.PROGRAMMING_REFERENCE_PREFIX.length, indexOfLine);
+        if (indexOfLine <= this.PROGRAMMING_REFERENCE_PREFIX.length || !filePath.trim()) {
             return undefined;
         }
-        return line;
+        const lineRange = feedback.reference.substring(indexOfLine + this.PROGRAMMING_REFERENCE_LINE_SEPERATOR.length).match(/^(\d+)(?:-(\d+))?$/);
+        const start = Number(lineRange?.[1]);
+        const end = Number(lineRange?.[2] ?? lineRange?.[1]);
+        if (!lineRange || start <= 0 || end <= 0 || end < start) {
+            return undefined;
+        }
+        return { start, end };
     }
 
     /**
@@ -270,14 +316,7 @@ export class Feedback implements BaseEntity {
     }
 
     public static fromServerResponse(response: Feedback): Feedback {
-        return Object.assign(new Feedback(), response);
-    }
-
-    public static updateFeedbackTypeOnChange(feedback: Feedback) {
-        if (Feedback.isFeedbackSuggestion(feedback)) {
-            // Mark as adapted feedback suggestion
-            feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
-        }
+        return hydrate(new Feedback(), response);
     }
 }
 
@@ -286,25 +325,35 @@ export class Feedback implements BaseEntity {
  * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
  * it returns the detailed text and/or text properties of the feedback depending on the submission element.
  *
+ * An AI feedback suggestion's `text` is never included: it always holds just the suggestion's short title (tagged
+ * with the internal `FeedbackSuggestion:...` marker), which is redundant with the suggestion's own `detailText`.
+ * For text/programming/file-upload exercises that title is still shown separately (the editable unified feedback
+ * editor's own title field, or the "name · title" heading in the read-only feedback item), so dropping it here
+ * only avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
+ * no separate title UI — that is safe because Apollon always writes an assessor's real edit into `detailText` and
+ * leaves `.text` as the untouched original suggestion title (see `ModelingAssessmentComponent`), so no
+ * assessor-authored content is ever hiding behind the excluded `text`.
+ *
  * @param feedback that contains feedback text and grading instruction
- * @param addFeedbackText if the text of the feedback should be part of the resulting text. Defaults to true.
- *                        The detailText of the feedback is always added if present.
+ * @param addFeedbackText if the (non-suggestion) text of the feedback should be part of the resulting text.
+ *                        Defaults to true. The detailText of the feedback is always added if present.
  * @returns formatted string representing the feedback text ready to display
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
+    const includeText = addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback);
     let feedbackText = '';
     if (feedback.gradingInstruction?.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
         }
-        if (addFeedbackText && feedback.text) {
+        if (includeText) {
             feedbackText = feedbackText + '\n' + feedback.text;
         }
     } else if (feedback.detailText) {
         feedbackText = feedback.detailText;
-    } else if (addFeedbackText && feedback.text) {
-        feedbackText = feedback.text;
+    } else if (includeText) {
+        feedbackText = feedback.text!;
     }
 
     // escape special characters like "<", ">", "&" to render them correctly
