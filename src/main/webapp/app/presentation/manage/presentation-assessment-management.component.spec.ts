@@ -251,8 +251,16 @@ describe('PresentationAssessmentManagementComponent', () => {
         const row = component.filteredSelectedPresentationStudentRows()[0];
         component.toggleStudentRowDetails(row);
 
-        expect(component.filteredSelectedPresentationStudentRows()[0]).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
-        expect(component.paginatedStudentRows()[0]).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
+        const selectedRow = component.filteredSelectedPresentationStudentRows()[0];
+        const overviewRow = component.paginatedStudentRows()[0];
+        expect(selectedRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
+        expect(overviewRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
+        expect(selectedRow.student).toBe(row.student);
+        expect(selectedRow.instance).toBe(row.instance);
+        expect(selectedRow.presentationAssessment).toBe(row.presentationAssessment);
+        expect(overviewRow.student).toBe(row.student);
+        expect(overviewRow.instance).toBe(row.instance);
+        expect(overviewRow.presentationAssessment).toBe(row.presentationAssessment);
     });
 
     it('should open the create dialog without persisting on cancel', () => {

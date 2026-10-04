@@ -41,7 +41,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
-import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import {
@@ -67,6 +67,19 @@ const PRESENTATION_SIDEBAR_ALWAYS_SHOW = presentationSidebarAlwaysShowRecord as 
 
 function studentRowKey(row: PresentationStudentRow | SelectedPresentationStudentRow): string {
     return `${row.instance?.id ?? 'new'}:${row.studentLogin}`;
+}
+
+function decorateStudentRow(row: PresentationStudentRow | SelectedPresentationStudentRow, expandedRows: string[]) {
+    const rowKey = studentRowKey(row);
+    return {
+        studentLogin: row.studentLogin,
+        student: row.student,
+        presentationAssessment: row.presentationAssessment,
+        instance: row.instance,
+        rowKey,
+        assessed: hasResultPoints(row.instance?.resultPoints),
+        expanded: expandedRows.includes(rowKey),
+    };
 }
 
 function positiveRouteId(value: string | null): number | undefined {
@@ -181,10 +194,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     });
     readonly filteredSelectedPresentationStudentRows = computed(() => {
         const expandedRows = this.expandedStudentRows();
-        return filterStudentRowsBySearch(this.selectedPresentationStudentRows(), this.studentSearchTerm()).map((row) => {
-            const rowKey = studentRowKey(row);
-            return cloneWith(row, { rowKey, assessed: hasResultPoints(row.instance?.resultPoints), expanded: expandedRows.includes(rowKey) });
-        });
+        return filterStudentRowsBySearch(this.selectedPresentationStudentRows(), this.studentSearchTerm()).map((row) => decorateStudentRow(row, expandedRows));
     });
     readonly filteredStudentRows = computed(() => {
         return filterAndSortStudentRows(this.studentRows(), {
@@ -204,10 +214,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         const expandedRows = this.expandedStudentRows();
         return this.filteredStudentRows()
             .slice(start, start + this.overviewPageSize())
-            .map((row) => {
-                const rowKey = studentRowKey(row);
-                return cloneWith(row, { rowKey, assessed: hasResultPoints(row.instance.resultPoints), expanded: expandedRows.includes(rowKey) });
-            });
+            .map((row) => decorateStudentRow(row, expandedRows));
     });
     readonly assessedStudentCount = computed(() => this.studentRows().filter((row) => hasResultPoints(row.instance.resultPoints)).length);
     readonly pendingStudentCount = computed(() => this.studentRows().length - this.assessedStudentCount());
