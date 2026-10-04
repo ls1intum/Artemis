@@ -1,25 +1,8 @@
 name: Test
 
 on:
-  pull_request:
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'documentation/**'
-    - '.github/**'
-    - '!.github/workflows/test.yml'
-    - '.husky/**'
-    - 'docker/**'
-    - '.coderabbit.yaml'
-    - '.editorconfig'
-    - '.gitattributes'
-    - 'artemis-server-cli'
-    - 'supporting_scripts/**'
-    - 'CITATION.cff'
-    - 'proxy.conf.mjs'
+  # Required test checks must start for every PR, including documentation-only changes.
+  pull_request: {}
   push:
     branches:
     - develop
