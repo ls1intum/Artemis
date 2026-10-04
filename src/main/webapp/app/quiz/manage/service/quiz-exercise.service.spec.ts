@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -147,6 +147,83 @@ describe('QuizExercise Service', () => {
         expect(quizExercise).toBeInstanceOf(QuizExercise);
         expect(quizExercise.releaseDate!.toISOString()).toBe('2026-05-01T10:00:00.000Z');
         expect(quizExercise.categories).toEqual([new ExerciseCategory('Week 1', '#6ae8ac')]);
+        const question = quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
+        expect(question).toBeInstanceOf(MultipleChoiceQuestion);
+        expect(question.answerOptions![0]).toBeInstanceOf(AnswerOption);
+    });
+
+    it('should load the quiz exercises of a course as class instances with converted dates, batches and categories', async () => {
+        const result = firstValueFrom(service.findForCourse(5));
+        httpMock.expectOne({ method: 'GET', url: '/api/quiz/courses/5/quiz-exercises' }).flush([
+            {
+                id: 11,
+                title: 'Quiz 1',
+                includedInOverallScore: 'INCLUDED_COMPLETELY',
+                quizMode: 'BATCHED',
+                releaseDate: '2026-05-01T10:00:00Z',
+                startDate: '2026-05-02T10:00:00Z',
+                dueDate: '2026-05-03T10:00:00Z',
+                categories: ['{"category":"Week 1","color":"#6ae8ac"}'],
+                quizBatches: [{ id: 21, started: true, startTime: '2026-05-02T10:05:00Z' }],
+            },
+            { id: 12, title: 'Quiz 2', includedInOverallScore: 'NOT_INCLUDED', quizMode: 'SYNCHRONIZED' },
+        ]);
+
+        const [first, second] = await result;
+        expect(first).toBeInstanceOf(QuizExercise);
+        expect(first.releaseDate!.toISOString()).toBe('2026-05-01T10:00:00.000Z');
+        expect(first.startDate!.toISOString()).toBe('2026-05-02T10:00:00.000Z');
+        expect(first.dueDate!.toISOString()).toBe('2026-05-03T10:00:00.000Z');
+        expect(first.categories).toEqual([new ExerciseCategory('Week 1', '#6ae8ac')]);
+        expect(first.quizBatches![0]).toBeInstanceOf(QuizBatch);
+        expect(first.quizBatches![0].startTime!.toISOString()).toBe('2026-05-02T10:05:00.000Z');
+        expect(second).toBeInstanceOf(QuizExercise);
+        expect(second.releaseDate).toBeUndefined();
+        expect(second.quizBatches).toBeUndefined();
+    });
+
+    it('should load the quiz exercises of an exam from the quiz module', async () => {
+        const result = firstValueFrom(service.findForExam(7));
+        // The exam module has no mapping for this list; the request must go to the quiz module.
+        httpMock
+            .expectOne({ method: 'GET', url: '/api/quiz/exams/7/quiz-exercises' })
+            .flush([{ id: 13, title: 'Exam quiz', includedInOverallScore: 'INCLUDED_COMPLETELY', quizMode: 'SYNCHRONIZED', dueDate: '2026-06-01T09:00:00Z' }]);
+
+        const [quizExercise] = await result;
+        expect(quizExercise).toBeInstanceOf(QuizExercise);
+        expect(quizExercise.title).toBe('Exam quiz');
+        expect(quizExercise.dueDate!.toISOString()).toBe('2026-06-01T09:00:00.000Z');
+    });
+
+    it('should leave the questions of a student quiz unset while the server withholds them', async () => {
+        const result = firstValueFrom(service.findForStudent(14));
+        httpMock.expectOne({ method: 'GET', url: '/api/quiz/quiz-exercises/14/for-student' }).flush({
+            id: 14,
+            title: 'Upcoming quiz',
+            includedInOverallScore: 'INCLUDED_COMPLETELY',
+            quizMode: 'SYNCHRONIZED',
+            startDate: '2026-05-02T10:00:00Z',
+        });
+
+        const quizExercise = await result;
+        expect(quizExercise).toBeInstanceOf(QuizExercise);
+        expect(quizExercise.startDate!.toISOString()).toBe('2026-05-02T10:00:00.000Z');
+        expect(quizExercise.quizQuestions).toBeUndefined();
+    });
+
+    it('should convert the questions of a running student quiz into the class graph', async () => {
+        const result = firstValueFrom(service.findForStudent(15));
+        httpMock.expectOne({ method: 'GET', url: '/api/quiz/quiz-exercises/15/for-student' }).flush({
+            id: 15,
+            title: 'Running quiz',
+            includedInOverallScore: 'INCLUDED_COMPLETELY',
+            quizMode: 'BATCHED',
+            quizBatches: [{ id: 22, started: true, startTime: '2026-05-02T10:05:00Z' }],
+            quizQuestions: [{ id: 3, type: 'multiple-choice', answerOptions: [{ id: 4, text: 'A' }] }],
+        });
+
+        const quizExercise = await result;
+        expect(quizExercise.quizBatches![0].startTime!.toISOString()).toBe('2026-05-02T10:05:00.000Z');
         const question = quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
         expect(question).toBeInstanceOf(MultipleChoiceQuestion);
         expect(question.answerOptions![0]).toBeInstanceOf(AnswerOption);
