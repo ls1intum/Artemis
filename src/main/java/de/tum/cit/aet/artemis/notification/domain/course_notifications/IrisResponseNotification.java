@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
  * anywhere (app backgrounded/closed, or the chat closed in the web client). Distributed via websocket
  * (in-app) and push.
  */
-@CourseNotificationType(26)
+@CourseNotificationType(27)
 public class IrisResponseNotification extends CourseNotification {
 
     private final IrisResponsePayloadDTO payload;
