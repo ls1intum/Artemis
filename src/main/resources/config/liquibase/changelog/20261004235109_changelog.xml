@@ -8,7 +8,7 @@
          the iOS app). Nullable because messages from a web browser / unrecognized client, non-user messages (LLM/artifact)
          and pre-existing rows have no originating Artemis app.
          DB-specific type: ENUM on MySQL/H2, TEXT on PostgreSQL (mirrors the ArtemisApp Java enum). -->
-    <changeSet id="20260612215421-1-add-sender-origin-mysql" author="senan-aslan" dbms="mysql,h2">
+    <changeSet id="20261004235109-1-add-sender-origin-mysql" author="senan-aslan" dbms="mysql,h2">
         <preConditions onFail="MARK_RAN">
             <not><columnExists tableName="iris_message" columnName="sender_origin"/></not>
         </preConditions>
@@ -17,7 +17,7 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="20260612215421-1-add-sender-origin-postgres" author="senan-aslan" dbms="postgresql">
+    <changeSet id="20261004235109-1-add-sender-origin-postgres" author="senan-aslan" dbms="postgresql">
         <preConditions onFail="MARK_RAN">
             <not><columnExists tableName="iris_message" columnName="sender_origin"/></not>
         </preConditions>
