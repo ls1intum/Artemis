@@ -195,6 +195,16 @@
                     "tutorialPeriodEnd": "Tutorial Period End",
                     "location": "Location"
                 },
+                "placeholder": {
+                    "title": "e.g. Tuesday 14:00 Group 3",
+                    "tutor": "Select a tutor",
+                    "language": "e.g. English",
+                    "mode": "Select a mode",
+                    "campus": "e.g. Garching",
+                    "capacity": "e.g. 30",
+                    "additionalInformation": "e.g. Bring your laptop",
+                    "location": "e.g. Room 00.08.038"
+                },
                 "validationError": {
                     "titleContent": "Title must start with a letter or digit, and can otherwise only contain letters, digits, colons, spaces and dashes.",
                     "titleLength": "Title must contain at most 19 characters. The system automatically removes leading/trailing whitespaces.",

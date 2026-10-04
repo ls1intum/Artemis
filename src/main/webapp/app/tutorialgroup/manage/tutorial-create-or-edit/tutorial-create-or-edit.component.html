@@ -15,7 +15,7 @@
                     id="title-input"
                     tumAetUiInput
                     [(ngModel)]="title"
-                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.title' | artemisTranslate"
+                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.title' | artemisTranslate"
                     (blur)="titleInputTouched.set(true)"
                 />
             </tumaet-ui-form-field>
@@ -35,7 +35,7 @@
                     filterBy="nameAndLogin"
                     [required]="true"
                     [(ngModel)]="selectedTutorId"
-                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutor' | artemisTranslate"
+                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.tutor' | artemisTranslate"
                 />
             </tumaet-ui-form-field>
         </div>
@@ -57,7 +57,7 @@
                     inputId="mode-input"
                     [options]="modes"
                     [(ngModel)]="selectedMode"
-                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate"
+                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.mode' | artemisTranslate"
                 />
             </tumaet-ui-form-field>
         </div>
@@ -71,7 +71,7 @@
                 [invalid]="campusValidation.status === ValidationStatus.INVALID"
                 [error]="campusValidation.status === ValidationStatus.INVALID ? (campusValidation.message | artemisTranslate) : ''"
             >
-                <input id="campus-input" tumAetUiInput [(ngModel)]="campus" [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus' | artemisTranslate" />
+                <input id="campus-input" tumAetUiInput [(ngModel)]="campus" [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.campus' | artemisTranslate" />
             </tumaet-ui-form-field>
 
             <tumaet-ui-form-field class="label-and-input" controlId="capacity-input" [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate">
@@ -79,7 +79,7 @@
                     [fluid]="true"
                     inputId="capacity-input"
                     [(ngModel)]="capacity"
-                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
+                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.capacity' | artemisTranslate"
                     [min]="1"
                     [max]="5000"
                     [showButtons]="true"
@@ -101,7 +101,7 @@
                     type="text"
                     tumAetUiInput
                     [(ngModel)]="additionalInformation"
-                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation' | artemisTranslate"
+                    [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.additionalInformation' | artemisTranslate"
                 />
             </tumaet-ui-form-field>
             <div class="spacer"></div>
@@ -225,7 +225,7 @@
                         type="text"
                         tumAetUiInput
                         [(ngModel)]="location"
-                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate"
+                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.location' | artemisTranslate"
                         (blur)="locationInputTouched.set(true)"
                     />
                 </tumaet-ui-form-field>

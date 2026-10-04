@@ -195,6 +195,16 @@
                     "tutorialPeriodEnd": "Ende Tutoriumsperiode",
                     "location": "Ort"
                 },
+                "placeholder": {
+                    "title": "z. B. Dienstag 14:00 Gruppe 3",
+                    "tutor": "Tutor auswählen",
+                    "language": "z. B. Englisch",
+                    "mode": "Modus auswählen",
+                    "campus": "z. B. Garching",
+                    "capacity": "z. B. 30",
+                    "additionalInformation": "z. B. Bring deinen Laptop mit",
+                    "location": "z. B. Raum 00.08.038"
+                },
                 "validationError": {
                     "titleContent": "Der Titel muss mit einem Buchstaben oder einer Ziffer anfangen und darf sonst nur Buchstaben, Ziffern, Strichpunkte, Leerzeichen und Bindestriche enthalten.",
                     "titleLength": "Titel darf eine maximale Länge von 19 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
