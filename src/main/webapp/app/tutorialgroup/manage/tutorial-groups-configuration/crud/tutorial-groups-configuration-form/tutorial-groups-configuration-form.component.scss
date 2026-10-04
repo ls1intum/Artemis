@@ -3,7 +3,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    max-width: 40rem;
+    max-width: 56rem;
     margin-block: 1.5rem 1rem;
 
     // Centered in the page, matching the checklist, so the hero and form share the page's middle.
@@ -23,8 +23,10 @@
     height: 44px;
     border-radius: 0.5rem;
     font-size: 1.2rem;
-    color: var(--tumaet-ui-primary-contrast-color);
-    background: var(--tumaet-ui-primary-color);
+
+    // A muted chip, not the brand primary - the icon is decorative here, not a clickable button.
+    color: var(--secondary);
+    background: color-mix(in srgb, var(--secondary) 12%, transparent);
 }
 
 .config-hero-title {
@@ -46,8 +48,8 @@
     // Generous spacing between the sections, so the form reads as distinct rows rather than a squished block.
     gap: 2rem;
 
-    // Not the full page width: the fields are short, so the form stays a readable column, centered in the page.
-    max-width: 40rem;
+    // A readable column centered in the page, at the width shared by the other tutorial-group pages.
+    max-width: 56rem;
     margin-inline: auto;
     padding-block: 1.5rem;
 }

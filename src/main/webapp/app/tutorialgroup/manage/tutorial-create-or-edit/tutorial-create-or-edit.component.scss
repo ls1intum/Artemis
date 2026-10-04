@@ -1,5 +1,10 @@
 :host {
-    width: 65%;
+    // Centered, fixed-width column shared with the other tutorial-group pages (and the course/lecture forms).
+    display: block;
+    width: 100%;
+    max-width: 56rem;
+    margin-inline: auto;
+    padding-block: 1.5rem;
 
     .frame {
         display: flex;
