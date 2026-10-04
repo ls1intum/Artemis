@@ -33,6 +33,10 @@ jobs:
                      .github/actions/resolve-artifact-run/resolve-artifact-run.sh
       - name: bats unit tests
         run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests
+      - name: Verify LocalCI installer safety
+        run: |
+          shellcheck -e SC1091 install-localci-kubernetes-ubuntu.sh supporting_scripts/update_python_dependency_locks.sh
+          python3 supporting_scripts/test_verified_installers.py
 
   actionlint:
     name: actionlint
