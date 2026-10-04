@@ -384,7 +384,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it.each([false, true])('should let instructors correct over-limit text during re-evaluation: %s', async (reEvaluationInProgress) => {
         const question = new DragAndDropQuestion();
-        question.dragItems = [{ text: 'a'.repeat(256) }];
+        question.dragItems = [{ text: 'a'.repeat(256), invalid: false }];
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('reEvaluationInProgress', reEvaluationInProgress);
         fixture.detectChanges();
