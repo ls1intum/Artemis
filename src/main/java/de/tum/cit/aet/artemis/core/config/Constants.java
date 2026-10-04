@@ -142,10 +142,10 @@ public final class Constants {
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final long MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024; // 5 MB
+    public static final long MAX_FILE_SIZE_COMMUNICATION = 5L * 1024 * 1024; // 5 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
+    public static final long MAX_SUBMISSION_FILE_SIZE = 8L * 1024 * 1024; // 8 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
     public static final int MAX_SUBMISSION_TEXT_LENGTH = 30_000; // 30.000 characters
@@ -744,7 +744,7 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
-    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
+    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]++(?:/[\\w-]++)*+$");
 
     public static final String JWT_COOKIE_NAME = "jwt";
 

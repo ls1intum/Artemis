@@ -2,7 +2,15 @@
     <form class="flex flex-col gap-6" [formGroup]="form" (ngSubmit)="submitForm()">
         @let nameInvalid = !!nameControl?.invalid && (!!nameControl?.dirty || !!nameControl?.touched);
         <tumaet-ui-form-field controlId="name" [label]="'artemisApp.textUnit.createTextUnit.name' | artemisTranslate" required [invalid]="nameInvalid">
-            <input tumAetUiInput id="name" type="text" formControlName="name" required [placeholder]="'artemisApp.textUnit.createTextUnit.namePlaceHolder' | artemisTranslate" />
+            <input
+                tumAetUiInput
+                id="name"
+                [attr.aria-label]="'artemisApp.textUnit.createTextUnit.name' | artemisTranslate"
+                type="text"
+                formControlName="name"
+                required
+                [placeholder]="'artemisApp.textUnit.createTextUnit.namePlaceHolder' | artemisTranslate"
+            />
             <ng-container tumAetUiFormFieldError>
                 @if (nameControl?.errors?.required) {
                     <span jhiTranslate="artemisApp.textUnit.createTextUnit.nameRequiredValidationError"></span>

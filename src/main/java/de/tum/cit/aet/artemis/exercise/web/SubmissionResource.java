@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -256,11 +257,14 @@ public class SubmissionResource {
 
     private Course findCourseFromSubmission(Submission submission) {
         Participation participation = submission.getParticipation();
-        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course = participation.getExercise() != null ? participation.getExercise().getCourseViaExerciseGroupOrCourseMember() : null;
+        if (course == null) {
+            course = studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
-
-        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new EntityNotFoundException("Course", "of submission " + submission.getId());
+        }
+        return course;
     }
 
     /**

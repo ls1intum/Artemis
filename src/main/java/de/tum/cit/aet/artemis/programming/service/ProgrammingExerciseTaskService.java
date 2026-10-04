@@ -36,6 +36,19 @@ public class ProgrammingExerciseTaskService {
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     /**
+     * The test case list of a task, see {@link #TASK_PATTERN}. Its parts, in order:
+     * <ol>
+     * <li>the plain test cases before the first round bracket: no leading comma, no empty entry</li>
+     * <li>any number of test cases with round brackets that are followed by at least one more test case: the name is the character in front of the bracket, the brackets hold
+     * method parameters, and the rest of the entry up to its comma is followed by the plain test cases that come next</li>
+     * <li>optionally the last test case with round brackets and the plain test cases after it</li>
+     * <li>no trailing comma</li>
+     * </ol>
+     */
+    private static final String TASK_TESTS_REGEX = "(?!,)(?![^()]*,,)[^()]*+" + "(?:(?<=[^(),])\\([^()]*+\\)[^(),]*+,(?!,)(?![^()]*,,)[^()]*+)*+"
+            + "(?:(?<=[^(),])\\([^()]*+\\)[^(),]*+(?:,(?!,)(?![^()]*,,)[^()]*+)?)?+(?<!,)";
+
+    /**
      * Pattern that is used to extract the tasks (capturing group {@code name}) and test case names (capturing groups {@code tests}) from the problem statement.
      * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following groups are extracted by the capturing groups:
      * <ul>
@@ -52,11 +65,15 @@ public class ProgrammingExerciseTaskService {
      * Therefore, allowed test names are among others {@code testName}, {@code testName()}, {@code testName(1234, 12)}, {@code testName(testValue)[1]}, {@code Test Name}.<br>
      * For multiple testcases it's {@code testName,otherTestName()} or {@code testName,     otherTestName()}.<br>
      * <p>
+     * The pattern is written so that matching needs no stack that grows with the number of test cases. Java regex recurses once per iteration of a backtracking group
+     * repetition, which overflows the stack for long lists. Here the repetition is possessive, which does not recurse, and runs of plain test cases are matched by a single
+     * character class. Lookaheads reject empty entries ({@code ,,}) and a leading comma, a lookbehind rejects a trailing comma and requires a name in front of every round bracket.
+     * The accepted language is that of the original pattern, in which every test case was a repetition of its own, so a task may list any number of test cases.
+     * <p>
      * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper`, `ProgrammingExerciseInstructionAnalysisService`, and `TaskCommand` in the client
      * If you change the regex, make sure to change it in all places!
      */
-    private static final Pattern TASK_PATTERN = Pattern
-            .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
+    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>" + TASK_TESTS_REGEX + ")\\)");
 
     /**
      * Regex to find PlantUML diagrams inside a problem statement.

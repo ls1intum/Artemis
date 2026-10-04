@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,7 +140,7 @@ public class TutorialGroupChannelManagementService {
         var teachingAssistantOptional = getTeachingAssistant(tutorialGroup);
         var tutorialGroupChannelOptional = getTutorialGroupChannel(tutorialGroup);
 
-        if (Stream.of(teachingAssistantOptional, tutorialGroupChannelOptional).allMatch(Optional::isPresent)) {
+        if (teachingAssistantOptional.isPresent() && tutorialGroupChannelOptional.isPresent()) {
             var teachingAssistant = teachingAssistantOptional.get();
             var channel = tutorialGroupChannelOptional.get();
             conversationService.registerUsersToConversation(tutorialGroup.getCourse(), Set.of(teachingAssistant), channel, Optional.empty());

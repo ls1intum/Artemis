@@ -43,13 +43,37 @@
             }
             <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <tumaet-ui-form-field controlId="examiner" [label]="'artemisApp.examManagement.examiner' | artemisTranslate">
-                    <input tumAetUiInput class="w-full" type="text" name="examiner" id="examiner" [(ngModel)]="exam.examiner" />
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="examiner"
+                        id="examiner"
+                        [attr.aria-label]="'artemisApp.examManagement.examiner' | artemisTranslate"
+                        [(ngModel)]="exam.examiner"
+                    />
                 </tumaet-ui-form-field>
                 <tumaet-ui-form-field controlId="moduleNumber" [label]="'artemisApp.examManagement.moduleNumber' | artemisTranslate">
-                    <input tumAetUiInput class="w-full" type="text" name="moduleNumber" id="moduleNumber" [(ngModel)]="exam.moduleNumber" />
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="moduleNumber"
+                        id="moduleNumber"
+                        [attr.aria-label]="'artemisApp.examManagement.moduleNumber' | artemisTranslate"
+                        [(ngModel)]="exam.moduleNumber"
+                    />
                 </tumaet-ui-form-field>
                 <tumaet-ui-form-field controlId="courseName" [label]="'artemisApp.examManagement.courseName' | artemisTranslate">
-                    <input tumAetUiInput class="w-full" type="text" name="courseName" id="courseName" [(ngModel)]="exam.courseName" />
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="courseName"
+                        id="courseName"
+                        [attr.aria-label]="'artemisApp.examManagement.courseName' | artemisTranslate"
+                        [(ngModel)]="exam.courseName"
+                    />
                 </tumaet-ui-form-field>
             </div>
             <hr class="my-4 border-(--border-color)" />

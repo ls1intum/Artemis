@@ -950,7 +950,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         return links
             ? links
                   .map((link) => `${link.competency?.id}:${link.weight}`)
-                  .sort()
+                  .sort((a, b) => a.localeCompare(b))
                   .join(',')
             : undefined;
     }
