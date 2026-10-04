@@ -1347,7 +1347,7 @@ class LectureContentProcessingServiceTest {
             order.verify(attachmentRepository).clearDisplayPageNumbersIfRecoveryClaimHolds(78L, testUnit.getId(), "recovery-claim");
             order.verify(irisLectureApi).deleteLectureFromPyrisDB(List.of(testUnit));
             order.verify(strandedRunRepository).requeueStrandedRunIfClaimed(eq(55L), eq("recovery-claim"), any(), any(), any(), any());
-            order.verify(strandedRunRepository).requeueRunExposedToRecoveryCleanup(eq(55L), eq("recovery-claim"), any(), any());
+            order.verify(strandedRunRepository).requeueRunExposedToRecoveryCleanup(eq(testUnit.getId()), eq("recovery-claim"), any(), any());
             verify(attachmentRepository, never()).updateDisplayPageNumbers(any(), any());
         }
 

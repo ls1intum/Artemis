@@ -136,8 +136,11 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
      * An unclaimed IDLE row dispatches after the deletion anyway; a row an edit settled because the unit has no content left
      * carries no content markers; a row still under this recovery's own claim, or claimed by a newer recovery that runs its
      * own cleanup, is left alone. The content markers are kept, since the edit that took over recorded the current ones.
+     * <p>
+     * The run is matched by its unit rather than by the state the recovery claimed: a manual retry deletes that state and
+     * saves a replacement, whose run the deletion reaches just the same.
      *
-     * @param id               the processing state the recovery worked on
+     * @param lectureUnitId    the unit whose interrupted content change the recovery worked on
      * @param claimToken       the recovery's lost claim
      * @param dispatchPriority where the requeued unit sits in the dispatch order
      * @param now              recorded as the new {@code lastUpdated}
@@ -152,7 +155,7 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
                 ps.contentFingerprint = NULL, ps.confirmedFingerprint = NULL, ps.dispatchPriority = :dispatchPriority,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
                 ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL, ps.lastUpdated = :now
-            WHERE ps.id = :id
+            WHERE ps.lectureUnit.id = :lectureUnitId
             AND (ps.claimToken IS NULL OR ps.claimToken <> :claimToken)
             AND ((ps.videoSourceHash IS NOT NULL AND ps.videoSourceHash <> '') OR ps.attachmentVersion IS NOT NULL)
             AND (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE
@@ -160,6 +163,6 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
                 OR (ps.claimToken IS NOT NULL
                     AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)))
             """)
-    int requeueRunExposedToRecoveryCleanup(@Param("id") long id, @Param("claimToken") String claimToken, @Param("dispatchPriority") Integer dispatchPriority,
+    int requeueRunExposedToRecoveryCleanup(@Param("lectureUnitId") long lectureUnitId, @Param("claimToken") String claimToken, @Param("dispatchPriority") Integer dispatchPriority,
             @Param("now") ZonedDateTime now);
 }

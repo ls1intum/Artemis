@@ -478,7 +478,7 @@ public class LectureContentProcessingService {
             closed = recoveryRepository.requeueStrandedRunIfClaimed(state.getId(), claimToken, hasVideo ? computeHash(unit.getVideoSource()) : null,
                     hasPdf ? unit.getAttachment().getVersion() : null, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now());
         }
-        if (closed == 0 && recoveryRepository.requeueRunExposedToRecoveryCleanup(state.getId(), claimToken, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now()) == 1) {
+        if (closed == 0 && recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), claimToken, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now()) == 1) {
             log.warn("Unit {} was taken over during the recovery of its interrupted content change; requeued the newer run after the Iris cleanup", unit.getId());
         }
     }

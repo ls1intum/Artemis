@@ -713,7 +713,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
                 .isEqualTo(1);
 
         // In flight: the run is cancelled and requeued, so its later completion matches nothing
-        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).isEqualTo(1);
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).isEqualTo(1);
         LectureUnitProcessingState requeued = processingStateRepository.findById(stranded.getId()).orElseThrow();
         assertThat(requeued.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         assertThat(requeued.getIngestionJobToken()).isNull();
@@ -726,10 +726,31 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim-2", ZonedDateTime.now())).isEqualTo(1);
         processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "third-run-token", "v1:new", "dispatch-claim-2", ZonedDateTime.now());
         assertThat(processingStateRepository.completeIngestionIfLive(stranded.getId(), "third-run-token", ZonedDateTime.now())).isEqualTo(1);
-        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).isEqualTo(1);
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).isEqualTo(1);
         LectureUnitProcessingState afterDone = processingStateRepository.findById(stranded.getId()).orElseThrow();
         assertThat(afterDone.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         assertThat(afterDone.getConfirmedFingerprint()).isNull();
+    }
+
+    /**
+     * A manual retry deletes the state the recovery claimed and saves a replacement. The deletion reaches the replacement's
+     * run just the same, so the repair finds it through the unit rather than through the deleted state.
+     */
+    @Test
+    void testRepairRequeueReachesTheStateAManualRetrySavedInPlaceOfTheClaimedOne() {
+        LectureUnitProcessingState stranded = claimedStrandedRun(unit, "recovery");
+        processingStateRepository.deleteById(stranded.getId());
+        LectureUnitProcessingState replacement = new LectureUnitProcessingState(unit);
+        replacement.setVideoSourceHash("new-hash");
+        replacement.setPhase(ProcessingPhase.DONE);
+        replacement.setConfirmedFingerprint("v1:new");
+        processingStateRepository.save(replacement);
+
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).isEqualTo(1);
+        LectureUnitProcessingState requeued = processingStateRepository.findById(replacement.getId()).orElseThrow();
+        assertThat(requeued.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(requeued.getConfirmedFingerprint()).isNull();
+        assertThat(requeued.getVideoSourceHash()).as("the replacement's markers are kept").isEqualTo("new-hash");
     }
 
     /**
@@ -740,13 +761,13 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
     @Test
     void testRepairRequeueLeavesRowsTheDeletionCannotHaveReachedAlone() {
         LectureUnitProcessingState stranded = claimedStrandedRun(unit, "recovery");
-        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).as("own claim still holds").isZero();
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).as("own claim still holds").isZero();
 
         processingStateRepository.requeueForContentChange(stranded.getId(), "new-hash", null, 0, ZonedDateTime.now());
-        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).as("unclaimed IDLE").isZero();
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).as("unclaimed IDLE").isZero();
 
         processingStateRepository.settleAsNothingIndexed(stranded.getId(), ZonedDateTime.now());
-        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).as("settled, no content left").isZero();
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).as("settled, no content left").isZero();
         assertThat(processingStateRepository.findById(stranded.getId()).orElseThrow().getPhase()).isEqualTo(ProcessingPhase.DONE);
     }
 
