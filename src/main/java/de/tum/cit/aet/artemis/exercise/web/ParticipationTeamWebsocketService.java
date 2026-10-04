@@ -16,10 +16,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.user.SimpSession;
 import org.springframework.messaging.simp.user.SimpSubscription;
 import org.springframework.messaging.simp.user.SimpUser;
@@ -160,17 +161,21 @@ public class ParticipationTeamWebsocketService {
      */
     @EventListener
     public void handleSubscribe(SessionSubscribeEvent event) {
-        StompHeaderAccessor stompHeaderAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String destination = stompHeaderAccessor.getDestination();
+        // Read the headers without copying them, the same way Spring's own DefaultSimpUserRegistry does. Spring publishes this event after it handed the frame to the
+        // inbound channel, so a handler on another thread may still add headers to the very same mutable map. StompHeaderAccessor.wrap copies that map and therefore
+        // throws a ConcurrentModificationException whenever it loses that race.
+        MessageHeaders headers = event.getMessage().getHeaders();
+        String destination = SimpMessageHeaderAccessor.getDestination(headers);
+        String sessionId = SimpMessageHeaderAccessor.getSessionId(headers);
+        String subscriptionId = SimpMessageHeaderAccessor.getSubscriptionId(headers);
         Principal principal = event.getUser();
         SimpUser user = principal != null ? simpUserRegistry.getUser(principal.getName()) : null;
-        String sessionId = stompHeaderAccessor.getSessionId();
         SimpSession session = user != null && sessionId != null ? user.getSession(sessionId) : null;
         // The local registry runs first and independently checks the topic's access rule.
-        boolean authorized = session != null && session.getSubscriptions().stream()
-                .anyMatch(subscription -> subscription.getId().equals(stompHeaderAccessor.getSubscriptionId()) && subscription.getDestination().equals(destination));
+        boolean authorized = session != null
+                && session.getSubscriptions().stream().anyMatch(subscription -> subscription.getId().equals(subscriptionId) && subscription.getDestination().equals(destination));
         if (authorized && destination != null) {
-            TEAM_ONLINE_STUDENTS.match(destination).ifPresent(variables -> subscribe(Long.parseLong(variables.get("participationId")), stompHeaderAccessor));
+            TEAM_ONLINE_STUDENTS.match(destination).ifPresent(variables -> subscribe(Long.parseLong(variables.get("participationId")), sessionId));
         }
     }
 
@@ -180,11 +185,11 @@ public class ParticipationTeamWebsocketService {
      * We have to keep track of the destination that this session belongs to since it is
      * needed on unsubscribe and disconnect but is not available there.
      *
-     * @param participationId     id of participation
-     * @param stompHeaderAccessor header from STOMP frame
+     * @param participationId id of participation
+     * @param sessionId       id of the session that subscribed
      */
-    public void subscribe(long participationId, StompHeaderAccessor stompHeaderAccessor) {
-        getDestinationTracker().put(stompHeaderAccessor.getSessionId(), TEAM_ONLINE_STUDENTS.at(participationId).value());
+    public void subscribe(long participationId, String sessionId) {
+        getDestinationTracker().put(sessionId, TEAM_ONLINE_STUDENTS.at(participationId).value());
         sendOnlineTeamStudents(participationId);
     }
 
@@ -385,7 +390,8 @@ public class ParticipationTeamWebsocketService {
      */
     @EventListener
     public void handleUnsubscribe(SessionUnsubscribeEvent event) {
-        unsubscribe(StompHeaderAccessor.wrap(event.getMessage()).getSessionId());
+        // See handleSubscribe: the headers must be read in place, copying them races with the inbound channel handlers.
+        unsubscribe(SimpMessageHeaderAccessor.getSessionId(event.getMessage().getHeaders()));
     }
 
     /**

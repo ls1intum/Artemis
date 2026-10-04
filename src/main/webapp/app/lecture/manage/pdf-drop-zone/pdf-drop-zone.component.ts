@@ -3,6 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCloudUploadAlt, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 
@@ -11,7 +12,7 @@ let nextDropZoneId = 0;
 /** An area to drop PDFs on, with a button that selects them instead; each PDF becomes one content item. */
 @Component({
     selector: 'jhi-pdf-drop-zone',
-    imports: [FaIconComponent, TumAetUiButtonDirective, TranslateDirective],
+    imports: [FaIconComponent, TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './pdf-drop-zone.component.html',
     styleUrl: './pdf-drop-zone.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

@@ -8,7 +8,7 @@
     border-radius: 3px;
     padding: 3px 10px 10px;
     margin-bottom: 10px;
-    box-shadow: rgba(0, 0, 0, 0.35) 0 3px 9px;
+    box-shadow: var(--tumaet-ui-shadow-lg);
 
     &.examAttendanceCheck {
         background-color: var(--artemis-alert-info-background);
@@ -67,6 +67,6 @@
 
     .date {
         margin-bottom: 20px;
-        color: var(--secondary);
+        color: var(--text-body-secondary);
     }
 }

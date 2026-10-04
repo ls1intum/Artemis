@@ -20,8 +20,8 @@ buildscript {
             // Keep each force equal to that module's project-level pin in the dependencies block below.
             force "org.apache.httpcomponents.client5:httpclient5:5.6.4"
             force "org.apache.httpcomponents.client5:httpclient5-cache:5.6.4"
-            force "org.apache.httpcomponents.core5:httpcore5:5.4.3"
-            force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
+            force "org.apache.httpcomponents.core5:httpcore5:5.4.4"
+            force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.4"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -55,8 +55,8 @@ buildscript {
         // shipped WAR only ever contains the patched versions. enforcedPlatform applies each jackson-bom's
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // both versions in sync with the project-level jackson-bom imports below.
-        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.2")
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.2")
+        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.3")
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.3")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -73,14 +73,14 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "io.github.ben-manes.versions" version "0.62.0"
+    id "io.github.ben-manes.versions" version "0.64.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.2.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.2.2"
+    id "org.owasp.dependencycheck" version "13.0.0"
     id "org.sonarqube" version "${sonarqube_plugin_version}"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
@@ -117,7 +117,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.7.1"
+    gradleVersion = "9.8.0"
 }
 
 node {
@@ -240,8 +240,8 @@ ext["tomcat.version"] = "11.0.25"
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
 dependencyManagement {
     imports {
-        mavenBom "tools.jackson:jackson-bom:3.2.2"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.2"
+        mavenBom "tools.jackson:jackson-bom:3.2.3"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.3"
     }
 }
 
@@ -347,15 +347,18 @@ dependencies {
     // Content-Encoding decode error leading to pool exhaustion, (httpcore5) HTTP/1 header parsing memory
     // exhaustion, and (httpcore5-h2) an unbounded HPackDecoder header list before SETTINGS ACK. httpcore5-h2 is
     // declared explicitly so the transitive request from httpclient5 cannot resolve down to a vulnerable 5.3.x.
+    // core5 is deliberately one patch (5.4.4) above the 5.4.3 that the httpclient5 5.6.4 parent POM declares: it is the
+    // same 5.4 train, and Eureka discovery and Hazelcast cluster formation were verified on this pair with the
+    // multi-node end-to-end run. If cluster formation ever breaks after a bump, go back to the declared version first.
     implementation "org.apache.httpcomponents.client5:httpclient5:5.6.4"
     // httpclient5-cache reaches the runtime classpath transitively (webauthn4j, helios-status-spring-starter) and
     // would otherwise sit at an older patch than httpclient5. Pinned so the whole family stays on one version.
     implementation "org.apache.httpcomponents.client5:httpclient5-cache:5.6.4"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.4.3"
-    implementation "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.4.4"
+    implementation "org.apache.httpcomponents.core5:httpcore5-h2:5.4.4"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
-    implementation "org.glassfish.jersey.core:jersey-common:4.0.2"
+    implementation "org.glassfish.jersey.core:jersey-common:4.0.3"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -485,7 +488,7 @@ dependencies {
     // Prometheus needs protobuf-java transitively; declare it directly to force the latest version (avoids CVEs).
     // A constraint is insufficient here: a competing enforced platform pins protobuf-java to an older 4.34.x, and
     // only a direct dependency reliably wins the version conflict.
-    implementation "com.google.protobuf:protobuf-java:4.36.1"
+    implementation "com.google.protobuf:protobuf-java:4.36.2"
 
     // The Jackson annotations, which never moved to the tools.jackson group and are the one part of Jackson 2 that
     // Artemis still writes against. Version supplied by the jackson-bom override (dependencyManagement block above).
@@ -573,12 +576,12 @@ dependencies {
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.10.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.31.11.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.9.1"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.10"
 
     // Nullable annotations for improved static analysis
     implementation "org.jspecify:jspecify:1.0.1"
@@ -586,7 +589,7 @@ dependencies {
     // Helios push-based status updates
     implementation "de.tum.cit.aet:helios-status-spring-starter:${helios_status_version}"
 
-    implementation "com.bucket4j:bucket4j_jdk17:${bucket4j_version}"
+    implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4j_version}"
     implementation "com.bucket4j:bucket4j_jdk17-hazelcast:${bucket4j_version}"
     // Rate-limit bucket storage for the Redis provider; the Hazelcast module above covers the Hazelcast provider.
     implementation "com.bucket4j:bucket4j_jdk17-redisson:${bucket4j_version}"
@@ -675,7 +678,7 @@ dependencies {
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
-    implementation "org.mnode.ical4j:ical4j:4.3.0"
+    implementation "org.mnode.ical4j:ical4j:4.4.0"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
@@ -705,19 +708,19 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.195"
+    testImplementation "io.github.classgraph:classgraph:4.8.196"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.7.1"
+    testImplementation "org.gradle:gradle-tooling-api:9.8.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.0"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
-    testImplementation "com.icegreen:greenmail-junit5:2.1.13"
-    testImplementation "com.tngtech.archunit:archunit:1.5.0"
+    testImplementation "com.icegreen:greenmail-junit5:2.1.14"
+    testImplementation "com.tngtech.archunit:archunit:1.5.1"
 
     // we only need the database present at runtime
-    runtimeOnly "com.h2database:h2:2.5.250"
+    runtimeOnly "com.h2database:h2:2.5.252"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20260814"

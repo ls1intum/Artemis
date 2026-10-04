@@ -88,6 +88,7 @@ export class IrisPointOutMarkerComponent {
             page: data.page,
             displayPage: data.displayPage,
             timestamp: data.timestamp,
+            pinnedVersion: data.pinnedVersion,
             forceOpen: true,
         });
     }

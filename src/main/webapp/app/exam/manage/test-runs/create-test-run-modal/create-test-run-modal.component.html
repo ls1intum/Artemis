@@ -1,69 +1,96 @@
-<div>
-    <div class="mb-3">
-        <h5><span jhiTranslate="artemisApp.studentExams.workingTime"></span></h5>
-        <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime"></p>
-        <form class="d-flex gap-1 align-items-center" [formGroup]="workingTimeForm">
-            <input formControlName="minutes" id="workingTimeMinutes" type="number" style="width: 70px; height: 35px" class="form-control" min="0" step="1" required />
-            :
-            <input formControlName="seconds" id="workingTimeSeconds" type="number" style="width: 70px; height: 35px" class="form-control" min="0" max="59" step="1" required />
-        </form>
+<tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.examManagement.testRun.setup' | artemisTranslate" size="large">
+    <div class="flex flex-col gap-6">
+        <div>
+            <h5><span jhiTranslate="artemisApp.studentExams.workingTime"></span></h5>
+            <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime"></p>
+            <form class="flex items-center gap-1" [formGroup]="workingTimeForm">
+                <input
+                    formControlName="minutes"
+                    id="workingTimeMinutes"
+                    [attr.aria-label]="'artemisApp.examManagement.testRun.workingTimeMinutes' | artemisTranslate"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20"
+                    min="0"
+                    step="1"
+                    required
+                />
+                :
+                <input
+                    formControlName="seconds"
+                    id="workingTimeSeconds"
+                    [attr.aria-label]="'artemisApp.examManagement.testRun.workingTimeSeconds' | artemisTranslate"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20"
+                    min="0"
+                    max="59"
+                    step="1"
+                    required
+                />
+            </form>
+        </div>
+        <div>
+            <h5 jhiTranslate="artemisApp.exam.exercises"></h5>
+            <p jhiTranslate="artemisApp.examManagement.testRun.setupHint"></p>
+            <div class="overflow-x-auto">
+                <table tumAetUiTable striped>
+                    <thead>
+                        <tr>
+                            <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></th>
+                            <th jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (exerciseGroup of exerciseGroups(); track exerciseGroup) {
+                            <tr>
+                                <td>
+                                    <b> {{ exerciseGroup.title }} </b>
+                                </td>
+                                <td>
+                                    <table tumAetUiTable striped rowHover>
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th jhiTranslate="artemisApp.exercise.title"></th>
+                                                <th jhiTranslate="artemisApp.exercise.difficulty"></th>
+                                                <th jhiTranslate="artemisApp.exercise.type"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (exercise of exerciseGroup.exercises; track exercise) {
+                                                @let selected = isSelected(exercise, exerciseGroup);
+                                                <tr
+                                                    [class]="selected ? 'cursor-pointer bg-highlight!' : 'cursor-pointer'"
+                                                    [attr.aria-selected]="selected"
+                                                    [id]="'exercise-' + exercise.id"
+                                                    (click)="onSelectExercise(exercise, exerciseGroup)"
+                                                >
+                                                    <td>{{ exercise.id }}</td>
+                                                    <td>{{ exercise.title }}</td>
+                                                    <td>{{ exercise.difficulty }}</td>
+                                                    <td>{{ exercise.type }}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <h5 jhiTranslate="artemisApp.exam.exercises"></h5>
-        <p jhiTranslate="artemisApp.examManagement.testRun.setupHint"></p>
-        <table class="table table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></th>
-                    <th jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (exerciseGroup of exam()?.exerciseGroups; track exerciseGroup) {
-                    <tr>
-                        <td>
-                            <b> {{ exerciseGroup.title }} </b>
-                        </td>
-                        <td>
-                            <table class="table table-hover table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th jhiTranslate="artemisApp.exercise.title"></th>
-                                        <th jhiTranslate="artemisApp.exercise.difficulty"></th>
-                                        <th jhiTranslate="artemisApp.exercise.type"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for (exercise of exerciseGroup.exercises; track exercise) {
-                                        <tr
-                                            (click)="onSelectExercise(exercise, exerciseGroup)"
-                                            [class.active]="exerciseGroup.id && exercise.id === testRunConfiguration[exerciseGroup.id]?.id"
-                                            [id]="'exercise-' + exercise.id"
-                                        >
-                                            <td>{{ exercise.id }}</td>
-                                            <td>{{ exercise.title }}</td>
-                                            <td>{{ exercise.difficulty }}</td>
-                                            <td>{{ exercise.type }}</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-    <div class="d-flex justify-content-end gap-2 mt-3">
-        <button type="button" class="btn btn-secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
+    <ng-template #footer>
+        <button tumAetUiButton type="button" severity="secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
         <button
+            tumAetUiButton
             id="createTestRunButton"
             type="button"
-            class="btn btn-primary"
-            [disabled]="!testRunConfigured"
+            [disabled]="!testRunConfigured()"
             (click)="createTestRun()"
             jhiTranslate="artemisApp.examManagement.testRun.setup"
         ></button>
-    </div>
-</div>
+    </ng-template>
+</tumaet-ui-dialog>
