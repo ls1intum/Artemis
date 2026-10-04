@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -108,6 +109,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     private static final Parser MESSAGE_PREVIEW_PARSER = Parser.builder().build();
 
     private static final TextContentRenderer MESSAGE_PREVIEW_RENDERER = TextContentRenderer.builder().lineBreakRendering(LineBreakRendering.STRIP).build();
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     private final IrisSettingsService irisSettingsService;
 
@@ -241,7 +244,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             return fallback;
         }
         Node document = MESSAGE_PREVIEW_PARSER.parse(markdown);
-        String plainText = MESSAGE_PREVIEW_RENDERER.render(document).replaceAll("\\s+", " ").strip();
+        String plainText = WHITESPACE_PATTERN.matcher(MESSAGE_PREVIEW_RENDERER.render(document)).replaceAll(" ").strip();
         if (plainText.isBlank()) {
             return fallback;
         }
