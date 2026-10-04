@@ -320,7 +320,7 @@ public class CompetencyProgressService {
      */
     private void calculateProgress(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos,
             CompetencyProgress competencyProgress) {
-        double numberOfLearningObjects = lectureUnitInfos.size() + exerciseInfos.size();
+        double numberOfLearningObjects = (double) lectureUnitInfos.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
             // If nothing is linked to the competency, the competency is considered completed
             competencyProgress.setProgress(100.0);
@@ -487,7 +487,7 @@ public class CompetencyProgressService {
      */
     private double calculateCompetencyLinkWeightConfidenceHeuristic(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos,
             Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos, double progress) {
-        double numberOfLearningObjects = lectureUnitInfos.size() + exerciseInfos.size();
+        double numberOfLearningObjects = (double) lectureUnitInfos.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
             return 0;
         }

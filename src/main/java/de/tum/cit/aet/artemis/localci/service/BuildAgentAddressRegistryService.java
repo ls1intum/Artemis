@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.annotation.PostConstruct;
@@ -84,9 +85,9 @@ public class BuildAgentAddressRegistryService {
      * Local snapshot of the registered addresses, consulted per git request. Reading the distributed map on every
      * fetch would put a network round trip in front of every clone during an exam peak.
      * <p>
-     * Volatile and replaced wholesale rather than mutated, so readers always see a complete generation.
+     * Held in an atomic reference and replaced wholesale rather than mutated, so readers always see a complete generation.
      */
-    private volatile Map<String, Set<String>> addressesByAgentName = Map.of();
+    private final AtomicReference<Map<String, Set<String>>> addressesByAgentName = new AtomicReference<>(Map.of());
 
     /**
      * Whether the middleware has ever answered a request for the connected clients on this node, an empty list included.
@@ -445,7 +446,7 @@ public class BuildAgentAddressRegistryService {
         // core nodes from both.
         addAddresses(snapshot, distributedDataAccessService.getBuildAgentAddressMap());
         addAddresses(snapshot, distributedDataAccessService.getBuildAgentReportedAddressMap());
-        addressesByAgentName = Map.copyOf(snapshot);
+        addressesByAgentName.set(Map.copyOf(snapshot));
     }
 
     /**
@@ -609,11 +610,11 @@ public class BuildAgentAddressRegistryService {
      *         through to the not-observable exemption, so presence is the question here and not emptiness.
      */
     private boolean hasRegisteredAddresses(String agentName) {
-        return addressesByAgentName.containsKey(agentName);
+        return addressesByAgentName.get().containsKey(agentName);
     }
 
     private boolean matchesRegisteredAddress(String agentName, String ipAddress) {
-        Set<String> addresses = addressesByAgentName.get(agentName);
+        Set<String> addresses = addressesByAgentName.get().get(agentName);
         if (addresses == null) {
             return false;
         }
@@ -651,7 +652,7 @@ public class BuildAgentAddressRegistryService {
         if (ipAddress == null) {
             return false;
         }
-        for (Set<String> addresses : addressesByAgentName.values()) {
+        for (Set<String> addresses : addressesByAgentName.get().values()) {
             if (addresses.contains(ipAddress) || addresses.stream().anyMatch(address -> IpAddresses.sameHost(address, ipAddress))) {
                 return true;
             }

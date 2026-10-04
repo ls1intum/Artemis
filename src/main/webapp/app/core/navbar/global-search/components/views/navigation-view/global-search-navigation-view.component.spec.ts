@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -265,6 +266,18 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component['navigateToResult']({ type: 'channel', id: '5', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: '5' } });
             });
+
+            it('should navigate to a post in its channel', () => {
+                component['navigateToResult']({ type: 'post', id: '6', metadata: { courseId: 10, channelId: 5 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 5, focusPostId: '6' } });
+            });
+
+            it('should navigate to an answer post in its channel', () => {
+                component['navigateToResult']({ type: 'answer_post', id: '7', metadata: { courseId: 10, channelId: 5, postId: 6 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], {
+                    queryParams: { conversationId: 5, messageId: 6, focusReplyId: '7' },
+                });
+            });
         });
 
         describe('template', () => {
@@ -282,6 +295,28 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 fixture.detectChanges();
                 const items = fixture.nativeElement.querySelectorAll('jhi-global-search-result-item');
                 expect(items.length).toBe(1);
+            });
+
+            it('should not add top margin to the results list when the iris card is not occupying space', () => {
+                // The mocked iris-answer child's default occupiesSpace() reports nothing to show.
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise' }] as GlobalSearchResult[]);
+                fixture.detectChanges();
+                const list = fixture.nativeElement.querySelector('.search-results-list');
+                expect(list.classList).not.toContain('mt-3');
+            });
+
+            it('should add top margin to the results list only while the iris card actually occupies space', () => {
+                // A margin conditioned on `irisEnabled` alone would stay reserved even after a dismissed
+                // "nothing relevant" card has collapsed to nothing, leaving exactly the gap collapsing
+                // the card was meant to give back.
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise' }] as GlobalSearchResult[]);
+                const irisChild = fixture.debugElement.query(By.directive(GlobalSearchIrisAnswerComponent)).componentInstance;
+                (irisChild as unknown as { occupiesSpace: () => boolean }).occupiesSpace = () => true;
+                fixture.detectChanges();
+                const list = fixture.nativeElement.querySelector('.search-results-list');
+                expect(list.classList).toContain('mt-3');
             });
 
             it('should render no results state', () => {

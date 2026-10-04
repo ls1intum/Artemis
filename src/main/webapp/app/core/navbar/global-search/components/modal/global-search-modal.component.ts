@@ -610,6 +610,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 break;
             case 'Enter':
                 // Enter on a keyboard-selected chip re-picks it, the same as clicking it.
+                if (event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+                    break;
+                }
                 if (this.selectedChip() >= 0) {
                     event.preventDefault();
                     this.onChipSelected(this.selectedChip());
