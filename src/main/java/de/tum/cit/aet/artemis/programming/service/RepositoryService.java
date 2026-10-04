@@ -79,9 +79,9 @@ public class RepositoryService {
 
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    static final long MAX_SELECTED_FILE_SIZE_BYTES = 1024 * 1024;
+    static final long MAX_SELECTED_FILE_SIZE_BYTES = 1024L * 1024;
 
-    static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5 * 1024 * 1024;
+    static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5L * 1024 * 1024;
 
     private enum BinaryFileFilter {
         NONE, EXTENSION, CONTENT
@@ -410,7 +410,7 @@ public class RepositoryService {
     private ObjectId resolveCommit(org.eclipse.jgit.lib.Repository repository, String commitHash) throws IOException {
         ObjectId commitId = repository.resolve(commitHash + "^{commit}");
         if (commitId == null) {
-            log.warn("Cannot resolve {} in the repository {}", commitHash, repository.getDirectory());
+            log.warn("Cannot resolve a commit in the repository {}", repository.getDirectory());
         }
         return commitId;
     }
@@ -566,7 +566,11 @@ public class RepositoryService {
         String unescapedPath = StringEscapeUtils.unescapeJava(path);
         Path normalizedInputPath = Path.of(unescapedPath).normalize();
 
-        Path repositoryRoot = repository.getLocalPath().normalize().toAbsolutePath();
+        Path localPath = repository.getLocalPath();
+        if (localPath == null) {
+            throw new IllegalStateException("The repository has no local path");
+        }
+        Path repositoryRoot = localPath.normalize().toAbsolutePath();
         Path resolvedAbsolutePath = repositoryRoot.resolve(normalizedInputPath).normalize();
 
         if (!resolvedAbsolutePath.startsWith(repositoryRoot)) {

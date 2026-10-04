@@ -16,12 +16,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -116,7 +118,15 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisTutorSuggestionSession session) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
-        builder.withCourse(post.getCoursePostingBelongsTo().getId());
+        builder.withCourse(courseOfPostElseThrow(post, session.getId()).getId());
+    }
+
+    private static Course courseOfPostElseThrow(Post post, Long sessionId) {
+        var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("Course not found for session " + sessionId);
+        }
+        return course;
     }
 
     @Override
@@ -140,10 +150,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
 
-        var course = post.getCoursePostingBelongsTo();
-        if (course == null) {
-            throw new IllegalStateException("Course not found for session " + chatSession.getId());
-        }
+        var course = courseOfPostElseThrow(post, chatSession.getId());
 
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
@@ -202,7 +209,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     @Override
     public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, post.getCoursePostingBelongsTo(), user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseOfPostElseThrow(post, irisSession.getId()), user);
         if (irisSession.getUserId() != user.getId()) {
             throw new AccessForbiddenException("Iris Session", irisSession.getId());
         }
