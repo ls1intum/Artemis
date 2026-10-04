@@ -48,6 +48,7 @@ import {
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -81,6 +82,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private readonly injector = inject(Injector);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
 
     protected readonly Feedback = Feedback;
     protected readonly CommitState = CommitState;
@@ -659,6 +661,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     acceptSuggestion(feedback: Feedback): void {
         const original = this.feedbackSuggestionsInternal().find((suggestion) => Feedback.areIdentical(suggestion, feedback));
         if (!original) {
+            return;
+        }
+        if (!this.selectionService.canApplyInstruction(original.gradingInstruction)) {
             return;
         }
         this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((suggestion) => suggestion !== original));

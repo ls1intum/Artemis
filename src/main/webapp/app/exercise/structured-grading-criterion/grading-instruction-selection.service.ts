@@ -120,6 +120,12 @@ export class GradingInstructionSelectionService {
         return this.appliedInstructionCounts().get(instruction.id) ?? 0;
     }
 
+    /** Whether another application fits the instruction's finite usage limit. */
+    canApplyInstruction(instruction?: GradingInstruction): boolean {
+        const usageLimit = instruction?.usageCount ?? 0;
+        return !instruction || usageLimit <= 0 || this.applicationCount(instruction) < usageLimit;
+    }
+
     /**
      * Whether the registered feedback list can take the instruction back. False while it is applied only to a
      * referenced element, which owns its feedback itself.
@@ -139,8 +145,7 @@ export class GradingInstructionSelectionService {
             return;
         }
         if (applied) {
-            const usageLimit = instruction.usageCount ?? 0;
-            if (usageLimit > 0 && this.applicationCount(instruction) >= usageLimit) {
+            if (!this.canApplyInstruction(instruction)) {
                 return;
             }
             host.applyInstruction(instruction);
@@ -172,8 +177,7 @@ export class GradingInstructionSelectionService {
         if (!instruction) {
             return undefined;
         }
-        const usageLimit = instruction.usageCount ?? 0;
-        return usageLimit > 0 && this.applicationCount(instruction) >= usageLimit ? undefined : instruction;
+        return this.canApplyInstruction(instruction) ? instruction : undefined;
     }
 
     /** Drops an unconsumed armed instruction (assessment teardown / new host registration). */

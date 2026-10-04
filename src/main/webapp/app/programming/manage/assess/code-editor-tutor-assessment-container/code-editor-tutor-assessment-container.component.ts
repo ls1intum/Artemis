@@ -524,7 +524,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!this.canProceedWithInlineFeedback()) {
             return;
         }
-        if (!(await this.discardPendingSubmissionsWithConfirmation())) {
+        const submissionId = this.submission()?.id;
+        if (!(await this.discardPendingSubmissionsWithConfirmation()) || this.submission()?.id !== submissionId) {
             return;
         }
         if (!this.canProceedWithInlineFeedback()) {

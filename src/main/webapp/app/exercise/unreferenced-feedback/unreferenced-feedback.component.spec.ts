@@ -104,6 +104,31 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(Feedback.getDisplayTitle(suggestion)).toBe('Title');
     });
 
+    it.each(['used', 'reserved'])('keeps an instruction-linked suggestion pending when its only slot is %s', (occupancy) => {
+        const instruction = { id: 7, credits: 1, usageCount: 1 } as GradingInstruction;
+        const suggestion = { text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Title`, gradingInstruction: instruction } as Feedback;
+        if (occupancy === 'used') {
+            comp.unreferencedFeedback = [{ gradingInstruction: instruction, credits: 1 } as Feedback];
+        }
+        comp.feedbackSuggestions.set([suggestion]);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        if (occupancy === 'reserved') {
+            selectionService.reserveInstruction({}, instruction);
+        }
+        const acceptSpy = vi.fn();
+        comp.onAcceptSuggestion.subscribe(acceptSpy);
+
+        comp.acceptSuggestion(suggestion);
+
+        expect(selectionService.applicationCount(instruction)).toBe(1);
+        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
+        expect(comp.unreferencedFeedback).toHaveLength(occupancy === 'used' ? 1 : 0);
+        expect(suggestion.text).toBe(`${FEEDBACK_SUGGESTION_IDENTIFIER}Title`);
+        expect(acceptSpy).not.toHaveBeenCalled();
+    });
+
     it('should update unreferenced feedback by id even when the emitted object is a different reference (e.g. long feedback hydration)', () => {
         const feedback = { id: 42, text: 'NewFeedback', credits: 3 } as Feedback;
         comp.unreferencedFeedback = [feedback];

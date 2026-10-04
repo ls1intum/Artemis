@@ -277,6 +277,9 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
      */
     acceptSuggestion(feedback: Feedback) {
+        if (!this.selectionService.canApplyInstruction(feedback.gradingInstruction)) {
+            return;
+        }
         this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
         // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
         // and will be filtered out in all kinds of places

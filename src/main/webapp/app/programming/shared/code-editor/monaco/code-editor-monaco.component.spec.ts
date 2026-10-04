@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -29,7 +30,7 @@ import {
     Feedback,
     FeedbackType,
 } from 'app/assessment/shared/entities/feedback.model';
-import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
@@ -189,6 +190,44 @@ describe('CodeEditorMonacoComponent', () => {
             expect(comp.feedbackSuggestionsInternal()).toEqual([]);
         },
     );
+
+    it.each(['used', 'reserved'])('keeps an instruction-linked suggestion pending when its only slot is %s', (occupancy) => {
+        const instruction = { id: 7, credits: 1, usageCount: 1, gradingScale: 'good', instructionDescription: 'description', feedback: 'feedback' };
+        const suggestion = {
+            id: 8,
+            reference: 'file:file1.java_line:1',
+            text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested`,
+            gradingInstruction: instruction,
+        } as Feedback;
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        const host: GradingInstructionSelectionHost = {
+            appliedInstructionIds: signal(new Set<number>()),
+            appliedInstructionCounts: signal(new Map(occupancy === 'used' ? [[instruction.id, 1]] : [])),
+            removableInstructionIds: signal(new Set<number>()),
+            applyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+        };
+        selectionService.register(host);
+        if (occupancy === 'reserved') {
+            selectionService.reserveInstruction({}, instruction);
+        }
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+        fixture.detectChanges();
+        const updateSpy = vi.fn();
+        const acceptSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(updateSpy);
+        comp.onAcceptSuggestion.subscribe(acceptSpy);
+
+        comp.acceptSuggestion(suggestion);
+
+        expect(selectionService.applicationCount(instruction)).toBe(1);
+        expect(comp.feedbackSuggestionsInternal()).toEqual([suggestion]);
+        expect(comp.feedbackInternal()).toEqual([]);
+        expect(suggestion.text).toBe(`${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested`);
+        expect(updateSpy).not.toHaveBeenCalled();
+        expect(acceptSpy).not.toHaveBeenCalled();
+    });
 
     it('keeps the unsaved feedback card for the same line when another card is removed', () => {
         vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
