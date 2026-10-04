@@ -67,21 +67,23 @@
             <table tumAetUiTable size="small" rowHover>
                 <thead>
                     <tr>
-                        <th colspan="2"></th>
+                        <th scope="col" colspan="2"></th>
                         <th
+                            scope="col"
                             class="text-center {{ groupDivider }}"
                             [attr.colspan]="metadataTypes.length"
                             jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group.metadata"
                         ></th>
                         <th
+                            scope="col"
                             class="text-center {{ groupDivider }}"
                             [attr.colspan]="contentTypes.length"
                             jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group.content"
                         ></th>
-                        <th></th>
+                        <th scope="col"></th>
                     </tr>
                     <tr>
-                        <th [attr.aria-sort]="ariaSort('name')">
+                        <th scope="col" [attr.aria-sort]="ariaSort('name')">
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"
@@ -91,7 +93,7 @@
                                 <fa-icon [icon]="sortIcon('name')" class="text-xs text-muted-color" />
                             </button>
                         </th>
-                        <th [attr.aria-sort]="ariaSort('release')">
+                        <th scope="col" [attr.aria-sort]="ariaSort('release')">
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"
@@ -102,9 +104,9 @@
                             </button>
                         </th>
                         @for (type of allTypes; track type; let i = $index) {
-                            <th class="text-center text-xs {{ dividerAt(i) }}" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + type"></th>
+                            <th scope="col" class="text-center text-xs {{ dividerAt(i) }}" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + type"></th>
                         }
-                        <th [attr.aria-sort]="ariaSort('worstFirst')">
+                        <th scope="col" [attr.aria-sort]="ariaSort('worstFirst')">
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer select-none"
@@ -121,7 +123,7 @@
                         <!-- The row opens the content browser. The title is a real button so the row is reachable by
                              keyboard and has an accessible name; its click bubbles to the row handler, so there is one
                              handler rather than two that could disagree. -->
-                        <tr class="cursor-pointer" (click)="openBrowser(row)">
+                        <tr class="cursor-pointer" (click)="openBrowser(row)" (keydown.enter)="$event.target === $event.currentTarget && openBrowser(row)">
                             <td>
                                 <button
                                     type="button"

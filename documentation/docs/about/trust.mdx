@@ -174,12 +174,14 @@ evaluation are welcome as [GitHub issues](https://github.com/ls1intum/Artemis/is
 - Server and client code are analyzed statically with CodeQL, both alongside pull requests and on a
   schedule for the `develop` and `main` branches.
 - Release-eligible builds include a **Software Bill of Materials (SBOM)** for both server and client,
-  downloadable from the admin area and attached to every GitHub release.
-- **Releases and container images are signed.** Each release carries `SHA256SUMS`, both CycloneDX
-  SBOMs, and a Sigstore-backed build provenance attestation; container images carry a provenance
-  attestation in the registry and a cosign signature, both bound to the image digest. The
-  [security policy](https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md) has the verification
-  commands.
+  downloadable from the admin area and attached to releases produced by the current release workflow.
+- **The release workflow signs releases and container images.** It publishes `SHA256SUMS`, both
+  CycloneDX SBOMs, and a Sigstore-backed build provenance attestation with the WAR; container images
+  carry a provenance attestation in the registry and a cosign signature, both bound to the image
+  digest. Older releases may omit some of these assets or carry a retrospective endorsement instead
+  of original build provenance. The
+  [security policy](https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md) explains which
+  verification commands apply to the available assets.
 
 See [builds and dependencies](/developer/builds-and-dependencies) for how the build and dependency
 tooling works.

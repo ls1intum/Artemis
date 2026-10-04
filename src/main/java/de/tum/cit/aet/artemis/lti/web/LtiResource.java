@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lti.web;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -140,9 +141,8 @@ public class LtiResource {
             throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
         }
 
-        OnlineCourseConfiguration existingConfiguration = onlineCourseConfigurationRepository.findByCourseId(courseId)
-                .orElseThrow(() -> new BadRequestAlertException("LTI is not configured for this course", OnlineCourseConfiguration.ENTITY_NAME, "ltiNotConfigured"));
-        if (!existingConfiguration.getId().equals(onlineCourseConfiguration.getId())) {
+        OnlineCourseConfiguration existingConfiguration = onlineCourseConfigurationRepository.findByCourseId(courseId).orElse(null);
+        if (existingConfiguration == null || !Objects.equals(existingConfiguration.getId(), onlineCourseConfiguration.getId())) {
             throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
                     OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
         }
@@ -186,8 +186,7 @@ public class LtiResource {
             @RequestParam(name = "contentIds", required = false) Set<Long> contentIds, @RequestParam(name = "ltiIdToken") String ltiIdToken,
             @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
 
-        log.info("LTI 1.3 Deep Linking request received for course {} with resourceType: {}, contentIds: {}, registrationId: {}", courseId, resourceType, contentIds,
-                clientRegistrationId);
+        log.info("LTI 1.3 Deep Linking request received for course {} with resourceType: {}, contentIds: {}", courseId, resourceType, contentIds);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
 

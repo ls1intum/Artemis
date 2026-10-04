@@ -93,7 +93,7 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
           # Module-affected diff (`git diff "origin/$DEFAULT_BRANCH"`) needs the full
@@ -101,7 +101,7 @@ jobs:
           # every test, defeating the optimisation.
           fetch-depth: 0
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: 'temurin'
           # Java 17 is required to run programming templates.
@@ -146,14 +146,14 @@ jobs:
         # own 80-min cap, the run is `cancelled` — and that is exactly when the watchdog's dump is the
         # only forensic data. `if-no-files-found: ignore` keeps the normal (no-hang) path quiet.
         if: ${{ always() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Server Test Thread Dumps
           path: build/hang-thread-dumps/*.txt
           if-no-files-found: ignore
       - name: Upload JUnit Test Results
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           # Disambiguated from `JUnit Test Results` (E2E) because both jobs upload in the
           # same parent run; `actions/upload-artifact@v4+` rejects duplicate artifact names — which is
@@ -164,7 +164,7 @@ jobs:
         # Each shard covers only part of the suite. The reporting job below collects every shard's
         # execution data and builds one report from all of it.
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Server Coverage Execution Data (${{ matrix.shard.name }})
           path: build/jacoco/test.exec
@@ -179,7 +179,7 @@ jobs:
           grep -c ":: Powered by Spring Boot[^:]* ::" tests.log > "server-starts/${{ matrix.shard.name }}.txt" || echo 0 > "server-starts/${{ matrix.shard.name }}.txt"
       - name: Upload Server Start Count
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Server Start Count (${{ matrix.shard.name }})
           path: server-starts/*.txt
@@ -210,18 +210,18 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: 'temurin'
           java-version: ${{ env.java }}
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
       - name: Download Coverage Execution Data
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: Server Coverage Execution Data (*)
           # Every shard's file is called test.exec, so they are kept apart by their artifact directory and
@@ -238,7 +238,7 @@ jobs:
           done
           ls -la build/jacoco
       - name: Download JUnit Test Results
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: Server JUnit Test Results (*)
           merge-multiple: true
@@ -293,7 +293,7 @@ jobs:
         # Without this the step is skipped as soon as an earlier one fails, and the server-start check right below it
         # then fails for want of files rather than on what it actually measures.
         if: ${{ !cancelled() }}
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: Server Start Count (*)
           merge-multiple: true
@@ -306,14 +306,14 @@ jobs:
           bash supporting_scripts/extract_number_of_server_starts.sh "$TOTAL"
       - name: Upload Server Test Coverage Report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Coverage Report Server Tests
           path: build/reports/jacoco/aggregated/html
       - name: Upload JaCoCo XML Reports
         # Consumed by pullrequest-coverage-reporter.yml; the name is part of that contract.
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Server JaCoCo XML
           path: build/reports/jacoco/**/jacocoTestReport.xml
@@ -335,7 +335,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
       # Some client tests OOM under the project-wide --max-old-space-size in .npmrc; drop only that line.
@@ -345,7 +345,7 @@ jobs:
       # The self-hosted runners have no usable npm on PATH; install Node first so
       # pnpm/action-setup's npm-based self-installer (v6) finds a working npm.
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version-file: .nvmrc
       - name: Setup pnpm
@@ -373,13 +373,13 @@ jobs:
         run: pnpm run coverage:check-module
       - name: Upload Vitest Coverage Report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Vitest Coverage Report
           path: build/test-results/vitest/coverage/
       - name: Upload Client Coverage Summaries
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Client Coverage Summaries
           path: |
@@ -387,7 +387,7 @@ jobs:
           if-no-files-found: ignore
       - name: Upload Vitest JUnit Test Results
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Vitest JUnit Test Results
           path: build/test-results/vitest/junit.xml

@@ -90,7 +90,7 @@ public class AuxiliaryRepositoryService {
 
         for (AuxiliaryRepository repo : updatedAuxiliaryRepositories) {
             validateAuxiliaryRepository(programmingExercise.getProgrammingLanguage(), repo, auxiliaryRepositories,
-                    programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> existingRepo.getId().equals(repo.getId())));
+                    programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> Objects.equals(existingRepo.getId(), repo.getId())));
             auxiliaryRepositories.add(repo);
         }
         updatedExercise.setAuxiliaryRepositories(new LinkedHashSet<>());

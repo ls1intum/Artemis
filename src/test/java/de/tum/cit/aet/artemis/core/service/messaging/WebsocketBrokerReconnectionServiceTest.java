@@ -163,4 +163,16 @@ class WebsocketBrokerReconnectionServiceTest {
 
         assertThatCode(() -> websocketBrokerReconnectionService.destroy()).doesNotThrowAnyException();
     }
+
+    @Test
+    void shouldCancelStatusPublisherOnDestroy() {
+        doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), any(Duration.class));
+        var service = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler), tcpClientSupplier, distributedDataProvider,
+                nodeRegistryService);
+        service.initBrokerStatusPublisher();
+
+        service.destroy();
+
+        verify(scheduledFuture).cancel(false);
+    }
 }

@@ -98,13 +98,13 @@
                             <th jhiTranslate="artemisApp.examScores.submittedColumn"></th>
                             <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
                             @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                                <th class="correction-divider" jhiTranslate="artemisApp.examScores.passedColumn"></th>
+                                <th scope="col" class="correction-divider" jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <th [class.correction-divider]="!gradingScaleExists() || isBonus()" jhiTranslate="artemisApp.examScores.submittedColumn"></th>
+                                <th scope="col" [class.correction-divider]="!gradingScaleExists() || isBonus()" jhiTranslate="artemisApp.examScores.submittedColumn"></th>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
+                                <th scope="col" jhiTranslate="artemisApp.examScores.totalColumn"></th>
                             }
                         </tr>
                     </thead>

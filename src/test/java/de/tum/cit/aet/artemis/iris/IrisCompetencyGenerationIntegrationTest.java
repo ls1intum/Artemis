@@ -49,14 +49,14 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void generateCompetencies_asEditor_shouldSucceed() throws Exception {
         String courseDescription = "Cool course description";
-        var currentCompetencies = new PyrisCompetencyRecommendationDTO[] { new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND), };
+        var currentCompetencies = List.of(new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND));
 
         // Expect that a request is sent to Pyris having the following characteristics
         irisRequestMockProvider.mockRunCompetencyExtractionResponseAnd(dto -> {
             var token = dto.execution().settings().authenticationToken();
             assertThat(token).isNotNull();
             assertThat(dto.courseDescription()).contains(courseDescription);
-            assertThat(dto.currentCompetencies()).containsExactly(currentCompetencies);
+            assertThat(dto.currentCompetencies()).isEqualTo(currentCompetencies);
             assertThat(dto.taxonomyOptions()).isNotEmpty();
             assertThat(dto.maxN()).isPositive();
         });
