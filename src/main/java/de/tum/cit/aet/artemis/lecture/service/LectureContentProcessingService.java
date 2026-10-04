@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -70,13 +72,20 @@ public class LectureContentProcessingService {
 
     private final AttachmentRepository attachmentRepository;
 
+    private final LectureUnitProcessingStateRecoveryRepository recoveryRepository;
+
+    private final LectureTranscriptionRepository transcriptionRepository;
+
     public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, Optional<IrisLectureApi> irisLectureApi,
-            FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService, AttachmentRepository attachmentRepository) {
+            FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService, AttachmentRepository attachmentRepository,
+            LectureUnitProcessingStateRecoveryRepository recoveryRepository, LectureTranscriptionRepository transcriptionRepository) {
         this.processingStateRepository = processingStateRepository;
         this.irisLectureApi = irisLectureApi;
         this.featureToggleService = featureToggleService;
         this.processingStateCallbackService = processingStateCallbackService;
         this.attachmentRepository = attachmentRepository;
+        this.recoveryRepository = recoveryRepository;
+        this.transcriptionRepository = transcriptionRepository;
     }
 
     /**
@@ -104,7 +113,7 @@ public class LectureContentProcessingService {
     @Async
     public void triggerProcessing(AttachmentVideoUnit unit) {
         SecurityUtils.setAuthorizationObject();
-        doTriggerProcessing(unit, Optional.empty(), false, FRESH_DISPATCH_PRIORITY);
+        doTriggerProcessing(unit, Optional.empty(), FRESH_DISPATCH_PRIORITY);
     }
 
     /**
@@ -116,19 +125,7 @@ public class LectureContentProcessingService {
     @Async
     public void triggerProcessingAsBacklog(AttachmentVideoUnit unit) {
         SecurityUtils.setAuthorizationObject();
-        doTriggerProcessing(unit, Optional.empty(), false, BACKLOG_DISPATCH_PRIORITY);
-    }
-
-    /**
-     * Trigger processing for metadata-only updates that are part of the ingestion payload
-     * (e.g. lecture unit name), even when video/PDF content hashes did not change.
-     *
-     * @param unit the attachment video unit to process
-     */
-    @Async
-    public void triggerProcessingForMetadataChange(AttachmentVideoUnit unit) {
-        SecurityUtils.setAuthorizationObject();
-        doTriggerProcessing(unit, Optional.empty(), true, FRESH_DISPATCH_PRIORITY);
+        doTriggerProcessing(unit, Optional.empty(), BACKLOG_DISPATCH_PRIORITY);
     }
 
     /**
@@ -144,7 +141,7 @@ public class LectureContentProcessingService {
      * @param dispatchPriority queue priority to enqueue with (fresh work before backlog)
      * @return true if preflight checks passed, false if preflight failed
      */
-    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete, boolean forceReprocessing, int dispatchPriority) {
+    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete, int dispatchPriority) {
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
             return false;
@@ -187,12 +184,8 @@ public class LectureContentProcessingService {
 
         // Detect content changes
         boolean contentChanged = handleContentChanges(unit, state, hasVideo, hasPdf);
-        boolean shouldReprocess = contentChanged || forceReprocessing;
+        boolean shouldReprocess = contentChanged;
         if (shouldReprocess) {
-            if (forceReprocessing && !contentChanged) {
-                // Metadata-only re-ingest (e.g., name change). Pyris deletes existing vectors by lectureUnitId before inserting new ones.
-                log.info("Forcing reprocessing for unit {} due to a metadata change in the ingestion payload", unit.getId());
-            }
             state.resetRetryCount();
             state.requeue();
             // The previous run's fingerprints describe content that no longer exists in this form.
@@ -301,7 +294,7 @@ public class LectureContentProcessingService {
         // Run processing, passing the FAILED state to delete after preflight passes
         // If preflight fails, the FAILED state is preserved (nothing deleted)
         // If preflight passes, the FAILED state is deleted and fresh state created
-        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState, false, FRESH_DISPATCH_PRIORITY);
+        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState, FRESH_DISPATCH_PRIORITY);
         if (!preflightPassed) {
             // Services unavailable - FAILED state was NOT deleted, return null
             return null;
@@ -370,7 +363,7 @@ public class LectureContentProcessingService {
             // Invalidate any in-flight run's token before the cleanup below deletes stored content: a
             // checkpoint still holding this token then fails its own token-match check immediately,
             // instead of succeeding on a stale snapshot and persisting content this cleanup is about
-            // to remove. The later full requeue() + save() this method's caller performs still clears
+            // to remove. The later requeueForContentChange this method's caller performs still clears
             // the token again (harmless): this call only narrows the window before that happens.
             String staleToken = state.getIngestionJobToken();
             if (hasPersistedState && staleToken != null) {
@@ -423,6 +416,13 @@ public class LectureContentProcessingService {
         }
 
         log.info("Processable content removed for unit {}, cleaning up existing Pyris content and processing state", unit.getId());
+        // As in handleContentChanges: invalidate an in-flight run before deleting what it is producing, so it cannot write its
+        // transcript back or finish as DONE for removed content. If the cleanup then fails, the row is stranded in flight, which
+        // the scheduler's recovery sweep settles once the Iris cleanup succeeds.
+        String staleToken = state.getIngestionJobToken();
+        if (staleToken != null) {
+            processingStateRepository.invalidateTokenIfMatches(state.getId(), staleToken, ZonedDateTime.now());
+        }
         if (previousVideoKnown) {
             processingStateCallbackService.deleteTranscriptionForUnit(unit.getId());
         }
@@ -438,12 +438,45 @@ public class LectureContentProcessingService {
         processingStateRepository.settleAsNothingIndexed(state.getId(), ZonedDateTime.now());
     }
 
+    /**
+     * Finish a content change that stopped after the in-flight run's token was invalidated, for a row the caller has claimed
+     * through {@link LectureUnitProcessingStateRecoveryRepository#claimStrandedRun}. Mirrors the two outcomes of an edit: the
+     * unit has content, so the previous video's transcript goes if the video changed and the unit is requeued for its current
+     * content; or it has none, so its Iris content goes and the row settles as nothing indexed. Every write is pinned to the
+     * claim, so if a concurrent edit requeues the unit in the meantime (which clears the claim), the rest of this does nothing
+     * and cannot touch the newer run. A failed Iris cleanup keeps the claim, so the sweep retries once the cutoff passes again.
+     *
+     * @param unit       the unit, loaded after the claim
+     * @param claimToken the claim the caller holds on the unit's processing state
+     */
+    public void recoverInterruptedContentChange(AttachmentVideoUnit unit, String claimToken) {
+        LectureUnitProcessingState state = processingStateRepository.findByLectureUnit_Id(unit.getId()).orElse(null);
+        if (state == null || !claimToken.equals(state.getClaimToken())) {
+            return; // Requeued by an edit since the claim; the guards below would match nothing anyway
+        }
+        boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
+        boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
+        if (hasVideoSourceChanged(unit, state)) {
+            // The stored transcript belongs to a video the unit no longer has
+            transcriptionRepository.deleteIfRecoveryClaimHolds(unit.getId(), claimToken);
+        }
+        boolean cleanupSucceeded = cleanupForReprocessing(unit);
+        if (!hasVideo && !hasPdf) {
+            if (cleanupSucceeded) {
+                recoveryRepository.settleStrandedRunIfClaimed(state.getId(), claimToken, ZonedDateTime.now());
+            }
+            return;
+        }
+        recoveryRepository.requeueStrandedRunIfClaimed(state.getId(), claimToken, hasVideo ? computeHash(unit.getVideoSource()) : null,
+                hasPdf ? unit.getAttachment().getVersion() : null, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now());
+    }
+
     private boolean cleanupForReprocessing(AttachmentVideoUnit unit) {
         Attachment attachment = unit.getAttachment();
         if (attachment != null && attachment.getDisplayPageNumbers() != null) {
             log.info("Clearing existing display page numbers for unit {} (content changed)", unit.getId());
-            attachment.setDisplayPageNumbers(null);
-            attachmentRepository.save(attachment);
+            // A field-only update: saving the whole attachment from this snapshot could revert a version uploaded meanwhile
+            attachmentRepository.updateDisplayPageNumbers(attachment.getId(), null);
         }
 
         // When a new job starts, Iris terminates old processes automatically

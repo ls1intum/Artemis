@@ -51,6 +51,11 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
      * and starts a newer run on it, so a delayed checkpoint of the superseded run would otherwise overwrite the newer
      * run's transcript before its own stale token is rejected anywhere else. {@code FOR UPDATE} on the ownership
      * subquery serializes this write with any transaction changing that token, as it does for the insert.
+     * <p>
+     * Within one run the token cannot tell a raw checkpoint from the enriched one, so a raw write delayed past the enriched
+     * write would otherwise replace the completed transcript with its PENDING segments. A COMPLETED transcript is therefore
+     * only ever replaced by another COMPLETED one. The condition is on the updated row itself, so both databases check it
+     * against the latest committed version under the row lock, however the two writes interleave.
      *
      * @param id                  the transcription row a checkpoint's earlier read found
      * @param lectureUnitId       the unit this transcription belongs to
@@ -59,7 +64,8 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
      *                                would (native queries bypass the ORM type layer)
      * @param transcriptionStatus the status to set, as its enum name
      * @param expectedToken       the token the checkpoint carried
-     * @return 1 when applied, 0 when the row no longer exists or the token had already changed
+     * @return 1 when applied, 0 when the row no longer exists, the token had already changed, or a PENDING write met a
+     *         COMPLETED transcript
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -67,6 +73,7 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
             UPDATE lecture_transcription
             SET language = :language, segments = CAST(:segments AS json), transcription_status = :transcriptionStatus
             WHERE id = :id
+            AND (transcription_status <> 'COMPLETED' OR :transcriptionStatus = 'COMPLETED')
             AND EXISTS (
                 SELECT 1 FROM lecture_unit_processing_state
                 WHERE lecture_unit_id = :lectureUnitId AND ingestion_job_token = :expectedToken
@@ -118,4 +125,27 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
             """, nativeQuery = true)
     int insertIfTokenMatches(@Param("lectureUnitId") Long lectureUnitId, @Param("language") String language, @Param("segments") String segments,
             @Param("transcriptionStatus") String transcriptionStatus, @Param("expectedToken") String expectedToken);
+
+    /**
+     * Delete a unit's transcription while the recovery that claimed its interrupted content change still holds that claim
+     * (see {@link LectureUnitProcessingStateRecoveryRepository#claimStrandedRun}). A concurrent requeue of the unit clears the
+     * claim, so once a newer run may own the unit this matches nothing and leaves its transcript alone. JPQL rather than a
+     * native {@code DELETE ... EXISTS}, so Hibernate emits the dialect's own single-table delete: the native form removed the
+     * processing-state row as well on MySQL.
+     *
+     * @param lectureUnitId the unit whose transcription to delete
+     * @param claimToken    the recovery's claim
+     * @return the number of deleted rows
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            DELETE FROM LectureTranscription t
+            WHERE t.lectureUnit.id = :lectureUnitId
+            AND EXISTS (
+                SELECT ps.id FROM LectureUnitProcessingState ps
+                WHERE ps.lectureUnit.id = :lectureUnitId AND ps.claimToken = :claimToken AND ps.ingestionJobToken IS NULL
+            )
+            """)
+    int deleteIfRecoveryClaimHolds(@Param("lectureUnitId") Long lectureUnitId, @Param("claimToken") String claimToken);
 }

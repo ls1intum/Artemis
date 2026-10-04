@@ -95,24 +95,6 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     List<LectureUnitProcessingState> findRunsWithLapsedLease(@Param("phases") List<ProcessingPhase> phases, @Param("leaseCutoff") ZonedDateTime leaseCutoff);
 
     /**
-     * Find in-flight runs whose job token is gone. Only an interrupted content change leaves this shape:
-     * {@link #invalidateTokenIfMatches} commits on its own, before the cleanup and the requeue that would move the row
-     * out of the in-flight phases. If either fails or the node stops in between, nothing else can recover the row, since
-     * every other recovery statement matches {@code ingestionJobToken = :token}, which a NULL token never satisfies.
-     *
-     * @param phases the in-flight phases to check
-     * @param cutoff rows last touched before this are considered interrupted rather than mid-cleanup
-     * @return the stranded runs
-     */
-    @Query("""
-            SELECT ps FROM LectureUnitProcessingState ps
-            WHERE ps.phase IN :phases
-            AND ps.ingestionJobToken IS NULL
-            AND ps.lastUpdated < :cutoff
-            """)
-    List<LectureUnitProcessingState> findInFlightRunsWithoutToken(@Param("phases") List<ProcessingPhase> phases, @Param("cutoff") ZonedDateTime cutoff);
-
-    /**
      * Find the processing state currently carrying the given ingestion job token. Backs worker lease
      * renewal: each heartbeat lists the tokens of the runs the worker is executing.
      *
@@ -470,13 +452,13 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     }
 
     /**
-     * Refresh liveness only, for a raw (non-enriched) transcription checkpoint that reports no stage
-     * progress of its own. Same token-and-phase guard as {@link #applyHeartbeatLocked}, for the same reason.
+     * Refresh liveness for a raw transcription checkpoint, only while the run is still TRANSCRIBING: a raw checkpoint after
+     * the enriched one moved the run on is a delayed redelivery, turned away here before it writes anything.
      *
      * @param id    the processing state to update
      * @param token the job token the checkpoint carried
      * @param now   recorded as the new {@code lastUpdated}
-     * @return 1 when applied, 0 when the run is no longer in flight under this token
+     * @return 1 when applied, 0 when the run is no longer transcribing under this token
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -485,9 +467,32 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             SET ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.ingestionJobToken = :token
-            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING
             """)
     int touchLastUpdated(@Param("id") long id, @Param("token") String token, @Param("now") ZonedDateTime now);
+
+    /**
+     * Record an enriched checkpoint's transcription version and hash before its transcript is written, while the run still
+     * transcribes under this token, so an interruption before the transition can only over-count the version, never leave a
+     * new transcript under the old one. The hash makes a replay a no-op.
+     *
+     * @param id                       the processing state to update
+     * @param token                    the job token the checkpoint carried
+     * @param transcriptionVersion     the transcription version for this checkpoint's segments
+     * @param transcriptionContentHash the content hash of those segments
+     * @return 1 when recorded, 0 when the run is no longer transcribing under this token
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.transcriptionVersion = :transcriptionVersion, ps.transcriptionContentHash = :transcriptionContentHash
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken = :token
+            AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING
+            """)
+    int recordTranscriptionVersionIfTranscribing(@Param("id") long id, @Param("token") String token, @Param("transcriptionVersion") Integer transcriptionVersion,
+            @Param("transcriptionContentHash") String transcriptionContentHash);
 
     /**
      * Renew a run's worker lease atomically, for a heartbeat batch. Same token-and-phase guard as

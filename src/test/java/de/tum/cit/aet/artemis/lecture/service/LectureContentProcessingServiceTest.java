@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 
@@ -81,6 +82,8 @@ class LectureContentProcessingServiceTest {
     private LectureUnitProcessingStateRepository processingStateRepository;
 
     private LectureTranscriptionRepository transcriptionRepository;
+
+    private LectureUnitProcessingStateRecoveryRepository strandedRunRepository;
 
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
@@ -116,6 +119,9 @@ class LectureContentProcessingServiceTest {
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         transcriptionRepository = mock(LectureTranscriptionRepository.class);
+        strandedRunRepository = mock(LectureUnitProcessingStateRecoveryRepository.class);
+        // An enriched checkpoint records its version first; by default the run still owns the unit
+        when(processingStateRepository.recordTranscriptionVersionIfTranscribing(anyLong(), any(), any(), any())).thenReturn(1);
         attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         attachmentRepository = mock(AttachmentRepository.class);
         irisLectureApi = mock(IrisLectureApi.class);
@@ -138,7 +144,8 @@ class LectureContentProcessingServiceTest {
                 featureToggleService, 2, 20, Duration.ofSeconds(90), 8, irisLectureUnitSyncStateRepository);
         recoveryService = new ProcessingStateRecoveryService(processingStateRepository, transcriptionRepository, websocketMessagingService);
 
-        service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository);
+        service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository,
+                strandedRunRepository, transcriptionRepository);
 
         testLecture = new Lecture();
         testLecture.setId(1L);
@@ -205,7 +212,8 @@ class LectureContentProcessingServiceTest {
             ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
                     Optional.empty(), new ProcessingStateNotificationService(mock(WebsocketMessagingService.class), transcriptionRepository), contentFingerprintService,
                     distributedDataProviderMock(), fts, 2, 20, Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class));
-            service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository);
+            service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository, strandedRunRepository,
+                    transcriptionRepository);
 
             service.triggerProcessing(testUnit);
 
@@ -625,6 +633,34 @@ class LectureContentProcessingServiceTest {
             callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
             verify(transcriptionRepository, never()).insertIfTokenMatches(any(), any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldRecordTheVersionBeforeTheTranscriptAndRefuseTheWriteWhenItCannot() {
+            // The version is recorded first, so an interruption before the transition can only over-count it. When it cannot be
+            // recorded the run no longer owns the unit, and neither the transcript nor the transition may follow.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.insertIfTokenMatches(eq(testUnit.getId()), any(), any(), any(), eq(TEST_JOB_TOKEN))).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            var order = org.mockito.Mockito.inOrder(processingStateRepository, transcriptionRepository);
+            order.verify(processingStateRepository).recordTranscriptionVersionIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), eq(1), any());
+            order.verify(transcriptionRepository).insertIfTokenMatches(eq(testUnit.getId()), eq("en"), any(), eq("COMPLETED"), eq(TEST_JOB_TOKEN));
+            order.verify(processingStateRepository).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), eq(1), any());
+
+            // Ownership lost before the version could be recorded: nothing else is written
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            when(processingStateRepository.recordTranscriptionVersionIfTranscribing(anyLong(), any(), any(), any())).thenReturn(0);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            verify(transcriptionRepository, times(1)).insertIfTokenMatches(any(), any(), any(), any(), any());
+            verify(processingStateRepository, times(1)).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
         }
 
         @Test
@@ -1276,13 +1312,51 @@ class LectureContentProcessingServiceTest {
             verify(processingStateRepository).invalidateTokenIfMatches(eq(52L), eq(TEST_JOB_TOKEN), any());
             verify(processingStateRepository, never()).requeueForContentChange(anyLong(), any(), any(), any(), any());
 
-            // The row as the failed attempt left it in the database: still in flight, token gone, markers unchanged
+            // The row as the failed attempt left it: in flight, token gone, markers unchanged, and claimed by the sweep
             testState.setIngestionJobToken(null);
+            testState.setClaimToken("recovery-claim");
 
-            service.triggerProcessingForMetadataChange(testUnit);
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
 
-            verify(transcriptionRepository, times(2)).delete(oldVideoTranscript);
-            verify(processingStateRepository).requeueForContentChange(eq(52L), any(), any(), any(), any());
+            // The changed video's transcript goes and the unit is requeued for its current content, both only under the claim
+            verify(transcriptionRepository).deleteIfRecoveryClaimHolds(testUnit.getId(), "recovery-claim");
+            verify(strandedRunRepository).requeueStrandedRunIfClaimed(eq(52L), eq("recovery-claim"), eq(computeTestHash(testUnit.getVideoSource())), any(), any(), any());
+            verify(processingStateRepository, never()).requeueForContentChange(anyLong(), any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldLeaveARowAloneWhenItsRecoveryClaimWasTakenOverByAnEdit() {
+            // An edit requeued the unit after the sweep claimed it, which cleared the claim: the recovery must write nothing
+            testState.setId(53L);
+            testState.setPhase(ProcessingPhase.IDLE);
+            testState.setClaimToken(null);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+
+            verify(transcriptionRepository, never()).deleteIfRecoveryClaimHolds(anyLong(), anyString());
+            verify(strandedRunRepository, never()).requeueStrandedRunIfClaimed(anyLong(), anyString(), any(), any(), any(), any());
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void shouldSettleARecoveredRowWhoseContentWasRemovedOnlyOnceIrisCleanupSucceeds() {
+            testState.setId(54L);
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setClaimToken("recovery-claim");
+            testUnit.setVideoSource(null);
+            testUnit.setAttachment(null);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            doThrow(new IllegalStateException("Iris down")).doNothing().when(irisLectureApi).deleteLectureFromPyrisDB(any());
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+            // The Iris cleanup failed: the claim is kept and nothing is settled, so the sweep retries after the cutoff
+            verify(strandedRunRepository, never()).settleStrandedRunIfClaimed(anyLong(), anyString(), any());
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+            verify(strandedRunRepository).settleStrandedRunIfClaimed(eq(54L), eq("recovery-claim"), any());
+            verify(strandedRunRepository, never()).requeueStrandedRunIfClaimed(anyLong(), anyString(), any(), any(), any(), any());
         }
 
         @Test
@@ -1499,24 +1573,9 @@ class LectureContentProcessingServiceTest {
 
             service.triggerProcessing(testUnit);
 
-            assertThat(attachment.getDisplayPageNumbers()).isNull();
-            verify(attachmentRepository).save(attachment);
-        }
-
-        @Test
-        void shouldResetToIdleWhenForcedReprocessAndContentUnchanged() {
-            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
-            testState.setPhase(ProcessingPhase.DONE);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
-
-            service.triggerProcessingForMetadataChange(testUnit);
-
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getStartedAt()).isNull();
-            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+            // A field-only update: a whole-entity save of this snapshot could revert a concurrently uploaded version
+            verify(attachmentRepository).updateDisplayPageNumbers(attachment.getId(), null);
+            verify(attachmentRepository, never()).save(attachment);
         }
 
         @Test

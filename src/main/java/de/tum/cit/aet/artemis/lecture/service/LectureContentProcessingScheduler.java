@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -41,8 +43,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * <p>
  * Runs only on the scheduling node: multiple nodes running stuck recovery, backfill, and the
  * dispatch tick concurrently would each apply the concurrency cap independently. Direct dispatch
- * from triggers and callbacks still happens on any node; row claiming stays safe everywhere via
- * {@code FOR UPDATE SKIP LOCKED}.
+ * from triggers and callbacks still happens on any node; row claiming stays safe everywhere through
+ * conditional claim updates, which only one caller can win.
  */
 @Conditional(LectureWithIrisEnabled.class)
 @Profile(PROFILE_SCHEDULING)
@@ -116,11 +118,14 @@ public class LectureContentProcessingScheduler {
 
     private final ProcessingStateRecoveryService recoveryService;
 
+    private final LectureUnitProcessingStateRecoveryRepository recoveryRepository;
+
     private final FeatureToggleService featureToggleService;
 
     public LectureContentProcessingScheduler(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             LectureContentProcessingService processingService, ProcessingStateCallbackService callbackService, LectureIngestionReconcileService reconcileService,
-            ProcessingStateRecoveryService recoveryService, FeatureToggleService featureToggleService, @Value("${artemis.iris.ingestion.stall-window:30m}") Duration stallWindow,
+            ProcessingStateRecoveryService recoveryService, LectureUnitProcessingStateRecoveryRepository recoveryRepository, FeatureToggleService featureToggleService,
+            @Value("${artemis.iris.ingestion.stall-window:30m}") Duration stallWindow,
             @Value("${artemis.iris.ingestion.slow-stage-warning-after:45m}") Duration slowStageWarningAfter,
             @Value("${artemis.iris.ingestion.no-callback-timeout-minutes:20}") int noCallbackTimeoutMinutes,
             @Value("${artemis.iris.ingestion.lease-expiry:60s}") Duration leaseExpiry, @Value("${artemis.iris.ingestion.absolute-timeout-hours:12}") int absoluteTimeoutHours) {
@@ -135,6 +140,7 @@ public class LectureContentProcessingScheduler {
         this.callbackService = callbackService;
         this.reconcileService = reconcileService;
         this.recoveryService = recoveryService;
+        this.recoveryRepository = recoveryRepository;
         this.featureToggleService = featureToggleService;
         this.stallWindow = stallWindow;
         this.slowStageWarningAfter = slowStageWarningAfter;
@@ -216,26 +222,27 @@ public class LectureContentProcessingScheduler {
 
     /**
      * Resume content changes that stopped between invalidating the in-flight run's token and requeueing the unit, see
-     * {@link LectureUnitProcessingStateRepository#findInFlightRunsWithoutToken}. The content markers are only written by
-     * that final requeue, so re-running the content-change path detects the same change again, redoes the transcript and
-     * Iris cleanup, and requeues. It is forced, so a unit whose content was changed back meanwhile is still re-ingested
-     * rather than left in flight. Each row is isolated like the other recovery loops.
+     * {@link LectureUnitProcessingStateRecoveryRepository}. Each row is claimed first, atomically re-checking that it is
+     * still stranded, so a row that recovered since the batch read, or that another pass already took, is skipped; the
+     * recovery then only writes while that claim holds. Each row is isolated like the other recovery loops.
      */
     private void resumeInterruptedContentChanges() {
-        ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(noCallbackTimeoutMinutes);
-        List<LectureUnitProcessingState> stranded = processingStateRepository.findInFlightRunsWithoutToken(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING),
-                cutoff);
-        for (LectureUnitProcessingState state : stranded) {
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime cutoff = now.minusMinutes(noCallbackTimeoutMinutes);
+        for (LectureUnitProcessingState state : recoveryRepository.findStrandedRuns(cutoff)) {
             try {
                 if (state.getLectureUnit() == null) {
                     continue;
                 }
+                String claimToken = UUID.randomUUID().toString();
+                if (recoveryRepository.claimStrandedRun(state.getId(), claimToken, cutoff, now) == 0) {
+                    continue;
+                }
                 long unitId = state.getLectureUnit().getId();
-                attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).ifPresent(unit -> {
-                    log.warn("interrupted-content-change unit={} phase={} — the run's token was invalidated but the unit was never requeued, resuming the cleanup", unitId,
-                            state.getPhase());
-                    processingService.triggerProcessingForMetadataChange(unit);
-                });
+                log.warn("interrupted-content-change unit={} phase={} — the run's token was invalidated but the unit was never requeued, resuming the cleanup", unitId,
+                        state.getPhase());
+                attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId)
+                        .ifPresent(unit -> processingService.recoverInterruptedContentChange(unit, claimToken));
             }
             catch (RuntimeException e) {
                 log.error("Resuming the interrupted content change of processing state {} failed, skipping it this pass: {}", state.getId(), e.getMessage());
@@ -432,6 +439,12 @@ public class LectureContentProcessingScheduler {
 
         if (freshState.getRetryEligibleAt() != null) {
             log.debug("State {} already scheduled for retry, skipping stuck recovery", freshState.getId());
+            return;
+        }
+
+        if (freshState.getIngestionJobToken() == null) {
+            // An interrupted content change: no token-matching failure can apply, and resumeInterruptedContentChanges owns it
+            log.debug("State {} has no job token, leaving it to the interrupted content change recovery", freshState.getId());
             return;
         }
 

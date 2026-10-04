@@ -191,6 +191,32 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     /**
+     * Within one run the token cannot tell a raw checkpoint from the enriched one. A raw (PENDING) write delayed past the
+     * enriched write must not replace the completed transcript, while an enriched write over a raw transcript still applies.
+     */
+    @Test
+    void testUpdateContentIfTokenMatches_neverReplacesACompletedTranscriptWithAPendingOne() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
+        state.setIngestionJobToken("run-token");
+        processingStateRepository.save(state);
+        LectureTranscription stored = lectureTranscriptionRepository
+                .save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Raw text", 0)), lectureUnit));
+        var converter = new LectureTranscriptionSegmentConverter();
+        String enrichedJson = converter.convertToDatabaseColumn(List.of(new LectureTranscriptionSegment(0.0, 10.0, "Enriched text", 1)));
+        String rawJson = converter.convertToDatabaseColumn(List.of(new LectureTranscriptionSegment(0.0, 10.0, "Late raw text", 0)));
+
+        assertThat(lectureTranscriptionRepository.updateContentIfTokenMatches(stored.getId(), lectureUnit.getId(), "en", enrichedJson, TranscriptionStatus.COMPLETED.name(),
+                "run-token")).as("enriched over raw applies").isEqualTo(1);
+        assertThat(lectureTranscriptionRepository.updateContentIfTokenMatches(stored.getId(), lectureUnit.getId(), "en", rawJson, TranscriptionStatus.PENDING.name(), "run-token"))
+                .as("a late raw write over the completed transcript is refused").isZero();
+
+        LectureTranscription reloaded = lectureTranscriptionRepository.findById(stored.getId()).orElseThrow();
+        assertThat(reloaded.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
+        assertThat(reloaded.getSegments().getFirst().text()).isEqualTo("Enriched text");
+        assertThat(processingStateRepository.findById(state.getId())).as("the guarded writes leave the processing state untouched").isPresent();
+    }
+
+    /**
      * A content-triggered requeue deletes the row between a checkpoint's read and its write. The update must no-op, not
      * resurrect it, even under the token that still matches.
      */

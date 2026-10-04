@@ -812,15 +812,20 @@ public class ProcessingStateCallbackService {
         transcription.setSegments(checkpoint.segments());
 
         if (checkpoint.isEnriched()) {
-            // Transcript first, then TRANSCRIBING → INGESTING: if the write fails, the row is still TRANSCRIBING and Iris's
-            // redelivery of this checkpoint replays both steps instead of being dropped as stale. The write guards ownership
-            // on its own (insert and update are both token-checked), and a refused write means ownership is gone, so no transition.
+            // Version, then transcript, then TRANSCRIBING → INGESTING, each guarded on its own: if any step fails, the row is
+            // still TRANSCRIBING and Iris's redelivery replays the rest, the hash keeping the version from moving twice. The
+            // version goes first so an interruption can only over-count it, never leave a new transcript under the old version.
             String jobToken = state.getIngestionJobToken();
+            LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, checkpoint.segments());
+            if (processingStateRepository.recordTranscriptionVersionIfTranscribing(state.getId(), jobToken, state.getTranscriptionVersion(),
+                    state.getTranscriptionContentHash()) == 0) {
+                log.debug("Ignoring enriched checkpoint for unit {}: the run is no longer TRANSCRIBING under this token", lectureUnitId);
+                return;
+            }
             transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
             if (!persistTranscription(lectureUnitId, jobToken, existing, transcription)) {
                 return;
             }
-            LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, checkpoint.segments());
             if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, ZonedDateTime.now(), state.getTranscriptionVersion(),
                     state.getTranscriptionContentHash()) == 0) {
                 log.debug("Ignoring enriched checkpoint for unit {}: the run is no longer TRANSCRIBING under this token", lectureUnitId);

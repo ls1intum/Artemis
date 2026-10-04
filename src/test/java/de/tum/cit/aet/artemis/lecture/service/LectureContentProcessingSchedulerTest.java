@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 
@@ -60,6 +61,8 @@ class LectureContentProcessingSchedulerTest {
 
     private ProcessingStateRecoveryService recoveryService;
 
+    private LectureUnitProcessingStateRecoveryRepository strandedRunRepository;
+
     private static final int MAX_CONCURRENT_JOBS = 2;
 
     private static final long PROCESSING_STATE_ID = 4242L;
@@ -78,6 +81,7 @@ class LectureContentProcessingSchedulerTest {
         callbackService = mock(ProcessingStateCallbackService.class);
         reconcileService = mock(LectureIngestionReconcileService.class);
         recoveryService = mock(ProcessingStateRecoveryService.class);
+        strandedRunRepository = mock(LectureUnitProcessingStateRecoveryRepository.class);
         FeatureToggleService featureToggleService = mock(FeatureToggleService.class);
 
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
@@ -85,7 +89,7 @@ class LectureContentProcessingSchedulerTest {
         when(callbackService.getMaxConcurrentJobs()).thenReturn(MAX_CONCURRENT_JOBS);
 
         scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService, callbackService, reconcileService,
-                recoveryService, featureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12);
+                recoveryService, strandedRunRepository, featureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12);
 
         Lecture testLecture = new Lecture();
         testLecture.setId(1L);
@@ -104,7 +108,8 @@ class LectureContentProcessingSchedulerTest {
         private LectureContentProcessingScheduler buildScheduler(Duration stallWindow, Duration slowStageWarningAfter, int noCallbackTimeoutMinutes, Duration leaseExpiry,
                 int absoluteTimeoutHours) {
             return new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService, callbackService, reconcileService,
-                    recoveryService, mock(FeatureToggleService.class), stallWindow, slowStageWarningAfter, noCallbackTimeoutMinutes, leaseExpiry, absoluteTimeoutHours);
+                    recoveryService, strandedRunRepository, mock(FeatureToggleService.class), stallWindow, slowStageWarningAfter, noCallbackTimeoutMinutes, leaseExpiry,
+                    absoluteTimeoutHours);
         }
 
         @Test
@@ -227,14 +232,31 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(null);
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30));
-            when(processingStateRepository.findInFlightRunsWithoutToken(eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)), any(ZonedDateTime.class)))
-                    .thenReturn(List.of(testState));
+            when(strandedRunRepository.findStrandedRuns(any(ZonedDateTime.class))).thenReturn(List.of(testState));
+            when(strandedRunRepository.claimStrandedRun(eq(testState.getId()), anyString(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(1);
             when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(testUnit.getId())).thenReturn(Optional.of(testUnit));
 
             scheduler.processScheduledRetries();
 
-            verify(processingService).triggerProcessingForMetadataChange(testUnit);
+            // The recovery runs under the very claim the sweep took
+            var claim = org.mockito.ArgumentCaptor.forClass(String.class);
+            verify(strandedRunRepository).claimStrandedRun(eq(testState.getId()), claim.capture(), any(ZonedDateTime.class), any(ZonedDateTime.class));
+            verify(processingService).recoverInterruptedContentChange(testUnit, claim.getValue());
             verify(callbackService).dispatchPendingJobs();
+        }
+
+        @Test
+        void shouldNotRecoverARowThatRecoveredBetweenTheBatchReadAndTheClaim() {
+            // The batch read saw the row stranded, but an edit requeued it, or another pass claimed it, before this claim: the
+            // claim re-checks the stranded predicate and fails, so no recovery runs and the newer state is left alone.
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(null);
+            when(strandedRunRepository.findStrandedRuns(any(ZonedDateTime.class))).thenReturn(List.of(testState));
+            when(strandedRunRepository.claimStrandedRun(eq(testState.getId()), anyString(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(0);
+
+            scheduler.processScheduledRetries();
+
+            verify(processingService, never()).recoverInterruptedContentChange(any(), anyString());
         }
 
         @Test
@@ -271,6 +293,7 @@ class LectureContentProcessingSchedulerTest {
             broken.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
+            testState.setIngestionJobToken("stuck-run-token"); // a stuck run still holds its token; token-less rows belong to the content-change recovery
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
@@ -292,6 +315,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setRetryCount(1);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
+            testState.setIngestionJobToken("stuck-run-token"); // a stuck run still holds its token; token-less rows belong to the content-change recovery
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
@@ -368,6 +392,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
+            testState.setIngestionJobToken("stuck-run-token"); // a stuck run still holds its token; token-less rows belong to the content-change recovery
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
@@ -387,6 +412,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
+            testState.setIngestionJobToken("stuck-run-token"); // a stuck run still holds its token; token-less rows belong to the content-change recovery
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
@@ -670,8 +696,8 @@ class LectureContentProcessingSchedulerTest {
             FeatureToggleService raceFeatureToggleService = mock(FeatureToggleService.class);
             when(raceFeatureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
             LectureContentProcessingScheduler raceScheduler = new LectureContentProcessingScheduler(raceRepository, attachmentVideoUnitRepository, processingService,
-                    realCallbackService, reconcileService, recoveryService, raceFeatureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30),
-                    12);
+                    realCallbackService, reconcileService, recoveryService, strandedRunRepository, raceFeatureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45), 20,
+                    Duration.ofSeconds(30), 12);
 
             raceScheduler.processScheduledRetries();
 

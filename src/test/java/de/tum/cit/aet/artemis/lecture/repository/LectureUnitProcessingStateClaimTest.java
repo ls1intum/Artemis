@@ -23,6 +23,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingScheduler;
@@ -48,6 +50,12 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private LectureUnitProcessingStateReconcileRepository reconcileStateRepository;
+
+    @Autowired
+    private LectureUnitProcessingStateRecoveryRepository recoveryRepository;
+
+    @Autowired
+    private LectureTranscriptionRepository lectureTranscriptionRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -510,11 +518,97 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         healthy.setLastUpdated(longAgo);
         processingStateRepository.save(healthy);
 
-        List<Long> found = processingStateRepository
-                .findInFlightRunsWithoutToken(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING), ZonedDateTime.now().minusMinutes(20)).stream()
-                .map(LectureUnitProcessingState::getId).toList();
-
+        ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(20);
+        List<Long> found = recoveryRepository.findStrandedRuns(cutoff).stream().map(LectureUnitProcessingState::getId).toList();
         assertThat(found).contains(stranded.getId()).doesNotContain(healthy.getId());
+
+        // Only one recovery claims it, and a healthy run can never be claimed
+        ZonedDateTime now = ZonedDateTime.now();
+        assertThat(recoveryRepository.claimStrandedRun(stranded.getId(), "recovery-1", cutoff, now)).isEqualTo(1);
+        assertThat(recoveryRepository.claimStrandedRun(stranded.getId(), "recovery-2", cutoff, now)).as("a second pass that read the same batch").isZero();
+        assertThat(recoveryRepository.claimStrandedRun(healthy.getId(), "recovery-3", cutoff, now)).isZero();
+        assertThat(recoveryRepository.findStrandedRuns(cutoff).stream().map(LectureUnitProcessingState::getId)).as("the claim hides it until the cutoff passes again")
+                .doesNotContain(stranded.getId());
+    }
+
+    /**
+     * The interleaving the recovery claim exists for: an edit requeues the unit after the sweep claimed it, and a newer run is
+     * dispatched before the recovery writes. The edit's requeue clears the claim, so every recovery write matches nothing and
+     * the newer run's state and transcript survive.
+     */
+    @Test
+    void testRecoveryWritesNothingOnceAnEditTookTheUnitOver() {
+        ZonedDateTime longAgo = ZonedDateTime.now().minusMinutes(30);
+        LectureUnitProcessingState stranded = new LectureUnitProcessingState(unit);
+        stranded.setPhase(ProcessingPhase.INGESTING);
+        stranded.setIngestionJobToken("content-change-token");
+        processingStateRepository.save(stranded);
+        processingStateRepository.invalidateTokenIfMatches(stranded.getId(), "content-change-token", longAgo);
+        ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(20);
+        assertThat(recoveryRepository.claimStrandedRun(stranded.getId(), "recovery", cutoff, ZonedDateTime.now())).isEqualTo(1);
+
+        // The edit's own requeue, then a newer run activated by a fresh claim, with its transcript stored
+        processingStateRepository.requeueForContentChange(stranded.getId(), "new-video-hash", null, 0, ZonedDateTime.now());
+        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim", ZonedDateTime.now())).isEqualTo(1);
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.TRANSCRIBING, "newer-run-token", "v1:new", "dispatch-claim", ZonedDateTime.now()))
+                .isEqualTo(1);
+        lectureTranscriptionRepository.save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 1.0, "Newer run", 0)), unit));
+
+        assertThat(lectureTranscriptionRepository.deleteIfRecoveryClaimHolds(unit.getId(), "recovery")).isZero();
+        assertThat(recoveryRepository.requeueStrandedRunIfClaimed(stranded.getId(), "recovery", "old-hash", null, 0, ZonedDateTime.now())).isZero();
+        assertThat(recoveryRepository.settleStrandedRunIfClaimed(stranded.getId(), "recovery", ZonedDateTime.now())).isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(stranded.getId()).orElseThrow();
+        assertThat(after.getIngestionJobToken()).isEqualTo("newer-run-token");
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId())).isPresent();
+    }
+
+    /**
+     * While the recovery still holds its claim, it deletes the previous video's transcript and requeues the unit for its
+     * current content.
+     */
+    @Test
+    void testRecoveryDeletesAndRequeuesWhileItsClaimHolds() {
+        ZonedDateTime longAgo = ZonedDateTime.now().minusMinutes(30);
+        LectureUnitProcessingState stranded = new LectureUnitProcessingState(unit);
+        stranded.setPhase(ProcessingPhase.TRANSCRIBING);
+        stranded.setIngestionJobToken("content-change-token");
+        processingStateRepository.save(stranded);
+        processingStateRepository.invalidateTokenIfMatches(stranded.getId(), "content-change-token", longAgo);
+        lectureTranscriptionRepository.save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 1.0, "Old video", 1)), unit));
+        assertThat(recoveryRepository.claimStrandedRun(stranded.getId(), "recovery", ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now())).isEqualTo(1);
+
+        // Exactly one transcript row exists (the lookup would throw on two); MySQL reports affected rows differently, so the
+        // count is only checked to be positive and the outcome is asserted on the data itself
+        assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId())).isPresent();
+        assertThat(lectureTranscriptionRepository.deleteIfRecoveryClaimHolds(unit.getId(), "recovery")).isPositive();
+        var probe = processingStateRepository.findById(stranded.getId());
+        assertThat(probe).as("state row survives the transcript delete").isPresent();
+        assertThat(probe.get().getClaimToken()).as("claim").isEqualTo("recovery");
+        assertThat(probe.get().getIngestionJobToken()).as("token").isNull();
+        assertThat(probe.get().getPhase()).as("phase").isEqualTo(ProcessingPhase.TRANSCRIBING);
+        assertThat(recoveryRepository.requeueStrandedRunIfClaimed(stranded.getId(), "recovery", "current-hash", null, 0, ZonedDateTime.now())).isEqualTo(1);
+
+        LectureUnitProcessingState after = processingStateRepository.findById(stranded.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(after.getClaimToken()).isNull();
+        assertThat(after.getVideoSourceHash()).isEqualTo("current-hash");
+        assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId())).isEmpty();
+    }
+
+    /**
+     * A raw checkpoint delayed past the enriched one finds the run INGESTING and is turned away before it writes anything.
+     */
+    @Test
+    void testRawLivenessTouchIsRefusedOnceTheRunIsIngesting() {
+        LectureUnitProcessingState running = new LectureUnitProcessingState(unit);
+        running.setPhase(ProcessingPhase.INGESTING);
+        running.setIngestionJobToken("run-token");
+        processingStateRepository.save(running);
+
+        assertThat(processingStateRepository.touchLastUpdated(running.getId(), "run-token", ZonedDateTime.now())).isZero();
+        assertThat(processingStateRepository.recordTranscriptionVersionIfTranscribing(running.getId(), "run-token", 2, "hash")).isZero();
     }
 
     /**
