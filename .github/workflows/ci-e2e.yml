@@ -77,7 +77,7 @@ jobs:
       relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
       remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 0
@@ -114,7 +114,7 @@ jobs:
       tests: ${{ steps.run-tests-phase1.outcome }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -178,7 +178,7 @@ jobs:
       - name: Classify E2E failures
         id: classify
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: phase1-test-results/results.xml
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -188,7 +188,7 @@ jobs:
       - name: Format test results
         id: format-results
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
           INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
@@ -209,7 +209,7 @@ jobs:
 
       - name: Post E2E comment (Phase 1)
         if: (success() || failure()) && inputs.is_pr
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         # Cosmetic PR comment; a GitHub API blip must not fail the E2E job whose
         # actual result has already been determined.
         continue-on-error: true
@@ -307,7 +307,7 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: phase2
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -368,7 +368,7 @@ jobs:
       - name: Classify E2E failures
         id: classify
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: phase2-test-results/results.xml
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -378,7 +378,7 @@ jobs:
       - name: Format test results
         id: format-results
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
           INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
@@ -400,7 +400,7 @@ jobs:
       - name: Update E2E comment (Phase 2)
         id: update-comment
         if: (success() || failure()) && inputs.is_pr
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         # Cosmetic PR comment update; do not gate Phase 2's job result.
         continue-on-error: true
         env:
@@ -499,7 +499,7 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -541,7 +541,7 @@ jobs:
 
       - name: Download all tests results
         if: ${{ !cancelled() }}
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
           path: all-test-results
@@ -569,7 +569,7 @@ jobs:
       - name: Classify E2E failures
         id: classify
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: all-test-results/results.xml
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -579,7 +579,7 @@ jobs:
       - name: Format test results
         id: format-results
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_SUMMARY: ${{ steps.test-report.outputs.summary }}
           INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
@@ -599,7 +599,7 @@ jobs:
 
       - name: Post E2E comment (All Tests)
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         # Cosmetic PR comment; do not gate the job result on a GitHub API blip.
         continue-on-error: true
         env:
@@ -674,7 +674,7 @@ jobs:
     env:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -702,7 +702,7 @@ jobs:
 
       - name: Download all tests results
         if: ${{ !cancelled() }}
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
           path: all-test-results
@@ -723,7 +723,7 @@ jobs:
       - name: Classify E2E failures
         id: classify
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: all-test-results/results.xml
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -835,7 +835,7 @@ jobs:
 
       # Sparse-checkout the local composite action used by find-e2e-comment below (PR-only); the
       # composite must be on disk before its `uses:` resolves.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         if: always()
         with:
           sparse-checkout: .github/actions
@@ -850,7 +850,7 @@ jobs:
 
       - name: Update E2E comment with overall status
         if: always() && inputs.is_pr
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         # Cosmetic PR comment finalisation; do not flip the aggregator job result.
         continue-on-error: true
         env:

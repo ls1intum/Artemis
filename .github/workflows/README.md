@@ -126,17 +126,16 @@ gate closed.
 
 ## Action pinning policy
 
-- **Third-party actions** (anything outside `actions/*`, `github/*`) are pinned to a
+- **All external actions**, including `actions/*` and `github/*`, are pinned to a
   40-character commit SHA with a `# vX.Y.Z` trailing comment. This is the
   [GitHub-recommended supply-chain mitigation](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions)
   and matches the org policy GitHub now supports enforcing.
-- **First-party `actions/*` and `github/*` actions** may use a major-version tag
-  (`@v6`, `@v9`) because they are governed by GitHub's own release process.
-  `actionlint`'s install script is pinned to a release tag because the script itself
-  is the third party, not the binary it downloads.
+- **Local actions and reusable workflows** use relative paths. The `actionlint` install
+  script uses a release tag and a verified SHA-256 checksum before execution.
 - **Don't hand-bump the SHAs.** Renovate (`renovate.json`) reads the `@<sha> # vX.Y.Z`
   format and opens PRs that update both the SHA and the comment together — keep the comment
   in that exact shape so it stays auto-maintained.
+  The `helpers:pinGitHubActionDigests` preset also pins newly added action references.
 
 ## Reusable workflows — `ci-*.yml`
 
