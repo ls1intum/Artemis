@@ -1325,6 +1325,47 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldRequeueTheRunThatTookTheUnitOverAfterTheRecoveryClaimCheck() {
+            // The claim holds at the check, then an edit takes the unit over while the Iris deletion is in progress and a newer
+            // run writes its content. The page mapping is only cleared under the claim; the deletion cannot be, so once the
+            // closing requeue finds the claim gone, the newer run is requeued after the deletion, as an edit would requeue it.
+            Attachment attachment = new Attachment();
+            attachment.setId(78L);
+            attachment.setDisplayPageNumbers(List.of(1, 2));
+            testUnit.setAttachment(attachment);
+            testState.setId(55L);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
+            testState.setClaimToken("recovery-claim");
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(strandedRunRepository.requeueStrandedRunIfClaimed(anyLong(), anyString(), any(), any(), any(), any())).thenReturn(0);
+            when(strandedRunRepository.requeueRunExposedToRecoveryCleanup(anyLong(), anyString(), any(), any())).thenReturn(1);
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+
+            var order = org.mockito.Mockito.inOrder(attachmentRepository, irisLectureApi, strandedRunRepository);
+            order.verify(attachmentRepository).clearDisplayPageNumbersIfRecoveryClaimHolds(78L, testUnit.getId(), "recovery-claim");
+            order.verify(irisLectureApi).deleteLectureFromPyrisDB(List.of(testUnit));
+            order.verify(strandedRunRepository).requeueStrandedRunIfClaimed(eq(55L), eq("recovery-claim"), any(), any(), any(), any());
+            order.verify(strandedRunRepository).requeueRunExposedToRecoveryCleanup(eq(55L), eq("recovery-claim"), any(), any());
+            verify(attachmentRepository, never()).updateDisplayPageNumbers(any(), any());
+        }
+
+        @Test
+        void shouldNotRepairWhenTheRecoveryClosedUnderItsOwnClaim() {
+            testState.setId(56L);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
+            testState.setClaimToken("recovery-claim");
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(strandedRunRepository.requeueStrandedRunIfClaimed(anyLong(), anyString(), any(), any(), any(), any())).thenReturn(1);
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+
+            verify(strandedRunRepository, never()).requeueRunExposedToRecoveryCleanup(anyLong(), anyString(), any(), any());
+        }
+
+        @Test
         void shouldLeaveARowAloneWhenItsRecoveryClaimWasTakenOverByAnEdit() {
             // An edit requeued the unit after the sweep claimed it, which cleared the claim: the recovery must write nothing
             testState.setId(53L);

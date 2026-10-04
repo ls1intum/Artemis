@@ -442,9 +442,14 @@ public class LectureContentProcessingService {
      * Finish a content change that stopped after the in-flight run's token was invalidated, for a row the caller has claimed
      * through {@link LectureUnitProcessingStateRecoveryRepository#claimStrandedRun}. Mirrors the two outcomes of an edit: the
      * unit has content, so the previous video's transcript goes if the video changed and the unit is requeued for its current
-     * content; or it has none, so its Iris content goes and the row settles as nothing indexed. Every write is pinned to the
-     * claim, so if a concurrent edit requeues the unit in the meantime (which clears the claim), the rest of this does nothing
-     * and cannot touch the newer run. A failed Iris cleanup keeps the claim, so the sweep retries once the cutoff passes again.
+     * content; or it has none, so its Iris content goes and the row settles as nothing indexed. Every database write is pinned
+     * to the claim, so if a concurrent edit requeues the unit in the meantime (which clears the claim), those writes do nothing
+     * and cannot touch the newer run. A failed Iris cleanup of a unit with no content left keeps the claim, so the sweep
+     * retries once the cutoff passes again; a unit with content is requeued regardless, as an edit does.
+     * <p>
+     * The Iris deletion cannot be pinned to the claim. When the closing requeue or settle finds the claim gone, a run that
+     * took the unit over may have written content the deletion then removed, so that run is requeued, as an edit's closing
+     * requeue would: whoever deletes last also requeues last.
      *
      * @param unit       the unit, loaded after the claim
      * @param claimToken the claim the caller holds on the unit's processing state
@@ -460,15 +465,22 @@ public class LectureContentProcessingService {
             // The stored transcript belongs to a video the unit no longer has
             transcriptionRepository.deleteIfRecoveryClaimHolds(unit.getId(), claimToken);
         }
-        boolean cleanupSucceeded = cleanupForReprocessing(unit);
-        if (!hasVideo && !hasPdf) {
-            if (cleanupSucceeded) {
-                recoveryRepository.settleStrandedRunIfClaimed(state.getId(), claimToken, ZonedDateTime.now());
-            }
-            return;
+        Attachment attachment = unit.getAttachment();
+        if (attachment != null && attachment.getDisplayPageNumbers() != null) {
+            attachmentRepository.clearDisplayPageNumbersIfRecoveryClaimHolds(attachment.getId(), unit.getId(), claimToken);
         }
-        recoveryRepository.requeueStrandedRunIfClaimed(state.getId(), claimToken, hasVideo ? computeHash(unit.getVideoSource()) : null,
-                hasPdf ? unit.getAttachment().getVersion() : null, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now());
+        boolean cleanupSucceeded = deleteFromIris(unit);
+        int closed;
+        if (!hasVideo && !hasPdf) {
+            closed = cleanupSucceeded ? recoveryRepository.settleStrandedRunIfClaimed(state.getId(), claimToken, ZonedDateTime.now()) : 0;
+        }
+        else {
+            closed = recoveryRepository.requeueStrandedRunIfClaimed(state.getId(), claimToken, hasVideo ? computeHash(unit.getVideoSource()) : null,
+                    hasPdf ? unit.getAttachment().getVersion() : null, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now());
+        }
+        if (closed == 0 && recoveryRepository.requeueRunExposedToRecoveryCleanup(state.getId(), claimToken, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now()) == 1) {
+            log.warn("Unit {} was taken over during the recovery of its interrupted content change; requeued the newer run after the Iris cleanup", unit.getId());
+        }
     }
 
     private boolean cleanupForReprocessing(AttachmentVideoUnit unit) {
@@ -478,7 +490,10 @@ public class LectureContentProcessingService {
             // A field-only update: saving the whole attachment from this snapshot could revert a version uploaded meanwhile
             attachmentRepository.updateDisplayPageNumbers(attachment.getId(), null);
         }
+        return deleteFromIris(unit);
+    }
 
+    private boolean deleteFromIris(AttachmentVideoUnit unit) {
         // When a new job starts, Iris terminates old processes automatically
         if (irisLectureApi.isEmpty()) {
             log.warn("Cannot delete unit {} from Iris because the lecture API is unavailable", unit.getId());

@@ -700,6 +700,29 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
+        void shouldCleanUpACourseWhoseLastUnitWasDeletedWhileIrisWasUnavailable() {
+            // The unit's one-shot Iris deletion failed, then the unit itself was deleted: the course has no units left,
+            // but the walk still visits it and the census still reports the unit's rows, so they are deleted now.
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
+                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of());
+            when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of());
+            when(attachmentVideoUnitRepository.findExistingIds(any())).thenReturn(Set.of());
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+
+            reconcileService.walkNextCourses();
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<IngestionJobIdentityDTO>> captor = ArgumentCaptor.forClass(List.class);
+            verify(irisLectureApi).deleteLectureUnitsByIdentity(captor.capture());
+            assertThat(captor.getValue()).singleElement().satisfies(identity -> {
+                assertThat(identity.courseId()).isEqualTo(COURSE_ID);
+                assertThat(identity.lectureId()).isEqualTo(lecture.getId());
+                assertThat(identity.lectureUnitId()).isEqualTo(unit.getId());
+            });
+        }
+
+        @Test
         void shouldDeleteRowsOfUnitsWhoseLectureBecameATutorialLecture() {
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
@@ -777,7 +800,7 @@ class LectureIngestionReconcileServiceTest {
             when(contentFingerprintService.computeFingerprint(secondUnit)).thenReturn(FINGERPRINT);
             when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit, secondUnit));
             when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state, secondState));
-            when(attachmentVideoUnitRepository.findCourseIdsWithAttachmentVideoUnitsAfter(anyLong(), any()))
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
                     .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
             givenCensus();
 
@@ -793,7 +816,7 @@ class LectureIngestionReconcileServiceTest {
             assertThat(oneRequeuePerPass.walkNextCourses()).isEqualTo(1);
             assertThat(secondState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            verify(attachmentVideoUnitRepository).findCourseIdsWithAttachmentVideoUnitsAfter(eq(COURSE_ID - 1), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID - 1), any());
         }
 
         @Test
@@ -801,7 +824,7 @@ class LectureIngestionReconcileServiceTest {
             // One answer per cursor position; a second when() stub would consume the first
             // sequential answer during its own stubbing invocation
             java.util.concurrent.atomic.AtomicBoolean firstPass = new java.util.concurrent.atomic.AtomicBoolean(true);
-            when(attachmentVideoUnitRepository.findCourseIdsWithAttachmentVideoUnitsAfter(anyLong(), any()))
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
                     .thenAnswer(invocation -> invocation.getArgument(0).equals(0L) && firstPass.getAndSet(false) ? List.of(COURSE_ID) : List.<Long>of());
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
@@ -813,8 +836,8 @@ class LectureIngestionReconcileServiceTest {
             // Third walk starts from the beginning again
             reconcileService.walkNextCourses();
 
-            verify(attachmentVideoUnitRepository).findCourseIdsWithAttachmentVideoUnitsAfter(eq(COURSE_ID), any());
-            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findCourseIdsWithAttachmentVideoUnitsAfter(eq(0L), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
+            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(eq(0L), any());
         }
     }
 

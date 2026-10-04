@@ -58,6 +58,9 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
     private LectureTranscriptionRepository lectureTranscriptionRepository;
 
     @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -579,15 +582,8 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         lectureTranscriptionRepository.save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 1.0, "Old video", 1)), unit));
         assertThat(recoveryRepository.claimStrandedRun(stranded.getId(), "recovery", ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now())).isEqualTo(1);
 
-        // Exactly one transcript row exists (the lookup would throw on two); MySQL reports affected rows differently, so the
-        // count is only checked to be positive and the outcome is asserted on the data itself
-        assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId())).isPresent();
-        assertThat(lectureTranscriptionRepository.deleteIfRecoveryClaimHolds(unit.getId(), "recovery")).isPositive();
-        var probe = processingStateRepository.findById(stranded.getId());
-        assertThat(probe).as("state row survives the transcript delete").isPresent();
-        assertThat(probe.get().getClaimToken()).as("claim").isEqualTo("recovery");
-        assertThat(probe.get().getIngestionJobToken()).as("token").isNull();
-        assertThat(probe.get().getPhase()).as("phase").isEqualTo(ProcessingPhase.TRANSCRIBING);
+        assertThat(lectureTranscriptionRepository.deleteIfRecoveryClaimHolds(unit.getId(), "recovery")).isEqualTo(1);
+        assertThat(processingStateRepository.findById(stranded.getId())).as("the transcript delete leaves the processing state alone").isPresent();
         assertThat(recoveryRepository.requeueStrandedRunIfClaimed(stranded.getId(), "recovery", "current-hash", null, 0, ZonedDateTime.now())).isEqualTo(1);
 
         LectureUnitProcessingState after = processingStateRepository.findById(stranded.getId()).orElseThrow();
@@ -690,5 +686,87 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
 
     private ZonedDateTime startedAtOf(LectureUnitProcessingState state) {
         return processingStateRepository.findById(state.getId()).orElseThrow().getStartedAt();
+    }
+
+    private LectureUnitProcessingState claimedStrandedRun(AttachmentVideoUnit target, String claimToken) {
+        LectureUnitProcessingState stranded = new LectureUnitProcessingState(target);
+        stranded.setPhase(ProcessingPhase.INGESTING);
+        stranded.setIngestionJobToken("content-change-token");
+        stranded.setVideoSourceHash("old-hash");
+        processingStateRepository.save(stranded);
+        processingStateRepository.invalidateTokenIfMatches(stranded.getId(), "content-change-token", ZonedDateTime.now().minusMinutes(30));
+        assertThat(recoveryRepository.claimStrandedRun(stranded.getId(), claimToken, ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now())).isEqualTo(1);
+        return stranded;
+    }
+
+    /**
+     * The recovery's Iris deletion cannot be pinned to its claim. When an edit took the unit over and a newer run then wrote
+     * content, which the deletion may have removed, that run is requeued with the edit's markers intact, as the edit's own
+     * closing requeue would have done had it come last.
+     */
+    @Test
+    void testRepairRequeueRestartsARunThatTookTheUnitOverDuringTheRecovery() {
+        LectureUnitProcessingState stranded = claimedStrandedRun(unit, "recovery");
+        processingStateRepository.requeueForContentChange(stranded.getId(), "new-hash", 2, 0, ZonedDateTime.now());
+        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim", ZonedDateTime.now())).isEqualTo(1);
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "newer-run-token", "v1:new", "dispatch-claim", ZonedDateTime.now()))
+                .isEqualTo(1);
+
+        // In flight: the run is cancelled and requeued, so its later completion matches nothing
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).isEqualTo(1);
+        LectureUnitProcessingState requeued = processingStateRepository.findById(stranded.getId()).orElseThrow();
+        assertThat(requeued.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(requeued.getIngestionJobToken()).isNull();
+        assertThat(requeued.getClaimToken()).isNull();
+        assertThat(requeued.getVideoSourceHash()).as("the edit's markers are kept").isEqualTo("new-hash");
+        assertThat(requeued.getAttachmentVersion()).isEqualTo(2);
+        assertThat(processingStateRepository.completeIngestionIfLive(stranded.getId(), "newer-run-token", ZonedDateTime.now())).isZero();
+
+        // DONE: a run that completed before the deletion landed is requeued as well
+        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim-2", ZonedDateTime.now())).isEqualTo(1);
+        processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "third-run-token", "v1:new", "dispatch-claim-2", ZonedDateTime.now());
+        assertThat(processingStateRepository.completeIngestionIfLive(stranded.getId(), "third-run-token", ZonedDateTime.now())).isEqualTo(1);
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).isEqualTo(1);
+        LectureUnitProcessingState afterDone = processingStateRepository.findById(stranded.getId()).orElseThrow();
+        assertThat(afterDone.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(afterDone.getConfirmedFingerprint()).isNull();
+    }
+
+    /**
+     * The repair only touches a run the deletion can have reached. A row still under the recovery's own claim, an unclaimed
+     * IDLE row that dispatches after the deletion anyway, and a row an edit settled because no content is left all stay as
+     * they are.
+     */
+    @Test
+    void testRepairRequeueLeavesRowsTheDeletionCannotHaveReachedAlone() {
+        LectureUnitProcessingState stranded = claimedStrandedRun(unit, "recovery");
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).as("own claim still holds").isZero();
+
+        processingStateRepository.requeueForContentChange(stranded.getId(), "new-hash", null, 0, ZonedDateTime.now());
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).as("unclaimed IDLE").isZero();
+
+        processingStateRepository.settleAsNothingIndexed(stranded.getId(), ZonedDateTime.now());
+        assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(stranded.getId(), "recovery", 0, ZonedDateTime.now())).as("settled, no content left").isZero();
+        assertThat(processingStateRepository.findById(stranded.getId()).orElseThrow().getPhase()).isEqualTo(ProcessingPhase.DONE);
+    }
+
+    /**
+     * The recovery clears the page mapping only while its claim holds; once an edit took the unit over, the mapping may be a
+     * newer run's and stays.
+     */
+    @Test
+    void testRecoveryClearsThePageMappingOnlyWhileItsClaimHolds() {
+        AttachmentVideoUnit withAttachment = lectureUtilService.createAttachmentVideoUnit(unit.getLecture(), false);
+        long attachmentId = withAttachment.getAttachment().getId();
+        attachmentRepository.updateDisplayPageNumbers(attachmentId, List.of(1, 2, 3));
+        LectureUnitProcessingState stranded = claimedStrandedRun(withAttachment, "recovery");
+
+        assertThat(attachmentRepository.clearDisplayPageNumbersIfRecoveryClaimHolds(attachmentId, withAttachment.getId(), "recovery")).isEqualTo(1);
+        assertThat(attachmentRepository.findById(attachmentId).orElseThrow().getDisplayPageNumbers()).isNull();
+
+        attachmentRepository.updateDisplayPageNumbers(attachmentId, List.of(4, 5));
+        processingStateRepository.requeueForContentChange(stranded.getId(), "new-hash", 2, 0, ZonedDateTime.now());
+        assertThat(attachmentRepository.clearDisplayPageNumbersIfRecoveryClaimHolds(attachmentId, withAttachment.getId(), "recovery")).isZero();
+        assertThat(attachmentRepository.findById(attachmentId).orElseThrow().getDisplayPageNumbers()).containsExactly(4, 5);
     }
 }

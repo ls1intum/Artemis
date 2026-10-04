@@ -125,4 +125,41 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
             AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
             """)
     int settleStrandedRunIfClaimed(@Param("id") long id, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now);
+
+    /**
+     * Requeue the run that took a unit over while a recovery was cleaning it up, for a recovery whose own requeue or settle
+     * found its claim gone. The recovery's Iris deletion is not tied to the claim, so it may have removed content that run
+     * already wrote. An edit relies on the same rule: whoever deletes last also requeues last, so a run dispatched after the
+     * deletion rebuilds whatever it removed.
+     * <p>
+     * Only a run the deletion can have reached is requeued: one that is DONE, in flight with a token, or claimed for dispatch.
+     * An unclaimed IDLE row dispatches after the deletion anyway; a row an edit settled because the unit has no content left
+     * carries no content markers; a row still under this recovery's own claim, or claimed by a newer recovery that runs its
+     * own cleanup, is left alone. The content markers are kept, since the edit that took over recorded the current ones.
+     *
+     * @param id               the processing state the recovery worked on
+     * @param claimToken       the recovery's lost claim
+     * @param dispatchPriority where the requeued unit sits in the dispatch order
+     * @param now              recorded as the new {@code lastUpdated}
+     * @return 1 when a run was requeued, 0 when none was exposed to the deletion
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.startedAt = NULL, ps.claimToken = NULL,
+                ps.ingestionJobToken = NULL, ps.retryEligibleAt = NULL, ps.errorKey = NULL,
+                ps.contentFingerprint = NULL, ps.confirmedFingerprint = NULL, ps.dispatchPriority = :dispatchPriority,
+                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
+                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND (ps.claimToken IS NULL OR ps.claimToken <> :claimToken)
+            AND ((ps.videoSourceHash IS NOT NULL AND ps.videoSourceHash <> '') OR ps.attachmentVersion IS NOT NULL)
+            AND (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE
+                OR ps.ingestionJobToken IS NOT NULL
+                OR (ps.claimToken IS NOT NULL
+                    AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)))
+            """)
+    int requeueRunExposedToRecoveryCleanup(@Param("id") long id, @Param("claimToken") String claimToken, @Param("dispatchPriority") Integer dispatchPriority,
+            @Param("now") ZonedDateTime now);
 }

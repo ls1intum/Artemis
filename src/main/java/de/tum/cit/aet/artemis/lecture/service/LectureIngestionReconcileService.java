@@ -175,7 +175,7 @@ public class LectureIngestionReconcileService {
         if (irisLectureApi.isEmpty()) {
             return 0;
         }
-        List<Long> courseIds = attachmentVideoUnitRepository.findCourseIdsWithAttachmentVideoUnitsAfter(courseCursor.get(), PageRequest.of(0, coursesPerRun));
+        List<Long> courseIds = attachmentVideoUnitRepository.findReconcileCourseIdsAfter(courseCursor.get(), PageRequest.of(0, coursesPerRun));
         if (courseIds.isEmpty()) {
             log.debug("Ingestion reconcile walk completed a full pass, restarting from the beginning next run");
             courseCursor.set(0);

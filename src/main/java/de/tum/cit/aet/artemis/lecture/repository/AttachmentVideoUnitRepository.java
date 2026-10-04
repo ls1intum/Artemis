@@ -167,30 +167,26 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
     List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
 
     /**
-     * Find the next course ids that hold attachment video units, ordered by id, starting after the given cursor.
-     * Drives the ingestion reconciler's round-robin walk over all courses, including inactive and archived ones.
+     * Find the next non-test course ids, ordered by id, starting after the given cursor. Drives the ingestion reconciler's
+     * round-robin walk over all courses, including inactive and archived ones.
      * <p>
-     * Deliberately does NOT filter out tutorial lectures, unlike {@link #findAllWithAttachmentByCourseId}: a
-     * course whose only attachment video units are on a tutorial lecture (or became one after content was
-     * already ingested) still needs to be walked so {@code deleteOrphanedIndexRows} can garbage-collect its
-     * Iris rows via {@link #findTutorialLectureUnitIdentities}. Without this, such a course drops off the walk
-     * entirely and its orphaned rows are never cleaned up. The per-unit reconcile loop still excludes tutorial
-     * units from active re-ingestion via {@link #findAllWithAttachmentByCourseId}; only the course-level cleanup
-     * traversal is unfiltered here.
+     * Deliberately not limited to courses that still hold attachment video units: the walk is also what garbage-collects a
+     * course's Iris rows through {@code deleteOrphanedIndexRows}, and a course whose last unit was deleted while Iris was
+     * unavailable still holds rows for it. Nor does it filter out tutorial lectures, whose rows are cleaned up the same way
+     * via {@link #findTutorialLectureUnitIdentities}; the per-unit reconcile loop excludes them from re-ingestion through
+     * {@link #findAllWithAttachmentByCourseId}.
      *
      * @param courseId the course id to continue after (exclusive); pass 0 to start from the beginning
      * @param pageable pagination to limit the number of courses per walk
      * @return the next course ids after the cursor
      */
     @Query("""
-            SELECT DISTINCT c.id FROM AttachmentVideoUnit avu
-            JOIN avu.lecture l
-            JOIN l.course c
+            SELECT c.id FROM Course c
             WHERE c.id > :courseId
                 AND c.testCourse = FALSE
             ORDER BY c.id
             """)
-    List<Long> findCourseIdsWithAttachmentVideoUnitsAfter(@Param("courseId") long courseId, Pageable pageable);
+    List<Long> findReconcileCourseIdsAfter(@Param("courseId") long courseId, Pageable pageable);
 
     /**
      * Find every attachment video unit of a course with its attachment, lecture, and course fetched.

@@ -138,4 +138,27 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     int updateDisplayPageNumbersIfVersionMatches(@Param("attachmentId") Long attachmentId, @Param("displayPageNumbers") List<Integer> displayPageNumbers,
             @Param("expectedVersion") Integer expectedVersion);
 
+    /**
+     * Clear an attachment's display page numbers while the recovery that claimed its unit's interrupted content change still
+     * holds that claim (see {@code LectureUnitProcessingStateRecoveryRepository#claimStrandedRun}). Once an edit has taken the
+     * unit over, which clears the claim, the mapping may be a newer run's and is left alone.
+     *
+     * @param attachmentId  the attachment to clear
+     * @param lectureUnitId the unit the attachment belongs to
+     * @param claimToken    the recovery's claim
+     * @return 1 when cleared, 0 when the claim no longer holds
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE Attachment a
+            SET a.displayPageNumbers = NULL
+            WHERE a.id = :attachmentId
+            AND EXISTS (
+                SELECT ps.id FROM LectureUnitProcessingState ps
+                WHERE ps.lectureUnit.id = :lectureUnitId AND ps.claimToken = :claimToken AND ps.ingestionJobToken IS NULL
+            )
+            """)
+    int clearDisplayPageNumbersIfRecoveryClaimHolds(@Param("attachmentId") Long attachmentId, @Param("lectureUnitId") Long lectureUnitId, @Param("claimToken") String claimToken);
+
 }
