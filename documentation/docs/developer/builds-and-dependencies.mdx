@@ -7,6 +7,20 @@ sidebar_label: Builds and Dependency Management
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
+## GitHub Actions dependencies
+
+Every external action in workflows and composite actions is pinned to a full commit SHA,
+including actions maintained by GitHub. A trailing `# vX.Y.Z` comment records the release
+version. Resolve the upstream release tag to its commit when adding an action; a major-version
+tag alone is mutable and does not provide the same guarantee.
+
+Renovate uses `helpers:pinGitHubActionDigests` to propose hash updates and pin new references.
+Review those pull requests so actions continue receiving security fixes. Local actions and
+reusable workflows use relative paths. The
+[workflow reference](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/README.md#action-pinning-policy)
+describes the policy, and the [Scorecard report](https://scorecard.dev/viewer/?uri=github.com/ls1intum/Artemis)
+shows dependency-pinning findings alongside other repository security checks.
+
 ## General Structure of Programming Exercise Execution
 
 Artemis uses docker containers to run programming exercises. This ensures that the students' code does not have

@@ -292,12 +292,16 @@ Every GitHub release carries, next to `Artemis.war`:
 - `SHA256SUMS`, covering the WAR and both SBOMs
 - `artemis-server-sbom.cdx.json` and `artemis-client-sbom.cdx.json`, the CycloneDX SBOMs extracted from
   the WAR that ships, so they describe exactly the bytes you downloaded
-- a signed [build provenance attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds),
+- `Artemis.war.sigstore.json`, a signed [build provenance attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds),
   which binds the artifact to the workflow run and commit that produced it
+- `Artemis.war.intoto.jsonl`, the same signed provenance envelope in in-toto JSON Lines format;
+  use the Sigstore bundle above when verifying certificates and transparency-log evidence
 
 ```bash
 sha256sum --check SHA256SUMS
 gh attestation verify Artemis.war --repo ls1intum/Artemis
+# Verify using the signed bundle downloaded from the release:
+gh attestation verify Artemis.war --bundle Artemis.war.sigstore.json --repo ls1intum/Artemis
 ```
 
 Container images pushed to `ghcr.io/ls1intum/artemis` carry the same guarantees. Both artefacts are
