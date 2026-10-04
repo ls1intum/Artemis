@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup_;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 
@@ -307,7 +308,7 @@ public class TutorialGroupChannelManagementService {
      * @return the teaching assistant of the tutorial group, if it exists
      */
     private Optional<User> getTeachingAssistant(TutorialGroup tutorialGroup) {
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "teachingAssistant")) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TEACHING_ASSISTANT)) {
             return Optional.ofNullable(tutorialGroup.getTeachingAssistant());
         }
         else {
