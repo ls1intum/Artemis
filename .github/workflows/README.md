@@ -256,8 +256,14 @@ stale, which is why the coverage badge is self-hosted (see above).
 
 **SonarQube Cloud** runs from `ci-sonar.yml` on `develop` pushes, after a green `test`, importing the
 `Server JaCoCo XML` and `Vitest Coverage Report` artifacts that job already uploaded — no suite is
-re-run. It exists to be compared against Codacy on the same code before either grade is trusted with
-a badge, so **it currently feeds no badge**. Configuration lives in `gradle/sonar.gradle`.
+re-run. It serves three badges in the root `README.md`, straight from `sonarcloud.io/api/project_badges`
+for the `develop` branch: the **quality gate** (which judges the new code of the last 30 days: ratings,
+coverage, duplication, hotspots), the **maintainability rating**, and the share of **duplicated lines**.
+Two things limit what they say. The badge service reports whole-project values and has no badge for the
+new-code metrics, so the reliability and security ratings are left out on purpose: the gate keeps new
+code at A, while the older findings still held by the project (open bugs and vulnerabilities from before
+the new-code window) rate those two lower, and a badge would show that figure. The coverage badge stays
+the self-hosted one described above. Configuration lives in `gradle/sonar.gradle`.
 
 Three things about it are worth knowing before changing it:
 
