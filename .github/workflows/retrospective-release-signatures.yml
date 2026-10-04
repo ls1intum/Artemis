@@ -1,0 +1,86 @@
+name: Retrospective release signatures
+
+# One-time, explicitly authorized backfill. Never executes or rebuilds historical artifacts.
+on:
+  push:
+    branches: [chore/security/retrospective-release-signatures]
+    paths: [.github/workflows/retrospective-release-signatures.yml]
+
+permissions: {}
+
+jobs:
+  sign:
+    if: github.repository == 'ls1intum/Artemis'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tag: '10.1'
+            sha256: '0218e6a1fd55c8699fb65560f7583ac850c844427a979ab87279f716d5cca8f7'
+            existing: true
+          - tag: '10.0'
+            sha256: 'a03f44eb92365f625791a2ffc05f18985e27cbedb7ec2a52ac5d32d6dbba0da3'
+            existing: true
+          - tag: '9.9.4'
+            sha256: 'd2381b5f7db330fecabd282e1466e7f2601a9e1dfe73d9e6241a2be2102a784e'
+            existing: false
+          - tag: '9.9.3'
+            sha256: 'e3bf8d1fb0789e49537f9a77a7a54b6a9e7895902b1802ba29d93bf4d477e756'
+            existing: false
+          - tag: '9.9.2'
+            sha256: 'f5a12eaca4db889cbcfe4b9bd3a3775265405380cf8cc61d906ff978c8aaeb92'
+            existing: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ matrix.tag }}
+      EXPECTED_SHA256: ${{ matrix.sha256 }}
+      PREDICATE_TYPE: https://artemis.tum.de/attestations/retrospective-release-endorsement/v1
+    steps:
+      - name: Download and check the historical WAR
+        run: |
+          set -Eeuo pipefail
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern Artemis.war
+          printf '%s  Artemis.war\n' "$EXPECTED_SHA256" | sha256sum --check --strict
+      - name: Recover and verify original build provenance
+        if: matrix.existing
+        run: |
+          set -Eeuo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/attestations/sha256:$EXPECTED_SHA256" \
+            --jq '.attestations[0].bundle' > Artemis.war.sigstore.json
+          gh attestation verify Artemis.war --bundle Artemis.war.sigstore.json \
+            --repo "$GITHUB_REPOSITORY" --signer-workflow ls1intum/Artemis/.github/workflows/ci.yml
+          jq -ce '.dsseEnvelope | select(.payloadType == "application/vnd.in-toto+json")' \
+            Artemis.war.sigstore.json > Artemis.war.intoto.jsonl
+          gh release upload "$RELEASE_TAG" Artemis.war.sigstore.json Artemis.war.intoto.jsonl \
+            --repo "$GITHUB_REPOSITORY"
+      - name: Record retrospective endorsement
+        if: ${{ !matrix.existing }}
+        run: |
+          jq -n --arg tag "$RELEASE_TAG" --arg sha256 "$EXPECTED_SHA256" \
+            '{release: $tag, sha256: $sha256, statement: "Retrospective maintainer endorsement of the existing published Artemis.war. This signature does not establish original build provenance."}' \
+            > endorsement.json
+      - name: Sign retrospective endorsement
+        if: ${{ !matrix.existing }}
+        id: endorsement
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+        with:
+          subject-path: Artemis.war
+          predicate-type: https://artemis.tum.de/attestations/retrospective-release-endorsement/v1
+          predicate-path: endorsement.json
+      - name: Verify and attach retrospective signature
+        if: ${{ !matrix.existing }}
+        env:
+          BUNDLE_PATH: ${{ steps.endorsement.outputs.bundle-path }}
+        run: |
+          set -Eeuo pipefail
+          cp "$BUNDLE_PATH" Artemis.war.sigstore.json
+          gh attestation verify Artemis.war --bundle Artemis.war.sigstore.json \
+            --repo "$GITHUB_REPOSITORY" --predicate-type "$PREDICATE_TYPE" \
+            --signer-workflow ls1intum/Artemis/.github/workflows/retrospective-release-signatures.yml
+          gh release upload "$RELEASE_TAG" Artemis.war.sigstore.json --repo "$GITHUB_REPOSITORY"
