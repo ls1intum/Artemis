@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -26,6 +26,8 @@ export class ExerciseImportFromFileComponent implements OnInit {
     private alertService = inject(AlertService);
 
     exerciseType = input<ExerciseType | undefined>();
+    /** Emits the exercise read from the file, for hosts that embed the component without a PrimeNG dialog reference. */
+    readonly imported = output<Exercise>();
     private readonly selectedExerciseType = computed(() => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.exerciseType ?? this.exerciseType());
 
     exercise?: Exercise;
@@ -124,6 +126,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
     }
 
     openImport(exercise: Exercise) {
+        this.imported.emit(exercise);
         this.dialogRef?.close(exercise);
     }
 }
