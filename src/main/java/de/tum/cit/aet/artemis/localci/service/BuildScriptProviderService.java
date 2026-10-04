@@ -38,6 +38,13 @@ public class BuildScriptProviderService {
         if (projectType.filter(ProjectType.MAVEN_BLACKBOX::equals).isPresent()) {
             fileNameComponents.add("plain_" + ProjectType.MAVEN_BLACKBOX.name().toLowerCase(Locale.ROOT));
         }
+        else if (projectType.filter(ProjectType.MAVEN_MAVEN::equals).isPresent()) {
+            // the exemplary dependency only changes the exercise and solution repositories, the build is the one of the plain project
+            fileNameComponents.add(ProjectType.PLAIN_MAVEN.name().toLowerCase(Locale.ROOT));
+        }
+        else if (projectType.filter(ProjectType.GRADLE_GRADLE::equals).isPresent()) {
+            fileNameComponents.add(ProjectType.PLAIN_GRADLE.name().toLowerCase(Locale.ROOT));
+        }
         else {
             fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase(Locale.ROOT));
         }

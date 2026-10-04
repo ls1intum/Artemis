@@ -411,7 +411,7 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
 }
 
 /**
- * Types a date into a PrimeNG p-datepicker input (the `jhi-date-time-picker` wrapper).
+ * Types a date into the input of a date picker: PrimeNG's p-datepicker (the `jhi-date-time-picker` wrapper) or the TUM AET UI date picker.
  *
  * The picker must be driven with real keystrokes: its `onUserInput` handler ignores any `input`
  * event that is not preceded by a `keydown` (an `isKeydown` guard), so Playwright's `fill()` — which
