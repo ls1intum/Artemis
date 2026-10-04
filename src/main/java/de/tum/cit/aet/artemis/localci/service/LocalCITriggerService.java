@@ -245,11 +245,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
-        long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        long courseId = course.getId();
 
         // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
         int priority = determinePriority(programmingExercise, participation, triggerAll);
-        priority = addPenaltyIfTestCourse(programmingExercise, priority);
+        priority = addPenaltyIfTestCourse(course, priority);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -478,12 +479,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         return PRIORITY_NORMAL;
     }
 
-    private int addPenaltyIfTestCourse(ProgrammingExercise programmingExercise, int priority) {
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course != null && course.isTestCourse()) {
-            return priority + TESTCOURSE_PRIORITY_PENALTY;
-        }
-        return priority;
+    private int addPenaltyIfTestCourse(Course course, int priority) {
+        return course.isTestCourse() ? priority + TESTCOURSE_PRIORITY_PENALTY : priority;
     }
 
     /**

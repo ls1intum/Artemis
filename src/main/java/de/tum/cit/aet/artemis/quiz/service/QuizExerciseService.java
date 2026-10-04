@@ -744,8 +744,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    handleDndBackgroundForCreation(dragAndDropQuestion, fileMap);
+                String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
+                if (backgroundFilePath != null) {
+                    handleDndBackgroundForCreation(dragAndDropQuestion, backgroundFilePath, fileMap);
                 }
                 handleDndQuizDragItemsCreation(dragAndDropQuestion, fileMap);
             }
@@ -757,14 +758,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * This logic is necessary to handle the case where a DragAndDropQuestion is created based on an existing one (e.g. via import).
      *
      * @param question the DragAndDropQuestion
+     * @param path     the stored background file path of the question, which is not null
      * @param fileMap  the map of provided files
      * @throws IOException if file operations fail
      */
-    public void handleDndBackgroundForCreation(DragAndDropQuestion question, Map<String, MultipartFile> fileMap) throws IOException {
-        String path = question.getBackgroundFilePath();
-        if (path == null) {
-            throw new IllegalStateException("The drag and drop question " + question.getId() + " has no background image");
-        }
+    private void handleDndBackgroundForCreation(DragAndDropQuestion question, @NonNull String path, Map<String, MultipartFile> fileMap) throws IOException {
         FilePathType type = FilePathType.DRAG_AND_DROP_BACKGROUND;
         Path basePath = FilePathConverter.getDragAndDropBackgroundFilePath();
 

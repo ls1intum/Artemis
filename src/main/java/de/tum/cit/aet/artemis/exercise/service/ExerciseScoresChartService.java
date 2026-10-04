@@ -89,10 +89,7 @@ public class ExerciseScoresChartService {
             Map<Long, StudentScore> individualExerciseIdToStudentScore, Map<Long, TeamScore> teamExerciseIdToTeamScore, Exercise exercise) {
         ExerciseScoresAggregatedInformation aggregatedInformation = exerciseIdToAggregatedInformation.get(exercise.getId());
 
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new IllegalStateException("The course of the exercise " + exercise.getId() + " could not be resolved");
-        }
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
         double averageScoreAchieved = 0D;
         double maxScoreAchieved = 0D;

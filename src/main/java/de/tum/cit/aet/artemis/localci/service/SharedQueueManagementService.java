@@ -354,7 +354,9 @@ public class SharedQueueManagementService {
         Slice<Long> buildJobIdsSlice = buildJobRepository.findFinishedIdsByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
                 search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper, pageRequest);
 
-        log.info("findFinishedIds took {} for course {}", TimeLogUtil.formatDurationFrom(start), courseId);
+        log.info("findFinishedIds took {} for course {} (status {}, from {}, to {}, duration {}-{}, agent filter {}, search term {}, page {})",
+                TimeLogUtil.formatDurationFrom(start), courseId, search.buildStatus(), search.startDate(), search.endDate(), buildDurationLower, buildDurationUpper,
+                search.buildAgentAddress() != null, search.pageable().getSearchTerm() != null && !search.pageable().getSearchTerm().isBlank(), search.pageable().getPage());
 
         List<Long> buildJobIds = buildJobIdsSlice.toList();
         // Fetch the build jobs with results. Since this query used "IN" clause, the order of the results is not guaranteed. We need to order them by the order of the ids.

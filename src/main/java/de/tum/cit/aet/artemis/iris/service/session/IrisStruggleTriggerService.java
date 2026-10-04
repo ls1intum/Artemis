@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -208,10 +207,7 @@ public class IrisStruggleTriggerService {
         if (exercise.isExamExercise()) {
             return TriggerPreparation.courseOff();
         }
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new EntityNotFoundException("Course", "of exercise " + exerciseId);
-        }
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled() || !settings.proactiveStruggleEffective()) {
             return TriggerPreparation.courseOff();

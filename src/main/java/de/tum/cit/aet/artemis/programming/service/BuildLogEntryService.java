@@ -433,7 +433,7 @@ public class BuildLogEntryService {
      * @throws RuntimeException      If an I/O error occurs while writing the log file.
      */
     public void saveBuildLogsToFile(List<BuildLogDTO> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
-        String courseShortName = getCourseShortNameElseThrow(programmingExercise);
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path exerciseLogsPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName);
         if (!Files.exists(exerciseLogsPath)) {
@@ -479,7 +479,7 @@ public class BuildLogEntryService {
         }
 
         ProgrammingExercise programmingExercise = retrieveProgrammingExerciseByBuildJobId(buildJobId);
-        String courseShortName = getCourseShortNameElseThrow(programmingExercise);
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path logPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName).resolve(buildJobId + ".log");
 
@@ -500,14 +500,6 @@ public class BuildLogEntryService {
 
         log.warn("Could not find build logs for programming exercise {}", programmingExercise.getId());
         return null;
-    }
-
-    private static String getCourseShortNameElseThrow(ProgrammingExercise programmingExercise) {
-        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new IllegalStateException("Cannot determine the course of programming exercise " + programmingExercise.getId());
-        }
-        return course.getShortName();
     }
 
     private ProgrammingExercise retrieveProgrammingExerciseByBuildJobId(String buildJobId) {

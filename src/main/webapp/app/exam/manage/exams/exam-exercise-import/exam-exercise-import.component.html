@@ -94,6 +94,7 @@
                                                 tumAetUiInput
                                                 class="w-full"
                                                 type="text"
+                                                [attr.aria-label]="'artemisApp.exercise.title' | artemisTranslate"
                                                 [tumAetUiInputInvalid]="!!getNonProgrammingExerciseTitleError(exercise)"
                                                 [tumAetUiInputId]="'exercise-' + exercise.id + '-title'"
                                                 [name]="'exercise-' + exercise.id + '-title'"

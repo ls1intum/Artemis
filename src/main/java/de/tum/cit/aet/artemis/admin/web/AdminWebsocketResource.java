@@ -91,7 +91,8 @@ public class AdminWebsocketResource {
                 .toList();
 
         if (targetMembers.isEmpty()) {
-            log.info("No core websocket nodes matched the reconnect request by {}", requester);
+            log.info("No core websocket nodes matched the reconnect request by {}, live nodes: {}", requester,
+                    nodeRegistryService.getLiveNodes().stream().map(node -> node.nodeId()).toList());
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
 
@@ -102,7 +103,7 @@ public class AdminWebsocketResource {
         catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
-        log.info("REST request to trigger websocket broker action {} for {} node(s) by {}", controlAction, targetMembers.size(), requester);
+        log.info("REST request to trigger websocket broker action {} on nodes {} by {}", controlAction, targetMembers.stream().map(node -> node.nodeId()).toList(), requester);
 
         targetMembers.forEach(node -> websocketBrokerReconnectionMessagingService.requestControl(node.nodeId(), requester, controlAction));
 

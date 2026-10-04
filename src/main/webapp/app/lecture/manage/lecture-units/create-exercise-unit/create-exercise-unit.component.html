@@ -22,13 +22,12 @@
                     <tr
                         id="exercise-{{ exercise.id }}"
                         class="cursor-pointer"
-                        tabindex="0"
                         [class.create-exercise-unit-selected]="selected"
                         (click)="selectExerciseForUnitCreation(exercise)"
                         (keydown.enter)="selectExerciseForUnitCreation(exercise)"
                     >
                         <td>
-                            <!-- The row toggles the selection for pointer users; the checkbox does it for keyboard users without toggling twice. -->
+                            <!-- The row toggles the selection for pointer users; the checkbox is the only tab stop per row; Enter on it bubbles to the row handler, so keyboard users toggle once. -->
                             <tumaet-ui-checkbox
                                 [inputId]="'exercise-select-' + exercise.id"
                                 [ariaLabel]="exercise.title ?? ''"

@@ -259,10 +259,7 @@ public class RepositoryVcsAccessTokenService {
      * @param exercise the programming exercise whose base repositories should get tokens (must have template/solution participations and auxiliary repositories loaded)
      */
     public void ensureTokensForExercise(ProgrammingExercise exercise) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new IllegalStateException("The course of programming exercise " + exercise.getId() + " cannot be resolved");
-        }
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         Set<User> staff = staffUsersOf(course);
         if (staff.isEmpty()) {
             return;

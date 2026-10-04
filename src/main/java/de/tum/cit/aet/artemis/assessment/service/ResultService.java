@@ -57,8 +57,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -591,29 +589,6 @@ public class ResultService {
     }
 
     /**
-     * Returns the result for the given id with authorization checks.
-     *
-     * @param participationId the id of the participation
-     * @param resultId        the id of the result
-     * @param role            the minimum role required to access the result
-     * @return the result
-     */
-    public Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
-        Result result = resultRepository.findByIdElseThrow(resultId);
-        Participation participation = result.getSubmission().getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
-                    "Participation", "400");
-        }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new EntityNotFoundException("No course found for result " + resultId);
-        }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
-        return result;
-    }
-
-    /**
      * Get a map of result ids to the respective build job ids if build log files for this build job exist.
      *
      * @param participationId the participation id for which the results and build logs should be checked
@@ -675,6 +650,10 @@ public class ResultService {
                 LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
                 if (longFeedback != null) {
                     feedback.setLongFeedbackText(Set.of(longFeedback));
+                }
+                else {
+                    // the flag is stale: no long feedback text exists behind it
+                    feedback.setHasLongFeedbackText(false);
                 }
             }
         }

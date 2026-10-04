@@ -417,10 +417,7 @@ public class ExerciseService {
             return;
         }
 
-        Course course = updatedExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new IllegalStateException("The course of the exercise " + updatedExercise.getId() + " could not be resolved");
-        }
+        Course course = updatedExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         for (ParticipantScore participantScore : participantScoreList) {
             Double lastPoints = null;
             Double lastRatedPoints = null;

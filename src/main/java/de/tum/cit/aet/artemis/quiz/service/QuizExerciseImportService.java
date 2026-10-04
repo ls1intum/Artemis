@@ -205,10 +205,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
             if (Files.exists(oldPath)) {
                 Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragAndDropBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND);
-                copy.setBackgroundFilePath(newPath.getFileName().toString());
+                // copyExistingFileToTarget returns null when the copy fails, and one unreadable background must not abort the whole quiz import
+                copy.setBackgroundFilePath(newPath == null ? originalBackgroundFilePath : newPath.getFileName().toString());
             }
             else {
-                copy.setBackgroundFilePath(original.getBackgroundFilePath());
+                copy.setBackgroundFilePath(originalBackgroundFilePath);
             }
         }
         else {

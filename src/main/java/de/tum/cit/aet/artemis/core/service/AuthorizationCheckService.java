@@ -203,7 +203,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorForExercise(@NonNull Exercise exercise) {
-        return isAtLeastEditorInCourse(getCourseOrThrow(exercise), null);
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
     }
 
     /**
@@ -216,22 +216,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorForExercise(@NonNull Exercise exercise, @Nullable User user) {
-        return isAtLeastEditorInCourse(getCourseOrThrow(exercise), user);
-    }
-
-    /**
-     * Resolves the course of the exercise for a permission check.
-     *
-     * @param exercise the exercise whose course is needed
-     * @return the course of the exercise, never null
-     * @throws IllegalStateException if the course cannot be resolved, e.g. on an exam exercise whose exam was masked
-     */
-    private static Course getCourseOrThrow(Exercise exercise) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new IllegalStateException("The course of exercise " + exercise.getId() + " cannot be resolved");
-        }
-        return course;
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -308,7 +293,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantForExercise(@NonNull Exercise exercise) {
-        return isAtLeastTeachingAssistantInCourse(getCourseOrThrow(exercise), null);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
     }
 
     /**
@@ -322,7 +307,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantForExercise(@NonNull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isAtLeastTeachingAssistantInCourse(getCourseOrThrow(exercise), user);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -346,7 +331,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentForExercise(@NonNull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isStudentInCourse(getCourseOrThrow(exercise), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
+        return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 
     /**
@@ -447,7 +432,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorForExercise(@NonNull Exercise exercise, @Nullable User user) {
-        return isAtLeastInstructorInCourse(getCourseOrThrow(exercise), user);
+        return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -482,7 +467,7 @@ public class AuthorizationCheckService {
      * @param user     the user whose permissions should be checked
      */
     public void checkHasAtLeastRoleForExerciseElseThrow(@NonNull Role role, @NonNull Exercise exercise, @Nullable User user) {
-        checkHasAtLeastRoleInCourseElseThrow(role, getCourseOrThrow(exercise), user);
+        checkHasAtLeastRoleInCourseElseThrow(role, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -722,7 +707,7 @@ public class AuthorizationCheckService {
         if (hasAdminAccess(user)) {
             return true;
         }
-        Course course = getCourseOrThrow(exercise);
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 

@@ -64,7 +64,7 @@
                             </button>
                         </div>
                         <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- This toolbar only isolates its nested controls from the feedback row. -->
-                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
                             @if (feedback()?.gradingInstruction) {
                                 <jhi-grading-instruction-link-icon [feedback]="feedback()!" />
                             }

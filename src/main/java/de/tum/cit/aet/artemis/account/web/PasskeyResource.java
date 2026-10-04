@@ -127,7 +127,7 @@ public class PasskeyResource {
         PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
         boolean isUserAllowedToUpdatePasskey = passkeyCredential.getUser().getId().equals(currentUser.getId());
         if (!isUserAllowedToUpdatePasskey) {
-            log.warn("User with id {} tried to update a credential of another user", currentUser.getId());
+            log.warn("User with id {} tried to update passkey {} owned by user {}", currentUser.getId(), passkeyCredential.getId(), passkeyCredential.getUser().getId());
             return ResponseEntity.notFound().build();
         }
 
@@ -157,7 +157,8 @@ public class PasskeyResource {
 
         boolean isUserAllowedToDeletePasskey = credentialToBeDeleted.get().getUser().getId().equals(currentUser.getId());
         if (!isUserAllowedToDeletePasskey) {
-            log.warn("User with id {} tried to delete a credential of another user", currentUser.getId());
+            log.warn("User with id {} tried to delete passkey {} owned by user {}", currentUser.getId(), credentialToBeDeleted.get().getId(),
+                    credentialToBeDeleted.get().getUser().getId());
             return ResponseEntity.notFound().build();
         }
 

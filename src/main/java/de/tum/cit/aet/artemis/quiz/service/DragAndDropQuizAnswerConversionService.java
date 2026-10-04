@@ -56,7 +56,7 @@ public class DragAndDropQuizAnswerConversionService {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
         if (backgroundFilePath == null) {
-            throw new IllegalStateException("The drag and drop question " + question.getId() + " has no background image");
+            throw new IOException("The drag and drop question " + question.getId() + " has no background image");
         }
         BufferedImage backgroundImage = ImageIO.read(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path().toFile());
 
@@ -118,11 +118,12 @@ public class DragAndDropQuizAnswerConversionService {
         Set<DragAndDropMapping> mappings = dragAndDropSubmittedAnswer.getMappings();
         for (var mapping : mappings) {
             if (dropLocation.equals(mapping.getDropLocation())) {
-                if (mapping.getDragItem().getPictureFilePath() == null) {
+                String pictureFilePath = mapping.getDragItem().getPictureFilePath();
+                if (pictureFilePath == null) {
                     drawTextDragItem(graphics, dropLocationCoordinates, dropLocationMidY, mapping);
                 }
                 else {
-                    drawPictureDragItem(graphics, dropLocationCoordinates, mapping);
+                    drawPictureDragItem(graphics, dropLocationCoordinates, pictureFilePath);
                 }
                 // if the drop location is invalid, we already marked the spot as invalid, no need to mark it twice
                 if (mapping.getDragItem().isInvalid() && !mapping.getDropLocation().isInvalid()) {
@@ -137,11 +138,7 @@ public class DragAndDropQuizAnswerConversionService {
         graphics.drawString(mapping.getDragItem().getText(), dropLocationCoordinates.x + 5, dropLocationMidY);
     }
 
-    private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, DragAndDropMapping mapping) throws IOException {
-        String pictureFilePath = mapping.getDragItem().getPictureFilePath();
-        if (pictureFilePath == null) {
-            throw new IllegalStateException("The drag item " + mapping.getDragItem().getId() + " has no picture");
-        }
+    private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, String pictureFilePath) throws IOException {
         BufferedImage dragItem = ImageIO.read(new FileSystemLocation.DragItem(pictureFilePath).path().toFile());
         Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
                 new Dimension(dropLocationCoordinates.width, dropLocationCoordinates.height));

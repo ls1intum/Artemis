@@ -9,12 +9,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -22,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -158,28 +157,33 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
-    private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
-            Resource[] staticCodeAnalysisResources, Path staticCodeAnalysisPrefix) {
+    private static final class RepositoryResources {
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || other instanceof RepositoryResources that && Objects.equals(repository, that.repository) && Arrays.equals(resources, that.resources)
-                    && Objects.equals(prefix, that.prefix) && Arrays.equals(projectTypeResources, that.projectTypeResources)
-                    && Objects.equals(projectTypePrefix, that.projectTypePrefix) && Arrays.equals(staticCodeAnalysisResources, that.staticCodeAnalysisResources)
-                    && Objects.equals(staticCodeAnalysisPrefix, that.staticCodeAnalysisPrefix);
-        }
+        private final Repository repository;
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(repository, Arrays.hashCode(resources), prefix, Arrays.hashCode(projectTypeResources), projectTypePrefix,
-                    Arrays.hashCode(staticCodeAnalysisResources), staticCodeAnalysisPrefix);
-        }
+        private final Resource[] resources;
 
-        @Override
-        public String toString() {
-            return "RepositoryResources[repository=" + repository + ", resources=" + Arrays.toString(resources) + ", prefix=" + prefix + ", projectTypeResources="
-                    + Arrays.toString(projectTypeResources) + ", projectTypePrefix=" + projectTypePrefix + ", staticCodeAnalysisResources="
-                    + Arrays.toString(staticCodeAnalysisResources) + ", staticCodeAnalysisPrefix=" + staticCodeAnalysisPrefix + "]";
+        private final Path prefix;
+
+        private final Resource @Nullable [] projectTypeResources;
+
+        @Nullable
+        private final Path projectTypePrefix;
+
+        private final Resource @Nullable [] staticCodeAnalysisResources;
+
+        @Nullable
+        private final Path staticCodeAnalysisPrefix;
+
+        private RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource @Nullable [] projectTypeResources, @Nullable Path projectTypePrefix,
+                Resource @Nullable [] staticCodeAnalysisResources, @Nullable Path staticCodeAnalysisPrefix) {
+            this.repository = repository;
+            this.resources = resources;
+            this.prefix = prefix;
+            this.projectTypeResources = projectTypeResources;
+            this.projectTypePrefix = projectTypePrefix;
+            this.staticCodeAnalysisResources = staticCodeAnalysisResources;
+            this.staticCodeAnalysisPrefix = staticCodeAnalysisPrefix;
         }
     }
 

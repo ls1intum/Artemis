@@ -222,9 +222,16 @@ public class OnlineUnitResource {
         }
 
         // Convert to ASCII (punycode) for IDN safety
-        String asciiHost = IDN.toASCII(host);
+        String asciiHost;
+        try {
+            asciiHost = IDN.toASCII(host);
+        }
+        catch (IllegalArgumentException e) {
+            // an empty label ("example..com") or a label longer than 63 characters cannot be converted
+            return false;
+        }
 
-        if (asciiHost.isEmpty() || asciiHost.length() > MAX_DOMAIN_LENGTH) {
+        if (asciiHost.length() > MAX_DOMAIN_LENGTH) {
             return false;
         }
 

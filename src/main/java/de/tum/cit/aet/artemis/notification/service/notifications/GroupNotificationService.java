@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -225,7 +224,7 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
-        var course = getCourseElseThrow(exercise);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
@@ -241,7 +240,7 @@ public class GroupNotificationService {
      * @param exercise the exercise where the builds status changed
      */
     public void notifyEditorAndInstructorGroupsAboutBuildRunUpdate(ProgrammingExercise exercise) {
-        var course = getCourseElseThrow(exercise);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
@@ -257,7 +256,7 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise) {
-        var course = getCourseElseThrow(exercise);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
         var formattedReleaseDate = exercise.getReleaseDate() != null ? exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
         var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
@@ -268,13 +267,5 @@ public class GroupNotificationService {
                 exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
-    }
-
-    private static Course getCourseElseThrow(Exercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new IllegalStateException("Cannot resolve the course of exercise " + exercise.getId());
-        }
-        return course;
     }
 }

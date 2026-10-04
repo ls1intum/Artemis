@@ -31,7 +31,8 @@ class LinkPreviewUrlValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "https://localhost", "http://127.0.0.1", "http://[::1]", "ftp://example.com", "javascript:void(0)", "https://user@example.com",
-            "https://example.superlongtldover20chars", "https://example.com:99999", "example.com" })
+            "https://example.superlongtldover20chars", "https://example.com:99999", "example.com", "https://localhost.",
+            "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.com", "https://example..com", "https://example.c0m" })
     void rejectsInvalidUrls(String url) {
         var validator = new LinkPreviewUrlValidator(host -> new InetAddress[] { InetAddress.getByName("93.184.216.34") });
 

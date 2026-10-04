@@ -26,6 +26,6 @@ public record ImageDTO(int page, float xPosition, float yPosition, int originalW
     @Override
     public String toString() {
         return "ImageDTO[page=" + page + ", xPosition=" + xPosition + ", yPosition=" + yPosition + ", originalWidth=" + originalWidth + ", originalHeight=" + originalHeight
-                + ", renderedWidth=" + renderedWidth + ", renderedHeight=" + renderedHeight + ", imageInBytes=" + Arrays.toString(imageInBytes) + "]";
+                + ", renderedWidth=" + renderedWidth + ", renderedHeight=" + renderedHeight + ", imageInBytes=" + imageInBytes.length + " bytes" + "]";
     }
 }

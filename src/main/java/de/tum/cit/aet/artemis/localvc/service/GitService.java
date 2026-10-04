@@ -143,12 +143,13 @@ public class GitService extends AbstractGitService {
      * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
      * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitException         if the participation has no repository URI.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
     public Repository getOrCheckoutRepositoryForJPlag(@NonNull ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
         var repoUri = participation.getVcsRepositoryUri();
         if (repoUri == null) {
-            throw new IllegalStateException("Participation " + participation.getId() + " has no repository URI and cannot be checked out for JPlag");
+            throw new GitException("Participation " + participation.getId() + " has no repository URI and cannot be checked out for JPlag");
         }
         String repoFolderName = repoUri.folderNameForRepositoryUri();
 

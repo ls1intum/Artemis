@@ -71,7 +71,7 @@ public class FileDownloadService {
 
         @Override
         public String toString() {
-            return "FileDownloadPayload[status=" + status + ", content=" + Arrays.toString(content) + ", headers=" + headers + ", mediaType=" + mediaType + ", contentRange="
+            return "FileDownloadPayload[status=" + status + ", content=" + content.length + " bytes" + ", headers=" + headers + ", mediaType=" + mediaType + ", contentRange="
                     + contentRange + "]";
         }
     }

@@ -128,11 +128,7 @@ public class ProgrammingPlagiarismDetectionService {
         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
 
         // Only one plagiarism check per course allowed
-        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new BadRequestAlertException("The programming exercise is not part of a course", "PlagiarismCheck", "exerciseWithoutCourse");
-        }
-        var courseId = course.getId();
+        var courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
 
         // Claim the course before entering the try block: the finally below releases the course, and a caller that was
         // refused must not release the check somebody else is running.

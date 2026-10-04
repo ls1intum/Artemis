@@ -90,7 +90,7 @@ public class TumLiveService {
             }
         }
         catch (URISyntaxException e) {
-            log.error("Malformed TUM Live URL: {}", videoUrl, e);
+            log.warn("Malformed TUM Live URL: {} at index {}", e.getReason(), e.getIndex());
         }
         return null;
     }

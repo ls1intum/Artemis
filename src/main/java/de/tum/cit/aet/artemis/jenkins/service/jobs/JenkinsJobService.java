@@ -140,7 +140,8 @@ public class JenkinsJobService {
      *
      * @param folderName the name of the folder
      * @return the xml document or null if the folder doesn't exist
-     * @throws IOException in case of errors
+     * @throws IOException      in case of errors
+     * @throws JenkinsException if Jenkins returns no config for an existing folder
      */
     public Document getFolderConfig(String folderName) throws IOException {
         if (getFolderJob(folderName) == null) {
@@ -150,7 +151,7 @@ public class JenkinsJobService {
         URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
         String folderXml = restTemplate.getForObject(uri, String.class);
         if (folderXml == null) {
-            throw new IOException("Jenkins returned an empty config for folder " + folderName);
+            throw new JenkinsException("Jenkins returned an empty config for folder " + folderName);
         }
         return JenkinsXmlFileUtils.readFromString(folderXml);
     }

@@ -315,7 +315,8 @@ public class ExerciseDateService {
             throw new IllegalArgumentException("This method should only be used for exam exercises");
         }
         ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-        return computeExamAssessmentDates(exercise, api.getLatestIndividualExamEndDate(exercise.getExam()));
+        Exam exam = exercise.getExam();
+        return computeExamAssessmentDates(exercise, exam, api.getLatestIndividualExamEndDate(exam));
     }
 
     /**
@@ -324,18 +325,15 @@ public class ExerciseDateService {
      * programming build-and-test date on top.
      *
      * @param exercise                    an exam exercise
+     * @param exam                        the exam of the exercise
      * @param latestIndividualExamEndDate the latest individual exam end date, as returned by
      *                                        {@code ExamDateApi#getLatestIndividualExamEndDate}
      * @return both relevant dates, or {@code null} if the given end date is {@code null}, i.e. the exam has no dates yet
      */
     @Nullable
-    public static ExamAssessmentDates computeExamAssessmentDates(Exercise exercise, @Nullable ZonedDateTime latestIndividualExamEndDate) {
+    public static ExamAssessmentDates computeExamAssessmentDates(Exercise exercise, Exam exam, @Nullable ZonedDateTime latestIndividualExamEndDate) {
         if (latestIndividualExamEndDate == null) {
             return null;
-        }
-        Exam exam = exercise.getExam();
-        if (exam == null) {
-            throw new IllegalArgumentException("The exam of the exercise " + exercise.getId() + " is not available");
         }
         ZonedDateTime latestExamEndDate = latestIndividualExamEndDate.plusSeconds(Objects.requireNonNullElse(exam.getGracePeriod(), 0));
 

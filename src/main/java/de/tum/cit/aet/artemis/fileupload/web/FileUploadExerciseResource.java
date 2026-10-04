@@ -639,11 +639,7 @@ public class FileUploadExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null) {
-            throw new IllegalStateException("The course of exercise " + exerciseId + " cannot be resolved");
-        }
-        exerciseService.logDeletion(exercise, course, user);
+        exerciseService.logDeletion(exercise, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
         exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exercise.getTitle())).build();
     }
