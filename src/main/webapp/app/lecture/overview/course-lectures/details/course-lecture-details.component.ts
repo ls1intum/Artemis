@@ -382,7 +382,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             const attachmentUnit = targetUnit as AttachmentVideoUnit;
             const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
-            const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
+            const attachment = attachmentUnit.attachment;
+            const pdfCandidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
+            const isPdf = pdfCandidate?.toLowerCase().endsWith('.pdf');
             if (!hasVideo) {
                 timestamp = undefined;
             }

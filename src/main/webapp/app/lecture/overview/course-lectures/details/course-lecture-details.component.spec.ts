@@ -720,6 +720,16 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, timestamp: undefined, page: undefined }));
         });
 
+        it('should keep a page target when the rendered student version is a PDF', () => {
+            const unit = attachmentUnit(7, '/path/to/slides.zip', '');
+            unit.attachment!.studentVersion = '/path/to/student/slides.pdf';
+            respondWith([unit]);
+
+            reInit({ unit: '7', page: '4' });
+
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
+        });
+
         it('should clear the previous deep link when the unit param is not a positive integer', () => {
             respondWith([attachmentUnit(7)]);
             reInit({ unit: '7', page: '4' });
