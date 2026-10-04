@@ -5,7 +5,15 @@
             <span jhiTranslate="artemisApp.examRooms.management.introText"></span>
         </div>
         <div class="flex items-center gap-2">
-            <input #roomDataFileSelect id="roomDataFileSelect" type="file" class="hidden" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
+            <input
+                #roomDataFileSelect
+                id="roomDataFileSelect"
+                type="file"
+                [attr.aria-label]="'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate"
+                class="hidden"
+                (change)="onFileSelectedAcceptZip($event)"
+                accept=".zip"
+            />
             <button id="roomDataFileSelectButton" type="button" tumAetUiButton variant="outlined" (click)="roomDataFileSelect.click()">
                 @if (!hasSelectedFile()) {
                     {{ 'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate }}

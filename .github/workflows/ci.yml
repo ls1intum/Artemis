@@ -585,6 +585,7 @@ jobs:
     uses: ./.github/workflows/ci-sonar.yml
     permissions:
       contents: read
+      actions: read  # ci-sonar.yml lists runs and downloads artifacts when it is dispatched on its own
     with:
       commit_sha: ${{ github.sha }}
       with_coverage: true

@@ -87,7 +87,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public static final String IRIS_BOT_LOGIN = "iris_bot";
 
-    @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
