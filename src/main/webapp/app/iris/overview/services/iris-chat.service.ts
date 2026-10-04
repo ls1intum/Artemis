@@ -789,7 +789,9 @@ export class IrisChatService implements OnDestroy {
         this.contextService.commitSentContext(ctx);
         const updatedSessions = this.chatSessions
             .getValue()
-            .map((session) => (session.id === this.sessionId ? cloneWith(session, { mode: ctx.mode, entityId: ctx.entityId, entityName: ctx.entityName ?? session.entityName }) : session));
+            .map((session) =>
+                session.id === this.sessionId ? cloneWith(session, { mode: ctx.mode, entityId: ctx.entityId, entityName: ctx.entityName ?? session.entityName }) : session,
+            );
         this.chatSessions.next(updatedSessions);
     }
 
