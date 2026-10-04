@@ -30,9 +30,10 @@
     border-radius: 0.5rem;
     font-size: 1.2rem;
 
-    // A muted chip, not the brand primary - the icon is decorative here, not a clickable button.
-    color: var(--secondary);
-    background: color-mix(in srgb, var(--secondary) 12%, transparent);
+    // Framed like the empty-state icon: the section icon on a surface tile, not a solid primary button.
+    color: var(--tumaet-ui-primary-color);
+    background: var(--tumaet-ui-content-background);
+    border: 1px solid var(--tumaet-ui-control-border-color);
 }
 
 .checklist-hero-title {
