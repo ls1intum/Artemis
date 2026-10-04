@@ -223,7 +223,7 @@ public class TextExerciseResource {
         notifyAtlasML(textExercise, OperationTypeDTO.DELETE, "text exercise deletion");
 
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
         exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }

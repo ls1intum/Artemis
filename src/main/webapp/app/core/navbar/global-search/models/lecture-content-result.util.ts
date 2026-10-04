@@ -13,7 +13,7 @@ export const LECTURE_CONTENT_TYPE = 'lecture_content';
  */
 function serializeQueryParams(queryParams: Record<string, string | number>): string {
     return Object.keys(queryParams)
-        .sort()
+        .sort((a, b) => a.localeCompare(b))
         .map((key) => `${key}=${queryParams[key]}`)
         .join('&');
 }

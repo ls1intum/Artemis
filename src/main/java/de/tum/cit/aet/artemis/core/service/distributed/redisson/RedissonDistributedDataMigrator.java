@@ -59,6 +59,9 @@ class RedissonDistributedDataMigrator {
      */
     private static final long LOCK_WAIT_MINUTES = 10;
 
+    /** How many set elements are read from the source before they are moved and the iteration is restarted. */
+    private static final int DRAIN_SET_BATCH_SIZE = 1000;
+
     /** What {@code RMapCache.remainTimeToLive} answers for an entry that exists but never expires. */
     private static final long NO_EXPIRY = -1;
 
@@ -341,12 +344,25 @@ class RedissonDistributedDataMigrator {
      */
     private long drainSet(RSet<byte[]> source, RSet<byte[]> target) {
         long moved = 0;
-        for (byte[] element : source) {
-            target.add(element);
-            source.remove(element);
-            moved++;
+        while (true) {
+            // Collect a bounded batch first and modify the set only after the iterator is done with it, so the
+            // iterator is never used after the collection changed underneath it.
+            List<byte[]> batch = new ArrayList<>(DRAIN_SET_BATCH_SIZE);
+            for (byte[] element : source) {
+                batch.add(element);
+                if (batch.size() >= DRAIN_SET_BATCH_SIZE) {
+                    break;
+                }
+            }
+            if (batch.isEmpty()) {
+                return moved;
+            }
+            for (byte[] element : batch) {
+                target.add(element);
+                source.remove(element);
+                moved++;
+            }
         }
-        return moved;
     }
 
     @FunctionalInterface

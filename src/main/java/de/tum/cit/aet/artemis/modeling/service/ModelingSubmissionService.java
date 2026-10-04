@@ -80,8 +80,9 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
         var submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
 
-        if (submission.getLatestResult() == null || submission.getLatestResult().getAssessor() == null) {
-            checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        var latestResult = submission.getLatestResult();
+        if (latestResult == null || latestResult.getAssessor() == null) {
+            checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         }
 
         lockSubmission(submission, correctionRound);

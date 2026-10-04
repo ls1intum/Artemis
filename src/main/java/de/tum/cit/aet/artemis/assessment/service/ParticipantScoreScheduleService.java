@@ -512,7 +512,7 @@ public class ParticipantScoreScheduleService {
         else {
             associatedParticipantScore.setLastScore(newLastResult.getScore());
             associatedParticipantScore.setLastPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastResult.getScore() * 0.01 * exercise.getMaxPoints(),
-                    exercise.getCourseViaExerciseGroupOrCourseMember()));
+                    exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow()));
         }
     }
 
@@ -528,7 +528,7 @@ public class ParticipantScoreScheduleService {
         else {
             associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
             associatedParticipantScore.setLastRatedPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(),
-                    exercise.getCourseViaExerciseGroupOrCourseMember()));
+                    exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow()));
         }
     }
 
