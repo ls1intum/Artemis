@@ -4,7 +4,7 @@
     [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate"
     [required]="true"
     [invalid]="languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()"
-    [error]="languageValidation.message | artemisTranslate"
+    [error]="languageValidation.status === TutorialEditValidationStatus.INVALID ? (languageValidation.message | artemisTranslate) : ''"
 >
     <input
         id="tutorial-edit-language-input"

@@ -9,7 +9,7 @@
                 [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.title' | artemisTranslate"
                 [required]="true"
                 [invalid]="titleValidation.status === ValidationStatus.INVALID && titleInputTouched()"
-                [error]="titleValidation.message | artemisTranslate"
+                [error]="titleValidation.status === ValidationStatus.INVALID ? (titleValidation.message | artemisTranslate) : ''"
             >
                 <input
                     id="title-input"
@@ -69,7 +69,7 @@
                 controlId="campus-input"
                 [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus' | artemisTranslate"
                 [invalid]="campusValidation.status === ValidationStatus.INVALID"
-                [error]="campusValidation.message | artemisTranslate"
+                [error]="campusValidation.status === ValidationStatus.INVALID ? (campusValidation.message | artemisTranslate) : ''"
             >
                 <input id="campus-input" tumAetUiInput [(ngModel)]="campus" [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus' | artemisTranslate" />
             </tumaet-ui-form-field>
@@ -94,7 +94,7 @@
                 controlId="additional-information-input"
                 [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation' | artemisTranslate"
                 [invalid]="additionalInformationValidation.status === ValidationStatus.INVALID"
-                [error]="additionalInformationValidation.message | artemisTranslate"
+                [error]="additionalInformationValidation.status === ValidationStatus.INVALID ? (additionalInformationValidation.message | artemisTranslate) : ''"
             >
                 <input
                     id="additional-information-input"
@@ -126,7 +126,7 @@
                     [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate"
                     [required]="true"
                     [invalid]="firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()"
-                    [error]="firstSessionStartValidation.message | artemisTranslate"
+                    [error]="firstSessionStartValidation.status === ValidationStatus.INVALID ? (firstSessionStartValidation.message | artemisTranslate) : ''"
                 >
                     <tumaet-ui-date-picker
                         inputId="first-session-start-input"
@@ -149,7 +149,7 @@
                     [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate"
                     [required]="true"
                     [invalid]="firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()"
-                    [error]="firstSessionEndValidation.message | artemisTranslate"
+                    [error]="firstSessionEndValidation.status === ValidationStatus.INVALID ? (firstSessionEndValidation.message | artemisTranslate) : ''"
                 >
                     <tumaet-ui-date-picker
                         inputId="first-session-end-input"
@@ -192,7 +192,7 @@
                     [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate"
                     [required]="true"
                     [invalid]="tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()"
-                    [error]="tutorialPeriodEndValidation.message | artemisTranslate"
+                    [error]="tutorialPeriodEndValidation.status === ValidationStatus.INVALID ? (tutorialPeriodEndValidation.message | artemisTranslate) : ''"
                 >
                     <tumaet-ui-date-picker
                         inputId="tutorial-period-end-input"
@@ -218,7 +218,7 @@
                     [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate"
                     [required]="true"
                     [invalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
-                    [error]="locationValidation.message | artemisTranslate"
+                    [error]="locationValidation.status === ValidationStatus.INVALID ? (locationValidation.message | artemisTranslate) : ''"
                 >
                     <input
                         id="location-input"
