@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static jakarta.persistence.Persistence.getPersistenceUtil;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -176,11 +178,11 @@ public abstract class ExerciseImportService {
     }
 
     private static boolean hasPlagiarismDetectionConfig(Exercise exercise) {
-        return Hibernate.isPropertyInitialized(exercise, "plagiarismDetectionConfig") && exercise.getPlagiarismDetectionConfig() != null;
+        return getPersistenceUtil().isLoaded(exercise, "plagiarismDetectionConfig") && exercise.getPlagiarismDetectionConfig() != null;
     }
 
     private static boolean hasTeamAssignmentConfig(Exercise exercise) {
-        return Hibernate.isPropertyInitialized(exercise, "teamAssignmentConfig") && exercise.getTeamAssignmentConfig() != null;
+        return getPersistenceUtil().isLoaded(exercise, "teamAssignmentConfig") && exercise.getTeamAssignmentConfig() != null;
     }
 
     /**
