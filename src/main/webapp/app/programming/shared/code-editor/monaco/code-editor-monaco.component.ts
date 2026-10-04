@@ -127,6 +127,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
+
+    hasUnsavedInlineFeedback(): boolean {
+        return this.newFeedbackLines().length > 0 || this.inlineFeedbackComponents().some((component) => component.hasUnsavedEdits());
+    }
     /** Line (0-based) → unsaved draft feedback that has a grading instruction link. */
     private readonly pendingFeedbackByLine = signal<Map<number, Feedback>>(new Map());
     readonly binaryFileSelected = signal<boolean>(false);

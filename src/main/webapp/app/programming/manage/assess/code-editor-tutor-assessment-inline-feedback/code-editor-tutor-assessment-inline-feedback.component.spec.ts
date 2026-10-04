@@ -57,6 +57,38 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
     });
 
+    it('should report draft and existing-card edits until save or cancel', () => {
+        fixture.detectChanges();
+        expect(comp.hasUnsavedEdits()).toBe(true);
+        comp.cancelFeedback();
+
+        const saved = { id: 1, type: FeedbackType.MANUAL, detailText: 'Original', credits: 1 } as Feedback;
+        fixture.componentRef.setInput('feedback', saved);
+        fixture.detectChanges();
+        expect(comp.hasUnsavedEdits()).toBe(false);
+
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+        expect(comp.hasUnsavedEdits()).toBe(false);
+        const textarea = fixture.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]') as HTMLTextAreaElement;
+        textarea.value = 'Edited';
+        textarea.dispatchEvent(new Event('input'));
+        expect(comp.hasUnsavedEdits()).toBe(true);
+        comp.cancelFeedback();
+        expect(comp.hasUnsavedEdits()).toBe(false);
+
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+        const points = fixture.nativeElement.querySelector('[data-testid="feedback-editor-points-input"]') as HTMLInputElement;
+        points.value = '-';
+        points.dispatchEvent(new Event('input'));
+        expect(comp.hasUnsavedEdits()).toBe(true);
+        points.value = '2';
+        points.dispatchEvent(new Event('change'));
+        comp.updateFeedback();
+        expect(comp.hasUnsavedEdits()).toBe(false);
+    });
+
     it('should enable edit feedback and emit to parent', () => {
         const onEditFeedbackSpy = vi.fn();
         comp.onEditFeedback.subscribe(onEditFeedbackSpy);
@@ -283,6 +315,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         comp.updateFeedbackOnDrop(new Event(''));
         expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
         expect(comp.currentFeedback().credits).toBe(2);
+        expect(comp.hasUnsavedEdits()).toBe(true);
 
         const restoredEmits: Feedback[] = [];
         comp.onUpdateFeedback.subscribe((feedback) => restoredEmits.push(feedback));
@@ -295,6 +328,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.currentFeedback().credits).toBe(1);
         expect(comp.currentFeedback().gradingInstruction).toBeUndefined();
         expect(comp.viewOnly()).toBe(true);
+        expect(comp.hasUnsavedEdits()).toBe(false);
     });
 
     it('should keep the editor open when Monaco rebinds a cloned instruction update and restore on cancel', () => {

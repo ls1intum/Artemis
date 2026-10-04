@@ -104,6 +104,9 @@
                         </tumaet-ui-button>
                     }
                     @if (!readOnly()) {
+                        @if (feedback().gradingInstruction) {
+                            <jhi-grading-instruction-link-icon [feedback]="feedback()" (linkRemoved)="unlinkInstruction()" />
+                        }
                         <button
                             type="button"
                             jhiDeleteButton
@@ -179,6 +182,9 @@
                         </tumaet-ui-button>
                     }
                     @if (!readOnly()) {
+                        @if (feedback().gradingInstruction) {
+                            <jhi-grading-instruction-link-icon [feedback]="feedback()" (linkRemoved)="unlinkInstruction()" />
+                        }
                         <button
                             type="button"
                             jhiDeleteButton

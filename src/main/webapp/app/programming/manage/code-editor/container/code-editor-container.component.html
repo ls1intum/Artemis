@@ -44,6 +44,7 @@
         [fileSyncService]="fileSyncService()"
         [showHeader]="showNavbar()"
         [(selectedFile)]="selectedFile"
+        [canSelectFile]="canSwitchFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
         (onError)="onError($event)"

@@ -26,6 +26,7 @@ import {
     TumAetUiTagSeverity,
 } from '@tumaet/ui-angular';
 import { CREDITS_STEP, normalizedCredits, pointsLabel, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 
 /** Awarded / deducted / neutral — drives the card's left accent stripe. */
 export type FeedbackTone = 'positive' | 'negative' | 'neutral';
@@ -52,6 +53,7 @@ export type FeedbackTone = 'positive' | 'negative' | 'neutral';
         TumAetUiTagComponent,
         TumAetUiInputGroupComponent,
         TumAetUiInputGroupAddonComponent,
+        GradingInstructionLinkIconComponent,
     ],
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
@@ -246,6 +248,11 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         const feedback = this.feedback();
         this.feedback.set(feedback);
         this.onFeedbackChange.emit(feedback);
+    }
+
+    unlinkInstruction(): void {
+        this.creditsEpoch.update((epoch) => epoch + 1);
+        this.onFeedbackChange.emit(this.feedback());
     }
 
     updateHeaderTitle(title: string): void {

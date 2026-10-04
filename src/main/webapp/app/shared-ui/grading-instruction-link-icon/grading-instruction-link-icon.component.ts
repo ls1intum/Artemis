@@ -42,8 +42,8 @@ export class GradingInstructionLinkIconComponent implements OnInit {
      * Set the tooltip of the link icon to be equal to the grading instruction description text
      * @param {GradingInstruction} instruction - the instruction object which is associated with feedback
      */
-    setTooltip(instruction: GradingInstruction) {
-        return this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + instruction.instructionDescription;
+    setTooltip(instruction?: GradingInstruction) {
+        return this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + (instruction?.instructionDescription ?? '');
     }
 
     /**

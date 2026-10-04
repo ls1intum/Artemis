@@ -278,6 +278,8 @@ describe('CodeEditorMonacoComponent', () => {
         points.dispatchEvent(new Event('change'));
         fixture.detectChanges();
 
+        expect(comp.hasUnsavedInlineFeedback()).toBe(true);
+
         comp.acceptSuggestion(suggestion);
         fixture.detectChanges();
 
@@ -289,6 +291,7 @@ describe('CodeEditorMonacoComponent', () => {
         card.updateFeedback();
 
         expect(comp.feedbackInternal().find((feedback) => feedback.id === 1)).toEqual(expect.objectContaining({ detailText: 'Edited comment', credits: 1.5 }));
+        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
     });
 
     it('should remove only the selected suggestion when identical text appears on another line', () => {
@@ -1098,6 +1101,9 @@ describe('CodeEditorMonacoComponent', () => {
         comp.addNewFeedback(feedbackLineOneBased);
         await vi.advanceTimersByTimeAsync(20);
         expect(comp.newFeedbackLines()).toContain(feedbackLineZeroBased);
+        expect(comp.hasUnsavedInlineFeedback()).toBe(true);
+        comp.cancelFeedback(feedbackLineZeroBased);
+        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
         vi.useRealTimers();
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();

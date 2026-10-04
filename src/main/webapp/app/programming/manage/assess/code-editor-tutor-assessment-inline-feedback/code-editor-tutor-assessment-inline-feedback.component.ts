@@ -75,6 +75,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly feedback = input<Feedback>();
 
     private readonly editSessionActive = signal(false);
+    private readonly creditInputEdited = signal(false);
     private pendingStepCredits: number | undefined;
 
     /**
@@ -136,6 +137,29 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     readonly oldFeedback = signal<Feedback>(new Feedback());
 
+    /** Editor parents read this before file changes, navigation, and assessment saves. */
+    hasUnsavedEdits(): boolean {
+        if (!this.feedback()) {
+            return true;
+        }
+        if (!this.editSessionActive()) {
+            return false;
+        }
+        const current = this.currentFeedback();
+        const original = this.oldFeedback();
+        return (
+            this.creditInputEdited() ||
+            current.detailText !== original.detailText ||
+            current.credits !== original.credits ||
+            current.text !== original.text ||
+            current.gradingInstruction?.id !== original.gradingInstruction?.id
+        );
+    }
+
+    protected onCreditsInput(): void {
+        this.creditInputEdited.set(true);
+    }
+
     /**
      * Criterion title for instruction-linked feedback, else suggestion title. Method (not computed): unlink
      * mutates {@link currentFeedback}.gradingInstruction in place without a new signal identity.
@@ -168,6 +192,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
             feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         }
         this.editSessionActive.set(false);
+        this.creditInputEdited.set(false);
         this.viewOnly.set(true);
         if (feedback.credits && feedback.credits > 0) {
             feedback.positive = true;
@@ -212,6 +237,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.currentFeedback.set(restored);
         this.oldFeedback.set(deepClone(restored));
         this.editSessionActive.set(false);
+        this.creditInputEdited.set(false);
         this.viewOnly.set(restored.type === this.MANUAL);
         if (this.feedback()) {
             // Existing card: push restored state so in-place link/unlink during edit reverts in usage counts.
@@ -268,6 +294,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const feedback = deepClone(this.currentFeedback());
         feedback.credits = normalizedCredits(credits);
         this.currentFeedback.set(feedback);
+        this.creditInputEdited.set(false);
     }
 
     /**
@@ -285,6 +312,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
+        this.creditInputEdited.set(false);
         this.editSessionActive.set(true);
         this.viewOnly.set(false);
         // Save the old feedback in case the user cancels later

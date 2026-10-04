@@ -40,6 +40,7 @@
                         type="number"
                         [step]="CREDITS_STEP"
                         [value]="currentFeedback().credits ?? ''"
+                        (input)="onCreditsInput()"
                         (change)="updateCredits(pointsInput.valueAsNumber)"
                         [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                         (keydown)="handleKeydown($event)"

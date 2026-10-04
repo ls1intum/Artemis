@@ -24,7 +24,11 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockRepositoryFileService } from 'test/helpers/mocks/service/mock-repository-file.service';
 
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
+import {
+    CodeEditorTutorAssessmentContainerComponent,
+    canLeaveCodeEditorTutorAssessmentContainer,
+} from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -33,7 +37,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, ParamMap, Router, RouterStateSnapshot, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -640,6 +644,44 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.cancelBusy()).toBe(false);
         expect(navigateBackStub).toHaveBeenCalledOnce();
         expect(cancelBackStub).toHaveBeenCalledOnce();
+    });
+
+    it('should block assessment save, submit, and next submission while an inline card is unsaved', async () => {
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({ hasUnsavedInlineFeedback: () => true } as CodeEditorContainerComponent);
+        const saveSpy = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.participation.set(participation);
+        comp.submission.set(submission);
+        comp.manualResult.set(result);
+
+        comp.save();
+        await comp.submit();
+        comp.nextSubmission();
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).not.toHaveBeenCalled();
+        expect(comp.saveBusy()).toBe(false);
+        expect(comp.submitBusy()).toBe(false);
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+    });
+
+    it('should ask before leaving an assessment with unsaved inline feedback', () => {
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({ hasUnsavedInlineFeedback: () => true } as CodeEditorContainerComponent);
+        comp.submission.set(submission);
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+        const canLeave = () =>
+            TestBed.runInInjectionContext(() =>
+                canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot),
+            );
+
+        const beforeUnload = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+        comp.handleBeforeUnload(beforeUnload);
+        expect(beforeUnload.defaultPrevented).toBe(true);
+
+        expect(canLeave()).toBe(false);
+        confirmSpy.mockReturnValue(true);
+        expect(canLeave()).toBe(true);
+        expect(confirmSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.confirmLeave');
     });
 
     it('should go to next submission', async () => {

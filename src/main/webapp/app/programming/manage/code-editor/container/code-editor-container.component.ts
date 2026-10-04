@@ -132,8 +132,23 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     set selectedFile(file: string | undefined) {
+        if (file !== this.selectedFileValue() && !this.canSwitchFile()) {
+            return;
+        }
         this.selectedFileValue.set(file);
     }
+
+    hasUnsavedInlineFeedback(): boolean {
+        return this.isTutorAssessment() && (this.monacoEditor()?.hasUnsavedInlineFeedback() ?? false);
+    }
+
+    readonly canSwitchFile = (): boolean => {
+        if (!this.hasUnsavedInlineFeedback()) {
+            return true;
+        }
+        this.alertService.error('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+        return false;
+    };
 
     get problemStatementIdentifier(): string {
         return PROBLEM_STATEMENT_IDENTIFIER;
@@ -456,7 +471,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * The user will be warned if there are unsaved changes when trying to leave the code-editor.
      */
     canDeactivate() {
-        return _isEmpty(this.unsavedFiles);
+        return _isEmpty(this.unsavedFiles) && !this.hasUnsavedInlineFeedback();
     }
 
     /**

@@ -345,7 +345,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     @HostListener('window:beforeunload', ['$event'])
     handleBeforeUnload(event: BeforeUnloadEvent) {
-        if (this.hasPendingChanges && this.submission() !== undefined) {
+        if ((this.hasPendingChanges || this.codeEditorContainer()?.hasUnsavedInlineFeedback()) && this.submission() !== undefined) {
             // Required to trigger the native prompt in modern browsers
             event.preventDefault();
         }
@@ -488,6 +488,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Save the assessment
      */
     save(): void {
+        if (!this.canProceedWithInlineFeedback()) {
+            return;
+        }
         this.saveBusy.set(true);
         this.handleSaveOrSubmit(undefined, 'artemisApp.textAssessment.saveSuccessful');
     }
@@ -518,7 +521,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Submit the assessment
      */
     async submit(): Promise<void> {
+        if (!this.canProceedWithInlineFeedback()) {
+            return;
+        }
         if (!(await this.discardPendingSubmissionsWithConfirmation())) {
+            return;
+        }
+        if (!this.canProceedWithInlineFeedback()) {
             return;
         }
         this.submitBusy.set(true);
@@ -574,6 +583,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
+        if (!this.canProceedWithInlineFeedback()) {
+            return;
+        }
         this.loadingParticipation.set(true);
         this.submission.set(undefined);
         this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise().id!, true, this.correctionRound()).subscribe({
@@ -626,6 +638,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
      */
     onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
+        if (!this.canProceedWithInlineFeedback()) {
+            assessmentAfterComplaint.onError();
+            return;
+        }
         this.validateFeedback();
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.programmingAssessment.invalidAssessments');
@@ -870,6 +886,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
+    private canProceedWithInlineFeedback(): boolean {
+        if (!this.codeEditorContainer()?.hasUnsavedInlineFeedback()) {
+            return true;
+        }
+        this.alertService.error('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+        return false;
+    }
+
     private calculateTotalScore() {
         const feedbacks = [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
         const totalScore = this.calculateTotalScoreOfFeedbacks(feedbacks);
@@ -884,7 +908,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 }
 
 export const canLeaveCodeEditorTutorAssessmentContainer: CanDeactivateFn<CodeEditorTutorAssessmentContainerComponent> = (component) => {
-    if (component.hasPendingChanges && component.submission() !== undefined) {
+    if ((component.hasPendingChanges || component.codeEditorContainer()?.hasUnsavedInlineFeedback()) && component.submission() !== undefined) {
         const translate = inject(TranslateService);
         return window.confirm(translate.instant('artemisApp.programmingAssessment.confirmLeave'));
     }

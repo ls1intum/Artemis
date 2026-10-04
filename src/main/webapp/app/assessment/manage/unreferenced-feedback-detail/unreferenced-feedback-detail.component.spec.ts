@@ -11,6 +11,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { By } from '@angular/platform-browser';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
@@ -42,6 +44,39 @@ describe('Unreferenced Feedback Detail Component', () => {
         fixture.componentRef.setInput('readOnly', false);
 
         expect(() => fixture.detectChanges()).not.toThrow();
+    });
+
+    it('should restore the title and editable points when a linked card is unlinked', async () => {
+        const feedback = { id: 1, type: FeedbackType.MANUAL_UNREFERENCED, text: 'Original title', credits: 2, gradingInstruction: { id: 5, credits: 2 } } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        const link = fixture.debugElement.query(By.directive(GradingInstructionLinkIconComponent));
+        expect(link).not.toBeNull();
+        const unlinkButton = link.nativeElement.querySelector('button') as HTMLButtonElement;
+        unlinkButton.click();
+        fixture.detectChanges();
+        expect(unlinkButton.getAttribute('aria-label')).toBeTruthy();
+        unlinkButton.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(feedback.gradingInstruction).toBeUndefined();
+        expect(emitSpy).toHaveBeenCalledWith(feedback);
+        expect((fixture.nativeElement.querySelector('.feedback-card__header-input') as HTMLInputElement).value).toBe('Original title');
+        expect(fixture.nativeElement.querySelector('.feedback-card__points-input')).not.toBeNull();
+    });
+
+    it('should not offer unlinking on a read-only card', () => {
+        fixture.componentRef.setInput('feedback', { gradingInstruction: { id: 5 } } as Feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.directive(GradingInstructionLinkIconComponent))).toBeNull();
     });
 
     it('should call getLongFeedbackText on init if feedback has long text', async () => {
