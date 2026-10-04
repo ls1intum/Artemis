@@ -45,6 +45,7 @@ jobs:
       - name: Download and check the historical WAR
         run: |
           set -Eeuo pipefail
+          gh --version
           gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern Artemis.war
           printf '%s  Artemis.war\n' "$EXPECTED_SHA256" | sha256sum --check --strict
       - name: Recover and verify original build provenance
@@ -54,7 +55,7 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/attestations/sha256:$EXPECTED_SHA256" \
             --jq '.attestations[0].bundle' > Artemis.war.sigstore.json
           gh attestation verify Artemis.war --bundle Artemis.war.sigstore.json \
-            --repo "$GITHUB_REPOSITORY" --signer-workflow ls1intum/Artemis/.github/workflows/ci.yml
+            --repo "$GITHUB_REPOSITORY" --signer-workflow ls1intum/Artemis/.github/workflows/ci-build.yml
           jq -ce '.dsseEnvelope | select(.payloadType == "application/vnd.in-toto+json")' \
             Artemis.war.sigstore.json > Artemis.war.intoto.jsonl
           gh release upload "$RELEASE_TAG" Artemis.war.sigstore.json Artemis.war.intoto.jsonl \
