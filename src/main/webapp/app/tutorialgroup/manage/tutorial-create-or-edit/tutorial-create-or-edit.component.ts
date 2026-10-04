@@ -173,19 +173,25 @@ export class TutorialCreateOrEditComponent {
         if (this.saveButtonDisabled()) {
             return;
         }
+        // The save button is disabled without a tutor, so this never returns here; reading it once also narrows the
+        // type for the request below, which avoids a non-null assertion.
+        const tutorId = this.selectedTutorId();
+        if (tutorId === undefined) {
+            return;
+        }
         const courseId = this.courseId();
-        if (this.tutorialGroup()) {
-            const tutorialGroupId = this.tutorialGroup()?.id;
+        const request = this.assembleCreateOrUpdateTutorialGroupRequest(tutorId);
+        const tutorialGroup = this.tutorialGroup();
+        if (tutorialGroup) {
+            const tutorialGroupId = tutorialGroup.id;
             if (!tutorialGroupId) return;
-            const updateTutorialGroup = this.assembleCreateOrUpdateTutorialGroupRequest();
             if (this.scheduleChangeOverwritesSessions()) {
-                this.confirmScheduleChangingSave(courseId, tutorialGroupId, updateTutorialGroup);
+                this.confirmScheduleChangingSave(courseId, tutorialGroupId, request);
             } else {
-                this.onUpdate.emit({ courseId: courseId, tutorialGroupId: tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroup });
+                this.onUpdate.emit({ courseId: courseId, tutorialGroupId: tutorialGroupId, updateTutorialGroupDTO: request });
             }
         } else {
-            const createTutorialGroupRequest = this.assembleCreateOrUpdateTutorialGroupRequest();
-            this.onCreate.emit({ courseId: courseId, createTutorialGroupDTO: createTutorialGroupRequest });
+            this.onCreate.emit({ courseId: courseId, createTutorialGroupDTO: request });
         }
     }
 
@@ -201,25 +207,34 @@ export class TutorialCreateOrEditComponent {
         });
     }
 
-    private assembleCreateOrUpdateTutorialGroupRequest(): CreateOrUpdateTutorialGroupRequest {
-        const tutorialGroupSchedule: TutorialGroupSchedule | undefined = this.configureSessionPlan()
-            ? {
-                  firstSessionStart: this.firstSessionStart()!.format('YYYY-MM-DDTHH:mm:ss'),
-                  firstSessionEnd: this.firstSessionEnd()!.format('YYYY-MM-DDTHH:mm:ss'),
-                  repetitionFrequency: this.repetitionFrequency(),
-                  tutorialPeriodEnd: this.tutorialPeriodEnd()!.format('YYYY-MM-DD'),
-                  location: this.location(),
-              }
-            : undefined;
+    private assembleCreateOrUpdateTutorialGroupRequest(tutorId: number): CreateOrUpdateTutorialGroupRequest {
         return {
             title: this.title().trim(),
-            tutorId: this.selectedTutorId()!,
+            tutorId: tutorId,
             language: this.selectedLanguage().trim(),
             isOnline: this.selectedMode() === Mode.ONLINE,
             campus: this.campus().trim() || undefined,
             capacity: this.capacity(),
             additionalInformation: this.additionalInformation().trim() || undefined,
-            tutorialGroupSchedule: tutorialGroupSchedule,
+            tutorialGroupSchedule: this.buildSchedule(),
+        };
+    }
+
+    // The schedule fields are optional until the toggle is on, and save stays disabled until all four are filled, so
+    // an incomplete schedule never reaches here; guarding the dates keeps it type-safe without a non-null assertion.
+    private buildSchedule(): TutorialGroupSchedule | undefined {
+        const firstSessionStart = this.firstSessionStart();
+        const firstSessionEnd = this.firstSessionEnd();
+        const tutorialPeriodEnd = this.tutorialPeriodEnd();
+        if (!this.configureSessionPlan() || !firstSessionStart || !firstSessionEnd || !tutorialPeriodEnd) {
+            return undefined;
+        }
+        return {
+            firstSessionStart: firstSessionStart.format('YYYY-MM-DDTHH:mm:ss'),
+            firstSessionEnd: firstSessionEnd.format('YYYY-MM-DDTHH:mm:ss'),
+            repetitionFrequency: this.repetitionFrequency(),
+            tutorialPeriodEnd: tutorialPeriodEnd.format('YYYY-MM-DD'),
+            location: this.location(),
         };
     }
 
