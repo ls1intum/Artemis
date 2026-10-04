@@ -129,11 +129,11 @@ describe('QuizManageUtil', () => {
             );
         });
 
-        it('should allow picture drag items without text', () => {
+        it('should exempt picture drag items from the text length limit', () => {
             const question = new DragAndDropQuestion();
             question.title = 'Picture question';
             question.points = 1;
-            const dragItem: DragItem = { id: 1, pictureFilePath: 'item.png', invalid: false };
+            const dragItem: DragItem = { id: 1, pictureFilePath: 'item.png', text: 'a'.repeat(256), invalid: false };
             const dropLocation: DropLocation = { id: 1, invalid: false };
             question.dragItems = [dragItem];
             question.dropLocations = [dropLocation];
