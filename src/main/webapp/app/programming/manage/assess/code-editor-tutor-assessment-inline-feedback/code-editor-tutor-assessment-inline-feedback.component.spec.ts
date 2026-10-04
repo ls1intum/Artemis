@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { computed, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockModule } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
@@ -11,12 +12,13 @@ import {
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -279,6 +281,63 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(onUpdateSpy.mock.calls[0][0].gradingInstruction).toBeUndefined();
         expect(onCancelSpy).not.toHaveBeenCalled();
         expect(comp.viewOnly()).toBe(true);
+    });
+
+    it('reserves a linked card’s finite instruction slot until its edit is saved or canceled', () => {
+        const instruction = { id: 7, credits: 2, feedback: 'Instruction', usageCount: 1 } as GradingInstruction;
+        const original = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            reference: `file:${fileName}_line:${codeLine}`,
+            detailText: 'Original',
+            credits: 2,
+            gradingInstruction: instruction,
+        } as Feedback;
+        const feedbacks = signal<Feedback[]>([original]);
+        const counts = computed(() => {
+            const count = feedbacks().filter((feedback) => feedback.gradingInstruction?.id === instruction.id).length;
+            return count ? new Map([[instruction.id!, count]]) : new Map<number, number>();
+        });
+        const applyInstruction = vi.fn(() => feedbacks.set([...feedbacks(), { id: 2, gradingInstruction: instruction } as Feedback]));
+        const host: GradingInstructionSelectionHost = {
+            appliedInstructionIds: computed(() => new Set(counts().keys())),
+            appliedInstructionCounts: counts,
+            removableInstructionIds: signal(new Set<number>()),
+            applyInstruction,
+            unapplyOneInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+        };
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        selectionService.register(host);
+        fixture.componentRef.setInput('feedback', original);
+        fixture.detectChanges();
+        comp.onUpdateFeedback.subscribe((updated) => {
+            feedbacks.set(feedbacks().map((feedback) => (feedback.id === updated.id ? updated : feedback)));
+            fixture.componentRef.setInput('feedback', updated);
+            fixture.detectChanges();
+        });
+
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+        expect(selectionService.applicationCount(instruction)).toBe(1);
+        fixture.debugElement.query(By.directive(GradingInstructionLinkIconComponent)).componentInstance.removeLink();
+        expect(feedbacks()[0].gradingInstruction).toBeUndefined();
+        expect(selectionService.applicationCount(instruction)).toBe(1);
+        expect(selectionService.isApplied(instruction)).toBe(true);
+
+        selectionService.setApplied(instruction, true);
+        expect(applyInstruction).not.toHaveBeenCalled();
+        comp.cancelFeedback();
+        expect(feedbacks()[0].gradingInstruction?.id).toBe(instruction.id);
+        expect(selectionService.applicationCount(instruction)).toBe(1);
+
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+        fixture.debugElement.query(By.directive(GradingInstructionLinkIconComponent)).componentInstance.removeLink();
+        comp.updateFeedback();
+        expect(selectionService.applicationCount(instruction)).toBe(0);
+        selectionService.setApplied(instruction, true);
+        expect(applyInstruction).toHaveBeenCalledOnce();
     });
 
     it('should restore the edit-start snapshot after point edit, instruction drop, and cancel', () => {

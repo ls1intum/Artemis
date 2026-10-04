@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -50,7 +50,7 @@ import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail
         TumAetUiTooltipDirective,
     ],
 })
-export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestroy {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private readonly selectionService = inject(GradingInstructionSelectionService);
     // Needed for the outer editor to access the DOM node of this component
@@ -201,6 +201,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         // Align cancel snapshot with the saved card so a later edit/cancel pair is coherent if editFeedback is skipped.
         this.oldFeedback.set(deepClone(feedback));
         this.emitUpdate(feedback);
+        this.updateInstructionReservation(feedback);
     }
 
     /** Emits a feedback update to the parent. */
@@ -246,6 +247,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
             this.onPendingFeedbackChange.emit(undefined);
             this.onCancelFeedback.emit(this.codeLine());
         }
+        this.updateInstructionReservation(restored);
     }
 
     /** Whether the feedback awards, deducts or changes nothing — the widget's left accent stripe follows it. */
@@ -365,9 +367,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     private notifyInstructionLinkChange(feedback: Feedback): void {
         if (this.feedback()) {
             this.emitUpdate(feedback);
+            this.updateInstructionReservation(feedback);
             return;
         }
         this.onPendingFeedbackChange.emit(feedback.gradingInstruction ? feedback : undefined);
+    }
+
+    private updateInstructionReservation(feedback: Feedback): void {
+        const original = this.editSessionActive() && this.feedback() ? this.oldFeedback().gradingInstruction : undefined;
+        this.selectionService.reserveInstruction(this, original?.id !== feedback.gradingInstruction?.id ? original : undefined);
+    }
+
+    ngOnDestroy(): void {
+        this.selectionService.reserveInstruction(this);
     }
 
     /**

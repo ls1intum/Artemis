@@ -37,6 +37,7 @@ const NO_APPLIED_COUNTS: ReadonlyMap<number, number> = new Map<number, number>()
 @Service()
 export class GradingInstructionSelectionService {
     private readonly host = signal<GradingInstructionSelectionHost | undefined>(undefined);
+    private readonly reservedInstructions = signal<ReadonlyMap<object, GradingInstruction>>(new Map());
 
     /**
      * Instruction armed by keyboard (Enter/Space) for the next feedback target without a checkbox host. Consumed by
@@ -51,22 +52,60 @@ export class GradingInstructionSelectionService {
     readonly isSelectable = computed(() => this.host() !== undefined);
 
     /** Ids of the instructions currently applied anywhere in the open assessment. */
-    readonly appliedInstructionIds = computed(() => this.host()?.appliedInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
+    readonly appliedInstructionIds = computed(() => {
+        const applied = new Set(this.host()?.appliedInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
+        if (this.host()) {
+            for (const instruction of this.reservedInstructions().values()) {
+                if (instruction.id !== undefined) {
+                    applied.add(instruction.id);
+                }
+            }
+        }
+        return applied;
+    });
 
     /** How often each instruction is currently applied anywhere in the open assessment. */
-    readonly appliedInstructionCounts = computed(() => this.host()?.appliedInstructionCounts() ?? NO_APPLIED_COUNTS);
+    readonly appliedInstructionCounts = computed(() => {
+        const host = this.host();
+        if (!host) {
+            return NO_APPLIED_COUNTS;
+        }
+        const counts = new Map(host.appliedInstructionCounts());
+        for (const instruction of this.reservedInstructions().values()) {
+            if (instruction.id !== undefined) {
+                counts.set(instruction.id, (counts.get(instruction.id) ?? 0) + 1);
+            }
+        }
+        return counts;
+    });
 
     /** Ids of the applied instructions the registered feedback list can remove again. */
     readonly removableInstructionIds = computed(() => this.host()?.removableInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
 
     register(host: GradingInstructionSelectionHost): void {
         this.clearArmedInstruction();
+        this.reservedInstructions.set(new Map());
         this.host.set(host);
     }
     unregister(host: GradingInstructionSelectionHost): void {
         if (this.host() === host) {
             this.host.set(undefined);
+            this.reservedInstructions.set(new Map());
         }
+    }
+
+    /** Keeps an existing card's original instruction slot occupied while its link is edited. */
+    reserveInstruction(owner: object, instruction?: GradingInstruction): void {
+        if (this.reservedInstructions().get(owner)?.id === instruction?.id) {
+            return;
+        }
+        const reservations = new Map(this.reservedInstructions());
+        if (instruction?.id !== undefined) {
+            reservations.set(owner, instruction);
+        } else {
+            reservations.delete(owner);
+        }
+        this.reservedInstructions.set(reservations);
     }
 
     isApplied(instruction: GradingInstruction): boolean {
@@ -100,6 +139,10 @@ export class GradingInstructionSelectionService {
             return;
         }
         if (applied) {
+            const usageLimit = instruction.usageCount ?? 0;
+            if (usageLimit > 0 && this.applicationCount(instruction) >= usageLimit) {
+                return;
+            }
             host.applyInstruction(instruction);
         } else {
             host.unapplyInstruction(instruction);
