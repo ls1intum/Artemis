@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
@@ -16,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,5 +65,28 @@ class ExerciseServicePointsUpdateTest {
         assertThatCode(() -> exerciseService.updatePointsInRelatedParticipantScores(20.0, null, exercise)).doesNotThrowAnyException();
 
         verifyNoMoreInteractions(participantScoreRepository);
+    }
+
+    @Test
+    void updatePointsInRelatedParticipantScores_withCourse_recomputesRoundedPointsAndSaves() {
+        var course = new Course();
+        course.setAccuracyOfScores(1);
+        var exercise = exerciseWithoutCourse();
+        exercise.setCourse(course);
+        var bothScores = new StudentScore();
+        bothScores.setLastScore(33.333);
+        bothScores.setLastRatedScore(50.0);
+        var noScores = new StudentScore();
+        noScores.setLastPoints(1.0);
+        noScores.setLastRatedPoints(1.0);
+        when(participantScoreRepository.findAllByExercise(exercise)).thenReturn(List.of(bothScores, noScores));
+
+        exerciseService.updatePointsInRelatedParticipantScores(10.0, null, exercise);
+
+        assertThat(bothScores.getLastPoints()).isEqualTo(6.7);
+        assertThat(bothScores.getLastRatedPoints()).isEqualTo(10.0);
+        assertThat(noScores.getLastPoints()).isNull();
+        assertThat(noScores.getLastRatedPoints()).isNull();
+        verify(participantScoreRepository).saveAll(List.of(bothScores, noScores));
     }
 }
