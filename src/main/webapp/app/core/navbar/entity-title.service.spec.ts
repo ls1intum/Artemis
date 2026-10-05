@@ -194,6 +194,25 @@ describe('EntityTitleService - authentication state changes', () => {
         scoped = TestBed.inject(EntityTitleService);
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should cancel pending title fetches when the injector is destroyed', () => {
+        vi.useFakeTimers();
+        const http = TestBed.inject(HttpClient);
+        const httpSpy = vi.spyOn(http, 'get');
+
+        scoped.getTitle(EntityType.COURSE, [1]).subscribe();
+
+        // Destroys the injector, like the TestBed teardown after each test
+        TestBed.resetTestingModule();
+        vi.advanceTimersByTime(3000);
+
+        expect(httpSpy).not.toHaveBeenCalled();
+    });
+
     it('should clear cached titles on logout', async () => {
         scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
         const before = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
