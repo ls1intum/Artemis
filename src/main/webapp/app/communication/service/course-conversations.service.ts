@@ -208,8 +208,10 @@ export class CourseConversationsService implements OnDestroy {
     public markAsRead(conversationId: number) {
         const indexOfCachedConversation = this.conversationsOfUser.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {
-            this.conversationsOfUser[indexOfCachedConversation].lastMessageDate = dayjs();
-            this.conversationsOfUser[indexOfCachedConversation].unreadMessagesCount = 0;
+            const conversation = this.conversationsOfUser[indexOfCachedConversation];
+            conversation.lastMessageDate = dayjs();
+            conversation.unreadMessagesCount = 0;
+            this.conversationsOfUser[indexOfCachedConversation] = conversation;
             this._conversationsOfUser$.next(this.conversationsOfUser);
         }
         this.hasUnreadMessagesCheck();
@@ -224,9 +226,11 @@ export class CourseConversationsService implements OnDestroy {
         }
         const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationId);
         if (indexOfConversationToUpdate !== -1) {
-            this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = lastReadDate;
-            this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = unreadMessagesCount;
-            this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
+            const conversation = this.conversationsOfUser[indexOfConversationToUpdate];
+            conversation.lastReadDate = lastReadDate;
+            conversation.unreadMessagesCount = unreadMessagesCount;
+            conversation.hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
+            this.conversationsOfUser[indexOfConversationToUpdate] = conversation;
             this._conversationsOfUser$.next(this.conversationsOfUser);
         }
     }
@@ -561,9 +565,11 @@ export class CourseConversationsService implements OnDestroy {
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {
-            conversationsCopy[indexOfCachedConversation].lastMessageDate = lastMessageDate;
-            conversationsCopy[indexOfCachedConversation].hasUnreadMessage = true;
-            conversationsCopy[indexOfCachedConversation].unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
+            const conversationCopy = conversationsCopy[indexOfCachedConversation];
+            conversationCopy.lastMessageDate = lastMessageDate;
+            conversationCopy.hasUnreadMessage = true;
+            conversationCopy.unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
+            conversationsCopy[indexOfCachedConversation] = conversationCopy;
             if (!this.hasUnreadMessages) {
                 this.hasUnreadMessages = true;
                 this._hasUnreadMessages$.next(this.hasUnreadMessages);
