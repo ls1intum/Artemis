@@ -20,6 +20,9 @@ export interface GradingInstructionSelectionHost {
     /** Adds one feedback linked to the given instruction. */
     applyInstruction(instruction: GradingInstruction): void;
 
+    /** Removes one feedback linked to the given instruction (owned by this host). */
+    unapplyOneInstruction(instruction: GradingInstruction): void;
+
     /** Removes every feedback linked to the given instruction. */
     unapplyInstruction(instruction: GradingInstruction): void;
 }
@@ -34,26 +37,75 @@ const NO_APPLIED_COUNTS: ReadonlyMap<number, number> = new Map<number, number>()
 @Service()
 export class GradingInstructionSelectionService {
     private readonly host = signal<GradingInstructionSelectionHost | undefined>(undefined);
+    private readonly reservedInstructions = signal<ReadonlyMap<object, GradingInstruction>>(new Map());
+
+    /**
+     * Instruction armed by keyboard (Enter/Space) for the next feedback target without a checkbox host. Consumed by
+     * the next target that accepts it (drop or keyboard), the drag-and-drop stand-in without a checkbox host.
+     */
+    private readonly armedInstruction = signal<GradingInstruction | undefined>(undefined);
+
+    /** True while an instruction is armed for the next feedback target. */
+    readonly hasArmedInstruction = computed(() => this.armedInstruction() !== undefined);
 
     /** True while an editable feedback list is mounted. */
     readonly isSelectable = computed(() => this.host() !== undefined);
 
     /** Ids of the instructions currently applied anywhere in the open assessment. */
-    readonly appliedInstructionIds = computed(() => this.host()?.appliedInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
+    readonly appliedInstructionIds = computed(() => {
+        const applied = new Set(this.host()?.appliedInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
+        if (this.host()) {
+            for (const instruction of this.reservedInstructions().values()) {
+                if (instruction.id !== undefined) {
+                    applied.add(instruction.id);
+                }
+            }
+        }
+        return applied;
+    });
 
     /** How often each instruction is currently applied anywhere in the open assessment. */
-    readonly appliedInstructionCounts = computed(() => this.host()?.appliedInstructionCounts() ?? NO_APPLIED_COUNTS);
+    readonly appliedInstructionCounts = computed(() => {
+        const host = this.host();
+        if (!host) {
+            return NO_APPLIED_COUNTS;
+        }
+        const counts = new Map(host.appliedInstructionCounts());
+        for (const instruction of this.reservedInstructions().values()) {
+            if (instruction.id !== undefined) {
+                counts.set(instruction.id, (counts.get(instruction.id) ?? 0) + 1);
+            }
+        }
+        return counts;
+    });
 
     /** Ids of the applied instructions the registered feedback list can remove again. */
     readonly removableInstructionIds = computed(() => this.host()?.removableInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
 
     register(host: GradingInstructionSelectionHost): void {
+        this.clearArmedInstruction();
+        this.reservedInstructions.set(new Map());
         this.host.set(host);
     }
     unregister(host: GradingInstructionSelectionHost): void {
         if (this.host() === host) {
             this.host.set(undefined);
+            this.reservedInstructions.set(new Map());
         }
+    }
+
+    /** Keeps an existing card's original instruction slot occupied while its link is edited. */
+    reserveInstruction(owner: object, instruction?: GradingInstruction): void {
+        if (this.reservedInstructions().get(owner)?.id === instruction?.id) {
+            return;
+        }
+        const reservations = new Map(this.reservedInstructions());
+        if (instruction?.id !== undefined) {
+            reservations.set(owner, instruction);
+        } else {
+            reservations.delete(owner);
+        }
+        this.reservedInstructions.set(reservations);
     }
 
     isApplied(instruction: GradingInstruction): boolean {
@@ -66,6 +118,12 @@ export class GradingInstructionSelectionService {
             return 0;
         }
         return this.appliedInstructionCounts().get(instruction.id) ?? 0;
+    }
+
+    /** Whether another application fits the instruction's finite usage limit. */
+    canApplyInstruction(instruction?: GradingInstruction): boolean {
+        const usageLimit = instruction?.usageCount ?? 0;
+        return !instruction || usageLimit <= 0 || this.applicationCount(instruction) < usageLimit;
     }
 
     /**
@@ -87,9 +145,53 @@ export class GradingInstructionSelectionService {
             return;
         }
         if (applied) {
+            if (!this.canApplyInstruction(instruction)) {
+                return;
+            }
             host.applyInstruction(instruction);
         } else {
             host.unapplyInstruction(instruction);
         }
+    }
+
+    /**
+     * Arms an instruction for the next feedback drop or keyboard apply.
+     */
+    armInstruction(instruction: GradingInstruction): void {
+        this.armedInstruction.set(instruction);
+    }
+
+    isArmed(instruction: GradingInstruction): boolean {
+        const armed = this.armedInstruction();
+        return armed !== undefined && (armed === instruction || (armed.id !== undefined && armed.id === instruction.id));
+    }
+
+    toggleArmedInstruction(instruction: GradingInstruction): void {
+        this.armedInstruction.set(this.isArmed(instruction) ? undefined : instruction);
+    }
+
+    /** Takes and clears the keyboard-armed instruction when its live usage limit still allows an application. */
+    consumeArmedInstruction(): GradingInstruction | undefined {
+        const instruction = this.armedInstruction();
+        this.armedInstruction.set(undefined);
+        if (!instruction) {
+            return undefined;
+        }
+        return this.canApplyInstruction(instruction) ? instruction : undefined;
+    }
+
+    /** Drops an unconsumed armed instruction (assessment teardown / new host registration). */
+    clearArmedInstruction(): void {
+        this.armedInstruction.set(undefined);
+    }
+
+    /** Adds one more application of the instruction in the registered feedback list. */
+    addApplication(instruction: GradingInstruction): void {
+        this.host()?.applyInstruction(instruction);
+    }
+
+    /** Removes one application of the instruction owned by the registered feedback list. */
+    removeOneApplication(instruction: GradingInstruction): void {
+        this.host()?.unapplyOneInstruction(instruction);
     }
 }

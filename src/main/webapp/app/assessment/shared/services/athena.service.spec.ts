@@ -76,6 +76,7 @@ describe('AthenaService', () => {
 
         expect(feedback.reference).toBe('file:src/Main.java_line:4');
         expect(feedback.type).toBe(FeedbackType.MANUAL);
+        expect(feedback.text).toBe('FeedbackSuggestion:Issue');
         expect(feedback.gradingInstruction?.instructionDescription).toBe('Important');
     });
 

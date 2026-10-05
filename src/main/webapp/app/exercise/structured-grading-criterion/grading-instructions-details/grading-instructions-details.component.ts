@@ -336,7 +336,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (!this.parseAccepted) {
             this.exercise().gradingInstructions = previousGradingInstructions;
             if (commitEmpty) {
-                this.alertService.error('artemisApp.exercise.gradingInstructionsAmbiguousEdit');
+                this.alertService.error('artemisApp.exercise.assessmentCriteriaGeneration.ambiguousEdit');
             }
         }
         return this.parseAccepted;
@@ -633,7 +633,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeContentMatch(unused, parsed, (criterion) => this.instructionsSignature(criterion)),
                 fallback: true,
             },
-            { match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeByTitle(unused, parsed), fallback: false },
+            { match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeByTitle(unused, parsed, previousCriteria, parsedCriteria), fallback: false },
         ]) {
             for (const entry of criterionEntries) {
                 if (!entry.previousCriterion) {
@@ -711,14 +711,22 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         return plan;
     }
 
-    /** Title-only claim; skips title-less rows so dummy criteria are not equated by empty string. */
-    private takeByTitle(unused: GradingCriterion[], parsed: GradingCriterion): GradingCriterion | undefined {
+    /** Title-only matches require a unique title and unchanged position after content matching. */
+    private takeByTitle(
+        unused: GradingCriterion[],
+        parsed: GradingCriterion,
+        previousCriteria: GradingCriterion[],
+        parsedCriteria: GradingCriterion[],
+    ): GradingCriterion | undefined {
         const title = parsed.title;
-        if (!title) {
+        if (!title || parsedCriteria.filter((criterion) => criterion.title === title).length !== 1) {
             return undefined;
         }
-        const matchIndex = unused.findIndex((criterion) => criterion.title === title);
-        return matchIndex < 0 ? undefined : unused.splice(matchIndex, 1)[0];
+        const matches = unused.filter((criterion) => criterion.title === title);
+        if (matches.length !== 1 || previousCriteria.indexOf(matches[0]) !== parsedCriteria.indexOf(parsed)) {
+            return undefined;
+        }
+        return unused.splice(unused.indexOf(matches[0]), 1)[0];
     }
 
     /** Same title, title-less pair, or shared instruction fingerprint indicates identity affinity. */

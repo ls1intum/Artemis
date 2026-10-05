@@ -154,13 +154,15 @@ export class Feedback implements BaseEntity {
         return FeedbackSuggestionType.SUGGESTED;
     }
 
-    /**
-     * Strips the internal `FeedbackSuggestion:(suggested|accepted|adapted):` marker off a feedback's `text`, if
-     * present. That marker exists only to tag the suggestion state in the database `text` column without a schema
-     * change; it must never reach a tutor or a student as literal text.
-     */
+    private static readonly FEEDBACK_SUGGESTION_PREFIXES = [
+        FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+        FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+        NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+        FEEDBACK_SUGGESTION_IDENTIFIER,
+    ] as const;
+
     public static stripSuggestionPrefix(text: string): string {
-        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+        for (const prefix of Feedback.FEEDBACK_SUGGESTION_PREFIXES) {
             if (text.startsWith(prefix)) {
                 return text.slice(prefix.length);
             }
@@ -168,17 +170,33 @@ export class Feedback implements BaseEntity {
         return text;
     }
 
-    /**
-     * Rewrites an accepted feedback suggestion's `text` prefix to adapted, leaving everything else unchanged. A
-     * suggestion transitions to adapted the moment it is edited in any way; every other state (already adapted,
-     * not a suggestion, or the unreachable bare "suggested") is returned as-is. This is a one-way, sticky
-     * transition - it never reverts even if the edit is undone later.
-     */
     public static markAdaptedIfAcceptedSuggestion(text: string): string {
         if (!text.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
             return text;
         }
         return `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}${text.slice(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER.length)}`;
+    }
+
+    public static getFeedbackSuggestionPrefix(text: string): string | undefined {
+        for (const prefix of Feedback.FEEDBACK_SUGGESTION_PREFIXES) {
+            if (text.startsWith(prefix)) {
+                return prefix;
+            }
+        }
+        return undefined;
+    }
+
+    /** Display title stored in {@link text}, without suggestion prefixes. Linked grading instructions own the title. */
+    public static getDisplayTitle(feedback: Feedback): string | undefined {
+        if (feedback.gradingInstruction || !feedback.text) {
+            return undefined;
+        }
+        const prefix = Feedback.getFeedbackSuggestionPrefix(feedback.text);
+        if (prefix) {
+            const title = feedback.text.slice(prefix.length);
+            return title || undefined;
+        }
+        return feedback.text;
     }
 
     public static hasDetailText(that: Feedback): boolean {
@@ -191,13 +209,12 @@ export class Feedback implements BaseEntity {
     }
 
     /**
-     * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
-     * feedbacks before they are saved.
+     * Checks for equality of two feedbacks. IDs may be undefined before saving; the reference distinguishes code lines.
      * @param f1 The feedback that is compared to f2
      * @param f2 The feedback that is compared to f1
      */
     public static areIdentical(f1: Feedback, f2: Feedback) {
-        return f1.id === f2.id && f1.text === f2.text && f1.detailText === f2.detailText;
+        return f1.id === f2.id && f1.reference === f2.reference && f1.text === f2.text && f1.detailText === f2.detailText;
     }
 
     /**
@@ -327,9 +344,9 @@ export class Feedback implements BaseEntity {
  *
  * An AI feedback suggestion's `text` is never included: it always holds just the suggestion's short title (tagged
  * with the internal `FeedbackSuggestion:...` marker), which is redundant with the suggestion's own `detailText`.
- * For text/programming/file-upload exercises that title is still shown separately (the editable unified feedback
+ * For text/programming/file-upload exercises an unlinked title is shown separately (the editable unified feedback
  * editor's own title field, or the "name · title" heading in the read-only feedback item), so dropping it here
- * only avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
+ * avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
  * no separate title UI — that is safe because Apollon always writes an assessor's real edit into `detailText` and
  * leaves `.text` as the untouched original suggestion title (see `ModelingAssessmentComponent`), so no
  * assessor-authored content is ever hiding behind the excluded `text`.
@@ -340,7 +357,8 @@ export class Feedback implements BaseEntity {
  * @returns formatted string representing the feedback text ready to display
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
-    const includeText = addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback);
+    const includeText =
+        addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback) && !(feedback.gradingInstruction && feedback.type === FeedbackType.MANUAL_UNREFERENCED);
     let feedbackText = '';
     if (feedback.gradingInstruction?.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;

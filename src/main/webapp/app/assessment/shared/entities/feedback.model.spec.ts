@@ -6,11 +6,48 @@ import {
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackSuggestionType,
+    FeedbackType,
     buildFeedbackTextForReview,
 } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 describe('Feedback', () => {
+    it('distinguishes otherwise identical feedback on different code lines', () => {
+        const first = { text: 'Title', detailText: 'Comment', reference: 'file:Main.java_line:1' } as Feedback;
+        const second = { text: 'Title', detailText: 'Comment', reference: 'file:Main.java_line:2' } as Feedback;
+        expect(Feedback.areIdentical(first, second)).toBe(false);
+    });
+
+    describe('getDisplayTitle', () => {
+        it('should strip AI suggestion prefixes from feedback text', () => {
+            expect(Feedback.getDisplayTitle({ text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Model` } as Feedback)).toBe('Model');
+            expect(Feedback.getDisplayTitle({ text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Model` } as Feedback)).toBe('Model');
+            expect(Feedback.getDisplayTitle({ text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Model` } as Feedback)).toBe('Model');
+        });
+
+        it('should return manual header text for unreferenced feedback', () => {
+            expect(Feedback.getDisplayTitle({ text: 'Player', detailText: 'Good work' } as Feedback)).toBe('Player');
+        });
+
+        it('should not expose text as title when linked to a grading instruction', () => {
+            expect(
+                Feedback.getDisplayTitle({
+                    text: 'ignored',
+                    gradingInstruction: { id: 1 },
+                } as Feedback),
+            ).toBeUndefined();
+        });
+
+        it('should not expose a suggestion title when linked to a grading instruction', () => {
+            expect(
+                Feedback.getDisplayTitle({
+                    text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Model`,
+                    gradingInstruction: { id: 1 },
+                } as Feedback),
+            ).toBeUndefined();
+        });
+    });
+
     describe('getReferenceLineRange', () => {
         it('should parse valid programming reference line ranges', () => {
             expect(Feedback.getReferenceLineRange({ reference: 'file:src/Main.java_line:3-5' })).toEqual({ start: 3, end: 5 });
@@ -73,6 +110,13 @@ describe('Feedback', () => {
             const feedback = { text: 'feedback1', gradingInstruction } as Feedback;
 
             expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>feedback1');
+        });
+
+        it('should omit a linked unreferenced feedback title from review without changing the stored text', () => {
+            const feedback = { type: FeedbackType.MANUAL_UNREFERENCED, text: 'Old title', detailText: 'Tutor comment', gradingInstruction } as Feedback;
+
+            expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>Tutor comment');
+            expect(feedback.text).toBe('Old title');
         });
 
         it('should drop even a non-suggestion text when addFeedbackText is false', () => {

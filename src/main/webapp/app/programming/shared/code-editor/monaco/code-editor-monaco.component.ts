@@ -22,10 +22,11 @@ import { RepositoryFileService } from 'app/programming/shared/services/repositor
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, take, timeout } from 'rxjs';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { fromPairs, pickBy } from 'lodash-es';
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco-editor-line-highlight.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { FileTypeService } from 'app/programming/shared/services/file-type.service';
@@ -46,17 +47,26 @@ import {
 } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
+type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
     templateUrl: './code-editor-monaco.component.html',
     styleUrls: ['./code-editor-monaco.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [MonacoEditorComponent, CodeEditorHeaderComponent, CodeEditorTutorAssessmentInlineFeedbackComponent, TranslateDirective],
+    imports: [
+        MonacoEditorComponent,
+        CodeEditorHeaderComponent,
+        CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent,
+        CodeEditorTutorAssessmentInlineFeedbackComponent,
+        TranslateDirective,
+    ],
     providers: [RepositoryFileService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -72,16 +82,20 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private readonly injector = inject(Injector);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
 
     protected readonly Feedback = Feedback;
     protected readonly CommitState = CommitState;
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
+    readonly inlineFeedbackSuggestionComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent);
     readonly commitState = input.required<CommitState>();
     readonly editorState = input.required<EditorState>();
     readonly course = input<Course>();
+    readonly gradingCriteria = input<GradingCriterion[]>([]);
     readonly feedbacks = input<Feedback[]>([]);
+    readonly feedbackSuggestions = input<Feedback[]>([]);
     readonly readOnlyManualFeedback = input<boolean>(false);
     readonly highlightDifferences = input<boolean>(false);
     readonly isTutorAssessment = input<boolean>(false);
@@ -98,7 +112,14 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
     readonly onUpdateFeedback = output<Feedback[]>();
+    /**
+     * Unsaved new inline drafts that already carry a grading instruction. Used by the assessment container for
+     * usage-limit counts before the card is saved into {@link onUpdateFeedback}.
+     */
+    readonly onPendingFeedbackChange = output<Feedback[]>();
     readonly onFileLoad = output<string>();
+    readonly onAcceptSuggestion = output<Feedback>();
+    readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
@@ -108,6 +129,12 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
+
+    hasUnsavedInlineFeedback(): boolean {
+        return this.newFeedbackLines().length > 0 || this.inlineFeedbackComponents().some((component) => component.hasUnsavedEdits());
+    }
+    /** Line (0-based) → unsaved draft feedback that has a grading instruction link. */
+    private readonly pendingFeedbackByLine = signal<Map<number, Feedback>>(new Map());
     readonly binaryFileSelected = signal<boolean>(false);
     readonly imagePreviewUrl = signal<string | undefined>(undefined);
     readonly imagePreviewError = signal<boolean>(false);
@@ -124,20 +151,32 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     );
 
     readonly feedbackInternal = linkedSignal<Feedback[]>(() => this.feedbacks());
+    readonly feedbackSuggestionsInternal = linkedSignal<Feedback[]>(() => this.feedbackSuggestions());
+    private readonly localFeedbackKeys = new WeakMap<Feedback, object>();
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
-    /**
-     * The feedback objects themselves (same references as in {@link feedbackInternal}, not clones) - the template
-     * derives `line` per item via {@link getFeedbackLine} instead of baking it into a copy. Cloning here would hand
-     * the inline feedback editor a new `feedback` object identity on every keystroke (this recomputes on every
-     * `feedbackInternal` write, i.e. on every character typed once a feedback commits live instead of on save).
-     */
-    readonly feedbackForSelectedFile = computed<Feedback[]>(() => this.filterFeedbackForSelectedFile(this.feedbackInternal()));
+    readonly feedbackForSelectedFile = computed(() =>
+        this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((source) => ({
+            key: source.id === undefined ? this.localFeedbackKey(source) : source.id + (source.reference ?? 'unreferenced'),
+            feedback: this.attachLineAndReferenceToFeedback(source),
+        })),
+    );
+    readonly feedbackSuggestionsForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
+        this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
+    );
 
-    /** The 0-based editor line a referenced feedback belongs to; -1 for the (unreachable, since already filtered by reference) fallback case. */
-    protected getFeedbackLine = (feedback: Feedback): number => {
-        return Feedback.getReferenceLine(feedback) ?? -1;
-    };
+    private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
+        return cloneWith(feedback, { line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' });
+    }
+
+    private localFeedbackKey(feedback: Feedback): object {
+        let key = this.localFeedbackKeys.get(feedback);
+        if (!key) {
+            key = {};
+            this.localFeedbackKeys.set(feedback, key);
+        }
+        return key;
+    }
 
     annotationsArray: Array<Annotation> = [];
     private addFeedbackKeydownListener?: Disposable;
@@ -185,12 +224,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             });
 
             const selectedFileChanged = selectedFile !== prev!.selectedFile;
-            // Compare by element identity, not array identity: a keystroke in the inline feedback editor
-            // round-trips the same feedback objects back through the parent's `onUpdateFeedback` (see
-            // updateFeedback() below), which re-wraps them in a new array every time. Treating that as a
-            // "real" change would tear down and rebuild every widget - including the focused one - per keystroke.
-            const feedbacksChanged =
-                prev!.hasObservedFeedbacksInput && (feedbacks.length !== prev!.feedbacks?.length || feedbacks.some((feedback, index) => feedback !== prev!.feedbacks?.[index]));
+            const feedbacksChanged = prev!.hasObservedFeedbacksInput && feedbacks !== prev!.feedbacks;
             const editorWasRefreshed = prev!.editorState === EditorState.REFRESHING && editorState === EditorState.CLEAN;
             const editorWasReset = prev!.commitState !== undefined && prev!.commitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED;
             const prevSelectedFile = prev!.selectedFile;
@@ -212,6 +246,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         });
 
         effect(() => {
+            this.feedbackSuggestions();
             this.renderFeedbackWidgets();
         });
 
@@ -288,6 +323,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             }
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
+            this.clearPendingFeedbacks();
             this.renderFeedbackWidgets();
             // changeModel() disposes line-decoration hover buttons; re-apply for the active mode.
             this.updateEditorInteractionMode();
@@ -301,7 +337,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
 
         if (feedbacksChanged) {
-            this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
         }
 
@@ -528,7 +563,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     addNewFeedback(lineNumber: number): void {
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
-        if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
+        if (!this.newFeedbackLines().includes(lineNumberZeroBased) && !this.getInlineFeedbackNode(lineNumberZeroBased)) {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
             this.renderFeedbackWidgets(lineNumberZeroBased);
         }
@@ -536,28 +571,31 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     /**
      * Updates an existing feedback item and renders it. If necessary, an unsaved feedback item will be converted into an actual feedback item.
-     *
-     * Manual feedback now commits on every keystroke instead of on an explicit save (see
-     * {@link CodeEditorTutorAssessmentInlineFeedbackComponent}), so this runs far more often than a single click.
-     * A widget is only re-rendered for the new-feedback transition, where it has to move out of the "new" bucket;
-     * updating content in place would otherwise tear down and recreate the widget's DOM node - including the
-     * focused textarea - on every character typed.
      * @param feedback The feedback item to save.
      */
-    updateFeedback(feedback: Feedback) {
+    updateFeedback(feedback: Feedback, original?: Feedback) {
         const line = Feedback.getReferenceLine(feedback);
-        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f.reference === feedback.reference);
+        const previous = original ?? feedback;
+        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) =>
+            previous.id !== undefined ? f.id === previous.id : original !== undefined && Feedback.areIdentical(f, original),
+        );
         if (existingFeedbackIndex !== -1) {
-            // Existing feedback -> update content only, no widget re-render needed.
+            // Existing feedback -> update only
             const feedbackArray = [...this.feedbackInternal()];
+            if (feedback.id === undefined) {
+                this.localFeedbackKeys.set(feedback, this.localFeedbackKey(feedbackArray[existingFeedbackIndex]));
+            }
             feedbackArray[existingFeedbackIndex] = feedback;
             this.feedbackInternal.set(feedbackArray);
         } else {
-            // New feedback -> save as actual feedback and refocus its detail field once the widget is rebuilt.
+            // New feedback -> save as actual feedback.
             this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
-            this.renderFeedbackWidgets(line);
+            if (line !== undefined) {
+                this.removePendingFeedback(line);
+            }
         }
+        this.renderFeedbackWidgets();
         this.onUpdateFeedback.emit(this.feedbackInternal());
     }
 
@@ -566,11 +604,44 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param line The line the feedback item refers to.
      */
     cancelFeedback(line: number) {
+        this.removePendingFeedback(line);
         // We only have to remove new feedback.
         if (this.newFeedbackLines().includes(line)) {
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
             this.renderFeedbackWidgets();
         }
+    }
+
+    /**
+     * Tracks an unsaved new-card draft that already links a grading instruction (or clears it on unlink).
+     */
+    setPendingFeedback(line: number, feedback: Feedback | undefined): void {
+        const next = new Map(this.pendingFeedbackByLine());
+        if (feedback?.gradingInstruction) {
+            next.set(line, feedback);
+        } else {
+            next.delete(line);
+        }
+        this.pendingFeedbackByLine.set(next);
+        this.onPendingFeedbackChange.emit([...next.values()]);
+    }
+
+    private removePendingFeedback(line: number): void {
+        if (!this.pendingFeedbackByLine().has(line)) {
+            return;
+        }
+        const next = new Map(this.pendingFeedbackByLine());
+        next.delete(line);
+        this.pendingFeedbackByLine.set(next);
+        this.onPendingFeedbackChange.emit([...next.values()]);
+    }
+
+    private clearPendingFeedbacks(): void {
+        if (this.pendingFeedbackByLine().size === 0) {
+            return;
+        }
+        this.pendingFeedbackByLine.set(new Map());
+        this.onPendingFeedbackChange.emit([]);
     }
 
     /**
@@ -581,6 +652,38 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         this.feedbackInternal.set(this.feedbackInternal().filter((f) => !Feedback.areIdentical(f, feedback)));
         this.onUpdateFeedback.emit(this.feedbackInternal());
         this.renderFeedbackWidgets();
+    }
+
+    /**
+     * Accepts a feedback suggestion by storing a feedback suggestion as actual feedback.
+     * @param feedback The feedback item of the feedback suggestion.
+     */
+    acceptSuggestion(feedback: Feedback): void {
+        const original = this.feedbackSuggestionsInternal().find((suggestion) => Feedback.areIdentical(suggestion, feedback));
+        if (!original) {
+            return;
+        }
+        if (!this.selectionService.canApplyInstruction(original.gradingInstruction)) {
+            return;
+        }
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((suggestion) => suggestion !== original));
+        const accepted = cloneWith(original, {
+            text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + Feedback.stripSuggestionPrefix(original.text ?? ''),
+        });
+        this.feedbackInternal.set([...this.feedbackInternal(), accepted]);
+        this.renderFeedbackWidgets();
+        this.onUpdateFeedback.emit(this.feedbackInternal());
+        this.onAcceptSuggestion.emit(original);
+    }
+
+    /**
+     * Discards a feedback suggestion and removes its widget.
+     * @param feedback The feedback item of the feedback suggestion.
+     */
+    discardSuggestion(feedback: Feedback): void {
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((suggestion) => !Feedback.areIdentical(suggestion, feedback)));
+        this.renderFeedbackWidgets();
+        this.onDiscardSuggestion.emit(feedback);
     }
 
     /**
@@ -597,28 +700,38 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
         this.renderScheduled = true;
         // Run after the next render so the inline feedback nodes (driven by the feedback signals) exist in the DOM.
-        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal)
-        // so a render is actually pending; otherwise renderScheduled would latch.
+        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal/
+        // feedbackSuggestionsInternal) so a render is actually pending; otherwise renderScheduled would latch.
         afterNextRender(
             () => {
                 this.renderScheduled = false;
                 this.editor().disposeWidgetsByPrefix('feedback-');
-                for (const feedback of this.filterFeedbackForSelectedFile(this.feedbackInternal())) {
-                    this.addLineWidgetWithFeedback(feedback);
+                if (!this.selectedFile()) {
+                    this.renderFocusLine = undefined;
+                    return;
+                }
+                const feedbacks = this.filterFeedbackForSelectedFile(this.feedbackInternal());
+                const suggestions = this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal());
+                for (const [index, feedback] of feedbacks.entries()) {
+                    this.addLineWidgetWithFeedback(feedback, false, index);
+                }
+                for (const [index, suggestion] of suggestions.entries()) {
+                    this.addLineWidgetWithFeedback(suggestion, true, feedbacks.length + index);
                 }
 
                 // New, unsaved feedback has no associated object yet.
                 for (const line of this.newFeedbackLines()) {
-                    const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                    const feedbackNode = this.getNewFeedbackNode(line);
+                    if (!feedbackNode) {
+                        throw new Error('No new feedback node found at line ' + line);
+                    }
                     this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
                 }
 
                 const focusLine = this.renderFocusLine;
                 this.renderFocusLine = undefined;
                 if (focusLine !== undefined) {
-                    // The inline feedback editor renders its description field through jhi-unified-feedback, which
-                    // identifies the textarea by class rather than by a (non-reusable) id.
-                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.focus();
+                    this.getNewFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
                 }
             },
             { injector: this.injector },
@@ -880,8 +993,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Retrieves the feedback node currently rendered at the specified line and throws an error if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
-    getInlineFeedbackNodeOrElseThrow(line: number): HTMLElement {
-        const element = this.getInlineFeedbackNode(line);
+    getInlineFeedbackNodeOrElseThrow(line: number, feedback?: Feedback, isSuggestion = false): HTMLElement {
+        const element = this.getInlineFeedbackNode(line, feedback, isSuggestion);
         if (!element) {
             throw new Error('No feedback node found at line ' + line);
         }
@@ -892,20 +1005,25 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Retrieves the feedback node currently rendered at the specified line, or undefined if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
-    getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
+    getInlineFeedbackNode(line: number, feedback?: Feedback, isSuggestion = false): HTMLElement | undefined {
+        const components = isSuggestion ? this.inlineFeedbackSuggestionComponents() : this.inlineFeedbackComponents();
+        return components.find((comp) => comp.codeLine() === line && (!feedback || (comp.feedback() && Feedback.areIdentical(comp.feedback()!, feedback))))?.elementRef
+            ?.nativeElement;
     }
 
-    private addLineWidgetWithFeedback(feedback: Feedback): void {
+    private getNewFeedbackNode(line: number): HTMLElement | undefined {
+        return this.inlineFeedbackComponents().find((component) => component.codeLine() === line && component.feedback() === undefined)?.elementRef.nativeElement;
+    }
+
+    private addLineWidgetWithFeedback(feedback: Feedback, isSuggestion: boolean, index: number): void {
         const line = Feedback.getReferenceLine(feedback);
         if (line === undefined) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
-        // TODO: In the future, there may be more than one feedback node per line. The ID should be unique.
-        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line, feedback, isSuggestion);
         // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
         const oneBasedLine = line + 1;
-        this.editor().addLineWidget(oneBasedLine, 'feedback-' + feedback.id + '-line-' + oneBasedLine, feedbackNode);
+        this.editor().addLineWidget(oneBasedLine, 'feedback-' + index + '-line-' + oneBasedLine, feedbackNode);
     }
 
     /**

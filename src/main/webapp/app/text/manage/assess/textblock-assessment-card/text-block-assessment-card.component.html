@@ -20,6 +20,20 @@
     (keydown.space)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
     (keyup.space)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
 ></span>
+@if (isKeyboardDropTarget()) {
+    <button
+        type="button"
+        tumAetUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        class="ms-1"
+        [attr.aria-label]="('artemisApp.exercise.applyArmedInstruction' | artemisTranslate) + ': ' + textBlockRef().block!.text"
+        (click)="applyArmedInstruction()"
+    >
+        <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
+    </button>
+}
 <!-- Display Feedback Editor -->
 @if (textBlockRef().feedback || selected()) {
     <jhi-text-block-feedback-editor
