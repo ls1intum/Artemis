@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * <ul>
  * <li>the read path must return the persisted configuration, otherwise the settings form initializes its controls from
  * the defaults and posts those back;</li>
- * <li>the write path must load the (lazy) configuration, otherwise {@code CourseUpdateDTO.applyTo} attaches a
- * replacement and {@code orphanRemoval} deletes the persisted row along with its retention bookkeeping.</li>
+ * <li>the write path must load the permanent configuration before {@code CourseUpdateDTO.applyTo} can update its
+ * settings while preserving its identity and retention bookkeeping.</li>
  * </ul>
  */
 class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegrationIndependentTest {

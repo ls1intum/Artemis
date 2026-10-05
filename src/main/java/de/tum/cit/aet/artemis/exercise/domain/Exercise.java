@@ -33,6 +33,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -265,11 +266,28 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.gradingInstructions = gradingInstructions;
     }
 
+    /** Creates permanent default settings for every exercise type before its first persistence. */
+    @PrePersist
+    void initializeDefaultConfigurations() {
+        if (teamAssignmentConfig == null) {
+            teamAssignmentConfig = new TeamAssignmentConfig();
+        }
+        if (plagiarismDetectionConfig == null) {
+            plagiarismDetectionConfig = PlagiarismDetectionConfig.createDefault();
+        }
+    }
+
     public TeamAssignmentConfig getTeamAssignmentConfig() {
-        return teamAssignmentConfig;
+        return isTeamMode() ? teamAssignmentConfig : null;
     }
 
     public void setTeamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
+        if (getId() != null && this.teamAssignmentConfig != null) {
+            if (teamAssignmentConfig == null) {
+                return;
+            }
+            teamAssignmentConfig.setId(this.teamAssignmentConfig.getId());
+        }
         this.teamAssignmentConfig = teamAssignmentConfig;
     }
 
@@ -445,6 +463,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public void setPlagiarismDetectionConfig(PlagiarismDetectionConfig plagiarismDetectionConfig) {
+        if (getId() != null && this.plagiarismDetectionConfig != null) {
+            if (plagiarismDetectionConfig == null) {
+                return;
+            }
+            plagiarismDetectionConfig.setId(this.plagiarismDetectionConfig.getId());
+        }
         this.plagiarismDetectionConfig = plagiarismDetectionConfig;
     }
 

@@ -323,7 +323,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setChannelName("exercise-new-team-text");
         textExercise.setMode(ExerciseMode.TEAM);
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(textExercise);
         teamAssignmentConfig.setMinTeamSize(2);
         teamAssignmentConfig.setMaxTeamSize(5);
         textExercise.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -630,51 +629,33 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(reloaded.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(12);
     }
 
-    /**
-     * The other Text config tests all start from an exercise that already owns a config, so they only cover the in-place
-     * branch of {@code PlagiarismDetectionConfigHelper.applyToExercise}. This one starts with no stored association, so
-     * it covers the branch that builds a new config from the DTO and persists it through the exercise cascade.
-     */
+    /** Submitted settings update the permanent default row instead of replacing it. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateTextExercise_missingPlagiarismDetectionConfig_createsFromSubmittedValues() throws Exception {
-        dropStoredPlagiarismDetectionConfig();
+    void updateTextExercise_defaultPlagiarismDetectionConfig_preservesIdentity() throws Exception {
+        long configId = textExercise.getPlagiarismDetectionConfig().getId();
         textExercise.setPlagiarismDetectionConfig(submittedPlagiarismDetectionConfig());
 
         TextExerciseResponseDTO updated = request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
                 HttpStatus.OK);
 
-        assertCreatedPlagiarismDetectionConfig(updated.id());
+        assertSubmittedPlagiarismDetectionConfig(updated.id(), configId);
     }
 
-    /**
-     * Re-evaluate runs the same apply-and-persist step as the general update, so the create branch must hold there too.
-     */
+    /** Re-evaluate also updates the existing default configuration in place. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void reEvaluateTextExercise_missingPlagiarismDetectionConfig_createsFromSubmittedValues() throws Exception {
-        dropStoredPlagiarismDetectionConfig();
+    void reEvaluateTextExercise_defaultPlagiarismDetectionConfig_preservesIdentity() throws Exception {
+        long configId = textExercise.getPlagiarismDetectionConfig().getId();
         textExercise.setPlagiarismDetectionConfig(submittedPlagiarismDetectionConfig());
 
         TextExerciseResponseDTO updated = request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate?deleteFeedback=false",
                 UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK);
 
-        assertCreatedPlagiarismDetectionConfig(updated.id());
+        assertSubmittedPlagiarismDetectionConfig(updated.id(), configId);
     }
 
-    /**
-     * Removes the stored plagiarism detection config of {@link #textExercise} (the exercise factory attaches one by
-     * default), so the request under test really hits the create branch. Asserts the association is gone in the database,
-     * not merely on the local object.
-     */
-    private void dropStoredPlagiarismDetectionConfig() {
-        textExercise.setPlagiarismDetectionConfig(null);
-        textExercise = textExerciseRepository.save(textExercise);
-        assertThat(textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(textExercise.getId()).getPlagiarismDetectionConfig())
-                .as("the exercise must start without a plagiarism detection config").isNull();
-    }
-
-    /** The (valid) values the request submits for an exercise that has no plagiarism detection config yet. */
+    /** Valid settings applied to the exercise's permanent default configuration. */
     private PlagiarismDetectionConfig submittedPlagiarismDetectionConfig() {
         var config = new PlagiarismDetectionConfig();
         config.setContinuousPlagiarismControlEnabled(true);
@@ -687,10 +668,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     /** Asserts that the exercise now owns a persisted config carrying exactly the submitted values. */
-    private void assertCreatedPlagiarismDetectionConfig(long exerciseId) {
+    private void assertSubmittedPlagiarismDetectionConfig(long exerciseId, long configId) {
         PlagiarismDetectionConfig createdConfig = textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(exerciseId).getPlagiarismDetectionConfig();
-        assertThat(createdConfig).as("the resource must create the missing config").isNotNull();
-        assertThat(createdConfig.getId()).as("the created config must be persisted").isNotNull();
+        assertThat(createdConfig).as("the permanent config must remain").isNotNull();
+        assertThat(createdConfig.getId()).isEqualTo(configId);
         assertThat(createdConfig.isContinuousPlagiarismControlEnabled()).isTrue();
         assertThat(createdConfig.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isTrue();
         assertThat(createdConfig.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(13);
@@ -1725,7 +1706,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exerciseToBeImported.setMode(ExerciseMode.TEAM);
 
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exerciseToBeImported);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1760,7 +1740,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise sourceExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
         sourceExercise.setMode(ExerciseMode.TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(sourceExercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);

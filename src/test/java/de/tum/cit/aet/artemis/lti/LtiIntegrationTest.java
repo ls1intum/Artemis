@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -220,7 +219,6 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         LtiPlatformConfiguration savedPlatform = ltiPlatformConfigurationRepository.save(platform);
         doReturn(Optional.empty()).when(ltiPlatformConfigurationRepository).findByRegistrationId(anyString());
         doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(savedPlatform.getId());
-        doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(anyLong());
 
         Course savedCourse = createOnlineCourseWithConfiguration();
 
@@ -296,10 +294,10 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         Course course = CourseFactory.generateCourse(null, COURSE_START_DATE, COURSE_END_DATE, new HashSet<>());
         course.setOnlineCourse(true);
 
-        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        Course savedCourse = courseRepository.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository.findStoredByCourseId(savedCourse.getId()).orElseThrow();
         onlineCourseConfiguration.setUserPrefix("prefix");
         onlineCourseConfiguration.setRequireExistingUser(false);
-        Course savedCourse = courseRepository.saveAndFlush(course);
         onlineCourseConfiguration.setCourse(savedCourse);
         onlineCourseConfigurationRepository.saveAndFlush(onlineCourseConfiguration);
         userUtilService.enrollPrefixedUsersInCourse(savedCourse, TEST_PREFIX);

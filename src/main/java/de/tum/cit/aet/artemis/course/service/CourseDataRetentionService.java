@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -138,12 +139,7 @@ public class CourseDataRetentionService {
                 }
                 // Persist the warning timestamp on the config-bearing instance (dueCourse has the configuration fetched),
                 // syncing the archive path set during archiving so saving this instance does not clobber it.
-                CourseConfiguration configuration = dueCourse.getCourseConfiguration();
-                if (configuration == null) {
-                    configuration = new CourseConfiguration();
-                    configuration.setCourse(dueCourse);
-                    dueCourse.setCourseConfiguration(configuration);
-                }
+                CourseConfiguration configuration = Objects.requireNonNull(dueCourse.getCourseConfiguration(), "Course configuration must be loaded for retention updates");
                 configuration.setResetWarningSentDate(ZonedDateTime.now());
                 dueCourse.setCourseArchivePath(courseWithExercises.getCourseArchivePath());
                 courseRepository.save(dueCourse);

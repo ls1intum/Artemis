@@ -230,7 +230,6 @@ public class ModelingExerciseResource {
         }
         // A client may omit the plagiarism detection config; fill and persist the default for course exercises so it is
         // not stored as null. Done after the competency-link save so it operates on the fully persisted exercise.
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(savedExercise, modelingExerciseRepository);
         final ModelingExercise result = savedExercise;
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));

@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.nimbusds.jwt.SignedJWT;
@@ -148,16 +147,9 @@ public class LtiResource {
         }
 
         onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
-        onlineCourseConfiguration.setCourse(course);
-        try {
-            onlineCourseConfigurationService.addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
-        }
-        catch (Exception ex) {
-            log.error("Failed to add online course configuration to LTI configurations", ex);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding online course configuration to LTI configurations", ex);
-        }
-
-        OnlineCourseConfiguration savedConfiguration = onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
+        onlineCourseConfigurationRepository.updateSettings(courseId, existingConfiguration.getId(), onlineCourseConfiguration.getUserPrefix(),
+                onlineCourseConfiguration.isRequireExistingUser(), onlineCourseConfiguration.getLtiPlatformConfiguration());
+        OnlineCourseConfiguration savedConfiguration = onlineCourseConfigurationRepository.findByCourseId(courseId).orElseThrow();
 
         return ResponseEntity.ok(OnlineCourseConfigurationDTO.of(savedConfiguration));
     }

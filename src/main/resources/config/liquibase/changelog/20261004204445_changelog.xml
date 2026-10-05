@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261004204445-01-backfill-course-configuration" author="krusche">
+        <comment>Create defaults only for owners without settings. A temporary owner key associates generated ids without changing existing settings.</comment>
+        <addColumn tableName="course_configuration">
+            <column name="backfill_owner_id" type="BIGINT"/>
+        </addColumn>
+        <sql>INSERT INTO course_configuration (backfill_owner_id, grade_relevant, data_retention_hold, auto_orchestrator_enabled)
+            SELECT id, TRUE, FALSE, FALSE FROM course WHERE course_configuration_id IS NULL;
+            UPDATE course SET course_configuration_id =
+                (SELECT config.id FROM course_configuration config WHERE config.backfill_owner_id = course.id)
+            WHERE course_configuration_id IS NULL;</sql>
+        <dropColumn tableName="course_configuration" columnName="backfill_owner_id"/>
+        <rollback><comment>Keep the new default rows: deleting them on rollback would discard settings modified since deployment.</comment></rollback>
+    </changeSet>
+
+    <changeSet id="20261004204445-02-backfill-course-athena-config" author="krusche">
+        <comment>Create defaults only for owners without settings. A temporary owner key associates generated ids without changing existing settings.</comment>
+        <addColumn tableName="course_athena_config">
+            <column name="backfill_owner_id" type="BIGINT"/>
+        </addColumn>
+        <sql>INSERT INTO course_athena_config (backfill_owner_id, grading_feedback_enabled, formative_feedback_enabled)
+            SELECT id, FALSE, FALSE FROM course WHERE athena_config_id IS NULL;
+            UPDATE course SET athena_config_id =
+                (SELECT config.id FROM course_athena_config config WHERE config.backfill_owner_id = course.id)
+            WHERE athena_config_id IS NULL;</sql>
+        <dropColumn tableName="course_athena_config" columnName="backfill_owner_id"/>
+        <rollback><comment>Keep the new default rows: deleting them on rollback would discard settings modified since deployment.</comment></rollback>
+    </changeSet>
+
+    <changeSet id="20261004204445-03-backfill-team-assignment-config" author="krusche">
+        <comment>Create defaults only for owners without settings. A temporary owner key associates generated ids without changing existing settings.</comment>
+        <addColumn tableName="team_assignment_config">
+            <column name="backfill_owner_id" type="BIGINT"/>
+        </addColumn>
+        <sql>INSERT INTO team_assignment_config (backfill_owner_id, min_team_size, max_team_size)
+            SELECT id, 1, 1 FROM exercise WHERE team_assignment_config_id IS NULL;
+            UPDATE exercise SET team_assignment_config_id =
+                (SELECT config.id FROM team_assignment_config config WHERE config.backfill_owner_id = exercise.id)
+            WHERE team_assignment_config_id IS NULL;</sql>
+        <dropColumn tableName="team_assignment_config" columnName="backfill_owner_id"/>
+        <rollback><comment>Keep the new default rows: deleting them on rollback would discard settings modified since deployment.</comment></rollback>
+    </changeSet>
+
+    <changeSet id="20261004204445-04-backfill-plagiarism-detection-config" author="krusche">
+        <comment>Create defaults only for owners without settings. A temporary owner key associates generated ids without changing existing settings.</comment>
+        <addColumn tableName="plagiarism_detection_config">
+            <column name="backfill_owner_id" type="BIGINT"/>
+        </addColumn>
+        <sql>INSERT INTO plagiarism_detection_config (backfill_owner_id, continuous_plagiarism_control_enabled, continuous_plagiarism_control_post_due_date_checks_enabled, continuous_plagiarism_control_case_student_response_period, similarity_threshold, minimum_score, minimum_size)
+            SELECT id, FALSE, FALSE, 7, 90, 0, 50 FROM exercise WHERE plagiarism_detection_config_id IS NULL;
+            UPDATE exercise SET plagiarism_detection_config_id =
+                (SELECT config.id FROM plagiarism_detection_config config WHERE config.backfill_owner_id = exercise.id)
+            WHERE plagiarism_detection_config_id IS NULL;</sql>
+        <dropColumn tableName="plagiarism_detection_config" columnName="backfill_owner_id"/>
+        <rollback><comment>Keep the new default rows: deleting them on rollback would discard settings modified since deployment.</comment></rollback>
+    </changeSet>
+
+    <changeSet id="20261004204445-05-backfill-dependent-settings" author="krusche">
+        <comment>Every course and programming exercise receives permanent defaults. Missing tutorial dates leave tutorial groups inactive; online mode is controlled by the course flag.</comment>
+        <sql>INSERT INTO online_course_configuration (course_id, user_prefix, require_existing_user)
+            SELECT course.id, COALESCE(course.short_name, CONCAT('course', course.id)), FALSE FROM course
+            WHERE NOT EXISTS (SELECT 1 FROM online_course_configuration config WHERE config.course_id = course.id);
+            INSERT INTO tutorial_groups_configuration (course_id, use_tutorial_group_channels, use_public_tutorial_group_channels)
+            SELECT course.id, FALSE, FALSE FROM course
+            WHERE NOT EXISTS (SELECT 1 FROM tutorial_groups_configuration config WHERE config.course_id = course.id);
+            INSERT INTO course_iris_settings (course_id, settings)
+            SELECT course.id, '{"enabled":true,"variant":"default","supportLevel":"moderate"}' FROM course
+            WHERE NOT EXISTS (SELECT 1 FROM course_iris_settings config WHERE config.course_id = course.id);
+            INSERT INTO programming_exercise_build_config (exercise_id, timeout_seconds, allow_branching, branch_regex, checkout_solution_repository)
+            SELECT exercise.id, 0, FALSE, '.*', FALSE FROM exercise WHERE exercise.discriminator = 'P'
+            AND NOT EXISTS (SELECT 1 FROM programming_exercise_build_config config WHERE config.exercise_id = exercise.id);</sql>
+        <rollback><comment>Retain defaults and any subsequently modified settings.</comment></rollback>
+    </changeSet>
+
+</databaseChangeLog>

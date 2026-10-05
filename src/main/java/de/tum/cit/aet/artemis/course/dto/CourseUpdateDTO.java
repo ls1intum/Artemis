@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.course.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -145,15 +146,8 @@ public record CourseUpdateDTO(
             course.setOnboardingDone(true);
         }
 
-        // Update the course's configuration (data-retention flags plus the Atlas auto-orchestration settings), creating
-        // it if absent. The course must be loaded with its (lazy) configuration for this to update in place instead of
-        // creating a duplicate.
-        CourseConfiguration configuration = course.getCourseConfiguration();
-        if (configuration == null) {
-            configuration = new CourseConfiguration();
-            configuration.setCourse(course);
-            course.setCourseConfiguration(configuration);
-        }
+        // Update the permanent settings row loaded through its own repository by the caller.
+        CourseConfiguration configuration = Objects.requireNonNull(course.getCourseConfiguration(), "Course configuration must be loaded before updating settings");
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
         // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to

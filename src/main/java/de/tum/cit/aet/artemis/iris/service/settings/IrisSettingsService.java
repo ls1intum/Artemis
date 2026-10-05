@@ -124,13 +124,7 @@ public class IrisSettingsService {
             enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);
         }
 
-        var entity = irisCourseSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
-            var newEntity = new IrisCourseSettingsEntity();
-            newEntity.setCourseId(courseId);
-            return newEntity;
-        });
-        entity.setSettings(sanitizedRequest);
-        irisCourseSettingsRepository.save(entity);
+        irisCourseSettingsRepository.updateSettings(courseId, sanitizedRequest);
         var defaults = getApplicationRateLimitDefaults();
         var effective = resolveEffectiveRateLimit(sanitizedRequest, defaults);
         return new IrisCourseSettingsWithRateLimitDTO(courseId, sanitizedRequest, effective, defaults);

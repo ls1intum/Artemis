@@ -134,7 +134,7 @@ public class ModelingExerciseUtilService {
         modelingExercise.setTitle(title);
         course.addExercises(modelingExercise);
         course.setMaxComplaintTimeDays(14);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         modelingExercise = exerciseRepository.save(modelingExercise);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
@@ -146,7 +146,7 @@ public class ModelingExerciseUtilService {
                 course);
         modelingExercise.setTitle("ClassDiagram");
         course.addExercises(modelingExercise);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         modelingExercise = exerciseRepository.save(modelingExercise);
         return modelingExercise;
     }
@@ -228,7 +228,7 @@ public class ModelingExerciseUtilService {
         finishedExercise.setTitle("finished");
         course.addExercises(finishedExercise);
 
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(classExercise);
         exerciseRepository.save(activityExercise);
         exerciseRepository.save(objectExercise);

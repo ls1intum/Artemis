@@ -9,10 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import jakarta.persistence.LockModeType;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
@@ -21,7 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -54,31 +51,63 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
 
     /**
-     * Locks the course row until the surrounding repository transaction completes.
+     * Stores a course and initializes its permanent configuration rows on first creation, including rows of disabled
+     * optional modules. Later edits only update the course. Athena and general settings are persisted through the course's
+     * creation cascade; the remaining configurations own the course key and are inserted after the course exists.
      *
-     * @param courseId the course id
-     * @return the course, if it still exists
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT course FROM Course course WHERE course.id = :courseId")
-    Optional<Course> findByIdWithWriteLock(@Param("courseId") long courseId);
-
-    /**
-     * Saves a course and reconciles its online-course configuration in one transaction. The course-row lock serializes
-     * updates even when no configuration exists yet. The callback reaches the optional LTI module through its API and
-     * must check configuration existence inside this transaction; a failed configuration write rolls back the course save.
-     *
-     * @param course              the updated, already persisted course
-     * @param updateConfiguration the configuration update to perform for the saved course
-     * @return the saved course
+     * @param course the course to store
+     * @return the stored course
      */
     @Transactional
-    default Course saveWithOnlineCourseConfigurationUpdate(Course course, Consumer<Course> updateConfiguration) {
-        getValueElseThrow(findByIdWithWriteLock(course.getId()), course.getId());
-        Course savedCourse = save(course);
-        updateConfiguration.accept(savedCourse);
-        return savedCourse;
+    default Course saveWithDefaultConfigurations(Course course) {
+        boolean newCourse = course.getId() == null;
+        Course saved = save(course);
+        if (newCourse) {
+            initializeOnlineCourseConfiguration(saved.getId());
+            initializeTutorialGroupsConfiguration(saved.getId());
+            initializeIrisCourseSettings(saved.getId());
+        }
+        return saved;
     }
+
+    /**
+     * Creates the default LTI settings for a newly stored course, independently of whether online mode is enabled.
+     *
+     * @param courseId the new course id
+     */
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT INTO online_course_configuration (course_id, user_prefix, require_existing_user)
+            SELECT id, COALESCE(short_name, CONCAT('course', id)), FALSE FROM course WHERE id = :courseId
+            """, nativeQuery = true)
+    void initializeOnlineCourseConfiguration(@Param("courseId") long courseId);
+
+    /**
+     * Creates inactive tutorial-group settings; a tutorial period must be configured before the feature becomes available.
+     *
+     * @param courseId the new course id
+     */
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT INTO tutorial_groups_configuration (course_id, use_tutorial_group_channels, use_public_tutorial_group_channels)
+            VALUES (:courseId, FALSE, FALSE)
+            """, nativeQuery = true)
+    void initializeTutorialGroupsConfiguration(@Param("courseId") long courseId);
+
+    /**
+     * Creates Iris settings matching the defaults previously used when a course had no settings row.
+     *
+     * @param courseId the new course id
+     */
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT INTO course_iris_settings (course_id, settings)
+            VALUES (:courseId, '{"enabled":true,"variant":"default","supportLevel":"moderate"}')
+            """, nativeQuery = true)
+    void initializeIrisCourseSettings(@Param("courseId") long courseId);
 
     /**
      * Answers in one query whether a course has lectures, competencies, tutorial groups, accepted FAQs, quiz questions

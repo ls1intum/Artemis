@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 
 /**
@@ -33,20 +34,28 @@ public interface OnlineCourseConfigurationRepository extends ArtemisJpaRepositor
     @Query("""
             SELECT configuration
             FROM OnlineCourseConfiguration configuration
-            WHERE configuration.course.id = :courseId
+            WHERE configuration.course.id = :courseId AND configuration.course.onlineCourse = TRUE
             """)
     Optional<OnlineCourseConfiguration> findByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Removes the online course configuration of the given course, e.g. when the course stops being an online course.
+     * Updates settings without replacing the permanent configuration row.
      *
-     * @param courseId the id of the course
+     * @param courseId            the owning course id
+     * @param configId            the configuration id validated by the endpoint
+     * @param prefix              the user prefix
+     * @param requireExistingUser whether new LTI accounts are prohibited
+     * @param platform            the linked LTI platform, or null to remove the link
+     * @return the number of updated rows
      */
     @Modifying
-    @Transactional // ok because of delete
+    @Transactional
     @Query("""
-            DELETE FROM OnlineCourseConfiguration configuration
-            WHERE configuration.course.id = :courseId
+            UPDATE OnlineCourseConfiguration configuration
+            SET configuration.userPrefix = :prefix, configuration.requireExistingUser = :requireExistingUser,
+                configuration.ltiPlatformConfiguration = :platform
+            WHERE configuration.course.id = :courseId AND configuration.id = :configId
             """)
-    void deleteByCourseId(@Param("courseId") long courseId);
+    int updateSettings(@Param("courseId") long courseId, @Param("configId") long configId, @Param("prefix") String prefix,
+            @Param("requireExistingUser") boolean requireExistingUser, @Param("platform") LtiPlatformConfiguration platform);
 }

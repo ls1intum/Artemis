@@ -35,7 +35,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void getSettingsForCourse_returnsDefaultsWhenNoSettingsExist() {
+    void getSettingsForCourse_returnsStoredDefaultsForNewCourse() {
         var settings = irisSettingsService.getSettingsForCourse(course);
 
         assertThat(settings.enabled()).isTrue();
@@ -69,7 +69,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void isEnabledForCourse_usesDefaultWhenMissing() {
+    void isEnabledForCourse_usesDefaultsForNewCourse() {
         assertThat(irisSettingsService.isEnabledForCourse(course.getId())).isTrue();
     }
 
@@ -414,7 +414,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void getSettingsForCourseOrThrow_returnsDefaultsWhenNoSettingsExist() {
+    void getSettingsForCourseOrThrow_returnsStoredDefaultsForNewCourse() {
         var settings = irisSettingsService.getSettingsForCourseOrThrow(course.getId());
 
         assertThat(settings.enabled()).isTrue();

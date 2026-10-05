@@ -337,7 +337,7 @@ public class CourseRequestService {
         CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course);
         CourseValidator.validateAccuracyOfScores(course);
 
-        Course createdCourse = courseRepository.save(course);
+        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
         channelService.createDefaultChannels(createdCourse);
 
         if (request.getRequester() != null) {

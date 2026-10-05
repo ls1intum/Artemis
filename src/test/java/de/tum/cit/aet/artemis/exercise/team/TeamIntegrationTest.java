@@ -117,8 +117,6 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTeamAssignmentConfig() {
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
-        assertThat(teamAssignmentConfig.getExercise()).isEqualTo(exercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);

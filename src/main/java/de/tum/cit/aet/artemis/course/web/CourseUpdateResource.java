@@ -143,18 +143,10 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        // Saving the course writes back the Athena configuration it was loaded with, so a course that predates the
-        // configuration would detach one that a concurrent first Athena switch attached in between, and that switch would
-        // silently be lost. Give such a course its configuration and load it again, only once the user may change it.
-        if (existingCourse.getAthenaConfig() == null) {
-            courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
-            existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
-        }
-
-        // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
+        // Attach the (lazily-stored) course configuration so applyTo can update its permanent row,
         // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
         // via its own repository to keep the course update entity graph small.
-        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
+        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElseThrow());
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -224,8 +216,8 @@ public class CourseUpdateResource {
             conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
-        Course result = courseRepository.saveWithOnlineCourseConfigurationUpdate(existingCourse,
-                savedCourse -> ltiApi.ifPresent(api -> api.updateOnlineCourseConfiguration(savedCourse)));
+        // Configurations live for the lifetime of the course. Toggling online mode only changes the course flag.
+        Course result = courseRepository.save(existingCourse);
 
         // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
         // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).

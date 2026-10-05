@@ -215,6 +215,24 @@ from the course module through `TutorialGroupApi` and `LtiApi`. Because the conf
 returns a configuration whose course the caller reads has to fetch it (`JOIN FETCH t.course`); with open-in-view disabled,
 an unfetched proxy fails with a `LazyInitializationException` rather than loading quietly.
 
+#### Permanent configuration rows
+
+Course and exercise settings belong to the lifetime of their owner. Create default rows when the owner is created,
+including settings for optional modules that are disabled on that server. Backfill missing rows for existing owners in
+a migration, preserving their existing settings. Do not insert or delete configurations when enabling or disabling a
+feature: update its flag and keep its settings for the next time it is enabled.
+
+Create courses through `CourseRepository.saveWithDefaultConfigurations`. Its short repository transaction persists the
+new course and all default settings together. Course edits and feature toggles do not use a course-row lock or a
+transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
+is true. Tutorial-group settings remain inactive until both tutorial-period dates are configured; configure those defaults
+through the configuration repository's modifying query.
+
+Exercise creation initializes team and plagiarism settings through the entity's creation callback. Team settings carry no
+inverse exercise association, so reading them does not cause an additional owner lookup. Team settings are
+exposed only for team-mode exercises. Programming creation and import persist the build settings after the exercise
+exists through `ProgrammingExerciseBuildConfigRepository.saveForExercise`. Later updates retain configuration ids.
+
 #### Turning an existing association lazy
 
 `open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.

@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -433,21 +434,38 @@ public class Course extends DomainObject {
         this.onlineCourse = onlineCourse;
     }
 
+    /** Initializes settings for every new course, including courses created from approved course requests. */
+    @PrePersist
+    void initializeDefaultConfigurations() {
+        if (athenaConfig == null) {
+            athenaConfig = new CourseAthenaConfig();
+        }
+        if (courseConfiguration == null) {
+            courseConfiguration = new CourseConfiguration();
+        }
+        courseConfiguration.setCourse(this);
+    }
+
     public CourseConfiguration getCourseConfiguration() {
         return Hibernate.isInitialized(courseConfiguration) ? courseConfiguration : null;
     }
 
     public void setCourseConfiguration(CourseConfiguration courseConfiguration) {
+        if (getId() != null && this.courseConfiguration != null) {
+            if (courseConfiguration == null) {
+                return;
+            }
+            courseConfiguration.setId(this.courseConfiguration.getId());
+        }
         this.courseConfiguration = courseConfiguration;
     }
 
     /**
      * Whether the course is grade-relevant, driving how long its student data is retained before the GDPR cleanup resets
-     * it. A course without an explicit {@link CourseConfiguration} (i.e. one that was never edited) is treated as
-     * grade-relevant, matching the safe default. This is null-safe with respect to the lazy association: it only reflects
-     * the flag when the configuration has been initialized.
+     * it. If the lazy {@link CourseConfiguration} was not loaded, this reports the safe grade-relevant default.
+     * The stored flag is reflected when the configuration has been initialized.
      *
-     * @return {@code true} if the course is grade-relevant or has no explicit configuration, {@code false} if an
+     * @return {@code true} if the course is grade-relevant or its configuration was not loaded, {@code false} if an
      *         instructor opted out
      */
     public boolean isGradeRelevant() {
@@ -813,6 +831,12 @@ public class Course extends DomainObject {
     }
 
     public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
+        if (getId() != null && this.athenaConfig != null) {
+            if (athenaConfig == null) {
+                return;
+            }
+            athenaConfig.setId(this.athenaConfig.getId());
+        }
         this.athenaConfig = athenaConfig;
     }
 

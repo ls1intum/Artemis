@@ -53,6 +53,15 @@ not be "fixed". Mappers are immutable in Jackson 3 — derive one with `JsonMapp
 `rebuild()`, never `configure()` or `registerModule()` on a built instance — and its exceptions are
 unchecked, so a `catch (IOException)` no longer catches a parse failure.
 
+## Configuration lifecycle
+
+Course and exercise settings use permanent default rows. Create courses with
+`CourseRepository.saveWithDefaultConfigurations`; this initializes settings even when an optional module is disabled.
+Exercise creation initializes team and plagiarism defaults, and programming creation/import also persists build settings.
+Use modifying queries for feature switches and settings endpoints, preserving configuration ids. Do not recreate or
+remove settings when disabling a feature. Backfill existing owners with the Liquibase migration skill. See
+[database](../../documentation/docs/developer/guidelines/database.mdx#permanent-configuration-rows).
+
 ## The rules most often broken
 
 **No transaction boundaries in services or controllers.** `@Transactional`,

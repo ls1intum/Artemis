@@ -48,8 +48,7 @@ public class CourseAthenaConfigService {
     }
 
     /**
-     * Applies the requested changes to the course's Athena configuration, creating the configuration if the course does
-     * not have one yet, and republishes Athena scheduling when the grading feedback flag actually changed.
+     * Applies the requested changes to the course's Athena configuration, and republishes Athena scheduling when the grading feedback flag actually changed.
      * <p>
      * Each requested flag is written by its own conditional statement, so a request changes only the feature it names
      * and cannot carry a stale value for the other one back into the database. Whether the grading flag changed is
@@ -61,7 +60,7 @@ public class CourseAthenaConfigService {
      * @return the stored configuration
      */
     public CourseAthenaConfigDTO updateConfig(long courseId, CourseAthenaConfigUpdateDTO update) {
-        long configId = courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
+        long configId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(courseId).orElseThrow();
 
         boolean gradingFeedbackChanged = update.gradingFeedbackEnabled() != null
                 && courseAthenaConfigRepository.updateGradingFeedbackEnabled(configId, update.gradingFeedbackEnabled()) > 0;

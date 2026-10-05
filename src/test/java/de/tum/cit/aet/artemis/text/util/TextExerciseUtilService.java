@@ -240,7 +240,7 @@ public class TextExerciseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
         course.addExercises(textExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         textExercise = exerciseRepository.save(textExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
@@ -532,7 +532,7 @@ public class TextExerciseUtilService {
         TextExercise finishedTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(finishedTextExercise);
         return course;
     }

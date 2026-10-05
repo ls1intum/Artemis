@@ -1,17 +1,21 @@
 package de.tum.cit.aet.artemis.lti.test_repository;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
 
-/**
- * Spring Data JPA repository for the OnlineCourseConfiguration entity.
- */
 @Lazy
 @Repository
 @Primary
 public interface OnlineCourseConfigurationTestRepository extends OnlineCourseConfigurationRepository {
-    // This interface is intentionally left blank. Spring Data JPA generates the implementation at runtime.
+
+    @Query("SELECT configuration FROM OnlineCourseConfiguration configuration WHERE configuration.course.id = :courseId")
+    Optional<OnlineCourseConfiguration> findStoredByCourseId(@Param("courseId") long courseId);
 }

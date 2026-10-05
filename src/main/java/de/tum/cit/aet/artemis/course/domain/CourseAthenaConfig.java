@@ -32,6 +32,10 @@ public class CourseAthenaConfig {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public Course getCourse() {
         return course;
     }

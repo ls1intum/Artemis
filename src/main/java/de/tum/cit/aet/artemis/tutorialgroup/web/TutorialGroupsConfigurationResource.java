@@ -110,9 +110,10 @@ public class TutorialGroupsConfigurationResource {
         }
         checkCourseTimeZone(course);
         validateTutorialGroupConfiguration(tutorialGroupConfigurationDto);
-        TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
-        configuration.setCourse(course);
-        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configuration);
+        tutorialGroupsConfigurationRepository.updateSettings(courseId, tutorialGroupConfigurationDto.tutorialPeriodStartInclusive(),
+                tutorialGroupConfigurationDto.tutorialPeriodEndInclusive(), tutorialGroupConfigurationDto.useTutorialGroupChannels(),
+                tutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
+        var persistedConfiguration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
 
         if (persistedConfiguration.getUseTutorialGroupChannels()) {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
@@ -162,7 +163,10 @@ public class TutorialGroupsConfigurationResource {
         configurationFromDatabase.setUseTutorialGroupChannels(updatedTutorialGroupConfigurationDto.useTutorialGroupChannels());
         configurationFromDatabase.setUsePublicTutorialGroupChannels(updatedTutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
 
-        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
+        tutorialGroupsConfigurationRepository.updateSettings(courseId, updatedTutorialGroupConfigurationDto.tutorialPeriodStartInclusive(),
+                updatedTutorialGroupConfigurationDto.tutorialPeriodEndInclusive(), updatedTutorialGroupConfigurationDto.useTutorialGroupChannels(),
+                updatedTutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
+        var persistedConfiguration = configurationFromDatabase;
 
         if (useTutorialGroupChannelSettingChanged) {
             log.debug("Tutorial group channel setting changed, updating tutorial group channels for course: {}", persistedConfiguration.getCourse().getId());

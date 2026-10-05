@@ -522,7 +522,7 @@ public class ProgrammingExerciseUtilService {
      */
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage, String title, String shortName) {
         var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage, title, shortName, null);
         course = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         for (var exercise : course.getExercises()) {
@@ -629,7 +629,7 @@ public class ProgrammingExerciseUtilService {
      */
     public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle, boolean scaActive) {
         var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle, scaActive);

@@ -829,6 +829,7 @@ class Lti13ServiceTest {
         long courseId = 12;
         Course course = new Course();
         course.setId(courseId);
+        course.setOnlineCourse(true);
         if (isOnlineCourse) {
             doReturn(Optional.of(new OnlineCourseConfiguration())).when(onlineCourseConfigurationRepository).findByCourseId(courseId);
         }
@@ -841,6 +842,7 @@ class Lti13ServiceTest {
     private Course getMockCourse(long courseId) {
         Course course = new Course();
         course.setId(courseId);
+        course.setOnlineCourse(true);
 
         return course;
     }
