@@ -327,6 +327,24 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMessages_leavesOutConversationSummaries() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage question = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        IrisMessage answer = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+        IrisMessage summary = new IrisMessage();
+        IrisJsonMessageContent summaryContent = new IrisJsonMessageContent();
+        summaryContent.setJsonContent("{\"summary\":\"The student asked a question.\",\"coversThroughMessageId\":" + answer.getId() + "}");
+        summary.addContent(summaryContent);
+        irisMessageService.saveMessage(summary, session, IrisMessageSender.SUMMARY);
+        IrisMessage followUp = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+        var messages = request.getList(messagesUrl(session), HttpStatus.OK, IrisMessageResponseDTO.class);
+
+        assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactly(question.getId(), answer.getId(), followUp.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void concurrentSavesToTheSameSessionKeepEveryMessage() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         int writers = 4;

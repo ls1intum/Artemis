@@ -113,7 +113,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(sessionId);
-        return ResponseEntity.ok(messages.stream().map(IrisMessageResponseDTO::of).toList());
+        return ResponseEntity.ok(IrisMessageResponseDTO.ofDisplayed(messages));
     }
 
     /**
