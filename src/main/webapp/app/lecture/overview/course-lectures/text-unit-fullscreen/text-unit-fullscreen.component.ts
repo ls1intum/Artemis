@@ -46,8 +46,16 @@ export class TextUnitFullscreenComponent implements OnInit {
     readonly courseId = signal<number | undefined>(undefined);
     readonly lectureId = signal<number | undefined>(undefined);
     readonly lectureTitle = signal<string | undefined>(undefined);
+    readonly isTutorialLecture = signal(false);
     readonly textUnit = signal<TextUnit | undefined>(undefined);
     readonly isLoading = signal(true);
+
+    // A tutorial lecture is not listed in the regular lecture sidebar, so it is reached through the tutorial groups.
+    readonly backLink = computed(() =>
+        this.isTutorialLecture()
+            ? ['/courses', this.courseId(), 'tutorial-groups', 'tutorial-lectures', this.lectureId()]
+            : ['/courses', this.courseId(), 'lectures', this.lectureId()],
+    );
 
     readonly formattedContent = computed(() => {
         const content = this.textUnit()?.content;
@@ -66,6 +74,7 @@ export class TextUnitFullscreenComponent implements OnInit {
                 switchMap((params) => {
                     this.isLoading.set(true);
                     this.textUnit.set(undefined);
+                    this.isTutorialLecture.set(false);
                     this.lectureId.set(Number(params.get('lectureId')));
                     return this.lectureService.findWithDetails(Number(params.get('lectureId'))).pipe(
                         tap((response) => {
@@ -73,6 +82,7 @@ export class TextUnitFullscreenComponent implements OnInit {
                             const unitId = Number(params.get('unitId'));
                             const unit = lecture?.lectureUnits?.find((lectureUnit) => lectureUnit.id === unitId && lectureUnit.type === LectureUnitType.TEXT);
                             this.lectureTitle.set(lecture?.title);
+                            this.isTutorialLecture.set(!!lecture?.isTutorialLecture);
                             this.textUnit.set(unit);
                             if (unit) {
                                 this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, unit.id);

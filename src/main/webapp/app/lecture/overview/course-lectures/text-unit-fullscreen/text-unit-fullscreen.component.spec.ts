@@ -79,6 +79,14 @@ describe('TextUnitFullscreenComponent', () => {
         expect(back?.getAttribute('href')).toBe('/courses/42/lectures/5?unit=7');
     });
 
+    it('should link back to the tutorial lecture when the lecture is a tutorial lecture', () => {
+        vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: { ...lecture, isTutorialLecture: true } as Lecture })));
+
+        fixture.detectChanges();
+
+        expect(byTestId('text-unit-fullscreen-back-button')?.getAttribute('href')).toBe('/courses/42/tutorial-groups/tutorial-lectures/5?unit=7');
+    });
+
     it('should log that the unit was opened', () => {
         fixture.detectChanges();
 

@@ -8,7 +8,7 @@
                 variant="outlined"
                 size="small"
                 data-testid="text-unit-fullscreen-back-button"
-                [routerLink]="['/courses', courseId(), 'lectures', lectureId()]"
+                [routerLink]="backLink()"
                 [queryParams]="{ unit: textUnit()?.id }"
             >
                 <fa-icon [icon]="faArrowLeft" />
