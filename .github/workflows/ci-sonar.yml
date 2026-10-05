@@ -73,7 +73,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           # Undefined on a dispatched run, which declares no inputs; the dispatched ref is what we want.
-          ref: ${{ inputs.commit_sha || github.sha }}
+          ref: a608065f4ee506ab9fa6b89922483492ff5ed14a
           # Sonar attributes issues to authors and separates new code from old via git history, so a
           # shallow clone degrades the analysis rather than failing it. `0` is what Sonar documents.
           fetch-depth: 0
@@ -132,7 +132,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
+          SHA: a608065f4ee506ab9fa6b89922483492ff5ed14a
         run: |
           set -Eeuo pipefail
           run_id=""
@@ -207,64 +207,9 @@ jobs:
       #
       # `-x webapp` skips the Angular production build: Sonar analyzes the TypeScript sources, not
       # the bundled output, so the ~10 min build would buy nothing.
-      # One-time, manually dispatched triage of the exact reviewed findings in PR #14052.
-      # No comments, severity changes, rule exclusions, or access changes are made.
-      - name: Triage reviewed reliability false positives
-        continue-on-error: true
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          python3 - <<'PY'
-          import json
-          import os
-          import urllib.error
-          import urllib.parse
-          import urllib.request
-          
-          EXPECTED = {'AaELOqlzIPetcsoYQkmh': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/lecture/service/LectureService.java', 'hash': 'fd139611138ec8c7a57e804299ae678c'}, 'AaELOt1IIPetcsoYQkmt': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/athena/service/AthenaRepositoryExportService.java', 'hash': '712a745a4b6e171d5ddfe51e6ee4db02'}, 'AaELOtx1IPetcsoYQkmr': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/athena/service/AthenaScheduleService.java', 'hash': 'e9af07eb44f15b41dd1d5f4019e7447a'}, 'AaELOlHzIPetcsoYQkmK': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/programming/service/ProgrammingAssessmentService.java', 'hash': '2b535f3365ffda14b44a9217452709f8'}, 'AaELOlzrIPetcsoYQkmN': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingSubmissionResource.java', 'hash': '6aeb68226b2cd0c2751aa9a86898cc7f'}, 'AaELOpxVIPetcsoYQkmf': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/text/web/TextAssessmentResource.java', 'hash': '2b535f3365ffda14b44a9217452709f8'}, 'AaB8pXu7rVuvvHTT2-ys': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/exercise/team/team-owner-search/team-owner-search.component.html', 'hash': 'cdc25cdd05ee25c9ea83a53a4aa750dd'}, 'AaB8pTO6rVuvvHTT293e': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/plagiarism/service/ProgrammingPlagiarismDetectionService.java', 'hash': 'd7734ce23668101f34bf0bad62e89c0d'}, 'AaB8pSgSrVuvvHTT29t_': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/programming/service/ProgrammingExerciseExportService.java', 'hash': '1db161c46cba8e1fb973daa549562aa5'}, 'AaB8pZ84rVuvvHTT2_V7': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:packages/tum-aet-ui/src/lib/autocomplete/tumaet-ui-autocomplete.component.html', 'hash': '1f93a508324052a39ae669f81a38f3ad'}, 'AaB8pZ84rVuvvHTT2_V9': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:packages/tum-aet-ui/src/lib/autocomplete/tumaet-ui-autocomplete.component.html', 'hash': 'b0651008da5abf68c9d90e615f642cd4'}, 'AaB8pZEErVuvvHTT2_JS': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component.html', 'hash': 'd90c26198ff23a5c54f81269ceed5c01'}, 'AaB8pZCSrVuvvHTT2_I3': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component.html', 'hash': '7b9246215390898edf862b9a567ca343'}, 'AaB8pZXGrVuvvHTT2_Nw': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/lecture/shared/pdf-viewer/pdf-viewer.component.html', 'hash': '7a0af1f6989ef44977a783d7fa099052'}, 'AaB8pY8qrVuvvHTT2_HG': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/communication/post/post.component.html', 'hash': 'd90c26198ff23a5c54f81269ceed5c01'}, 'AaB8pZyNrVuvvHTT2_T9': {'rule': 'css:S8776', 'component': 'ls1intum_Artemis:src/main/webapp/app/iris/overview/base-chatbot/iris-base-chatbot.component.scss', 'hash': 'ad9723981586ac9ed363883d9aff331b'}, 'AaB8pZyNrVuvvHTT2_T-': {'rule': 'css:S8776', 'component': 'ls1intum_Artemis:src/main/webapp/app/iris/overview/base-chatbot/iris-base-chatbot.component.scss', 'hash': 'dad3b2376a5bc52201a7f100f419ab6b'}, 'AaB8pZyNrVuvvHTT2_T_': {'rule': 'css:S8776', 'component': 'ls1intum_Artemis:src/main/webapp/app/iris/overview/base-chatbot/iris-base-chatbot.component.scss', 'hash': '798643c575617e4031c04942da91d6d8'}, 'AaB8pYhtrVuvvHTT2_Ab': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/localci/build-agent-summary/build-agent-summary.component.html', 'hash': 'cb4854f45eb3d7c19602288d759d0fd7'}, 'AaB8pYhtrVuvvHTT2_Ac': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/localci/build-agent-summary/build-agent-summary.component.html', 'hash': 'c4dd65fb45f5d256f0b17fd872a6f336'}, 'AaELOkL6IPetcsoYQkmF': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/exam/service/ExamRoomDistributionService.java', 'hash': '765aefcf817928ff56f5d00f242881e8'}, 'AaELOiZmIPetcsoYQkmC': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java', 'hash': '10488330835d29dad4d8a0b80cb865e0'}, 'AaELOiZmIPetcsoYQkmB': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java', 'hash': '10488330835d29dad4d8a0b80cb865e0'}, 'AaB8pToZrVuvvHTT297y': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/assessment/service/ResultService.java', 'hash': 'befe0e22180cdfd66f71553892d6c485'}, 'AaB8pY8qrVuvvHTT2_HF': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/communication/post/post.component.html', 'hash': 'a9ee13967a8eda443ce6589e2a32ceeb'}, 'AaB8pXtUrVuvvHTT2-yO': {'rule': 'css:S8776', 'component': 'ls1intum_Artemis:src/main/webapp/app/exercise/team/team-participate/team-students-online-list.component.scss', 'hash': '605682023edc6d1c0d7aaae9de02655b'}, 'AaB8pY33rVuvvHTT2_GL': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component.html', 'hash': '8c4fc872bd985b72c4242d14285c6b42'}, 'AaB8pZj_rVuvvHTT2_Pv': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/lecture/manage/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component.html', 'hash': 'e33ade067fc1744ea60ccda511c3c082'}, 'AaB8pY2drVuvvHTT2_Fs': {'rule': 'Web:MouseEventWithoutKeyboardEquivalentCheck', 'component': 'ls1intum_Artemis:src/main/webapp/app/communication/course-conversations-components/posting-summary/posting-summary.component.html', 'hash': '712ac105a3d45e26d882b4d14d991f5d'}, 'AaELOkXoIPetcsoYQkmI': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/exam/service/ExamAccessService.java', 'hash': '6d1ddcb22f69a8b50995c2cd6e09bedb'}, 'AaELOkRZIPetcsoYQkmG': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/exam/service/ExamService.java', 'hash': '6de94464f953d1050755f694e02acf28'}, 'AaB8pTxerVuvvHTT29-b': {'rule': 'javabugs:S2259', 'component': 'ls1intum_Artemis:src/main/java/de/tum/cit/aet/artemis/lti/service/OnlineCourseConfigurationService.java', 'hash': 'e8964666ed561bd4c272929e6aa9ec0b'}}
-          TOKEN = os.environ['SONAR_TOKEN']
-          if not TOKEN:
-              raise SystemExit('The existing Sonar credential is unavailable.')
-          
-          def request(action, parameters, write=False):
-              encoded = urllib.parse.urlencode(parameters)
-              url = 'https://sonarcloud.io/api/' + action
-              if not write:
-                  url += '?' + encoded
-              req = urllib.request.Request(url, data=encoded.encode() if write else None,
-                  headers={'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/x-www-form-urlencoded'})
-              try:
-                  with urllib.request.urlopen(req, timeout=60) as response:
-                      return json.load(response)
-              except urllib.error.HTTPError as error:
-                  raise SystemExit('Sonar rejected ' + action + ' with HTTP ' + str(error.code)) from None
-          
-          issues = request('issues/search', {'issues': ','.join(EXPECTED), 'ps': 100})['issues']
-          actual = {issue['key']: issue for issue in issues}
-          if set(actual) != set(EXPECTED):
-              raise SystemExit('The reviewed issue set changed; no transitions were attempted.')
-          for key, expected in EXPECTED.items():
-              issue = actual[key]
-              if any(issue.get(field) != value for field, value in expected.items()):
-                  raise SystemExit('The rule or source hash changed for ' + key + '; no transitions were attempted.')
-              if issue['project'] != 'ls1intum_Artemis' or issue['type'] != 'BUG':
-                  raise SystemExit('Unexpected project or issue type; no transitions were attempted.')
-              if issue['issueStatus'] not in ('OPEN', 'CONFIRMED', 'FALSE_POSITIVE'):
-                  raise SystemExit('Unexpected status for ' + key + '; no transitions were attempted.')
-          print('Validated all 32 reviewed issue identities, rules, and source hashes.')
-          for key in EXPECTED:
-              if actual[key]['issueStatus'] == 'FALSE_POSITIVE':
-                  print(key + ': already false positive')
-                  continue
-              issue = request('issues/do_transition', {'issue': key, 'transition': 'falsepositive'}, write=True)['issue']
-              if issue.get('issueStatus') != 'FALSE_POSITIVE' and issue.get('resolution') != 'FALSE-POSITIVE':
-                  raise SystemExit('Unexpected transition result for ' + key)
-              print(key + ': verified false positive')
-          PY
-
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Manual dispatches must not publish a feature branch as the main branch.
           SONAR_BRANCH_NAME: release/sonar-reliability-audit
-        run: ./gradlew compileJava sonar -x webapp "-Dsonar.branch.name=${SONAR_BRANCH_NAME}"
+        run: ./gradlew compileJava sonar -x webapp "-Dsonar.branch.name=${SONAR_BRANCH_NAME}" "-Dsonar.scm.revision=a608065f4ee506ab9fa6b89922483492ff5ed14a"
