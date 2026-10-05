@@ -50,7 +50,8 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
         await login(tutor);
         for (const view of [
             { route: 'participations', endpoint: 'page', component: 'jhi-participation' },
-            { route: 'participations?view=results', endpoint: 'page', component: 'jhi-participation' },
+            // The former scores page redirects to the participation page
+            { route: 'scores', endpoint: 'page', component: 'jhi-participation' },
         ]) {
             const [response] = await Promise.all([
                 page.waitForResponse(
@@ -164,16 +165,16 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             await expect(modal.locator('jhi-result').first()).toContainText(`${percentage}%`, { timeout: 15000 });
         });
 
-        test('Instructor sees the assessed result in the results view', async ({ login, page }) => {
+        test('Instructor sees the assessed result in the participation table', async ({ login, page }) => {
             test.slow();
-            // The results view renders one jhi-result per participation. Wait for the assessment due date
+            // The participation table renders one jhi-result per participation. Wait for the assessment due date
             // so the score is released, then verify the graded percentage renders for the (only) participant.
             const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {
                 await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
             }
             const percentage = (tutorFeedbackPoints + tutorTextFeedbackPoints) * 10;
-            await login(instructor, `/course-management/${course.id}/text-exercises/${exercise.id}/participations?view=results`);
+            await login(instructor, `/course-management/${course.id}/text-exercises/${exercise.id}/participations`);
             // Only studentOne participated, so the single data row's jhi-result must show the graded score.
             await expect(page.locator('jhi-participation jhi-result').first()).toContainText(`${percentage}%`, { timeout: 20000 });
         });

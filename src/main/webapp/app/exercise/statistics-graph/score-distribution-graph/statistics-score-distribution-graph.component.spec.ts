@@ -60,7 +60,7 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
 
         expect(routeInNewTabStub).toHaveBeenCalledOnce();
         expect(routeInNewTabStub).toHaveBeenCalledWith([`/course-management/2/file-upload-exercises/1/participations`], {
-            queryParams: { view: 'results', scoreRangeFilter: expectedLabels.indexOf(label) },
+            queryParams: { scoreRangeFilter: expectedLabels.indexOf(label) },
         });
     });
 });

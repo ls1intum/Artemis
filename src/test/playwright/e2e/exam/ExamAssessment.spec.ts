@@ -447,10 +447,10 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         await examParticipation.checkResultScore('90%');
     });
 
-    test('Results view offers the actions of each correction round', async ({ page, login }) => {
+    test('Participation table offers the actions of each correction round', async ({ page, login }) => {
         await login(instructor);
-        // The results view renders one set of assessment actions per correction round of the exam.
-        await page.goto(`/course-management/${dashboardCourse.id}/text-exercises/${exerciseId}/participations?view=results`);
+        // The participation table renders one set of assessment actions per correction round of the exam.
+        await page.goto(`/course-management/${dashboardCourse.id}/text-exercises/${exerciseId}/participations`);
         await page.waitForLoadState('domcontentloaded');
 
         const studentRow = page.locator('tr', { hasText: studentOneName });
@@ -541,9 +541,9 @@ test.describe.serial('Cancelling one correction round leaves the other one alone
         await expect(exerciseAssessment.getLockedMessage()).toBeVisible();
     });
 
-    test('Results view offers to continue and to cancel only the round that is a draft', async ({ page, login }) => {
+    test('Participation table offers to continue and to cancel only the round that is a draft', async ({ page, login }) => {
         await login(instructor);
-        await page.goto(`/course-management/${cancelCourse.id}/text-exercises/${exerciseId}/participations?view=results`);
+        await page.goto(`/course-management/${cancelCourse.id}/text-exercises/${exerciseId}/participations`);
         await page.waitForLoadState('domcontentloaded');
 
         const studentRow = page.locator('tr', { hasText: studentOneName });
@@ -561,7 +561,7 @@ test.describe.serial('Cancelling one correction round leaves the other one alone
 
     test('Cancelling the second round releases it and keeps the first round assessed', async ({ page, login }) => {
         await login(instructor);
-        await page.goto(`/course-management/${cancelCourse.id}/text-exercises/${exerciseId}/participations?view=results`);
+        await page.goto(`/course-management/${cancelCourse.id}/text-exercises/${exerciseId}/participations`);
         await page.waitForLoadState('domcontentloaded');
 
         const studentRow = page.locator('tr', { hasText: studentOneName });

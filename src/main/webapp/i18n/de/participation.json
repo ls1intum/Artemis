@@ -5,11 +5,6 @@
                 "title": "Teilnahmen",
                 "createLabel": "Teilnahme erstellen"
             },
-            "view": {
-                "participation": "Teilnahme",
-                "results": "Ergebnisse",
-                "all": "Alle Spalten"
-            },
             "filterGroup": {
                 "submissions": "Abgaben",
                 "results": "Ergebnisse"

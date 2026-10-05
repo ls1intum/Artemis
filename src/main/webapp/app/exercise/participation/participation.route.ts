@@ -4,15 +4,15 @@ import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/consta
 import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
- * The former scores page is the results view of the participation page. Old links and the score distribution
- * deep link (`scoreRangeFilter`) keep working. A relative redirect drops the query parameters it does not name,
- * so the one the page reads is passed on explicitly.
+ * The participation page also shows the scores, so the former scores page redirects to it. Old links and the score
+ * distribution deep link (`scoreRangeFilter`) keep working. A relative redirect drops the query parameters it does
+ * not name, so the one the page reads is passed on explicitly.
  */
 export const scoresRedirect =
     (participationsPath: string): RedirectFunction =>
     ({ queryParams }) => {
         const scoreRangeFilter = queryParams['scoreRangeFilter'];
-        return `${participationsPath}?view=results` + (scoreRangeFilter !== undefined ? `&scoreRangeFilter=${scoreRangeFilter}` : '');
+        return scoreRangeFilter !== undefined ? `${participationsPath}?scoreRangeFilter=${scoreRangeFilter}` : participationsPath;
     };
 
 export const routes: Routes = [

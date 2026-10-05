@@ -75,29 +75,36 @@
     </div>
 }
 
-<!-- Column preset and filter in the table caption bar -->
+<!-- Filter dropdown in the table caption bar -->
+
 <ng-template #filterActionsTemplate>
-    <div class="flex items-center gap-2">
-        <tumaet-ui-select-button
-            size="small"
-            data-testid="participation-view-select"
-            [options]="viewOptions"
-            [ngModel]="view()"
-            (ngModelChange)="setView($event)"
-            optionValue="value"
-            [allowEmpty]="false"
-            [itemTemplate]="viewItem"
-        />
-        <ng-template #viewItem let-item>
-            <span [attr.data-view]="item.value" [jhiTranslate]="item.labelKey"></span>
-        </ng-template>
-        <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilter]="activeFilter()" (filterChange)="updateParticipationFilter($event)" />
-    </div>
+    <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilter]="activeFilter()" (filterChange)="updateParticipationFilter($event)" />
 </ng-template>
 
 <!-- Row actions -->
+
 <ng-template #actionsTemplate let-dto>
+    <!-- Ordered by how often they are needed: assessing and opening the code first, destructive actions last -->
     <div class="btn-group gap-1">
+        @if (exercise()!.isAtLeastInstructor) {
+            <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
+            @if (exercise()!.type === ExerciseType.PROGRAMMING) {
+                @if (dto.buildPlanId && !isLocalCIEnabled()) {
+                    <a [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
+                        <fa-icon [icon]="farFileCode" />
+                        <span class="d-none d-xl-inline ms-1">Build plan</span>
+                    </a>
+                }
+                <a
+                    [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
+                    class="btn btn-info btn-sm"
+                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                >
+                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                    <span class="d-none d-xl-inline ms-1">Online editor</span>
+                </a>
+            }
+        }
         @if (exercise()!.type === ExerciseType.PROGRAMMING && exercise()!.isAtLeastInstructor) {
             @if (hasLoadedPendingSubmissions()) {
                 <jhi-programming-exercise-instructor-trigger-build-button
@@ -108,20 +115,6 @@
             } @else {
                 <fa-icon [icon]="faCircleNotch" animation="spin" class="text-secondary" />
             }
-        }
-        @if (exercise()!.type === ExerciseType.PROGRAMMING && !isLocalCIEnabled() && dto.buildPlanId && exercise()!.isAtLeastInstructor) {
-            <button
-                type="button"
-                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                jhiDeleteButton
-                [actionType]="ActionType.Cleanup"
-                deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
-                (delete)="cleanupProgrammingExerciseParticipation(dto)"
-                [dialogError]="dialogError"
-                [entityTitle]="dto.participantName"
-            >
-                <fa-icon [icon]="faEraser" />
-            </button>
         }
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
             <button type="button" (click)="addBasicPresentation(dto)" class="btn btn-info btn-sm">
@@ -149,24 +142,19 @@
                 <span class="d-none d-xl-inline ms-1" jhiTranslate="artemisApp.participation.removePresentation.label"></span>
             </button>
         }
-        @if (exercise()!.isAtLeastInstructor) {
-            @if (exercise()!.type === ExerciseType.PROGRAMMING) {
-                @if (dto.buildPlanId && !isLocalCIEnabled()) {
-                    <a [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
-                        <fa-icon [icon]="farFileCode" />
-                        <span class="d-none d-xl-inline ms-1">Build plan</span>
-                    </a>
-                }
-                <a
-                    [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
-                    class="btn btn-info btn-sm"
-                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                >
-                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                    <span class="d-none d-xl-inline ms-1">Online editor</span>
-                </a>
-            }
-            <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
+        @if (exercise()!.type === ExerciseType.PROGRAMMING && !isLocalCIEnabled() && dto.buildPlanId && exercise()!.isAtLeastInstructor) {
+            <button
+                type="button"
+                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                jhiDeleteButton
+                [actionType]="ActionType.Cleanup"
+                deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
+                (delete)="cleanupProgrammingExerciseParticipation(dto)"
+                [dialogError]="dialogError"
+                [entityTitle]="dto.participantName"
+            >
+                <fa-icon [icon]="faEraser" />
+            </button>
         }
         @if (exercise()!.isAtLeastInstructor) {
             <button
@@ -200,7 +188,12 @@
 </ng-template>
 
 <ng-template #initStateCellTemplate let-cell>
-    {{ 'artemisApp.InitializationState.' + cell.data.initializationState | artemisTranslate }}
+    <div class="flex flex-wrap items-center gap-1">
+        <span>{{ 'artemisApp.InitializationState.' + cell.data.initializationState | artemisTranslate }}</span>
+        @if (cell.data.testRun) {
+            <tumaet-ui-tag severity="info" data-testid="participation-practice-tag" [value]="'artemisApp.participation.practice' | artemisTranslate" />
+        }
+    </div>
 </ng-template>
 
 <ng-template #initDateCellTemplate let-cell>
@@ -217,9 +210,12 @@
 
 <ng-template #participantNameCellTemplate let-cell>
     @if (exercise()!.teamMode) {
-        <a [routerLink]="['/course-management', exercise()!.course?.id, 'exercises', exercise()!.id, 'teams', cell.data.teamId]">
-            {{ cell.data.participantName }}
-        </a>
+        <div class="flex flex-col gap-1">
+            <a [routerLink]="['/course-management', course()!.id, 'exercises', exercise()!.id, 'teams', cell.data.teamId]">
+                {{ cell.data.participantName }}
+            </a>
+            <jhi-team-students-list [students]="cell.data.teamStudents ?? []" />
+        </div>
     } @else {
         @if (isAdmin()) {
             <a routerLink="/admin/user-management/{{ cell.data.studentLogin }}">{{ cell.data.participantName }}</a>
@@ -227,16 +223,6 @@
             {{ cell.data.participantName }}
         }
     }
-</ng-template>
-
-<ng-template #teamStudentsCellTemplate let-cell>
-    <div style="max-width: 20vw; overflow-x: auto">
-        <jhi-team-students-list [students]="cell.data.teamStudents ?? []" />
-    </div>
-</ng-template>
-
-<ng-template #practiceCellTemplate let-cell>
-    {{ (cell.data.testRun ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
 </ng-template>
 
 <ng-template #basicPresentationCellTemplate let-cell>
@@ -306,25 +292,33 @@
 </ng-template>
 
 <ng-template #completionDateCellTemplate let-cell>
-    {{ cell.data.completionDate | artemisDate }}
+    @if (cell.data.completionDate) {
+        <div class="flex flex-col">
+            <span>{{ cell.data.completionDate | artemisDate }}</span>
+            @if (cell.data.durationInSeconds !== undefined) {
+                <span class="text-sm opacity-60" [pTooltip]="'artemisApp.exercise.duration' | artemisTranslate" tooltipPosition="top">
+                    {{ cell.data.durationInSeconds | artemisDurationFromSeconds: true }}
+                </span>
+            }
+        </div>
+    }
 </ng-template>
 
 <ng-template #lastResultCellTemplate let-cell>
     @if (toResult(cell.data); as result) {
-        <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
+        <div class="flex flex-wrap items-center gap-2">
+            <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
+            @if (showAssessmentType() && cell.data.assessmentType) {
+                <span class="text-sm opacity-60" data-testid="participation-assessment-type">{{ cell.data.assessmentType }}</span>
+            }
+            @if (showAssessmentNote() && cell.data.assessmentNote?.trim()) {
+                <i
+                    class="pi pi-comment"
+                    [pTooltip]="cell.data.assessmentNote"
+                    tooltipPosition="top"
+                    [attr.aria-label]="'artemisApp.assessment.assessmentNote' | artemisTranslate"
+                ></i>
+            }
+        </div>
     }
-</ng-template>
-
-<ng-template #assessmentTypeCellTemplate let-cell>
-    {{ cell.data.assessmentType }}
-</ng-template>
-
-<ng-template #assessmentNoteCellTemplate let-cell>
-    @if (cell.data.assessmentNote?.trim()) {
-        <i class="pi pi-comment" [pTooltip]="cell.data.assessmentNote" tooltipPosition="top"></i>
-    }
-</ng-template>
-
-<ng-template #durationCellTemplate let-cell>
-    {{ cell.data.durationInSeconds !== undefined && cell.data.durationInSeconds !== null ? (cell.data.durationInSeconds | artemisDurationFromSeconds: true) : '-' }}
 </ng-template>

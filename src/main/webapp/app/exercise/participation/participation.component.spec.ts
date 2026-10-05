@@ -130,64 +130,78 @@ describe('ParticipationComponent', () => {
             expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(1);
             expect(component.exercise()).toEqual(exercise);
             expect(component.course()?.id).toBe(10);
-            expect(component.view()).toBe('participation');
         });
 
-        it('should open the view and score range named in the query parameters', () => {
-            queryParams = { view: 'results', scoreRangeFilter: '3' };
+        it('should open the score range named in the query parameters', () => {
+            queryParams = { scoreRangeFilter: '3' };
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
             component.ngOnInit();
 
-            expect(component.view()).toBe('results');
             expect(component.rangeFilter()).toEqual(new Range(30, 40));
-        });
-
-        it('should ignore an unknown view', () => {
-            queryParams = { view: 'scores' };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
-
-            component.ngOnInit();
-
-            expect(component.view()).toBe('participation');
         });
     });
 
-    describe('Views', () => {
-        it('should show the participation state columns only in the participation and all views', () => {
+    describe('Columns', () => {
+        const render = async (ex: Exercise, dto: ParticipationManagementDTO) => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: ex })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [dto], totalElements: 1 }));
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+            return componentFixture.nativeElement.querySelector('jhi-table-view tbody tr') as HTMLElement;
+        };
+
+        it('should show the state and the result of a participation side by side', () => {
             component.exercise.set({ ...exercise, isAtLeastInstructor: true, dueDate: dayjs() });
 
-            expect(headerKeys()).toEqual(
-                expect.arrayContaining(['artemisApp.participation.initializationState', 'artemisApp.participation.individualDueDate', 'artemisApp.exercise.submissionCount']),
+            expect(headerKeys()).toEqual([
+                'artemisApp.participation.student',
+                'artemisApp.participation.initializationState',
+                'artemisApp.participation.initializationDate',
+                'artemisApp.exercise.lastResult',
+                'artemisApp.exercise.completionDate',
+                'artemisApp.exercise.submissionCount',
+                'artemisApp.participation.individualDueDate',
+            ]);
+        });
+
+        it('should list the team members below the team instead of in a column of their own', async () => {
+            const row = await render(
+                { ...exercise, isAtLeastInstructor: true, teamMode: true },
+                { ...sampleDto, participantName: 'Team A', teamId: 7, teamStudents: [{ name: 'Bob', login: 'bob' }] },
             );
-            expect(headerKeys()).not.toContain('artemisApp.exercise.lastResult');
 
-            component.view.set('results');
-            expect(headerKeys()).toEqual(expect.arrayContaining(['artemisApp.exercise.completionDate', 'artemisApp.exercise.lastResult', 'artemisApp.exercise.duration']));
-            expect(headerKeys()).not.toContain('artemisApp.participation.initializationState');
-            expect(headerKeys()).not.toContain('artemisApp.participation.individualDueDate');
-
-            component.view.set('all');
-            expect(headerKeys()).toEqual(expect.arrayContaining(['artemisApp.participation.initializationState', 'artemisApp.exercise.lastResult']));
+            expect(headerKeys()).not.toContain('artemisApp.participation.students');
+            const teamCell = row.querySelector('td')!;
+            expect(teamCell.querySelector('a[href*="/teams/7"]')?.textContent).toContain('Team A');
+            expect(teamCell.textContent).toContain('bob');
         });
 
-        it('should show the assessment columns only when the exercise is assessed manually', () => {
-            component.view.set('results');
+        it('should mark a practice participation in its status', async () => {
+            const row = await render({ ...exercise, isAtLeastInstructor: true }, { ...sampleDto, testRun: true, initializationState: 'INITIALIZED' });
+
+            expect(row.querySelector('[data-testid="participation-practice-tag"]')).not.toBeNull();
+        });
+
+        it('should name the assessment type next to the result only where manual results exist', async () => {
+            const dto: ParticipationManagementDTO = { ...sampleDto, submissionId: 2, resultId: 5, score: 80, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() };
+            // MockResultService leaves out what jhi-result needs to render the score
+            Object.defineProperty(resultService, 'getResultString', { value: vi.fn(() => '80%') });
+            const row = await render({ ...exercise, isAtLeastInstructor: true, assessmentType: AssessmentType.MANUAL }, dto);
+
+            expect(row.querySelector('jhi-result')).not.toBeNull();
+            expect(row.querySelector('[data-testid="participation-assessment-type"]')?.textContent).toContain(AssessmentType.MANUAL);
+        });
+
+        it('should hide the assessment type and note for automatically assessed exercises', () => {
             component.exercise.set({ ...exercise, assessmentType: AssessmentType.AUTOMATIC });
-            expect(headerKeys()).not.toContain('artemisApp.exercise.type');
-            expect(component.columns().some((column) => column.headerTooltip === 'artemisApp.assessment.assessmentNote')).toBe(false);
+            expect(component.showAssessmentType()).toBe(false);
+            expect(component.showAssessmentNote()).toBe(false);
 
-            component.newManualResultAllowed.set(true);
-            component.exercise.set({ ...exercise, assessmentType: AssessmentType.SEMI_AUTOMATIC });
-            expect(headerKeys()).toContain('artemisApp.exercise.type');
-            expect(component.columns().some((column) => column.headerTooltip === 'artemisApp.assessment.assessmentNote')).toBe(true);
-        });
-
-        it('should record the selected view in the URL', () => {
-            component.setView('results');
-
-            expect(component.view()).toBe('results');
-            expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { view: 'results' }, queryParamsHandling: 'merge', replaceUrl: true }));
+            component.exercise.set({ ...exercise, assessmentType: AssessmentType.SEMI_AUTOMATIC, allowComplaintsForAutomaticAssessments: true });
+            expect(component.showAssessmentType()).toBe(true);
+            expect(component.showAssessmentNote()).toBe(true);
         });
     });
 
@@ -221,7 +235,6 @@ describe('ParticipationComponent', () => {
                 field: 'participantName',
                 sort: true,
             });
-            expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.students')).toBe(teamMode);
         });
 
         it.each(['participantName', 'participantIdentifier', 'buildPlanId'])(

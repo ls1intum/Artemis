@@ -58,7 +58,7 @@ import { ResultService } from 'app/exercise/result/result.service';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TooltipModule } from 'primeng/tooltip';
-import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
@@ -81,13 +81,6 @@ export enum FilterProp {
     AUTOMATIC = 'Automatic',
     LOCKED = 'Locked',
 }
-
-/**
- * Column presets of the participation table. `participation` shows the state of each participation, `results` how it
- * was assessed, and `all` both. Kept in the `view` query parameter, so links can open a preset directly.
- */
-export type ParticipationView = 'participation' | 'results' | 'all';
-const PARTICIPATION_VIEWS: readonly ParticipationView[] = ['participation', 'results', 'all'];
 
 @Component({
     selector: 'jhi-participation',
@@ -113,7 +106,7 @@ const PARTICIPATION_VIEWS: readonly ParticipationView[] = ['participation', 'res
         CourseTitleBarActionsDirective,
         NgbPopover,
         TooltipModule,
-        TumAetUiSelectButtonComponent,
+        TumAetUiTagComponent,
         ExternalSubmissionButtonComponent,
         ExerciseActionButtonComponent,
         ExerciseScoresExportButtonComponent,
@@ -160,8 +153,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly exercise = signal<Exercise | undefined>(undefined);
     // The assessment links only need the course id, which the route carries for course and exam exercises alike
     readonly course = signal<Course | undefined>(undefined);
-    readonly view = signal<ParticipationView>('participation');
-    protected readonly viewOptions = PARTICIPATION_VIEWS.map((value) => ({ value, labelKey: 'artemisApp.participation.view.' + value }));
     readonly newManualResultAllowed = signal(false);
 
     // represents all intervals selectable in the score distribution on the exercise statistics
@@ -182,7 +173,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly totalRows = signal(0);
     readonly isLoading = signal(false);
     readonly isSaving = signal(false);
-    readonly afterDueDate = signal(false);
     readonly activeFilter = signal<FilterProp>(FilterProp.ALL);
     readonly hasLoadedPendingSubmissions = signal(false);
     readonly isAdmin = signal(false);
@@ -250,24 +240,31 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly initDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initDateCellTemplate');
     readonly submissionCountCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('submissionCountCellTemplate');
     readonly participantNameCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('participantNameCellTemplate');
-    readonly teamStudentsCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('teamStudentsCellTemplate');
-    readonly practiceCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('practiceCellTemplate');
     readonly basicPresentationCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('basicPresentationCellTemplate');
     readonly gradedPresentationCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('gradedPresentationCellTemplate');
     readonly individualDueDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('individualDueDateCellTemplate');
     readonly completionDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('completionDateCellTemplate');
     readonly lastResultCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('lastResultCellTemplate');
-    readonly assessmentTypeCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('assessmentTypeCellTemplate');
-    readonly assessmentNoteCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('assessmentNoteCellTemplate');
-    readonly durationCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('durationCellTemplate');
     readonly exportPopover = viewChild<NgbPopover>('exportPopover');
 
+    /** Whether the result cell names how the result was produced; only meaningful where manual results can exist. */
+    readonly showAssessmentType = computed(() => this.newManualResultAllowed() || !!this.exercise()?.allowComplaintsForAutomaticAssessments);
+
+    /** Whether the result cell offers the assessor's internal note. */
+    readonly showAssessmentNote = computed(() => {
+        const assessmentType = this.exercise()?.assessmentType;
+        return assessmentType === AssessmentType.MANUAL || assessmentType === AssessmentType.SEMI_AUTOMATIC;
+    });
+
+    /**
+     * One row per participation, read from left to right: who, where their work is, how far they got, what they
+     * achieved, and the per-participation settings. Facts that belong together share a cell (team members with the
+     * team, practice mode with the status, assessment type and note with the result, duration with the completion
+     * date), so the table stays narrow without hiding anything.
+     */
     readonly columns = computed<ColumnDef<ParticipationManagementDTO>[]>(() => {
         const ex = this.exercise();
         if (!ex) return [];
-        const view = this.view();
-        const showParticipation = view !== 'results';
-        const showResults = view !== 'participation';
 
         const cols: ColumnDef<ParticipationManagementDTO>[] = [];
 
@@ -277,18 +274,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             cols.push({
                 headerKey: ex.teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
                 field: 'participantName',
-                width: '150px',
+                width: ex.teamMode ? '200px' : '150px',
                 sort: true,
                 templateRef: this.participantNameCellTemplate(),
             });
-            if (ex.teamMode && showParticipation) {
-                cols.push({
-                    headerKey: 'artemisApp.participation.students',
-                    width: '150px',
-                    sort: false,
-                    templateRef: this.teamStudentsCellTemplate(),
-                });
-            }
         }
 
         if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastInstructor) {
@@ -300,87 +289,45 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (showParticipation) {
-            cols.push(
-                {
-                    headerKey: 'artemisApp.participation.initializationState',
-                    field: 'initializationState',
-                    width: '90px',
-                    sort: true,
-                    templateRef: this.initStateCellTemplate(),
-                },
-                {
-                    headerKey: 'artemisApp.participation.initializationDate',
-                    field: 'initializationDate',
-                    width: '160px',
-                    sort: true,
-                    templateRef: this.initDateCellTemplate(),
-                },
-            );
-        }
-
-        if (showResults) {
-            cols.push(
-                {
-                    headerKey: 'artemisApp.exercise.completionDate',
-                    field: 'completionDate',
-                    width: '160px',
-                    sort: true,
-                    templateRef: this.completionDateCellTemplate(),
-                },
-                {
-                    headerKey: 'artemisApp.exercise.lastResult',
-                    field: 'score',
-                    width: '200px',
-                    sort: true,
-                    templateRef: this.lastResultCellTemplate(),
-                },
-            );
-            if (this.newManualResultAllowed() || ex.allowComplaintsForAutomaticAssessments) {
-                cols.push({
-                    headerKey: 'artemisApp.exercise.type',
-                    field: 'assessmentType',
-                    width: '90px',
-                    sort: true,
-                    templateRef: this.assessmentTypeCellTemplate(),
-                });
-            }
-            if (ex.assessmentType === AssessmentType.MANUAL || ex.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
-                cols.push({
-                    headerIcon: 'pi pi-comment',
-                    headerTooltip: 'artemisApp.assessment.assessmentNote',
-                    templateRef: this.assessmentNoteCellTemplate(),
-                });
-            }
-        }
-
-        cols.push({
-            headerKey: 'artemisApp.exercise.submissionCount',
-            field: 'submissionCount',
-            width: '90px',
-            sort: true,
-            templateRef: this.submissionCountCellTemplate(),
-        });
-
-        if (ex.type === ExerciseType.PROGRAMMING && this.afterDueDate()) {
-            cols.push({
-                headerKey: 'artemisApp.participation.practice',
-                field: 'testRun',
+        cols.push(
+            {
+                headerKey: 'artemisApp.participation.initializationState',
+                field: 'initializationState',
+                width: '110px',
+                sort: true,
+                templateRef: this.initStateCellTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.participation.initializationDate',
+                field: 'initializationDate',
+                width: '160px',
+                sort: true,
+                templateRef: this.initDateCellTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.exercise.lastResult',
+                field: 'score',
+                width: '200px',
+                sort: true,
+                templateRef: this.lastResultCellTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.exercise.completionDate',
+                field: 'completionDate',
+                width: '160px',
+                sort: true,
+                templateRef: this.completionDateCellTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.exercise.submissionCount',
+                field: 'submissionCount',
                 width: '90px',
                 sort: true,
-                templateRef: this.practiceCellTemplate(),
-            });
-        }
+                templateRef: this.submissionCountCellTemplate(),
+            },
+        );
 
-        if (showResults) {
-            cols.push({
-                headerKey: 'artemisApp.exercise.duration',
-                width: '90px',
-                templateRef: this.durationCellTemplate(),
-            });
-        }
-
-        if (showParticipation && this.basicPresentationEnabled()) {
+        if (this.basicPresentationEnabled()) {
             cols.push({
                 headerKey: 'artemisApp.participation.presentationScore',
                 field: 'presentationScore',
@@ -390,7 +337,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (showParticipation && this.gradedPresentationEnabled()) {
+        if (this.gradedPresentationEnabled()) {
             cols.push({
                 headerKey: 'artemisApp.participation.presentationGrade',
                 field: 'presentationScore',
@@ -400,7 +347,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (showParticipation && ex.type !== ExerciseType.QUIZ && ex.dueDate) {
+        if (ex.type !== ExerciseType.QUIZ && ex.dueDate) {
             cols.push({
                 headerKey: 'artemisApp.participation.individualDueDate',
                 field: 'individualDueDate',
@@ -414,12 +361,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     });
 
     ngOnInit() {
-        const queryParams = this.route.snapshot.queryParamMap;
-        const view = queryParams.get('view') as ParticipationView | null;
-        if (view && PARTICIPATION_VIEWS.includes(view)) {
-            this.view.set(view);
-        }
-        const scoreRangeFilter = queryParams.get('scoreRangeFilter');
+        const scoreRangeFilter = this.route.snapshot.queryParamMap.get('scoreRangeFilter');
         if (scoreRangeFilter) {
             this.rangeFilter.set(this.scoreRanges[Number(scoreRangeFilter)]);
         }
@@ -449,7 +391,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
             const ex = exerciseResponse.body!;
             this.exercise.set(ex);
-            this.afterDueDate.set(!!ex.dueDate && dayjs().isAfter(ex.dueDate));
             this.newManualResultAllowed.set(areManualResultsAllowed(ex));
             this.loadGradingScale(ex.course?.id);
             if (ex.type === ExerciseType.PROGRAMMING) {
@@ -532,14 +473,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     updateParticipationFilter(newValue: string) {
         this.activeFilter.set(newValue as FilterProp);
         this.loadPage();
-    }
-
-    /**
-     * Switches the column preset and records it in the URL, so a reload or a shared link opens the same preset.
-     */
-    setView(view: ParticipationView) {
-        this.view.set(view);
-        void this.router.navigate([], { relativeTo: this.route, queryParams: { view }, queryParamsHandling: 'merge', replaceUrl: true });
     }
 
     /**
