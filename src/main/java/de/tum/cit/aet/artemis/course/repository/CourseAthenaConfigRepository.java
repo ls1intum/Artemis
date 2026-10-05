@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
- * Spring Data JPA repository for the {@link CourseAthenaConfig} entity, which reads a course's Athena settings without
- * the lazy association on the course, as {@link CourseConfigurationRepository} does for the course configuration. The
- * queries start from {@code Course} because the foreign key lives there.
+ * Spring Data JPA repository for the {@link CourseAthenaConfig} entity. The configuration holds the key to its course and
+ * the course carries no mapped association to it, so loading a course never reads the configuration: it is read here, at
+ * the point where it is needed, as {@link CourseConfigurationRepository} does for the course configuration.
  * <p>
  * The two feature flags are switched independently and save immediately, so each one is written by its own conditional
  * statement rather than by storing a whole configuration read earlier: two instructors switching the two features at
@@ -46,9 +46,8 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      */
     @Query("""
             SELECT athenaConfig
-            FROM Course course
-                JOIN course.athenaConfig athenaConfig
-            WHERE course.id = :courseId
+            FROM CourseAthenaConfig athenaConfig
+            WHERE athenaConfig.course.id = :courseId
             """)
     Optional<CourseAthenaConfig> findByCourseId(@Param("courseId") long courseId);
 
@@ -62,7 +61,7 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
             SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(
                 COALESCE(athenaConfig.gradingFeedbackEnabled, FALSE), COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE))
             FROM Course course
-                LEFT JOIN course.athenaConfig athenaConfig
+                LEFT JOIN CourseAthenaConfig athenaConfig ON athenaConfig.course = course
             WHERE course.id = :courseId
             """)
     Optional<CourseAthenaConfigDTO> findConfigByCourseId(@Param("courseId") long courseId);
@@ -146,39 +145,24 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
     Optional<Long> lockCourseForAthenaConfigInitialization(@Param("courseId") long courseId);
 
     /**
-     * Returns the id of a course's Athena configuration, reading the foreign key without loading either entity.
+     * Returns the id of a course's Athena configuration, without loading the entity.
      *
      * @param courseId the id of the course to read the configuration id of
      * @return the id of the course's Athena configuration, or empty if the course has none yet
      */
     @Query("""
-            SELECT course.athenaConfig.id
-            FROM Course course
-            WHERE course.id = :courseId
+            SELECT athenaConfig.id
+            FROM CourseAthenaConfig athenaConfig
+            WHERE athenaConfig.course.id = :courseId
             """)
     Optional<Long> findAthenaConfigIdByCourseId(@Param("courseId") long courseId);
-
-    /**
-     * Points a course at an Athena configuration.
-     *
-     * @param courseId the id of the course to attach the configuration to
-     * @param config   the configuration to attach
-     * @return the number of rows updated: 1 if the course exists, 0 if it does not
-     */
-    @Modifying
-    @Query("""
-            UPDATE Course course
-            SET course.athenaConfig = :config
-            WHERE course.id = :courseId
-            """)
-    int attachAthenaConfigToCourse(@Param("courseId") long courseId, @Param("config") CourseAthenaConfig config);
 
     /**
      * Returns the id of a course's Athena configuration, creating an all-disabled one if the course has none yet.
      * <p>
      * The course row is locked first, so that two instructors switching a feature of the same not-yet-configured course
-     * cannot both find no configuration, create one each and then race to point the course at theirs: the loser of that
-     * race would have written its flag into a row nothing references any more, while its request still answered 200.
+     * cannot both find no configuration and create one each: the unique key on the course would refuse the loser with an
+     * error instead of letting it switch the feature it asked for.
      * Locking before reading also makes the read below see the winner's configuration on both databases, because MySQL
      * takes the transaction's snapshot at its first non-locking read rather than at the lock.
      *
@@ -194,10 +178,12 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
         if (existingConfigId.isPresent()) {
             return existingConfigId.get();
         }
-        // Flushed right away because the statement attaching it to the course needs its generated id.
-        CourseAthenaConfig config = saveAndFlush(new CourseAthenaConfig());
-        attachAthenaConfigToCourse(courseId, config);
-        return config.getId();
+        // The configuration only needs the id of its course, so a stub that carries nothing else is enough.
+        Course course = new Course();
+        course.setId(courseId);
+        CourseAthenaConfig config = new CourseAthenaConfig();
+        config.setCourse(course);
+        return saveAndFlush(config).getId();
     }
 
     /**

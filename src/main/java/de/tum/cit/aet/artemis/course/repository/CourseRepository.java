@@ -105,42 +105,41 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
     @Query("""
-            SELECT DISTINCT c
+            SELECT c
             FROM Course c
-                LEFT JOIN FETCH c.athenaConfig
             WHERE c.startDate <= :now
                 AND c.endDate >= :now
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
     /**
-     * Finds all courses that ended before the given date, eagerly loading their (otherwise lazy) course configuration so
-     * grade-relevance can be evaluated without extra queries. Used by the data-privacy retention cleanup to determine
-     * which old courses are due for a student-data reset.
+     * Finds all courses that ended before the given date. Used by the data-privacy retention cleanup to determine which
+     * old courses are due for a student-data reset. The course configuration is not part of the result: the cleanup
+     * attaches it with {@code CourseConfigurationRepository.attachTo}, in one query for all of them.
      *
      * @param endDateBefore only courses whose end date is non-null and strictly before this are returned
-     * @return the matching courses with their course configuration initialized
+     * @return the matching courses
      */
     @Query("""
             SELECT c
             FROM Course c
-                LEFT JOIN FETCH c.courseConfiguration
             WHERE c.endDate IS NOT NULL
                 AND c.endDate < :endDateBefore
             """)
-    List<Course> findAllWithCourseConfigurationByEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
+    List<Course> findAllByEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
 
     /**
      * Finds all courses whose data-privacy reset warning has already been sent (i.e. their configuration has a non-null
-     * reset warning date), eagerly loading the configuration. Used by the retention cleanup to determine which warned
-     * courses are past the grace period and due for a student-data reset.
+     * reset warning date) and that have not been reset yet. Used by the retention cleanup to determine which warned
+     * courses are past the grace period and due for a student-data reset. The configuration is not part of the result:
+     * the cleanup attaches it with {@code CourseConfigurationRepository.attachTo}.
      *
-     * @return the matching courses with their course configuration initialized
+     * @return the matching courses
      */
     @Query("""
             SELECT c
             FROM Course c
-                LEFT JOIN FETCH c.courseConfiguration cc
+                JOIN CourseConfiguration cc ON cc.course = c
             WHERE cc.resetWarningSentDate IS NOT NULL
                 AND cc.studentDataResetDate IS NULL
             """)
@@ -302,13 +301,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
-
-    // The Athena configuration and the course configuration are fetched here so the (instructor) course management view
-    // exposes the Athena switches, grade-relevance and the per-course Atlas auto-orchestration settings for editing. The
-    // online course configuration and the tutorial groups configuration are not here because they hold the key to their
-    // course: read them through their own repositories.
-    @EntityGraph(type = LOAD, attributePaths = { "athenaConfig", "courseConfiguration" })
-    Course findWithEagerAthenaConfigAndCourseConfigurationById(long courseId);
 
     /**
      * Fetches the online courses of an LTI platform. The configuration holds the key to its course, so the query starts
@@ -503,10 +495,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
-    }
-
-    default Course findByIdWithEagerAthenaConfigAndCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
-        return getValueElseThrow(Optional.ofNullable(findWithEagerAthenaConfigAndCourseConfigurationById(courseId)), courseId);
     }
 
     @NonNull
@@ -804,7 +792,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 COALESCE(athenaConfig.gradingFeedbackEnabled, false),
                 COALESCE(athenaConfig.formativeFeedbackEnabled, false))
             FROM Course course
-                LEFT JOIN course.athenaConfig athenaConfig
+                LEFT JOIN CourseAthenaConfig athenaConfig ON athenaConfig.course = course
             WHERE course.id = :courseId
             """)
     Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);

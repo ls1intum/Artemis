@@ -45,9 +45,13 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAdminService;
 import de.tum.cit.aet.artemis.course.service.CourseDeletionService;
@@ -113,9 +117,14 @@ public class AdminCourseResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
             FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService,
-            CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository, CourseConfigurationRepository courseConfigurationRepository) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -127,6 +136,8 @@ public class AdminCourseResource {
         this.courseResetService = courseResetService;
         this.progressService = progressService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -181,9 +192,18 @@ public class AdminCourseResource {
         CourseValidator.validateSemester(course);
         CourseValidator.validateTimeZone(course.getTimeZone());
 
+        // The configurations hold the key to their course, so the course does not cascade to them: they are stored once the
+        // course is. A new course starts with a disabled Athena configuration and its course configuration.
+        CourseAthenaConfig athenaConfig = course.getAthenaConfig();
+        CourseConfiguration courseConfiguration = course.getCourseConfiguration();
+
         Course createdCourse = courseRepository.save(course);
 
-        // The configuration holds the key to its course, so it can only be created once the course is stored.
+        athenaConfig.setCourse(createdCourse);
+        courseAthenaConfigRepository.save(athenaConfig);
+        courseConfiguration.setCourse(createdCourse);
+        courseConfigurationRepository.save(courseConfiguration);
+
         if (createdCourse.isOnlineCourse() && ltiApi.isPresent()) {
             ltiApi.get().createOnlineCourseConfiguration(createdCourse);
         }

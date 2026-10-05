@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
@@ -40,6 +41,10 @@ class CourseDataRetentionServiceTest {
 
     @Mock
     private CourseTestRepository courseRepository;
+
+    // attachTo is a default method, so on a mock it does nothing: the configurations a test sets on its courses stay there
+    @Mock
+    private CourseConfigurationRepository courseConfigurationRepository;
 
     @Mock
     private CourseArchiveService courseArchiveService;
@@ -57,7 +62,8 @@ class CourseDataRetentionServiceTest {
     private final DataCleanupProperties properties = new DataCleanupProperties(5, 1, 30, 8, 8, 6, 30, false, false, false, false, false, false, false);
 
     private CourseDataRetentionService service() {
-        return new CourseDataRetentionService(courseRepository, courseArchiveService, courseResetService, userRepository, mailSendingService, properties);
+        return new CourseDataRetentionService(courseRepository, courseConfigurationRepository, courseArchiveService, courseResetService, userRepository, mailSendingService,
+                properties);
     }
 
     private Course course(long id, ZonedDateTime endDate, Boolean gradeRelevant, boolean testCourse, ZonedDateTime warnedDate, ZonedDateTime resetDate) {
@@ -87,8 +93,7 @@ class CourseDataRetentionServiceTest {
         Course gradeNotYetDue = course(6, now.minusYears(2), true, false, null, null); // needs 5y -> not due
         Course gradeDue = course(7, now.minusYears(6), true, false, null, null); // > 5y -> due
 
-        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any()))
-                .thenReturn(List.of(nonGradeDue, nonGradeTooRecent, alreadyWarned, alreadyReset, testCourse, gradeNotYetDue, gradeDue));
+        when(courseRepository.findAllByEndDateBefore(any())).thenReturn(List.of(nonGradeDue, nonGradeTooRecent, alreadyWarned, alreadyReset, testCourse, gradeNotYetDue, gradeDue));
 
         assertThat(service().findCoursesDueForWarning()).extracting(Course::getId).containsExactlyInAnyOrder(1L, 7L);
     }
@@ -110,7 +115,7 @@ class CourseDataRetentionServiceTest {
     void warnsAndArchivesDueCoursesEmailsInstructorsAndStampsWarningDate() {
         ZonedDateTime now = ZonedDateTime.now();
         Course due = course(1, now.minusYears(2), false, false, null, null);
-        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
+        when(courseRepository.findAllByEndDateBefore(any())).thenReturn(List.of(due));
         when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
         when(mailSendingService.isMailConfigured()).thenReturn(true);
@@ -128,6 +133,8 @@ class CourseDataRetentionServiceTest {
         verify(mailSendingService).buildAndSendSyncReporting(any(MailRecipientDTO.class), eq("email.courseStudentDataResetWarning.title"), anyList(),
                 eq("mail/courseStudentDataResetWarningEmail"), anyMap());
         verify(courseRepository).save(due);
+        // the configuration holds the key to its course, so saving the course does not store it
+        verify(courseConfigurationRepository).save(due.getCourseConfiguration());
         assertThat(due.getCourseConfiguration()).isNotNull();
         assertThat(due.getCourseConfiguration().getResetWarningSentDate()).isNotNull();
     }
@@ -136,7 +143,7 @@ class CourseDataRetentionServiceTest {
     void doesNotAdvanceLifecycleWhenMailIsDisabled() {
         ZonedDateTime now = ZonedDateTime.now();
         Course due = course(1, now.minusYears(2), false, false, null, null);
-        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
+        when(courseRepository.findAllByEndDateBefore(any())).thenReturn(List.of(due));
         when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
         when(mailSendingService.isMailConfigured()).thenReturn(false);
@@ -153,7 +160,7 @@ class CourseDataRetentionServiceTest {
     void doesNotAdvanceLifecycleWhenNoEligibleInstructor() {
         ZonedDateTime now = ZonedDateTime.now();
         Course due = course(1, now.minusYears(2), false, false, null, null);
-        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
+        when(courseRepository.findAllByEndDateBefore(any())).thenReturn(List.of(due));
         when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
         when(mailSendingService.isMailConfigured()).thenReturn(true);
@@ -175,7 +182,7 @@ class CourseDataRetentionServiceTest {
     void doesNotWarnOrEmailWhenArchivingFails() {
         ZonedDateTime now = ZonedDateTime.now();
         Course due = course(1, now.minusYears(2), false, false, null, null);
-        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(due));
+        when(courseRepository.findAllByEndDateBefore(any())).thenReturn(List.of(due));
         when(courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(1L)).thenReturn(due);
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(false);
 
@@ -199,6 +206,8 @@ class CourseDataRetentionServiceTest {
         verify(courseResetService).resetStudentData(1L);
         verify(courseResetService, never()).resetStudentData(2L);
         assertThat(due.getCourseConfiguration().getStudentDataResetDate()).isNotNull();
+        verify(courseConfigurationRepository).save(due.getCourseConfiguration());
+        verify(courseConfigurationRepository, never()).save(withinGrace.getCourseConfiguration());
     }
 
     @Test
@@ -235,7 +244,7 @@ class CourseDataRetentionServiceTest {
         // The stale warning is withdrawn, so becoming eligible again later requires a new warning and a full grace period.
         assertThat(extended.getCourseConfiguration().getResetWarningSentDate()).isNull();
         assertThat(extended.getCourseConfiguration().getStudentDataResetDate()).isNull();
-        verify(courseRepository).save(extended);
+        verify(courseConfigurationRepository).save(extended.getCourseConfiguration());
     }
 
     @Test
@@ -251,7 +260,7 @@ class CourseDataRetentionServiceTest {
         assertThat(reset).isZero();
         verifyNoInteractions(courseResetService);
         assertThat(nowGradeRelevant.getCourseConfiguration().getResetWarningSentDate()).isNull();
-        verify(courseRepository).save(nowGradeRelevant);
+        verify(courseConfigurationRepository).save(nowGradeRelevant.getCourseConfiguration());
     }
 
     @Test
@@ -259,7 +268,7 @@ class CourseDataRetentionServiceTest {
         ZonedDateTime now = ZonedDateTime.now();
         Course held = onHold(course(1, now.minusYears(2), false, false, null, null));
         Course due = course(2, now.minusYears(2), false, false, null, null);
-        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(held, due));
+        when(courseRepository.findAllByEndDateBefore(any())).thenReturn(List.of(held, due));
 
         assertThat(service().findCoursesDueForWarning()).extracting(Course::getId).containsExactly(2L);
     }
@@ -277,7 +286,7 @@ class CourseDataRetentionServiceTest {
         verifyNoInteractions(courseResetService);
         // Lifting the hold later must not resume a grace period that ran while the proceeding was pending.
         assertThat(held.getCourseConfiguration().getResetWarningSentDate()).isNull();
-        verify(courseRepository).save(held);
+        verify(courseConfigurationRepository).save(held.getCourseConfiguration());
     }
 
     private Course onHold(Course course) {

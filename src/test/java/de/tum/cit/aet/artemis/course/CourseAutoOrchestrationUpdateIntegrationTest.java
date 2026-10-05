@@ -78,7 +78,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setCourse(managed);
         managed.setCourseConfiguration(configuration);
-        courseRepository.save(managed);
+        courseUtilService.saveWithConfigurations(managed);
         return courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
     }
 

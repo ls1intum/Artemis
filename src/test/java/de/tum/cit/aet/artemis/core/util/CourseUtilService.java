@@ -40,7 +40,11 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
@@ -111,6 +115,12 @@ public class CourseUtilService {
 
     @Autowired
     private CourseTestRepository courseRepo;
+
+    @Autowired
+    private CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    @Autowired
+    private CourseConfigurationRepository courseConfigurationRepository;
 
     @Autowired
     private OnlineCourseConfigurationTestRepository onlineCourseConfigurationRepository;
@@ -927,6 +937,29 @@ public class CourseUtilService {
         studentParticipationRepo.save(participationProgramming);
 
         return courseSaved;
+    }
+
+    /**
+     * Saves a course together with the Athena configuration and the course configuration it holds in its slots. The two
+     * configurations hold the key to their course, so saving the course does not cascade to them: they are stored once
+     * the course is, and the returned course carries them again, as the one a test builds its exercises from needs.
+     *
+     * @param course the course, with its configurations set on it
+     * @return the saved course, carrying the saved configurations
+     */
+    public Course saveWithConfigurations(Course course) {
+        CourseAthenaConfig athenaConfig = course.getAthenaConfig();
+        CourseConfiguration courseConfiguration = course.getCourseConfiguration();
+        Course saved = courseRepo.save(course);
+        if (athenaConfig != null) {
+            athenaConfig.setCourse(saved);
+            saved.setAthenaConfig(courseAthenaConfigRepository.save(athenaConfig));
+        }
+        if (courseConfiguration != null) {
+            courseConfiguration.setCourse(saved);
+            saved.setCourseConfiguration(courseConfigurationRepository.save(courseConfiguration));
+        }
+        return saved;
     }
 
     /**

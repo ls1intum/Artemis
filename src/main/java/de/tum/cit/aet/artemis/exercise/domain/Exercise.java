@@ -36,7 +36,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.Nullable;
 
@@ -708,10 +707,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public boolean getAllowFeedbackRequests() {
         var course = getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = course == null ? null : course.getAthenaConfig();
-        // athenaConfig can be an uninitialized Hibernate proxy when the course was loaded via an entity graph that
-        // does not include it (see CourseUpdateResource for the same caveat); Hibernate.isInitialized() checks this
-        // without triggering a lazy load, so it stays safe to call once the persistence context has closed.
-        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isFormativeFeedbackEnabled();
+        // The course carries no mapped association to its Athena configuration, so the slot is empty - and this reads as
+        // switched off - unless the flow attached it (CourseAthenaConfigRepository.attachToCourseOf).
+        return athenaConfig != null && athenaConfig.isFormativeFeedbackEnabled();
     }
 
     /**
@@ -731,7 +729,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
         var course = getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = course == null ? null : course.getAthenaConfig();
-        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();
+        return athenaConfig != null && athenaConfig.isGradingFeedbackEnabled();
     }
 
     public Set<GradingCriterion> getGradingCriteria() {

@@ -55,7 +55,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
         athenaConfig.setGradingFeedbackEnabled(gradingFeedbackEnabled);
         athenaConfig.setFormativeFeedbackEnabled(formativeFeedbackEnabled);
         persisted.setAthenaConfig(athenaConfig);
-        courseRepository.save(persisted);
+        courseUtilService.saveWithConfigurations(persisted);
     }
 
     private CourseAthenaConfigDTO storedConfig() {

@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -56,6 +57,8 @@ public class CourseDataRetentionService {
 
     private final CourseRepository courseRepository;
 
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     private final CourseArchiveService courseArchiveService;
 
     private final CourseResetService courseResetService;
@@ -66,9 +69,10 @@ public class CourseDataRetentionService {
 
     private final DataCleanupProperties dataCleanupProperties;
 
-    public CourseDataRetentionService(CourseRepository courseRepository, CourseArchiveService courseArchiveService, CourseResetService courseResetService,
-            UserRepository userRepository, MailSendingService mailSendingService, DataCleanupProperties dataCleanupProperties) {
+    public CourseDataRetentionService(CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository, CourseArchiveService courseArchiveService,
+            CourseResetService courseResetService, UserRepository userRepository, MailSendingService mailSendingService, DataCleanupProperties dataCleanupProperties) {
         this.courseRepository = courseRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
         this.courseArchiveService = courseArchiveService;
         this.courseResetService = courseResetService;
         this.userRepository = userRepository;
@@ -86,8 +90,10 @@ public class CourseDataRetentionService {
         int shortestRetentionYears = Math.min(dataCleanupProperties.gradeRelevantRetentionYears(), dataCleanupProperties.nonGradeRelevantRetentionYears());
         ZonedDateTime candidateCutoff = now.minusYears(shortestRetentionYears);
         // A title is required to build the warning email; skip the (anomalous) title-less course rather than fail it forever.
-        return courseRepository.findAllWithCourseConfigurationByEndDateBefore(candidateCutoff).stream().filter(course -> course.getTitle() != null)
-                .filter(this::notYetWarnedOrReset).filter(course -> isEligibleForReset(course, now)).toList();
+        List<Course> endedCourses = courseRepository.findAllByEndDateBefore(candidateCutoff).stream().filter(course -> course.getTitle() != null).toList();
+        // The course carries no mapped association to its configuration, so it is read for all candidates in one go.
+        courseConfigurationRepository.attachTo(endedCourses);
+        return endedCourses.stream().filter(this::notYetWarnedOrReset).filter(course -> isEligibleForReset(course, now)).toList();
     }
 
     /**
@@ -147,6 +153,8 @@ public class CourseDataRetentionService {
                 configuration.setResetWarningSentDate(ZonedDateTime.now());
                 dueCourse.setCourseArchivePath(courseWithExercises.getCourseArchivePath());
                 courseRepository.save(dueCourse);
+                // The configuration holds the key to its course, so saving the course does not cascade to it.
+                courseConfigurationRepository.save(configuration);
                 warned++;
             }
             catch (Exception e) {
@@ -174,7 +182,7 @@ public class CourseDataRetentionService {
                 courseResetService.resetStudentData(course.getId());
                 CourseConfiguration configuration = course.getCourseConfiguration();
                 configuration.setStudentDataResetDate(ZonedDateTime.now());
-                courseRepository.save(course);
+                courseConfigurationRepository.save(configuration);
                 reset++;
             }
             catch (Exception e) {
@@ -201,8 +209,9 @@ public class CourseDataRetentionService {
         List<Course> staleCourses = warnedCoursesAwaitingReset().filter(course -> !isEligibleForReset(course, now)).toList();
         for (Course staleCourse : staleCourses) {
             log.info("Withdrawing the student-data reset warning of course {}: it is no longer due for a reset", staleCourse.getId());
-            staleCourse.getCourseConfiguration().setResetWarningSentDate(null);
-            courseRepository.save(staleCourse);
+            CourseConfiguration configuration = staleCourse.getCourseConfiguration();
+            configuration.setResetWarningSentDate(null);
+            courseConfigurationRepository.save(configuration);
         }
         return staleCourses.size();
     }
@@ -211,7 +220,9 @@ public class CourseDataRetentionService {
      * @return the warned courses that have not been reset yet, with their configuration guaranteed to be present
      */
     private Stream<Course> warnedCoursesAwaitingReset() {
-        return courseRepository.findAllWithResetWarningSent().stream().filter(course -> {
+        List<Course> warnedCourses = courseRepository.findAllWithResetWarningSent();
+        courseConfigurationRepository.attachTo(warnedCourses);
+        return warnedCourses.stream().filter(course -> {
             CourseConfiguration configuration = course.getCourseConfiguration();
             return configuration != null && configuration.getResetWarningSentDate() != null && configuration.getStudentDataResetDate() == null;
         });

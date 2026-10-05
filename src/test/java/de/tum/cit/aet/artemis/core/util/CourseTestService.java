@@ -1182,7 +1182,7 @@ public class CourseTestService {
         athenaConfig.setGradingFeedbackEnabled(true);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepo.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         CourseForOverviewDTO overview = request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
 
@@ -1209,7 +1209,7 @@ public class CourseTestService {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepo.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // Pin every programming action field read by the overview. The graded participation deliberately differs from
         // the practice participation so the projection cannot accidentally copy the wrong repository.

@@ -80,7 +80,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         athenaConfig.setCourse(persisted);
         athenaConfig.setGradingFeedbackEnabled(enabled);
         persisted.setAthenaConfig(athenaConfig);
-        courseRepository.save(persisted);
+        courseUtilService.saveWithConfigurations(persisted);
     }
 
     private CourseAthenaConfigDTO updateAthenaConfig(CourseAthenaConfigUpdateDTO update) throws Exception {
@@ -169,27 +169,28 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         assertThat(updated.get("description").asString()).isEqualTo("Unrelated description change");
         // The response must still report the stored flag, so the client does not cache a course that claims Athena is off
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
-        assertThat(courseRepository.findByIdWithEagerAthenaConfigAndCourseConfigurationElseThrow(course.getId()).getAthenaConfig().isGradingFeedbackEnabled()).isTrue();
+        assertThat(courseAthenaConfigRepository.findByCourseId(course.getId()).orElseThrow().isGradingFeedbackEnabled()).isTrue();
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService, never()).sendTextExerciseSchedule(textExercise.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCourse_courseWithoutConfig_initializesItSoALaterSwitchSurvives() throws Exception {
-        // A course from before the configuration existed has a null athena_config_id. The course update gives it a
-        // configuration before loading the course, because saving a course loaded without one would write the null
-        // back and detach a configuration that a concurrent first switch had attached in between.
+    void updateCourse_courseWithoutConfig_leavesItAloneAndALaterSwitchSurvives() throws Exception {
+        // A course from before the configuration existed has none. The configuration holds the key to its course, so
+        // saving the course never reads or writes it: the update neither creates one nor can it detach one that a
+        // concurrent first switch created in between.
         assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
 
         Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
         updateCourse(loaded);
 
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+
+        // The first switch creates the configuration, and saving the course again leaves it as it is.
+        updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
         var configId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
         assertThat(configId).isPresent();
-
-        // The switch reuses that configuration, and saving the course again leaves it attached.
-        updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
         JsonNode updated = updateCourse(loaded);
 
         assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEqualTo(configId);
@@ -199,8 +200,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void updateCourse_asInstructorOfAnotherCourse_isForbiddenAndCreatesNoConfig() throws Exception {
-        // The course update gives a course that predates the Athena configuration one, which must only happen once the
-        // user has been authorized for the course: an instructor of another course is rejected without leaving state.
+        // An instructor of another course is rejected without leaving state.
         userUtilService.addInstructor(TEST_PREFIX + "instructor2");
         assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
 

@@ -167,8 +167,8 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
 | `Course` | — | Root | No | The main aggregate root. |
-| `CourseAthenaConfig` | Course `course.athena_config_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
-| `CourseConfiguration` | Course `course.course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `CourseAthenaConfig` | Course `course_id` | Required | No | Cascades on course deletion. The course carries no mapped association to it. |
+| `CourseConfiguration` | Course `course_id` | Required | No | Cascades on course deletion. The course carries no mapped association to it. |
 | `CourseRequest` | User `requester_id` | Required | No | `created_course_id` is a result link, not a parent. |
 
 ### Exam
@@ -429,12 +429,17 @@ UNION ALL SELECT 'tutorial_group_free_period of those configurations', COUNT(*)
   FROM tutorial_group_free_period WHERE tutorial_groups_configuration_id IN
        (SELECT t.id FROM tutorial_groups_configuration t WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.tutorial_groups_configuration_id = t.id))
 UNION ALL SELECT 'online_course_configuration no course points at', COUNT(*)
-  FROM online_course_configuration o WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.online_course_configuration_id = o.id);
+  FROM online_course_configuration o WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.online_course_configuration_id = o.id)
+UNION ALL SELECT 'course_athena_config no course points at', COUNT(*)
+  FROM course_athena_config a WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.athena_config_id = a.id)
+UNION ALL SELECT 'course_configuration no course points at', COUNT(*)
+  FROM course_configuration cc WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.course_configuration_id = cc.id);
 ```
 
-The last three rows read the pointer a course used to carry to its tutorial groups configuration and its
-online course configuration, so they apply to a database that has not been upgraded yet. A configuration that
-no course points at configures nothing and is removed, together with the free periods below it. A session
+The last five rows read the pointer a course used to carry to its tutorial groups configuration, its online
+course configuration, its Athena configuration and its course configuration, so they apply to a database that
+has not been upgraded yet. A configuration that no course points at configures nothing and is removed, together
+with the free periods below a tutorial groups configuration. A session
 cancelled because of one of those free periods keeps existing under its tutorial group and merely loses the
 reference to the period.
 
@@ -450,9 +455,9 @@ name.
 
 ## Where orphans are still possible
 
-Of the 147 tables behind the 186 entities, 90 have a required parent, 24 are roots by design, 18 are
+Of the 147 tables behind the 186 entities, 92 have a required parent, 24 are roots by design, 18 are
 join entities whose parents are all required and five carry a check constraint over alternative
-parents. That leaves **10 tables where the schema permits an orphan**, in two shapes.
+parents. That leaves **8 tables where the schema permits an orphan**, in two shapes.
 
 ### An owning foreign key that is nullable
 
@@ -477,10 +482,9 @@ submission or participation, which is a different orphan and still reachable.
 
 ### One-to-one where the parent holds the pointer
 
-Six tables have no foreign key of their own. Nothing in the schema connects them to anything, and
-the only thing keeping them reachable is a nullable column on the parent: `CourseAthenaConfig`,
-`CourseConfiguration`, `TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy` and
-`BuildPlan`.
+Four tables have no foreign key of their own. Nothing in the schema connects them to anything, and
+the only thing keeping them reachable is a nullable column on the parent: `TeamAssignmentConfig`,
+`PlagiarismDetectionConfig`, `SubmissionPolicy` and `BuildPlan`.
 
 Moving the key onto the configuration is the fix, and it costs more than the migration. **The
 parent-side association has to go with it**, not merely become `mappedBy`: the non-owning side of a

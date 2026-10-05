@@ -63,7 +63,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         configuration.setDataRetentionHold(true);
         configuration.setResetWarningSentDate(warningSentDate);
         course.setCourseConfiguration(configuration);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
     }
 
     private CourseManagementDTO updateCourse(long courseId, Object courseToUpdate) throws Exception {

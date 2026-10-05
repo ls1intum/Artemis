@@ -122,7 +122,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         athenaConfig.setGradingFeedbackEnabled(true);
         athenaConfig.setFormativeFeedbackEnabled(false);
         course.setAthenaConfig(athenaConfig);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
 
         // Only ever read off an exercise already in memory, so it does not need a row of its own.
         var autoConfig = new CourseAthenaConfig();

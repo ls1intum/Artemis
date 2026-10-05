@@ -143,18 +143,10 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        // Saving the course writes back the Athena configuration it was loaded with, so a course that predates the
-        // configuration would detach one that a concurrent first Athena switch attached in between, and that switch would
-        // silently be lost. Give such a course its configuration and load it again, only once the user may change it.
-        if (existingCourse.getAthenaConfig() == null) {
-            courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
-            existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
-        }
-
-        // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
-        // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
-        // via its own repository to keep the course update entity graph small.
-        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
+        // Attach the course configuration so applyTo updates it in place instead of creating a duplicate, and so the
+        // admin-only auto-orchestration change detection below compares against the persisted values. The course carries
+        // no mapped association to it, so it is read through its own repository.
+        courseConfigurationRepository.attachTo(existingCourse);
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -230,6 +222,10 @@ public class CourseUpdateResource {
 
         Course result = courseRepository.save(existingCourse);
 
+        // The course configuration holds the key to its course, so saving the course does not cascade to it (applyTo
+        // updated it in place, or created it for a course that never had one).
+        result.setCourseConfiguration(courseConfigurationRepository.save(existingCourse.getCourseConfiguration()));
+
         // The course exists by now, which is what the configuration's key to it needs.
         if (onlineCourseChanged) {
             if (courseUpdateDTO.onlineCourse() && ltiApi.isPresent()) {
@@ -260,8 +256,8 @@ public class CourseUpdateResource {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
 
-        // The Athena configuration is lazy and not part of the update, so attach it for the response to report the stored
-        // flags; otherwise the client would cache a course that claims Athena is off.
+        // The Athena configuration is not part of the update and the course carries no mapped association to it, so attach it
+        // for the response to report the stored flags; otherwise the client would cache a course that claims Athena is off.
         courseAthenaConfigRepository.attachTo(result);
         OnlineCourseConfiguration onlineConfiguration = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).orElse(null);
         TutorialGroupsConfiguration tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
