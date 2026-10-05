@@ -19,6 +19,10 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,6 +38,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -87,6 +92,10 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     void setUp() throws Exception {
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
+        exercise.setMaxPoints(10.0);
+        var course = new Course();
+        course.setAccuracyOfScores(2);
+        exercise.setCourse(course);
         participation = new ProgrammingExerciseStudentParticipation();
         participation.setId(PARTICIPATION_ID);
         participation.setProgrammingExercise(exercise);
@@ -145,7 +154,12 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
         when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser))).thenReturn(List.of());
         var firstPublished = new java.util.concurrent.atomic.AtomicReference<ZonedDateTime>();
         org.mockito.Mockito.doAnswer(invocation -> {
-            firstPublished.compareAndSet(null, ((Result) invocation.getArgument(0)).getCompletionDate());
+            if (firstPublished.get() == null) {
+                Result placeholder = invocation.getArgument(0);
+                assertThat(placeholder.getScore()).isNull();
+                assertThat(placeholder.isSuccessful()).isNull();
+                firstPublished.set(placeholder.getCompletionDate());
+            }
             return null;
         }).when(programmingMessagingService).notifyUserAboutNewResult(any(), any());
         ZonedDateTime publishedAt = ZonedDateTime.now();
@@ -279,18 +293,76 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     }
 
     @Test
-    void generatingFeedback_carriesTheScoreOfTheLastBuildIntoThePlaceholder() throws Exception {
-        // The placeholder replaces the visible result, so showing zero would look to the student like they lost their points.
+    void generatingFeedback_usesAllAthenaCreditsAndLeavesTheOfficialResultUnchanged() throws Exception {
         var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
         var previousResult = new Result();
         previousResult.setId(80L);
-        previousResult.setScore(75.0);
+        previousResult.setScore(80.0);
         submission.setResults(Set.of(previousResult));
+        var automaticResult = withAnEmptyResultForTheLatestSubmission();
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser))).thenReturn(
+                List.of(suggestion(null, "no file", 1, null, 1.0), suggestion("src/Main.java", null, 1, null, 2.0), suggestion("src/Main.java", "visible", 1, null, 3.0)));
+
+        var feedbacks = generatedFeedbacks(service);
+
+        assertThat(feedbacks).hasSize(1);
+        assertThat(automaticResult.getScore()).isEqualTo(60.0);
+        assertThat(automaticResult.isSuccessful()).isTrue();
+        assertThat(previousResult.getScore()).isEqualTo(80.0);
+        assertThat(previousResult.isSuccessful()).isFalse();
+        verify(resultService).storeFeedbackInResult(eq(automaticResult), any(), eq(true));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "0, 10, 0", "1, 3, 33.33", "2.99999999, 3, 100", "-1, 10, -10", "12, 10, 120" })
+    void generatingFeedback_preservesZeroAndRoundsWithoutReweighting(double credits, double maxPoints, double expectedScore) throws Exception {
+        var automaticResult = withAnEmptyResultForTheLatestSubmission();
+        exercise.setMaxPoints(maxPoints);
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion("src/Main.java", "feedback", 1, null, credits)));
+
+        serviceWithAthena(Optional.of(athenaFeedbackApi)).generateAutomaticNonGradedFeedback(participation, exercise, requestingUser);
+
+        assertThat(automaticResult.getScore()).isEqualTo(expectedScore);
+        assertThat(automaticResult.isSuccessful()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.MAX_VALUE })
+    void generatingFeedback_withInvalidCreditsHasNoScore(double credits) throws Exception {
+        var automaticResult = withAnEmptyResultForTheLatestSubmission();
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion(null, "hidden invalid credits", 1, null, credits), suggestion("src/Main.java", "valid", 1, null, 2.0)));
+
+        serviceWithAthena(Optional.of(athenaFeedbackApi)).generateAutomaticNonGradedFeedback(participation, exercise, requestingUser);
+
+        assertThat(automaticResult.getScore()).isNull();
+        assertThat(automaticResult.isSuccessful()).isTrue();
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(doubles = { 0, -1, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
+    void generatingFeedback_withInvalidMaxPointsHasNoScore(Double maxPoints) throws Exception {
+        var automaticResult = withAnEmptyResultForTheLatestSubmission();
+        exercise.setMaxPoints(maxPoints);
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion("src/Main.java", "feedback", 1, null, 6.0)));
+
+        serviceWithAthena(Optional.of(athenaFeedbackApi)).generateAutomaticNonGradedFeedback(participation, exercise, requestingUser);
+
+        assertThat(automaticResult.getScore()).isNull();
+        assertThat(automaticResult.isSuccessful()).isTrue();
+    }
+
+    @Test
+    void generatingFeedback_withAnEmptyResponseHasNoScore() throws Exception {
         var automaticResult = withAnEmptyResultForTheLatestSubmission();
         when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser))).thenReturn(List.of());
 
-        service.generateAutomaticNonGradedFeedback(participation, exercise, requestingUser);
+        serviceWithAthena(Optional.of(athenaFeedbackApi)).generateAutomaticNonGradedFeedback(participation, exercise, requestingUser);
 
-        assertThat(automaticResult.getScore()).isEqualTo(75.0);
+        assertThat(automaticResult.getScore()).isNull();
+        assertThat(automaticResult.isSuccessful()).isTrue();
     }
 }
