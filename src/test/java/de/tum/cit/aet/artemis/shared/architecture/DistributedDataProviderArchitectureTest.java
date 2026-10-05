@@ -19,30 +19,30 @@ import com.tngtech.archunit.lang.ArchRule;
  * Keeps the distributed data provider abstraction the only way into Hazelcast and Redis.
  *
  * <p>
- * Artemis supports Hazelcast and Redis as interchangeable backends for all cross-node state, and intends to be able to
+ * Artemis supports Hazelcast and Redis as interchangeable providers for all cross-node state, and intends to be able to
  * switch between them. That only holds as long as application code talks to
- * {@link de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider} rather than to a backend directly:
+ * {@link de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider} rather than to a provider library directly:
  * a single {@code hazelcastInstance.getMap(...)} in a service silently pins the whole deployment to Hazelcast, and it
- * does so without failing any test, because the other backend simply never sees that state. That is exactly how the
+ * does so without failing any test, because the other provider simply never sees that state. That is exactly how the
  * abstraction drifted the first time, when 21 services across 8 modules had grown their own Hazelcast usage.
  *
  * <p>
- * The rules below therefore forbid every dependency on a backend library outside a small, explicitly named set of
- * infrastructure classes. Adding a class to {@link #INFRASTRUCTURE_ALLOWED_TO_USE_A_BACKEND_DIRECTLY} is a deliberate
+ * The rules below therefore forbid every dependency on a provider library outside a small, explicitly named set of
+ * infrastructure classes. Adding a class to {@link #INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY} is a deliberate
  * decision that needs a reason recorded next to the entry, not a way to make a failing build green.
  */
 class DistributedDataProviderArchitectureTest extends AbstractArchitectureTest {
 
     /**
-     * Packages of the backend libraries that application code must not reach into.
+     * Packages of the provider libraries that application code must not reach into.
      */
-    private static final String[] BACKEND_PACKAGES = { "com.hazelcast..", "org.redisson..", "org.springframework.data.redis..", "org.springframework.boot.data.redis.." };
+    private static final String[] PROVIDER_LIBRARY_PACKAGES = { "com.hazelcast..", "org.redisson..", "org.springframework.data.redis..", "org.springframework.boot.data.redis.." };
 
     /**
-     * The only production classes that may depend on a backend library directly.
+     * The only production classes that may depend on a provider library directly.
      *
      * <p>
-     * Each entry is infrastructure that exists precisely to adapt one backend, and therefore cannot be written against
+     * Each entry is infrastructure that exists precisely to adapt one provider, and therefore cannot be written against
      * the abstraction:
      * <ul>
      * <li>{@code core.service.distributed.hazelcast} / {@code core.service.distributed.redisson} — the two provider
@@ -54,14 +54,14 @@ class DistributedDataProviderArchitectureTest extends AbstractArchitectureTest {
      * configured provider, so it necessarily names the auto-configuration classes.</li>
      * <li>{@code RedissonCodecConfiguration} — aligns Redis serialization with Hazelcast's, which means naming the
      * Redisson codec.</li>
-     * <li>{@code RateLimitConfig} — Bucket4j ships one storage module per backend and offers no common abstraction, so
+     * <li>{@code RateLimitConfig} — Bucket4j ships one storage module per provider and offers no common abstraction, so
      * the bean that selects the storage has to name both.</li>
      * <li>{@code HazelcastHealthIndicator}, {@code RedisHealthIndicator}, {@code ArtemisMetricsEndpoint} — report
-     * backend-specific health and statistics that have no equivalent on the other backend, and degrade to nothing when
-     * their backend is not the configured one.</li>
+     * provider-specific health and statistics that have no equivalent on the other provider, and degrade to nothing when
+     * their provider is not the configured one.</li>
      * </ul>
      */
-    private static final List<String> INFRASTRUCTURE_ALLOWED_TO_USE_A_BACKEND_DIRECTLY = List.of("de.tum.cit.aet.artemis.core.service.distributed.hazelcast.",
+    private static final List<String> INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY = List.of("de.tum.cit.aet.artemis.core.service.distributed.hazelcast.",
             "de.tum.cit.aet.artemis.core.service.distributed.redisson.", "de.tum.cit.aet.artemis.core.config.HazelcastConfiguration",
             "de.tum.cit.aet.artemis.core.config.HazelcastClusterManager", "de.tum.cit.aet.artemis.core.config.HazelcastPathSerializer",
             "de.tum.cit.aet.artemis.core.config.EurekaHazelcastDiscoveryStrategy", "de.tum.cit.aet.artemis.core.config.EurekaHazelcastDiscoveryStrategyFactory",
@@ -71,15 +71,15 @@ class DistributedDataProviderArchitectureTest extends AbstractArchitectureTest {
 
     private static final String REASON = """
             all cross-node state must go through DistributedDataProvider. Using Hazelcast or Redis directly pins the \
-            deployment to that backend without any test noticing, because the other backend never sees the state. If a \
+            deployment to that provider without any test noticing, because the other provider never sees the state. If a \
             capability is genuinely missing from the abstraction, add it to DistributedDataProvider together with an \
-            implementation for every backend and a case in AbstractDistributedDataTest, rather than reaching past it. \
-            The infrastructure classes that legitimately adapt a single backend are listed in \
+            implementation for every provider and a case in AbstractDistributedDataTest, rather than reaching past it. \
+            The infrastructure classes that legitimately adapt a single provider are listed in \
             DistributedDataProviderArchitectureTest.""";
 
     @Test
-    void testNoDirectBackendUsageOutsideTheProviderImplementations() {
-        ArchRule rule = noClasses().that(not(isBackendInfrastructure())).should().dependOnClassesThat(resideInAnyPackage(BACKEND_PACKAGES)).because(REASON);
+    void testNoDirectProviderLibraryUsageOutsideTheProviderImplementations() {
+        ArchRule rule = noClasses().that(not(isProviderInfrastructure())).should().dependOnClassesThat(resideInAnyPackage(PROVIDER_LIBRARY_PACKAGES)).because(REASON);
 
         rule.check(productionClasses);
     }
@@ -91,35 +91,35 @@ class DistributedDataProviderArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testEveryAllowlistEntryStillMatchesAClass() {
         Set<String> productionClassNames = productionClasses.stream().map(JavaClass::getFullName).collect(java.util.stream.Collectors.toSet());
-        for (String allowed : INFRASTRUCTURE_ALLOWED_TO_USE_A_BACKEND_DIRECTLY) {
+        for (String allowed : INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY) {
             assertThat(productionClassNames).as("Allowlist entry '%s' matches no production class, remove it", allowed).anyMatch(name -> matches(name, allowed));
         }
     }
 
     /**
      * Guards against the abstraction being bypassed by widening the allowlist: every allowlisted class must actually
-     * still need a backend, otherwise the entry is dead weight that hides the next real violation.
+     * still need a provider library, otherwise the entry is dead weight that hides the next real violation.
      */
     @Test
-    void testEveryAllowlistEntryStillDependsOnABackend() {
-        JavaClasses infrastructure = productionClasses.that(isBackendInfrastructure());
-        for (String allowed : INFRASTRUCTURE_ALLOWED_TO_USE_A_BACKEND_DIRECTLY) {
-            boolean anyUsesABackend = infrastructure.stream().filter(javaClass -> matches(javaClass.getFullName(), allowed))
-                    .anyMatch(javaClass -> javaClass.getDirectDependenciesFromSelf().stream().anyMatch(dependency -> isBackendClass(dependency.getTargetClass())));
-            assertThat(anyUsesABackend).as("Allowlist entry '%s' no longer uses Hazelcast or Redis directly, remove it", allowed).isTrue();
+    void testEveryAllowlistEntryStillDependsOnAProviderLibrary() {
+        JavaClasses infrastructure = productionClasses.that(isProviderInfrastructure());
+        for (String allowed : INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY) {
+            boolean anyUsesAProviderLibrary = infrastructure.stream().filter(javaClass -> matches(javaClass.getFullName(), allowed))
+                    .anyMatch(javaClass -> javaClass.getDirectDependenciesFromSelf().stream().anyMatch(dependency -> isProviderLibraryClass(dependency.getTargetClass())));
+            assertThat(anyUsesAProviderLibrary).as("Allowlist entry '%s' no longer uses Hazelcast or Redis directly, remove it", allowed).isTrue();
         }
     }
 
-    private static boolean isBackendClass(JavaClass javaClass) {
-        return resideInAnyPackage(BACKEND_PACKAGES).test(javaClass);
+    private static boolean isProviderLibraryClass(JavaClass javaClass) {
+        return resideInAnyPackage(PROVIDER_LIBRARY_PACKAGES).test(javaClass);
     }
 
-    private static DescribedPredicate<JavaClass> isBackendInfrastructure() {
-        return new DescribedPredicate<>("infrastructure that adapts a single distributed data backend") {
+    private static DescribedPredicate<JavaClass> isProviderInfrastructure() {
+        return new DescribedPredicate<>("infrastructure that adapts a single distributed data provider") {
 
             @Override
             public boolean test(JavaClass javaClass) {
-                return INFRASTRUCTURE_ALLOWED_TO_USE_A_BACKEND_DIRECTLY.stream().anyMatch(allowed -> matches(javaClass.getFullName(), allowed));
+                return INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY.stream().anyMatch(allowed -> matches(javaClass.getFullName(), allowed));
             }
         };
     }

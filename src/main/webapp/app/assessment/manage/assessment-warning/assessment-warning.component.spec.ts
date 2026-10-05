@@ -5,6 +5,9 @@ import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-war
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -76,5 +79,34 @@ describe('AssessmentWarningComponent', () => {
 
         expect(component.isBeforeExerciseDueDate()).toBe(false);
         expect(component.showWarning()).toBe(true);
+    });
+
+    it('should still show the warning before the due date when the course has formative Athena feedback enabled but the submission is not a feedback request', async () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.dueDate = dayjs().add(2, 'hours');
+        exercise.course!.athenaFormativeFeedbackEnabled = true;
+
+        const submission = new ProgrammingSubmission();
+        submission.results = [{ assessmentType: AssessmentType.MANUAL } as Result];
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('submissions', [submission]);
+        await fixture.whenStable();
+
+        expect(component.showWarning()).toBe(true);
+    });
+
+    it('should not show the warning before the due date when the submission carries an AUTOMATIC_ATHENA feedback request result', async () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.dueDate = dayjs().add(2, 'hours');
+
+        const submission = new ProgrammingSubmission();
+        submission.results = [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result];
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('submissions', [submission]);
+        await fixture.whenStable();
+
+        expect(component.showWarning()).toBe(false);
     });
 });

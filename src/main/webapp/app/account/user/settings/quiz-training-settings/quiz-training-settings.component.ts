@@ -5,13 +5,13 @@ import { QuizTrainingSettingsService } from 'app/account/user/settings/quiz-trai
 import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { TooltipModule } from 'primeng/tooltip';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-quiz-training-settings',
     templateUrl: './quiz-training-settings.component.html',
-    imports: [TranslateDirective, FormsModule, TooltipModule, HelpIconComponent],
+    imports: [TranslateDirective, FormsModule, HelpIconComponent, TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiToggleSwitchComponent],
 })
 export class QuizTrainingSettingsComponent implements OnInit {
     quizService = inject(QuizTrainingSettingsService);
@@ -23,7 +23,8 @@ export class QuizTrainingSettingsComponent implements OnInit {
         this.loadSettings();
     }
 
-    toggleLeaderboardVisibility(): void {
+    onLeaderboardVisibilityChange(visible: boolean): void {
+        this.isVisibleInLeaderboard.set(visible);
         this.saveSettings();
     }
 

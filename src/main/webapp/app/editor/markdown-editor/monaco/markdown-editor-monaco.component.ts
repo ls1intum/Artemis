@@ -6,10 +6,8 @@ import {
     ElementRef,
     Injector,
     OnDestroy,
-    Signal,
     ViewContainerRef,
     afterNextRender,
-    computed,
     effect,
     inject,
     input,
@@ -52,13 +50,13 @@ import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/t
 import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction, LectureWithDetails } from 'app/editor/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { PostingEditType, ReferenceType } from 'app/communication/metis.util';
+import { PostingEditType, ReferenceType } from 'app/communication/communication.util';
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/editor/monaco-editor/monaco-editor-option.helper';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -155,8 +153,8 @@ const TAB_VISUAL_ID = 'editor_visual';
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
-    // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
-    private readonly metisService = inject(MetisService, { optional: true });
+    // We inject the CommunicationService here to avoid a NullInjectorError in the FileUploaderService.
+    private readonly communicationService = inject(CommunicationService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
@@ -355,7 +353,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         ['#d86b1f', 'orange'],
     ]);
 
-    colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
+    readonly colors: string[] = [...this.colorToClassMap.keys()];
     allowedFileExtensions = signal<string>(UPLOAD_MARKDOWN_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(', ')).asReadonly();
 
     static readonly TAB_EDIT = TAB_EDIT_ID;
@@ -511,7 +509,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Builds the PrimeNG menu item for a lecture. Lectures without referencable attachments insert a lecture
-     * reference directly; otherwise the lecture exposes a submenu with its units, slides, and attachments.
+     * reference directly; otherwise the lecture exposes a submenu with its units and their slides.
      */
     private buildLectureMenuItem(lectureAction: LectureAttachmentReferenceAction, lecture: LectureWithDetails): MenuItem {
         if (!this.hasReferencableAttachments(lecture)) {
@@ -528,13 +526,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             if (unit.attachment && unit.attachment.link) {
                 items.push(this.buildAttachmentVideoUnitMenuItem(lectureAction, lecture, unit));
             }
-        }
-
-        for (const attachment of lecture.attachments ?? []) {
-            items.push({
-                label: attachment.name,
-                command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment }),
-            });
         }
 
         return { label: lecture.title, items };
@@ -894,7 +885,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
         if (previousId === this.TAB_EDIT || (previousId === this.TAB_VISUAL && this.inPreviewMode())) {
-            this.parseMarkdown();
+            // Preview must read Monaco synchronously because textChanged is debounced.
+            this.flushLiveMarkdownAndParse();
         }
 
         // Mirror ngbNav's `(shown)` event: re-layout and focus the editor once the edit tab content is visible.
@@ -909,6 +901,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     onDiffOriginalPaneLayoutChanged(originalWidth: number): void {
         this.diffOriginalPaneWidth.set(originalWidth);
+    }
+
+    /**
+     * Reads Monaco's live buffer into {@link currentMarkdown} (user edits may still be inside the
+     * textChanged debounce window), then runs {@link parseMarkdown}.
+     */
+    flushLiveMarkdownAndParse(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
+        const liveMarkdown = this.monacoEditor()?.getText();
+        if (liveMarkdown !== undefined) {
+            this.currentMarkdown.set(liveMarkdown);
+        }
+        this.parseMarkdown(domainActionsToCheck);
     }
 
     parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
@@ -964,10 +968,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         files.forEach((file) => {
             void (
                 this.useCommunicationForFileUpload()
-                    ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
+                    ? this.fileUploaderService.uploadMarkdownFileInCurrentConversation(
                           file,
-                          this.metisService?.getCourse()?.id,
-                          this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
+                          this.communicationService?.getCourse()?.id,
+                          this.communicationService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
                       )
                     : this.fileUploaderService.uploadMarkdownFile(file)
             )
@@ -1146,11 +1150,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param lecture The lecture to check
      */
     hasReferencableAttachments(lecture: LectureWithDetails): boolean {
-        const hasAttachments = !!lecture.attachments?.length;
-        const hasReferencableAttachmentVideoUnits =
+        return (
             lecture.attachmentVideoUnits?.some((unit) => {
                 return unit.attachment && unit.attachment.link;
-            }) === true;
-        return hasAttachments || hasReferencableAttachmentVideoUnits;
+            }) === true
+        );
     }
 }

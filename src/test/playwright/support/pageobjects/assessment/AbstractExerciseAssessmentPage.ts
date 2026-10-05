@@ -1,11 +1,15 @@
 import { BASE_API, ExerciseType } from '../../constants';
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 /**
  * Parent class for all exercise assessment pages.
  */
 export abstract class AbstractExerciseAssessmentPage {
     protected readonly page: Page;
+
+    // Points are graded in half steps throughout Artemis; the unified feedback card's points input is
+    // readonly and only ever adjustable via its +/- stepper buttons (see UnifiedFeedbackComponent).
+    private static readonly CREDITS_STEP = 0.5;
 
     constructor(page: Page) {
         this.page = page;
@@ -17,12 +21,31 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async fillFeedback(points: number, feedback?: string) {
-        const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail');
-        await unreferencedFeedback.locator('#feedback-points').clear();
-        await unreferencedFeedback.locator('#feedback-points').fill(points.toString());
+        // Scoped to the newest card: with multiple unreferenced feedback entries present, an unscoped locator
+        // matches every card's stepper/points input and Playwright strict mode rejects the ambiguous match.
+        const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail').last();
+        await this.setPointsViaStepper(unreferencedFeedback, points);
         if (feedback) {
-            await unreferencedFeedback.locator('#feedback-textarea').clear();
-            await unreferencedFeedback.locator('#feedback-textarea').fill(feedback);
+            await unreferencedFeedback.locator('.unified-feedback-detail-input').clear();
+            await unreferencedFeedback.locator('.unified-feedback-detail-input').fill(feedback);
+        }
+    }
+
+    /**
+     * Drives the unified feedback card's points stepper to reach the target value, since the points input
+     * itself is readonly and can no longer be typed into directly.
+     */
+    protected async setPointsViaStepper(scope: Locator, points: number) {
+        const input = scope.locator('.unified-feedback-points-input');
+        await input.waitFor({ state: 'visible' });
+        const current = Number(await input.inputValue()) || 0;
+        const steps = Math.round((points - current) / AbstractExerciseAssessmentPage.CREDITS_STEP);
+        if (steps === 0) {
+            return;
+        }
+        const stepButton = scope.locator('.unified-feedback-points-step').nth(steps > 0 ? 1 : 0);
+        for (let i = 0; i < Math.abs(steps); i++) {
+            await stepButton.click();
         }
     }
 
@@ -79,20 +102,20 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async nextAssessment() {
-        await this.page.locator('#assessNextButton').click();
-        await this.page.locator('#assessNextButton').waitFor({ state: 'hidden' });
+        await this.page.locator('[data-testid="assessNextButton"]').click();
+        await this.page.locator('[data-testid="assessNextButton"]').waitFor({ state: 'hidden' });
     }
 
     private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean, complaintExerciseTitle?: string) {
         if (exerciseType !== ExerciseType.MODELING && !examMode) {
             // The course-wide complaints list intermingles complaints from every assessment test that shares the seed
             // course (e.g. file-upload and modeling both use the exerciseAssessment course). Clicking the first
-            // #show-complaint therefore races those other tests and can open an unrelated — possibly different-type —
+            // [data-testid="show-complaint"] therefore races those other tests and can open an unrelated — possibly different-type —
             // complaint whose response editor never enables for this flow (the observed flake). When the caller knows
             // the exercise title, open that exercise's own complaint row instead of the first one.
             const showComplaintButton = complaintExerciseTitle
-                ? this.page.locator('tr', { hasText: complaintExerciseTitle }).locator('#show-complaint')
-                : this.page.locator('#show-complaint').first();
+                ? this.page.locator('tr', { hasText: complaintExerciseTitle }).locator('[data-testid="show-complaint"]')
+                : this.page.locator('[data-testid="show-complaint"]').first();
             await showComplaintButton.click();
         }
         // The response textarea starts as readonly/disabled while the complaint data loads.

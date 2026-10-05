@@ -42,8 +42,8 @@ public interface DistributedMap<K, V> {
      * <p>
      * Only supported on maps obtained from
      * {@link de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider#getExpiringMap(String, Duration)}.
-     * Expiry is enforced on read as well as by the backend's background eviction, so a read after the time-to-live has
-     * elapsed never observes the entry, regardless of how coarse the backend's eviction interval is.
+     * Expiry is enforced on read as well as by the provider's background eviction, so a read after the time-to-live has
+     * elapsed never observes the entry, regardless of how coarse the provider's eviction interval is.
      *
      * @param key        the key
      * @param value      the value
@@ -136,7 +136,7 @@ public interface DistributedMap<K, V> {
      *
      * <p>
      * Not atomic as a whole: each entry is stored individually, so a concurrent reader can observe a partially applied
-     * batch. That matches how the backends behave for bulk writes and is acceptable for the current callers, which write
+     * batch. That matches how the providers behave for bulk writes and is acceptable for the current callers, which write
      * independent keys.
      *
      * @param entries the entries to store
@@ -165,8 +165,8 @@ public interface DistributedMap<K, V> {
      * Returns the value for the key, computing and storing it if absent.
      *
      * <p>
-     * Implemented on top of {@link #putIfAbsent(Object, Object)} rather than delegating to a backend primitive, because
-     * the backends run the mapping function on the calling node anyway. If two nodes compute concurrently, exactly one
+     * Implemented on top of {@link #putIfAbsent(Object, Object)} rather than delegating to a provider primitive, because
+     * the providers run the mapping function on the calling node anyway. If two nodes compute concurrently, exactly one
      * stored value wins and both callers observe that same winner, so the result is consistent even though the function
      * may run more than once. The function must therefore be side-effect free.
      *

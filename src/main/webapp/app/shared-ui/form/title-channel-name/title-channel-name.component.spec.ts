@@ -156,4 +156,32 @@ describe('TitleChannelNameComponent', () => {
 
         expect(component.channelName()).toBeUndefined();
     });
+    // Opt-in so lectures and exams, which render this same component, keep their labels unmarked.
+    describe('required marker', () => {
+        it('should not mark the labels by default', async () => {
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(fixture.debugElement.queryAll(By.css('.text-state-danger'))).toHaveLength(0);
+        });
+
+        it('should mark both the title and the channel name label when opted in', async () => {
+            fixture.componentRef.setInput('showRequiredMarker', true);
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            const markers = fixture.debugElement.queryAll(By.css('.text-state-danger'));
+            expect(markers).toHaveLength(2);
+            expect((markers[0].nativeElement as HTMLElement).textContent).toBe('*');
+        });
+
+        it('should not mark the channel name label when the channel field is hidden', async () => {
+            fixture.componentRef.setInput('showRequiredMarker', true);
+            fixture.componentRef.setInput('hideChannelName', true);
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(fixture.debugElement.queryAll(By.css('.text-state-danger'))).toHaveLength(1);
+        });
+    });
 });

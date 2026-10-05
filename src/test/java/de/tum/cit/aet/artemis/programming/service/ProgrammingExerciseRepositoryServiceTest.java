@@ -212,7 +212,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Path repoPath = gradleTestRepository();
         Repository repository = mockRepository(repoPath);
 
-        programmingExerciseRepositoryService.replacePlaceholders(javaExercise(), repository);
+        programmingExerciseRepositoryService.replacePlaceholders(javaExercise(), new ProgrammingExerciseBuildConfig(), repository);
 
         assertThat(Files.readString(repoPath.resolve("build.gradle"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
         assertThat(Files.readString(repoPath.resolve("settings.gradle"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
@@ -254,7 +254,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Path repoPath = blackboxTestRepository();
         programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.MAVEN_BLACKBOX, mirrorSections(true));
 
-        programmingExerciseRepositoryService.replacePlaceholders(blackboxExercise(), mockRepository(repoPath));
+        programmingExerciseRepositoryService.replacePlaceholders(blackboxExercise(), new ProgrammingExerciseBuildConfig(), mockRepository(repoPath));
 
         assertThat(Files.readString(repoPath.resolve(".mvn").resolve("local-settings.xml"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
         assertThat(Files.readString(repoPath.resolve("pom.xml"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
@@ -339,7 +339,6 @@ class ProgrammingExerciseRepositoryServiceTest {
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setPackageName("de.tum.in.ase");
-        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         return exercise;
     }
 

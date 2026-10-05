@@ -11,10 +11,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.jspecify.annotations.NonNull;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +27,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.RedisDistributedDataCondition;
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DefaultTimeToLiveDistributedMap;
@@ -50,6 +54,9 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     @Value("${spring.data.redis.client-name:artemis-node}")
     private String redisClientName;
 
+    @Value("${artemis.version:unknown}")
+    private String artemisVersion;
+
     private final RedissonClient redissonClient;
 
     private final RedisClientListResolver redisClientListResolver;
@@ -67,7 +74,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     /**
      * Tracks the previously known connected clients for detecting disconnections.
      */
-    private volatile Set<String> previouslyKnownClients = new HashSet<>();
+    private final AtomicReference<Set<String>> previouslyKnownClients = new AtomicReference<>(new HashSet<>());
 
     /**
      * Scheduled executor for polling client connections.
@@ -90,6 +97,16 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     }
 
     /**
+     * Brings the store up to the schema version this build reads. Placed here rather than on a startup event because
+     * ordering is what matters: nothing can obtain a structure before this bean exists, so nothing can read a
+     * namespace the migration has not finished preparing.
+     */
+    @PostConstruct
+    public void migrateDistributedData() {
+        new RedissonDistributedDataMigrator(redissonClient, artemisVersion).migrateToCurrentVersion();
+    }
+
+    /**
      * Cleans up resources when the service is destroyed.
      */
     @PreDestroy
@@ -97,19 +114,31 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         stopClientPolling();
     }
 
+    /**
+     * Prefixes a logical name with the namespace of the schema version this build reads, so that a release never sees
+     * a key another version wrote. The logical name is what callers pass and what appears in log and error messages;
+     * only what reaches Redis is prefixed.
+     *
+     * @param name the logical structure name
+     * @return the Redis key it lives under
+     */
+    private static String key(String name) {
+        return DistributedDataSchema.currentKeyFor(name);
+    }
+
     @Override
     public <T> DistributedQueue<T> getQueue(String name) {
-        return new RedissonDistributedQueue<>(redissonClient.getQueue(name), redissonClient.getTopic(name + ":queue_notification"));
+        return new RedissonDistributedQueue<>(redissonClient.getQueue(key(name)), redissonClient.getTopic(key(name) + ":queue_notification"), name);
     }
 
     @Override
     public <T extends Comparable<T>> DistributedQueue<T> getPriorityQueue(String name) {
-        return new RedissonDistributedQueue<>(redissonClient.getPriorityQueue(name), redissonClient.getTopic(name + ":queue_notification"));
+        return new RedissonDistributedQueue<>(redissonClient.getPriorityQueue(key(name)), redissonClient.getTopic(key(name) + ":queue_notification"), name);
     }
 
     @Override
     public <K, V> DistributedMap<K, V> getMap(String name) {
-        return new NonExpiringDistributedMap<>(new RedissonDistributedMap<>(redissonClient.getMap(name), redissonClient.getTopic(name + ":map_notification")), name);
+        return new NonExpiringDistributedMap<>(new RedissonDistributedMap<>(redissonClient.getMap(key(name)), redissonClient.getTopic(key(name) + ":map_notification")), name);
     }
 
     /**
@@ -121,25 +150,35 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
      */
     @Override
     public <K, V> DistributedMap<K, V> getExpiringMap(String name, Duration defaultTimeToLive) {
-        RedissonDistributedMap<K, V> expiringMap = new RedissonDistributedMap<>(redissonClient.<K, V>getMapCache(name), redissonClient.getTopic(name + ":map_notification"));
+        RedissonDistributedMap<K, V> expiringMap = new RedissonDistributedMap<>(redissonClient.<K, V>getMapCache(key(name)),
+                redissonClient.getTopic(key(name) + ":map_notification"));
         return new DefaultTimeToLiveDistributedMap<>(expiringMap, defaultTimeToLive);
     }
 
     @Override
     public <T> DistributedTopic<T> getTopic(String name) {
-        return new RedissonDistributedTopic<>(redissonClient.getTopic(name));
+        return new RedissonDistributedTopic<>(redissonClient.getTopic(key(name)));
     }
 
     @Override
     public <T> DistributedTopic<T> getReliableTopic(String name) {
-        return new RedissonReliableDistributedTopic<>(redissonClient.getReliableTopic(name));
+        return new RedissonReliableDistributedTopic<>(redissonClient.getReliableTopic(key(name)));
     }
 
     @Override
     public <T> DistributedSet<T> getSet(String name) {
-        return new RedissonDistributedSet<>(redissonClient.getSet(name));
+        return new RedissonDistributedSet<>(redissonClient.getSet(key(name)));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Deliberately not namespaced. A lock carries no encoded payload, so a version prefix buys nothing, and it costs
+     * the only thing a lock is for: during a rolling upgrade a node of the old and a node of the new schema version
+     * would take different mutexes and both enter a section {@link DistributedLock} promises is cluster-wide, which is
+     * how a scheduled digest or alert gets sent twice.
+     */
     @Override
     public DistributedLock getLock(String name) {
         return new RedissonDistributedLock(redissonClient.getLock(name));
@@ -198,6 +237,22 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     public Set<String> getConnectedClientNames() {
         var snapshot = redisClientListResolver.resolveClients();
         return snapshot.complete() ? snapshot.clientNames() : Set.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Redis answers both views from the same {@code CLIENT LIST}, so this resolves it once instead of issuing the
+     * query twice. {@code CLIENT LIST} is O(connections) on the server and returns a line per connection that the
+     * client then parses, which made it the second most expensive command this deployment ran.
+     */
+    @Override
+    @NonNull
+    public ClusterMembership getClusterMembership() {
+        var snapshot = redisClientListResolver.resolveClients();
+        Set<String> names = snapshot.complete() ? snapshot.clientNames() : Set.of();
+        return new ClusterMembership(names, names);
     }
 
     /**
@@ -287,8 +342,9 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
                 });
 
                 // Initialize with current clients to avoid false disconnection events on startup
-                previouslyKnownClients = new HashSet<>(redisClientListResolver.getUniqueClients());
-                log.info("Starting Redis client disconnection polling with interval of {} seconds. Initial clients: {}", CLIENT_POLLING_INTERVAL_SECONDS, previouslyKnownClients);
+                previouslyKnownClients.set(new HashSet<>(redisClientListResolver.getUniqueClients()));
+                log.info("Starting Redis client disconnection polling with interval of {} seconds. Initial clients: {}", CLIENT_POLLING_INTERVAL_SECONDS,
+                        previouslyKnownClients.get());
 
                 clientPollingFuture = clientPollingExecutor.scheduleAtFixedRate(this::checkForDisconnectedClients, CLIENT_POLLING_INTERVAL_SECONDS, CLIENT_POLLING_INTERVAL_SECONDS,
                         TimeUnit.SECONDS);
@@ -340,7 +396,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
                 return;
             }
             Set<String> currentClients = snapshot.clientNames();
-            Set<String> disconnectedClients = new HashSet<>(previouslyKnownClients);
+            Set<String> disconnectedClients = new HashSet<>(previouslyKnownClients.get());
             disconnectedClients.removeAll(currentClients);
 
             for (String disconnectedClient : disconnectedClients) {
@@ -349,7 +405,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
             }
 
             // Update the known clients for the next check
-            previouslyKnownClients = new HashSet<>(currentClients);
+            previouslyKnownClients.set(new HashSet<>(currentClients));
         }
         catch (Exception e) {
             log.warn("Error checking for disconnected Redis clients: {}", e.getMessage());

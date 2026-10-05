@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.UpcomingExamDTO;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 @Conditional(ExamEnabled.class)
 @EnforceAdmin
 @Lazy
+@FeatureUsage(UserFeature.UPCOMING_EXAMS_AND_EXERCISES)
 @RestController
 @RequestMapping("api/exam/admin/")
 public class AdminExamResource {

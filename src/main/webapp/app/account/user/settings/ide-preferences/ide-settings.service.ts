@@ -1,11 +1,11 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { Observable, lastValueFrom } from 'rxjs';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { Ide, IdeMappingDTO } from 'app/account/user/settings/ide-preferences/ide.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IdeSettingsService {
     private http = inject(HttpClient);
 

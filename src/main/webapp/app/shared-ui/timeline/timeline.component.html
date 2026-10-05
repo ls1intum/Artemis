@@ -1,25 +1,8 @@
-<div class="frame" [class.locked-to-group]="lockedToGroup()">
-    @if (lockedToGroup()) {
-        <div
-            class="timeline-lock-overlay"
-            role="button"
-            tabindex="0"
-            (click)="lockedClick.emit()"
-            (keydown.enter)="lockedClick.emit()"
-            (keydown.space)="lockedClick.emit()"
-            [tumUiTooltip]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
-            tumUiTooltipPlacement="top"
-        >
-            <fa-icon [icon]="faLock" class="timeline-lock-icon text-muted-color" />
-        </div>
-    }
+<div class="frame">
     @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
             @let isInvalid =
-                internalItem.isInvalidInput ||
-                internalItem.hasInvalidDateOrder ||
-                internalItem.isOtherRequiredItemDateUndefined ||
-                (dateModel.touched && internalItem.isInputRequiredButUndefined);
+                internalItem.isInvalidInput || internalItem.hasInvalidDateOrder || internalItem.hasExternalError || (dateModel.touched && internalItem.isInputRequiredButUndefined);
             <div class="timeline-graphic">
                 <div class="timeline-graphic-line"></div>
                 <div
@@ -61,13 +44,13 @@
                         placeholder="dd.mm.yyyy hh:mm"
                         keepInvalid="true"
                         showClear="true"
-                        [showIcon]="!isReadonly()"
+                        [showIcon]="!internalItem.isDisabled"
                         iconDisplay="input"
                         appendTo="body"
                         showOnFocus="false"
                         [baseZIndex]="1060"
                         [invalid]="isInvalid"
-                        [disabled]="isReadonly()"
+                        [disabled]="internalItem.isDisabled"
                     />
                     @if (isInvalid || internalItem.hasWarning) {
                         <i

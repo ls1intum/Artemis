@@ -78,7 +78,21 @@ public enum RateLimitType {
      * <p>
      * Default: 120 requests per minute per client.
      */
-    AI_SEARCH_PIPELINE(120);
+    AI_SEARCH_PIPELINE(120),
+
+    /**
+     * Rate limit for the proactive struggle-intervention trigger, which dispatches a Pyris pipeline that need not
+     * persist a message, and so can spend an LLM call without touching the message-counted Iris budget.
+     * <p>
+     * Sized for a shared address, not for one student: the limit is per client address, a lecture hall can sit
+     * behind one NAT, and the editor's detector cooldown keeps a real student near one trigger every two minutes.
+     * A single abusive student is bounded instead by the admission cooldown, which runs per student, exercise and
+     * intent.
+     * <p>
+     * Default: 300 requests per minute per client, overridable with
+     * {@code artemis.rate-limiting.struggle-intervention-requests-per-minute}.
+     */
+    STRUGGLE_INTERVENTION(300);
 
     private final int defaultRpm;
 

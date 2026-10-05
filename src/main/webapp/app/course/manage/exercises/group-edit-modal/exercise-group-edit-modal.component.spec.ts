@@ -1,12 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ExerciseTimelineStubComponent } from 'test/helpers/stubs/modeling/exercise-timeline-stub.component';
+import { TimelineStubComponent } from 'test/helpers/stubs/exercise/timeline-stub.component';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -39,16 +46,16 @@ describe('ExerciseGroupEditModalComponent', () => {
                 set: {
                     imports: [
                         FormsModule,
-                        TumUiDialogComponent,
-                        TumUiInputDirective,
-                        TumUiInputNumberComponent,
-                        TumUiButtonComponent,
-                        TumUiMessageComponent,
-                        TumUiTooltipDirective,
+                        TumAetUiDialogComponent,
+                        TumAetUiInputDirective,
+                        TumAetUiInputNumberComponent,
+                        TumAetUiButtonComponent,
+                        TumAetUiMessageComponent,
+                        TumAetUiTooltipDirective,
                         FaIconComponent,
                         ArtemisTranslatePipe,
                         TranslateDirective,
-                        ExerciseTimelineStubComponent,
+                        TimelineStubComponent,
                     ],
                 },
             })
@@ -117,6 +124,17 @@ describe('ExerciseGroupEditModalComponent', () => {
             fixture.detectChanges();
             expect(component.timelineItems().map((item) => item.labelStringKey)).not.toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
         }
+    });
+
+    it('requires a due date when an assessment due date is set', () => {
+        fixture.componentRef.setInput('group', buildGroup({ dueDate: undefined }));
+        fixture.detectChanges();
+
+        const assessmentDueDateItem = component.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.assessmentDueDate');
+        expect(assessmentDueDateItem?.errorStringKey?.()).toBe('artemisApp.exercise.assessmentDueDateRequiresDueDate');
+
+        component.draftDueDate.set(dayjs('2026-01-10T00:00:00Z'));
+        expect(assessmentDueDateItem?.errorStringKey?.()).toBeUndefined();
     });
 
     it('closes without emitting saved when saving without any changes', () => {

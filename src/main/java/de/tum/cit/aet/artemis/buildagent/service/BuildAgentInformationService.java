@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
+import de.tum.cit.aet.artemis.buildagent.service.runner.BuildRunnerType;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
@@ -39,11 +41,17 @@ public class BuildAgentInformationService {
 
     /**
      * The Docker version running on this build agent.
-     * Updated periodically by {@link #updateDockerVersion()} and included in build agent details.
+     * Updated periodically by {@link #updateBuildRunnerStatus()} and included in build agent details.
      * Marked as volatile to ensure visibility across threads since it's updated by the scheduler
      * and read by request handling threads.
      */
     private volatile String dockerVersion;
+
+    private volatile String buildRunnerVersion;
+
+    private volatile boolean buildRunnerAvailable;
+
+    private final BuildJobRunner buildJobRunner;
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
@@ -58,68 +66,90 @@ public class BuildAgentInformationService {
     private String buildAgentDisplayName;
 
     public BuildAgentInformationService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
-            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties) {
+            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties, BuildJobRunner buildJobRunner) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.buildJobRunner = buildJobRunner;
     }
 
     /**
-     * Periodically checks Docker availability and retrieves the Docker version from the Docker daemon.
+     * Periodically checks whether the configured build runner is reachable and retrieves its version.
      * <p>
      * This method is scheduled to run:
      * <ul>
      * <li>10 seconds after application startup (to avoid blocking startup)</li>
-     * <li>Every 60 seconds thereafter (using fixedDelay to prevent overlap if Docker daemon is slow)</li>
+     * <li>Every 60 seconds thereafter (using fixedDelay to prevent overlap if the runner is slow to answer)</li>
      * </ul>
      * <p>
-     * On success, the method marks Docker as available via {@link BuildAgentConfiguration#setDockerAvailable(boolean)}
-     * and updates the version if it changed. On failure, Docker is marked as unavailable. State transitions
-     * (available → unavailable and vice versa) are logged at WARN/INFO level; repeated failures log at DEBUG.
+     * For the Docker runner, availability is additionally published through {@link BuildAgentConfiguration#setDockerAvailable(boolean)}, which the rest of the agent uses to
+     * decide whether it may accept builds. State transitions (available → unavailable and vice versa) are logged at WARN/INFO level; repeated failures log at DEBUG.
+     * A refresh never changes the pause state of the agent: it republishes the pause state and consecutive failure count that are currently in the distributed map.
      */
     @Scheduled(initialDelayString = "10000", fixedDelayString = "60000")
-    public void updateDockerVersion() {
-        var dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClient == null) {
-            return;
+    public void updateBuildRunnerStatus() {
+        var status = buildJobRunner.status();
+        boolean stateChanged = status.available() != buildRunnerAvailable;
+        boolean versionChanged = status.available() && !Objects.equals(status.version(), buildRunnerVersion);
+
+        if (buildJobRunner.type() == BuildRunnerType.DOCKER) {
+            buildAgentConfiguration.setDockerAvailable(status.available());
         }
-        boolean wasAvailable = buildAgentConfiguration.isDockerAvailable();
-        try {
-            String newVersion = dockerClient.versionCmd().exec().getVersion();
-            boolean stateChanged = !wasAvailable;
-            boolean versionChanged = !Objects.equals(newVersion, dockerVersion);
-            if (stateChanged) {
-                log.info("Docker is now available (version: {})", newVersion);
-                buildAgentConfiguration.setDockerAvailable(true);
-            }
-            if (versionChanged) {
-                log.info("Docker version: {}", newVersion);
-                dockerVersion = newVersion;
-            }
+
+        if (status.available()) {
             if (stateChanged || versionChanged) {
-                updateLocalBuildAgentInformation(false);
+                log.info("{} build runner is available (version: {})", buildJobRunner.type().displayName(), status.version());
+            }
+            buildRunnerVersion = status.version();
+            if (buildJobRunner.type() == BuildRunnerType.DOCKER) {
+                dockerVersion = status.version();
             }
         }
-        catch (Exception e) {
-            if (wasAvailable) {
-                log.warn("Docker is no longer available: {}", e.getMessage());
-            }
-            else {
-                log.debug("Docker is not available: {}", e.getMessage());
-            }
-            buildAgentConfiguration.setDockerAvailable(false);
+        else if (buildRunnerAvailable) {
+            log.warn("{} build runner is no longer available: {}", buildJobRunner.type().displayName(), status.message());
+        }
+        else {
+            log.debug("{} build runner is unavailable: {}", buildJobRunner.type().displayName(), status.message());
+        }
+        buildRunnerAvailable = status.available();
+        if (stateChanged || versionChanged) {
+            // An availability or version refresh must not clear an existing pause. Passing a hardcoded "not paused" here would force the status back to ACTIVE or IDLE
+            // and reset the consecutive failure counter, even though the agent was paused by an admin or by too many consecutive failures.
+            BuildAgentInformation currentInformation = getCurrentLocalBuildAgentInformation();
+            boolean isPausedDueToFailures = currentInformation != null && currentInformation.status() == BuildAgentStatus.SELF_PAUSED;
+            boolean isPaused = isPausedDueToFailures || (currentInformation != null && currentInformation.status() == BuildAgentStatus.PAUSED);
+            int consecutiveFailures = currentInformation != null && currentInformation.buildAgentDetails() != null
+                    ? currentInformation.buildAgentDetails().consecutiveBuildFailures()
+                    : DEFAULT_CONSECUTIVE_FAILURES;
+            updateLocalBuildAgentInformation(isPaused, isPausedDueToFailures, consecutiveFailures);
         }
     }
 
     /**
+     * Reads the build agent information this agent currently published to the distributed map.
+     *
+     * @return the current information, or null if this agent is not connected to the cluster or has not published anything yet
+     */
+    private BuildAgentInformation getCurrentLocalBuildAgentInformation() {
+        if (buildAgentShortName == null || buildAgentShortName.isBlank() || !distributedDataAccessService.isConnectedToCluster()) {
+            return null;
+        }
+        return distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
+    }
+
+    /**
      * Returns the cached Docker version.
-     * This version is periodically updated by {@link #updateDockerVersion()}.
+     * This version is periodically updated by {@link #updateBuildRunnerStatus()}.
      *
      * @return the Docker version string, or null if not yet retrieved or retrieval failed
      */
     public String getDockerVersion() {
         return dockerVersion;
+    }
+
+    public String getBuildRunnerVersion() {
+        return buildRunnerVersion;
     }
 
     /**
@@ -244,7 +274,7 @@ public class BuildAgentInformationService {
         var timedOutBuilds = getTimedOutBuilds(agent, recentBuildJob);
 
         return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision,
-                consecutiveFailures, dockerVersion);
+                consecutiveFailures, dockerVersion, buildJobRunner.type().displayName(), buildRunnerVersion);
     }
 
     private ZonedDateTime getLastBuildDate(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {

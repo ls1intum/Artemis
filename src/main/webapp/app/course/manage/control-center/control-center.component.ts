@@ -5,20 +5,24 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { AthenaEnabledComponent } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
+import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
 
 @Component({
     selector: 'jhi-control-center',
-    imports: [IrisEnabledComponent, IrisLogoComponent, TranslateDirective],
+    imports: [IrisEnabledComponent, IrisLogoComponent, AthenaEnabledComponent, AthenaLogoComponent, TranslateDirective],
     templateUrl: './control-center.component.html',
     styleUrls: ['./control-center.component.scss'],
 })
 export class ControlCenterComponent {
-    protected readonly IrisLogoSize = IrisLogoSize;
     private dialogService = inject(DialogService);
+
+    protected readonly IrisLogoSize = IrisLogoSize;
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
     course = input.required<Course>();
     irisEnabled = input.required<boolean>();
+    athenaEnabled = input.required<boolean>();
 
     openAboutIrisModal(): void {
         this.aboutIrisDialogRef?.close();

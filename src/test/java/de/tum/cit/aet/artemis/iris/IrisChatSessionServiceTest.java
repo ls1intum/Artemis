@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -47,6 +48,9 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
     private IrisChatSessionService irisChatSessionService;
 
     @Autowired
+    private IrisSessionService irisSessionService;
+
+    @Autowired
     private IrisChatSessionRepository irisChatSessionRepository;
 
     @Autowired
@@ -58,6 +62,17 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
+    }
+
+    /**
+     * Restores the fixture's default decision before every test in this file, whichever nested class it sits in.
+     * The preference is one persisted row shared by all of them, and six tests spread over four nested classes
+     * change it, so a per-class guard would only protect the class that carries it and leave the class that runs
+     * next holding whatever the previous one left behind.
+     */
+    @BeforeEach
+    void resetAiSelectionDecision() {
+        userUtilService.setAiSelectionDecision(student1(), AiSelectionDecision.CLOUD_AI);
     }
 
     private User student1() {
@@ -82,17 +97,69 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
     // checkHasAccessTo
     // =========================================================================
 
+    /**
+     * The LLM opt-in gate moved to {@link IrisSessionService}, which is why it is asserted here and not
+     * on the sub-feature check below: that one is reached through this method and carries no gate of its
+     * own any more. The ungated entry point exists so an already-delivered proactive hint can still have
+     * its outcome recorded after the opt-in lapsed, so it is tested for NOT throwing.
+     */
+    @Nested
+    class LlmOptInGate {
+
+        @Test
+        void throwsWhenUserHasNotOptedIntoLLM() {
+            User user = student1();
+            userUtilService.clearAiSelectionDecision(user);
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
+            session.setId(1L);
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisSessionService.checkHasAccessToIrisSession(session, user))
+                    .withMessageContaining("not selected to use AI");
+        }
+
+        @Test
+        void throwsWhenUserOptedOutOfLLM() {
+            User user = student1();
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
+            session.setId(1L);
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisSessionService.checkHasAccessToIrisSession(session, user))
+                    .withMessageContaining("not selected to use AI");
+        }
+
+        @Test
+        void allowsLocalAI() {
+            User user = student1();
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.LOCAL_AI);
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
+            session.setId(1L);
+
+            assertThatNoException().isThrownBy(() -> irisSessionService.checkHasAccessToIrisSession(session, user));
+        }
+
+        @Test
+        void recordsAnOutcomeWithoutALiveOptIn() {
+            User user = student1();
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
+            session.setId(1L);
+
+            assertThatNoException().isThrownBy(() -> irisSessionService.checkHasAccessToIrisSessionWithoutLlmOptIn(session, user));
+        }
+
+        @Test
+        void stillChecksOwnershipWithoutTheOptIn() {
+            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, student2());
+            session.setId(1L);
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisSessionService.checkHasAccessToIrisSessionWithoutLlmOptIn(session, student1()))
+                    .withMessageContaining("Iris Session");
+        }
+    }
+
     @Nested
     class CheckHasAccessTo {
-
-        /**
-         * Restores the fixture's default decision before each test. The preference is a persisted row shared by every test
-         * in this class, so a test that changes it would otherwise leak that change into the next one.
-         */
-        @BeforeEach
-        void resetAiSelectionDecision() {
-            userUtilService.setAiSelectionDecision(student1(), AiSelectionDecision.CLOUD_AI);
-        }
 
         @ParameterizedTest
         @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
@@ -111,38 +178,6 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisChatSessionService.checkHasAccessTo(student1(), session))
                     .withMessageContaining("Iris Session");
-        }
-
-        @Test
-        void throwsWhenUserHasNotOptedIntoLLM() {
-            User user = student1();
-            userUtilService.clearAiSelectionDecision(user);
-            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
-            session.setId(1L);
-
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisChatSessionService.checkHasAccessTo(user, session))
-                    .withMessageContaining("not selected to use AI");
-        }
-
-        @Test
-        void throwsWhenUserOptedOutOfLLM() {
-            User user = student1();
-            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
-            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
-            session.setId(1L);
-
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisChatSessionService.checkHasAccessTo(user, session))
-                    .withMessageContaining("not selected to use AI");
-        }
-
-        @Test
-        void allowsLocalAI() {
-            User user = student1();
-            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.LOCAL_AI);
-            IrisChatSession session = newSessionFor(IrisChatMode.COURSE_CHAT, user);
-            session.setId(1L);
-
-            assertThatNoException().isThrownBy(() -> irisChatSessionService.checkHasAccessTo(user, session));
         }
 
         @Test
@@ -317,10 +352,10 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("added");
-            assertThat(markerContent.getJsonNode().get("entityMode").asText()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("added");
+            assertThat(markerContent.getJsonNode().get("entityMode").asString()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
             assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(lecture.getId());
-            assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
+            assertThat(markerContent.getJsonNode().get("name").asString()).isEqualTo(lecture.getTitle());
         }
 
         @Test
@@ -333,7 +368,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("removed");
+            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("removed");
             assertThat(markerContent.getJsonNode().has("entityMode")).isFalse();
             assertThat(markerContent.getJsonNode().has("entityId")).isFalse();
             assertThat(markerContent.getJsonNode().has("name")).isFalse();
@@ -349,10 +384,10 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("changed");
-            assertThat(markerContent.getJsonNode().get("entityMode").asText()).isEqualTo(IrisChatMode.TEXT_EXERCISE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("changed");
+            assertThat(markerContent.getJsonNode().get("entityMode").asString()).isEqualTo(IrisChatMode.TEXT_EXERCISE_CHAT.name());
             assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(textExercise.getId());
-            assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(textExercise.getTitle());
+            assertThat(markerContent.getJsonNode().get("name").asString()).isEqualTo(textExercise.getTitle());
         }
 
         @Test

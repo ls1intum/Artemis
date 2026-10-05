@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -38,11 +39,6 @@ public class LLMTokenUsageService {
     private static final Logger log = LoggerFactory.getLogger(LLMTokenUsageService.class);
 
     private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-?\\d{4}-\\d{2}-\\d{2}$");
-
-    /**
-     * Default value used when token-count metadata is missing ({@code null}).
-     */
-    private static final int DEFAULT_TOKEN_COUNT = 0;
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
@@ -180,9 +176,12 @@ public class LLMTokenUsageService {
             }
             ChatResponseMetadata metadata = chatResponse.getMetadata();
             Usage usage = metadata.getUsage();
-            String model = metadata.getModel() != null ? metadata.getModel() : "";
-            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
-                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
+            if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
+                return;
+            }
+            // Spring AI is @NullMarked: token counts are never null; the model is defaulted because mocked metadata (tests) can return null
+            String model = Objects.requireNonNullElse(metadata.getModel(), "");
+            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {

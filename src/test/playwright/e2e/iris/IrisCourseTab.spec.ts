@@ -6,11 +6,18 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { generateUUID } from '../../support/utils';
+import { enableIrisForCourse, loginWithoutIrisTour } from '../../support/irisSetup';
+import { IrisChat } from '../../support/pageobjects/iris/IrisChat';
 
 /**
- * Gets a student past the one-time overlays Iris puts in front of the chat: the LLM usage choice and the onboarding
- * tour. Both are remembered per user, so whether they appear depends on what an earlier run already answered, and both
- * cover the page with a backdrop that swallows every other click while they are up.
+ * Gets a student past the one-time LLM usage choice Iris puts in front of the chat. The choice is remembered per user,
+ * so whether it appears depends on what an earlier run already answered, and its backdrop swallows every other click
+ * while it is up.
+ *
+ * The onboarding tour is not handled here: it opens an unpredictable time after the chat appears, so there is no
+ * moment at which it is safe to conclude it will not. The tests sign in with the tour already completed instead
+ * (see loginWithoutIrisTour). The last assertion is only a snapshot, not a wait: it names the cause when the tour is
+ * already open, which is how a click blocked by its backdrop would otherwise look like an unrelated timeout.
  */
 async function openIrisChat(page: Page): Promise<void> {
     await expect(page.locator('jhi-course-chatbot')).toBeVisible({ timeout: 30_000 });
@@ -23,15 +30,8 @@ async function openIrisChat(page: Page): Promise<void> {
         await expect(cloudOption).toBeHidden();
     }
 
-    // The tour is offered a moment after the chat settles, so give it time to appear before deciding it will not
-    await page.waitForTimeout(2000);
-    const tourClose = page.locator('.iris-onboarding-modal-welcome .close-button, .onboarding-tooltip .tooltip-close-button').first();
-    if (await tourClose.isVisible().catch(() => false)) {
-        await tourClose.click();
-    }
-    await expect(page.locator('.onboarding-container .full-backdrop')).toHaveCount(0);
-    await expect(page.locator('.onboarding-container .spotlight-click-guard')).toHaveCount(0);
     await expect(messageInput).toBeVisible();
+    await expect(page.locator('.onboarding-container'), 'the onboarding tour must not be offered to a student who completed it').toHaveCount(0);
 }
 
 /**
@@ -64,8 +64,8 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse();
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        const settingsResponse = await page.request.put(`api/iris/courses/${course.id}/iris-settings`, { data: { enabled: true, variant: 'default' } });
-        expect(settingsResponse.ok(), 'Iris must be enabled for the course, otherwise the tab is not offered').toBeTruthy();
+        // Without it the tab is not offered
+        await enableIrisForCourse(page.request, course.id!);
 
         lecture = await courseManagementAPIRequests.createLecture(course, 'IrisLec ' + generateUUID());
         const released = dayjs().subtract(2, 'day');
@@ -78,7 +78,7 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 
-    test('offers the course lectures and exercises in the context picker, loaded only when it is opened', async ({ page, login }) => {
+    test('offers the course lectures and exercises in the context picker, loaded only when it is opened', async ({ page }) => {
         const lectureRequests: string[] = [];
         const exerciseTitleRequests: string[] = [];
         page.on('request', (request) => {
@@ -90,7 +90,7 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
             }
         });
 
-        await login(studentOne, `/courses/${course.id}/iris`);
+        await loginWithoutIrisTour(page, studentOne, `/courses/${course.id}/iris`);
         await openIrisChat(page);
 
         const picker = page.locator('jhi-context-selection');
@@ -106,7 +106,7 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
         await expect.poll(() => lectureRequests.length, { timeout: 15_000 }).toBe(1);
         await expect.poll(() => exerciseTitleRequests.length, { timeout: 15_000 }).toBe(1);
 
-        const options = page.locator('.p-select-overlay .p-select-option');
+        const options = page.getByTestId('iris-context-overlay').getByTestId('iris-context-option');
         await expect(options.filter({ hasText: lecture.title! })).toBeVisible({ timeout: 15_000 });
         await expect(options.filter({ hasText: exercise.title! })).toBeVisible();
 
@@ -123,13 +123,12 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
         expect(exerciseTitleRequests, 'the options are loaded once per course, not on every open').toHaveLength(1);
     });
 
-    test('answers a course chat message sent from the tab', async ({ page, login }) => {
-        await login(studentOne, `/courses/${course.id}/iris`);
+    test('answers a course chat message sent from the tab', async ({ page }) => {
+        await loginWithoutIrisTour(page, studentOne, `/courses/${course.id}/iris`);
         await openIrisChat(page);
 
-        const input = page.locator('.chat-input textarea');
-        await input.fill('Hello Iris, what is this course about?');
-        await page.locator('#irisSendButton').click();
+        // Waits for the send button to be enabled, which it only is once the chat session has loaded
+        await new IrisChat(page).sendMessage('Hello Iris, what is this course about?');
 
         // The mock LLM the Iris stack runs against always includes this marker in its reply
         await expect(page.locator('.llm-message-wrapper').last()).toContainText('mock-llm', { timeout: 60_000 });

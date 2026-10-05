@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.notification.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -13,9 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationInfoDTO;
@@ -26,11 +31,9 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPres
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.COURSE_NOTIFICATIONS)
 @RestController
-// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/" prefix.
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/courses/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
+@RequestMapping("api/notification/courses/")
 public class CourseNotificationResource {
 
     private final CourseNotificationService courseNotificationService;
@@ -70,11 +73,13 @@ public class CourseNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and the list of all notification types and presets
      */
     @EnforceAtLeastStudent
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("info")
     public ResponseEntity<CourseNotificationInfoDTO> getCourseNotificationInfo() {
         var presetDTOs = courseNotificationSettingPresetRegistryService.getSettingPresetDTOs();
         var notificationTypes = courseNotificationRegistryService.getNotificationTypes();
 
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(new CourseNotificationInfoDTO(notificationTypes, NotificationChannelOption.values(), presetDTOs));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(new CourseNotificationInfoDTO(notificationTypes, List.of(NotificationChannelOption.values()), presetDTOs));
     }
 }

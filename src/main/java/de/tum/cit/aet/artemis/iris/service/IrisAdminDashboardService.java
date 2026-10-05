@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -332,7 +333,7 @@ public class IrisAdminDashboardService {
 
         while (current.isBefore(endExclusive)) {
             buckets.add(current.atStartOfDay(ZoneOffset.UTC).toInstant());
-            current = switch (span.toUpperCase()) {
+            current = switch (span.toUpperCase(Locale.ROOT)) {
                 case "DAY" -> current.plusDays(1);
                 case "WEEK" -> current.plusWeeks(1);
                 case "MONTH" -> current.plusMonths(1);

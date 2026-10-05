@@ -5,17 +5,15 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { ApollonEditor, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/course/shared/entities/course.model';
-import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MAX_SIZE_UNIT, computeDropLocation, generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import * as testClassDiagramV3 from 'test/helpers/sample/modeling/test-models/class-diagram.json';
-import * as testClassDiagramV4 from 'test/helpers/sample/modeling/test-models/class-diagram-v4.json';
-import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import testClassDiagramV3 from 'test/helpers/sample/modeling/test-models/class-diagram.json';
+import testClassDiagramV4 from 'test/helpers/sample/modeling/test-models/class-diagram-v4.json';
 
 function setupCanvasAndImageMocks() {
     const createMockCanvas = () => {
@@ -36,9 +34,6 @@ function setupCanvasAndImageMocks() {
         } as unknown as HTMLCanvasElement;
     };
 
-    // The createElement overload union contains a @deprecated entry for legacy elements like
-    // <applet>; the canvas-mocking pattern itself isn't deprecated, but TS-ESLint can't
-    // disambiguate the overloads when we hold a reference to the bound method.
     // eslint-disable-next-line @typescript-eslint/no-deprecated
     const originalCreateElement = document.createElement.bind(document);
     const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
@@ -62,7 +57,7 @@ function setupCanvasAndImageMocks() {
 
         set src(value: string) {
             this._src = value;
-            setTimeout(() => this.onload?.(), 0);
+            queueMicrotask(() => this.onload?.());
         }
     }
 
@@ -81,24 +76,13 @@ function setupCanvasAndImageMocks() {
     };
 }
 
-/**
- * RUTHLESS TEST SUITE: Quiz Exercise Generator
- *
- * These tests cover:
- * 1. V3 format (interactive.elements/relationships) - backwards compatibility
- * 2. V4 format (nodes/edges arrays) - current format
- * 3. computeDropLocation math with edge cases
- * 4. Error handling and edge cases
- */
 describe('QuizExercise Generator', () => {
-    const course: Course = { id: 123 } as Course;
     let cleanupCanvasAndImageMocks: (() => void) | undefined;
     const defaultExportModelAsSvgResult = {
         svg: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>',
         clip: { x: 0, y: 0, width: 100, height: 100 },
     };
 
-    // Type-safe mock for ApollonEditor.exportModelAsSvg
     const mockExportModelAsSvg = vi.fn().mockResolvedValue(defaultExportModelAsSvgResult);
 
     beforeEach(async () => {
@@ -116,8 +100,8 @@ describe('QuizExercise Generator', () => {
         mockExportModelAsSvg.mockReset();
         mockExportModelAsSvg.mockResolvedValue(defaultExportModelAsSvgResult);
 
-        // Mock static method with proper cleanup
         vi.spyOn(ApollonEditor, 'exportModelAsSvg').mockImplementation(mockExportModelAsSvg);
+        vi.spyOn(SVGRendererAPI, 'cropRenderedSVGToElement').mockReturnValue(defaultExportModelAsSvgResult);
         vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob(['PNG'], { type: 'image/png' }));
         cleanupCanvasAndImageMocks = setupCanvasAndImageMocks().cleanup;
     });
@@ -128,30 +112,24 @@ describe('QuizExercise Generator', () => {
         vi.restoreAllMocks();
     });
 
-    // ===========================================
-    // V3 FORMAT TESTS (Backwards Compatibility)
-    // ===========================================
     describe('V3 format (interactive.elements/relationships)', () => {
         const v3Model = testClassDiagramV3 as unknown as UMLModel;
 
         it('should extract interactive elements from v3 model', async () => {
             const exerciseTitle = 'V3 Format Test';
 
-            const question = await generateDragAndDropQuizExercise(course, exerciseTitle, v3Model);
+            const question = await generateDragAndDropQuizExercise(exerciseTitle, v3Model);
 
-            // V3 has 3 interactive elements defined in interactive.elements
-            const expectedInteractiveCount = 3;
-            expect(question.dragItems).toHaveLength(expectedInteractiveCount);
-            expect(question.dropLocations).toHaveLength(expectedInteractiveCount);
+            expect(question.dragItems).toHaveLength(3);
+            expect(question.dropLocations).toHaveLength(3);
+            expect(Array.isArray(mockExportModelAsSvg.mock.calls[0][0].nodes)).toBe(true);
         });
 
         it('should create correct mappings for v3 interactive elements', async () => {
-            const question = await generateDragAndDropQuizExercise(course, 'Mapping Test', v3Model);
+            const question = await generateDragAndDropQuizExercise('Mapping Test', v3Model);
 
-            // Each drag item should have at least one correct mapping
             expect(question.correctMappings!.length).toBeGreaterThanOrEqual(question.dragItems!.length);
 
-            // Verify each drag item has a corresponding mapping
             for (const dragItem of question.dragItems!) {
                 const hasMapping = question.correctMappings!.some((m) => m.dragItem === dragItem);
                 expect(hasMapping).toBe(true);
@@ -159,29 +137,27 @@ describe('QuizExercise Generator', () => {
         });
 
         it('should generate background image excluding interactive elements', async () => {
-            await generateDragAndDropQuizExercise(course, 'Background Test', v3Model);
+            await generateDragAndDropQuizExercise('Background Test', v3Model);
 
             const calls = mockExportModelAsSvg.mock.calls;
-            const expectedExcludedIds = Object.entries((v3Model as any).interactive.elements)
-                .filter(([, value]) => value)
-                .map(([id]) => id);
+            const topLevelInteractiveIds = ['2f67120e-b491-4222-beb1-79e87c2cf54d'];
 
             expect(calls[calls.length - 1][1]).toEqual(
                 expect.objectContaining({
-                    exclude: expect.arrayContaining(expectedExcludedIds),
+                    exclude: expect.arrayContaining(topLevelInteractiveIds),
                     keepOriginalSize: true,
                     svgMode: 'compat',
                 }),
             );
         });
 
-        it('should handle v3 model with empty interactive elements', async () => {
+        it('should preserve an explicitly empty interactive selection', async () => {
             const emptyInteractiveModel = {
                 ...testClassDiagramV3,
                 interactive: { elements: {}, relationships: {} },
             } as unknown as UMLModel;
 
-            const question = await generateDragAndDropQuizExercise(course, 'Empty Interactive', emptyInteractiveModel);
+            const question = await generateDragAndDropQuizExercise('Empty Interactive', emptyInteractiveModel);
 
             expect(question.dragItems).toHaveLength(0);
             expect(question.dropLocations).toHaveLength(0);
@@ -197,38 +173,29 @@ describe('QuizExercise Generator', () => {
                 },
             } as unknown as UMLModel;
 
-            const question = await generateDragAndDropQuizExercise(course, 'Relationship Only', relationshipOnlyModel);
+            const question = await generateDragAndDropQuizExercise('Relationship Only', relationshipOnlyModel);
 
-            // Should have 1 interactive element (the relationship)
             expect(question.dragItems).toHaveLength(1);
         });
     });
 
-    // ===========================================
-    // V4 FORMAT TESTS (Current Format)
-    // ===========================================
     describe('V4 format (nodes/edges arrays)', () => {
         const v4Model = testClassDiagramV4 as unknown as UMLModel;
 
         it('should extract all elements from v4 model nodes array', async () => {
-            const question = await generateDragAndDropQuizExercise(course, 'V4 Format Test', v4Model);
+            const question = await generateDragAndDropQuizExercise('V4 Format Test', v4Model);
 
-            // V4 has 5 nodes + 2 edges = 7 total elements
-            const expectedElementCount = 7;
-            expect(question.dragItems).toHaveLength(expectedElementCount);
-            expect(question.dropLocations).toHaveLength(expectedElementCount);
+            expect(question.dragItems).toHaveLength(15);
+            expect(question.dropLocations).toHaveLength(15);
         });
 
-        it('should correctly identify v4 model by array structure', async () => {
-            // Verify the model has array structure (not object)
-            expect(Array.isArray((v4Model as any).nodes)).toBe(true);
-            expect(Array.isArray((v4Model as any).edges)).toBe(true);
+        it('should isolate the source model from export normalization', async () => {
+            const serializedModel = JSON.stringify(v4Model);
 
-            const question = await generateDragAndDropQuizExercise(course, 'Array Structure Test', v4Model);
+            await generateDragAndDropQuizExercise('Immutable Source Test', v4Model);
 
-            // Should successfully generate without errors
-            expect(question).toBeDefined();
-            expect(question.type).toBe(QuizQuestionType.DRAG_AND_DROP);
+            expect(JSON.stringify(v4Model)).toBe(serializedModel);
+            expect(mockExportModelAsSvg.mock.calls[0][0]).not.toBe(v4Model);
         });
 
         it('should handle v4 model with only nodes (no edges)', async () => {
@@ -237,10 +204,9 @@ describe('QuizExercise Generator', () => {
                 edges: [],
             } as unknown as UMLModel;
 
-            const question = await generateDragAndDropQuizExercise(course, 'Nodes Only', nodesOnlyModel);
+            const question = await generateDragAndDropQuizExercise('Nodes Only', nodesOnlyModel);
 
-            // Should have 5 nodes
-            expect(question.dragItems).toHaveLength(5);
+            expect(question.dragItems).toHaveLength(13);
         });
 
         it('should handle v4 model with empty nodes and edges', async () => {
@@ -254,35 +220,31 @@ describe('QuizExercise Generator', () => {
                 assessments: {},
             } as unknown as UMLModel;
 
-            const question = await generateDragAndDropQuizExercise(course, 'Empty V4', emptyModel);
+            const question = await generateDragAndDropQuizExercise('Empty V4', emptyModel);
 
             expect(question.dragItems).toHaveLength(0);
             expect(question.dropLocations).toHaveLength(0);
         });
 
         it('should use node IDs from v4 array elements', async () => {
-            await generateDragAndDropQuizExercise(course, 'ID Test', v4Model);
+            await generateDragAndDropQuizExercise('ID Test', v4Model);
 
-            // exportModelAsSvg should be called once for sizing, once per generated drag item, and once for the background.
             const calls = mockExportModelAsSvg.mock.calls;
 
-            // Sizing call should export the full diagram in compat mode.
             expect(calls[0][1]).toEqual(expect.objectContaining({ keepOriginalSize: true, svgMode: 'compat' }));
 
-            // Individual element calls should include specific IDs
             const includeCallIds = calls
                 .slice(1)
                 .map((call) => call[1]?.include?.[0])
                 .filter(Boolean);
 
-            // Should include actual node IDs, not array indices
             expect(includeCallIds).toContain('package-1');
             expect(includeCallIds).toContain('class-in-package');
-            expect(includeCallIds).not.toContain('0'); // Should NOT be array index
+            expect(includeCallIds).not.toContain('0');
 
             expect(calls[calls.length - 1][1]).toEqual(
                 expect.objectContaining({
-                    exclude: expect.arrayContaining(includeCallIds),
+                    exclude: expect.arrayContaining([...v4Model.nodes.map(({ id }) => id), ...v4Model.edges.map(({ id }) => id)]),
                     keepOriginalSize: true,
                     svgMode: 'compat',
                 }),
@@ -290,39 +252,20 @@ describe('QuizExercise Generator', () => {
         });
     });
 
-    // ===========================================
-    // QUESTION STRUCTURE TESTS
-    // ===========================================
     describe('Question structure and defaults', () => {
-        it('should set correct question metadata', async () => {
+        it('creates a complete drag-and-drop question contract', async () => {
             const title = 'Test Quiz Question';
-            const question = await generateDragAndDropQuizExercise(course, title, testClassDiagramV3 as unknown as UMLModel);
+            const question = await generateDragAndDropQuizExercise(title, testClassDiagramV3 as unknown as UMLModel);
 
             expect(question.title).toBe(title);
             expect(question.type).toBe(QuizQuestionType.DRAG_AND_DROP);
             expect(question.scoringType).toBe(ScoringType.PROPORTIONAL_WITH_PENALTY);
             expect(question.points).toBe(1);
-        });
-
-        it('should set default question text', async () => {
-            const question = await generateDragAndDropQuizExercise(course, 'Default Text Test', testClassDiagramV3 as unknown as UMLModel);
-
             expect(question.text).toBe('Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.');
-        });
-
-        it('should set background file path', async () => {
-            const question = await generateDragAndDropQuizExercise(course, 'Background Path Test', testClassDiagramV3 as unknown as UMLModel);
-
             expect(question.backgroundFilePath).toBe('diagram-background.png');
-        });
-
-        it('should include all generated files in importedFiles map', async () => {
-            const question = await generateDragAndDropQuizExercise(course, 'Files Test', testClassDiagramV3 as unknown as UMLModel);
-
             expect(question.importedFiles).toBeDefined();
             expect(question.importedFiles!.has('diagram-background.png')).toBe(true);
 
-            // Each drag item should have a corresponding file
             for (const dragItem of question.dragItems!) {
                 if (dragItem.pictureFilePath) {
                     expect(question.importedFiles!.has(dragItem.pictureFilePath)).toBe(true);
@@ -331,9 +274,6 @@ describe('QuizExercise Generator', () => {
         });
     });
 
-    // ===========================================
-    // computeDropLocation TESTS
-    // ===========================================
     describe('computeDropLocation', () => {
         it('should compute relative position as percentage of MAX_SIZE_UNIT', () => {
             const elementLocation = { x: 50, y: 25, width: 100, height: 50 };
@@ -341,13 +281,9 @@ describe('QuizExercise Generator', () => {
 
             const dropLocation = computeDropLocation(elementLocation, totalSize);
 
-            // x: 50/200 * 200 = 50
             expect(dropLocation.posX).toBe(50);
-            // y: 25/100 * 200 = 50
             expect(dropLocation.posY).toBe(50);
-            // width: 100/200 * 200 = 100
             expect(dropLocation.width).toBe(100);
-            // height: 50/100 * 200 = 100
             expect(dropLocation.height).toBe(100);
         });
 
@@ -357,9 +293,7 @@ describe('QuizExercise Generator', () => {
 
             const dropLocation = computeDropLocation(elementLocation, totalSize);
 
-            // x: (60-10)/200 * 200 = 50
             expect(dropLocation.posX).toBe(50);
-            // y: (35-10)/100 * 200 = 50
             expect(dropLocation.posY).toBe(50);
         });
 
@@ -393,9 +327,7 @@ describe('QuizExercise Generator', () => {
 
             const dropLocation = computeDropLocation(elementLocation, totalSize);
 
-            // x: -10/200 * 200 = -10
             expect(dropLocation.posX).toBe(-10);
-            // y: -20/200 * 200 = -20
             expect(dropLocation.posY).toBe(-20);
         });
 
@@ -412,41 +344,29 @@ describe('QuizExercise Generator', () => {
         });
 
         it('should round to two decimal places', () => {
-            const elementLocation = { x: 33, y: 17, width: 77, height: 43 };
-            const totalSize = { width: 100, height: 100 };
+            const elementLocation = { x: 1, y: 2, width: 1, height: 2 };
+            const totalSize = { width: 3, height: 3 };
 
             const dropLocation = computeDropLocation(elementLocation, totalSize);
 
-            // Verify values are numbers (rounded)
-            expect(typeof dropLocation.posX).toBe('number');
-            expect(typeof dropLocation.posY).toBe('number');
-            expect(typeof dropLocation.width).toBe('number');
-            expect(typeof dropLocation.height).toBe('number');
-
-            // Values should be reasonable percentages of MAX_SIZE_UNIT
-            expect(dropLocation.posX).toBeGreaterThanOrEqual(0);
-            expect(dropLocation.posX).toBeLessThanOrEqual(MAX_SIZE_UNIT);
+            expect(dropLocation).toMatchObject({ posX: 66.67, posY: 133.33, width: 66.67, height: 133.33 });
         });
     });
 
-    // ===========================================
-    // ERROR HANDLING TESTS
-    // ===========================================
     describe('Error handling', () => {
         it('should handle SVG export failure gracefully', async () => {
             mockExportModelAsSvg.mockRejectedValueOnce(new Error('SVG export failed'));
 
-            await expect(generateDragAndDropQuizExercise(course, 'Error Test', testClassDiagramV3 as unknown as UMLModel)).rejects.toThrow('SVG export failed');
+            await expect(generateDragAndDropQuizExercise('Error Test', testClassDiagramV3 as unknown as UMLModel)).rejects.toThrow('SVG export failed');
         });
 
         it('should handle PNG conversion failure gracefully', async () => {
             vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockRejectedValueOnce(new Error('PNG conversion failed'));
 
-            await expect(generateDragAndDropQuizExercise(course, 'PNG Error Test', testClassDiagramV3 as unknown as UMLModel)).rejects.toThrow('PNG conversion failed');
+            await expect(generateDragAndDropQuizExercise('PNG Error Test', testClassDiagramV3 as unknown as UMLModel)).rejects.toThrow('PNG conversion failed');
         });
 
         it('should handle model with missing elements gracefully', async () => {
-            // Model with interactive IDs that don't exist in elements
             const brokenModel = {
                 ...testClassDiagramV3,
                 interactive: {
@@ -455,9 +375,8 @@ describe('QuizExercise Generator', () => {
                 },
             } as unknown as UMLModel;
 
-            const question = await generateDragAndDropQuizExercise(course, 'Broken Model', brokenModel);
+            const question = await generateDragAndDropQuizExercise('Broken Model', brokenModel);
 
-            // Should skip non-existent elements
             expect(question.dragItems).toHaveLength(0);
         });
     });

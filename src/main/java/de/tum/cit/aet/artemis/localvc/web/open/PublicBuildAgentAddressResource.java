@@ -15,7 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localvc.dto.ObservedClientAddressDTO;
 
 /**
@@ -42,6 +46,7 @@ import de.tum.cit.aet.artemis.localvc.dto.ObservedClientAddressDTO;
 @Lazy
 @RestController
 @RequestMapping("api/localvc/public/")
+@FeatureUsage(UserFeature.BUILD_AGENTS)
 public class PublicBuildAgentAddressResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicBuildAgentAddressResource.class);
@@ -58,6 +63,7 @@ public class PublicBuildAgentAddressResource {
      * @param request the incoming request
      * @return the caller's address as this node sees it, which is the value its git requests will be authorized against
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping("observed-client-address")
     @EnforceNothing
     public ResponseEntity<ObservedClientAddressDTO> getObservedClientAddress(HttpServletRequest request) {

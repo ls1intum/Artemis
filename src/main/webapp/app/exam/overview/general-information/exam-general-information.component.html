@@ -2,14 +2,14 @@
     @if (!displayOnExamCover()) {
         <h3 id="general-information-title" jhiTranslate="artemisApp.exam.examSummary.generalInformation"></h3>
     }
-    <div class="ml-4 mt-3 mb-4">
-        <table class="table table-borderless mx-auto d-block">
+    <div class="mt-4 mb-6">
+        <table class="mx-auto block w-full align-top">
             <tbody>
                 @if (isTestExam()) {
                     <tr>
                         <th>{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
                         <td>
-                            <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
+                            <jhi-exam-mode-badge [testExam]="true" />
                         </td>
                     </tr>
                 }
@@ -32,7 +32,7 @@
                     </tr>
                 }
                 @if (exam()?.title) {
-                    <tr id="exam-title">
+                    <tr data-testid="exam-title">
                         <th>{{ 'artemisApp.examManagement.examTitle' | artemisTranslate }}:</th>
                         <td>{{ exam().title }}</td>
                     </tr>
@@ -49,11 +49,11 @@
                             </td>
                         </tr>
                     } @else {
-                        <tr class="mb-2">
+                        <tr>
                             <th>{{ 'artemisApp.exam.date' | artemisTranslate }}:</th>
                             <td>{{ exam().startDate | artemisDate: 'long-date' }}</td>
                         </tr>
-                        <tr class="mb-2">
+                        <tr>
                             <th>{{ 'artemisApp.exam.workingTime' | artemisTranslate }}:</th>
                             <td>{{ exam().startDate | artemisDate: 'time' }} - {{ examEndDate() | artemisDate: 'time' }}</td>
                         </tr>
@@ -82,7 +82,7 @@
                 @if (exam() && studentExam()?.ended && (exam().examStudentReviewStart || exam().examStudentReviewEnd)) {
                     <tr>
                         <th>{{ 'artemisApp.exam.examStudentReviewTimespan' | artemisTranslate }}:&nbsp;</th>
-                        <td class="d-flex align-items-center">
+                        <td class="flex items-center">
                             @if (exam().examStudentReviewStart) {
                                 <span> {{ exam().examStudentReviewStart | artemisDate }} </span>
                             }
@@ -93,7 +93,7 @@
                                 <span>{{ exam().examStudentReviewEnd | artemisDate }}</span>
                             }
                             @if (reviewIsOpen()) {
-                                <div class="mx-2 badge bg-success" jhiTranslate="artemisApp.exam.studentReviewEnabled"></div>
+                                <tumaet-ui-tag class="mx-2" severity="success"><span jhiTranslate="artemisApp.exam.studentReviewEnabled"></span></tumaet-ui-tag>
                             }
                         </td>
                     </tr>

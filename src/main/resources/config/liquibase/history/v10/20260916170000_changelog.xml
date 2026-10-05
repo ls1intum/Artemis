@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20260916170000_changelog.xml">
+
+    <!--
+    The second instalment of documentation/docs/developer/guidelines/entity-ownership.mdx: the orphan shapes that
+    needed a model change rather than a constraint.
+
+    LearnerProfile is the one with a privacy argument. It holds per-course study preferences for a named account and
+    was reachable only from jhi_user.learner_profile_id, so once that column was null nothing found the row again,
+    including the routine that deletes an account's data. The key moves onto the profile, which makes a profile
+    without an account impossible to write and deletable by cascade. The profiles that have already lost their
+    account are deleted here, along with the course profiles hanging off them: nothing names the account they
+    described any more, so there is nothing to reattach them to.
+
+    LearningPath and VcsAccessLog referenced rows without declaring it. Their columns are there and their entities map
+    them, but no foreign key existed, so nothing stopped them pointing at a course, account or participation that had
+    been deleted. VcsAccessLog holds rows doing exactly that.
+
+    Slide stops being detached. SlideSplitterService cleared attachment_unit_id on superseded slides and on slides
+    dropped from the page order, and slide.attachment_unit_id was ON DELETE SET NULL, so a deleted unit detached its
+    slides rather than removing them. Nothing references a slide row, and nothing ever cleaned the detached ones up,
+    so a detached slide has been unreachable from the moment it was detached. They are now marked superseded and keep
+    their unit, so the history stays readable and the unit still owns them.
+
+    PlagiarismSubmission and PlagiarismComparison referenced each other: the comparison named its two submissions and
+    each submission named the comparison back. The comparison's pointers were what the code read, so a submission the
+    comparison stopped naming was reachable from nowhere, and every deletion had to clear one side before it could
+    remove the other. The submissions now hold the key and say which side of the pair they are.
+
+    AuxiliaryRepository could name no exercise because the mapping asked for it: an indexed collection makes Hibernate
+    the owner of the row's foreign key, so the creation path saved a new repository with the exercise cleared and
+    attached it afterwards. The order now comes from the id instead, and the exercise is required.
+    -->
+
+    <changeSet id="20260916170000-01-precondition-learner-profiles-are-unique" author="krusche">
+        <preConditions onFail="HALT" onFailMessage="More than one account points at the same learner profile, so the profile cannot take ownership of the relationship without losing one of them. Find them with: SELECT learner_profile_id, COUNT(*) FROM jhi_user WHERE learner_profile_id IS NOT NULL GROUP BY learner_profile_id HAVING COUNT(*) > 1; then give each account its own profile and start again.">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM (SELECT learner_profile_id FROM jhi_user WHERE learner_profile_id IS NOT NULL GROUP BY learner_profile_id HAVING COUNT(*) > 1) duplicates
+            </sqlCheck>
+        </preConditions>
+        <!-- No-op body; the precondition is the entire purpose of this changeset. -->
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260916170000-02-learner-profile-owns-its-account-key" author="krusche">
+        <comment>Move the account key onto the learner profile, so a profile cannot outlive the account it describes.</comment>
+        <addColumn tableName="learner_profile">
+            <column name="user_id" type="BIGINT"/>
+        </addColumn>
+        <sql>UPDATE learner_profile SET user_id = (SELECT u.id FROM jhi_user u WHERE u.learner_profile_id = learner_profile.id);</sql>
+        <!--
+        A profile no account points at describes a person nobody can name any more. There is nothing to reattach it
+        to, and leaving it is what put it outside account deletion in the first place, so it goes, and its course
+        profiles with it.
+        -->
+        <sql>DELETE FROM course_learner_profile WHERE learner_profile_id IN (SELECT id FROM learner_profile WHERE user_id IS NULL);</sql>
+        <sql>DELETE FROM learner_profile WHERE user_id IS NULL;</sql>
+        <addNotNullConstraint tableName="learner_profile" columnName="user_id" columnDataType="BIGINT"/>
+        <addUniqueConstraint tableName="learner_profile" columnNames="user_id" constraintName="UK_LEARNER_PROFILE_USER"/>
+        <addForeignKeyConstraint baseTableName="learner_profile" baseColumnNames="user_id" constraintName="FK_LEARNER_PROFILE_USER" referencedTableName="jhi_user"
+                                 referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="learner_profile" constraintName="FK_LEARNER_PROFILE_USER"/>
+            <dropUniqueConstraint tableName="learner_profile" constraintName="UK_LEARNER_PROFILE_USER"/>
+            <dropColumn tableName="learner_profile" columnName="user_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916170000-03-drop-the-account-side-profile-pointer" author="krusche">
+        <comment>The profile now holds the key, so the account no longer points back.</comment>
+        <dropForeignKeyConstraint baseTableName="jhi_user" constraintName="FK_user_learner_profile"/>
+        <dropColumn tableName="jhi_user" columnName="learner_profile_id"/>
+        <rollback>
+            <addColumn tableName="jhi_user">
+                <column name="learner_profile_id" type="BIGINT"/>
+            </addColumn>
+            <sql>UPDATE jhi_user SET learner_profile_id = (SELECT lp.id FROM learner_profile lp WHERE lp.user_id = jhi_user.id);</sql>
+            <addForeignKeyConstraint baseTableName="jhi_user" baseColumnNames="learner_profile_id" constraintName="FK_user_learner_profile" referencedTableName="learner_profile"
+                                     referencedColumnNames="id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916170000-04-learning-path-declares-its-references" author="krusche">
+        <preConditions onFail="HALT" onFailMessage="A learning path names a course or an account that does not exist, or names neither. Find them with: SELECT id, course_id, user_id FROM learning_path lp WHERE course_id IS NULL OR user_id IS NULL OR NOT EXISTS (SELECT 1 FROM course c WHERE c.id = lp.course_id) OR NOT EXISTS (SELECT 1 FROM jhi_user u WHERE u.id = lp.user_id); then repair or remove each row and start again.">
+            <and>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM learning_path WHERE course_id IS NULL OR user_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM learning_path lp WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.id = lp.course_id)</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM learning_path lp WHERE NOT EXISTS (SELECT 1 FROM jhi_user u WHERE u.id = lp.user_id)</sqlCheck>
+            </and>
+        </preConditions>
+        <comment>A learning path belongs to one account in one course, which the columns said and nothing enforced.</comment>
+        <addNotNullConstraint tableName="learning_path" columnName="course_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="learning_path" columnName="user_id" columnDataType="BIGINT"/>
+        <addForeignKeyConstraint baseTableName="learning_path" baseColumnNames="course_id" constraintName="FK_LEARNING_PATH_COURSE" referencedTableName="course"
+                                 referencedColumnNames="id" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="learning_path" baseColumnNames="user_id" constraintName="FK_LEARNING_PATH_USER" referencedTableName="jhi_user"
+                                 referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="learning_path" constraintName="FK_LEARNING_PATH_COURSE"/>
+            <dropForeignKeyConstraint baseTableName="learning_path" constraintName="FK_LEARNING_PATH_USER"/>
+            <dropNotNullConstraint tableName="learning_path" columnName="course_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="learning_path" columnName="user_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916170000-05-vcs-access-log-declares-its-references" author="krusche">
+        <comment>An access log entry records what happened to one participation, and now says so in the schema.</comment>
+        <!--
+        Rows naming a participation that no longer exists are removed rather than kept: the entry records an action on
+        a repository that has been deleted, and nothing can read it back through the participation it names. The
+        orphan section of documentation/docs/developer/guidelines/entity-ownership.mdx counts them for an installation
+        before the upgrade runs.
+        -->
+        <sql>DELETE FROM vcs_access_log WHERE participation_id NOT IN (SELECT id FROM participation);</sql>
+        <!-- An entry naming an account that no longer exists keeps the rest of what it recorded, so the name is cleared rather than the row removed. -->
+        <sql>UPDATE vcs_access_log SET user_id = NULL WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM jhi_user);</sql>
+        <addForeignKeyConstraint baseTableName="vcs_access_log" baseColumnNames="participation_id" constraintName="FK_VCS_ACCESS_LOG_PARTICIPATION"
+                                 referencedTableName="participation" referencedColumnNames="id" onDelete="CASCADE"/>
+        <!-- The account is a reference, not a parent: the log outlives the person who acted, so the key is nulled. -->
+        <addForeignKeyConstraint baseTableName="vcs_access_log" baseColumnNames="user_id" constraintName="FK_VCS_ACCESS_LOG_USER" referencedTableName="jhi_user"
+                                 referencedColumnNames="id" onDelete="SET NULL"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="vcs_access_log" constraintName="FK_VCS_ACCESS_LOG_PARTICIPATION"/>
+            <dropForeignKeyConstraint baseTableName="vcs_access_log" constraintName="FK_VCS_ACCESS_LOG_USER"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916170000-06-deleting-a-unit-takes-its-slides" author="krusche">
+        <comment>Keep a superseded slide with its unit and mark it, and let a deleted unit take its slides with it.</comment>
+        <addColumn tableName="slide">
+            <column name="superseded" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <!--
+        The slides already detached cannot be marked: they name no unit, and the row carries no evidence of which one
+        it left. Nothing references a slide and nothing lists one without a unit, so they have been unreachable since
+        the moment they were detached. Their image files stay on disk, which is the state they were already in.
+        -->
+        <sql>DELETE FROM slide WHERE attachment_unit_id IS NULL;</sql>
+        <!--
+        The delete rule goes first, and the column is required in the next changeset: ON DELETE SET NULL is the reason
+        a deleted unit detached its slides rather than removing them, and MySQL refuses to make a column NOT NULL
+        while a key that would write NULL into it still needs it nullable.
+        -->
+        <dropForeignKeyConstraint baseTableName="slide" constraintName="FK_slide_id"/>
+        <addForeignKeyConstraint baseTableName="slide" baseColumnNames="attachment_unit_id" constraintName="FK_slide_id" referencedTableName="lecture_unit"
+                                 referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="slide" constraintName="FK_slide_id"/>
+            <addForeignKeyConstraint baseTableName="slide" baseColumnNames="attachment_unit_id" constraintName="FK_slide_id" referencedTableName="lecture_unit"
+                                     referencedColumnNames="id" onDelete="SET NULL"/>
+            <dropColumn tableName="slide" columnName="superseded"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916170000-07-a-slide-always-names-its-unit" author="krusche">
+        <comment>A slide belongs to the unit it was uploaded to, which the schema now requires.</comment>
+        <addNotNullConstraint tableName="slide" columnName="attachment_unit_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="slide" columnName="attachment_unit_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916170000-08-auxiliary-repositories-name-their-exercise" author="krusche">
+        <comment>An auxiliary repository belongs to one programming exercise, which the schema now requires.</comment>
+        <!--
+        A repository naming no exercise is reachable from nowhere: auxiliary repositories are only ever listed through
+        the exercise that owns them. Rows like this were written by the creation path itself, which used to save a new
+        repository with the exercise cleared and attach it afterwards, so a failure in between left the row behind.
+        The mapping no longer needs that detour, and the rows it produced go.
+        -->
+        <sql>DELETE FROM programming_exercise_auxiliary_repositories WHERE exercise_id IS NULL;</sql>
+        <addNotNullConstraint tableName="programming_exercise_auxiliary_repositories" columnName="exercise_id" columnDataType="BIGINT"/>
+        <!--
+        The index column goes with it. Hibernate takes the foreign key of an indexed collection for its own and clears
+        it before deleting a row, which is exactly what a non-null exercise forbids; the order now comes from the id,
+        which is the order the rows were created in.
+        -->
+        <dropColumn tableName="programming_exercise_auxiliary_repositories" columnName="programming_exercise_auxiliary_repositories_order"/>
+        <rollback>
+            <addColumn tableName="programming_exercise_auxiliary_repositories">
+                <column name="programming_exercise_auxiliary_repositories_order" type="INT"/>
+            </addColumn>
+            <dropNotNullConstraint tableName="programming_exercise_auxiliary_repositories" columnName="exercise_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916170000-09-precondition-a-submission-belongs-to-one-comparison" author="krusche">
+        <preConditions onFail="HALT" onFailMessage="A plagiarism submission is named by more than one comparison, so it cannot take ownership of the relationship without losing one of them. Find them with: SELECT s.id FROM plagiarism_submission s JOIN plagiarism_comparison c ON c.submission_a_id = s.id OR c.submission_b_id = s.id GROUP BY s.id HAVING COUNT(*) > 1; then give each comparison its own submissions and start again.">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM (SELECT s.id FROM plagiarism_submission s JOIN plagiarism_comparison c ON c.submission_a_id = s.id OR c.submission_b_id = s.id GROUP BY s.id HAVING COUNT(*) > 1) shared
+            </sqlCheck>
+        </preConditions>
+        <!-- No-op body; the precondition is the entire purpose of this changeset. -->
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260916170000-10-plagiarism-submissions-name-their-comparison" author="krusche">
+        <comment>Move the pair pointer onto the submissions, so that neither side can be left behind.</comment>
+        <addColumn tableName="plagiarism_submission">
+            <column name="comparison_side" type="VARCHAR(10)"/>
+        </addColumn>
+        <sql>
+            UPDATE plagiarism_submission s
+            SET plagiarism_comparison_id = (SELECT c.id FROM plagiarism_comparison c WHERE c.submission_a_id = s.id OR c.submission_b_id = s.id),
+                comparison_side = (SELECT CASE WHEN c.submission_a_id = s.id THEN 'FIRST' ELSE 'SECOND' END FROM plagiarism_comparison c WHERE c.submission_a_id = s.id OR c.submission_b_id = s.id)
+        </sql>
+        <!--
+        A submission no comparison names is one half of a pair whose other half is gone, and nothing lists a submission
+        except through its comparison, so it has been unreachable since the moment the comparison stopped naming it.
+        -->
+        <sql>DELETE FROM plagiarism_submission_element WHERE plagiarism_submission_id IN (SELECT id FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL);</sql>
+        <sql>DELETE FROM plagiarism_submission WHERE plagiarism_comparison_id IS NULL;</sql>
+        <addNotNullConstraint tableName="plagiarism_submission" columnName="plagiarism_comparison_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="plagiarism_submission" columnName="comparison_side" columnDataType="VARCHAR(10)"/>
+        <addUniqueConstraint tableName="plagiarism_submission" columnNames="plagiarism_comparison_id, comparison_side" constraintName="UK_PLAGIARISM_SUBMISSION_SIDE"/>
+        <rollback>
+            <dropUniqueConstraint tableName="plagiarism_submission" constraintName="UK_PLAGIARISM_SUBMISSION_SIDE"/>
+            <dropNotNullConstraint tableName="plagiarism_submission" columnName="plagiarism_comparison_id" columnDataType="BIGINT"/>
+            <dropColumn tableName="plagiarism_submission" columnName="comparison_side"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916170000-11-drop-the-comparison-side-submission-pointers" author="krusche">
+        <comment>The submissions hold the key, so the comparison no longer points back and the two tables stop referencing each other.</comment>
+        <dropForeignKeyConstraint baseTableName="plagiarism_comparison" constraintName="fk_plagiarism_comparison_submission_a"/>
+        <dropForeignKeyConstraint baseTableName="plagiarism_comparison" constraintName="fk_plagiarism_comparison_submission_b"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="submission_a_id"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="submission_b_id"/>
+        <!-- With the cycle gone, a comparison can take its submissions with it instead of being unpicked first. -->
+        <dropForeignKeyConstraint baseTableName="plagiarism_submission" constraintName="fk_plagiarism_submission_plagiarism_comparison_id"/>
+        <addForeignKeyConstraint baseTableName="plagiarism_submission" baseColumnNames="plagiarism_comparison_id" constraintName="fk_plagiarism_submission_plagiarism_comparison_id"
+                                 referencedTableName="plagiarism_comparison" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="plagiarism_submission" constraintName="fk_plagiarism_submission_plagiarism_comparison_id"/>
+            <addForeignKeyConstraint baseTableName="plagiarism_submission" baseColumnNames="plagiarism_comparison_id"
+                                     constraintName="fk_plagiarism_submission_plagiarism_comparison_id" referencedTableName="plagiarism_comparison" referencedColumnNames="id"/>
+            <addColumn tableName="plagiarism_comparison">
+                <column name="submission_a_id" type="BIGINT"/>
+                <column name="submission_b_id" type="BIGINT"/>
+            </addColumn>
+            <sql>UPDATE plagiarism_comparison c SET submission_a_id = (SELECT s.id FROM plagiarism_submission s WHERE s.plagiarism_comparison_id = c.id AND s.comparison_side = 'FIRST')</sql>
+            <sql>UPDATE plagiarism_comparison c SET submission_b_id = (SELECT s.id FROM plagiarism_submission s WHERE s.plagiarism_comparison_id = c.id AND s.comparison_side = 'SECOND')</sql>
+            <addForeignKeyConstraint baseTableName="plagiarism_comparison" baseColumnNames="submission_a_id" constraintName="fk_plagiarism_comparison_submission_a"
+                                     referencedTableName="plagiarism_submission" referencedColumnNames="id"/>
+            <addForeignKeyConstraint baseTableName="plagiarism_comparison" baseColumnNames="submission_b_id" constraintName="fk_plagiarism_comparison_submission_b"
+                                     referencedTableName="plagiarism_submission" referencedColumnNames="id"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

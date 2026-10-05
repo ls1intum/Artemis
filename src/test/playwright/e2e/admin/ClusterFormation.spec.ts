@@ -9,7 +9,7 @@ import { expect } from '@playwright/test';
  * test because no test asserts on cluster membership directly. This test fails fast in the multi-node E2E pipeline if
  * cluster formation regresses.
  *
- * Backend-agnostic on purpose: Artemis reaches its cross-node state through the DistributedDataProvider abstraction and
+ * Provider-agnostic on purpose: Artemis reaches its cross-node state through the DistributedDataProvider abstraction and
  * supports both Hazelcast and Redis, so the same assertions have to hold on either. The two report node identity in
  * different namespaces — Hazelcast uses the member's `[host]:port`, the Redis provider uses the configured client name,
  * which has no port — so the shape assertions that only make sense for one of them are guarded by

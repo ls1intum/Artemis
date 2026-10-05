@@ -18,19 +18,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.VS_CODE_EXTENSION)
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/account/")
 public class TokenResource {
 
     private final JWTCookieService jwtCookieService;

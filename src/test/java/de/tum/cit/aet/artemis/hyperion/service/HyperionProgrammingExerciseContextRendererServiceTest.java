@@ -115,6 +115,16 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
     }
 
     @Test
+    void renderContext_withoutLineNumbers_omitsTheGuttersButKeepsTheHeader() {
+        String withGutters = contextRendererService.renderContext(exercise, true);
+        String withoutGutters = contextRendererService.renderContext(exercise, false);
+
+        assertThat(withGutters).contains("1 | Implement a sorting algorithm");
+        assertThat(withoutGutters).contains("Implement a sorting algorithm").doesNotContain("1 | ");
+        assertThat(withoutGutters).contains("problem_statement.md:").contains("-".repeat(80));
+    }
+
+    @Test
     void renderContext_withNullProgrammingLanguage_handlesGracefully() {
         exercise.setProgrammingLanguage(null);
 

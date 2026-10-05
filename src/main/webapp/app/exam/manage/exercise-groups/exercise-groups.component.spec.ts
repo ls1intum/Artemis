@@ -1,11 +1,12 @@
-import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EmbeddedViewRef } from '@angular/core';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -20,7 +21,6 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -28,7 +28,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
+import { ExamExerciseImportDialogComponent } from 'app/exam/manage/exercise-groups/exercise-import-dialog/exam-exercise-import-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamExerciseTableComponent } from 'app/exam/manage/exercise-groups/exercise-table/exam-exercise-table.component';
@@ -51,7 +52,6 @@ describe('Exercise Groups Component', () => {
     let exerciseGroupService: ExerciseGroupService;
     let examManagementService: ExamManagementService;
     let eventManager: EventManager;
-    let dialogService: DialogService;
     let router: Router;
     let alertService: AlertService;
 
@@ -68,9 +68,12 @@ describe('Exercise Groups Component', () => {
                 MockComponent(ExamExerciseTableComponent),
                 MockComponent(ExamExerciseGroupEditModalComponent),
                 MockComponent(ExamExerciseTypePickerComponent),
-                MockComponent(TumUiPanelComponent),
-                MockComponent(TumUiButtonComponent),
-                MockDirective(DeleteButtonDirective),
+                MockComponent(TumAetUiPanelComponent),
+                MockComponent(TumAetUiDialogComponent),
+                MockComponent(ExamImportComponent),
+                MockComponent(TumAetUiButtonComponent),
+                MockComponent(ExamDeleteDialogComponent),
+                MockComponent(ExamExerciseImportDialogComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
             ],
@@ -78,7 +81,6 @@ describe('Exercise Groups Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
-                { provide: DialogService, useClass: MockDialogService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -94,7 +96,6 @@ describe('Exercise Groups Component', () => {
                 exerciseGroupService = TestBed.inject(ExerciseGroupService);
                 examManagementService = TestBed.inject(ExamManagementService);
                 eventManager = TestBed.inject(EventManager);
-                dialogService = TestBed.inject(DialogService);
                 alertService = TestBed.inject(AlertService);
                 router = TestBed.inject(Router);
 
@@ -185,41 +186,39 @@ describe('Exercise Groups Component', () => {
     });
 
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
-        'opens the import dialog and navigates to import page',
-        async (exerciseType: ExerciseType) => {
-            const onCloseSubject = new Subject<Exercise | undefined>();
-            const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-            vi.spyOn(router, 'navigate');
-
+        'opens the import dialog for the chosen exercise type',
+        (exerciseType: ExerciseType) => {
             comp.openImportModal(groups[0], exerciseType);
 
-            // Simulate dialog closing with result
-            onCloseSubject.next({ id: 1 } as Exercise);
-            onCloseSubject.complete();
-            await Promise.resolve();
+            expect(comp['exerciseImportVisible']()).toBe(true);
+            expect(comp['exerciseImportType']()).toBe(exerciseType);
+        },
+    );
 
-            expect(dialogService.open).toHaveBeenCalledOnce();
+    it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
+        'closes the import dialog and navigates to the import page of the chosen exercise',
+        (exerciseType: ExerciseType) => {
+            vi.spyOn(router, 'navigate');
+            comp.openImportModal(groups[0], exerciseType);
+
+            comp['onExerciseImported']({ id: 1 } as Exercise);
+
+            expect(comp['exerciseImportVisible']()).toBe(false);
             expect(router.navigate).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import', 1]);
         },
     );
-    it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
-        'opens the import dialog and navigates to import from file page',
-        async (exerciseType: ExerciseType) => {
-            const onCloseSubject = new Subject<Exercise | undefined>();
-            const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-            vi.spyOn(router, 'navigate');
 
+    it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
+        'closes the import dialog and navigates to the import from file page',
+        (exerciseType: ExerciseType) => {
+            vi.spyOn(router, 'navigate');
             comp.openImportModal(groups[0], exerciseType);
 
-            // Simulate dialog closing with result (no id means import from file)
-            onCloseSubject.next({ id: undefined } as Exercise);
-            onCloseSubject.complete();
-            await Promise.resolve();
+            // An exercise read from a file has no id
+            comp['onExerciseImported']({ id: undefined } as Exercise);
 
-            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(comp['exerciseImportVisible']()).toBe(false);
             expect(router.navigate).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledWith(
                 ['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import-from-file'],
@@ -227,6 +226,31 @@ describe('Exercise Groups Component', () => {
             );
         },
     );
+
+    it('asks for the confirmation of the deletion of a plain exercise group', () => {
+        comp.localCIEnabled.set(false);
+        const plainGroup = { id: 7, title: 'Plain', exercises: [{ id: 3, type: ExerciseType.TEXT }] } as ExerciseGroup;
+
+        comp['confirmDeleteGroup'](plainGroup);
+
+        expect(comp['deleteGroupVisible']()).toBe(true);
+        expect(comp['groupToDelete']()).toBe(plainGroup);
+        expect(comp['deleteGroupQuestion']()).toBe('artemisApp.examManagement.exerciseGroup.delete.question');
+        expect(comp['deleteGroupChecks']()).toEqual({});
+    });
+
+    it('offers the build plan cleanup for a group with a programming exercise unless LocalCI is active', () => {
+        const programmingGroup = { id: 8, title: 'Programming', exercises: [{ id: 4, type: ExerciseType.PROGRAMMING }] } as ExerciseGroup;
+        comp.localCIEnabled.set(false);
+
+        comp['confirmDeleteGroup'](programmingGroup);
+
+        expect(comp['deleteGroupQuestion']()).toBe('artemisApp.examManagement.exerciseGroup.delete.questionLocalVC');
+        expect(Object.keys(comp['deleteGroupChecks']())).toEqual(['deleteStudentReposBuildPlans', 'deleteBaseReposBuildPlans']);
+
+        comp.localCIEnabled.set(true);
+        expect(comp['deleteGroupChecks']()).toEqual({});
+    });
 
     it('moves up an exercise group', () => {
         comp.exerciseGroups.set(groups);
@@ -417,24 +441,34 @@ describe('Exercise Groups Component', () => {
         expect(alertSpy).not.toHaveBeenCalled();
     });
 
-    it('opens the import modal for exercise groups', async () => {
-        const alertSpy = vi.spyOn(alertService, 'success');
-        const exerciseGroup = { id: 1 } as ExerciseGroup;
-
-        const onCloseSubject = new Subject<ExerciseGroup[] | undefined>();
-        const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+    it('opens the exercise group import in a dialog that targets the current exam', () => {
+        fixture.detectChanges();
+        expect(comp['groupImportVisible']()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(ExamImportComponent))).toBeNull();
 
         comp.openExerciseGroupImportModal();
+        fixture.detectChanges();
 
-        // Simulate dialog closing with result
-        onCloseSubject.next([exerciseGroup]);
-        onCloseSubject.complete();
-        await Promise.resolve();
+        const importComponent = fixture.debugElement.query(By.directive(ExamImportComponent)).componentInstance;
+        expect(importComponent.subsequentExerciseGroupSelection()).toBe(true);
+        expect(importComponent.targetCourseId()).toBe(course.id);
+        expect(importComponent.targetExamId()).toBe(exam.id);
+    });
 
-        expect(dialogService.open).toHaveBeenCalledOnce();
+    it('shows the imported exercise groups and closes the import dialog', () => {
+        const alertSpy = vi.spyOn(alertService, 'success');
+        const exerciseGroup = { id: 1 } as ExerciseGroup;
+        comp.openExerciseGroupImportModal();
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.directive(ExamImportComponent)).componentInstance.imported.emit([exerciseGroup]);
+        fixture.detectChanges();
+
         expect(comp.exerciseGroups()).toEqual([exerciseGroup]);
         expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importSuccessful');
+        expect(comp['groupImportVisible']()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(ExamImportComponent))).toBeNull();
     });
 
     it('shows the exercise group import button only to instructors, not to editors', () => {
@@ -468,7 +502,7 @@ describe('Exercise Groups Component', () => {
         comp.exerciseGroups.set([]);
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelectorAll('tum-ui-panel')).toHaveLength(0);
+        expect(fixture.nativeElement.querySelectorAll('tumaet-ui-panel')).toHaveLength(0);
         expect(fixture.nativeElement.querySelector('#create-first-group')).not.toBeNull();
     });
 

@@ -1,9 +1,10 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { DialogModule } from 'primeng/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { ButtonDirective } from 'primeng/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
@@ -30,17 +31,26 @@ interface ImportResult {
 
 @Component({
     selector: 'jhi-tutorial-registrations-import-modal',
-    imports: [DialogModule, TranslateDirective, ButtonDirective, TutorialRegistrationsImportModalTableComponent, LoadingIndicatorOverlayComponent],
+    imports: [
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        FaIconComponent,
+        TranslateDirective,
+        TutorialRegistrationsImportModalTableComponent,
+        LoadingIndicatorOverlayComponent,
+    ],
     templateUrl: './tutorial-registrations-import-modal.component.html',
     styleUrl: './tutorial-registrations-import-modal.component.scss',
 })
 export class TutorialRegistrationsImportModalComponent {
-    protected readonly ImportFlowStep = ImportFlowStep;
-
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
+
+    protected readonly ImportFlowStep = ImportFlowStep;
+    protected readonly faCircleCheck = faCircleCheck;
+
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private parsedStudents = signal<TutorialGroupRegisterStudentRequest[]>([]);
     private importResults = signal<ImportResult[]>([]);

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.localci.service.scaparser.format.sarif.ReportingDescriptor;
@@ -20,15 +21,15 @@ public class ClippyCategorizer implements RuleCategorizer {
         NONSTANDARD_STYLE, UNSAFE_CODE, UNUSED, RUST_OTHER, CARGO, COMPLEXITY, CORRECTNESS, NURSERY, PEDANTIC, PERF, RESTRICTION, STYLE, SUSPICIOUS, CLIPPY_OTHER,
     }
 
-    public static final List<String> CATEGORY_NAMES = Arrays.stream(Category.values()).map(Enum::name).map(String::toLowerCase).toList();
+    public static final List<String> CATEGORY_NAMES = Arrays.stream(Category.values()).map(Enum::name).map(name -> name.toLowerCase(Locale.ROOT)).toList();
 
     @Override
     public String categorizeRule(ReportingDescriptor rule) {
         if (rule.id().startsWith("clippy::")) {
-            return CLIPPY_CATEGORY_BY_NAME.getOrDefault(rule.id(), Category.CLIPPY_OTHER).name().toLowerCase();
+            return CLIPPY_CATEGORY_BY_NAME.getOrDefault(rule.id(), Category.CLIPPY_OTHER).name().toLowerCase(Locale.ROOT);
         }
 
-        return RUST_CATEGORY_BY_NAME.getOrDefault(rule.id(), Category.RUST_OTHER).name().toLowerCase();
+        return RUST_CATEGORY_BY_NAME.getOrDefault(rule.id(), Category.RUST_OTHER).name().toLowerCase(Locale.ROOT);
     }
 
     // @formatter:off

@@ -11,11 +11,10 @@ import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
@@ -39,15 +38,14 @@ public class AthenaHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, JsonMapper objectMapper) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     private record AthenaModuleHealth(String exerciseType, boolean healthy, String url) {
@@ -68,8 +66,9 @@ public class AthenaHealthIndicator implements HealthIndicator {
         additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
         ConnectorHealth health;
         try {
-            // Use String.class to avoid Jackson 3 / Jackson 2 incompatibility in RestTemplate,
-            // then deserialize manually with the Jackson 2 ObjectMapper.
+            // Read the response as a String and deserialize it here rather than letting RestTemplate bind it: this
+            // template is a plain new RestTemplate, so its Jackson converter holds a default mapper rather than the
+            // application one, and only the application mapper carries the Artemis defaults.
             final var responseBody = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", String.class);
             final var healthResponse = responseBody != null ? objectMapper.readValue(responseBody, AthenaHealthResponse.class) : null;
             final var athenaStatus = healthResponse != null ? healthResponse.status() : null;

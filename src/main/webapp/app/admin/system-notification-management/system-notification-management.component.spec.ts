@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TumUiTableSortEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -198,7 +198,7 @@ describe('SystemNotificationManagementComponent', () => {
         it('ignores events without a field', () => {
             const transitionSpy = vi.spyOn(component, 'transition');
 
-            component.onTableSort({ field: '', order: 1 } as TumUiTableSortEvent);
+            component.onTableSort({ field: '', order: 1 } as TumAetUiTableSortEvent);
 
             expect(transitionSpy).not.toHaveBeenCalled();
         });
@@ -209,7 +209,7 @@ describe('SystemNotificationManagementComponent', () => {
             component.reverse.set(true);
             const transitionSpy = vi.spyOn(component, 'transition');
 
-            component.onTableSort({ field: 'id', order: 1 } as TumUiTableSortEvent);
+            component.onTableSort({ field: 'id', order: 1 } as TumAetUiTableSortEvent);
 
             expect(transitionSpy).not.toHaveBeenCalled();
             expect(component.predicate()).toBe('id');
@@ -221,7 +221,7 @@ describe('SystemNotificationManagementComponent', () => {
             component.reverse.set(true);
             const transitionSpy = vi.spyOn(component, 'transition').mockImplementation(() => {});
 
-            component.onTableSort({ field: 'title', order: 1 } as TumUiTableSortEvent);
+            component.onTableSort({ field: 'title', order: 1 } as TumAetUiTableSortEvent);
 
             expect(component.predicate()).toBe('title');
             expect(component.reverse()).toBe(true);
@@ -233,7 +233,7 @@ describe('SystemNotificationManagementComponent', () => {
             component.reverse.set(true);
             const transitionSpy = vi.spyOn(component, 'transition').mockImplementation(() => {});
 
-            component.onTableSort({ field: 'id', order: -1 } as TumUiTableSortEvent);
+            component.onTableSort({ field: 'id', order: -1 } as TumAetUiTableSortEvent);
 
             expect(component.predicate()).toBe('id');
             expect(component.reverse()).toBe(false);

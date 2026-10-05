@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -207,8 +208,9 @@ public class ParticipationDeletionService {
         }
 
         Set<Submission> submissions = participation.getSubmissions();
-        // Delete all results for this participation
-        Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toSet());
+        // Delete all results for this participation.
+        // submission.getResults() can contain null entries (see Submission#removeNullResults), so filter those out to avoid an NPE below.
+        Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull).collect(Collectors.toSet());
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));

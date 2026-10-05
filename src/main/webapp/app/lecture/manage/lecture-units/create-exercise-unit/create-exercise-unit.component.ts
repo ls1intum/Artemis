@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -8,19 +8,27 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/foundation/service/sort.service';
-import { combineLatest, forkJoin, from } from 'rxjs';
+import { Observable, combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
-import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
-    styleUrls: ['./create-exercise-unit.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective],
+    styleUrl: './create-exercise-unit.component.scss',
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        ArtemisDatePipe,
+    ],
 })
 export class CreateExerciseUnitComponent implements OnInit {
     private readonly activatedRoute = inject(ActivatedRoute);
@@ -31,12 +39,13 @@ export class CreateExerciseUnitComponent implements OnInit {
     private readonly exerciseUnitService = inject(ExerciseUnitService);
 
     protected readonly faTimes = faTimes;
-    protected readonly faSort = faSort;
 
     lectureId = input<number | undefined>(undefined);
     courseId = input<number | undefined>(undefined);
     hasCancelButton = input<boolean>();
     shouldNavigateOnSubmit = input<boolean>(true);
+    /** Lets the lecture editor follow the create requests, also after this form is closed, so it asks before it is left while they run. */
+    readonly trackRequest = input<<T>(request: Observable<T>) => Observable<T>>((request) => request);
 
     onCancel = output<void>();
     onExerciseUnitCreated = output<void>();
@@ -45,12 +54,21 @@ export class CreateExerciseUnitComponent implements OnInit {
     private resolvedLectureId = signal<number | undefined>(undefined);
     private resolvedCourseId = signal<number | undefined>(undefined);
 
-    predicate = 'type';
-    reverse = false;
+    readonly predicate = signal('type');
+    /** Starts descending, which lists the exercises in the order this page always had. */
+    readonly ascending = signal(false);
     isLoading = signal(false);
 
     exercisesAvailableForUnitCreation = signal<Exercise[]>([]);
+    /** Whether the course has exercises at all, which tells an empty list apart from one whose exercises are all content already. */
+    readonly hasCourseExercises = signal(false);
     exercisesToCreateUnitFor = signal<Exercise[]>([]);
+    /** Set once the form is closed; create requests that still run complete without it, and the page that follows them reloads its list. */
+    private isDestroyed = false;
+
+    constructor() {
+        inject(DestroyRef).onDestroy(() => (this.isDestroyed = true));
+    }
 
     ngOnInit(): void {
         this.isLoading.set(true);
@@ -73,6 +91,7 @@ export class CreateExerciseUnitComponent implements OnInit {
             .subscribe({
                 next: ([courseResult, exerciseUnitResult]) => {
                     const allExercisesOfCourse = courseResult?.body?.exercises ? courseResult?.body?.exercises : [];
+                    this.hasCourseExercises.set(allExercisesOfCourse.length > 0);
                     const idsOfExercisesAlreadyConnectedToUnit = exerciseUnitResult?.body
                         ? exerciseUnitResult?.body?.map((exerciseUnit: ExerciseUnit) => exerciseUnit.exercise?.id)
                         : [];
@@ -89,25 +108,31 @@ export class CreateExerciseUnitComponent implements OnInit {
             return unit;
         });
 
-        from(exerciseUnitsToCreate)
-            .pipe(
+        this.trackRequest()(
+            from(exerciseUnitsToCreate).pipe(
                 concatMap((unit) => this.exerciseUnitService.create(unit, this.resolvedLectureId()!)),
                 finalize(() => {
                     if (this.shouldNavigateOnSubmit()) {
                         void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                    } else {
+                    } else if (!this.isDestroyed) {
                         this.onExerciseUnitCreated.emit();
                     }
                 }),
-            )
-            .subscribe({
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            ),
+        ).subscribe({
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    onSortChange(event: TumAetUiTableSortEvent): void {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order > 0);
+        this.sortRows();
     }
 
     sortRows() {
         const sorted = [...this.exercisesAvailableForUnitCreation()];
-        this.sortService.sortByProperty(sorted, this.predicate, this.reverse);
+        this.sortService.sortByProperty(sorted, this.predicate(), this.ascending());
         this.exercisesAvailableForUnitCreation.set(sorted);
     }
 

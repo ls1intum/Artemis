@@ -1,15 +1,7 @@
-dt {
+.ide-preferences-description {
     font-weight: 500;
 
     span {
-        color: var(--secondary);
+        color: var(--artemis-control-muted);
     }
-}
-
-.btn-default:hover {
-    border: 1px solid var(--primary);
-}
-
-.dropdown-toggle::after {
-    display: none;
 }

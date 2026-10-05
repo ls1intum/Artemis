@@ -70,7 +70,6 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
     // all course competencies (rebuilt as a fresh array on every write so the template re-renders under zoneless)
     readonly competencyLinks = signal<CompetencyLearningObjectLink[] | undefined>(undefined);
 
-    readonly isLoading = signal(false);
     readonly isSuggesting = signal(false);
     // rebuilt as a fresh object on every write so the template re-renders under zoneless
     readonly checkboxStates = signal<Record<number, boolean>>(undefined!);
@@ -114,29 +113,21 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
             if (course?.competencies?.length || course?.prerequisites?.length) {
                 this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
             } else {
-                this.isLoading.set(true);
-                this.courseCompetencyService
-                    .getAllForCourse(courseId)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading.set(false);
-                        }),
-                    )
-                    .subscribe({
-                        next: (response) => {
-                            this.setCompetencyLinks(response.body!);
-                            // Apply any links that arrived via refreshWithLinks() while still loading
-                            if (this.pendingRefreshLinks) {
-                                this.refreshWithLinks(this.pendingRefreshLinks);
-                                this.pendingRefreshLinks = undefined;
-                            } else {
-                                this.writeValue(this.selectedCompetencyLinks);
-                            }
-                        },
-                        error: () => {
-                            this.disabled.set(true);
-                        },
-                    });
+                this.courseCompetencyService.getAllForCourse(courseId).subscribe({
+                    next: (response) => {
+                        this.setCompetencyLinks(response.body!);
+                        // Apply any links that arrived via refreshWithLinks() while still loading
+                        if (this.pendingRefreshLinks) {
+                            this.refreshWithLinks(this.pendingRefreshLinks);
+                            this.pendingRefreshLinks = undefined;
+                        } else {
+                            this.writeValue(this.selectedCompetencyLinks);
+                        }
+                    },
+                    error: () => {
+                        this.disabled.set(true);
+                    },
+                });
             }
         }
     }

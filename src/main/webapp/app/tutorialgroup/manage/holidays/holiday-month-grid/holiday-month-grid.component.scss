@@ -1,0 +1,32 @@
+/*
+ * The grid itself is Tailwind in the template. The bar is here because its border cannot be expressed in utilities on
+ * this page: `border-0` resolves to Bootstrap's `border: 0 !important`, which takes the accent with it, and a lone
+ * `border-l-3` leaves the button's own two-pixel border on the other three sides.
+ */
+.holiday-bar {
+    border-width: 0 0 0 3px;
+    border-style: solid;
+    border-color: var(--tumaet-ui-state-danger);
+    background-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 12%, transparent);
+}
+
+/* A run carrying on into the week beside this one loses the corner and the accent on that side. */
+.holiday-bar-continues-before {
+    border-left-width: 0;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.holiday-bar-continues-after {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+/*
+ * The holiday a drag would make, drawn exactly as the saved one will be: what is on screen while choosing the days is
+ * then the same thing that stays there afterwards, rather than a paler stand-in that changes on release. Transparent
+ * to the pointer, so the day underneath still takes the drag running over it.
+ */
+.holiday-bar-preview {
+    pointer-events: none;
+}

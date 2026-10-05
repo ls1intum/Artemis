@@ -79,6 +79,22 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
 
+    @Query("SELECT submission.participation.exercise.id FROM ProgrammingSubmission submission WHERE submission.id = :submissionId")
+    Optional<Long> findExerciseIdBySubmissionId(@Param("submissionId") long submissionId);
+
+    /**
+     * Reads the id of the submission's newest result straight from the database, deliberately not from an in-memory collection: a submission loaded by result id carries only
+     * that one result, which would make any "is this the newest result" check trivially true.
+     *
+     * @param submissionId the programming submission to read the newest result of
+     * @return the newest result's id, or {@link Optional#empty()} if the submission has no result
+     */
+    @Query("SELECT MAX(result.id) FROM ProgrammingSubmission submission JOIN submission.results result WHERE submission.id = :submissionId")
+    Optional<Long> findLatestResultIdBySubmissionId(@Param("submissionId") long submissionId);
+
+    @Query("SELECT submission.id FROM ProgrammingSubmission submission WHERE submission.id IN :submissionIds")
+    Set<Long> findExistingIds(@Param("submissionIds") Set<Long> submissionIds);
+
     /**
      * Returns what the grading code reads off the submission a build result belongs to, together with its newest result.
      * <p>
@@ -249,11 +265,11 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.feedbacks.longFeedbackText", "buildLogEntries" })
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.longFeedbackText", "buildLogEntries", "participation.exercise" })
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksAndBuildLogsById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.assessor" })
-    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksTestCasesAssessorById(long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
+    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(long submissionId);
@@ -274,8 +290,8 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @return the programming submission with the given id
      */
     @NonNull
-    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
-        return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
+    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessor(long submissionId) {
+        return getValueElseThrow(findWithEagerResultsFeedbacksAssessorById(submissionId), submissionId);
     }
 
     @NonNull
@@ -326,4 +342,13 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     Set<ParticipationCommitHashDTO> findLatestValidCommitHashForParticipations(@Param("loadedParticipationIds") Set<Long> loadedParticipationIds,
             @Param("filterLateSubmissionsIndividualDueDate") ZonedDateTime filterLateSubmissionsIndividualDueDate, @Param("exerciseDueDate") ZonedDateTime exerciseDueDate);
+
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id = :participationId
+                AND s.commitHash IS NOT NULL
+            ORDER BY s.submissionDate ASC, s.id ASC
+            """)
+    List<ProgrammingSubmission> findByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") long participationId);
 }

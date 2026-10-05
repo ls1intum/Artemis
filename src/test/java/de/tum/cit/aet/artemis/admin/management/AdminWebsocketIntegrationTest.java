@@ -32,6 +32,8 @@ class AdminWebsocketIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @BeforeEach
     void setUp() {
+        // Both the admin this class authenticates as and the student it expects to be rejected have to exist.
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         // The registry publishes lazily on a schedule; publish once so the endpoint has something to report.
         nodeRegistryService.heartbeat();
     }

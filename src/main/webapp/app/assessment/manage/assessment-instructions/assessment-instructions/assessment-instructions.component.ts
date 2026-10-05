@@ -18,7 +18,7 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -33,7 +33,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         ButtonComponent,
         TranslateDirective,
         ModelingEditorComponent,
-        TumUiTagComponent,
+        TumAetUiTagComponent,
         ArtemisTranslatePipe,
     ],
 })
@@ -45,6 +45,8 @@ export class AssessmentInstructionsComponent {
 
     readonly isAssessmentTraining = input(false);
     readonly showAssessmentInstructions = input(true);
+    /** Drops the frame and heading, for a host whose surrounding card already provides both. */
+    readonly embeddedInEditorChrome = input(false);
     readonly readOnly = input<boolean>();
     // For programming exercises we hand over the participation or use the template participation
     readonly programmingParticipation = input<ProgrammingExerciseStudentParticipation>();

@@ -19,6 +19,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -36,9 +38,14 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateOutboxDispatcher;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -73,6 +80,15 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
+
+    @Autowired
+    private WeaviateOutboxDispatcher weaviateOutboxDispatcher;
+
+    @Autowired
+    private WeaviateOutboxRepository outboxRepository;
+
+    @Autowired
+    private SearchableEntitySyncStateRepository syncStateRepository;
 
     @Autowired
     private PostTestRepository postRepository;
@@ -146,7 +162,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         post = postRepository.save(post);
         searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, createdChannel));
         long postId = post.getId();
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertPostExistsInWeaviate(weaviateService, postId));
+        assertPostExistsInWeaviate(weaviateService, postId);
 
         // Toggle privacy via REST: public -> private
         request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + createdChannel.getId() + "/toggle-privacy", HttpStatus.OK,
@@ -155,11 +171,72 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         Channel updatedChannel = channelRepository.findByIdElseThrow(createdChannel.getId());
         assertThat(updatedChannel.getIsPublic()).isFalse();
 
-        // Both the channel and its posts should be removed from Weaviate
+        // Both the channel and its posts should be removed from Weaviate. Each helper already polls for up to 30s,
+        // so they must not be wrapped in a further await: the first call would consume the whole shared budget and the
+        // outer timeout would then replace the real assertion message with a bare "null".
+        assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+        assertPostNotInWeaviate(weaviateService, postId);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReconcileDelete_afterPrivateChannelBecomesPublic_rederivesAndKeepsTheCurrentRow(WeaviateOutboxOrigin origin) throws Exception {
+        Channel channel = new Channel();
+        channel.setName("reconcile-" + reconcileOriginLabel(origin));
+        channel.setIsPublic(false);
+        channel.setIsCourseWide(false);
+        channel.setIsAnnouncementChannel(false);
+
+        Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
+        assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + createdChannel.getId() + "/toggle-privacy", HttpStatus.OK,
+                new org.springframework.util.LinkedMultiValueMap<>());
+        Channel updatedChannel = channelRepository.findByIdElseThrow(createdChannel.getId());
+        assertThat(updatedChannel.getIsPublic()).isTrue();
+        assertChannelExistsInWeaviate(weaviateService, updatedChannel);
+
+        assertReconcileDeleteReindexesCurrentChannel(updatedChannel, origin);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReconcileDelete_afterArchivedChannelIsUnarchived_rederivesAndKeepsTheCurrentRow(WeaviateOutboxOrigin origin) throws Exception {
+        Channel channel = new Channel();
+        channel.setName("unarchive-" + reconcileOriginLabel(origin));
+        channel.setIsPublic(true);
+        channel.setIsCourseWide(true);
+        channel.setIsAnnouncementChannel(false);
+
+        Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
+        assertChannelExistsInWeaviate(weaviateService, createdChannel);
+        channelService.archiveChannel(createdChannel.getId());
+        assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+        channelService.unarchiveChannel(createdChannel.getId());
+        assertChannelExistsInWeaviate(weaviateService, createdChannel);
+
+        assertReconcileDeleteReindexesCurrentChannel(createdChannel, origin);
+    }
+
+    private void assertReconcileDeleteReindexesCurrentChannel(Channel channel, WeaviateOutboxOrigin origin) {
+        WeaviateOutboxEntry staleDelete = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId(), origin));
+
+        weaviateOutboxDispatcher.drain();
+
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-            assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
-            assertPostNotInWeaviate(weaviateService, postId);
+            var properties = queryChannelProperties(weaviateService, channel.getId());
+            assertThat(properties).as("the channel must be re-derived rather than removed by a stale reconcile decision").isNotNull();
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.SOURCE_SEQ)).longValue()).isEqualTo(staleDelete.getId());
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId())).isPresent()
+                    .hasValueSatisfying(state -> assertThat(properties.get(SearchableEntitySchema.Properties.CONTENT_HASH)).isEqualTo(state.getContentHash()));
+            assertThat(outboxRepository.existsById(staleDelete.getId())).as("the confirmed reconcile row is acknowledged").isFalse();
         });
+    }
+
+    private static String reconcileOriginLabel(WeaviateOutboxOrigin origin) {
+        return origin == WeaviateOutboxOrigin.RECONCILE_DRIFT ? "drift" : "orphan";
     }
 
     @Nested

@@ -23,8 +23,9 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
  * Exposes the {@link CacheManager} that {@code @Cacheable} resolves against, and enables Spring's caching support.
  *
  * <p>
- * It routes by cache name so that large blob values stay on the node that produced them while the small, read-heavy
- * caches remain shared across nodes. See {@link BlobCacheConfiguration} for why that split exists.
+ * It routes by cache name: large blob values and the title lookups stay on the node that reads them, and every cache
+ * whose entries have to be identical on all nodes stays shared. See {@link BlobCacheConfiguration} and
+ * {@link BlobCacheConfiguration} for why those are local.
  *
  * <p>
  * Caching is enabled here rather than on the Hazelcast configuration, because that one only exists when Hazelcast is the
@@ -51,9 +52,12 @@ public class CacheManagerConfiguration {
      */
     private static final Duration ATLAS_SESSION_TIME_TO_LIVE = Duration.ofHours(2);
 
+    /** How long the latest GitHub release looked up by {@code ArtemisVersionService} is reused, so a new release is noticed without a restart. */
+    private static final Duration ARTEMIS_VERSION_TIME_TO_LIVE = Duration.ofHours(1);
+
     private static final Map<String, Duration> EXPIRING_CACHES = Map.of("atlas-session-pending-operations", ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-pending-relations",
             ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-exercise-preview", ATLAS_SESSION_TIME_TO_LIVE, "atlas-session-relation-preview", ATLAS_SESSION_TIME_TO_LIVE,
-            "atlas-execution-plan", ATLAS_SESSION_TIME_TO_LIVE);
+            "atlas-execution-plan", ATLAS_SESSION_TIME_TO_LIVE, "artemisVersion", ARTEMIS_VERSION_TIME_TO_LIVE);
 
     /**
      * @param distributedDataProvider the configured provider backing all cluster-wide caches

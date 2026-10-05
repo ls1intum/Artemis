@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.plagiarism.dto;
 
-import java.util.Objects;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -49,8 +49,7 @@ public record PlagiarismPostCreationDTO(@NotBlank(message = "The post must have 
      * @param post the post-entity
      * @return a DTO containing the data required to create a plagiarism post
      */
-    public static PlagiarismPostCreationDTO of(Post post) {
-        Objects.requireNonNull(post, "The post must be set.");
+    public static PlagiarismPostCreationDTO of(@NonNull Post post) {
         if (post.getPlagiarismCase() == null || post.getPlagiarismCase().getId() == null) {
             throw new BadRequestAlertException("The post must be associated with a plagiarism case.", PLAGIARISM_POST_ENTITY_NAME, "plagiarismCaseMissing");
         }

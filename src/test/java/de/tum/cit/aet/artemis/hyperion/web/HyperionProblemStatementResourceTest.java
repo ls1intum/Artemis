@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,12 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
@@ -42,7 +43,6 @@ import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTar
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -51,13 +51,10 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     private CourseTestRepository courseRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
     private CommentThreadRepository commentThreadRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
@@ -74,7 +71,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void setupTestData() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         course.setTitle("Hyperion Test Course");
         course = courseRepository.save(course);
         persistedCourseId = course.getId();
@@ -203,7 +200,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         });
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exerciseId + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exerciseId + "/synchronization"), captor.capture());
 
         ExerciseReviewThreadUpdateDTO syncPayload = captor.getValue();
         assertThat(syncPayload.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
@@ -507,7 +504,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     // Targeted refinement endpoint tests
 
     private String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction)
-            throws JsonProcessingException {
+            throws JacksonException {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("problemStatementText", problemStatement);
         node.put("startLine", startLine);
@@ -611,7 +608,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForChecklistAnalysisCourseMismatch() throws Exception {
         // Create a second course with its own exercise
-        Course otherCourse = new Course();
+        Course otherCourse = CourseFactory.generateMinimalCourse();
         otherCourse.setTitle("Other Course");
         otherCourse = courseRepository.save(otherCourse);
 
@@ -711,7 +708,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForChecklistSectionAnalysisCourseMismatch() throws Exception {
-        Course otherCourse = new Course();
+        Course otherCourse = CourseFactory.generateMinimalCourse();
         otherCourse.setTitle("Other Course Section");
         otherCourse = courseRepository.save(otherCourse);
 

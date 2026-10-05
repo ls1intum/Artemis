@@ -3,8 +3,13 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -90,6 +95,35 @@ public class AssessmentService {
     }
 
     /**
+     * Derives the points per test case for programming score calculations. Test-case feedback does not
+     * store credits, so the programming subclass ({@code ProgrammingAssessmentService}) overrides this with
+     * the real derivation; the base implementation is only reached for non-programming exercises (the
+     * programming complaint flow always goes through the subclass bean).
+     *
+     * @param exercise the programming exercise
+     * @param result   the result being scored
+     * @return derived points per test-case id
+     */
+    protected Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
+        return Map.of();
+    }
+
+    /**
+     * Attaches the synthesized legacy views of a programming result's typed automatic feedback, so that a
+     * response serializing the result still carries the test-case and static code analysis feedback. The
+     * typed collections themselves are JSON-ignored, so without this the automatic feedback is dropped. The
+     * programming subclass ({@code ProgrammingAssessmentService}) overrides this with the real synthesis;
+     * the base implementation is only reached for non-programming exercises (the programming complaint flow
+     * always goes through the subclass bean).
+     *
+     * @param exercise the programming exercise the result belongs to
+     * @param result   the result about to be serialized
+     */
+    protected void attachSynthesizedAutomaticFeedback(ProgrammingExercise exercise, Result result) {
+        // no-op, see the programming subclass
+    }
+
+    /**
      * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about.
      *
      * @param originalResult   the original assessment that was complained about
@@ -98,9 +132,15 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
+        // a complaint update may retain the existing feedback, in which case there is nothing new to validate
+        if (assessmentUpdate.feedbacks() != null) {
+            resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
+        }
         if (assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
+        // the update is copied onto a new result below, but the feedback ids are still read while the request is mapped
+        checkFeedbackBelongsToResultElseThrow(assessmentUpdate.feedbacks(), originalResult);
         // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.complaintResponse());
 
@@ -114,13 +154,18 @@ public class AssessmentService {
         resultRepository.save(newResult);
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            newResult.calculateScoreForProgrammingExercise(programmingExercise);
+            newResult.calculateScoreForProgrammingExercise(programmingExercise, calculateTestCasePoints(programmingExercise, newResult));
             newResult.setCompletionDate(ZonedDateTime.now());
             newResult.setRated(true);
             newResult.copyProgrammingExerciseCounters(originalResult);
 
             Result savedResult = resultRepository.save(newResult);
-            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).orElseThrow(); // to eagerly load assessor
+            // eagerly load the assessor and the manual feedback the response serializes
+            Result reloadedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(savedResult.getId()).orElseThrow();
+            // the copied automatic test-case and SCA feedback lives in JSON-ignored typed collections - attach
+            // the synthesized legacy views (after all persistence) so the complaint response keeps it
+            attachSynthesizedAutomaticFeedback(programmingExercise, reloadedResult);
+            return reloadedResult;
         }
         else {
             return resultRepository.submitResult(newResult, exercise);
@@ -275,8 +320,19 @@ public class AssessmentService {
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText, long exerciseId) {
         Result result = null;
         if (resultId != null) {
-            result = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId).orElse(null);
+            result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId).orElse(null);
         }
+
+        if (result != null && (result.getSubmission() == null || !result.getSubmission().getId().equals(submission.getId()))) {
+            throw new BadRequestAlertException("The result does not belong to the assessed submission.", "result", "resultSubmissionMismatch");
+        }
+        // an assessment may be saved without any feedback, in which case there is nothing to validate
+        if (feedbackList != null) {
+            resultService.validateGradingInstructions(feedbackList, exerciseId);
+        }
+
+        // run before a missing result is created, since saveNewEmptyResult commits the empty result on its own and a request refused afterwards would leave it behind
+        checkFeedbackBelongsToResultElseThrow(feedbackList, result);
 
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission, exerciseId);
@@ -315,6 +371,25 @@ public class AssessmentService {
         result = resultRepository.save(result);
         result.setAssessor(assessor);
         return result;
+    }
+
+    /**
+     * Checks that an assessment only contains feedback of the result it is saved to. A feedback id is the id of a stored row, so an id of another result would be written to this
+     * result instead of being added to it.
+     *
+     * @param feedbackList the feedback list sent by the client
+     * @param result       the result the assessment is saved to, or {@code null} if it does not exist yet
+     */
+    protected void checkFeedbackBelongsToResultElseThrow(final Collection<Feedback> feedbackList, final Result result) {
+        if (feedbackList == null) {
+            return;
+        }
+        // a result that does not exist yet owns no feedback, so any stored feedback id is foreign
+        final Set<Long> ownFeedbackIds = result == null ? Set.of() : result.getFeedbacks().stream().map(Feedback::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // a negative id belongs to a synthesized view of the typed automatic feedback of a programming exercise and not to a stored row
+        if (feedbackList.stream().map(Feedback::getId).anyMatch(id -> id != null && id > 0 && !ownFeedbackIds.contains(id))) {
+            throw new BadRequestAlertException("The assessment contains feedback of another result", "Feedback", "feedbackIdMismatch");
+        }
     }
 
     /**

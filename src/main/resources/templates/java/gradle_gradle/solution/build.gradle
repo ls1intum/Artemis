@@ -1,7 +1,8 @@
 apply plugin: 'java'
+apply plugin: 'application'
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 version = '1.0.0'
@@ -12,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    implementation 'org.apache.commons:commons-lang3:3.21.0'
 }
 
 sourceSets {
@@ -26,4 +27,8 @@ sourceSets {
             srcDirs = []
         }
     }
+}
+
+application {
+    mainClass = '${packageName}.Client'
 }

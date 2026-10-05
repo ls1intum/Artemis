@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -39,12 +40,16 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -64,6 +69,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.MODELING_EXERCISES)
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
@@ -87,11 +93,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final Optional<ExamSubmissionApi> examSubmissionApi;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<ExamSubmissionApi> examSubmissionApi, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, Optional<ExamAccessApi> examAccessApi) {
+            ModelingSubmissionRepository modelingSubmissionRepository, Optional<ExamAccessApi> examAccessApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -165,7 +174,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        StudentParticipation participationFromExamGate = null;
+        StudentParticipationSubmitTargetDTO participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
             // Apply further checks if it is an exam submission
@@ -179,13 +188,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Check if the user is allowed to submit
         modelingSubmissionService.checkSubmissionAllowanceElseThrow(exercise, modelingSubmission, user);
 
-        modelingSubmission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user, participationFromExamGate);
-        modelingSubmissionService.hideDetails(modelingSubmission, user);
+        var saved = modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user, participationFromExamGate);
+        modelingSubmission = saved.submission();
         long end = System.currentTimeMillis();
         log.info("save took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         // Include the participation owner: this is the student's own submission and the client checks participation
         // ownership (isOwnerOfParticipation) on the returned participation. hideDetails keeps the owner for the student.
-        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, true));
+        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, saved.participation()));
     }
 
     /**
@@ -201,6 +210,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return a list of modeling submissions
      */
     @ResponseStatus(HttpStatus.OK)
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingSubmissionResponseDTO>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
@@ -234,6 +244,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("modeling-submissions/{submissionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmissionResponseDTO> getModelingSubmission(@PathVariable Long submissionId,
@@ -265,6 +276,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         modelingSubmissionService.checkThatAssessmentIsPossibleElseThrow(modelingExercise, studentParticipation);
+        modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(modelingExercise, submissionId, correctionRound);
 
         // now we can assume the user is at least a tutor for the underlying exercise
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
@@ -299,6 +311,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission.removeNotNeededResults(correctionRound, resultId);
         }
 
+        // the assessment editor gates feedback suggestions on the course's Athena setting, which the reloads above drop
+        courseAthenaConfigRepository.attachToCourseOf(modelingSubmission.getParticipation().getExercise());
         // Tutors must not see the student behind a submission (double-blind); instructors may.
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(modelingExercise, user);
         return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, includeStudent));
@@ -313,6 +327,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ModelingSubmissionResponseDTO> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
@@ -331,6 +346,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        this.modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
 
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -344,6 +360,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             // Make sure the exercise is connected to the participation in the json response
             submission.getParticipation().setExercise(modelingExercise);
             this.modelingSubmissionService.hideDetails(submission, user);
+            courseAthenaConfigRepository.attachToCourseOf(modelingExercise);
         }
 
         // Tutors must not see the student behind a submission (double-blind); instructors may.
@@ -486,6 +503,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
+        Comparator<Result> resultsByMostRecentCompletion = Comparator.comparing(Result::getCompletionDate, Comparator.nullsFirst(Comparator.naturalOrder())).reversed();
 
         // Get the submissions associated with the participation
         Set<Submission> submissions = studentParticipation.getSubmissions();
@@ -496,7 +514,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             submission.setParticipation(studentParticipation);
 
             // Filter results within each submission based on assessment type and period
-            List<Result> filteredResults = submission.getResults().stream().filter(result -> {
+            List<Result> filteredResults = submission.getResults().stream().filter(Objects::nonNull).filter(result -> {
                 if (!validationResult.isAtLeastTutor) {
                     if (ExerciseDateService.isAfterAssessmentDueDate(validationResult.modelingExercise)) {
                         return true; // Include all results if the assessment period is over
@@ -508,7 +526,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                 else {
                     return true; // Tutors and above can see all results
                 }
-            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
+            }).peek(Result::filterSensitiveInformation).sorted(resultsByMostRecentCompletion).toList();
 
             // Set filtered results back into the submission if any results remain after filtering
             if (!filteredResults.isEmpty()) {

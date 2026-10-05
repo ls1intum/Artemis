@@ -17,4 +17,14 @@ describe('app.routes', () => {
             expect(adminRoute?.data?.['usesModuleBackground']).toBe(false);
         });
     });
+
+    describe('legacy course management overview', () => {
+        it('redirects at the root with a relative target before loading the management routes', () => {
+            const managementRoutes = routes.filter((route) => route.path === 'course-management');
+
+            expect(managementRoutes[0]?.pathMatch).toBe('full');
+            expect(managementRoutes[0]?.redirectTo).toBe('courses');
+            expect(managementRoutes[1]?.loadChildren).toBeDefined();
+        });
+    });
 });

@@ -9,33 +9,29 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-onboarding-modal',
     standalone: true,
     templateUrl: './feedback-onboarding-modal.component.html',
     styleUrls: ['./feedback-onboarding-modal.component.scss'],
-    imports: [CommonModule, TextResultComponent, TranslateDirective, ButtonComponent, DialogModule],
+    imports: [CommonModule, TextResultComponent, TranslateDirective, TumAetUiButtonComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class FeedbackOnboardingModalComponent {
-    readonly visible = model<boolean>(false);
-    readonly completed = output<void>();
-
-    readonly step = signal(0);
-    readonly totalSteps = 2;
-    selected: (number | undefined)[] = [undefined, undefined];
-    feedbackExamples = FEEDBACK_EXAMPLES;
-
     private learnerProfileApiService = inject(LearnerProfileApiService);
     private alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
     protected themeService = inject(ThemeService);
 
-    // Button types and sizes for template
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
+    readonly visible = model<boolean>(false);
+    readonly completed = output<void>();
+
+    readonly step = signal(0);
+    readonly totalSteps = 2;
+    readonly selected = signal<(number | undefined)[]>([undefined, undefined]);
+    feedbackExamples = FEEDBACK_EXAMPLES;
 
     /**
      * Navigates to the next step in the onboarding process.
@@ -61,11 +57,8 @@ export class FeedbackOnboardingModalComponent {
      * @param choice - The choice to select
      */
     select(step: number, choice: number) {
-        if (this.selected[step] === choice) {
-            this.selected[step] = undefined;
-        } else {
-            this.selected[step] = choice;
-        }
+        // Replace the array rather than mutating it: a signal only notifies when its reference changes.
+        this.selected.update((selected) => selected.map((current, index) => (index === step ? (current === choice ? undefined : choice) : current)));
     }
 
     /**
@@ -92,8 +85,8 @@ export class FeedbackOnboardingModalComponent {
     async finish() {
         try {
             const newProfile = new LearnerProfileDTO({
-                feedbackDetail: this.mapSelectionToFeedbackValue(this.selected[0]),
-                feedbackFormality: this.mapSelectionToFeedbackValue(this.selected[1]),
+                feedbackDetail: this.mapSelectionToFeedbackValue(this.selected()[0]),
+                feedbackFormality: this.mapSelectionToFeedbackValue(this.selected()[1]),
                 hasSetupFeedbackPreferences: true,
             });
             const profile = await this.learnerProfileApiService.getLearnerProfileForCurrentUser();

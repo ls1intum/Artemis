@@ -20,25 +20,22 @@ import { SubmissionVersionService } from 'app/exercise/submission-version/submis
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { Slider } from 'primeng/slider';
-import { FormsModule } from '@angular/forms';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
     templateUrl: './student-exam-timeline.component.html',
-    styleUrls: ['./student-exam-timeline.component.scss'],
     imports: [
         TranslateDirective,
-        Slider,
-        FormsModule,
         ExamNavigationBarComponent,
         QuizExamSubmissionComponent,
         FileUploadExamSubmissionComponent,
         TextExamSubmissionComponent,
         ModelingExamSubmissionComponent,
         ProgrammingExerciseExamDiffComponent,
+        CourseTitleBarTitleDirective,
     ],
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -53,7 +50,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     // this is an array because the exam-timeline uses a page component for each exercise
     pageComponentVisited = signal<boolean[]>([]);
     selectedTimestamp = signal<number>(0);
-    timestampIndex = 0;
+    timestampIndex = signal(0);
 
     studentExam = signal<StudentExam>(undefined!);
     exerciseIndex = signal<number>(0);
@@ -61,8 +58,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     submissionTimeStamps = signal<dayjs.Dayjs[]>([]);
     /**
      * Percentage positions (0–100) of each submission timestamp along the slider track, used to render tick markers
-     * under the `p-slider`. This restores the discrete-submission visual cue that the previous Material slider provided
-     * via `[showTickMarks]` (PrimeNG's slider has no equivalent input). Empty for a single submission (no range to mark).
+     * under the range input, which has no tick marks of its own. Empty for a single submission (no range to mark).
      */
     readonly submissionTickPercentages = computed<number[]>(() => {
         const count = this.submissionTimeStamps().length;
@@ -342,7 +338,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * This method is called when the user clicks on the slider
      */
     onSliderInputChange() {
-        this.selectedTimestamp.set(this.submissionTimeStamps()[this.timestampIndex].toDate().getTime());
+        this.selectedTimestamp.set(this.submissionTimeStamps()[this.timestampIndex()].toDate().getTime());
         const submission = this.findCorrespondingSubmissionForTimestamp(this.selectedTimestamp());
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
@@ -358,19 +354,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         this.exerciseIndex.set(exerciseIndex);
         this.currentSubmission = submission;
         this.examNavigationBarComponent().changePage(exerciseIndex, submission);
-    }
-
-    /**
-     * p-slider commits keyboard adjustments to the value but, unlike the old mat-slider `(change)`, does NOT emit
-     * `(onSlideEnd)` for keyboard input. Navigate on keyup for the navigation keys so keyboard users get the same
-     * timeline update as a pointer release — without the per-step churn that binding `(onChange)` (which also fires
-     * continuously during a pointer drag) would cause.
-     */
-    onSliderKeyup(event: KeyboardEvent): void {
-        const navigationKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'];
-        if (navigationKeys.includes(event.key)) {
-            this.onSliderInputChange();
-        }
     }
 
     /**

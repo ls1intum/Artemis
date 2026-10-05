@@ -26,6 +26,10 @@ const FOREVER = dayjs('9999-12-31');
     imports: [FontAwesomeModule, NgbTooltipModule, RouterModule, TranslateDirective, CommonModule, FormsModule],
 })
 export class PdfPreviewDateBoxComponent implements OnInit {
+    // Injected services
+    private readonly alertService = inject(AlertService);
+    private readonly courseExerciseService = inject(CourseExerciseService);
+
     // Inputs
     courseId = input<number>();
     selectedPages = input<OrderedPage[]>([]);
@@ -51,19 +55,19 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return `${pages[0].order}`;
         }
 
-        return pages
-            .map((p) => p.order)
-            .sort()
-            .join(', ');
+        return (
+            pages
+                .map((p) => p.order)
+                // Page orders are numbers, so they need a numeric comparator: the default sort compares them as
+                // strings, which listed page 10 before page 2.
+                .sort((a, b) => a - b)
+                .join(', ')
+        );
     });
     isMultiplePages = computed(() => this.selectedPages().length > 1);
     isSubmitDisabled = computed(() => {
         return !this.hideForever() && !this.calendarSelected() && !this.selectedExercise();
     });
-
-    // Injected services
-    private readonly alertService = inject(AlertService);
-    private readonly courseExerciseService = inject(CourseExerciseService);
 
     ngOnInit(): void {
         this.loadExercises();

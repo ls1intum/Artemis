@@ -577,7 +577,7 @@ class BuildAgentAddressRegistryServiceTest {
      * member address, which is what ties the two together.
      * <p>
      * Without this the registry would hold nothing on every Redis installation, every agent would fall through to the
-     * not-observable exemption, and the origin binding would be silently inert on a supported backend.
+     * not-observable exemption, and the origin binding would be silently inert on a supported provider.
      */
     @Test
     void shouldRegisterAnAgentWhoseMiddlewareClientNameIsItsNodeIdentity() {

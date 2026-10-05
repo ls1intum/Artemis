@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,17 +26,21 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -43,14 +48,17 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * REST controller for managing Submission.
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
 @RestController
 @RequestMapping("api/exercise/")
 public class SubmissionResource {
@@ -80,9 +88,12 @@ public class SubmissionResource {
 
     private final SubmissionVersionRepository submissionVersionRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
             ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository) {
+            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -92,6 +103,7 @@ public class SubmissionResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.submissionVersionRepository = submissionVersionRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -101,6 +113,7 @@ public class SubmissionResource {
      * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
     @DeleteMapping("submissions/{submissionId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long submissionId) {
@@ -138,7 +151,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/test-run-submissions")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<SubmissionResponseDTO>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isExamExercise()) {
@@ -157,7 +170,14 @@ public class SubmissionResource {
                 latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }
             latestSubmission.removeAutomaticResults();
-            return ResponseEntity.ok().body(List.of(latestSubmission));
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                // the draft's automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+                // attach the synthesized legacy views so the tutor sees the automatic feedback. The exercise
+                // context is passed explicitly: the test-run participation's exercise is a lazy proxy here.
+                latestSubmission.getResults().stream().filter(Objects::nonNull)
+                        .forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
+            }
+            return ResponseEntity.ok().body(List.of(SubmissionResponseDTO.of(latestSubmission)));
         }
         else {
             return ResponseEntity.ok(List.of());
@@ -214,9 +234,10 @@ public class SubmissionResource {
      * @param search     the pageable search containing the page size and query string
      * @return The desired page, sorted and matching the given query
      */
+    @FeatureUsage(UserFeature.TUTOR_TRAINING)
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<SubmissionResponseDTO>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get all Submissions for import : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -236,11 +257,14 @@ public class SubmissionResource {
 
     private Course findCourseFromSubmission(Submission submission) {
         Participation participation = submission.getParticipation();
-        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course = participation.getExercise() != null ? participation.getExercise().getCourseViaExerciseGroupOrCourseMember() : null;
+        if (course == null) {
+            course = studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
-
-        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new EntityNotFoundException("Course", "of submission " + submission.getId());
+        }
+        return course;
     }
 
     /**
@@ -253,6 +277,7 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body a list of {@link SubmissionVersionDTO} for the given submission
      */
 
+    @FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
     @GetMapping("submissions/{submissionId}/versions")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<SubmissionVersionDTO>> getSubmissionVersions(@PathVariable long submissionId) {

@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup_;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupExportDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupImportDataDTO;
@@ -111,7 +112,7 @@ public class TutorialGroupService {
      */
     public void setTransientPropertiesForUser(User user, TutorialGroup tutorialGroup) {
 
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "registrations") && tutorialGroup.getRegistrations() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.REGISTRATIONS) && tutorialGroup.getRegistrations() != null) {
             tutorialGroup.setIsUserRegistered(tutorialGroup.getRegistrations().stream().anyMatch(registration -> registration.getStudent().equals(user)));
             tutorialGroup.setNumberOfRegisteredUsers(tutorialGroup.getRegistrations().size());
         }
@@ -120,14 +121,14 @@ public class TutorialGroupService {
             tutorialGroup.setNumberOfRegisteredUsers(null);
         }
 
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "course") && tutorialGroup.getCourse() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.COURSE) && tutorialGroup.getCourse() != null) {
             tutorialGroup.setCourseTitle(tutorialGroup.getCourse().getTitle());
         }
         else {
             tutorialGroup.setCourseTitle(null);
         }
 
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "teachingAssistant") && tutorialGroup.getTeachingAssistant() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TEACHING_ASSISTANT) && tutorialGroup.getTeachingAssistant() != null) {
             tutorialGroup.setTeachingAssistantName(tutorialGroup.getTeachingAssistant().getName());
             tutorialGroup.setTeachingAssistantId(tutorialGroup.getTeachingAssistant().getId());
             tutorialGroup.setTeachingAssistantImageUrl(tutorialGroup.getTeachingAssistant().getImageUrl());
@@ -164,7 +165,7 @@ public class TutorialGroupService {
     private void setAverageAttendance(TutorialGroup tutorialGroup) {
         Collection<TutorialGroupSession> sessions;
 
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TUTORIAL_GROUP_SESSIONS) && tutorialGroup.getTutorialGroupSessions() != null) {
             sessions = tutorialGroup.getTutorialGroupSessions();
         }
         else {
@@ -194,7 +195,7 @@ public class TutorialGroupService {
      */
     private void setNextSession(TutorialGroup tutorialGroup) {
         Optional<TutorialGroupSession> nextSessionOptional = Optional.empty();
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TUTORIAL_GROUP_SESSIONS) && tutorialGroup.getTutorialGroupSessions() != null) {
             // determine the next session - we show currently running sessions and up to 30 minutes after the end of the session so that students can still
             // join and tutors can easily update the attendance of the session
             nextSessionOptional = tutorialGroup.getTutorialGroupSessions().stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
@@ -377,7 +378,7 @@ public class TutorialGroupService {
         // === Step 3: Register all found users to their respective tutorial groups ===
         Map<TutorialGroup, Set<User>> tutorialGroupToRegisteredUsers = new HashMap<>();
         for (var registrationUserPair : uniqueRegistrationsWithMatchingUsers.entrySet()) {
-            String title = Objects.requireNonNull(registrationUserPair.getKey().title());
+            String title = registrationUserPair.getKey().title();
             var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(title.trim());
             var user = registrationUserPair.getValue();
             tutorialGroupToRegisteredUsers.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(user);
@@ -629,7 +630,7 @@ public class TutorialGroupService {
         }
         var persistenceUtil = getPersistenceUtil();
         var tutorialGroupToCheck = tutorialGroup;
-        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
+        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, TutorialGroup_.TEACHING_ASSISTANT);
         if (!teachingAssistantInitialized || tutorialGroupToCheck.getTeachingAssistant() == null) {
             tutorialGroupToCheck = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroupToCheck.getId());
         }

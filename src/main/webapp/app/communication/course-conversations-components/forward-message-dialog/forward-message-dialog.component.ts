@@ -18,13 +18,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -42,9 +42,14 @@ interface CombinedOption {
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
     imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective, FaIconComponent],
-    providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
+    providers: [CommunicationService, LinkPreviewService, LinkifyService, CourseConversationsService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
+    protected dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
+    private courseManagementService = inject(CourseManagementService);
+    private renderer = inject(Renderer2);
+
     channels = signal<(ChannelDTO | GroupChatDTO)[]>([]);
     users = signal<UserPublicInfoDTO[]>([]);
     postToForward = signal<Post | undefined>(undefined);
@@ -64,14 +69,9 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     readonly showFullForwardedMessage = signal(false);
     readonly isContentLong = signal(false);
 
-    protected dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
     readonly maxContentLength = MAX_CONTENT_LENGTH;
-
-    private courseManagementService = inject(CourseManagementService);
-    private renderer = inject(Renderer2);
 
     protected readonly faPeopleGroup = faPeopleGroup;
     protected readonly faHashtag = faHashtag;

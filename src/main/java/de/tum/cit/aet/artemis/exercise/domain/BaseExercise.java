@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.ZonedDateTime;
+import java.util.regex.Pattern;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
@@ -17,6 +18,9 @@ import de.tum.cit.aet.artemis.core.util.StringUtil;
 
 @MappedSuperclass
 public abstract class BaseExercise extends DomainObject {
+
+    /** A run of whitespace inside a title, collapsed into a single space. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     @Column(name = "title")
     private String title;
@@ -74,7 +78,7 @@ public abstract class BaseExercise extends DomainObject {
      * @param title the new (non-sanitized) title to be set
      */
     public void setTitle(String title) {
-        this.title = title != null ? title.strip().replaceAll("\\s+", " ") : null;
+        this.title = title != null ? WHITESPACE_RUN.matcher(title.strip()).replaceAll(" ") : null;
     }
 
     public String getShortName() {
@@ -192,52 +196,6 @@ public abstract class BaseExercise extends DomainObject {
     }
 
     public abstract boolean isExamExercise();
-
-    /**
-     * This method is used to validate the assessmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assessmentDueDate is
-     * invalid without an according dueDate
-     *
-     * @return true if there is no assessmentDueDateError
-     */
-    protected static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
-        if (assessmentDueDate == null) {
-            return true;
-        }
-        // There cannot be a assessmentDueDate without dueDate
-        if (dueDate == null) {
-            return false;
-        }
-        return isNotAfterAndNotNull(dueDate, assessmentDueDate) && isNotAfterAndNotNull(releaseDate, assessmentDueDate);
-    }
-
-    /**
-     * This method is used to validate the exampleSolutionPublicationDate of an exercise. An exampleSolutionPublicationDate is valid if it is after the releaseDate and dueDate.
-     * Any given exampleSolutionPublicationDate is valid if releaseDate and dueDate are not set.
-     * exampleSolutionPublicationDate is valid if it is not set.
-     *
-     * @return true if there is no exampleSolutionPublicationDateError
-     */
-    protected static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime exampleSolutionPublicationDate,
-            IncludedInOverallScore includedInOverallScore) {
-        if (exampleSolutionPublicationDate == null) {
-            return true;
-        }
-
-        return (isNotAfterAndNotNull(dueDate, exampleSolutionPublicationDate) || includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED)
-                && isNotAfterAndNotNull(releaseDate, exampleSolutionPublicationDate);
-    }
-
-    /**
-     * This method is used to validate if the previousDate is before the laterDate.
-     *
-     * @return true if the previousDate is valid
-     */
-    protected static boolean isNotAfterAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
-        if (previousDate == null || laterDate == null) {
-            return true;
-        }
-        return !previousDate.isAfter(laterDate);
-    }
 
     /**
      * a helper method to get the exercise title in a sanitized form (i.e. usable in file names)
