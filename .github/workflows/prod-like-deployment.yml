@@ -114,6 +114,13 @@ jobs:
         with:
           repository: 'ls1intum/artemis-ansible'
 
+      - name: Check out Python dependency lock
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          path: artemis-dependency-lock
+          sparse-checkout: .github/python-dependencies
+          sparse-checkout-cone-mode: false
+
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
@@ -121,7 +128,7 @@ jobs:
 
       - name: Install Artemis-Ansible dependencies
         run: |
-          pip3 install -r requirements.txt
+          python3 -m pip install --require-hashes -r artemis-dependency-lock/.github/python-dependencies/requirements.txt
           ansible-galaxy collection install -r requirements.yml --force
           ansible-galaxy install -r requirements.yml --force
           ansible-galaxy install -r ~/.ansible/collections/ansible_collections/ls1intum/artemis/requirements.yml

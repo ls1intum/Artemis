@@ -364,7 +364,7 @@ public class ExerciseSharingService {
      * </p>
      *
      * @param b64Token URL-safe Base64 token (no padding)
-     * @return path to the ZIP if it exists; otherwise {@link Optional#empty()}
+     * @return path to the ZIP if it exists; {@link Optional#empty()} for malformed tokens or missing files
      */
     public Optional<Path> getExportedExerciseByToken(String b64Token) {
         if (isInvalidToken(b64Token)) {
@@ -381,7 +381,7 @@ public class ExerciseSharingService {
             }
         }
         catch (CharacterCodingException | IllegalArgumentException e) {
-            return Optional.empty();
+            log.warn("Invalid token received: {}", b64Token);
         }
         return Optional.empty();
     }

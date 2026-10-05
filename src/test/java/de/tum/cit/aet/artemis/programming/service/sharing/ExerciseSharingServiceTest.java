@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -83,6 +84,24 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     void shouldReturnFalseForInvalidTokenAndSecurityString() {
         assertThat(exerciseSharingService.validate("invalidToken", "invalid sec")).isFalse();
         assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForMalformedBase64Token() {
+        // A single Base64 character passes the alphabet check but cannot be decoded.
+        assertThat(exerciseSharingService.getExportedExerciseByToken("a")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForMalformedUtf8Token() {
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[] { (byte) 0xff });
+        assertThat(exerciseSharingService.getExportedExerciseByToken(token)).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForTokenContainingNullByte() {
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[] { 0 });
+        assertThat(exerciseSharingService.getExportedExerciseByToken(token)).isEmpty();
     }
 
     @Test

@@ -66,9 +66,9 @@
 @source './app/editor/markdown-editor';
 @source './app/shared-ui/date-time-picker';
 
-/* The instructor pages of the exam mode and the pieces they share with the student pages. */
-@source './app/exam/manage';
-@source './app/exam/shared';
+/* The whole exam mode, and the example solution that only its summary shows. */
+@source './app/exam';
+@source './app/exercise/example-solution';
 
 @source './app/localci/build-queue';
 @source './app/course/request';
