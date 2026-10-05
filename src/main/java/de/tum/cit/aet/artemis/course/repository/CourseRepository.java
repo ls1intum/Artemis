@@ -54,11 +54,14 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * Stores a course and initializes its permanent configuration rows on first creation, including rows of disabled
      * optional modules. Later edits only update the course. Athena and general settings are persisted through the course's
      * creation cascade; the remaining configurations own the course key and are inserted after the course exists.
+     * <p>
+     * There is deliberately no transaction around the statements: each one commits on its own, so no lock is held across
+     * them. If one of the later inserts fails, the exception reaches the caller and the course stays without the settings
+     * that were not inserted yet; nothing repairs that, and creating the course again is refused until it is deleted.
      *
      * @param course the course to store
      * @return the stored course
      */
-    @Transactional // ok because the new course and all its default settings are stored together or not at all
     default Course saveWithDefaultConfigurations(Course course) {
         boolean newCourse = course.getId() == null;
         Course saved = save(course);

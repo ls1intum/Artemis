@@ -35,26 +35,18 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
     private TextExerciseRepository textExerciseRepository;
 
     @Test
-    void configurationInsertFailureRollsBackTheCourseAndItsCascade() throws SQLException {
+    void aFailingSettingsInsertIsReportedToTheCaller() throws SQLException {
         var course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
-        course.setShortName("rollbackdefaultstest");
-        var jdbc = new JdbcTemplate(dataSource);
+        course.setShortName("failingdefaultstest");
 
-        // A constraint scoped to this test's prefix forces a real database failure after the course and cascade inserts.
+        // A constraint scoped to this test's prefix forces a real database failure of one of the settings inserts. There is no
+        // transaction around the statements, so the course is not rolled back; the caller gets the error and decides.
         setConfigurationInsertFailure(true);
         try {
             assertThatThrownBy(() -> courseRepository.saveWithDefaultConfigurations(course)).isInstanceOf(DataIntegrityViolationException.class);
         }
         finally {
             setConfigurationInsertFailure(false);
-        }
-
-        assertThat(course.getId()).isNotNull();
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course WHERE id = ?", Long.class, course.getId())).isZero();
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course_configuration WHERE id = ?", Long.class, course.getCourseConfiguration().getId())).isZero();
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course_athena_config WHERE id = ?", Long.class, course.getAthenaConfig().getId())).isZero();
-        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
-            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isZero();
         }
     }
 
@@ -159,7 +151,7 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
             connection.setAutoCommit(true);
             if (enabled) {
-                statement.execute("ALTER TABLE online_course_configuration ADD CONSTRAINT fail_default_config_insert CHECK (user_prefix <> 'rollbackdefaultstest')");
+                statement.execute("ALTER TABLE online_course_configuration ADD CONSTRAINT fail_default_config_insert CHECK (user_prefix <> 'failingdefaultstest')");
             }
             else {
                 String constraintType = connection.getMetaData().getDatabaseProductName().contains("MySQL") ? "CHECK" : "CONSTRAINT";

@@ -222,9 +222,11 @@ including settings for optional modules that are disabled on that server. Backfi
 a migration, preserving their existing settings. Do not insert or delete configurations when enabling or disabling a
 feature: update its flag and keep its settings for the next time it is enabled.
 
-Create courses through `CourseRepository.saveWithDefaultConfigurations`. Its short repository transaction persists the
-new course and all default settings together. Course edits and feature toggles do not use a course-row lock or a
-transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
+Create courses through `CourseRepository.saveWithDefaultConfigurations`. It stores the course and then inserts the
+default settings with plain statements, without a transaction around them, so no lock is held across the statements. A
+failure between two of them leaves the course without the settings not yet inserted; the caller sees the exception and
+nothing repairs the course, which has to be deleted before the creation can be repeated. Course edits and feature toggles
+do not use a course-row lock or a transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
 is true. Tutorial-group settings remain inactive until both tutorial-period dates are configured; configure those defaults
 through the configuration repository's modifying query.
 
