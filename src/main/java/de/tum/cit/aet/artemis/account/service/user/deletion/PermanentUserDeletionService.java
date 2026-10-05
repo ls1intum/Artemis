@@ -163,9 +163,7 @@ public class PermanentUserDeletionService {
     private void delete(User user, UserDeletionImpactDTO impact, UserDeletionMode mode, String actor) {
         long userId = user.getId();
         String login = user.getLogin();
-        userOwnedContentDeletionService.invalidateCourseMemoryOf(userId);
         closeAccount(userId);
-        userOwnedContentDeletionService.invalidateCourseMemoryOf(userId);
 
         String imageUrl = user.getImageUrl();
         List<Path> filesToDelete = new ArrayList<>();
@@ -208,7 +206,7 @@ public class PermanentUserDeletionService {
      * expires, since a JWT is validated from its claims alone, but it can no longer be renewed.
      */
     private void closeAccount(long userId) {
-        userRepository.deactivateForDeletion(userId);
+        userOwnedContentDeletionService.deactivateAndInvalidateCourseMemory(userId, () -> userRepository.deactivateForDeletion(userId));
         userReferenceCleanupService.resolve(UserDeletionReferencePolicy.COURSE_ROLE, userId);
     }
 

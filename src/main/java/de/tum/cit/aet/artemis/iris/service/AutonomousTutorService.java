@@ -147,18 +147,12 @@ public class AutonomousTutorService {
         ensureBotIsParticipant(botUser, conversation);
 
         // Publishing unreviewed also requires that every channel the run drew Course Memory entries from is still readable
-        // by every student. Checked before saving, and again after saving: a channel made private in between sends the
-        // reply to a tutor instead. A reply whose sources are unknown is never published unreviewed.
-        boolean isVerified = confidence >= AUTO_VERIFY_CONFIDENCE_THRESHOLD && courseMemorySourcesReadable(statusUpdate, course.getId());
+        // by every student. Checked before saving, and again after the reply was saved as a draft: a channel made private in
+        // between sends the reply to a tutor instead. A reply whose sources are unknown is never published unreviewed.
+        boolean publishable = confidence >= AUTO_VERIFY_CONFIDENCE_THRESHOLD && courseMemorySourcesReadable(statusUpdate, course.getId());
 
-        AnswerPost answerPost = createAndSaveAnswerPost(statusUpdate.result(), botUser, originalPost, confidence, isVerified);
-        if (isVerified && !courseMemorySourcesStillReadable(statusUpdate, course.getId(), answerPost.getId())) {
-            answerPost.setVerified(false);
-            answerPost.setVerifiedAt(null);
-            answerPost = answerPostRepository.save(answerPost);
-            isVerified = false;
-            log.info("Holding autonomous tutor answer {} for review: a Course Memory source channel stopped being readable", answerPost.getId());
-        }
+        AnswerPost answerPost = createAndSaveAnswerPost(statusUpdate.result(), botUser, originalPost, confidence);
+        boolean isVerified = publishable && publishIfSourcesStillReadable(answerPost, statusUpdate, course.getId());
 
         if (isVerified) {
             Set<ConversationNotificationRecipientSummary> recipientSummaries = getNotificationRecipients(conversation, course);
@@ -193,15 +187,27 @@ public class AutonomousTutorService {
     }
 
     /**
-     * The check after saving. The answer is already published at this point, so a failed check counts as "not readable"
-     * and sends the answer back to review instead of leaving it published.
+     * Publishes a reply that was saved as a draft, if its Course Memory sources are still readable by every student. Any
+     * failure, of the check or of the save, leaves the draft for review: a reply is never left published by mistake.
+     *
+     * @return whether the reply was published
      */
-    private boolean courseMemorySourcesStillReadable(PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate, long courseId, long answerPostId) {
+    private boolean publishIfSourcesStillReadable(AnswerPost draft, PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate, long courseId) {
         try {
-            return courseMemorySourcesReadable(statusUpdate, courseId);
+            if (!courseMemorySourcesReadable(statusUpdate, courseId)) {
+                log.info("Holding autonomous tutor answer {} for review: a Course Memory source channel stopped being readable", draft.getId());
+                return false;
+            }
+            draft.setVerified(true);
+            // auto-verified answers are implicitly approved by the system, there is no human reviewer
+            draft.setVerifiedAt(ZonedDateTime.now());
+            answerPostRepository.save(draft);
+            return true;
         }
         catch (RuntimeException e) {
-            log.warn("Could not check the Course Memory sources of autonomous tutor answer {} again; holding it for review", answerPostId, e);
+            draft.setVerified(false);
+            draft.setVerifiedAt(null);
+            log.warn("Could not publish autonomous tutor answer {}; holding it for review", draft.getId(), e);
             return false;
         }
     }
@@ -215,18 +221,17 @@ public class AutonomousTutorService {
         }
     }
 
-    private AnswerPost createAndSaveAnswerPost(String content, User botUser, Post originalPost, Double confidence, boolean isVerified) {
+    /**
+     * Saves the reply as an unverified draft, which only staff can see.
+     */
+    private AnswerPost createAndSaveAnswerPost(String content, User botUser, Post originalPost, Double confidence) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent(content);
         answerPost.setAuthor(botUser);
         answerPost.setPost(originalPost);
         answerPost.setResolvesPost(false);
         answerPost.setConfidenceScore(confidence);
-        answerPost.setVerified(isVerified);
-        if (isVerified) {
-            // auto-verified answers are implicitly approved by the system, there is no human reviewer
-            answerPost.setVerifiedAt(ZonedDateTime.now());
-        }
+        answerPost.setVerified(false);
         AnswerPost savedAnswer = answerPostRepository.save(answerPost);
         savedAnswer.setAuthorRole(UserRole.USER);
         savedAnswer.setIsSaved(false);

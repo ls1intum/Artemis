@@ -250,15 +250,15 @@ public class UserOwnedContentDeletionService {
     }
 
     /**
-     * Outdates the Course Memory entries that hold the account's messages. A permanent deletion calls it before and again
-     * after it closes the account: if the deletion stops part of the way, the account stays closed with messages of an
-     * inactive author, and the nightly Course Memory sync retracts the entries that still contain them. The second call
-     * covers a rebuild that ran while the account was being closed and still saw it active.
+     * Deactivates the account in the same transaction that outdates the Course Memory entries holding its messages. If the
+     * deletion then stops part of the way, the account stays closed with messages of an inactive author, and the nightly
+     * Course Memory sync retracts the entries that still contain them.
      *
-     * @param userId the account being deleted
+     * @param userId       the account being deleted
+     * @param deactivation the deactivation; its repository call joins the transaction
      */
-    public void invalidateCourseMemoryOf(long userId) {
-        courseMemoryIngestionApi.ifPresent(api -> api.invalidateThreadsWithContentBy(userId));
+    public void deactivateAndInvalidateCourseMemory(long userId, Runnable deactivation) {
+        courseMemoryIngestionApi.ifPresentOrElse(api -> api.changeAccountAndInvalidate(userId, deactivation), deactivation);
     }
 
     /**

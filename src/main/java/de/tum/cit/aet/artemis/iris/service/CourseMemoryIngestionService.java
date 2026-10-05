@@ -259,15 +259,16 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Bumps the version of every thread with a Course Memory version that contains content by the given user. Called
-     * before an opt-out from AI or a deactivation is recorded, so the entries holding that content become outdated in the
-     * same moment; a refresh that never runs leaves them for the nightly sync to retract.
+     * Applies an account change that takes the user's messages out of Course Memory and bumps the version of every thread
+     * with a Course Memory version that contains content by the user, in one transaction. A refresh that never runs leaves
+     * the outdated entries for the nightly sync to retract.
      *
-     * @param userId the user
+     * @param userId        the user
+     * @param accountChange the account change; runs inside the transaction
      * @return the affected threads' root post ids
      */
-    public List<Long> invalidateThreadsWithContentBy(long userId) {
-        return conversationMessageRepository.invalidateCourseMemoryOfThreadsWithContentBy(userId);
+    public List<Long> changeAccountAndInvalidate(long userId, Runnable accountChange) {
+        return conversationMessageRepository.changeAccountAndInvalidateCourseMemory(userId, accountChange);
     }
 
     /**

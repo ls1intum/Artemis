@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.PatternSyntaxException;
 
 import org.jspecify.annotations.NonNull;
@@ -319,13 +320,7 @@ public class UserCreationService {
 
         log.debug("Changed Information for User: {}", user);
 
-        // A deactivated account's messages are redacted from Course Memory: outdate the entries holding them before and
-        // after the deactivation commits, then rebuild them.
-        List<Long> courseMemoryThreads = isBeingDeactivated ? invalidateCourseMemoryOf(user) : List.of();
-        User savedUser = saveUser(user);
-        if (isBeingDeactivated) {
-            invalidateAgainAndRefreshCourseMemory(user, courseMemoryThreads);
-        }
+        User savedUser = isBeingDeactivated ? saveDeactivatedUser(user) : saveUser(user);
         if (credentialsChanged) {
             // Stops sessions established before this change from being extended any further. Stamped after the save so it
             // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.
@@ -422,12 +417,8 @@ public class UserCreationService {
      * @param user the user that should be deactivated
      */
     public void deactivateUser(User user) {
-        // A deactivated account's messages are redacted from Course Memory: outdate the entries holding them before and
-        // after the deactivation commits, then rebuild them.
-        List<Long> courseMemoryThreads = invalidateCourseMemoryOf(user);
         user.setActivated(false);
-        saveUser(user);
-        invalidateAgainAndRefreshCourseMemory(user, courseMemoryThreads);
+        saveDeactivatedUser(user);
         // Stops sessions established before the deactivation from being extended any further.
         userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
@@ -443,21 +434,19 @@ public class UserCreationService {
         log.info("Deactivated user: {}", user);
     }
 
-    private List<Long> invalidateCourseMemoryOf(User user) {
-        return courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of());
-    }
-
     /**
-     * Outdates the entries again once the account change has committed, then rebuilds them. A refresh that ran between the
-     * first bump and the commit read the old account state; its entry now has an older version than Artemis, so the
-     * nightly sync retracts it even if the rebuild never runs.
+     * Saves an account that is being deactivated. A deactivated account's messages are redacted from Course Memory, so the
+     * save commits together with outdating the entries that hold them; those entries are then rebuilt without them.
      */
-    private void invalidateAgainAndRefreshCourseMemory(User user, List<Long> threadsBefore) {
-        courseMemoryIngestionApi.ifPresent(api -> {
-            Set<Long> threads = new HashSet<>(threadsBefore);
-            threads.addAll(api.invalidateThreadsWithContentBy(user.getId()));
-            api.refreshThreadsInBackground(threads);
-        });
+    private User saveDeactivatedUser(User user) {
+        if (courseMemoryIngestionApi.isEmpty()) {
+            return saveUser(user);
+        }
+        CourseMemoryIngestionApi api = courseMemoryIngestionApi.get();
+        AtomicReference<User> saved = new AtomicReference<>();
+        List<Long> courseMemoryThreads = api.changeAccountAndInvalidate(user.getId(), () -> saved.set(saveUser(user)));
+        api.refreshThreadsInBackground(courseMemoryThreads);
+        return saved.get();
     }
 
     /**

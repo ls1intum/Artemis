@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -12,12 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
 
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CommunicationDataCleanupRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -33,6 +38,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.CourseMemoryOperation;
 import de.tum.cit.aet.artemis.iris.domain.CourseMemoryStage;
@@ -110,6 +116,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private JsonMapper jsonMapper;
+
+    @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
 
     private Course course;
 
@@ -1362,7 +1371,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void invalidatingTheThreadsOfAUser_bumpsExactlyTheThreadsWithTheirContent() {
+    void anAccountChangeOfAUser_bumpsExactlyTheThreadsWithTheirContent() {
         Post withReply = createQuestion("Thread with a reply by student2");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         saveAnswer(withReply, student2, "Reply.", false);
@@ -1371,12 +1380,57 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         markAsStoredInCourseMemory(unrelated);
         long withReplyBefore = conversationMessageRepository.findCourseMemoryVersion(withReply.getId()).orElseThrow();
         long unrelatedBefore = conversationMessageRepository.findCourseMemoryVersion(unrelated.getId()).orElseThrow();
+        AtomicBoolean changed = new AtomicBoolean();
 
-        List<Long> affected = courseMemoryIngestionService.invalidateThreadsWithContentBy(student2.getId());
+        List<Long> affected = courseMemoryIngestionService.changeAccountAndInvalidate(student2.getId(), () -> changed.set(true));
 
+        assertThat(changed).isTrue();
         assertThat(affected).contains(withReply.getId()).doesNotContain(unrelated.getId());
         assertThat(conversationMessageRepository.findCourseMemoryVersion(withReply.getId()).orElseThrow()).isEqualTo(withReplyBefore + 1);
         assertThat(conversationMessageRepository.findCourseMemoryVersion(unrelated.getId()).orElseThrow()).isEqualTo(unrelatedBefore);
+    }
+
+    @Test
+    void anAccountChangeThatFails_leavesTheVersionsAsTheyWere() {
+        // The account change and the bump commit together or not at all: a bump without the change would only cost a
+        // rebuild, but a change without the bump could leave an entry built from the old account state at the latest version.
+        Post thread = createQuestion("Thread of student1");
+        markAsStoredInCourseMemory(thread);
+        long before = conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow();
+
+        assertThatThrownBy(() -> courseMemoryIngestionService.changeAccountAndInvalidate(student.getId(), () -> {
+            throw new IllegalStateException("account change failed");
+        })).hasMessageContaining("account change failed");
+
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "optingout", roles = "USER")
+    void optingOutOfAi_isRecordedTogetherWithTheBump() throws Exception {
+        // An account of its own: the shared test users have content in the threads of other tests, all of which an
+        // opt-out would rebuild in the background.
+        User optingOut = userUtilService.createAndSaveUser(TEST_PREFIX + "optingout");
+        userUtilService.clearAiSelectionDecision(optingOut);
+        Post thread = new Post();
+        thread.setAuthor(optingOut);
+        thread.setContent("Thread before the opt-out");
+        thread.setConversation(channel);
+        thread.setVisibleForStudents(true);
+        thread = conversationMessageRepository.save(thread);
+        markAsStoredInCourseMemory(thread);
+        long before = conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow();
+        // The rebuild runs in the background. The thread has no answer, so it retracts the entry; wait for it, so that it
+        // cannot reach the mocked Pyris during a later test.
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> retraction = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(retraction::set);
+
+        request.put("/api/account/users/select-llm-usage", new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI), HttpStatus.OK);
+
+        assertThat(userAiPreferenceService.findDecision(optingOut.getId())).isEqualTo(AiSelectionDecision.NO_AI);
+        await().until(() -> retraction.get() != null);
+        // Bumped together with the decision, then minted once more by the rebuild.
+        assertThat(retraction.get().version()).isGreaterThan(before + 1);
     }
 
     @Test

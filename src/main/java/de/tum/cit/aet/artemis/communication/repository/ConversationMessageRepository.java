@@ -244,18 +244,45 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     List<Long> findCourseMemoryThreadIdsWithContentBy(@Param("userId") long userId);
 
     /**
-     * Outdates the Course Memory entries of every thread that contains a message by the given user, in one transaction.
-     * Called before an opt-out from AI or a deactivation is recorded.
+     * Locks the root post row of every thread that contains a message by the given user, as root post or as answer,
+     * whether or not the thread has a Course Memory version, until the transaction ends.
      *
      * @param userId the user
-     * @return the affected threads' root post ids
+     * @return the threads' root post ids
      */
-    @Transactional // ok because the lookup and the version bump have to see the same threads
-    default List<Long> invalidateCourseMemoryOfThreadsWithContentBy(long userId) {
+    @Query(value = """
+            SELECT post.id
+            FROM post
+            WHERE post.id IN (
+                SELECT own.id FROM post own WHERE own.author_id = :userId
+                UNION
+                SELECT answer.post_id FROM answer_post answer WHERE answer.author_id = :userId
+            )
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<Long> lockThreadsWithContentBy(@Param("userId") long userId);
+
+    /**
+     * Applies an account change that takes the user's messages out of Course Memory (an opt-out from AI, a deactivation)
+     * and outdates the entries holding those messages, in one transaction.
+     * <p>
+     * Every thread with a message by the user is locked first, tracked or not. A rebuild mints its version on that row
+     * before it reads the thread, so a rebuild that starts now waits for this commit and then reads the changed account;
+     * one that minted before has a lower version than the bump below. Either way no entry built from the old account
+     * state keeps the thread's latest version, and the nightly sync retracts whatever a failed rebuild leaves behind.
+     *
+     * @param userId        the user
+     * @param accountChange the account change, run inside this transaction; its repository calls join it
+     * @return the root post ids of the threads that have a Course Memory version and were outdated
+     */
+    @Transactional // ok because the account change and the version bump have to commit together
+    default List<Long> changeAccountAndInvalidateCourseMemory(long userId, Runnable accountChange) {
+        lockThreadsWithContentBy(userId);
         List<Long> postIds = findCourseMemoryThreadIdsWithContentBy(userId);
         if (!postIds.isEmpty()) {
             bumpCourseMemoryVersions(postIds);
         }
+        accountChange.run();
         return postIds;
     }
 
