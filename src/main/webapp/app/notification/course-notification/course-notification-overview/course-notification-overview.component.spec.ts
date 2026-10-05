@@ -290,6 +290,7 @@ describe('CourseNotificationOverviewComponent', () => {
         componentAsAny.isShown.set(true);
         const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
         const menu = document.createElement('tumaet-ui-menu');
+        menu.setAttribute('data-notification-preset-menu', '');
         const menuEntry = document.createElement('button');
         menu.appendChild(menuEntry);
         document.body.appendChild(menu);
@@ -299,6 +300,21 @@ describe('CourseNotificationOverviewComponent', () => {
 
         expect(componentAsAny.isShown()).toBe(true);
         expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should hide overlay when clicking an entry of an unrelated menu outside the component', () => {
+        componentAsAny.isShown.set(true);
+        const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const otherMenu = document.createElement('tumaet-ui-menu');
+        const otherEntry = document.createElement('button');
+        otherMenu.appendChild(otherEntry);
+        document.body.appendChild(otherMenu);
+
+        componentAsAny.onClickOutside(otherEntry);
+        otherMenu.remove();
+
+        expect(componentAsAny.isShown()).toBe(false);
+        expect(updateSpy).toHaveBeenCalledOnce();
     });
 
     it('should hide overlay when clicking inside an unrelated overlay outside the component', () => {

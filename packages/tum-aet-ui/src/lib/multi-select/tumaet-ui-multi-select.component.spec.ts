@@ -6,6 +6,7 @@ import { DOWN_ARROW, END, HOME, UP_ARROW } from '@angular/cdk/keycodes';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { vi } from 'vitest';
 import { TumAetUiMultiSelectComponent } from './tumaet-ui-multi-select.component';
+import { TumAetUiFormFieldComponent } from '../form-field/tumaet-ui-form-field.component';
 
 interface Option {
     label: string;
@@ -142,6 +143,49 @@ describe('TumAetUiMultiSelectComponent', () => {
         expect(onChange).not.toHaveBeenCalled();
     });
 
+    it('keeps focus on the trigger when an option is pressed, so the keyboard keeps working after a mouse selection', () => {
+        const onChange = vi.fn();
+        component.registerOnChange(onChange);
+        openPanel();
+
+        const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        options()[0].dispatchEvent(mousedown);
+        options()[0].click();
+        fixture.detectChanges();
+        expect(mousedown.defaultPrevented).toBe(true);
+
+        press('ArrowDown');
+        press(' ');
+        expect(onChange).toHaveBeenLastCalledWith(['a', 'b']);
+
+        press('Tab');
+        expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('reports the control as touched when focus leaves it without the panel ever opening', () => {
+        const onTouched = vi.fn();
+        component.registerOnTouched(onTouched);
+
+        trigger().dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+
+        expect(onTouched).toHaveBeenCalledOnce();
+    });
+
+    it('does not report touched while the panel is open or when focus moves within the control', () => {
+        const onTouched = vi.fn();
+        component.registerOnTouched(onTouched);
+
+        trigger().dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: trigger() }));
+        expect(onTouched).not.toHaveBeenCalled();
+
+        openPanel();
+        trigger().dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+        expect(onTouched).not.toHaveBeenCalled();
+
+        press('Escape');
+        expect(onTouched).toHaveBeenCalledOnce();
+    });
+
     it('does not open when disabled', () => {
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
@@ -255,5 +299,61 @@ describe('TumAetUiMultiSelectComponent templates and forms', () => {
         fixture.detectChanges();
         expect(trigger().getAttribute('aria-expanded')).toBe('false');
         expect(trigger().getAttribute('aria-disabled')).toBe('true');
+    });
+});
+
+@Component({
+    imports: [TumAetUiMultiSelectComponent, TumAetUiFormFieldComponent, ReactiveFormsModule],
+    template: `
+        <tumaet-ui-form-field label="Letters">
+            <tumaet-ui-multi-select [options]="options" optionLabel="label" optionValue="value" [formControl]="control" [inputId]="inputId()" [ariaLabel]="ariaLabel()" />
+        </tumaet-ui-form-field>
+    `,
+})
+class FormFieldHostComponent {
+    readonly options = OPTIONS;
+    readonly control = new FormControl<string[]>([]);
+    readonly inputId = signal<string | undefined>(undefined);
+    readonly ariaLabel = signal<string | undefined>(undefined);
+}
+
+describe('TumAetUiMultiSelectComponent in a form field', () => {
+    let fixture: ComponentFixture<FormFieldHostComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [FormFieldHostComponent, FontAwesomeTestingModule] }).compileComponents();
+        fixture = TestBed.createComponent(FormFieldHostComponent);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => fixture.destroy());
+
+    const trigger = () => fixture.debugElement.query(By.css('[role="combobox"]')).nativeElement as HTMLElement;
+    const label = () => fixture.debugElement.query(By.css('label')).nativeElement as HTMLLabelElement;
+
+    it('names the trigger by the label of the field', () => {
+        expect(label().id).toBeTruthy();
+        expect(trigger().getAttribute('aria-labelledby')).toBe(label().id);
+        expect(label().getAttribute('for')).toBe(trigger().id);
+    });
+
+    it('names the trigger by the label of the field when it has an input id of its own', () => {
+        fixture.componentInstance.inputId.set('my-letters');
+        fixture.detectChanges();
+        expect(trigger().id).toBe('my-letters');
+        expect(label().getAttribute('for')).toBe('my-letters');
+        expect(trigger().getAttribute('aria-labelledby')).toBe(label().id);
+    });
+
+    it('prefers an explicit aria label over the label of the field', () => {
+        fixture.componentInstance.ariaLabel.set('Letters');
+        fixture.detectChanges();
+        expect(trigger().getAttribute('aria-labelledby')).toBeNull();
+        expect(trigger().getAttribute('aria-label')).toBe('Letters');
+    });
+
+    it('focuses the trigger when the label is clicked', () => {
+        label().click();
+        expect(document.activeElement).toBe(trigger());
     });
 });

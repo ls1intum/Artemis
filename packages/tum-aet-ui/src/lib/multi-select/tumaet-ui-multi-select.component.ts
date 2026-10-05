@@ -116,6 +116,8 @@ export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
 
     private readonly fallbackInputId = `tumaet-ui-multi-select-${nextMultiSelectId++}`;
     protected readonly resolvedInputId = computed(() => this.formField?.explicitControlId() ?? this.inputId() ?? this.formField?.labelTargetId() ?? this.fallbackInputId);
+    /** The label of an enclosing form field names the trigger, unless the consumer gave it an `ariaLabel` of its own. */
+    protected readonly labelledBy = computed(() => (this.ariaLabel() ? null : (this.formField?.labelId() ?? null)));
     protected readonly describedBy = computed(() => this.formField?.describedBy() ?? null);
     protected readonly isInvalid = computed(() => this.formField?.invalid() ?? false);
     protected readonly listboxId = `tumaet-ui-multi-select-listbox-${nextMultiSelectId++}`;
@@ -148,6 +150,13 @@ export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
     private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd();
 
     constructor() {
+        // Tell an enclosing field which id to label whenever this control was given one of its own.
+        effect(() => {
+            const ownId = this.inputId();
+            if (ownId) {
+                this.formField?.adoptControlId(ownId);
+            }
+        });
         this.destroyRef.onDestroy(() => {
             this.overlayRef?.dispose();
             this.keyManager.destroy();
@@ -254,6 +263,19 @@ export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
         if (restoreFocus && !this.isDisabled()) {
             this.trigger().nativeElement.focus();
         }
+    }
+
+    /**
+     * Reports the control as touched when focus leaves it for good. While the panel is open, focus staying on the
+     * trigger or moving into the panel is not leaving; closing the panel reports touched itself.
+     */
+    protected onTriggerFocusOut(event: FocusEvent): void {
+        const next = event.relatedTarget;
+        const trigger = this.trigger().nativeElement;
+        if (this.isOpen() || (next instanceof Node && trigger.contains(next))) {
+            return;
+        }
+        this.onTouchedCallback();
     }
 
     protected toggleOption(option: unknown): void {

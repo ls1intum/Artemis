@@ -13,11 +13,13 @@
         [attr.aria-controls]="isOpen() ? listboxId : null"
         [attr.aria-activedescendant]="isOpen() ? activeOptionId() : null"
         [attr.aria-label]="ariaLabel()"
+        [attr.aria-labelledby]="labelledBy()"
         [attr.aria-describedby]="describedBy()"
         [attr.aria-invalid]="isInvalid() ? 'true' : null"
         [attr.aria-required]="required() ? 'true' : null"
         (click)="toggle()"
         (keydown)="onTriggerKeydown($event)"
+        (focusout)="onTriggerFocusOut($event)"
     >
         @if (selectedItemsTemplate(); as template) {
             <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: selectedOptions() }" />
@@ -58,6 +60,7 @@
                     [attr.aria-selected]="isSelected(option) ? 'true' : 'false'"
                     [class]="optionClasses(i)"
                     tabindex="-1"
+                    (mousedown)="$event.preventDefault()"
                     (click)="toggleOption(option)"
                     (keydown.enter)="toggleOption(option)"
                     (mouseenter)="setActive(i)"

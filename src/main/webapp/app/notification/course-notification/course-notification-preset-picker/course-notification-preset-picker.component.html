@@ -18,7 +18,11 @@
 </div>
 
 <ng-template #presetMenu>
-    <tumaet-ui-menu class="max-h-88 w-72 max-w-[calc(100vw-2rem)] overflow-y-auto" [attr.aria-label]="'artemisApp.courseNotification.preset.dropdown' | artemisTranslate">
+    <tumaet-ui-menu
+        data-notification-preset-menu
+        class="max-h-88 w-72 max-w-[calc(100vw-2rem)] overflow-y-auto"
+        [attr.aria-label]="'artemisApp.courseNotification.preset.dropdown' | artemisTranslate"
+    >
         @for (preset of availableCourseSettingPresets(); track preset) {
             <button
                 type="button"
