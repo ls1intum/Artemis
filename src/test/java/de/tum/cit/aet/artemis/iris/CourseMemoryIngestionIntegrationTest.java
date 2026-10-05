@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.client.ExpectedCount;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CommunicationDataCleanupRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -105,6 +107,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private CommunicationDataCleanupRepository communicationDataCleanupRepository;
+
+    @Autowired
+    private JsonMapper jsonMapper;
 
     private Course course;
 
@@ -1192,6 +1197,36 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(captured.get().version()).isEqualTo(Long.MAX_VALUE);
     }
 
+    @Test
+    void deletingATrackedThread_retractsItWithTheFinalVersion() {
+        Post post = createQuestion("Delete me once I am stored.");
+        markAsStoredInCourseMemory(post);
+
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
+
+        userUtilService.changeUser(student.getLogin());
+        conversationMessagingService.deleteMessageById(course.getId(), post.getId());
+
+        assertThat(conversationMessageRepository.findById(post.getId())).isEmpty();
+        assertThat(captured.get().postId()).isEqualTo(String.valueOf(post.getId()));
+        assertThat(captured.get().version()).isEqualTo(Long.MAX_VALUE);
+    }
+
+    @Test
+    void deletingAThreadThatWasNeverStored_doesNotCallPyris() {
+        Post post = createQuestion("Never stored, deleted quietly.");
+
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set, ExpectedCount.max(1));
+
+        userUtilService.changeUser(student.getLogin());
+        conversationMessagingService.deleteMessageById(course.getId(), post.getId());
+
+        assertThat(conversationMessageRepository.findById(post.getId())).isEmpty();
+        assertThat(captured.get()).isNull();
+    }
+
     // --- Readable channels, privacy and the nightly sync ---
 
     @Test
@@ -1375,16 +1410,46 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         markAsStoredInCourseMemory(hidden);
 
         List<PyrisCourseMemoryCourseSyncDTO> courseSyncs = new ArrayList<>();
-        AtomicReference<PyrisCourseMemoryInstanceSyncDTO> instanceSync = new AtomicReference<>();
+        AtomicReference<String> instanceSync = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryInstanceSyncResponse(instanceSync::set);
         irisRequestMockProvider.mockCourseMemoryCourseSyncResponse(courseSyncs::add);
 
         courseMemorySyncService.syncCourseMemory();
 
-        assertThat(instanceSync.get().courseIds()).contains(course.getId());
+        var sent = jsonMapper.readValue(instanceSync.get(), PyrisCourseMemoryInstanceSyncDTO.class);
+        assertThat(sent.courseIds()).contains(course.getId());
+        assertThat(sent.courseIdsWithThreads()).contains(course.getId());
         var mine = courseSyncs.stream().filter(sync -> sync.courseId() == course.getId()).findFirst().orElseThrow();
         assertThat(mine.threads()).contains(
                 new PyrisCourseMemorySyncThreadDTO(readable.getId(), conversationMessageRepository.findCourseMemoryVersion(readable.getId()).orElseThrow(), true),
                 new PyrisCourseMemorySyncThreadDTO(hidden.getId(), conversationMessageRepository.findCourseMemoryVersion(hidden.getId()).orElseThrow(), false));
+    }
+
+    @Test
+    void nightlySync_aCourseWhoseLastThreadIsGoneIsLeftToTheInstanceSync() {
+        Post thread = createQuestion("Thread that will be deleted");
+        markAsStoredInCourseMemory(thread);
+        conversationMessageRepository.deleteById(thread.getId());
+
+        List<PyrisCourseMemoryCourseSyncDTO> courseSyncs = new ArrayList<>();
+        AtomicReference<String> instanceSync = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryInstanceSyncResponse(instanceSync::set);
+        irisRequestMockProvider.mockCourseMemoryCourseSyncResponse(courseSyncs::add);
+
+        courseMemorySyncService.syncCourseMemory();
+
+        // Pyris retracts the entries of an existing course without threads itself; no course sync is sent for it.
+        var sent = jsonMapper.readValue(instanceSync.get(), PyrisCourseMemoryInstanceSyncDTO.class);
+        assertThat(sent.courseIds()).contains(course.getId());
+        assertThat(sent.courseIdsWithThreads()).doesNotContain(course.getId());
+        assertThat(courseSyncs).noneMatch(sync -> sync.courseId() == course.getId());
+    }
+
+    @Test
+    void nightlySync_sendsBothCourseListsEvenWhenEmpty() {
+        // Pyris requires both lists: one that went missing must never read as "no courses". NON_EMPTY would drop them.
+        String json = jsonMapper.writeValueAsString(new PyrisCourseMemoryInstanceSyncDTO(null, "2026-10-05T03:00:00Z", List.of(), List.of()));
+
+        assertThat(json).contains("\"courseIds\":[]").contains("\"courseIdsWithThreads\":[]");
     }
 }

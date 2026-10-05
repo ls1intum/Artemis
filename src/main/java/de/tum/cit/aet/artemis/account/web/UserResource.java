@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.account.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -175,13 +177,22 @@ public class UserResource {
             throw new IllegalArgumentException("LLM selection decision cannot be null");
         }
         AiSelectionDecision before = userAiPreferenceService.findDecision(user.getId());
-        // Opting out of AI: the Course Memory entries holding this user's messages are outdated before the decision is
-        // recorded, so an entry built from their text cannot outlive the opt-out even if the rebuild below never runs.
-        List<Long> courseMemoryThreads = selectedLLMUsage == AiSelectionDecision.NO_AI && before != AiSelectionDecision.NO_AI
-                ? courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of())
-                : List.of();
+        boolean optsOut = selectedLLMUsage == AiSelectionDecision.NO_AI && before != AiSelectionDecision.NO_AI;
+        // Opting out of AI: the Course Memory entries holding this user's messages are outdated before and again after the
+        // decision is recorded. Before: an entry cannot outlive the opt-out if the server stops right after recording it.
+        // After: a refresh running in between read the old decision, and its entry now has an older version than Artemis,
+        // so the nightly sync retracts it even if the rebuild below never runs.
+        Set<Long> courseMemoryThreads = new HashSet<>();
+        if (optsOut) {
+            courseMemoryIngestionApi.ifPresent(api -> courseMemoryThreads.addAll(api.invalidateThreadsWithContentBy(user.getId())));
+        }
         userAiPreferenceService.recordDecision(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
-        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
+        if (optsOut) {
+            courseMemoryIngestionApi.ifPresent(api -> {
+                courseMemoryThreads.addAll(api.invalidateThreadsWithContentBy(user.getId()));
+                api.refreshThreadsInBackground(courseMemoryThreads);
+            });
+        }
         var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.ok().build();

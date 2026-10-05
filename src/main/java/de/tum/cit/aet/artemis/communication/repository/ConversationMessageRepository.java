@@ -168,6 +168,30 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     }
 
     /**
+     * Reads a thread's Course Memory version and locks its row until the transaction ends.
+     *
+     * @param postId the id of the thread's root post
+     * @return the version, or empty if the post does not exist
+     */
+    @Query(value = "SELECT course_memory_version FROM post WHERE id = :postId FOR UPDATE", nativeQuery = true)
+    Optional<Long> lockCourseMemoryVersion(@Param("postId") long postId);
+
+    /**
+     * Deletes a thread and returns the Course Memory version it had. The row stays locked from the read to the deletion,
+     * so a version minted concurrently is either seen here or never minted at all (the mint waits for the lock and then
+     * finds no row). A caller that sees 0 can therefore skip the retraction: no entry can exist or appear.
+     *
+     * @param postId the id of the thread's root post
+     * @return the thread's Course Memory version before the deletion, 0 if it never had one
+     */
+    @Transactional // ok because the version has to be read under the same row lock as the deletion
+    default long deleteAndReturnCourseMemoryVersion(long postId) {
+        long version = lockCourseMemoryVersion(postId).orElse(0L);
+        deleteById(postId);
+        return version;
+    }
+
+    /**
      * Bumps a thread's Course Memory version if the thread has one, i.e. if anything was ever dispatched for it. Used in the
      * same transaction as a change to the thread's content, so the entry Pyris holds is outdated the moment the change
      * commits; if the refresh that follows never reaches Pyris, the nightly sync retracts the entry.

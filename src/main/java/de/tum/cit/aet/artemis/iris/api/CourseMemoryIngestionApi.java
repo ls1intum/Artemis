@@ -66,8 +66,8 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
     }
 
     /**
-     * Outdates the entries of every thread with content by the user. Call it before an opt-out from AI or a deactivation
-     * is recorded, then pass the result to {@link #refreshThreadsInBackground} once it is.
+     * Outdates the entries of every thread with content by the user. Call it before and again after an opt-out from AI
+     * or a deactivation is recorded, then pass both results to {@link #refreshThreadsInBackground}.
      *
      * @param userId the user
      * @return the affected threads' root post ids

@@ -152,7 +152,7 @@ public class AutonomousTutorService {
         boolean isVerified = confidence >= AUTO_VERIFY_CONFIDENCE_THRESHOLD && courseMemorySourcesReadable(statusUpdate, course.getId());
 
         AnswerPost answerPost = createAndSaveAnswerPost(statusUpdate.result(), botUser, originalPost, confidence, isVerified);
-        if (isVerified && !courseMemorySourcesReadable(statusUpdate, course.getId())) {
+        if (isVerified && !courseMemorySourcesStillReadable(statusUpdate, course.getId(), answerPost.getId())) {
             answerPost.setVerified(false);
             answerPost.setVerifiedAt(null);
             answerPost = answerPostRepository.save(answerPost);
@@ -190,6 +190,20 @@ public class AutonomousTutorService {
             return true;
         }
         return channelRepository.findIdsOfChannelsReadableByAllStudents(courseId, ZonedDateTime.now()).containsAll(used);
+    }
+
+    /**
+     * The check after saving. The answer is already published at this point, so a failed check counts as "not readable"
+     * and sends the answer back to review instead of leaving it published.
+     */
+    private boolean courseMemorySourcesStillReadable(PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate, long courseId, long answerPostId) {
+        try {
+            return courseMemorySourcesReadable(statusUpdate, courseId);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not check the Course Memory sources of autonomous tutor answer {} again; holding it for review", answerPostId, e);
+            return false;
+        }
     }
 
     private void ensureBotIsParticipant(User botUser, Conversation conversation) {

@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * Nightly backstop for Course Memory: tells Pyris, per course, which threads may have an entry and at which version, and
- * which courses still exist. Pyris retracts every entry that missed an update (its version is older), whose thread may no
- * longer be stored, or whose thread or course was deleted.
+ * which courses still exist and which of them have such threads. Pyris retracts every entry that missed an update (its
+ * version is older), whose thread may no longer be stored, or whose thread or course was deleted.
  * <p>
  * Everything Artemis dispatches right away when something changes is best-effort: a Pyris outage, a crash or a lost
  * callback can leave an entry that should be gone. Every such change bumps the thread's version in the same transaction as
@@ -83,9 +83,11 @@ public class CourseMemorySyncService {
         ZonedDateTime snapshotAt = ZonedDateTime.now();
         String snapshot = snapshotAt.toInstant().toString();
 
-        pyrisConnectorService.executeCourseMemoryInstanceSync(new PyrisCourseMemoryInstanceSyncDTO(settings(), snapshot, List.copyOf(courseRepository.findAllCourseIds())));
-
+        // Read before the instance sync is sent: Pyris cleans up every existing course not in this list itself.
         Set<Long> courseIds = conversationMessageRepository.findCourseIdsWithCourseMemory();
+        pyrisConnectorService.executeCourseMemoryInstanceSync(
+                new PyrisCourseMemoryInstanceSyncDTO(settings(), snapshot, List.copyOf(courseRepository.findAllCourseIds()), List.copyOf(courseIds)));
+
         for (long courseId : courseIds) {
             try {
                 syncCourse(courseId, snapshotAt, snapshot);

@@ -319,11 +319,13 @@ public class UserCreationService {
 
         log.debug("Changed Information for User: {}", user);
 
-        // A deactivated account's messages are redacted from Course Memory: outdate the entries holding them before the
-        // deactivation commits, rebuild them once it has.
+        // A deactivated account's messages are redacted from Course Memory: outdate the entries holding them before and
+        // after the deactivation commits, then rebuild them.
         List<Long> courseMemoryThreads = isBeingDeactivated ? invalidateCourseMemoryOf(user) : List.of();
         User savedUser = saveUser(user);
-        refreshCourseMemory(courseMemoryThreads);
+        if (isBeingDeactivated) {
+            invalidateAgainAndRefreshCourseMemory(user, courseMemoryThreads);
+        }
         if (credentialsChanged) {
             // Stops sessions established before this change from being extended any further. Stamped after the save so it
             // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.
@@ -420,12 +422,12 @@ public class UserCreationService {
      * @param user the user that should be deactivated
      */
     public void deactivateUser(User user) {
-        // A deactivated account's messages are redacted from Course Memory: outdate the entries holding them before the
-        // deactivation commits, rebuild them once it has.
+        // A deactivated account's messages are redacted from Course Memory: outdate the entries holding them before and
+        // after the deactivation commits, then rebuild them.
         List<Long> courseMemoryThreads = invalidateCourseMemoryOf(user);
         user.setActivated(false);
         saveUser(user);
-        refreshCourseMemory(courseMemoryThreads);
+        invalidateAgainAndRefreshCourseMemory(user, courseMemoryThreads);
         // Stops sessions established before the deactivation from being extended any further.
         userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
@@ -445,8 +447,17 @@ public class UserCreationService {
         return courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of());
     }
 
-    private void refreshCourseMemory(List<Long> threads) {
-        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(threads));
+    /**
+     * Outdates the entries again once the account change has committed, then rebuilds them. A refresh that ran between the
+     * first bump and the commit read the old account state; its entry now has an older version than Artemis, so the
+     * nightly sync retracts it even if the rebuild never runs.
+     */
+    private void invalidateAgainAndRefreshCourseMemory(User user, List<Long> threadsBefore) {
+        courseMemoryIngestionApi.ifPresent(api -> {
+            Set<Long> threads = new HashSet<>(threadsBefore);
+            threads.addAll(api.invalidateThreadsWithContentBy(user.getId()));
+            api.refreshThreadsInBackground(threads);
+        });
     }
 
     /**

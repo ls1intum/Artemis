@@ -349,10 +349,11 @@ public class AnswerMessageService extends PostingService {
         updatedMessage.removeAnswerPost(answerMessage);
         updatedMessage.setResolved(updatedMessage.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
         updatedMessage.setConversation(conversation);
-        // update on the message properties
-        conversationMessageRepository.save(updatedMessage);
+        // Update on the message properties. Saving the message already deletes the removed answer (orphan removal), so
+        // the thread's Course Memory version is bumped in the same transaction: the entry may contain this answer's text.
+        conversationMessageRepository.saveAndInvalidateCourseMemory(updatedMessage);
 
-        // delete, together with a bump of the thread's Course Memory version: the entry may contain this answer's text
+        // delete explicitly as well, in case the answer was not part of the loaded message
         answerPostRepository.deleteAndInvalidateCourseMemory(answerMessageId, updatedMessage.getId());
         refreshCourseMemory(updatedMessage.getId(), user, course, false);
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerMessageId));

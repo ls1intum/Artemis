@@ -408,9 +408,9 @@ public class ConversationMessagingService extends PostingService {
         post.setConversation(conversation);
 
         // delete
-        // Read before the row is gone: only a thread that ever had a Course Memory operation can have an entry.
-        boolean hadCourseMemory = conversationMessageRepository.findCourseMemoryVersion(postId).orElse(0L) > 0;
-        conversationMessageRepository.deleteById(postId);
+        // Only a thread that ever had a Course Memory operation can have an entry. Read under the same row lock as the
+        // deletion, so a first operation that starts concurrently cannot slip in between.
+        boolean hadCourseMemory = conversationMessageRepository.deleteAndReturnCourseMemoryVersion(postId) > 0;
         // The thread is gone, so its Course Memory entry must go too. Right after the deletion, before the work below
         // that can fail; the nightly Course Memory sync retracts it if this does not get through.
         try {

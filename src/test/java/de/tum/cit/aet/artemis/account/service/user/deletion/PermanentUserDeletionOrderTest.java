@@ -116,6 +116,21 @@ class PermanentUserDeletionOrderTest {
     }
 
     @Test
+    void courseMemoryIsOutdatedAroundClosingTheAccountEvenWhenTheDeletionCannotFinish() {
+        // Closing makes the account an inactive author, whose messages Course Memory must not keep. If the deletion then
+        // stops, nothing else outdates the entries, so this has to happen before and after the account is closed.
+        doThrow(new IllegalStateException("something went wrong halfway through")).when(userOwnedContentDeletionService).deleteTeams(anyLong());
+
+        catchThrowable(() -> permanentUserDeletionService.deleteByAdmin(USER_ID, FINGERPRINT, "an-admin"));
+
+        InOrder order = inOrder(userRepository, userOwnedContentDeletionService);
+        order.verify(userOwnedContentDeletionService).invalidateCourseMemoryOf(USER_ID);
+        order.verify(userRepository).deactivateForDeletion(USER_ID);
+        order.verify(userOwnedContentDeletionService).invalidateCourseMemoryOf(USER_ID);
+        order.verify(userOwnedContentDeletionService).deleteTeams(USER_ID);
+    }
+
+    @Test
     void aProtectedAccountIsNeverEvenClosed() {
         user.setLogin("the-admin");
 
