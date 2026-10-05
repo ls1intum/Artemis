@@ -1450,9 +1450,9 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.isResidueOutsideCanonicalRoot("R/column_sums.R")).isFalse();
     }
 
-    /** The Gradle harness Artemis actually ships, not a replica. */
+    /** The preserved Ares 1 harness used by the legacy annotation cases. */
     private static String aresBuildGradle() {
-        return classpathResource("templates/java/test/gradle/projectTemplate/build.gradle");
+        return classpathResource("hyperion/legacy-ares1-build.gradle");
     }
 
     private static String classpathResource(String path) {

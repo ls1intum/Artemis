@@ -44,6 +44,9 @@ final class SandboxPathPolicy {
         for (String repository : List.of("solution/", "template/", "tests/")) {
             if (path.startsWith(repository)) {
                 String repositoryPath = path.substring(repository.length());
+                if (path.equals("tests/SecurityPolicy.yaml")) {
+                    return false; // Only the instructor test-class list may change; final verification checks the rest against the seed.
+                }
                 return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || repositoryPath.startsWith(".mvn/") || repositoryPath.startsWith(".m2/")
                         || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath);
             }
@@ -90,7 +93,7 @@ final class SandboxPathPolicy {
 
     static String dependencyArtifactsError() {
         return "exit=2\nThe dependency cache and dependency JARs are not inspectable: the build is offline and the test harness is immutable, so nothing in there is actionable. "
-                + "The Ares and JUnit API to use (@Public, @WhitelistPath, @BlacklistPath, @StrictTimeout, ReflectionTestUtils) is stated in your instructions and shown in "
+                + "The Ares and JUnit API to use (@Public, @Policy, @StrictTimeout, ReflectionTestUtils) is stated in your instructions and shown in "
                 + "reference/style/tests.md. Write the tests against that contract instead.";
     }
 

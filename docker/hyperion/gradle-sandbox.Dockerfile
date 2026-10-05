@@ -1,5 +1,5 @@
 # Build from the repository root. The base and the canonical harness pin the JDK, wrapper and dependencies.
-ARG JAVA_IMAGE=eclipse-temurin:17-jdk@sha256:a27c79d44326d5f689668df5fedfee487652066d2a91e172747056cc7fbee6fc
+ARG JAVA_IMAGE=eclipse-temurin:25.0.3_9-jdk@sha256:32861ec22e54af9597a3875c69001f57c0954648f5e3fcb6be601b4e35290ab5
 FROM ${JAVA_IMAGE}
 
 COPY src/main/resources/templates/java/test/gradle/projectTemplate/ /opt/cache-fixture/
@@ -7,7 +7,7 @@ COPY src/main/resources/templates/hyperion/readiness/java/solution/ /opt/cache-f
 COPY src/main/resources/templates/hyperion/readiness/java/tests/behavior/ /opt/cache-fixture/test/
 COPY src/main/resources/templates/hyperion/readiness/java/tests/structural/ /opt/cache-fixture/test/
 WORKDIR /opt/cache-fixture
-ENV JAVA_TOOL_OPTIONS="-Djava.security.manager=allow"
+COPY src/main/resources/templates/hyperion/readiness/java/tests/SecurityPolicy.yaml /opt/cache-fixture/SecurityPolicy.yaml
 
 # Render the supported non-SCA, non-sequential, public-repository template, just as exercise creation does.
 # Keep Teamscale and all canonical dependency versions: an offline cache is not a different grading harness.

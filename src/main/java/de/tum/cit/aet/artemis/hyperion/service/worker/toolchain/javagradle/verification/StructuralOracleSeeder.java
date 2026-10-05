@@ -199,6 +199,14 @@ public class StructuralOracleSeeder {
             }
             Map<String, String> workspaceFiles = new LinkedHashMap<>();
             structuralFiles.forEach((path, content) -> workspaceFiles.put(GenerationWorkspace.directoryFor(RepositoryRole.TESTS) + "/" + path, content));
+            Map<String, String> registeredTests = new LinkedHashMap<>(testFiles);
+            String registeredDirectory = testDirectory;
+            registeredTests.entrySet().removeIf(entry -> directory(entry.getKey()).equals(registeredDirectory) && isRecognizedStructuralAsset(entry.getKey(), entry.getValue()));
+            registeredTests.putAll(structuralFiles);
+            String policy = AresSecurityPolicy.registerTestClasses(registeredTests);
+            if (policy != null) {
+                workspaceFiles.put("tests/" + AresSecurityPolicy.PATH, policy);
+            }
             sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(workspaceFiles, Map.of()));
             Set<String> seededTestNames = structuralTestNames(oracle);
             List<String> missingExpectedTypes = expectedStudentCreatedTypes.stream().filter(type -> !seededTestNames.contains("testClass[" + type + "]")).sorted().toList();

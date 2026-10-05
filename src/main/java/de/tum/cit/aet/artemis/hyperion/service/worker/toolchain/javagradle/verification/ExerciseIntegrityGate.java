@@ -35,10 +35,6 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
  */
 public final class ExerciseIntegrityGate {
 
-    private static final Pattern ARES_SANDBOX_DEPENDENCY = Pattern.compile("(?m)^\\s*(?:testImplementation|implementation)\\s+['\"]de\\.tum\\.in\\.ase:artemis-java-test-sandbox:");
-
-    private static final Pattern FORBIDDEN_PACKAGE_FOLDERS = Pattern.compile("(?m)^\\s*def\\s+forbiddenPackageFolders\\s*=");
-
     private static final Pattern JAVA_IDENTIFIER = Pattern.compile("[A-Za-z_$][A-Za-z0-9_$]*");
 
     private static final Pattern SEAM_ID = Pattern.compile("S[1-9][0-9]*");
@@ -60,10 +56,11 @@ public final class ExerciseIntegrityGate {
     /**
      * Exact basenames of build/harness/manifest files in the tests repository, graded verbatim in production so the agent must not change them. Matched case-insensitively.
      */
-    private static final Set<String> HARNESS_FILE_NAMES = Set.of("pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties",
-            "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "tsconfig.json", "jest.config.js", "jest.config.ts", "cargo.toml", "cargo.lock", "cabal.project",
-            "stack.yaml", "stack.yaml.lock", "dune", "dune-project", "rakefile", "gemfile", "gemfile.lock", "pubspec.yaml", "pubspec.lock", "go.mod", "go.sum", "package.swift",
-            "cmakelists.txt", "tests.py", "run.sh", "build.sh", "makefile", "description", "namespace", "assignment_path.rb", "test_helper.rb", ".clang-format");
+    private static final Set<String> HARNESS_FILE_NAMES = Set.of("securitypolicy.yaml", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts",
+            "gradle.properties", "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "tsconfig.json", "jest.config.js", "jest.config.ts", "cargo.toml",
+            "cargo.lock", "cabal.project", "stack.yaml", "stack.yaml.lock", "dune", "dune-project", "rakefile", "gemfile", "gemfile.lock", "pubspec.yaml", "pubspec.lock", "go.mod",
+            "go.sum", "package.swift", "cmakelists.txt", "tests.py", "run.sh", "build.sh", "makefile", "description", "namespace", "assignment_path.rb", "test_helper.rb",
+            ".clang-format");
 
     /** Filename suffixes that always denote a build/harness/manifest file regardless of basename. Matched case-insensitively. */
     private static final List<String> HARNESS_FILE_SUFFIXES = List.of(".cabal", ".csproj", ".fsproj", ".vbproj", ".sln");
@@ -165,6 +162,9 @@ public final class ExerciseIntegrityGate {
             String produced = producedFiles == null ? null : producedFiles.get(path);
             if (produced == null) {
                 reasons.add("you deleted the seeded harness file " + repository + "/" + path + "; restore it unchanged.");
+                continue;
+            }
+            if (repository.equals("tests") && path.equals(AresSecurityPolicy.PATH) && AresSecurityPolicy.onlyTestClassesChanged(seed.getValue(), produced)) {
                 continue;
             }
             List<String> seedNormalized = normalizedLines(seed.getValue());
@@ -588,69 +588,7 @@ public final class ExerciseIntegrityGate {
      * produced repository.
      */
     static List<String> javaAresConventionReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean preserveUnchangedLegacyTests) {
-        if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
-            return List.of();
-        }
-        Map<String, String> seed = safeFiles(seedTestsFiles);
-        List<Map.Entry<String, String>> javaTests = producedTestsFiles.entrySet().stream().filter(entry -> isJavaTestSourcePath(entry.getKey())).toList();
-
-        List<String> reasons = new ArrayList<>();
-        List<String> generatedBuildOutput = producedTestsFiles.keySet().stream().filter(path -> path.startsWith("target/") || path.startsWith("build/")).toList();
-        if (!generatedBuildOutput.isEmpty()) {
-            reasons.add("Java tests repository must not contain generated build output such as target/ or build/ files; remove "
-                    + sampleNames(new LinkedHashSet<>(generatedBuildOutput)) + ".");
-        }
-        String gradle = producedTestsFiles.get("build.gradle");
-        if (gradle != null) {
-            String gradleWithoutComments = JavaSourceInspector.stripJavaComments(gradle);
-            if (!ARES_SANDBOX_DEPENDENCY.matcher(gradleWithoutComments).find()) {
-                reasons.add(
-                        "Java Gradle tests must keep the Artemis Ares dependency in tests/build.gradle (de.tum.in.ase:artemis-java-test-sandbox); do not replace it with plain JUnit.");
-            }
-            if (!FORBIDDEN_PACKAGE_FOLDERS.matcher(gradleWithoutComments).find() || !gradleWithoutComments.contains("de/tum/in/test/api/")
-                    || !gradleWithoutComments.contains("org/junit/")) {
-                reasons.add("Java Gradle tests must keep the seeded forbidden-package checks in tests/build.gradle so student code cannot shadow trusted packages.");
-            }
-        }
-        else {
-            reasons.add("Java tests must keep the seeded Gradle harness file containing the Artemis Ares dependency and trusted-package protections.");
-        }
-
-        List<String> missingClassAnnotations = new ArrayList<>();
-        List<String> missingTimeouts = new ArrayList<>();
-        for (Map.Entry<String, String> javaTest : javaTests) {
-            String path = javaTest.getKey();
-            String content = javaTest.getValue();
-            var annotationSummary = JavaSourceInspector.javaTestAnnotationSummary(content);
-            // An unchanged annotation declaration can enable a newly written test elsewhere, so composition never inherits the legacy exemption.
-            if (annotationSummary.unsupportedAnnotationSyntax()) {
-                reasons.add("Java test annotations cannot be inspected safely in " + path
-                        + ". Apply JUnit annotations directly to test methods; composed annotations and malformed annotation syntax cannot establish Ares restrictions or bounded StrictTimeout.");
-                continue;
-            }
-            if (preserveUnchangedLegacyTests && Objects.equals(seed.get(path), content)) {
-                continue;
-            }
-            if (annotationSummary.hasTestMethods() && annotationSummary.classWithMissingAresAnnotations()) {
-                missingClassAnnotations.add(path);
-            }
-            if (annotationSummary.testMethodWithoutStrictTimeout()) {
-                missingTimeouts.add(path);
-            }
-        }
-        if (!missingClassAnnotations.isEmpty()) {
-            reasons.add("Java test classes must use the trusted Ares annotations @Public (de.tum.in.test.api.jupiter.Public), @WhitelistPath(\"build\") "
-                    + "(de.tum.in.test.api.WhitelistPath), and @BlacklistPath(\"build/classes/java/test\") (de.tum.in.test.api.BlacklistPath); missing or shadowed in "
-                    + sampleNames(new LinkedHashSet<>(missingClassAnnotations))
-                    + ". Copy these exact imports from the seeded reference tests; only @Public lives in the .jupiter package.");
-        }
-        if (!missingTimeouts.isEmpty()) {
-            reasons.add("Every Java @Test method must carry the trusted de.tum.in.test.api.StrictTimeout, set to a bounded number of seconds between "
-                    + JavaSourceInspector.MIN_STRICT_TIMEOUT_SECONDS + " and " + JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS
-                    + " inclusive (e.g. @StrictTimeout(1)), so an infinite loop cannot hang grading and a generous but still-bounded structural check is not falsely rejected; "
-                    + "missing, shadowed, or out of that range in " + sampleNames(new LinkedHashSet<>(missingTimeouts)) + ".");
-        }
-        return reasons;
+        return AresConventions.reasons(seedTestsFiles, producedTestsFiles, preserveUnchangedLegacyTests);
     }
 
     /**
@@ -721,6 +659,9 @@ public final class ExerciseIntegrityGate {
         Set<String> paths = new LinkedHashSet<>(safeSeed.keySet());
         paths.addAll(safeProduced.keySet());
         paths.stream().filter(path -> !Objects.equals(safeSeed.get(path), safeProduced.get(path))).filter(path -> {
+            if (repository.equals("tests/") && path.equals(AresSecurityPolicy.PATH)) {
+                return false; // Its sole mutable field is checked against the produced test sources by AresConventions.
+            }
             boolean inSourceRoot = allowedPrefixes.stream().anyMatch(path::startsWith);
             boolean allowedFile = path.endsWith(".java") || allowStructuralOracle && path.endsWith("/test.json");
             boolean packageMatchesPath = !path.endsWith(".java") || !safeProduced.containsKey(path)

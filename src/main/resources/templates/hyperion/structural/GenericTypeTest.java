@@ -20,15 +20,13 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-import de.tum.in.test.api.BlacklistPath;
-import de.tum.in.test.api.StrictTimeout;
-import de.tum.in.test.api.WhitelistPath;
-import de.tum.in.test.api.jupiter.Public;
+import de.tum.cit.ase.ares.api.StrictTimeout;
+import de.tum.cit.ase.ares.api.Policy;
+import de.tum.cit.ase.ares.api.jupiter.Public;
 
 /** Checks the generic API from the approved specification, independently of the reference implementation. */
 @Public
-@WhitelistPath("build")
-@BlacklistPath("build/classes/java/test")
+@Policy(value = "SecurityPolicy.yaml")
 class GenericTypeTest {
 
     @TestFactory
