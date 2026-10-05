@@ -65,6 +65,9 @@ export class UserCourseRolesComponent {
     /** Emits after a role was added or removed on the server, so the host can refresh what depends on it, such as the global authorities. */
     readonly courseRolesChanged = output<void>();
 
+    /** Emits `true` when a request that adds or removes a role starts and `false` when it ends, so the host can hold back actions that must not overlap with it. */
+    readonly changeInProgress = output<boolean>();
+
     protected readonly courseRolesResource = rxResource({
         params: () => this.login(),
         stream: ({ params: login }) => this.adminUserService.getCourseRoles(login),
@@ -109,6 +112,10 @@ export class UserCourseRolesComponent {
         });
     }
 
+    protected onAddInProgress(inProgress: boolean): void {
+        this.changeInProgress.emit(inProgress);
+    }
+
     protected onRoleAdded(): void {
         this.courseRolesResource.reload();
         this.courseRolesChanged.emit();
@@ -116,14 +123,19 @@ export class UserCourseRolesComponent {
 
     private remove(courseRole: UserCourseRole, params: Record<string, unknown>): void {
         this.removing.set(this.removalKey(courseRole));
+        this.changeInProgress.emit(true);
         this.adminUserService.removeCourseRole(this.login(), courseRole.courseId, courseRole.role).subscribe({
             next: () => {
                 this.removing.set(undefined);
                 this.alertService.success('artemisApp.userManagement.courseRoles.remove.success', params);
                 this.courseRolesResource.reload();
                 this.courseRolesChanged.emit();
+                this.changeInProgress.emit(false);
             },
-            error: () => this.removing.set(undefined),
+            error: () => {
+                this.removing.set(undefined);
+                this.changeInProgress.emit(false);
+            },
         });
     }
 

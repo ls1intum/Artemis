@@ -60,7 +60,7 @@ describe('UserCourseRoleAddComponent', () => {
     }
 
     function chooseCourse(course: CourseForRoleAssignment | string | undefined): void {
-        component().onCourseChange(course);
+        component().onCourseChange(typeof course === 'object' ? { course, label: course.title } : course);
         fixture.detectChanges();
     }
 
@@ -82,14 +82,33 @@ describe('UserCourseRoleAddComponent', () => {
         expect(addButton().disabled).toBe(true);
     });
 
-    it('suggests the courses the search finds', () => {
+    it('suggests the courses the search finds, labelled with short name and semester', () => {
         component().searchCourses({ query: 'alg' });
 
         httpMock
             .expectOne((request) => request.url === 'api/admin/courses/for-role-assignment' && request.params.get('searchTerm') === 'alg' && request.params.get('size') === '10')
-            .flush([algorithms]);
+            .flush([algorithms, { id: 2, title: 'Algorithms', shortName: 'ALGO2', semester: 'SS26' }, { id: 3, title: 'Databases' }]);
 
-        expect(component().courseSuggestions()).toEqual([algorithms]);
+        expect(component().courseSuggestions()).toEqual([
+            { course: algorithms, label: 'Algorithms (ALGO, WS25)' },
+            { course: { id: 2, title: 'Algorithms', shortName: 'ALGO2', semester: 'SS26' }, label: 'Algorithms (ALGO2, SS26)' },
+            { course: { id: 3, title: 'Databases' }, label: 'Databases' },
+        ]);
+    });
+
+    it('answers only the latest search, so a slower earlier search cannot replace its suggestions', () => {
+        component().searchCourses({ query: 'al' });
+        component().searchCourses({ query: 'alg' });
+
+        const cancelled = httpMock.expectOne((request) => request.params.get('searchTerm') === 'al');
+        expect(cancelled.cancelled).toBe(true);
+        httpMock.expectOne((request) => request.params.get('searchTerm') === 'alg').flush([algorithms]);
+
+        expect(
+            component()
+                .courseSuggestions()
+                .map((option: { course: CourseForRoleAssignment }) => option.course.id),
+        ).toEqual([1]);
     });
 
     it('enables adding once a course is chosen that the user does not hold the role in', () => {
@@ -121,7 +140,7 @@ describe('UserCourseRoleAddComponent', () => {
         fixture.detectChanges();
         expect(successSpy).toHaveBeenCalledWith('artemisApp.userManagement.courseRoles.add.success', { login: 'student1', course: 'Algorithms', role: 'Instructor' });
         expect(added).toBe(1);
-        expect(component().course()).toBeUndefined();
+        expect(component().selectedOption()).toBeUndefined();
         expect(addButton().disabled).toBe(true);
     });
 
@@ -134,7 +153,32 @@ describe('UserCourseRoleAddComponent', () => {
         fixture.detectChanges();
 
         expect(added).toBe(0);
-        expect(component().course()).toEqual(algorithms);
+        expect(component().selectedOption().course).toEqual(algorithms);
         expect(addButton().disabled).toBe(false);
+    });
+
+    it('announces the role that was submitted even when another role is selected while the request is pending', () => {
+        const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+        component().onRoleChange('INSTRUCTOR');
+        chooseCourse(algorithms);
+
+        component().add();
+        component().onRoleChange('EDITOR');
+        httpMock.expectOne({ method: 'POST', url: 'api/course/courses/1/instructors/student1' }).flush(null);
+
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.userManagement.courseRoles.add.success', expect.objectContaining({ role: 'Instructor' }));
+    });
+
+    it('reports when a request is running and when it ended', () => {
+        const states: boolean[] = [];
+        fixture.componentInstance.changing.subscribe((inProgress) => states.push(inProgress));
+        chooseCourse(algorithms);
+        component().onRoleChange('EDITOR');
+
+        component().add();
+        expect(states).toEqual([true]);
+        httpMock.expectOne({ method: 'POST' }).flush('error', { status: 500, statusText: 'Server Error' });
+
+        expect(states).toEqual([true, false]);
     });
 });

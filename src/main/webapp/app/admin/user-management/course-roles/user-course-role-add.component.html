@@ -6,13 +6,13 @@
             <!-- The enter key must not submit the surrounding user form. -->
             <tumaet-ui-autocomplete
                 class="w-full"
-                optionLabel="title"
+                optionLabel="label"
                 data-testid="user-course-role-add-course"
                 [placeholder]="'artemisApp.userManagement.courseRoles.add.coursePlaceholder' | artemisTranslate"
                 [emptyMessage]="'artemisApp.userManagement.courseRoles.add.noCourseFound' | artemisTranslate"
                 [minLength]="2"
                 [suggestions]="courseSuggestions()"
-                [ngModel]="course()"
+                [ngModel]="selectedOption()"
                 [ngModelOptions]="{ standalone: true }"
                 (ngModelChange)="onCourseChange($event)"
                 (searchRequested)="searchCourses($event)"

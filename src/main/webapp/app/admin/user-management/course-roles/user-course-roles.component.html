@@ -55,7 +55,7 @@
             </div>
         }
         @if (editable()) {
-            <jhi-user-course-role-add [login]="login()" [existingRoles]="courseRoles()" (added)="onRoleAdded()" />
+            <jhi-user-course-role-add [login]="login()" [existingRoles]="courseRoles()" (added)="onRoleAdded()" (changing)="onAddInProgress($event)" />
         }
     }
 </tumaet-ui-card>

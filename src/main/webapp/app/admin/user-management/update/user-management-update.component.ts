@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -15,6 +16,7 @@ import {
     TumAetUiDialogComponent,
     TumAetUiFormFieldComponent,
     TumAetUiInputDirective,
+    TumAetUiMessageComponent,
     TumAetUiSelectComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
@@ -52,6 +54,7 @@ import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles
         TumAetUiCheckboxComponent,
         TumAetUiSelectComponent,
         TumAetUiChipComponent,
+        TumAetUiMessageComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonDirective,
         TumAetUiDialogComponent,
@@ -150,6 +153,17 @@ export class UserManagementUpdateComponent implements OnInit {
     /** The login the server knows the edited user by. Unlike the login field of the form, it does not change while typing, so it identifies the user in course role requests. */
     readonly persistedLogin = signal<string | undefined>(undefined);
 
+    /** Whether the authorities in the form reflect the server after the latest change of a course role. */
+    protected readonly authoritySync = signal<'idle' | 'syncing' | 'failed'>('idle');
+
+    /** Whether a request that adds or removes a course role is running. */
+    protected readonly courseRoleChangeInProgress = signal(false);
+
+    /** The form cannot be saved while it might still submit authorities that a change of the course roles has made outdated. */
+    protected readonly saveBlockedByCourseRoles = computed(() => this.courseRoleChangeInProgress() || this.authoritySync() !== 'idle');
+
+    private authoritySyncSubscription?: Subscription;
+
     /** The global authorities of the edited user as last seen on the server, to tell what a change of course roles did to them. */
     private serverAuthorities = new Set<string>();
 
@@ -205,6 +219,9 @@ export class UserManagementUpdateComponent implements OnInit {
      * Shows a warning for Jenkins users when login changes.
      */
     async save(): Promise<void> {
+        if (this.saveBlockedByCourseRoles()) {
+            return;
+        }
         const passwordControl = this.editForm.get('password')!;
         if (passwordControl.invalid) {
             passwordControl.markAsTouched();
@@ -281,21 +298,36 @@ export class UserManagementUpdateComponent implements OnInit {
      * Giving or taking a tutor, editor or instructor role grants or revokes the matching global authority on the server at once.
      * Saving the form submits its authorities, so without this they would still be the old ones and the save would silently undo that change.
      * Only the difference is applied, so authorities the administrator changed in the form but did not save yet are kept.
+     * Saving is blocked until this succeeded, and a response that a later refresh superseded is dropped.
      */
     onCourseRolesChanged(): void {
         const login = this.persistedLogin();
         if (!login) {
             return;
         }
-        this.userService.findUser(login).subscribe((reloadedUser) => {
-            const latest = reloadedUser.authorities ?? [];
-            const added = latest.filter((authority) => !this.serverAuthorities.has(authority));
-            const removed = [...this.serverAuthorities].filter((authority) => !latest.includes(authority));
-            this.serverAuthorities = new Set(latest);
-            const authoritiesControl = this.editForm.get('authorities');
-            const current: string[] = authoritiesControl?.value ?? [];
-            authoritiesControl?.setValue([...current.filter((authority) => !removed.includes(authority)), ...added.filter((authority) => !current.includes(authority))]);
+        this.authoritySync.set('syncing');
+        this.authoritySyncSubscription?.unsubscribe();
+        this.authoritySyncSubscription = this.userService.findUser(login).subscribe({
+            next: (reloadedUser) => {
+                const latest = reloadedUser.authorities ?? [];
+                const added = latest.filter((authority) => !this.serverAuthorities.has(authority));
+                const removed = [...this.serverAuthorities].filter((authority) => !latest.includes(authority));
+                this.serverAuthorities = new Set(latest);
+                const authoritiesControl = this.editForm.get('authorities');
+                const current: string[] = authoritiesControl?.value ?? [];
+                authoritiesControl?.setValue([...current.filter((authority) => !removed.includes(authority)), ...added.filter((authority) => !current.includes(authority))]);
+                this.authoritySync.set('idle');
+            },
+            error: () => this.authoritySync.set('failed'),
         });
+    }
+
+    /**
+     * Tracks whether a request that adds or removes a course role is running. Its effect on the global authorities is only known once it ended and they were refreshed.
+     * @param inProgress whether such a request is running
+     */
+    onCourseRoleChangeInProgress(inProgress: boolean): void {
+        this.courseRoleChangeInProgress.set(inProgress);
     }
 
     /**

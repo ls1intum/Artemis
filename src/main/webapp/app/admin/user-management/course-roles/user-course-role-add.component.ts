@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { EMPTY, Subject } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent, TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
@@ -12,6 +14,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 
 /** Number of courses suggested while an administrator types. */
 const COURSE_SUGGESTION_COUNT = 10;
+
+/** A course in the suggestions, labelled so that courses with the same title can be told apart. */
+interface CourseOption {
+    course: CourseForRoleAssignment;
+    label: string;
+}
+
+const toCourseOption = (course: CourseForRoleAssignment): CourseOption => {
+    const details = [course.shortName, course.semester].filter((detail) => !!detail).join(', ');
+    return { course, label: details ? `${course.title ?? course.shortName} (${details})` : `${course.title ?? course.id}` };
+};
 
 /**
  * Lets an administrator give a user a role in a course: pick a course by title or short name, pick a role and confirm.
@@ -37,12 +50,18 @@ export class UserCourseRoleAddComponent {
     /** Emits after the role was added on the server. */
     readonly added = output<void>();
 
+    /** Emits `true` when a request to add a role starts and `false` when it ends, so the host can hold back actions that must not overlap with it. */
+    readonly changing = output<boolean>();
+
     protected readonly faPlus = faPlus;
 
-    protected readonly courseSuggestions = signal<CourseForRoleAssignment[]>([]);
+    protected readonly courseSuggestions = signal<CourseOption[]>([]);
+
+    /** Search texts in the order they were typed. Only the latest one is answered, an earlier search still in flight is cancelled. */
+    private readonly searchTexts = new Subject<string>();
 
     /** Either a chosen course or the text typed into the course field. */
-    private readonly courseInput = signal<CourseForRoleAssignment | string | undefined>(undefined);
+    private readonly courseInput = signal<CourseOption | string | undefined>(undefined);
 
     protected readonly role = signal<CourseRoleName>('STUDENT');
 
@@ -56,11 +75,13 @@ export class UserCourseRoleAddComponent {
         return [...COURSE_ROLES_DESCENDING].reverse().map((role) => ({ value: role, label: this.translateService.instant(courseRoleTranslationKey(role)) }));
     });
 
-    /** The chosen course. Typing into the field again discards it, because the text no longer names a course. */
-    protected readonly course = computed(() => {
+    /** The chosen suggestion. Typing into the field again discards it, because the text no longer names a course. */
+    protected readonly selectedOption = computed(() => {
         const value = this.courseInput();
         return value && typeof value === 'object' ? value : undefined;
     });
+
+    private readonly course = computed(() => this.selectedOption()?.course);
 
     protected readonly alreadyHasRole = computed(() => {
         const course = this.course();
@@ -69,12 +90,21 @@ export class UserCourseRoleAddComponent {
 
     protected readonly canAdd = computed(() => this.course() !== undefined && !this.alreadyHasRole() && !this.isSaving());
 
+    constructor() {
+        this.searchTexts
+            .pipe(
+                switchMap((searchText) => this.adminUserService.searchCoursesForRoleAssignment(searchText, COURSE_SUGGESTION_COUNT).pipe(catchError(() => EMPTY))),
+                takeUntilDestroyed(),
+            )
+            .subscribe((courses) => this.courseSuggestions.set(courses.map(toCourseOption)));
+    }
+
     protected searchCourses(event: TumAetUiAutoCompleteSearchEvent): void {
-        this.adminUserService.searchCoursesForRoleAssignment(event.query, COURSE_SUGGESTION_COUNT).subscribe((courses) => this.courseSuggestions.set(courses));
+        this.searchTexts.next(event.query);
     }
 
     protected onCourseChange(value: unknown): void {
-        this.courseInput.set(value as CourseForRoleAssignment | string | undefined);
+        this.courseInput.set(value as CourseOption | string | undefined);
     }
 
     protected onRoleChange(value: unknown): void {
@@ -86,19 +116,26 @@ export class UserCourseRoleAddComponent {
         if (!course || !this.canAdd()) {
             return;
         }
+        // The selection can change while the request is pending, so the request and its message use what was submitted.
+        const role = this.role();
         this.isSaving.set(true);
-        this.adminUserService.addCourseRole(this.login(), course.id, this.role()).subscribe({
+        this.changing.emit(true);
+        this.adminUserService.addCourseRole(this.login(), course.id, role).subscribe({
             next: () => {
                 this.isSaving.set(false);
                 this.courseInput.set(undefined);
                 this.alertService.success('artemisApp.userManagement.courseRoles.add.success', {
                     login: this.login(),
                     course: course.title ?? course.shortName,
-                    role: this.translateService.instant(courseRoleTranslationKey(this.role())),
+                    role: this.translateService.instant(courseRoleTranslationKey(role)),
                 });
                 this.added.emit();
+                this.changing.emit(false);
             },
-            error: () => this.isSaving.set(false),
+            error: () => {
+                this.isSaving.set(false);
+                this.changing.emit(false);
+            },
         });
     }
 }

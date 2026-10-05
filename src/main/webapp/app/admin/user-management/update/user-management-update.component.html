@@ -220,14 +220,28 @@
                     </div>
                 </div>
                 @if (persistedLogin(); as login) {
-                    <jhi-user-course-roles class="mb-3 block" editable [login]="login" (courseRolesChanged)="onCourseRolesChanged()" />
+                    <jhi-user-course-roles
+                        class="mb-3 block"
+                        editable
+                        [login]="login"
+                        (courseRolesChanged)="onCourseRolesChanged()"
+                        (changeInProgress)="onCourseRoleChangeInProgress($event)"
+                    />
+                    @if (authoritySync() === 'failed') {
+                        <tumaet-ui-message class="mb-3 block" severity="warn" data-testid="authority-sync-failed">
+                            <span jhiTranslate="artemisApp.userManagement.courseRoles.syncFailed"></span>
+                            <tumaet-ui-button size="small" variant="outlined" severity="warn" data-testid="authority-sync-retry" (clicked)="onCourseRolesChanged()">
+                                {{ 'artemisApp.userManagement.courseRoles.syncRetry' | artemisTranslate }}
+                            </tumaet-ui-button>
+                        </tumaet-ui-message>
+                    }
                 }
             </div>
             <div class="flex gap-2">
                 <tumaet-ui-button severity="secondary" size="small" (clicked)="previousState()"
                     ><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span
                 ></tumaet-ui-button>
-                <button type="submit" tumAetUiButton size="small" [disabled]="editForm.invalid || isSaving()" data-testid="save-user-button">
+                <button type="submit" tumAetUiButton size="small" [disabled]="editForm.invalid || isSaving() || saveBlockedByCourseRoles()" data-testid="save-user-button">
                     <fa-icon [icon]="faSave" />
                     <span jhiTranslate="entity.action.save"></span>
                 </button>

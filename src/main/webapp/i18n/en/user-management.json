@@ -114,7 +114,9 @@
                     "message": "Remove the role {{ role }} of {{ login }} in the course {{ course }}? The user loses the access this role grants in the course.",
                     "accept": "Remove",
                     "success": "Removed the role {{ role }} of {{ login }} in {{ course }}."
-                }
+                },
+                "syncFailed": "The global roles could not be refreshed after the last change of the course roles. Saving is blocked until they are loaded.",
+                "syncRetry": "Load again"
             },
             "login": "Login",
             "firstName": "First name",

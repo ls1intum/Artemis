@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
@@ -834,6 +834,66 @@ describe('UserManagementUpdateComponent', () => {
             component.onCourseRolesChanged();
 
             expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT]);
+        });
+
+        it('should block saving until the authorities were refreshed after a change of the course roles', async () => {
+            const reloaded = new Subject<User>();
+            vi.spyOn(adminUserService, 'findUser').mockReturnValue(reloaded);
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRolesChanged();
+            await component.save();
+
+            expect(component['saveBlockedByCourseRoles']()).toBe(true);
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            reloaded.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR]));
+
+            expect(component['saveBlockedByCourseRoles']()).toBe(false);
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+        });
+
+        it('should keep saving blocked when the refresh failed, and allow a retry', async () => {
+            const findUserSpy = vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(throwError(() => new Error('failed')));
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRolesChanged();
+            await component.save();
+
+            expect(component['authoritySync']()).toBe('failed');
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            findUserSpy.mockReturnValueOnce(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])));
+            component.onCourseRolesChanged();
+
+            expect(component['authoritySync']()).toBe('idle');
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+        });
+
+        it('should drop the response of a refresh that a later refresh superseded', () => {
+            const first = new Subject<User>();
+            const second = new Subject<User>();
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(first).mockReturnValueOnce(second);
+
+            component.onCourseRolesChanged();
+            component.onCourseRolesChanged();
+            second.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR]));
+            first.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT]));
+
+            expect(component['authoritySync']()).toBe('idle');
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.INSTRUCTOR]);
+        });
+
+        it('should block saving while a course role is being added or removed', async () => {
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRoleChangeInProgress(true);
+            await component.save();
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).toHaveBeenCalledOnce();
         });
 
         it('should leave the authorities untouched when the server changed none', () => {

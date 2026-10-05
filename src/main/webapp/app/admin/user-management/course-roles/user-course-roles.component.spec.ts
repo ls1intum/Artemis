@@ -139,9 +139,12 @@ describe('UserCourseRolesComponent', () => {
 
     describe('when editable', () => {
         let courseRolesChanged: number;
+        let inProgress: boolean[];
 
         beforeEach(() => {
             courseRolesChanged = 0;
+            inProgress = [];
+            fixture.componentInstance.changeInProgress.subscribe((state) => inProgress.push(state));
             fixture.componentRef.setInput('editable', true);
             fixture.componentInstance.courseRolesChanged.subscribe(() => courseRolesChanged++);
         });
@@ -200,6 +203,7 @@ describe('UserCourseRolesComponent', () => {
 
             expect(successSpy).toHaveBeenCalledWith('artemisApp.userManagement.courseRoles.remove.success', expect.objectContaining({ login: 'student1', course: 'Algorithms' }));
             expect(courseRolesChanged).toBe(1);
+            expect(inProgress).toEqual([true, false]);
             expect(element().querySelector('[data-testid="user-course-roles-group-INSTRUCTOR"]')).toBeNull();
         });
 
@@ -213,6 +217,7 @@ describe('UserCourseRolesComponent', () => {
             fixture.detectChanges();
 
             expect(courseRolesChanged).toBe(0);
+            expect(inProgress).toEqual([true, false]);
             expect(removeButtons()).toHaveLength(4);
             expect(removeButtons()[0].hasAttribute('disabled')).toBe(false);
         });
@@ -228,6 +233,14 @@ describe('UserCourseRolesComponent', () => {
 
             expect(courseRolesChanged).toBe(1);
             expect(element().querySelectorAll('[data-testid="user-course-roles-course"]')).toHaveLength(4);
+        });
+
+        it('forwards the progress of adding a role', async () => {
+            await respondWith([]);
+
+            fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.changing.emit(true);
+
+            expect(inProgress).toEqual([true]);
         });
     });
 });

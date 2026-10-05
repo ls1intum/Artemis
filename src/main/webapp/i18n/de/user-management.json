@@ -114,7 +114,9 @@
                     "message": "Die Rolle {{ role }} von {{ login }} im Kurs {{ course }} entfernen? Die Person verliert den Zugriff, den diese Rolle im Kurs gewährt.",
                     "accept": "Entfernen",
                     "success": "Die Rolle {{ role }} von {{ login }} in {{ course }} wurde entfernt."
-                }
+                },
+                "syncFailed": "Die globalen Rollen konnten nach der letzten Änderung der Kursrollen nicht aktualisiert werden. Speichern ist gesperrt, bis sie geladen sind.",
+                "syncRetry": "Erneut laden"
             },
             "login": "Login",
             "firstName": "Vorname",
