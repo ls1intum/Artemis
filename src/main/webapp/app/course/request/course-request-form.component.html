@@ -94,6 +94,17 @@
         <label [for]="idPrefix() + 'testCourse'" jhiTranslate="artemisApp.courseRequest.form.testCourse"></label>
     </div>
 
+    <div class="flex flex-col gap-1 mb-3">
+        <div class="flex items-center gap-2">
+            <tumaet-ui-checkbox [inputId]="idPrefix() + 'gradeRelevant'" name="gradeRelevant" formControlName="gradeRelevant" />
+            <label [for]="idPrefix() + 'gradeRelevant'" jhiTranslate="artemisApp.courseRequest.form.gradeRelevant"></label>
+        </div>
+        <small
+            class="text-muted-color"
+            [jhiTranslate]="isTestCourse() ? 'artemisApp.courseRequest.form.gradeRelevantTestCourseHint' : 'artemisApp.courseRequest.form.gradeRelevantHint'"
+        ></small>
+    </div>
+
     <div class="flex flex-col gap-2 mb-3">
         <label class="font-semibold" [for]="idPrefix() + 'reason'" jhiTranslate="artemisApp.courseRequest.form.reason"></label>
         <textarea

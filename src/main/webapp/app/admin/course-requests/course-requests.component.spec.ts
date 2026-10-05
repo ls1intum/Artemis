@@ -34,6 +34,7 @@ describe('CourseRequestsComponent', () => {
         startDate: mockDateRange.startDate,
         endDate: mockDateRange.endDate,
         testCourse: false,
+        gradeRelevant: true,
         reason: 'Test reason',
         status: CourseRequestStatus.PENDING,
     };
@@ -47,6 +48,7 @@ describe('CourseRequestsComponent', () => {
         startDate: mockDateRange.startDate,
         endDate: mockDateRange.endDate,
         testCourse: false,
+        gradeRelevant: true,
         reason: 'Test reason',
         status: CourseRequestStatus.ACCEPTED,
         createdCourseId: 100,
@@ -61,6 +63,7 @@ describe('CourseRequestsComponent', () => {
         startDate: mockDateRange.startDate,
         endDate: mockDateRange.endDate,
         testCourse: false,
+        gradeRelevant: true,
         reason: 'Test reason',
         status: CourseRequestStatus.REJECTED,
         decisionReason: 'Not approved',
@@ -176,6 +179,7 @@ describe('CourseRequestsComponent', () => {
                 startDate: dayjs('2025-10-01'),
                 endDate: dayjs('2026-03-31'),
                 testCourse: false,
+                gradeRelevant: true,
                 reason: 'reason',
             };
 
@@ -249,7 +253,15 @@ describe('CourseRequestsComponent', () => {
         });
 
         it('should not call service if selectedRequest has no id', () => {
-            component.selectedRequest.set({ title: 'Test', shortName: 'T', startDate: dayjs('2025-10-01'), endDate: dayjs('2026-03-31'), testCourse: false, reason: 'reason' });
+            component.selectedRequest.set({
+                title: 'Test',
+                shortName: 'T',
+                startDate: dayjs('2025-10-01'),
+                endDate: dayjs('2026-03-31'),
+                testCourse: false,
+                gradeRelevant: true,
+                reason: 'reason',
+            });
             component.decisionReason.set('Valid reason');
 
             component.reject();
@@ -315,6 +327,18 @@ describe('CourseRequestsComponent', () => {
             expect(component.editForm.get('reason')?.value).toBe('Test reason');
             expect(component.editModalVisible()).toBe(true);
         });
+
+        it('should populate the grade relevant control from the request', () => {
+            component.openEditModal({ ...mockRequest, gradeRelevant: false });
+
+            expect(component.editForm.get('gradeRelevant')?.value).toBe(false);
+        });
+
+        it('should treat a request without a grade relevant value as grade relevant', () => {
+            component.openEditModal({ ...mockRequest, gradeRelevant: undefined as unknown as boolean });
+
+            expect(component.editForm.get('gradeRelevant')?.value).toBe(true);
+        });
     });
 
     describe('saveEdit', () => {
@@ -364,7 +388,15 @@ describe('CourseRequestsComponent', () => {
         });
 
         it('should not submit when selectedRequest has no id', () => {
-            component.selectedRequest.set({ title: 'Test', shortName: 'T', startDate: dayjs('2025-10-01'), endDate: dayjs('2026-03-31'), testCourse: false, reason: 'reason' });
+            component.selectedRequest.set({
+                title: 'Test',
+                shortName: 'T',
+                startDate: dayjs('2025-10-01'),
+                endDate: dayjs('2026-03-31'),
+                testCourse: false,
+                gradeRelevant: true,
+                reason: 'reason',
+            });
             component.editForm.patchValue({
                 title: 'Test',
                 shortName: 'TST',
@@ -456,6 +488,49 @@ describe('CourseRequestsComponent', () => {
             component.saveEdit();
 
             expect(component.isSubmittingEdit()).toBe(false);
+        });
+    });
+
+    describe('grade relevant', () => {
+        const renderedTags = (requests: CourseRequest[]): string[] => {
+            const fixture = TestBed.createComponent(CourseRequestsComponent);
+            fixture.detectChanges(); // ngOnInit loads the (mocked) overview
+            fixture.componentInstance.pendingRequests.set(requests);
+            fixture.detectChanges();
+            return Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('tumaet-ui-tag')).map((tag) => tag.textContent?.trim() ?? '');
+        };
+
+        it('should show the grade relevance of a regular course and none for a test course', () => {
+            const tags = renderedTags([
+                { ...mockRequest, id: 1, gradeRelevant: true },
+                { ...mockRequest, id: 2, gradeRelevant: false },
+                { ...mockRequest, id: 3, testCourse: true, gradeRelevant: false },
+            ]);
+
+            expect(tags).toEqual(['artemisApp.courseRequest.admin.gradeRelevant', 'artemisApp.courseRequest.admin.notGradeRelevant', 'artemisApp.courseRequest.admin.testCourse']);
+        });
+
+        beforeEach(() => {
+            component.selectedRequest.set(mockRequest);
+            component.editModalVisible.set(true);
+            mockCourseRequestService.updateRequest.mockReturnValue(of(mockRequest));
+            component.editForm.patchValue({ title: 'Updated Course', shortName: 'UC1', semester: 'WS25/26', reason: 'Updated reason' });
+        });
+
+        it('should send a changed grade relevant value when saving an edit', () => {
+            component.editForm.patchValue({ gradeRelevant: false });
+
+            component.saveEdit();
+
+            expect(courseRequestService.updateRequest).toHaveBeenCalledWith(1, expect.objectContaining({ testCourse: false, gradeRelevant: false }));
+        });
+
+        it('should never send a test course as grade relevant', () => {
+            component.editForm.patchValue({ testCourse: true, gradeRelevant: true });
+
+            component.saveEdit();
+
+            expect(courseRequestService.updateRequest).toHaveBeenCalledWith(1, expect.objectContaining({ testCourse: true, gradeRelevant: false }));
         });
     });
 

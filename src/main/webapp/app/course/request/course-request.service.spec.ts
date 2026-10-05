@@ -37,6 +37,7 @@ describe('CourseRequestService', () => {
                 startDate: dayjs('2025-01-01'),
                 endDate: dayjs('2025-06-30'),
                 testCourse: false,
+                gradeRelevant: true,
                 reason: 'I need this course for teaching.',
             };
 
@@ -48,6 +49,7 @@ describe('CourseRequestService', () => {
                 startDate: '2025-01-01T00:00:00Z',
                 endDate: '2025-06-30T00:00:00Z',
                 testCourse: false,
+                gradeRelevant: true,
                 reason: 'I need this course for teaching.',
                 status: CourseRequestStatus.PENDING,
                 createdDate: '2025-01-15T10:30:00Z',
@@ -64,6 +66,7 @@ describe('CourseRequestService', () => {
                 expect(result.endDate).toBeDefined();
                 expect(result.createdDate).toBeDefined();
                 expect(result.requester?.login).toBe('student1');
+                expect(result.gradeRelevant).toBe(true);
             });
 
             const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
@@ -71,6 +74,7 @@ describe('CourseRequestService', () => {
             expect(req.request.body.shortName).toBe('TC001');
             expect(req.request.body.semester).toBe('WS2025');
             expect(req.request.body.testCourse).toBe(false);
+            expect(req.request.body.gradeRelevant).toBe(true);
             expect(req.request.body.reason).toBe('I need this course for teaching.');
             expect(req.request.body.startDate).toBeDefined();
             expect(req.request.body.endDate).toBeDefined();
@@ -88,6 +92,7 @@ describe('CourseRequestService', () => {
                 startDate: dayjs('2025-01-01'),
                 endDate: dayjs('2025-06-30'),
                 testCourse: true,
+                gradeRelevant: false,
                 reason: 'Testing purpose.',
             };
 
@@ -96,6 +101,7 @@ describe('CourseRequestService', () => {
                 title: 'Minimal Course',
                 shortName: 'MC001',
                 testCourse: true,
+                gradeRelevant: false,
                 reason: 'Testing purpose.',
                 status: CourseRequestStatus.PENDING,
             };
@@ -104,6 +110,7 @@ describe('CourseRequestService', () => {
                 expect(result.id).toBe(2);
                 expect(result.title).toBe('Minimal Course');
                 expect(result.testCourse).toBe(true);
+                expect(result.gradeRelevant).toBe(false);
                 expect(result.semester).toBeUndefined();
                 expect(result.startDate).toBeUndefined();
                 expect(result.endDate).toBeUndefined();
@@ -111,6 +118,7 @@ describe('CourseRequestService', () => {
 
             const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
             expect(req.request.body.semester).toBe('WS24/25');
+            expect(req.request.body.gradeRelevant).toBe(false);
             req.flush(mockResponse);
         });
     });
@@ -124,6 +132,7 @@ describe('CourseRequestService', () => {
                         title: 'Course 1',
                         shortName: 'C1',
                         testCourse: false,
+                        gradeRelevant: true,
                         reason: 'Reason 1',
                         status: CourseRequestStatus.PENDING,
                         createdDate: '2025-01-10T08:00:00Z',
@@ -137,6 +146,7 @@ describe('CourseRequestService', () => {
                         title: 'Course 2',
                         shortName: 'C2',
                         testCourse: true,
+                        gradeRelevant: false,
                         reason: 'Reason 2',
                         status: CourseRequestStatus.ACCEPTED,
                         createdDate: '2025-01-11T09:00:00Z',
@@ -205,6 +215,7 @@ describe('CourseRequestService', () => {
                 title: 'Accepted Course',
                 shortName: 'AC001',
                 testCourse: false,
+                gradeRelevant: true,
                 reason: 'Valid reason',
                 status: CourseRequestStatus.ACCEPTED,
                 createdDate: '2025-01-10T08:00:00Z',
@@ -235,6 +246,7 @@ describe('CourseRequestService', () => {
                 title: 'Rejected Course',
                 shortName: 'RC001',
                 testCourse: false,
+                gradeRelevant: true,
                 reason: 'Original reason',
                 status: CourseRequestStatus.REJECTED,
                 createdDate: '2025-01-10T08:00:00Z',
@@ -266,6 +278,7 @@ describe('CourseRequestService', () => {
                         title: 'Date Test Course',
                         shortName: 'DTC',
                         testCourse: false,
+                        gradeRelevant: true,
                         reason: 'Testing dates',
                         status: CourseRequestStatus.PENDING,
                         startDate: '2025-02-01T00:00:00Z',
@@ -296,6 +309,7 @@ describe('CourseRequestService', () => {
                         title: 'No Dates Course',
                         shortName: 'NDC',
                         testCourse: false,
+                        gradeRelevant: true,
                         reason: 'No dates provided',
                         status: CourseRequestStatus.PENDING,
                     },

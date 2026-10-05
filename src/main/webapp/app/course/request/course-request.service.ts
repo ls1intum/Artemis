@@ -13,6 +13,7 @@ interface BaseCourseRequestDTO {
     startDate?: string;
     endDate?: string;
     testCourse: boolean;
+    gradeRelevant: boolean;
     reason: string;
 }
 
@@ -77,6 +78,7 @@ export class CourseRequestService {
             title: courseRequest.title,
             shortName: courseRequest.shortName,
             testCourse: courseRequest.testCourse,
+            gradeRelevant: courseRequest.gradeRelevant,
             reason: courseRequest.reason,
         };
         dto.semester = courseRequest.semester;
@@ -90,6 +92,7 @@ export class CourseRequestService {
             title: dto.title,
             shortName: dto.shortName,
             testCourse: dto.testCourse,
+            gradeRelevant: dto.gradeRelevant,
             reason: dto.reason,
         };
         response.id = dto.id;

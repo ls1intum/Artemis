@@ -9,6 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -31,6 +32,7 @@ describe('CourseRequestFormComponent', () => {
             startDate: [undefined],
             endDate: [undefined],
             testCourse: [false],
+            gradeRelevant: [true],
             reason: ['', [Validators.required]],
         });
 
@@ -47,6 +49,7 @@ describe('CourseRequestFormComponent', () => {
                         TextareaModule,
                         SelectModule,
                         CheckboxModule,
+                        TumAetUiCheckboxComponent,
                         MockComponent(FormDateTimePickerComponent),
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
@@ -194,5 +197,58 @@ describe('CourseRequestFormComponent', () => {
         fixture.detectChanges();
 
         expect(component.showReasonPlaceholder()).toBe(false);
+    });
+
+    describe('grade relevant', () => {
+        const gradeRelevantControl = () => form.get('gradeRelevant')!;
+
+        it('should show an enabled, checked grade relevant control for a regular course', () => {
+            expect(gradeRelevantControl().value).toBe(true);
+            expect(gradeRelevantControl().enabled).toBe(true);
+            expect(fixture.nativeElement.querySelector('#gradeRelevant')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#gradeRelevant').disabled).toBe(false);
+        });
+
+        it('should force the grade relevant control off and disable it when the course becomes a test course', () => {
+            form.get('testCourse')!.setValue(true);
+            fixture.detectChanges();
+
+            expect(gradeRelevantControl().value).toBe(false);
+            expect(gradeRelevantControl().disabled).toBe(true);
+            expect(fixture.nativeElement.querySelector('#gradeRelevant').disabled).toBe(true);
+        });
+
+        it('should track whether the course is a test course for the hint', () => {
+            expect(component['isTestCourse']()).toBe(false);
+
+            form.get('testCourse')!.setValue(true);
+            fixture.detectChanges();
+
+            expect(component['isTestCourse']()).toBe(true);
+        });
+
+        it('should enable the grade relevant control again with its default when the test course is unchecked', () => {
+            form.get('testCourse')!.setValue(true);
+            form.get('testCourse')!.setValue(false);
+
+            expect(gradeRelevantControl().enabled).toBe(true);
+            expect(gradeRelevantControl().value).toBe(true);
+        });
+
+        it('should keep a deliberately unchecked grade relevant value for a regular course', () => {
+            gradeRelevantControl().setValue(false);
+
+            form.get('testCourse')!.setValue(false);
+
+            expect(gradeRelevantControl().enabled).toBe(true);
+            expect(gradeRelevantControl().value).toBe(false);
+        });
+
+        it('should disable the control when a form is reset to a test course', () => {
+            form.reset({ semester: 'WS25/26', testCourse: true, gradeRelevant: false });
+
+            expect(gradeRelevantControl().disabled).toBe(true);
+            expect(gradeRelevantControl().value).toBe(false);
+        });
     });
 });

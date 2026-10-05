@@ -24,6 +24,7 @@ interface CourseRequestCommon {
     title: string;
     shortName: string;
     testCourse: boolean;
+    gradeRelevant: boolean;
     reason: string;
 }
 

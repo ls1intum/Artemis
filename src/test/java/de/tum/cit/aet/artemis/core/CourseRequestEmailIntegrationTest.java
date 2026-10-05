@@ -98,7 +98,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void receivedEmailTemplate_shouldRenderRecordFieldsAndDeliver() throws Exception {
-        var courseRequestData = new CourseRequestEmailData("Introduction to Testing", "INTTEST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+        var courseRequestData = new CourseRequestEmailData("Introduction to Testing", "INTTEST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, true,
                 "Need this course for our testing department.", null);
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
@@ -109,11 +109,12 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(body).contains("INTTEST");
         assertThat(body).contains("WS2025");
         assertThat(body).contains("Need this course for our testing department.");
+        assertThat(body).contains("Grade relevant");
     }
 
     @Test
     void acceptedEmailTemplate_shouldRenderRecordFieldsAndDeliver() throws Exception {
-        var courseRequestData = new CourseRequestEmailData("Accepted Course", "ACPTCRS", null, null, null, false, null, null);
+        var courseRequestData = new CourseRequestEmailData("Accepted Course", "ACPTCRS", null, null, null, false, true, null, null);
 
         var course = new Course();
         course.setId(42L);
@@ -128,7 +129,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void rejectedEmailTemplate_shouldRenderRecordFieldsIncludingDecisionReason() throws Exception {
-        var courseRequestData = new CourseRequestEmailData("Rejected Course", "REJCRS", null, null, null, false, null, "Not enough justification provided.");
+        var courseRequestData = new CourseRequestEmailData("Rejected Course", "REJCRS", null, null, null, false, true, null, "Not enough justification provided.");
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail",
                 Map.of("courseRequest", courseRequestData));
@@ -141,7 +142,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     void receivedEmailTemplate_shouldRenderCorrectlyInGerman() throws Exception {
         recipient.setLangKey("de");
-        var courseRequestData = new CourseRequestEmailData("Einführung in Tests", "EINFTEST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true,
+        var courseRequestData = new CourseRequestEmailData("Einführung in Tests", "EINFTEST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true, false,
                 "Kurs wird für die Abteilung benötigt.", null);
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
@@ -154,7 +155,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void contactEmailTemplate_shouldRenderRecordFieldsAndDeliver() throws Exception {
-        var contactData = new ContactEmailData("New Course Request", "NEWCRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+        var contactData = new ContactEmailData("New Course Request", "NEWCRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, true,
                 "We need this course urgently.", "Jane Doe", "jane@example.com");
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.contact.title", "mail/courseRequestContactEmail",
@@ -165,6 +166,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(body).contains("NEWCRS");
         assertThat(body).contains("WS2025");
         assertThat(body).contains("We need this course urgently.");
+        assertThat(body).contains("Grade relevant");
         assertThat(body).contains("Jane Doe");
         assertThat(body).contains("jane@example.com");
     }
@@ -172,7 +174,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     void contactEmailTemplate_shouldRenderCorrectlyInGerman() throws Exception {
         recipient.setLangKey("de");
-        var contactData = new ContactEmailData("Neuer Kurs", "NEUKRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true, "Dringend benötigt.",
+        var contactData = new ContactEmailData("Neuer Kurs", "NEUKRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true, false, "Dringend benötigt.",
                 "Max Mustermann", "max@example.com");
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.contact.title", "mail/courseRequestContactEmail",
@@ -187,7 +189,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     void acceptedEmailTemplate_shouldRenderCorrectlyInGerman() throws Exception {
         recipient.setLangKey("de");
-        var courseRequestData = new CourseRequestEmailData("Akzeptierter Kurs", "AKZKRS", null, null, null, false, null, null);
+        var courseRequestData = new CourseRequestEmailData("Akzeptierter Kurs", "AKZKRS", null, null, null, false, true, null, null);
 
         var course = new Course();
         course.setId(99L);
@@ -203,7 +205,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     void rejectedEmailTemplate_shouldRenderCorrectlyInGerman() throws Exception {
         recipient.setLangKey("de");
-        var courseRequestData = new CourseRequestEmailData("Abgelehnter Kurs", "ABLKRS", null, null, null, false, null, "Keine ausreichende Begründung.");
+        var courseRequestData = new CourseRequestEmailData("Abgelehnter Kurs", "ABLKRS", null, null, null, false, true, null, "Keine ausreichende Begründung.");
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail",
                 Map.of("courseRequest", courseRequestData));
@@ -229,15 +231,15 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
      * Used to verify that Thymeleaf/SpEL can resolve record accessor methods (e.g., {@code title()})
      * for template expressions like {@code ${courseRequest.title}}.
      */
-    record CourseRequestEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, String reason,
-            String decisionReason) {
+    record CourseRequestEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, boolean gradeRelevant,
+            String reason, String decisionReason) {
     }
 
     /**
      * DTO that mirrors the {@code ContactEmailData} record in {@code CourseRequestService}.
      * Includes requester information needed by the contact email template.
      */
-    record ContactEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, String reason,
-            String requesterName, String requesterEmail) {
+    record ContactEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, boolean gradeRelevant,
+            String reason, String requesterName, String requesterEmail) {
     }
 }
