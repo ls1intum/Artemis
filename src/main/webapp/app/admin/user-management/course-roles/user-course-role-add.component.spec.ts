@@ -181,4 +181,14 @@ describe('UserCourseRoleAddComponent', () => {
 
         expect(states).toEqual([true, false]);
     });
+
+    it('cannot add while the host disables it', () => {
+        fixture.componentRef.setInput('disabled', true);
+        component().onRoleChange('EDITOR');
+        chooseCourse(algorithms);
+
+        expect(addButton().disabled).toBe(true);
+        component().add();
+        httpMock.expectNone({ method: 'POST' });
+    });
 });

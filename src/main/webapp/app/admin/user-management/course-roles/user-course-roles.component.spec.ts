@@ -235,6 +235,41 @@ describe('UserCourseRolesComponent', () => {
             expect(element().querySelectorAll('[data-testid="user-course-roles-course"]')).toHaveLength(4);
         });
 
+        it('blocks every other change while a role is being removed', async () => {
+            await respondWith(courseRoles);
+
+            removeButtons()[0].click();
+            const confirmation = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+            confirmation.request(undefined)?.accept();
+            confirmation.close(undefined);
+            fixture.detectChanges();
+
+            expect(removeButtons().every((button) => button.hasAttribute('disabled'))).toBe(true);
+            expect(fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.disabled()).toBe(true);
+            removeButtons()[1].click();
+            expect(fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)).toBeUndefined();
+            httpMock.expectOne({ method: 'DELETE' }).flush(null);
+            fixture.detectChanges();
+            httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles.slice(1));
+        });
+
+        it('blocks removing a role while a role is being added', async () => {
+            await respondWith(courseRoles);
+
+            fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.changing.emit(true);
+            fixture.detectChanges();
+
+            expect(removeButtons().every((button) => button.hasAttribute('disabled'))).toBe(true);
+        });
+
+        it('blocks every change while the host disables the component', async () => {
+            fixture.componentRef.setInput('disabled', true);
+            await respondWith(courseRoles);
+
+            expect(removeButtons().every((button) => button.hasAttribute('disabled'))).toBe(true);
+            expect(fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.disabled()).toBe(true);
+        });
+
         it('forwards the progress of adding a role', async () => {
             await respondWith([]);
 

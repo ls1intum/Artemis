@@ -223,6 +223,7 @@
                     <jhi-user-course-roles
                         class="mb-3 block"
                         editable
+                        [disabled]="isSaving()"
                         [login]="login"
                         (courseRolesChanged)="onCourseRolesChanged()"
                         (changeInProgress)="onCourseRoleChangeInProgress($event)"

@@ -896,6 +896,20 @@ describe('UserManagementUpdateComponent', () => {
             expect(updateSpy).toHaveBeenCalledOnce();
         });
 
+        it('should keep saving blocked until every overlapping change of the course roles ended', async () => {
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRoleChangeInProgress(true);
+            component.onCourseRoleChangeInProgress(true);
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).toHaveBeenCalledOnce();
+        });
+
         it('should leave the authorities untouched when the server changed none', () => {
             component.editForm.get('authorities')?.setValue([Authority.STUDENT, Authority.EDITOR]);
             vi.spyOn(adminUserService, 'findUser').mockReturnValue(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT])));

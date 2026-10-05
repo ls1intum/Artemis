@@ -43,7 +43,7 @@
                                             [icon]="faTrash"
                                             [ariaLabel]="removeLabel(course)"
                                             [loading]="isRemoving(course)"
-                                            [disabled]="removing() !== undefined"
+                                            [disabled]="busy()"
                                             (clicked)="confirmRemove(course)"
                                         />
                                     }
@@ -55,7 +55,7 @@
             </div>
         }
         @if (editable()) {
-            <jhi-user-course-role-add [login]="login()" [existingRoles]="courseRoles()" (added)="onRoleAdded()" (changing)="onAddInProgress($event)" />
+            <jhi-user-course-role-add [login]="login()" [existingRoles]="courseRoles()" [disabled]="busy()" (added)="onRoleAdded()" (changing)="onAddInProgress($event)" />
         }
     }
 </tumaet-ui-card>

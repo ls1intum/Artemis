@@ -62,6 +62,9 @@ export class UserCourseRolesComponent {
     /** Whether roles can be added and removed. */
     readonly editable = input(false, { transform: booleanAttribute });
 
+    /** Blocks every change from outside, for example while the form around the component is being saved. */
+    readonly disabled = input(false, { transform: booleanAttribute });
+
     /** Emits after a role was added or removed on the server, so the host can refresh what depends on it, such as the global authorities. */
     readonly courseRolesChanged = output<void>();
 
@@ -84,6 +87,11 @@ export class UserCourseRolesComponent {
     /** Identifies the role being removed, so its button can show progress and nothing is removed twice. */
     protected readonly removing = signal<string | undefined>(undefined);
 
+    private readonly adding = signal(false);
+
+    /** Changes run one at a time, because each changes the global authorities of the user and the host has to refresh them in between. */
+    protected readonly busy = computed(() => this.disabled() || this.removing() !== undefined || this.adding());
+
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faTrash = faTrash;
 
@@ -101,6 +109,9 @@ export class UserCourseRolesComponent {
 
     /** Asks for confirmation, because losing a role takes the user's access to that course away. */
     protected confirmRemove(courseRole: UserCourseRole): void {
+        if (this.busy()) {
+            return;
+        }
         const params = this.removeParams(courseRole);
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.userManagement.courseRoles.remove.header'),
@@ -113,6 +124,7 @@ export class UserCourseRolesComponent {
     }
 
     protected onAddInProgress(inProgress: boolean): void {
+        this.adding.set(inProgress);
         this.changeInProgress.emit(inProgress);
     }
 
@@ -122,6 +134,9 @@ export class UserCourseRolesComponent {
     }
 
     private remove(courseRole: UserCourseRole, params: Record<string, unknown>): void {
+        if (this.busy()) {
+            return;
+        }
         this.removing.set(this.removalKey(courseRole));
         this.changeInProgress.emit(true);
         this.adminUserService.removeCourseRole(this.login(), courseRole.courseId, courseRole.role).subscribe({

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { EMPTY, Subject } from 'rxjs';
@@ -47,6 +47,9 @@ export class UserCourseRoleAddComponent {
     /** The roles the user already holds, to tell the administrator that a chosen combination exists. */
     readonly existingRoles = input<readonly UserCourseRole[]>([]);
 
+    /** Blocks adding, for example while another change of the course roles is running. */
+    readonly disabled = input(false, { transform: booleanAttribute });
+
     /** Emits after the role was added on the server. */
     readonly added = output<void>();
 
@@ -88,7 +91,7 @@ export class UserCourseRoleAddComponent {
         return course !== undefined && this.existingRoles().some((existing) => existing.courseId === course.id && existing.role === this.role());
     });
 
-    protected readonly canAdd = computed(() => this.course() !== undefined && !this.alreadyHasRole() && !this.isSaving());
+    protected readonly canAdd = computed(() => this.course() !== undefined && !this.alreadyHasRole() && !this.isSaving() && !this.disabled());
 
     constructor() {
         this.searchTexts

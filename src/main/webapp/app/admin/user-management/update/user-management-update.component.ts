@@ -156,11 +156,11 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Whether the authorities in the form reflect the server after the latest change of a course role. */
     protected readonly authoritySync = signal<'idle' | 'syncing' | 'failed'>('idle');
 
-    /** Whether a request that adds or removes a course role is running. */
-    protected readonly courseRoleChangeInProgress = signal(false);
+    /** How many requests that add or remove a course role are running. */
+    private readonly courseRoleChangesInProgress = signal(0);
 
     /** The form cannot be saved while it might still submit authorities that a change of the course roles has made outdated. */
-    protected readonly saveBlockedByCourseRoles = computed(() => this.courseRoleChangeInProgress() || this.authoritySync() !== 'idle');
+    protected readonly saveBlockedByCourseRoles = computed(() => this.courseRoleChangesInProgress() > 0 || this.authoritySync() !== 'idle');
 
     private authoritySyncSubscription?: Subscription;
 
@@ -327,7 +327,7 @@ export class UserManagementUpdateComponent implements OnInit {
      * @param inProgress whether such a request is running
      */
     onCourseRoleChangeInProgress(inProgress: boolean): void {
-        this.courseRoleChangeInProgress.set(inProgress);
+        this.courseRoleChangesInProgress.update((running) => Math.max(0, running + (inProgress ? 1 : -1)));
     }
 
     /**
