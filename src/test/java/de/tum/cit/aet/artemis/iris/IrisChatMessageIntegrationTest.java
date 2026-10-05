@@ -625,6 +625,27 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_allowsATrailingConversationSummary() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        // A run whose answer failed can still report a finished compaction, which is stored after the unanswered user message.
+        IrisMessage summary = new IrisMessage();
+        IrisJsonMessageContent summaryContent = new IrisJsonMessageContent();
+        summaryContent.setJsonContent("{\"summary\":\"The student asked a question.\",\"coversThroughMessageId\":" + userMessage.getId() + "}");
+        summary.addContent(summaryContent);
+        irisMessageService.saveMessage(summary, session, IrisMessageSender.SUMMARY);
+
+        mockChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend", null, HttpStatus.OK);
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resendMessage_rejectsOversizedClientId() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);

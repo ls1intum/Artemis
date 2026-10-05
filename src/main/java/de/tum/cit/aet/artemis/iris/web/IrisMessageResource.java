@@ -201,7 +201,9 @@ public class IrisMessageResource {
         irisSessionService.checkRateLimit(session, user);
 
         var message = irisMessageRepository.findByIdElseThrow(messageId);
-        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
+        // A stored conversation summary can follow the user message whose run failed. Clients do not show it, so it does not count as the last message.
+        var displayedMessages = session.getMessages().stream().filter(sessionMessage -> sessionMessage.getSender() != IrisMessageSender.SUMMARY).toList();
+        if (displayedMessages.lastIndexOf(message) != displayedMessages.size() - 1) {
             throw new BadRequestException("Only the last message can be resent");
         }
         if (message.getSender() != IrisMessageSender.USER) {
