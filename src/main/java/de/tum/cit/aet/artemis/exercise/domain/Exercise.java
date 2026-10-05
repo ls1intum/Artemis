@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 
 import java.time.ZonedDateTime;
@@ -13,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
@@ -964,23 +962,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private void validateExamExerciseIncludedInScoreCompletely() {
         if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
             throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
-        }
-    }
-
-    /**
-     * Validate the exercise title.
-     * 1. Check presence and length of exercise title
-     * 2. Find forbidden patterns in exercise title
-     */
-    public void validateTitle() {
-        // Check if exercise title is set
-        if (getTitle() == null || getTitle().isBlank() || getTitle().length() < 3) {
-            throw new BadRequestAlertException("The title is not set or is too short.", "Exercise", "titleLengthInvalid");
-        }
-        // Check if the exercise title matches regex
-        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(getTitle());
-        if (!titleMatcher.matches()) {
-            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
         }
     }
 
