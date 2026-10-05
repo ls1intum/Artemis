@@ -147,7 +147,7 @@ class PyrisStatusUpdateServiceTest {
     @EnumSource(PyrisRunState.class)
     void autonomousTutorJobLifecycleUsesRunState(PyrisRunState runState) {
         var job = new AutonomousTutorJob("autonomous-run", 1L, 2L);
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO(null, false, null, runState, null, List.of());
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO(null, false, null, runState, null, List.of(), List.of());
 
         service.handleStatusUpdate(job, statusUpdate);
 
@@ -353,8 +353,8 @@ class PyrisStatusUpdateServiceTest {
         verify(pyrisJobService).removeJob(tutorJob);
 
         var autonomousJob = new AutonomousTutorJob("autonomous-null", 1L, 2L);
-        var autonomousUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO(null, false, null, null, null, List.of());
-        var normalizedAutonomousUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO(null, false, null, PyrisRunState.FAILED, null, List.of());
+        var autonomousUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO(null, false, null, null, null, List.of(), List.of());
+        var normalizedAutonomousUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO(null, false, null, PyrisRunState.FAILED, null, List.of(), List.of());
 
         service.handleStatusUpdate(autonomousJob, autonomousUpdate);
 

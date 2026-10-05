@@ -10,6 +10,7 @@ import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUn
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnverifiedIrisAnswersSpecification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -164,6 +166,125 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
         incrementCourseMemoryVersion(postId);
         return findCourseMemoryVersion(postId);
     }
+
+    /**
+     * Bumps a thread's Course Memory version if the thread has one, i.e. if anything was ever dispatched for it. Used in the
+     * same transaction as a change to the thread's content, so the entry Pyris holds is outdated the moment the change
+     * commits; if the refresh that follows never reaches Pyris, the nightly sync retracts the entry.
+     *
+     * @param postId the id of the thread's root post
+     * @return 1 if the version was bumped, 0 if the thread has no Course Memory version
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id = :postId AND course_memory_version > 0", nativeQuery = true)
+    int bumpCourseMemoryVersionIfTracked(@Param("postId") long postId);
+
+    /**
+     * Bumps the Course Memory version of every given thread that has one.
+     *
+     * @param postIds the ids of the threads' root posts
+     * @return how many versions were bumped
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id IN (:postIds) AND course_memory_version > 0", nativeQuery = true)
+    int bumpCourseMemoryVersions(@Param("postIds") Collection<Long> postIds);
+
+    /**
+     * Saves an edited root post and outdates the thread's Course Memory entry in one transaction.
+     *
+     * @param post the edited post
+     * @return the saved post
+     */
+    @Transactional // ok because the edit and the version bump have to commit together
+    default Post saveAndInvalidateCourseMemory(Post post) {
+        Post saved = save(post);
+        bumpCourseMemoryVersionIfTracked(saved.getId());
+        return saved;
+    }
+
+    /**
+     * The threads with a Course Memory version that contain a message by the given user, as root post or as answer.
+     *
+     * @param userId the user
+     * @return the threads' root post ids
+     */
+    @Query("""
+            SELECT DISTINCT post.id
+            FROM Post post
+            WHERE post.courseMemoryVersion > 0
+                AND (post.author.id = :userId
+                    OR EXISTS (SELECT answer.id FROM AnswerPost answer WHERE answer.post.id = post.id AND answer.author.id = :userId))
+            """)
+    List<Long> findCourseMemoryThreadIdsWithContentBy(@Param("userId") long userId);
+
+    /**
+     * Outdates the Course Memory entries of every thread that contains a message by the given user, in one transaction.
+     * Called before an opt-out from AI or a deactivation is recorded.
+     *
+     * @param userId the user
+     * @return the affected threads' root post ids
+     */
+    @Transactional // ok because the lookup and the version bump have to see the same threads
+    default List<Long> invalidateCourseMemoryOfThreadsWithContentBy(long userId) {
+        List<Long> postIds = findCourseMemoryThreadIdsWithContentBy(userId);
+        if (!postIds.isEmpty()) {
+            bumpCourseMemoryVersions(postIds);
+        }
+        return postIds;
+    }
+
+    /**
+     * @param postId the id of a post
+     * @return the id of the conversation the post belongs to, or empty if the post does not exist
+     */
+    @Query("""
+            SELECT post.conversation.id
+            FROM Post post
+            WHERE post.id = :postId
+            """)
+    Optional<Long> findConversationIdOfPost(@Param("postId") long postId);
+
+    /**
+     * @param postId the id of a post
+     * @return the id of the course the post's conversation belongs to, or empty if the post does not exist
+     */
+    @Query("""
+            SELECT post.conversation.course.id
+            FROM Post post
+            WHERE post.id = :postId
+            """)
+    Optional<Long> findCourseIdOfPost(@Param("postId") long postId);
+
+    /**
+     * @return the ids of all courses with at least one thread that has a Course Memory version
+     */
+    @Query("""
+            SELECT DISTINCT post.conversation.course.id
+            FROM Post post
+            WHERE post.courseMemoryVersion > 0
+            """)
+    Set<Long> findCourseIdsWithCourseMemory();
+
+    /**
+     * The next threads of a course that have a Course Memory version, in id order after {@code afterPostId}. Keyset paging,
+     * so a thread that gets its first version while the list is read cannot shift a page and hide another thread.
+     *
+     * @param courseId    the course
+     * @param afterPostId the last post id of the previous page, or 0 for the first page
+     * @param pageable    the page size (the page number must be 0)
+     * @return the threads with their channel and current version
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO(post.id, post.conversation.id, post.conversation.course.id, post.courseMemoryVersion)
+            FROM Post post
+            WHERE post.conversation.course.id = :courseId
+                AND post.courseMemoryVersion > 0
+                AND post.id > :afterPostId
+            ORDER BY post.id
+            """)
+    List<CourseMemoryThreadDTO> findCourseMemoryThreadsOfCourseAfter(@Param("courseId") long courseId, @Param("afterPostId") long afterPostId, Pageable pageable);
 
     Integer countByConversationId(Long conversationId);
 

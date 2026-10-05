@@ -422,7 +422,7 @@ public class PyrisStatusUpdateService {
             return statusUpdate;
         }
         return new PyrisAutonomousTutorPipelineStatusUpdateDTO(statusUpdate.result(), statusUpdate.shouldPostDirectly(), statusUpdate.confidence(), runState, statusUpdate.error(),
-                statusUpdate.tokens());
+                statusUpdate.tokens(), statusUpdate.usedCourseMemoryConversationIds());
     }
 
 }

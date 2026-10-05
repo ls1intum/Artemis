@@ -287,23 +287,6 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
     boolean hasHumanVerifier(@Param("answerPostId") long answerPostId);
 
     /**
-     * Returns the login of the user recorded as the verifier of the given {@link AnswerPost}.
-     * <p>
-     * Queried rather than navigated from the entity because {@code verifiedBy} is lazy and is not part of
-     * the eager thread fetch, so reading it off a detached answer would fail outside a transaction.
-     *
-     * @param answerPostId the ID of the {@link AnswerPost} to look up
-     * @return the verifier's login, or empty if none is recorded or the answer post does not exist
-     */
-    @Query("""
-            SELECT answerPost.verifiedBy.login
-            FROM AnswerPost answerPost
-            WHERE answerPost.id = :answerPostId
-                AND answerPost.verifiedBy IS NOT NULL
-            """)
-    Optional<String> findVerifierLoginById(@Param("answerPostId") long answerPostId);
-
-    /**
      * Returns, for every resolving answer of a thread that records an endorser, who marked it resolving.
      * <p>
      * Course Memory derives an entry's trust tier from this endorsement — a tutor marking an answer resolving
@@ -311,8 +294,7 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * still resolves the thread after another one was un-marked or deleted. Answers resolved before the
      * endorser was recorded are absent from the result and are treated as community-resolved.
      * <p>
-     * Queried as a projection for the same reason as {@link #findVerifierLoginById}: {@code resolvedBy} is
-     * lazy and not part of the eager thread fetch. One query for the whole thread rather than one per answer.
+     * Queried as a projection: {@code resolvedBy} is lazy and not part of the eager thread fetch. One query for the whole thread rather than one per answer.
      *
      * @param postId the id of the thread's root post
      * @return one entry per resolving answer that carries an endorser
@@ -325,4 +307,43 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
                 AND answerPost.resolvedBy IS NOT NULL
             """)
     List<ResolvingAnswerEndorserDTO> findResolvingAnswerEndorsersByPostId(@Param("postId") long postId);
+
+    /**
+     * Bumps the Course Memory version of a thread if it has one. See
+     * {@code ConversationMessageRepository#bumpCourseMemoryVersionIfTracked}; repeated here because a default method can only
+     * call its own repository.
+     *
+     * @param postId the id of the thread's root post
+     * @return 1 if the version was bumped, 0 if the thread has no Course Memory version
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id = :postId AND course_memory_version > 0", nativeQuery = true)
+    int bumpCourseMemoryVersionOfThreadIfTracked(@Param("postId") long postId);
+
+    /**
+     * Saves an edited answer and outdates its thread's Course Memory entry in one transaction, so an entry built from the
+     * old text cannot outlive a refresh that never reaches Pyris.
+     *
+     * @param answerPost the edited answer
+     * @return the saved answer
+     */
+    @Transactional // ok because the edit and the version bump have to commit together
+    default AnswerPost saveAndInvalidateCourseMemory(AnswerPost answerPost) {
+        AnswerPost saved = save(answerPost);
+        bumpCourseMemoryVersionOfThreadIfTracked(saved.getPost().getId());
+        return saved;
+    }
+
+    /**
+     * Deletes an answer and outdates its thread's Course Memory entry in one transaction.
+     *
+     * @param answerPostId the id of the answer to delete
+     * @param postId       the id of the thread's root post
+     */
+    @Transactional // ok because the deletion and the version bump have to commit together
+    default void deleteAndInvalidateCourseMemory(long answerPostId, long postId) {
+        deleteById(answerPostId);
+        bumpCourseMemoryVersionOfThreadIfTracked(postId);
+    }
 }

@@ -10,18 +10,22 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -54,6 +58,9 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
     @Autowired
     private ConversationMessageRepository conversationMessageRepository;
+
+    @Autowired
+    private ConversationTestRepository conversationRepository;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -97,7 +104,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         Post post = createPostInChannel(student, "How does recursion work?");
         var job = new AutonomousTutorJob("job1", post.getId(), course.getId());
         var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Recursion is a technique where a function calls itself.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD,
-                PyrisRunState.FINISHED, null, null);
+                PyrisRunState.FINISHED, null, null, List.of());
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
@@ -115,7 +122,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         var job = new AutonomousTutorJob("job2", post.getId(), course.getId());
         var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Polymorphism allows objects to take many forms.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD,
-                PyrisRunState.FINISHED, null, null);
+                PyrisRunState.FINISHED, null, null, List.of());
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
@@ -127,7 +134,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         Post post = createPostInChannel(student, "Explain inheritance.");
         var job = new AutonomousTutorJob("job3", post.getId(), course.getId());
         var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Inheritance allows a class to inherit from another.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD,
-                PyrisRunState.FINISHED, null, null);
+                PyrisRunState.FINISHED, null, null, List.of());
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
@@ -146,7 +153,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         Post post = createPostInChannel(student, "What is encapsulation?");
         var job = new AutonomousTutorJob("job4", post.getId(), course.getId());
         var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Encapsulation hides internal state.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD, PyrisRunState.FINISHED,
-                null, null);
+                null, null, List.of());
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
@@ -160,7 +167,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         Post post = createPostInChannel(student, "What is abstraction?");
         var job = new AutonomousTutorJob("job5", post.getId(), course.getId());
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO(null, true, null, PyrisRunState.FINISHED, null, null);
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO(null, true, null, PyrisRunState.FINISHED, null, null, List.of());
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
@@ -174,7 +181,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         Post post = createPostInChannel(student, "What are design patterns?");
         var job = new AutonomousTutorJob("job6", post.getId(), course.getId());
         var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Design patterns are reusable solutions.", true, REVIEW_MIN_CONFIDENCE_THRESHOLD - 0.3,
-                PyrisRunState.FINISHED, null, null);
+                PyrisRunState.FINISHED, null, null, List.of());
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
@@ -187,10 +194,53 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         Post post = createPostInChannel(student, "What is SOLID?");
         var job = new AutonomousTutorJob("job7", post.getId(), course.getId());
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("SOLID is a set of principles.", true, null, PyrisRunState.FINISHED, null, null);
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("SOLID is a set of principles.", true, null, PyrisRunState.FINISHED, null, null, List.of());
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         assertThat(answerPostRepository.findAnswerPostsByAuthorId(botUser.getId())).hasSize(initialCount);
+    }
+
+    private AnswerPost onlyBotAnswerOf(Post post) {
+        var botAnswers = answerPostRepository.findAnswerPostsByAuthorId(botUser.getId()).stream().filter(a -> a.getPost().getId().equals(post.getId())).toList();
+        assertThat(botAnswers).hasSize(1);
+        return botAnswers.getFirst();
+    }
+
+    @Test
+    void handleStatusUpdate_withCourseMemoryFromAReadableChannel_publishes() {
+        Post post = createPostInChannel(student, "When is the deadline?");
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Friday.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD, PyrisRunState.FINISHED, null, null,
+                List.of(channel.getId()));
+
+        autonomousTutorService.handleStatusUpdate(new AutonomousTutorJob("job-cm-1", post.getId(), course.getId()), statusUpdate);
+
+        assertThat(onlyBotAnswerOf(post).isVerified()).isTrue();
+    }
+
+    @Test
+    void handleStatusUpdate_withCourseMemoryFromAChannelThatIsNoLongerReadable_holdsForReview() {
+        Post post = createPostInChannel(student, "When is the deadline?");
+        Channel privateChannel = conversationUtilService.createPublicChannel(course, "no-longer-readable");
+        privateChannel.setIsPublic(false);
+        privateChannel = conversationRepository.save(privateChannel);
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Friday.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD, PyrisRunState.FINISHED, null, null,
+                List.of(channel.getId(), privateChannel.getId()));
+
+        autonomousTutorService.handleStatusUpdate(new AutonomousTutorJob("job-cm-2", post.getId(), course.getId()), statusUpdate);
+
+        AnswerPost answer = onlyBotAnswerOf(post);
+        assertThat(answer.isVerified()).isFalse();
+        assertThat(answer.getVerifiedAt()).isNull();
+    }
+
+    @Test
+    void handleStatusUpdate_withoutReportedCourseMemorySources_holdsForReview() {
+        Post post = createPostInChannel(student, "When is the deadline?");
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Friday.", true, AUTO_VERIFY_CONFIDENCE_THRESHOLD, PyrisRunState.FINISHED, null, null, null);
+
+        autonomousTutorService.handleStatusUpdate(new AutonomousTutorJob("job-cm-3", post.getId(), course.getId()), statusUpdate);
+
+        assertThat(onlyBotAnswerOf(post).isVerified()).isFalse();
     }
 }

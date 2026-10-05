@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutono
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryCourseSyncDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryInstanceSyncDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -235,6 +237,15 @@ public class IrisRequestMockProvider {
 
     public void mockCourseMemoryDeletionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryDeletionExecutionDTO> responseConsumer) {
         mockWebhookPost("/course-memory/delete", PyrisWebhookCourseMemoryDeletionExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockCourseMemoryCourseSyncResponse(Consumer<PyrisCourseMemoryCourseSyncDTO> responseConsumer) {
+        // One request per course with tracked threads; the shared test database holds other tests' courses too.
+        mockWebhookPost("/course-memory/sync/course", PyrisCourseMemoryCourseSyncDTO.class, responseConsumer, ExpectedCount.manyTimes());
+    }
+
+    public void mockCourseMemoryInstanceSyncResponse(Consumer<PyrisCourseMemoryInstanceSyncDTO> responseConsumer) {
+        mockWebhookPost("/course-memory/sync/instance", PyrisCourseMemoryInstanceSyncDTO.class, responseConsumer);
     }
 
     /**

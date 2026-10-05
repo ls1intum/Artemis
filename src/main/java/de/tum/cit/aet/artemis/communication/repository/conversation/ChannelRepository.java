@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.repository.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -131,4 +132,43 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
                 AND (channel.exercise IS NOT NULL OR channel.lecture IS NOT NULL OR channel.exam IS NOT NULL)
             """)
     Set<ChannelSubTypeReferenceDatesDTO> findSubTypeReferenceDates(@Param("channelIds") Collection<Long> channelIds);
+
+    /**
+     * The channels of a course that every student can read right now: public or course-wide, not an exam channel, and,
+     * for an exercise channel, a course exercise that is released. Mirrors {@link Channel#isVisibleToStudents()}. Course
+     * Memory serves entries only from these channels and checks them again before an Iris reply is published unreviewed.
+     *
+     * @param courseId the course
+     * @param now      the current time, taken from the JVM clock so it agrees with {@code BaseExercise#isVisibleToStudents}
+     * @return the ids of the readable channels
+     */
+    @Query("""
+            SELECT channel.id
+            FROM Channel channel
+                LEFT JOIN channel.exercise exercise
+            WHERE channel.course.id = :courseId
+                AND channel.exam IS NULL
+                AND (channel.isPublic = TRUE OR channel.isCourseWide = TRUE)
+                AND (exercise IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate <= :now)))
+            """)
+    Set<Long> findIdsOfChannelsReadableByAllStudents(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Whether a conversation is a channel every student of its course can read right now, by the same rule as
+     * {@link #findIdsOfChannelsReadableByAllStudents}.
+     *
+     * @param channelId the conversation id
+     * @param now       the current time
+     * @return {@code true} for a readable channel, {@code false} otherwise or if it does not exist
+     */
+    @Query("""
+            SELECT CASE WHEN COUNT(channel) > 0 THEN TRUE ELSE FALSE END
+            FROM Channel channel
+                LEFT JOIN channel.exercise exercise
+            WHERE channel.id = :channelId
+                AND channel.exam IS NULL
+                AND (channel.isPublic = TRUE OR channel.isCourseWide = TRUE)
+                AND (exercise IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate <= :now)))
+            """)
+    boolean isChannelReadableByAllStudents(@Param("channelId") long channelId, @Param("now") ZonedDateTime now);
 }

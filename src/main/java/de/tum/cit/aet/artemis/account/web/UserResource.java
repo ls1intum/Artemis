@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
@@ -85,9 +86,12 @@ public class UserResource {
 
     private final UserAiPreferenceService userAiPreferenceService;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     public UserResource(AuditEventRepository auditEventRepository, UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi,
-            UserAiPreferenceService userAiPreferenceService) {
+            UserAiPreferenceService userAiPreferenceService, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi) {
         this.userRepository = userRepository;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
         this.userAiPreferenceService = userAiPreferenceService;
         this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
@@ -171,7 +175,13 @@ public class UserResource {
             throw new IllegalArgumentException("LLM selection decision cannot be null");
         }
         AiSelectionDecision before = userAiPreferenceService.findDecision(user.getId());
+        // Opting out of AI: the Course Memory entries holding this user's messages are outdated before the decision is
+        // recorded, so an entry built from their text cannot outlive the opt-out even if the rebuild below never runs.
+        List<Long> courseMemoryThreads = selectedLLMUsage == AiSelectionDecision.NO_AI && before != AiSelectionDecision.NO_AI
+                ? courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of())
+                : List.of();
         userAiPreferenceService.recordDecision(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
+        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
         var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.ok().build();

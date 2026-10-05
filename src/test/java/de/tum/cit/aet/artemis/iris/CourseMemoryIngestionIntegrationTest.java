@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -14,15 +13,17 @@ import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.cleanup.CommunicationDataCleanupRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -35,11 +36,15 @@ import de.tum.cit.aet.artemis.iris.domain.CourseMemoryOperation;
 import de.tum.cit.aet.artemis.iris.domain.CourseMemoryStage;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseMemoryStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.CourseMemoryIngestionService;
+import de.tum.cit.aet.artemis.iris.service.CourseMemorySyncService;
 import de.tum.cit.aet.artemis.iris.service.IrisBotUserService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryCourseSyncDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryInstanceSyncDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemorySource;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemorySyncThreadDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryThreadMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
@@ -91,6 +96,15 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private PyrisStatusUpdateService pyrisStatusUpdateService;
+
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private CourseMemorySyncService courseMemorySyncService;
+
+    @Autowired
+    private CommunicationDataCleanupRepository communicationDataCleanupRepository;
 
     private Course course;
 
@@ -186,6 +200,14 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         return reloaded.getAnswers().stream().filter(answer -> answer.getId().equals(answerId)).findFirst().orElseThrow();
     }
 
+    /**
+     * Gives the thread a Course Memory version, as an earlier dispatched operation would. Edits only refresh threads that
+     * have one.
+     */
+    private void markAsStoredInCourseMemory(Post post) {
+        conversationMessageRepository.mintCourseMemoryVersion(post.getId());
+    }
+
     private Post reloadPost(Post post) {
         return conversationMessageRepository.findMessagePostByIdElseThrow(post.getId());
     }
@@ -199,13 +221,13 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void ingestVerifiedAnswer_approvedAsIs_firesIrisAuto() {
         Post post = createQuestion("How do I submit the exercise?");
-        AnswerPost answer = saveAnswer(post, botUser, "Push to your repo before the deadline.", true);
+        AnswerPost answer = saveDashboardVerifiedIrisAnswer(post, "Push to your repo before the deadline.", false);
         AnswerPost managed = reloadManagedAnswer(post, answer.getId());
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.ingestVerifiedAnswer(managed, false, tutor, course);
+        courseMemoryIngestionService.refreshThread(managed.getPost().getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -218,7 +240,6 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto.postId()).isEqualTo(String.valueOf(post.getId()));
         assertThat(dto.messageId()).isEqualTo(String.valueOf(answer.getId()));
         assertThat(dto.isPublicChannel()).isTrue();
-        assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
         assertThat(dto.settings().authenticationToken()).isNotNull();
 
         // thread is ordered oldest->newest: question first (student), then the verified Iris answer marked as draft.
@@ -240,13 +261,16 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void ingestVerifiedAnswer_edited_firesIrisCorrectedWithExistingAnswer() {
         Post post = createQuestion("When is the deadline?");
-        AnswerPost answer = saveAnswer(post, botUser, "Corrected: only commits before 23:59 are graded.", true);
+        AnswerPost answer = saveDashboardVerifiedIrisAnswer(post, "Corrected: only commits before 23:59 are graded.", false);
+        // Approving with an edit records updatedDate in the same statement; that, not an event flag, marks the correction.
+        answer.setUpdatedDate(ZonedDateTime.now());
+        answerPostRepository.save(answer);
         AnswerPost managed = reloadManagedAnswer(post, answer.getId());
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.ingestVerifiedAnswer(managed, true, tutor, course);
+        courseMemoryIngestionService.refreshThread(managed.getPost().getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -266,7 +290,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -274,8 +298,8 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.TUTOR_WRITTEN);
         assertThat(dto.postId()).isEqualTo(String.valueOf(post.getId()));
         assertThat(dto.messageId()).isEqualTo(String.valueOf(answer.getId()));
-        assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
-        assertThat(dto.existingAnswer()).isNull();
+        // The tutor vouched for exactly this text, so it travels verbatim.
+        assertThat(dto.existingAnswer()).isEqualTo("The latest push before the deadline is graded.");
         assertThat(dto.thread()).hasSize(2);
         var tutorAnswer = dto.thread().get(1);
         assertThat(tutorAnswer.id()).isEqualTo("answer-" + answer.getId());
@@ -295,12 +319,11 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
         // The post author (a student) may mark any answer resolving, but that is not a tutor endorsement.
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, student, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), student, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
-        assertThat(dto.verifiedBy()).isNull();
         assertThat(dto.verifiedAt()).isNull();
     }
 
@@ -313,14 +336,13 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, student, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), student, course);
 
         // A peer answer that resolved the thread is worth remembering, but nobody with authority signed
         // off on it: it is stored, and labelled so retrieval can weight it as a hint rather than fact.
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
-        assertThat(dto.verifiedBy()).isNull();
         assertThat(dto.verifiedAt()).isNull();
         assertThat(messageWithId(dto.thread(), "answer-" + answer.getId()).isVerifiedAnswer()).isTrue();
     }
@@ -334,14 +356,13 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // The trust tier follows the endorsement, not the authorship: a tutor marking a student's answer
         // as the resolving one vouches for it just as much as writing it themselves.
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.TUTOR_WRITTEN);
-        assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
         assertThat(dto.verifiedAt()).isNotNull();
     }
 
@@ -354,7 +375,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, tutorAnswer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -366,21 +387,24 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void ingestion_isSkippedWhenTheQuestionAuthorOptedOutOfAi() {
+    void ingestion_redactsAQuestionAuthorWhoOptedOutOfAi() {
         userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
         Post post = createQuestion("Please keep my question away from AI.");
         AnswerPost answer = saveAnswer(post, tutor, "Understood.", true, true);
-        AnswerPost managed = reloadManagedAnswer(post, answer.getId());
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        // The stored question is derived from the thread root, so the opt-out has to block the whole
-        // entry, not just redact one message.
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, tutor, course);
+        // The question author's words never travel; the thread itself stays usable.
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
-        assertThat(captured.get()).isNull();
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        var question = messageWithId(dto.thread(), "post-" + post.getId());
+        assertThat(question.redacted()).isTrue();
+        assertThat(question.content()).isNullOrEmpty();
+        assertThat(messageWithId(dto.thread(), "answer-" + answer.getId()).isVerifiedAnswer()).isTrue();
     }
 
     @Test
@@ -399,7 +423,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         // The answer itself would become the stored text, so redacting it is not an option and nothing may be
         // ingested. Doing nothing is not an option either: whatever the entry holds was written by an answer
         // that no longer resolves this thread, so it has to go.
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         assertThat(ingested.get()).isNull();
         assertThat(retracted.get()).isNotNull();
@@ -419,7 +443,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, tutorAnswer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -445,6 +469,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     void editingAResolvingAnswer_reingestsTheThread() {
         Post post = createQuestion("What is the deadline?");
         AnswerPost answer = saveAnswer(post, tutor, "Friday.", true, true);
+        markAsStoredInCourseMemory(post);
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
@@ -485,6 +510,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         saveAnswer(post, tutor, "Use ./gradlew bootRun.", true, true);
         post.setResolved(true);
         Post resolvedPost = conversationMessageRepository.save(post);
+        markAsStoredInCourseMemory(resolvedPost);
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
@@ -518,120 +544,6 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     // --- A channel that stops being an eligible source must take its entries with it ---
 
     @Test
-    void togglingPrivacyOfACourseWideChannel_keepsItsEntries() throws Exception {
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
-
-        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + channel.getId() + "/toggle-privacy", HttpStatus.OK,
-                new LinkedMultiValueMap<>());
-
-        // Eligibility is isPublic OR isCourseWide, so a course-wide channel stays readable by the whole
-        // course whatever this flag says — retracting its entries here would drop valid memory.
-        assertThat(conversationRepository.findById(channel.getId())).get().asInstanceOf(type(Channel.class)).extracting(Channel::getIsPublic).isEqualTo(false);
-        assertThat(captured.get()).isNull();
-    }
-
-    @Test
-    void togglingPrivacyOfAPlainPublicChannel_deletesItsEntries() throws Exception {
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        Channel publicChannel = conversationUtilService.createPublicChannel(course, "public-for-privacy-toggle");
-
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
-
-        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + publicChannel.getId() + "/toggle-privacy", HttpStatus.OK,
-                new LinkedMultiValueMap<>());
-
-        // Nothing else keeps this one readable, so everything mined from it while it was public has to go.
-        var dto = captured.get();
-        assertThat(dto).isNotNull();
-        assertThat(dto.conversationId()).isEqualTo(String.valueOf(publicChannel.getId()));
-    }
-
-    @Test
-    void channelNoLongerEligible_deletesEveryEntryOfThatChannel() {
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
-
-        courseMemoryIngestionService.handleChannelNoLongerEligible(channel, tutor, course);
-
-        // Scoped to the channel, not a single thread: eligibility is only evaluated when an entry is
-        // written, so everything mined from this channel has to go at once.
-        var dto = captured.get();
-        assertThat(dto).isNotNull();
-        assertThat(dto.conversationId()).isEqualTo(String.valueOf(channel.getId()));
-        assertThat(dto.postId()).isNull();
-        assertThat(dto.courseId()).isEqualTo(course.getId());
-        // Spans threads whose ids are not known up front, so there is no per-thread version to send.
-        assertThat(dto.version()).isNull();
-    }
-
-    @Test
-    void channelNoLongerEligible_isSkippedWhenIrisIsDisabled() {
-        disableIrisFor(course);
-
-        // No webhook mock registered: a request would fail the MockRestServiceServer.
-        courseMemoryIngestionService.handleChannelNoLongerEligible(channel, tutor, course);
-    }
-
-    @Test
-    void deletingAConversationPurgesItsEntries() {
-        Channel doomed = conversationUtilService.createPublicChannel(course, "channel-deleted-directly");
-
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
-
-        // The purge hangs off ConversationService rather than off any one caller, so every route that
-        // deletes a channel — a plain channel delete, an exercise's channel going away with its exercise,
-        // a tutorial group's channel — retracts its entries without having to remember to.
-        conversationService.deleteConversation(doomed.getId());
-
-        var dto = captured.get();
-        assertThat(dto).isNotNull();
-        assertThat(dto.conversationId()).isEqualTo(String.valueOf(doomed.getId()));
-        assertThat(dto.postId()).isNull();
-        assertThat(dto.wholeCourse()).isFalse();
-    }
-
-    @Test
-    void deletingAnExercisesChannelPurgesItsEntries() {
-        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
-                ZonedDateTime.now().plusDays(2));
-        Channel exerciseChannel = conversationUtilService.addChannelToExercise(exercise);
-
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
-
-        // The sharp case: the course keeps running, so without this Iris goes on serving answers mined
-        // from a channel that no longer exists, citing links that 404.
-        channelService.deleteChannelForExerciseId(exercise.getId());
-
-        var dto = captured.get();
-        assertThat(dto).isNotNull();
-        assertThat(dto.conversationId()).isEqualTo(String.valueOf(exerciseChannel.getId()));
-    }
-
-    @Test
-    void courseDeletion_purgesEveryEntryOfTheCourse() {
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
-
-        courseMemoryIngestionService.handleCourseDeleted(course, tutor);
-
-        // Course deletion drops every conversation in one bulk statement, so there is no channel id left to
-        // purge one by one — and afterwards no Artemis object survives that could ever ask for these
-        // entries' removal.
-        var dto = captured.get();
-        assertThat(dto).isNotNull();
-        assertThat(dto.courseId()).isEqualTo(course.getId());
-        assertThat(dto.wholeCourse()).isTrue();
-        assertThat(dto.postId()).isNull();
-        assertThat(dto.conversationId()).isNull();
-        assertThat(dto.version()).isNull();
-    }
-
-    @Test
     void threadDeletion_stillTargetsASingleThread() {
         Post post = createQuestion("Does a thread deletion stay narrow?");
         saveAnswer(post, tutor, "It should.", true, false);
@@ -639,13 +551,12 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleThreadDeleted(reloadPost(post), tutor, course);
+        courseMemoryIngestionService.retractDeletedThread(post.getId(), course.getId(), tutor);
 
         // Pyris rejects a deletion carrying both scopes, so the thread path must leave conversationId unset.
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.postId()).isEqualTo(String.valueOf(post.getId()));
-        assertThat(dto.conversationId()).isNull();
     }
 
     @Test
@@ -661,7 +572,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, tutorAnswer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // Ingestion sends the whole transcript to an extraction model, so it answers "which model may
         // see this thread" exactly as the autonomous tutor run does: one local participant pins it.
@@ -678,7 +589,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, tutorAnswer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -698,7 +609,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, tutorAnswer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -718,7 +629,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // Deletion must stay reachable: an entry written before the author opted out has to be removable.
         assertThat(captured.get()).isNotNull();
@@ -734,7 +645,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, second.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -757,7 +668,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -777,7 +688,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, unmarked.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -797,7 +708,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         // A tutor-verified Iris answer keeps the thread memory-worthy, so the entry must not be retracted
         // just because an unrelated answer was un-marked.
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, humanAnswer.getId()), student, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), student, course);
 
         // Rebuilt from the Iris answer rather than left as it stood: the entry is keyed on the thread, so
         // it may hold what a since-retracted staff answer wrote.
@@ -820,7 +731,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, humanAnswer.getId()), student, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), student, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -843,7 +754,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), null, tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -859,7 +770,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // Trigger A owns this answer, so the run keeps its provenance and its verifier instead of being
         // relabelled after whoever triggered this pass — but it still has to be dispatched, or a stale
@@ -867,7 +778,6 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.IRIS_AUTO);
-        assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
         // Uncorrected, but still a tutor's sign-off on this exact text, so it travels verbatim.
         assertThat(dto.existingAnswer()).isEqualTo("It happens when two branches change the same lines.");
     }
@@ -884,7 +794,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // The corrected text travels as existingAnswer so extraction cannot paraphrase the tutor's wording
         // away, exactly as Trigger A passes it.
@@ -905,14 +815,13 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // The tutor marking it resolving is the first and only sign-off the answer ever gets; without
         // this path an auto-posted answer could never reach course memory at all.
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.IRIS_AUTO);
-        assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
         assertThat(messageWithId(dto.thread(), "answer-" + answer.getId()).isIrisDraft()).isTrue();
         // The tutor signed off on exactly the text they read, so it travels verbatim like a dashboard approval;
         // Pyris rejects IRIS_AUTO without it rather than store an extractor's paraphrase as tutor-approved.
@@ -928,13 +837,12 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, student, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), student, course);
 
         // A student accepting an AI answer is not a tutor endorsement, so it must not be labelled as one.
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
-        assertThat(dto.verifiedBy()).isNull();
     }
 
     @Test
@@ -946,7 +854,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, tutorAnswer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
@@ -962,7 +870,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleThreadDeleted(reloadPost(post), tutor, course);
+        courseMemoryIngestionService.retractDeletedThread(post.getId(), course.getId(), tutor);
 
         assertThat(captured.get()).isNotNull();
         assertThat(captured.get().postId()).isEqualTo(String.valueOf(post.getId()));
@@ -987,7 +895,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(dto -> {
         });
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         verifyMessageWasSentOverWebsocket(tutor.getLogin(), courseMemoryTopic(), status(CourseMemoryOperation.INGEST, CourseMemoryStage.TRIGGERED, post));
     }
@@ -1000,7 +908,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(dto -> {
         });
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         verifyMessageWasSentOverWebsocket(tutor.getLogin(), courseMemoryTopic(), status(CourseMemoryOperation.DELETE, CourseMemoryStage.TRIGGERED, post));
     }
@@ -1019,7 +927,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         privatePost.setVisibleForStudents(true);
         Post savedPrivatePost = conversationMessageRepository.save(privatePost);
         AnswerPost privateAnswer = saveAnswer(savedPrivatePost, tutor, "Not ingested.", true, true);
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(savedPrivatePost), reloadManagedAnswer(savedPrivatePost, privateAnswer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(savedPrivatePost).getId(), tutor, course);
 
         verifyNumberOfCallsToWebsocket(tutor.getLogin(), courseMemoryTopic(), 0);
     }
@@ -1046,7 +954,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<String> jobToken = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunError(dto -> jobToken.set(dto.settings().authenticationToken()), HttpStatus.INTERNAL_SERVER_ERROR.value());
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // TRIGGERED was already pushed, and Pyris never took the request, so nothing else will ever close this run
         // out: Artemis has to report the failure itself.
@@ -1098,7 +1006,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AnswerPost managed = reloadManagedAnswer(savedPost, answer.getId());
 
         // Not a public/course-wide channel -> no webhook expected (a stray request would fail the mock server)
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(savedPost), managed, tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(savedPost).getId(), tutor, course);
     }
 
     // --- The trust tier follows the endorser recorded on the anchoring answer, not the acting user ---
@@ -1114,7 +1022,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, unmarked.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // The tutor is the actor of this refresh, not the endorser of the answer that now anchors the entry.
         // Labelling it after the actor would store a student's guess about the exam as tutor-verified.
@@ -1122,7 +1030,6 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto).isNotNull();
         assertThat(dto.messageId()).isEqualTo(String.valueOf(studentEndorsed.getId()));
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
-        assertThat(dto.verifiedBy()).isNull();
         assertThat(dto.verifiedAt()).isNull();
     }
 
@@ -1135,7 +1042,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, unmarked.getId()), student, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), student, course);
 
         // The student is merely the actor; the surviving answer carries a tutor's endorsement and keeps it, with
         // the verifier and timestamp of that endorsement rather than of this refresh.
@@ -1143,7 +1050,6 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto).isNotNull();
         assertThat(dto.messageId()).isEqualTo(String.valueOf(tutorEndorsed.getId()));
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.TUTOR_WRITTEN);
-        assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
         ZonedDateTime endorsedAt = answerPostRepository.findById(tutorEndorsed.getId()).orElseThrow().getResolvedAt();
         assertThat(dto.verifiedAt()).isEqualTo(endorsedAt.toInstant().toString());
     }
@@ -1158,12 +1064,11 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         // What the question-edit path calls: no triggering answer, and the editor — here a tutor fixing a typo —
         // as the actor. Fixing a typo is not an endorsement of the answer below it.
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), null, tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
-        assertThat(dto.verifiedBy()).isNull();
     }
 
     @Test
@@ -1175,7 +1080,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, studentEndorsed.getId()), student, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), student, course);
 
         // Pyris applies the latest state Artemis sends, so the anchor has to be chosen by trust tier first: the
         // newer student-endorsed answer must not demote the thread's tutor-verified entry, even though it is the
@@ -1184,7 +1089,6 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto).isNotNull();
         assertThat(dto.messageId()).isEqualTo(String.valueOf(tutorEndorsed.getId()));
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.TUTOR_WRITTEN);
-        assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
         assertThat(messageWithId(dto.thread(), "answer-" + tutorEndorsed.getId()).isVerifiedAnswer()).isTrue();
         assertThat(messageWithId(dto.thread(), "answer-" + studentEndorsed.getId()).resolvesPost()).isTrue();
     }
@@ -1198,14 +1102,13 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, legacy.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // Nobody is on record as having endorsed it, so it fails closed into the community tier — even though a
         // tutor wrote it and a tutor triggered this refresh.
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
-        assertThat(dto.verifiedBy()).isNull();
     }
 
     @Test
@@ -1244,12 +1147,12 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> retracted = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(retracted::set);
 
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // The answer is un-marked, so the next event retracts the entry.
         answer.setResolution(false, null);
         answerPostRepository.save(answer);
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // Pyris keeps the highest version per thread and drops anything older, so the retraction has to outrank
         // the ingestion it supersedes — and the counter it was minted from has to say the same.
@@ -1266,8 +1169,8 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         List<Long> versions = new ArrayList<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(dto -> versions.add(dto.version()), ExpectedCount.times(2));
-        courseMemoryIngestionService.ingestVerifiedAnswer(reloadManagedAnswer(post, irisAnswer.getId()), false, tutor, course);
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, humanAnswer.getId()), tutor, course);
+        courseMemoryIngestionService.refreshThread(post.getId(), tutor, course);
+        courseMemoryIngestionService.refreshThread(reloadPost(post).getId(), tutor, course);
 
         // Both triggers write the same thread entry, so they must be ordered against each other, not each on its own.
         assertThat(versions).hasSize(2);
@@ -1282,10 +1185,206 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
 
-        courseMemoryIngestionService.handleThreadDeleted(reloadPost(post), tutor, course);
+        courseMemoryIngestionService.retractDeletedThread(post.getId(), course.getId(), tutor);
 
         // The row is gone by the time this fires in production, so no version can be minted for it; the maximum
         // value is a tombstone no ingestion still in flight can ever outrank.
         assertThat(captured.get().version()).isEqualTo(Long.MAX_VALUE);
+    }
+
+    // --- Readable channels, privacy and the nightly sync ---
+
+    @Test
+    void readableChannels_areExactlyThoseEveryStudentCanRead() {
+        Channel publicChannel = conversationUtilService.createPublicChannel(course, "public-readable");
+        Channel privateChannel = conversationUtilService.createPublicChannel(course, "private-unreadable");
+        privateChannel.setIsPublic(false);
+        privateChannel = conversationRepository.save(privateChannel);
+        TextExercise released = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(2));
+        TextExercise unreleased = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2),
+                ZonedDateTime.now().plusDays(3));
+        Channel releasedChannel = conversationUtilService.addChannelToExercise(released);
+        Channel unreleasedChannel = conversationUtilService.addChannelToExercise(unreleased);
+
+        var readable = channelRepository.findIdsOfChannelsReadableByAllStudents(course.getId(), ZonedDateTime.now());
+
+        assertThat(readable).contains(channel.getId(), publicChannel.getId(), releasedChannel.getId()).doesNotContain(privateChannel.getId(), unreleasedChannel.getId());
+        assertThat(channelRepository.isChannelReadableByAllStudents(unreleasedChannel.getId(), ZonedDateTime.now())).isFalse();
+        assertThat(channelRepository.isChannelReadableByAllStudents(releasedChannel.getId(), ZonedDateTime.now())).isTrue();
+    }
+
+    @Test
+    void refresh_ofAStoredThreadInAChannelThatTurnedPrivate_retractsIt() {
+        Channel narrowed = conversationUtilService.createPublicChannel(course, "turns-private");
+        Post post = new Post();
+        post.setAuthor(student);
+        post.setContent("Question in a channel that will be narrowed");
+        post.setConversation(narrowed);
+        post.setVisibleForStudents(true);
+        post = conversationMessageRepository.save(post);
+        saveResolvingAnswer(post, tutor, "Answer.", true, tutor);
+        markAsStoredInCourseMemory(post);
+        narrowed.setIsPublic(false);
+        conversationRepository.save(narrowed);
+
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.refreshThread(post.getId(), tutor, course);
+
+        assertThat(captured.get()).isNotNull();
+        assertThat(captured.get().postId()).isEqualTo(String.valueOf(post.getId()));
+        assertThat(captured.get().version()).isEqualTo(conversationMessageRepository.findCourseMemoryVersion(post.getId()).orElseThrow());
+    }
+
+    @Test
+    void refresh_retractsWithoutAGateOnTheIrisSetting() {
+        Post post = createQuestion("Stored while Iris was on");
+        saveResolvingAnswer(post, tutor, "Answer.", true, tutor);
+        markAsStoredInCourseMemory(post);
+        disableIrisFor(course);
+
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.refreshThread(post.getId(), tutor, course);
+
+        assertThat(captured.get()).isNotNull();
+    }
+
+    @Test
+    void studentEditOfATutorEndorsedAnswer_downgradesTheEntryToCommunityResolved() {
+        Post post = createQuestion("When is the deadline?");
+        AnswerPost studentAnswer = saveResolvingAnswer(post, student, "Friday.", false, tutor);
+        markAsStoredInCourseMemory(post);
+
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
+        // The tutor vouched for "Friday.", not for whatever the student writes next.
+        userUtilService.changeUser(student.getLogin());
+        answerMessageService.updateAnswerMessage(course.getId(), studentAnswer.getId(),
+                new UpdatePostingDTO(studentAnswer.getId(), "Friday, and the exam is cancelled.", null, true));
+
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
+        assertThat(dto.existingAnswer()).isNull();
+        assertThat(answerPostRepository.findById(studentAnswer.getId()).orElseThrow().getResolvedAt()).isNull();
+    }
+
+    @Test
+    void mentionsReachPyrisWithoutTheLogin() {
+        Post post = createQuestion("Who grades the exercise?");
+        saveResolvingAnswer(post, tutor, "Ask [user]Tutor One(" + tutor.getLogin() + ")[/user] about it.", true, tutor);
+
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.refreshThread(post.getId(), tutor, course);
+
+        var dto = captured.get();
+        assertThat(dto.existingAnswer()).isEqualTo("Ask Tutor One about it.");
+        assertThat(dto.thread()).allSatisfy(message -> assertThat(message.content()).doesNotContain(tutor.getLogin()));
+    }
+
+    @Test
+    void anchor_isTheSameWhoeverTriggeredTheRefresh() {
+        Post post = createQuestion("How is it graded?");
+        saveResolvingAnswer(post, tutor, "Older tutor-endorsed answer.", true, tutor);
+        AnswerPost newer = saveResolvingAnswer(post, tutor, "Newer tutor-endorsed answer.", true, tutor);
+
+        List<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new ArrayList<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::add, ExpectedCount.times(2));
+
+        courseMemoryIngestionService.refreshThread(post.getId(), student, course);
+        courseMemoryIngestionService.refreshThread(post.getId(), tutor, course);
+
+        assertThat(captured).extracting(PyrisWebhookCourseMemoryIngestionExecutionDTO::messageId).containsOnly(String.valueOf(newer.getId()));
+        assertThat(captured.get(1).version()).isGreaterThan(captured.get(0).version());
+    }
+
+    @Test
+    void deactivatedAuthor_isRedacted() {
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Post post = createQuestion("Question?");
+        AnswerPost reply = saveAnswer(post, student2, "A reply by an account that will be deactivated.", false);
+        saveResolvingAnswer(post, tutor, "Answer.", true, tutor);
+        student2.setActivated(false);
+        userTestRepository.save(student2);
+
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.refreshThread(post.getId(), tutor, course);
+
+        var redacted = messageWithId(captured.get().thread(), "answer-" + reply.getId());
+        assertThat(redacted.redacted()).isTrue();
+        assertThat(redacted.content()).isNullOrEmpty();
+        student2.setActivated(true);
+        userTestRepository.save(student2);
+    }
+
+    @Test
+    void invalidatingTheThreadsOfAUser_bumpsExactlyTheThreadsWithTheirContent() {
+        Post withReply = createQuestion("Thread with a reply by student2");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        saveAnswer(withReply, student2, "Reply.", false);
+        markAsStoredInCourseMemory(withReply);
+        Post unrelated = createQuestion("Thread without student2");
+        markAsStoredInCourseMemory(unrelated);
+        long withReplyBefore = conversationMessageRepository.findCourseMemoryVersion(withReply.getId()).orElseThrow();
+        long unrelatedBefore = conversationMessageRepository.findCourseMemoryVersion(unrelated.getId()).orElseThrow();
+
+        List<Long> affected = courseMemoryIngestionService.invalidateThreadsWithContentBy(student2.getId());
+
+        assertThat(affected).contains(withReply.getId()).doesNotContain(unrelated.getId());
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(withReply.getId()).orElseThrow()).isEqualTo(withReplyBefore + 1);
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(unrelated.getId()).orElseThrow()).isEqualTo(unrelatedBefore);
+    }
+
+    @Test
+    void accountContentDeletion_deletesTheMessagesAndBumpsTheSurvivingThreadsInOneGo() {
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Post othersThread = createQuestion("Thread with a reply by student2");
+        AnswerPost reply = saveAnswer(othersThread, student2, "Reply that will be deleted.", false);
+        markAsStoredInCourseMemory(othersThread);
+        long before = conversationMessageRepository.findCourseMemoryVersion(othersThread.getId()).orElseThrow();
+
+        var threads = communicationDataCleanupRepository.deleteCommunicationContentAndInvalidateCourseMemory(student2.getId());
+
+        assertThat(threads).extracting(CourseMemoryThreadDTO::postId).contains(othersThread.getId());
+        assertThat(answerPostRepository.findById(reply.getId())).isEmpty();
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(othersThread.getId()).orElseThrow()).isEqualTo(before + 1);
+    }
+
+    @Test
+    void nightlySync_reportsEveryTrackedThreadWithItsVersionAndEligibility() {
+        Post readable = createQuestion("Readable thread");
+        markAsStoredInCourseMemory(readable);
+        Channel narrowed = conversationUtilService.createPublicChannel(course, "sync-private");
+        narrowed.setIsPublic(false);
+        narrowed = conversationRepository.save(narrowed);
+        Post hidden = new Post();
+        hidden.setAuthor(student);
+        hidden.setContent("Thread in a private channel");
+        hidden.setConversation(narrowed);
+        hidden.setVisibleForStudents(true);
+        hidden = conversationMessageRepository.save(hidden);
+        markAsStoredInCourseMemory(hidden);
+
+        List<PyrisCourseMemoryCourseSyncDTO> courseSyncs = new ArrayList<>();
+        AtomicReference<PyrisCourseMemoryInstanceSyncDTO> instanceSync = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryInstanceSyncResponse(instanceSync::set);
+        irisRequestMockProvider.mockCourseMemoryCourseSyncResponse(courseSyncs::add);
+
+        courseMemorySyncService.syncCourseMemory();
+
+        assertThat(instanceSync.get().courseIds()).contains(course.getId());
+        var mine = courseSyncs.stream().filter(sync -> sync.courseId() == course.getId()).findFirst().orElseThrow();
+        assertThat(mine.threads()).contains(
+                new PyrisCourseMemorySyncThreadDTO(readable.getId(), conversationMessageRepository.findCourseMemoryVersion(readable.getId()).orElseThrow(), true),
+                new PyrisCourseMemorySyncThreadDTO(hidden.getId(), conversationMessageRepository.findCourseMemoryVersion(hidden.getId()).orElseThrow(), false));
     }
 }

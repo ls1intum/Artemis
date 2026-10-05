@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +50,7 @@ class ConversationServiceMarkAllAsReadUnitTest {
         conversationRepository = mock(ConversationTestRepository.class);
         conversationService = new ConversationService(mock(ConversationDTOService.class), mock(UserRepository.class), mock(ChannelRepository.class),
                 conversationParticipantRepository, conversationRepository, mock(WebsocketMessagingService.class), mock(OneToOneChatRepository.class), mock(PostRepository.class),
-                mock(GroupChatRepository.class), mock(AuthorizationCheckService.class), mock(CourseRepository.class), Optional.empty());
+                mock(GroupChatRepository.class), mock(AuthorizationCheckService.class), mock(CourseRepository.class));
     }
 
     private static Channel channel(long id) {

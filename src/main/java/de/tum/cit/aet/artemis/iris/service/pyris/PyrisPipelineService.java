@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -87,6 +89,8 @@ public class PyrisPipelineService {
 
     private final FeatureToggleService featureToggleService;
 
+    private final ChannelRepository channelRepository;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
@@ -96,8 +100,9 @@ public class PyrisPipelineService {
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService,
-            IrisLectureMaterialVersionService materialVersionService) {
+            IrisLectureMaterialVersionService materialVersionService, ChannelRepository channelRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
+        this.channelRepository = channelRepository;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.materialVersionService = materialVersionService;
@@ -326,7 +331,9 @@ public class PyrisPipelineService {
                 executionDto.settings(),
                 programmingExerciseDTO,
                 textExerciseDTO,
-                lectureDTO
+                lectureDTO,
+                // Computed now, at dispatch: Course Memory may only serve entries from channels every student can read.
+                channelRepository.findIdsOfChannelsReadableByAllStudents(course.getId(), ZonedDateTime.now())
             ),
             statusUpdateConsumer
         );
