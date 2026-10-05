@@ -47,9 +47,10 @@ export class CalendarEventDetailPopoverComponent {
 
     open(mouseEvent: MouseEvent, event: IdentifiableCalendarEvent) {
         const popover = this.popover();
-        if (popover && !this.isOpen()) {
+        const origin = mouseEvent.currentTarget;
+        if (popover && origin instanceof HTMLElement && !this.isOpen()) {
             this.event.set(event);
-            popover.open(mouseEvent.currentTarget as HTMLElement);
+            popover.open(origin);
         }
     }
 
