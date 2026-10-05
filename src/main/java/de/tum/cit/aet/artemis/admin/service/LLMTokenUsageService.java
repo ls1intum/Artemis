@@ -133,6 +133,10 @@ public class LLMTokenUsageService {
         llmTokenUsageRequest.setNumOutputTokens(llmRequest.numOutputTokens());
         llmTokenUsageRequest.setCostPerMillionInputTokens(llmRequest.costPerMillionInputToken());
         llmTokenUsageRequest.setCostPerMillionOutputTokens(llmRequest.costPerMillionOutputToken());
+        llmTokenUsageRequest.setNumCachedInputTokens(llmRequest.numCachedInputTokens());
+        llmTokenUsageRequest.setCostPerMillionCachedInputTokens(llmRequest.costPerMillionCachedInputToken());
+        llmTokenUsageRequest.setNumCacheWriteInputTokens(llmRequest.numCacheWriteInputTokens());
+        llmTokenUsageRequest.setCostPerMillionCacheWriteInputTokens(llmRequest.costPerMillionCacheWriteInputToken());
         llmTokenUsageRequest.setServicePipelineId(llmRequest.pipelineId());
         return llmTokenUsageRequest;
     }

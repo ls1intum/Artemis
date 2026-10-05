@@ -401,6 +401,9 @@ export class IrisChatService implements OnDestroy {
     }
 
     private replaceOrAddMessage(message: IrisMessage, announceNewAssistantMessage = true) {
+        if (message.sender === IrisSender.SUMMARY) {
+            return;
+        }
         const messageWasReplaced = this.replaceMessage(message);
         if (!messageWasReplaced) {
             if (message.sender === IrisSender.LLM && announceNewAssistantMessage) {
@@ -619,7 +622,8 @@ export class IrisChatService implements OnDestroy {
 
                 this.sessionId = newIrisSession.id;
                 this.citationInfo.next(newIrisSession.citationInfo || []);
-                this.messages.next(newIrisSession.messages || []);
+                // Summaries are for Iris only; the student keeps seeing the original messages.
+                this.messages.next((newIrisSession.messages || []).filter((message) => message.sender !== IrisSender.SUMMARY));
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
                 this.resetLiveAssistantDraftTracking();
                 this.resetRunTracking();

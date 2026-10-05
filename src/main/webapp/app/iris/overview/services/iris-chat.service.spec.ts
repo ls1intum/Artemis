@@ -206,6 +206,19 @@ describe('IrisChatService', () => {
         expect(messages).toHaveLength(mockConversation.messages!.length);
     });
 
+    it('should hide stored conversation summaries', async () => {
+        const compaction = { id: 99, sender: IrisSender.SUMMARY, content: [], sentAt: dayjs() };
+        const session: IrisSession = { ...mockConversation, messages: [...mockConversation.messages!, compaction] };
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: session } as HttpResponse<IrisSession>));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        service.openChat(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages).toHaveLength(mockConversation.messages!.length);
+        expect(messages.some((message) => message.sender === IrisSender.SUMMARY)).toBe(false);
+    });
+
     describe('stagePendingContext', () => {
         it('should not call HTTP when stagePendingContext is invoked, only update dropdown signals', async () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
