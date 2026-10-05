@@ -434,6 +434,8 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         Post post = createQuestion("Who wrote this answer?");
         AnswerPost answer = saveAnswer(post, tutor, "A tutor who opted out.", true, true);
         AnswerPost managed = reloadManagedAnswer(post, answer.getId());
+        // Stored before the tutor opted out.
+        markAsStoredInCourseMemory(post);
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> ingested = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(ingested::set);
@@ -645,6 +647,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         userTestRepository.save(student);
         Post post = createQuestion("Opted out after an entry already existed.");
         AnswerPost answer = saveAnswer(post, tutor, "No longer resolving.", true, false);
+        markAsStoredInCourseMemory(post);
 
         AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
@@ -684,6 +687,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         Post post = createQuestion("Is attendance mandatory?");
         // Already un-marked in the database, mirroring the state after the flag was toggled back off.
         AnswerPost answer = saveAnswer(post, tutor, "No, it is optional.", true, false);
+        markAsStoredInCourseMemory(post);
 
         AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
@@ -697,6 +701,21 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto.settings().authenticationToken()).isNotNull();
         // The retraction is ordered against the thread's ingestions by the version minted for it.
         assertThat(dto.version()).isEqualTo(conversationMessageRepository.findCourseMemoryVersion(post.getId()).orElseThrow());
+    }
+
+    @Test
+    void resolutionChanged_unmarkedOnAThreadThatWasNeverStored_doesNothing() {
+        // Nothing was ever sent for this thread, so there is nothing to retract and no removal to report to the tutor.
+        Post post = createQuestion("Was this ever stored?");
+        saveAnswer(post, tutor, "Not yet.", true, false);
+
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set, ExpectedCount.max(1));
+
+        courseMemoryIngestionService.refreshThread(post.getId(), tutor, course);
+
+        assertThat(captured.get()).isNull();
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(post.getId()).orElseThrow()).isZero();
     }
 
     @Test
@@ -924,6 +943,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     void retraction_pushesDeleteTriggeredToTheMarker() {
         Post post = createQuestion("Does un-resolving notify me?");
         AnswerPost answer = saveAnswer(post, tutor, "No longer resolving.", true, false);
+        markAsStoredInCourseMemory(post);
 
         irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(dto -> {
         });

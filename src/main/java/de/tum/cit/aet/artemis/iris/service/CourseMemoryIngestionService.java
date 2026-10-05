@@ -190,9 +190,11 @@ public class CourseMemoryIngestionService {
         if (previous.isEmpty()) {
             return;
         }
-        // Nothing was ever dispatched for a thread at version 0, so a thread that may not be stored needs no work at
-        // all. This read is only a shortcut; the decision itself is made again on the fresh state below.
-        if (previous.get() == 0 && !mayBeStored(postId, course)) {
+        // Nothing was ever dispatched for a thread at version 0, so a thread that may not be stored, or that has nothing
+        // to store, needs no work at all: no retraction and no status message about a removal. This read is only a
+        // shortcut; the decision itself is made again on the fresh state below. A change that adds an anchor later
+        // refreshes the thread itself, after its own commit.
+        if (previous.get() == 0 && (!mayBeStored(postId, course) || !hasAnchor(postId, course))) {
             return;
         }
         Optional<Long> minted = conversationMessageRepository.mintCourseMemoryVersion(postId);
@@ -221,6 +223,13 @@ public class CourseMemoryIngestionService {
             return;
         }
         ingest(fullPost, anchor.get(), course, actor, version);
+    }
+
+    /**
+     * Whether the thread currently has an answer its entry could be built from.
+     */
+    private boolean hasAnchor(long postId, Course course) {
+        return fetchThread(postId).flatMap(post -> selectAnchor(visibleAnswers(post), loadTutorEndorsements(post, course))).isPresent();
     }
 
     /**
