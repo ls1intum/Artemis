@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -94,6 +95,8 @@ public class ProgrammingExerciseRetrievalResource {
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final GradingCriterionRepository gradingCriterionRepository;
@@ -113,8 +116,10 @@ public class ProgrammingExerciseRetrievalResource {
             GradingCriterionRepository gradingCriterionRepository, ChannelRepository channelRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService,
-            RepositoryParticipationService repositoryParticipationService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            RepositoryParticipationService repositoryParticipationService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.courseRepository = courseRepository;
@@ -157,13 +162,14 @@ public class ProgrammingExerciseRetrievalResource {
     }
 
     private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
         if (includePlagiarismDetectionConfig) {
-            var programmingExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
-            return programmingExercise;
+            // The plagiarism detection configuration is not part of the exercise, so it is read here, and filled with the
+            // default for a course exercise that predates it.
+            plagiarismDetectionConfigRepository.attachTo(programmingExercise);
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, plagiarismDetectionConfigRepository);
         }
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
+        return programmingExercise;
     }
 
     /**

@@ -373,7 +373,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigGradingCriteriaAndCategoriesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaAndCategoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();

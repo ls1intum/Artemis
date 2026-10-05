@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
@@ -42,8 +43,8 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService,
             Optional<CompetencyProgressApi> competencyProgressApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, teamAssignmentConfigRepository);
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
@@ -80,6 +81,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         // reports the channel the caller asked for.
         persistedExercise.setChannelName(newExercise.getChannelName());
         saveTeamAssignmentConfig(persistedExercise, newExercise);
+        savePlagiarismDetectionConfig(persistedExercise, newExercise);
 
         channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(persistedExercise.getChannelName()));
 

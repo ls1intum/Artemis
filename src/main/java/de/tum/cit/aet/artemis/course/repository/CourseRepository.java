@@ -255,12 +255,13 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     Optional<Course> findWithEagerLecturesById(long courseId);
 
     /**
-     * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
+     * Returns an optional course by id with eagerly loaded exercises, lectures and attachments. The plagiarism detection and team assignment configurations are not part of the
+     * course or its exercises; a caller that reports them reads them through their repositories.
      *
      * @param courseId The id of the course to find
      * @return the populated course or an empty optional if no course was found
      */
-    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.exerciseVariantGroup", "lectures" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises.exerciseVariantGroup", "lectures" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites" })

@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
@@ -110,6 +111,8 @@ public class ModelingExerciseResource {
     private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     private final UserRepository userRepository;
 
@@ -162,8 +165,10 @@ public class ModelingExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
             Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExerciseGroupApi> exerciseGroupApi,
-            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -232,12 +237,13 @@ public class ModelingExerciseResource {
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = modelingExerciseRepository.save(savedExercise);
         }
+        final ModelingExercise result = savedExercise;
+        // The configurations hold the key to their exercise, so they are stored once the exercise exists.
+        teamAssignmentConfigRepository.replaceFor(result, modelingExercise.getTeamAssignmentConfig());
+        plagiarismDetectionConfigRepository.replaceFor(result, modelingExercise.getPlagiarismDetectionConfig());
         // A client may omit the plagiarism detection config; fill and persist the default for course exercises so it is
         // not stored as null. Done after the competency-link save so it operates on the fully persisted exercise.
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(savedExercise, modelingExerciseRepository);
-        final ModelingExercise result = savedExercise;
-        // The configuration holds the key to its exercise, so it is stored once the exercise exists.
-        teamAssignmentConfigRepository.replaceFor(result, modelingExercise.getTeamAssignmentConfig());
+        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(result, plagiarismDetectionConfigRepository);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
@@ -342,8 +348,10 @@ public class ModelingExerciseResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
-        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration.
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration. The
+        // plagiarism detection configuration is stored when the update carried one and read otherwise.
         teamAssignmentConfigRepository.attachTo(persistedExercise);
+        plagiarismDetectionConfigRepository.replaceOrAttach(persistedExercise, updatedExercise.getPlagiarismDetectionConfig());
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
@@ -405,8 +413,10 @@ public class ModelingExerciseResource {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        // The response reports the team assignment and the plagiarism detection configuration, which an exercise does not
+        // carry by itself.
         teamAssignmentConfigRepository.attachTo(modelingExercise);
+        plagiarismDetectionConfigRepository.attachTo(modelingExercise);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
 
@@ -575,6 +585,7 @@ public class ModelingExerciseResource {
         // Save directly instead of delegating to updateModelingExercise() to avoid double side effects.
         ModelingExercise savedExercise = modelingExerciseRepository.save(exerciseForReevaluation);
         teamAssignmentConfigRepository.attachTo(savedExercise);
+        plagiarismDetectionConfigRepository.replaceOrAttach(savedExercise, exerciseForReevaluation.getPlagiarismDetectionConfig());
 
         // Apply all post-save side effects once with the captured originals.
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -704,15 +715,8 @@ public class ModelingExerciseResource {
         }
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
         if (updateModelingExerciseDTO.plagiarismDetectionConfig() != null) {
-            PlagiarismDetectionConfig config = toPlagiarismDetectionConfig(updateModelingExerciseDTO.plagiarismDetectionConfig());
-            PlagiarismDetectionConfig existingConfig = exercise.getPlagiarismDetectionConfig();
-            if (existingConfig != null) {
-                // Reuse the exercise's own row id (never a client-sent one) so Hibernate merges the existing row
-                // instead of orphan-deleting it and inserting a new one: Exercise.plagiarismDetectionConfig is a
-                // @OneToOne(cascade = ALL, orphanRemoval = true) association.
-                config.setId(existingConfig.getId());
-            }
-            exercise.setPlagiarismDetectionConfig(config);
+            // Carried to the repository after the save, which updates the stored row of this exercise in place.
+            exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(updateModelingExerciseDTO.plagiarismDetectionConfig()));
         }
 
         // The diagram type is immutable after creation because changing it would invalidate existing submissions.

@@ -262,7 +262,7 @@ public class ExerciseSharingService {
             throw new SharingException("No Sharing ApiBaseUrl provided");
         }
         try {
-            ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigAndGradingCriteriaElseThrow(exerciseId);
+            ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exerciseId);
 
             List<String> exportErrors = new ArrayList<>();
             Path zipFilePath = programmingExerciseExportService.exportProgrammingExerciseForDownload(exercise, exportErrors);

@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.SecureXmlFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -150,9 +151,10 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
             RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, JsonMapper objectMapper,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         // Programming exercises do not have a submission export service
-        super(objectMapper, null, teamAssignmentConfigRepository);
+        super(objectMapper, null, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;

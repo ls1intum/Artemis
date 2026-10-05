@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -96,6 +97,8 @@ public class TextExerciseCreationUpdateResource {
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final UserRepository userRepository;
 
     private final ParticipationRepository participationRepository;
@@ -111,8 +114,10 @@ public class TextExerciseCreationUpdateResource {
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyApi> competencyApi,
             Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -183,8 +188,9 @@ public class TextExerciseCreationUpdateResource {
             savedExercise = textExerciseRepository.save(savedExercise);
         }
         final TextExercise result = savedExercise;
-        // The configuration holds the key to its exercise, so it is stored once the exercise exists.
+        // The configurations hold the key to their exercise, so they are stored once the exercise exists.
         teamAssignmentConfigRepository.replaceFor(result, textExercise.getTeamAssignmentConfig());
+        plagiarismDetectionConfigRepository.replaceFor(result, textExercise.getPlagiarismDetectionConfig());
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -272,8 +278,10 @@ public class TextExerciseCreationUpdateResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         TextExercise persistedExercise = textExerciseRepository.save(updatedExercise);
-        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration.
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration. The
+        // plagiarism detection configuration is stored when the update carried one and read otherwise.
         teamAssignmentConfigRepository.attachTo(persistedExercise);
+        plagiarismDetectionConfigRepository.replaceOrAttach(persistedExercise, updatedExercise.getPlagiarismDetectionConfig());
 
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
@@ -340,6 +348,7 @@ public class TextExerciseCreationUpdateResource {
         // Save directly instead of delegating to updateTextExercise() to avoid double side effects.
         TextExercise savedExercise = textExerciseRepository.save(exerciseForReevaluation);
         teamAssignmentConfigRepository.attachTo(savedExercise);
+        plagiarismDetectionConfigRepository.replaceOrAttach(savedExercise, exerciseForReevaluation.getPlagiarismDetectionConfig());
 
         // Apply all post-save side effects once with the captured originals.
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -498,7 +507,7 @@ public class TextExerciseCreationUpdateResource {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
 
-        // Attach the submitted plagiarism config (if any) so it is validated and persisted (via cascade) on create.
+        // Attach the submitted plagiarism config (if any) so it is validated on create and stored once the exercise exists.
         PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
 
         // Transfer grading criteria from the DTO

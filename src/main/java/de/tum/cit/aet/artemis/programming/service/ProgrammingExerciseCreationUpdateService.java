@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -112,6 +113,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     /**
@@ -145,8 +148,9 @@ public class ProgrammingExerciseCreationUpdateService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -231,9 +235,11 @@ public class ProgrammingExerciseCreationUpdateService {
         // We save once in order to generate an id for the programming exercise. The build configuration names the
         // exercise, so it is written afterwards rather than before.
         var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        // Like the build configuration, the team assignment configuration names the exercise, so it is written afterwards.
-        // The re-fetches below do not carry it, so the stored one is put back on the exercise that is returned.
+        // Like the build configuration, the team assignment and plagiarism detection configuration name the exercise, so they
+        // are written afterwards. The re-fetches below do not carry them, so the stored ones are put back on the exercise
+        // that is returned.
         final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.replaceFor(savedProgrammingExercise, programmingExercise.getTeamAssignmentConfig());
+        final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.replaceFor(savedProgrammingExercise, programmingExercise.getPlagiarismDetectionConfig());
 
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
         savedProgrammingExercise.generateAndSetProjectKey();
@@ -250,9 +256,6 @@ public class ProgrammingExerciseCreationUpdateService {
         savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
-
-        // Make sure that plagiarism detection config does not use existing id
-        Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
@@ -281,6 +284,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
         createdProgrammingExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
+        createdProgrammingExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
 
         // Pre-provision repository-scoped VCS access tokens for all current course staff for the exercise's base repositories. Done asynchronously (after the exercise is saved) so
         // exercise creation does not block on token generation for potentially many staff members; the clone-dialog lazy fallback covers the brief window before the tokens exist.
@@ -395,8 +399,10 @@ public class ProgrammingExerciseCreationUpdateService {
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
-        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration.
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration. The
+        // plagiarism detection configuration is stored when the update carried one and read otherwise.
         teamAssignmentConfigRepository.attachTo(savedProgrammingExercise);
+        plagiarismDetectionConfigRepository.replaceOrAttach(savedProgrammingExercise, updatedProgrammingExercise.getPlagiarismDetectionConfig());
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 

@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -72,6 +74,9 @@ public class ExerciseUtilService {
 
     @Autowired
     private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepo;
@@ -520,6 +525,34 @@ public class ExerciseUtilService {
      */
     public <E extends Exercise> E attachTeamAssignmentConfig(E exercise) {
         teamAssignmentConfigRepository.attachTo(exercise);
+        return exercise;
+    }
+
+    /**
+     * Stores a plagiarism detection configuration for an exercise that is saved already. The configuration holds the key to
+     * its exercise and the exercise carries no mapped association to it, so saving an exercise that carries one in its slot
+     * does not store it.
+     *
+     * @param exercise the saved exercise
+     * @param config   the configuration to store for it, or null for none
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E savePlagiarismDetectionConfig(E exercise, PlagiarismDetectionConfig config) {
+        plagiarismDetectionConfigRepository.replaceFor(exercise, config);
+        return exercise;
+    }
+
+    /**
+     * Reads the stored plagiarism detection configuration of an exercise onto it, as the flows that report it do. An exercise
+     * read from the database does not carry it.
+     *
+     * @param exercise the exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E attachPlagiarismDetectionConfig(E exercise) {
+        plagiarismDetectionConfigRepository.attachTo(exercise);
         return exercise;
     }
 }

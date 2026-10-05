@@ -17,6 +17,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService;
@@ -76,7 +77,7 @@ class ProgrammingExerciseExportServiceCourseTest {
     void setUp() {
         exportService = new ProgrammingExerciseExportService(programmingExerciseRepository, programmingExerciseTaskService, studentParticipationRepository, fileService, gitService,
                 gitRepositoryExportService, repositoryExportGitService, zipFileService, JsonMapper.builder().build(), auxiliaryRepositoryRepository, buildPlanRepository,
-                programmingExerciseBuildConfigRepository, mock(TeamAssignmentConfigRepository.class));
+                programmingExerciseBuildConfigRepository, mock(TeamAssignmentConfigRepository.class), mock(PlagiarismDetectionConfigRepository.class));
     }
 
     @Test

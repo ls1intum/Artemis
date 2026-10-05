@@ -39,7 +39,7 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency", "categories" })
     Optional<TextExercise> findWithEagerCompetenciesAndCategoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency", "categories", "gradingCriteria", "plagiarismDetectionConfig", "exampleSubmissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency", "categories", "gradingCriteria", "exampleSubmissions" })
     Optional<TextExercise> findWithCompetenciesCategoriesAndGradingCriteriaById(long exerciseId);
 
     @NonNull
@@ -49,9 +49,6 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "competencyLinks.competency", "exerciseVariantGroup" })
     Optional<TextExercise> findWithEagerCategoriesAndCompetenciesById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "competencyLinks.competency", "plagiarismDetectionConfig", "exerciseVariantGroup" })
-    Optional<TextExercise> findWithEagerCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(long exerciseId);
 
     @Query("""
             SELECT t
@@ -78,7 +75,6 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
                 LEFT JOIN FETCH textExercise.gradingCriteria
                 LEFT JOIN FETCH textExercise.competencyLinks competencyLink
                 LEFT JOIN FETCH competencyLink.competency
-                LEFT JOIN FETCH textExercise.plagiarismDetectionConfig
             WHERE textExercise.id = :exerciseId
             """)
     Optional<TextExercise> findWithExampleSubmissionsAndResultsAndGradingCriteriaById(@Param("exerciseId") long exerciseId);
@@ -107,7 +103,7 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
      * @param exerciseId the id of the exercise to fetch
      * @return {@link TextExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "gradingCriteria", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "gradingCriteria" })
     Optional<TextExercise> findForVersioningById(long exerciseId);
 
     /**

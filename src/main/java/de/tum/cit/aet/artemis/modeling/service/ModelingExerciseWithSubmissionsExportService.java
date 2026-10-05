@@ -12,6 +12,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
@@ -27,8 +28,8 @@ import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseResponseDTO;
 public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
     public ModelingExerciseWithSubmissionsExportService(ModelingSubmissionExportService modelingSubmissionExportService, JsonMapper objectMapper,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
-        super(objectMapper, modelingSubmissionExportService, teamAssignmentConfigRepository);
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        super(objectMapper, modelingSubmissionExportService, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
     }
 
     /**

@@ -32,7 +32,6 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -169,8 +168,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "plagiarism_detection_config_id")
+    // Not mapped: the plagiarism detection configuration holds the key to its exercise and nothing ever fills this slot by
+    // itself, so reading an exercise never reads the configuration. Attach it with PlagiarismDetectionConfigRepository.attachTo
+    // where a flow needs it; an empty slot reads as "no plagiarism detection configuration".
+    @Transient
     @JsonIgnoreProperties("exercise")
     private PlagiarismDetectionConfig plagiarismDetectionConfig;
 

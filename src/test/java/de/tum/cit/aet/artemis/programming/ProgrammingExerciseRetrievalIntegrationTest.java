@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -53,6 +54,9 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
 
     @Autowired
     private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     private Course course;
 
@@ -179,9 +183,10 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         // Every later GET must reuse the row written by the first one instead of creating another.
         assertThat(second.plagiarismDetectionConfig().id()).isNotNull().isEqualTo(third.plagiarismDetectionConfig().id());
 
-        var reloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exercise.getId());
-        assertThat(reloaded.getPlagiarismDetectionConfig()).isNotNull();
-        assertThat(reloaded.getPlagiarismDetectionConfig().getId()).isEqualTo(second.plagiarismDetectionConfig().id());
+        // The configuration is a row of its own, so the exercise has exactly one stored configuration, the one on the wire.
+        var stored = plagiarismDetectionConfigRepository.findByExerciseId(exercise.getId());
+        assertThat(stored).isPresent();
+        assertThat(stored.orElseThrow().getId()).isEqualTo(second.plagiarismDetectionConfig().id());
     }
 
     @Test

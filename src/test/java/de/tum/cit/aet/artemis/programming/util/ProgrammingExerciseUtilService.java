@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -128,6 +130,9 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -1081,6 +1086,22 @@ public class ProgrammingExerciseUtilService {
      * @return The programming exercise with references.
      */
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
-        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
+        ProgrammingExercise exercise = programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
+        // The plagiarism detection configuration is not part of the exercise, so it is read explicitly.
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+        return exercise;
+    }
+
+    /**
+     * Loads a programming exercise with its grading criteria and the stored plagiarism detection configuration, which an
+     * exercise does not carry by itself.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exercise, whose slot carries the stored plagiarism detection configuration
+     */
+    public Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigAndGradingCriteriaById(long exerciseId) {
+        Optional<ProgrammingExercise> exercise = programmingExerciseRepository.findByIdWithGradingCriteria(exerciseId);
+        exercise.ifPresent(plagiarismDetectionConfigRepository::attachTo);
+        return exercise;
     }
 }

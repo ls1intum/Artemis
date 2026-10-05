@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -104,6 +105,8 @@ public class TextExerciseResource {
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final UserRepository userRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -122,8 +125,10 @@ public class TextExerciseResource {
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
-            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.textBlockRepository = textBlockRepository;
@@ -163,12 +168,16 @@ public class TextExerciseResource {
     }
 
     private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId);
         if (includePlagiarismDetectionConfig) {
-            var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId);
-            textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, textExerciseRepository));
-            return textExercise;
+            // The plagiarism detection configuration is not part of the exercise, so it is read here, and filled with the
+            // default for a course exercise that predates it.
+            textExercise.ifPresent(it -> {
+                plagiarismDetectionConfigRepository.attachTo(it);
+                PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, plagiarismDetectionConfigRepository);
+            });
         }
-        return textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId);
+        return textExercise;
     }
 
     /**

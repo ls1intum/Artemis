@@ -399,10 +399,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             @Param("maxDate") ZonedDateTime maxDate);
 
     // TODO: we should not load so much data at the same time, consider revising this query
+    // The plagiarism detection configuration only filters here, through a join from its own side; the caller reads the
+    // configurations of the returned exercises with PlagiarismDetectionConfigRepository.attachTo, in one query.
     @Query("""
             SELECT e
             FROM Exercise e
-                LEFT JOIN FETCH e.plagiarismDetectionConfig c
+                JOIN PlagiarismDetectionConfig c ON c.exercise = e
                 LEFT JOIN FETCH e.studentParticipations p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results

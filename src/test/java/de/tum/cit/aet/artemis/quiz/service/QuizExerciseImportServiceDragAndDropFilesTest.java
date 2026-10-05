@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -44,7 +45,8 @@ class QuizExerciseImportServiceDragAndDropFilesTest {
         Files.createDirectories(FilePathConverter.getDragAndDropBackgroundFilePath());
         Files.createDirectories(FilePathConverter.getDragItemFilePath());
         importService = new QuizExerciseImportService(mock(QuizExerciseService.class), mock(ExampleSubmissionRepository.class), mock(SubmissionRepository.class),
-                mock(ResultRepository.class), mock(ChannelService.class), mock(FeedbackService.class), Optional.empty(), mock(TeamAssignmentConfigRepository.class));
+                mock(ResultRepository.class), mock(ChannelService.class), mock(FeedbackService.class), Optional.empty(), mock(TeamAssignmentConfigRepository.class),
+                mock(PlagiarismDetectionConfigRepository.class));
     }
 
     @AfterEach

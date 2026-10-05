@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    A plagiarism detection configuration had no key of its own. The exercise pointed at it through a nullable column, so
+    nothing tied the configuration to the exercise it configures and deleting the exercise by any route other than the
+    application's own cascade left the row behind for good.
+
+    The configuration now holds the key. A deleted exercise takes its plagiarism detection configuration with it, and a
+    configuration that belongs to no exercise can no longer be written.
+    -->
+
+    <changeSet id="20261005120000-01-plagiarism-detection-configuration-owns-its-exercise-key" author="krusche">
+        <!-- Two exercises cannot share a configuration. If they do, nothing says which one owns it, so the upgrade stops rather than guessing. -->
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT plagiarism_detection_config_id FROM exercise WHERE plagiarism_detection_config_id IS NOT NULL
+                GROUP BY plagiarism_detection_config_id HAVING COUNT(*) &gt; 1) shared</sqlCheck>
+        </preConditions>
+        <comment>Move the exercise key onto the plagiarism detection configuration, so that it cannot outlive the exercise it configures.</comment>
+        <addColumn tableName="plagiarism_detection_config">
+            <column name="exercise_id" type="BIGINT"/>
+        </addColumn>
+        <sql>UPDATE plagiarism_detection_config SET exercise_id =
+            (SELECT MIN(exercise.id) FROM exercise WHERE exercise.plagiarism_detection_config_id = plagiarism_detection_config.id);</sql>
+        <rollback>
+            <dropColumn tableName="plagiarism_detection_config" columnName="exercise_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005120000-02-remove-plagiarism-detection-configurations-no-exercise-points-at" author="krusche">
+        <comment>Remove the plagiarism detection configurations that no exercise points at.</comment>
+        <!--
+        A configuration no exercise points at configures nothing. It carried no key of its own, and nothing lists one except
+        through the exercise that named it, so it has been unreachable from the moment the exercise stopped naming it. Nothing
+        else references the table, so the statement removes nothing but the rows themselves.
+        -->
+        <sql>DELETE FROM plagiarism_detection_config WHERE exercise_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005120000-03-plagiarism-detection-configuration-exercise-constraints" author="krusche">
+        <addNotNullConstraint tableName="plagiarism_detection_config" columnName="exercise_id" columnDataType="BIGINT"/>
+        <addUniqueConstraint tableName="plagiarism_detection_config" columnNames="exercise_id" constraintName="UK_PLAGIARISM_DETECTION_CONFIG_EXERCISE"/>
+        <addForeignKeyConstraint baseTableName="plagiarism_detection_config" baseColumnNames="exercise_id" constraintName="FK_PLAGIARISM_DETECTION_CONFIG_EXERCISE"
+                                 referencedTableName="exercise" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="plagiarism_detection_config" constraintName="FK_PLAGIARISM_DETECTION_CONFIG_EXERCISE"/>
+            <dropUniqueConstraint tableName="plagiarism_detection_config" constraintName="UK_PLAGIARISM_DETECTION_CONFIG_EXERCISE"/>
+            <dropNotNullConstraint tableName="plagiarism_detection_config" columnName="exercise_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005120000-04-exercises-stop-pointing-at-their-plagiarism-detection-configuration" author="krusche">
+        <comment>The configuration holds the key, so the exercise no longer points at it.</comment>
+        <dropForeignKeyConstraint baseTableName="exercise" constraintName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG"/>
+        <dropColumn tableName="exercise" columnName="plagiarism_detection_config_id"/>
+        <rollback>
+            <addColumn tableName="exercise">
+                <column name="plagiarism_detection_config_id" type="BIGINT"/>
+            </addColumn>
+            <sql>UPDATE exercise SET plagiarism_detection_config_id =
+                (SELECT config.id FROM plagiarism_detection_config config WHERE config.exercise_id = exercise.id);</sql>
+            <createIndex indexName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG" tableName="exercise">
+                <column name="plagiarism_detection_config_id"/>
+            </createIndex>
+            <addForeignKeyConstraint baseTableName="exercise" baseColumnNames="plagiarism_detection_config_id" constraintName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG"
+                                     referencedTableName="plagiarism_detection_config" referencedColumnNames="id" onDelete="RESTRICT"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

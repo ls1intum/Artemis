@@ -1396,8 +1396,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         storedConfig.setSimilarityThreshold(42);
         storedConfig.setMinimumScore(13);
         storedConfig.setMinimumSize(7);
-        classExercise.setPlagiarismDetectionConfig(storedConfig);
         classExercise = modelingExerciseTestRepository.save(classExercise);
+        exerciseUtilService.savePlagiarismDetectionConfig(classExercise, storedConfig);
 
         // The graph fetches example submissions through the nested exampleSubmissions.submission.results path rather
         // than listing them separately, so pin that they still reach the response.
@@ -1420,7 +1420,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         body.put("title", "Echoed update");
         request.putWithResponseBody("/api/modeling/modeling-exercises", body, ModelingExerciseResponseDTO.class, HttpStatus.OK);
 
-        var persisted = modelingExerciseTestRepository.findForVersioningById(classExercise.getId()).orElseThrow();
+        var persisted = exerciseUtilService.attachPlagiarismDetectionConfig(modelingExerciseTestRepository.findForVersioningById(classExercise.getId()).orElseThrow());
         assertThat(persisted.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(42);
         assertThat(persisted.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(13);
         assertThat(persisted.getPlagiarismDetectionConfig().getMinimumSize()).isEqualTo(7);
@@ -1432,8 +1432,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void reEvaluateModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         var validConfig = PlagiarismDetectionConfig.createDefault();
-        classExercise.setPlagiarismDetectionConfig(validConfig);
         modelingExerciseTestRepository.save(classExercise);
+        exerciseUtilService.savePlagiarismDetectionConfig(classExercise, validConfig);
 
         ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(classExercise));
         ((ObjectNode) body.get("plagiarismDetectionConfig")).put("continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod", 6);
@@ -1441,7 +1441,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         request.putWithResponseBody("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate?deleteFeedback=false", body, ModelingExerciseResponseDTO.class,
                 HttpStatus.BAD_REQUEST);
 
-        ModelingExercise persisted = modelingExerciseTestRepository.findForVersioningById(classExercise.getId()).orElseThrow();
+        ModelingExercise persisted = exerciseUtilService.attachPlagiarismDetectionConfig(modelingExerciseTestRepository.findForVersioningById(classExercise.getId()).orElseThrow());
         assertThat(persisted.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(7);
     }
 
@@ -1458,9 +1458,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
         // Reload through a fresh persistence context that eagerly fetches the (lazy) plagiarism config.
-        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        ModelingExercise reloaded = exerciseUtilService.attachPlagiarismDetectionConfig(modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow());
         assertThat(reloaded.getPlagiarismDetectionConfig()).as("course exercise create persists a non-null default plagiarism config").isNotNull();
-        assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id").isEqualTo(PlagiarismDetectionConfig.createDefault());
+        assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id", "exercise", "exerciseId")
+                .isEqualTo(PlagiarismDetectionConfig.createDefault());
     }
 
     @Test
@@ -1475,7 +1476,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         ModelingExerciseResponseDTO created = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(exercise),
                 ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
-        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        ModelingExercise reloaded = exerciseUtilService.attachPlagiarismDetectionConfig(modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow());
         assertThat(reloaded.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(42);
         Long originalConfigId = reloaded.getPlagiarismDetectionConfig().getId();
 
@@ -1484,9 +1485,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         request.putWithResponseBody("/api/modeling/modeling-exercises", updateBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
 
         // Reload through a fresh persistence context (not the in-memory managed object) and pin that the PUT merged
-        // into the existing plagiarism config row instead of orphan-deleting it and inserting a new one: the config's
-        // OneToOne is cascade=ALL, orphanRemoval=true, so dropping the id on write-back silently swaps the row's PK.
-        ModelingExercise updated = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        // into the existing plagiarism config row instead of deleting it and inserting a new one, which would silently swap
+        // the row's primary key.
+        ModelingExercise updated = exerciseUtilService.attachPlagiarismDetectionConfig(modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow());
         assertThat(updated.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(73);
         assertThat(updated.getPlagiarismDetectionConfig().getId()).as("PUT must keep the plagiarism config row id stable").isEqualTo(originalConfigId);
 
@@ -1497,7 +1498,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ((ObjectNode) tamperedBody.get("plagiarismDetectionConfig")).put("similarityThreshold", 81);
         request.putWithResponseBody("/api/modeling/modeling-exercises", tamperedBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
 
-        ModelingExercise afterTamper = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        ModelingExercise afterTamper = exerciseUtilService.attachPlagiarismDetectionConfig(modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow());
         assertThat(afterTamper.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(81);
         assertThat(afterTamper.getPlagiarismDetectionConfig().getId()).as("a tampered client-sent config id must not replace the exercise's own row").isEqualTo(originalConfigId);
     }
@@ -1545,8 +1546,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         config.setSimilarityThreshold(42);
         config.setMinimumScore(13);
         config.setMinimumSize(7);
-        sourceExercise.setPlagiarismDetectionConfig(config);
         modelingExerciseTestRepository.save(sourceExercise);
+        exerciseUtilService.savePlagiarismDetectionConfig(sourceExercise, config);
 
         sourceExercise.setCourse(course2);
         sourceExercise.setChannelName("channel-" + UUID.randomUUID().toString().substring(0, 8));
@@ -1555,9 +1556,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 ImportModelingExerciseDTO.of(sourceExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
         // Reload through a fresh persistence context that eagerly fetches the (lazy) plagiarism config.
-        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(importedDto.id()).orElseThrow();
+        ModelingExercise reloaded = exerciseUtilService.attachPlagiarismDetectionConfig(modelingExerciseTestRepository.findForVersioningById(importedDto.id()).orElseThrow());
         assertThat(reloaded.getPlagiarismDetectionConfig()).as("import persists the plagiarism config carried on the DTO").isNotNull();
-        assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id").isEqualTo(config);
+        assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id", "exercise", "exerciseId").isEqualTo(config);
     }
 
     @Test

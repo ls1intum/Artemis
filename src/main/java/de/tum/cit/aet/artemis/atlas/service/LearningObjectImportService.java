@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.api.LectureImportApi;
@@ -80,6 +81,8 @@ public class LearningObjectImportService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
     private final Optional<FileUploadImportApi> fileUploadImportApi;
@@ -116,8 +119,10 @@ public class LearningObjectImportService {
             QuizExerciseImportService quizExerciseImportService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, GradingCriterionRepository gradingCriterionRepository,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.exerciseRepository = exerciseRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.fileUploadImportApi = fileUploadImportApi;
@@ -247,8 +252,10 @@ public class LearningObjectImportService {
             programmingExercise.setGradingCriteria(gradingCriteria);
 
             ProgrammingExercise newExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(programmingExercise.getId());
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(newExercise, programmingExerciseRepository);
+                    .findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(programmingExercise.getId());
+            // The plagiarism detection configuration is not part of the exercise, so it is read here for the import to copy.
+            plagiarismDetectionConfigRepository.attachTo(newExercise);
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(newExercise, plagiarismDetectionConfigRepository);
             newExercise.setCourse(course);
             newExercise.forceNewProjectKey();
 

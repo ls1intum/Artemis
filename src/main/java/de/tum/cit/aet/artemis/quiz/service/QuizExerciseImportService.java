@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
@@ -63,8 +64,8 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService, Optional<CompetencyProgressApi> competencyProgressApi,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, teamAssignmentConfigRepository);
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
         this.quizExerciseService = quizExerciseService;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;

@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -76,6 +77,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -106,7 +109,7 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -125,6 +128,7 @@ public class ProgrammingExerciseImportBasicService {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
     }
 
     /**
@@ -189,10 +193,13 @@ public class ProgrammingExerciseImportBasicService {
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         // An exam exercise is always individual and must not keep a team assignment configuration a client brought along.
         final var desiredTeamAssignmentConfig = newExercise.isExamExercise() ? null : newExercise.getTeamAssignmentConfig();
+        // Likewise an exam exercise has none: setupExerciseForImport already cleared it, and a course exercise has at least the default.
+        final var desiredPlagiarismDetectionConfig = newExercise.isExamExercise() ? null : newExercise.getPlagiarismDetectionConfig();
         newExercise = programmingExerciseRepository.save(newExercise);
         // The configurations name the exercise, so they are written once that exercise exists.
         programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
         final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.replaceFor(newExercise, desiredTeamAssignmentConfig);
+        final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.replaceFor(newExercise, desiredPlagiarismDetectionConfig);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
@@ -243,6 +250,7 @@ public class ProgrammingExerciseImportBasicService {
         // reason, so we reuse it here (the import produces a new exercise just like a regular creation).
         newExercise = programmingExerciseRepository.saveForCreation(newExercise);
         newExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
+        newExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
         // Restore the transient channel name on the re-fetched exercise, so the serialized import response reports the
         // channel the caller asked for.
         newExercise.setChannelName(channelName);
@@ -498,11 +506,11 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.getTeamAssignmentConfig().setId(null);
         }
 
-        if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() != null) {
-            newExercise.getPlagiarismDetectionConfig().setId(null);
-        }
-        else if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() == null) {
-            newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        // The configuration is stored once the new exercise exists, as a row of its own: only its values are carried over.
+        if (newExercise.isCourseExercise()) {
+            if (newExercise.getPlagiarismDetectionConfig() == null) {
+                newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+            }
         }
         else {
             newExercise.setPlagiarismDetectionConfig(null);

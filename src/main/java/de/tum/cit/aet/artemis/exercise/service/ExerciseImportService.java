@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
-import static jakarta.persistence.Persistence.getPersistenceUtil;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,8 +21,8 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -41,15 +39,19 @@ public abstract class ExerciseImportService {
 
     protected final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
+    protected final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private static final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
     protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FeedbackService feedbackService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            FeedbackService feedbackService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.feedbackService = feedbackService;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
     }
 
     /**
@@ -135,6 +137,11 @@ public abstract class ExerciseImportService {
         }
         newExercise.setCompetencyLinks(copiedLinks);
 
+        // The source comes straight from a query, which does not carry the configuration: read it explicitly, and only
+        // here, because only an exercise that brought none of its own needs it.
+        if (!hasPlagiarismDetectionConfig(newExercise)) {
+            plagiarismDetectionConfigRepository.attachTo(sourceExercise);
+        }
         Exercise plagiarismSource = hasPlagiarismDetectionConfig(newExercise) ? newExercise : sourceExercise;
         if (hasPlagiarismDetectionConfig(plagiarismSource)) {
             newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(plagiarismSource.getPlagiarismDetectionConfig()));
@@ -188,7 +195,7 @@ public abstract class ExerciseImportService {
     }
 
     private static boolean hasPlagiarismDetectionConfig(Exercise exercise) {
-        return getPersistenceUtil().isLoaded(exercise, Exercise_.PLAGIARISM_DETECTION_CONFIG) && exercise.getPlagiarismDetectionConfig() != null;
+        return exercise.getPlagiarismDetectionConfig() != null;
     }
 
     private static boolean hasTeamAssignmentConfig(Exercise exercise) {
@@ -205,6 +212,18 @@ public abstract class ExerciseImportService {
      */
     protected void saveTeamAssignmentConfig(Exercise persistedExercise, Exercise newExercise) {
         teamAssignmentConfigRepository.replaceFor(persistedExercise, newExercise.getTeamAssignmentConfig());
+    }
+
+    /**
+     * Stores the plagiarism detection configuration {@link #copyExerciseBasis} left on {@code newExercise}, now that the
+     * exercise is saved, for the same reason as {@link #saveTeamAssignmentConfig}: the configuration holds the key to its
+     * exercise, so it can only be written afterwards.
+     *
+     * @param persistedExercise the saved exercise that the caller goes on to return
+     * @param newExercise       the exercise {@link #copyExerciseBasis} prepared, which carries the configuration to store
+     */
+    protected void savePlagiarismDetectionConfig(Exercise persistedExercise, Exercise newExercise) {
+        plagiarismDetectionConfigRepository.replaceFor(persistedExercise, newExercise.getPlagiarismDetectionConfig());
     }
 
     /**

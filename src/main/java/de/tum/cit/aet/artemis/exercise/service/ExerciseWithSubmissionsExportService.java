@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 
 /**
@@ -64,11 +65,14 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     protected ExerciseWithSubmissionsExportService(JsonMapper objectMapper, SubmissionExportService submissionExportService,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.objectMapper = objectMapper;
         this.submissionExportService = submissionExportService;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
     }
 
     /**
@@ -245,8 +249,10 @@ public abstract class ExerciseWithSubmissionsExportService {
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         String cleanExerciseDetailsFileName = FileUtil.sanitizeFilename(exerciseDetailsFileName);
         var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
-        // The exported details report the team assignment configuration, which an exercise does not carry by itself.
+        // The exported details report the team assignment and the plagiarism detection configuration, which an exercise does
+        // not carry by itself.
         teamAssignmentConfigRepository.attachTo(exercise);
+        plagiarismDetectionConfigRepository.attachTo(exercise);
         pathsToBeZipped.add(FileUtil.writeObjectToJsonFile(exerciseDetailsForExport(exercise), this.objectMapper, exerciseDetailsExportPath));
     }
 

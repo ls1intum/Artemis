@@ -373,10 +373,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         conversationUtilService.addChannelToExercise(fileUploadExercise);
 
-        // The ceiling includes the one query that reads the team assignment configuration, which an exercise does not carry by
-        // itself and the response reports.
+        // The ceiling includes the two queries that read the team assignment and the plagiarism detection configuration, which
+        // an exercise does not carry by itself and the response reports.
         FileUploadExerciseDTO receivedFileUploadExercise = assertThatDb(
-                () -> request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExerciseDTO.class)).hasBeenCalledAtMostTimes(11);
+                () -> request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExerciseDTO.class)).hasBeenCalledAtMostTimes(12);
 
         assertThat(fileUploadExercise.getId()).isEqualTo(receivedFileUploadExercise.id());
         assertThat(receivedFileUploadExercise.course()).isNotNull();
@@ -552,8 +552,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExerciseDTO receivedFileUploadExercise = assertThatDb(
                 () -> request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification",
                         UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK))
-                // Includes the four fixed queries used to reload and enrich the response DTO and one lookup for the new competency link.
-                .hasBeenCalledAtMostTimes(52);
+                // Includes the four fixed queries used to reload and enrich the response DTO, one lookup for the new competency link and
+                // the reads of the plagiarism detection configuration that the response and the version snapshot report (an exercise
+                // does not carry it by itself).
+                .hasBeenCalledAtMostTimes(54);
         assertThat(receivedFileUploadExercise.dueDate()).isCloseTo(dueDate, HalfSecond());
         assertThat(receivedFileUploadExercise.course()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.exerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
@@ -808,10 +810,11 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
                 () -> request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false",
                         UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK))
                 // Includes the four fixed queries used to reload and enrich the response DTO, the one insert that queues the
-                // global search update in the Weaviate outbox and the two reads of the team assignment configuration that the
-                // response and the version snapshot report (an exercise does not carry it by itself). The ceiling is the number
-                // this flow actually performs; it guards against new N+1 queries rather than describing an optimum.
-                .hasBeenCalledAtMostTimes(56);
+                // global search update in the Weaviate outbox and the four reads of the team assignment and the plagiarism detection
+                // configuration that the response and the version snapshot report (an exercise does not carry them by itself). The
+                // ceiling is the number this flow actually performs; it guards against new N+1 queries rather than describing an
+                // optimum.
+                .hasBeenCalledAtMostTimes(58);
         FileUploadExercise updatedFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(updatedFileUploadExerciseDTO.id());
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedFileUploadExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getId().equals(usedInstruction.getId())).orElseThrow().getCredits())

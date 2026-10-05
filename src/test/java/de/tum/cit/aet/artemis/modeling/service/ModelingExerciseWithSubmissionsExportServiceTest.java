@@ -45,8 +45,8 @@ class ModelingExerciseWithSubmissionsExportServiceTest extends AbstractSpringInt
     void exportModelingExerciseWithSubmissions_writesTheExerciseDetailsWithoutTheEntityGraph() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise(TEST_PREFIX);
         ModelingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
-        exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         exercise = exerciseRepository.save(exercise);
+        exerciseUtilService.savePlagiarismDetectionConfig(exercise, PlagiarismDetectionConfig.createDefault());
         exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig());
         assertThat(exercise.getTeamAssignmentConfig().getId()).as("the fixture stores both configurations").isNotNull();
         assertThat(exercise.getPlagiarismDetectionConfig().getId()).isNotNull();
