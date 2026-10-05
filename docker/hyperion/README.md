@@ -40,7 +40,7 @@ admission.
 
 The image builds Artemis's canonical Gradle test harness with the trusted
 readiness fixture online at image-build time, then repeats it offline. It retains
-the canonical Teamscale plugin, wrapper, Java 17 toolchain and test dependency
+the canonical Teamscale plugin, wrapper, Java 25 toolchain, Ares 2 policy and test dependency
 versions. The supported fixture has no static code analysis, sequential tests or
 private Maven Central mirror. A deployment with a private mirror needs its own
 qualified cache; never copy repository credentials into a sandbox image.
