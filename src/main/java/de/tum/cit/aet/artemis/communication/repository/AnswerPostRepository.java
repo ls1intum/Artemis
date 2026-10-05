@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -429,6 +430,10 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * readable by every student of the course. The check and the publication run in one transaction, and the channels and
      * their exercises stay locked until it commits: a channel made private or an exercise hidden again waits, and counts
      * as a change after the publication.
+     * <p>
+     * Read committed, so that the readability check after the locks sees a change that committed while this transaction
+     * waited for them. Under repeatable read (the MySQL default) the check could read the snapshot an earlier statement of
+     * this transaction established.
      *
      * @param answerPostId    the draft
      * @param courseId        the course
@@ -436,7 +441,7 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * @param now             the current time
      * @return whether the reply was published
      */
-    @Transactional // ok because the readability check and the publication have to see the same channel state
+    @Transactional(isolation = Isolation.READ_COMMITTED) // ok because the readability check and the publication have to see the same channel state
     default boolean publishIfConversationsReadable(long answerPostId, long courseId, Collection<Long> conversationIds, ZonedDateTime now) {
         Set<Long> distinctIds = new HashSet<>(conversationIds);
         if (!distinctIds.isEmpty()) {

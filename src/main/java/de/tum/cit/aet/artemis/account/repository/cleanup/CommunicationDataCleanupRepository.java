@@ -77,7 +77,28 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             SET answerPost.verifiedBy = NULL
             WHERE answerPost.verifiedBy.id = :userId
             """)
-    int detachVerifiedAnswerPosts(@Param("userId") long userId);
+    int clearVerifierOfAnswerPosts(@Param("userId") long userId);
+
+    @Modifying
+    @Transactional // ok because of update
+    @Query(value = """
+            UPDATE post SET course_memory_version = course_memory_version + 1
+            WHERE course_memory_version > 0 AND id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.verified_by_id = :userId)
+            """, nativeQuery = true)
+    int bumpCourseMemoryVersionsOfThreadsVerifiedBy(@Param("userId") long userId);
+
+    /**
+     * Forgets who approved the answers in the verification dashboard. The approval is what makes an Iris answer
+     * tutor-verified in Course Memory, so the threads' entries are outdated in the same transaction.
+     *
+     * @param userId the account being deleted
+     * @return how many answer posts lost their verifier
+     */
+    @Transactional // ok because the detachment and the version bump have to commit together
+    default int detachVerifiedAnswerPosts(long userId) {
+        bumpCourseMemoryVersionsOfThreadsVerifiedBy(userId);
+        return clearVerifierOfAnswerPosts(userId);
+    }
 
     @Query("""
             SELECT answerPost.resolvedBy.id AS userId, COUNT(answerPost) AS count
@@ -87,13 +108,6 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             """)
     List<UserReferenceCount> countResolvedAnswerPosts(@Param("userIds") Collection<Long> userIds);
 
-    /**
-     * Forgets who marked the answers as resolving without un-marking them: the resolution belongs to the thread, only the
-     * endorsement was the account's. Course Memory treats such an answer as community-resolved from then on.
-     *
-     * @param userId the account being deleted
-     * @return how many answer posts lost their endorser
-     */
     @Modifying
     @Transactional // ok because of update
     @Query("""
@@ -101,7 +115,29 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             SET answerPost.resolvedBy = NULL
             WHERE answerPost.resolvedBy.id = :userId
             """)
-    int detachResolvedAnswerPosts(@Param("userId") long userId);
+    int clearResolverOfAnswerPosts(@Param("userId") long userId);
+
+    @Modifying
+    @Transactional // ok because of update
+    @Query(value = """
+            UPDATE post SET course_memory_version = course_memory_version + 1
+            WHERE course_memory_version > 0 AND id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.resolved_by_id = :userId)
+            """, nativeQuery = true)
+    int bumpCourseMemoryVersionsOfThreadsResolvedBy(@Param("userId") long userId);
+
+    /**
+     * Forgets who marked the answers as resolving without un-marking them: the resolution belongs to the thread, only the
+     * endorsement was the account's. Course Memory treats such an answer as community-resolved from then on, so the
+     * threads' entries are outdated in the same transaction.
+     *
+     * @param userId the account being deleted
+     * @return how many answer posts lost their endorser
+     */
+    @Transactional // ok because the detachment and the version bump have to commit together
+    default int detachResolvedAnswerPosts(long userId) {
+        bumpCourseMemoryVersionsOfThreadsResolvedBy(userId);
+        return clearResolverOfAnswerPosts(userId);
+    }
 
     @Query("""
             SELECT reaction.user.id AS userId, COUNT(reaction) AS count

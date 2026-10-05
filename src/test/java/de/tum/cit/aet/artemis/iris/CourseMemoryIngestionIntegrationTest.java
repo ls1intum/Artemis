@@ -1433,6 +1433,30 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void accountDeletion_removingASignOffBumpsTheVersionInTheSameTransaction() {
+        // Between closing the account and removing its sign-offs a rebuild may store an entry that still carries the
+        // tutor label; removing the sign-off has to outdate that entry by itself.
+        User tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Post resolved = createQuestion("Resolved by the tutor being deleted");
+        saveResolvingAnswer(resolved, student2, "A student's answer.", true, tutor2);
+        markAsStoredInCourseMemory(resolved);
+        Post approved = createQuestion("Approved by the tutor being deleted");
+        AnswerPost draft = saveAnswer(approved, botUser, "An Iris answer.", false);
+        answerPostRepository.verifyIfUnverified(draft.getId(), tutor2, ZonedDateTime.now(), null);
+        markAsStoredInCourseMemory(approved);
+        long resolvedBefore = conversationMessageRepository.findCourseMemoryVersion(resolved.getId()).orElseThrow();
+        long approvedBefore = conversationMessageRepository.findCourseMemoryVersion(approved.getId()).orElseThrow();
+
+        communicationDataCleanupRepository.detachResolvedAnswerPosts(tutor2.getId());
+        communicationDataCleanupRepository.detachVerifiedAnswerPosts(tutor2.getId());
+
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(resolved.getId()).orElseThrow()).isEqualTo(resolvedBefore + 1);
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(approved.getId()).orElseThrow()).isEqualTo(approvedBefore + 1);
+        assertThat(answerPostRepository.hasHumanVerifier(draft.getId())).isFalse();
+    }
+
+    @Test
     void dashboardApproval_bumpsTheVersionTogetherWithTheApproval() {
         Post question = createQuestion("Approved in the dashboard?");
         AnswerPost draft = saveAnswer(question, botUser, "An Iris draft.", false);
