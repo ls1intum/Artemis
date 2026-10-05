@@ -47,6 +47,8 @@ class PermanentUserDeletionOrderTest {
 
     private static final String FINGERPRINT = "fingerprint";
 
+    private static final long COURSE_MEMORY_THREAD = 7L;
+
     private UserRepository userRepository;
 
     private UserDeletionPlanService userDeletionPlanService;
@@ -83,7 +85,7 @@ class PermanentUserDeletionOrderTest {
         // The real service runs the deactivation inside its Course Memory transaction.
         doAnswer(invocation -> {
             invocation.<Runnable>getArgument(1).run();
-            return null;
+            return List.of(COURSE_MEMORY_THREAD);
         }).when(userOwnedContentDeletionService).deactivateAndInvalidateCourseMemory(anyLong(), any());
 
         permanentUserDeletionService = new PermanentUserDeletionService(userRepository, userDeletionPlanService, userReferenceCleanupService, userOwnedContentDeletionService,
@@ -133,6 +135,16 @@ class PermanentUserDeletionOrderTest {
         order.verify(userOwnedContentDeletionService).deactivateAndInvalidateCourseMemory(eq(USER_ID), any());
         order.verify(userRepository).deactivateForDeletion(USER_ID);
         order.verify(userOwnedContentDeletionService).deleteTeams(USER_ID);
+    }
+
+    @Test
+    void courseMemoryIsRebuiltOnlyOnceTheAccountIsGone() {
+        // An entry's trust label follows who signed off on its answer; those references disappear with the account row.
+        permanentUserDeletionService.deleteByAdmin(USER_ID, FINGERPRINT, "an-admin");
+
+        InOrder order = inOrder(userRepository, userOwnedContentDeletionService);
+        order.verify(userRepository).deleteUserRow(USER_ID);
+        order.verify(userOwnedContentDeletionService).refreshCourseMemory(List.of(COURSE_MEMORY_THREAD));
     }
 
     @Test

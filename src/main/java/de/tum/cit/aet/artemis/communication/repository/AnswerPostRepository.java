@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -345,5 +347,105 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
     default void deleteAndInvalidateCourseMemory(long answerPostId, long postId) {
         deleteById(answerPostId);
         bumpCourseMemoryVersionOfThreadIfTracked(postId);
+    }
+
+    /**
+     * Verifies an unverified Iris answer, like {@link #verifyIfUnverified}, and outdates its thread's Course Memory entry in
+     * the same transaction: the approval changes what the entry has to hold.
+     *
+     * @param answerPostId the id of the answer message to verify
+     * @param postId       the id of the thread's root post
+     * @param verifier     the tutor verifying the answer
+     * @param verifiedAt   the verification time
+     * @param content      the updated content, or null to keep the existing content
+     * @return whether this call verified the answer message; false when it was already verified
+     */
+    @Transactional // ok because the approval and the version bump have to commit together
+    default boolean verifyIfUnverifiedAndInvalidateCourseMemory(long answerPostId, long postId, User verifier, ZonedDateTime verifiedAt, @Nullable String content) {
+        if (!verifyIfUnverified(answerPostId, verifier, verifiedAt, content)) {
+            return false;
+        }
+        bumpCourseMemoryVersionOfThreadIfTracked(postId);
+        return true;
+    }
+
+    /**
+     * Locks the given conversations with a shared lock until the transaction ends. A change to them, such as making a
+     * channel private, waits for the transaction.
+     *
+     * @param conversationIds the conversations
+     * @return the ids of the locked conversations
+     */
+    @Query(value = "SELECT id FROM conversation WHERE id IN (:conversationIds) FOR SHARE", nativeQuery = true)
+    List<Long> lockConversationsForShare(@Param("conversationIds") Collection<Long> conversationIds);
+
+    /**
+     * Locks the exercises of the given conversations with a shared lock until the transaction ends. A change to them, such
+     * as moving the release date into the future, waits for the transaction.
+     *
+     * @param conversationIds the conversations
+     * @return the ids of the locked exercises
+     */
+    @Query(value = "SELECT id FROM exercise WHERE id IN (SELECT exercise_id FROM conversation WHERE id IN (:conversationIds) AND exercise_id IS NOT NULL) FOR SHARE", nativeQuery = true)
+    List<Long> lockExercisesOfConversationsForShare(@Param("conversationIds") Collection<Long> conversationIds);
+
+    /**
+     * How many of the given conversations are channels of the course that every student can read right now, by the rule
+     * Course Memory uses everywhere ({@link ChannelRepository#READABLE_BY_ALL_STUDENTS}).
+     *
+     * @param conversationIds the conversations
+     * @param courseId        the course
+     * @param now             the current time
+     * @return the number of readable channels among them
+     */
+    @Query("""
+            SELECT COUNT(channel)
+            FROM Channel channel
+                LEFT JOIN channel.exercise exercise
+            WHERE channel.id IN :conversationIds
+                AND channel.course.id = :courseId
+                AND""" + " " + ChannelRepository.READABLE_BY_ALL_STUDENTS)
+    long countChannelsReadableByAllStudents(@Param("conversationIds") Collection<Long> conversationIds, @Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Marks an unverified answer as verified without a human verifier, which publishes it to the students.
+     *
+     * @param answerPostId the answer
+     * @param verifiedAt   the publication time
+     * @return the number of updated rows
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE AnswerPost answerPost
+            SET answerPost.verified = TRUE, answerPost.verifiedAt = :verifiedAt
+            WHERE answerPost.id = :answerPostId
+                AND answerPost.verified = FALSE
+            """)
+    int publishUnverified(@Param("answerPostId") long answerPostId, @Param("verifiedAt") ZonedDateTime verifiedAt);
+
+    /**
+     * Publishes an autonomous tutor reply saved as a draft, but only if every Course Memory channel it drew from is still
+     * readable by every student of the course. The check and the publication run in one transaction, and the channels and
+     * their exercises stay locked until it commits: a channel made private or an exercise hidden again waits, and counts
+     * as a change after the publication.
+     *
+     * @param answerPostId    the draft
+     * @param courseId        the course
+     * @param conversationIds the channels the reply's Course Memory entries came from
+     * @param now             the current time
+     * @return whether the reply was published
+     */
+    @Transactional // ok because the readability check and the publication have to see the same channel state
+    default boolean publishIfConversationsReadable(long answerPostId, long courseId, Collection<Long> conversationIds, ZonedDateTime now) {
+        Set<Long> distinctIds = new HashSet<>(conversationIds);
+        if (!distinctIds.isEmpty()) {
+            lockConversationsForShare(distinctIds);
+            lockExercisesOfConversationsForShare(distinctIds);
+            if (countChannelsReadableByAllStudents(distinctIds, courseId, now) != distinctIds.size()) {
+                return false;
+            }
+        }
+        return publishUnverified(answerPostId, now) == 1;
     }
 }

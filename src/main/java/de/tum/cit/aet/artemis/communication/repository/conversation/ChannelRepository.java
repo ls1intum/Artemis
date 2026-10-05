@@ -22,6 +22,18 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
 
+    /**
+     * JPQL condition under which every student of a course can read a channel right now: public or course-wide, not an
+     * exam channel, and, for an exercise channel, a course exercise that is released. Expects the aliases {@code channel}
+     * and {@code exercise} (a left join of {@code channel.exercise}) and the parameter {@code :now}. Shared by every query
+     * that decides what Course Memory may use, so they cannot drift apart.
+     */
+    String READABLE_BY_ALL_STUDENTS = """
+            channel.exam IS NULL
+                AND (channel.isPublic = TRUE OR channel.isCourseWide = TRUE)
+                AND (exercise IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate <= :now)))
+            """;
+
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
@@ -147,10 +159,7 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             FROM Channel channel
                 LEFT JOIN channel.exercise exercise
             WHERE channel.course.id = :courseId
-                AND channel.exam IS NULL
-                AND (channel.isPublic = TRUE OR channel.isCourseWide = TRUE)
-                AND (exercise IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate <= :now)))
-            """)
+                AND""" + " " + READABLE_BY_ALL_STUDENTS)
     Set<Long> findIdsOfChannelsReadableByAllStudents(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     /**
@@ -166,9 +175,6 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             FROM Channel channel
                 LEFT JOIN channel.exercise exercise
             WHERE channel.id = :channelId
-                AND channel.exam IS NULL
-                AND (channel.isPublic = TRUE OR channel.isCourseWide = TRUE)
-                AND (exercise IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate <= :now)))
-            """)
+                AND""" + " " + READABLE_BY_ALL_STUDENTS)
     boolean isChannelReadableByAllStudents(@Param("channelId") long channelId, @Param("now") ZonedDateTime now);
 }

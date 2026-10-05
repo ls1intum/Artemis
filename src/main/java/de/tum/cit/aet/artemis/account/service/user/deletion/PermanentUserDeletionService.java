@@ -163,7 +163,7 @@ public class PermanentUserDeletionService {
     private void delete(User user, UserDeletionImpactDTO impact, UserDeletionMode mode, String actor) {
         long userId = user.getId();
         String login = user.getLogin();
-        closeAccount(userId);
+        List<Long> courseMemoryThreads = closeAccount(userId);
 
         String imageUrl = user.getImageUrl();
         List<Path> filesToDelete = new ArrayList<>();
@@ -194,6 +194,9 @@ public class PermanentUserDeletionService {
         }
 
         userOwnedContentDeletionService.anonymiseScienceEvents(login, userId);
+        // Rebuilt only now: the trust label of an entry follows who signed off on its answer, and those references to the
+        // account are gone only once its row is.
+        userOwnedContentDeletionService.refreshCourseMemory(courseMemoryThreads);
         auditEventRepository.add(new AuditEvent(actor, AUDIT_EVENT_TYPE,
                 Map.of("targetUserId", userId, "mode", mode.name(), "affectedObjects", impact.totalAffectedObjects(), "outcome", UserDeletionResultStatus.DELETED.name())));
         scheduleExternalCleanup(filesToDelete);
@@ -205,9 +208,10 @@ public class PermanentUserDeletionService {
      * memberships removes what it could still reach. A session that is already signed in keeps its token until it
      * expires, since a JWT is validated from its claims alone, but it can no longer be renewed.
      */
-    private void closeAccount(long userId) {
-        userOwnedContentDeletionService.deactivateAndInvalidateCourseMemory(userId, () -> userRepository.deactivateForDeletion(userId));
+    private List<Long> closeAccount(long userId) {
+        List<Long> courseMemoryThreads = userOwnedContentDeletionService.deactivateAndInvalidateCourseMemory(userId, () -> userRepository.deactivateForDeletion(userId));
         userReferenceCleanupService.resolve(UserDeletionReferencePolicy.COURSE_ROLE, userId);
+        return courseMemoryThreads;
     }
 
     /**

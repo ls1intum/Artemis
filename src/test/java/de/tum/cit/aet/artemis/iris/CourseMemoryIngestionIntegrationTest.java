@@ -1417,6 +1417,59 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void anAccountChange_alsoOutdatesThreadsTheUserOnlySignedOffOn() {
+        // The trust label of an entry follows who marked its answer resolving; deleting that account removes the sign-off.
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Post endorsedOnly = createQuestion("Thread the tutor only endorsed");
+        saveResolvingAnswer(endorsedOnly, student2, "A student's answer.", true, tutor);
+        markAsStoredInCourseMemory(endorsedOnly);
+        long before = conversationMessageRepository.findCourseMemoryVersion(endorsedOnly.getId()).orElseThrow();
+
+        List<Long> affected = courseMemoryIngestionService.changeAccountAndInvalidate(tutor.getId(), () -> {
+        });
+
+        assertThat(affected).contains(endorsedOnly.getId());
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(endorsedOnly.getId()).orElseThrow()).isEqualTo(before + 1);
+    }
+
+    @Test
+    void dashboardApproval_bumpsTheVersionTogetherWithTheApproval() {
+        Post question = createQuestion("Approved in the dashboard?");
+        AnswerPost draft = saveAnswer(question, botUser, "An Iris draft.", false);
+        markAsStoredInCourseMemory(question);
+        long before = conversationMessageRepository.findCourseMemoryVersion(question.getId()).orElseThrow();
+
+        boolean verified = answerPostRepository.verifyIfUnverifiedAndInvalidateCourseMemory(draft.getId(), question.getId(), tutor, ZonedDateTime.now(), null);
+
+        assertThat(verified).isTrue();
+        assertThat(answerPostRepository.findById(draft.getId()).orElseThrow().isVerified()).isTrue();
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(question.getId()).orElseThrow()).isEqualTo(before + 1);
+        // A second approval of the same draft changes nothing.
+        assertThat(answerPostRepository.verifyIfUnverifiedAndInvalidateCourseMemory(draft.getId(), question.getId(), tutor, ZonedDateTime.now(), null)).isFalse();
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(question.getId()).orElseThrow()).isEqualTo(before + 1);
+    }
+
+    @Test
+    void publication_happensOnlyWhileEverySourceChannelIsReadable() {
+        Post question = createQuestion("Published from readable sources only?");
+        Channel source = conversationUtilService.createPublicChannel(course, "publication-source");
+        AnswerPost refused = saveAnswer(question, botUser, "Draft citing a channel that became private.", false);
+        AnswerPost published = saveAnswer(question, botUser, "Draft citing readable channels.", false);
+        AnswerPost withoutSources = saveAnswer(question, botUser, "Draft citing nothing.", false);
+
+        assertThat(answerPostRepository.publishIfConversationsReadable(published.getId(), course.getId(), List.of(channel.getId(), source.getId()), ZonedDateTime.now())).isTrue();
+        assertThat(answerPostRepository.publishIfConversationsReadable(withoutSources.getId(), course.getId(), List.of(), ZonedDateTime.now())).isTrue();
+
+        source.setIsPublic(false);
+        conversationRepository.save(source);
+        assertThat(answerPostRepository.publishIfConversationsReadable(refused.getId(), course.getId(), List.of(channel.getId(), source.getId()), ZonedDateTime.now())).isFalse();
+
+        assertThat(answerPostRepository.findById(published.getId()).orElseThrow().isVerified()).isTrue();
+        assertThat(answerPostRepository.findById(withoutSources.getId()).orElseThrow().isVerified()).isTrue();
+        assertThat(answerPostRepository.findById(refused.getId()).orElseThrow().isVerified()).isFalse();
+    }
+
+    @Test
     void anAccountChangeThatFails_leavesTheVersionsAsTheyWere() {
         // The account change and the bump commit together or not at all: a bump without the change would only cost a
         // rebuild, but a change without the bump could leave an entry built from the old account state at the latest version.
