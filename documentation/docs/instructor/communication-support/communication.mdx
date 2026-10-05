@@ -141,15 +141,15 @@ An Iris response that refers to an earlier verified answer:
 
 <Image src={autonomousTutorMemoryReferenceImg} alt={"autonomous-tutor-memory-reference"} size={ImageSize.medium} />
 
-The Autonomous Tutor is only available in public course channels; private conversations are excluded. The feature is disabled by default and must be explicitly enabled by instructors in the course's Iris settings. All processing runs on self-hosted language models, and students who have opted out of AI interaction are excluded from every processing step, including reading, embedding, and storage.
+The Autonomous Tutor is only available in public course channels; private conversations are excluded. The feature is disabled by default, and an administrator must enable it for the whole Artemis instance. It then runs in every course where Iris is enabled. Iris is enabled for a course unless an instructor disables it in the course's Iris settings. The AI choice of the student who asks decides whether Iris answers with on-premise or cloud models. Students who have opted out of AI interaction are excluded from every processing step, including reading, embedding, and storage.
 
 <Callout variant={CalloutVariant.warning}>
 
   <strong>Privacy and activation at a glance</strong>
 
   <ul>
-    <li><strong>Self-hosted inference</strong>: All response generation runs on self-hosted language models. No student data is sent to external providers or GPT models.</li>
-    <li><strong>Opt-in</strong>: The feature is not active by default and must be explicitly enabled by instructors for the course.</li>
+    <li><strong>Model choice</strong>: The AI choice of the student who asks decides the models. For students who chose cloud AI, the thread can be sent to cloud providers.</li>
+    <li><strong>Activation</strong>: The feature is not active by default. An administrator enables it for the whole instance. Instructors can turn it off for their course by disabling Iris.</li>
     <li><strong>Student opt-out</strong>: Students who have opted out of AI interaction are excluded from all processing steps, including reading, embedding, and storage of their messages.</li>
     <li><strong>Transparency</strong>: Every Iris-generated message carries the Iris icon and a bot tag. Responses awaiting tutor review remain hidden from students until a tutor approves or edits them.</li>
     <li><strong>GDPR</strong>: Processing is purpose-limited to assisting with student support (purpose limitation, data minimisation). If your institution requires consent as the legal basis, activation must be preceded by explicit <strong>consent</strong> (Art. 6(1)(a) GDPR).</li>
