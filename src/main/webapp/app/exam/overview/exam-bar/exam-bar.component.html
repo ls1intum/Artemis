@@ -1,12 +1,15 @@
-<div class="h5 module-bg exam-bar mt-0 px-3 py-2 rounded rounded-3 sticky-top" [ngClass]="{ 'end-view': isEndView(), 'mx-3': !isEndView() && !isTestRun() }">
-    <div class="d-flex justify-content-between">
-        <h3 class="align-self-center mb-0 me-3">
+<div
+    class="exam-bar sticky top-0 z-[1020] mt-0 mb-3! rounded-lg bg-(--module-bg) px-4 py-2 text-xl font-medium"
+    [class]="isEndView() ? 'mx-auto max-w-[900px] max-[900px]:max-w-[600px] max-[600px]:max-w-[500px]' : !isTestRun() ? 'mx-4' : ''"
+>
+    <div class="flex justify-between">
+        <h3 class="mr-4 mb-0! self-center" data-testid="exam-bar-title">
             {{ examTitle() }}
         </h3>
         @if (!examTimeLineView()) {
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="flex items-center justify-between">
                 <jhi-exam-timer
-                    class="me-3"
+                    class="mr-4!"
                     [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
                     [endDate]="endDate()"
                     [isEndView]="isEndView()"
@@ -14,13 +17,20 @@
                 />
                 <jhi-exam-live-events-button [examStartDate]="examStartDate()" />
                 @if (!isEndView()) {
-                    <button type="button" data-testid="hand-in-early" class="btn btn-sm btn-danger ms-2" aria-label="Hand In Early" (click)="handInEarly()">
-                        <div class="d-flex justify-content-between">
-                            <span>
-                                <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
-                                <span class="d-none d-sm-inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
-                            </span>
-                        </div>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="danger"
+                        size="small"
+                        data-testid="hand-in-early"
+                        class="ml-2!"
+                        [attr.aria-label]="'artemisApp.examParticipation.handInEarly' | artemisTranslate"
+                        (click)="handInEarly()"
+                    >
+                        <span>
+                            <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
+                            <span class="hidden sm:inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
+                        </span>
                     </button>
                 }
             </div>

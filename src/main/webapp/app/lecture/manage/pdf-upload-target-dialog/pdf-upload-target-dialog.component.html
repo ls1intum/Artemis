@@ -1,72 +1,80 @@
-<div class="modal-body">
-    <!-- File list summary -->
-    <div class="upload-summary mb-3">
-        <div class="d-flex align-items-center mb-2">
-            <fa-icon [icon]="faFilePdf" class="text-danger me-2" />
-            <span>{{ 'artemisApp.lecture.pdfUpload.filesSelected' | artemisTranslate: { count: uploadedFiles().length } }}</span>
-        </div>
-        <ul class="file-list mb-0">
-            @for (file of uploadedFiles(); track file.name) {
-                <li class="text-muted small">{{ file.name }}</li>
-            }
-        </ul>
-    </div>
-
-    <div class="target-options">
-        <div class="form-check target-option" [class.selected]="targetType() === 'new'">
-            <input class="form-check-input" type="radio" name="targetType" id="targetNew" [checked]="targetType() === 'new'" (change)="onTargetTypeChange('new')" />
-            <label class="form-check-label" for="targetNew">
-                <fa-icon [icon]="faFolderPlus" class="me-2" />
-                <span jhiTranslate="artemisApp.lecture.pdfUpload.newLecture"></span>
-            </label>
+<tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.lecture.pdfUpload.dialogTitle' | artemisTranslate" size="medium">
+    <div class="flex flex-col gap-6" data-testid="pdf-upload-target-dialog">
+        <div class="pdf-upload-summary flex flex-col gap-2 rounded-lg p-3.5">
+            <span class="flex items-center gap-2 font-medium">
+                <fa-icon [icon]="faFilePdf" class="text-state-danger" />
+                {{ 'artemisApp.lecture.pdfUpload.filesSelected' | artemisTranslate: { count: uploadedFiles().length } }}
+            </span>
+            <ul class="pdf-upload-file-list m-0 flex max-h-30 list-none flex-col gap-0.5 overflow-y-auto ps-6 text-sm">
+                @for (file of uploadedFiles(); track file.name) {
+                    <li>{{ file.name }}</li>
+                }
+            </ul>
         </div>
 
-        @if (targetType() === 'new') {
-            <div class="lecture-title-input mt-3 ms-4">
-                <label for="lectureTitleInput" class="form-label" jhiTranslate="artemisApp.lecture.pdfUpload.lectureTitle"></label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="lectureTitleInput"
-                    [ngModel]="newLectureTitle()"
-                    (ngModelChange)="newLectureTitle.set($event)"
-                    [placeholder]="'artemisApp.lecture.pdfUpload.lectureTitlePlaceholder' | artemisTranslate"
-                    required
-                />
+        <div class="flex flex-col gap-3.5" role="radiogroup" [attr.aria-label]="'artemisApp.lecture.pdfUpload.dialogTitle' | artemisTranslate">
+            <div class="pdf-upload-target flex flex-col gap-3.5 rounded-lg p-6" [class.pdf-upload-target-selected]="targetType() === 'new'">
+                <div class="flex items-center gap-3.5">
+                    <tumaet-ui-radio-button inputId="targetNew" name="targetType" value="new" [ngModel]="targetType()" (ngModelChange)="onTargetTypeChange($event)" />
+                    <label for="targetNew" class="m-0 flex cursor-pointer items-center gap-2 font-medium">
+                        <fa-icon [icon]="faFolderPlus" />
+                        <span jhiTranslate="artemisApp.lecture.pdfUpload.newLecture"></span>
+                    </label>
+                </div>
+                @if (targetType() === 'new') {
+                    <tumaet-ui-form-field class="ps-7" controlId="lectureTitleInput" [label]="'artemisApp.lecture.pdfUpload.lectureTitle' | artemisTranslate" required>
+                        <input
+                            tumAetUiInput
+                            id="lectureTitleInput"
+                            [attr.aria-label]="'artemisApp.lecture.pdfUpload.lectureTitle' | artemisTranslate"
+                            type="text"
+                            required
+                            [value]="newLectureTitle()"
+                            (input)="newLectureTitle.set(titleInput.value)"
+                            [placeholder]="'artemisApp.lecture.pdfUpload.lectureTitlePlaceholder' | artemisTranslate"
+                            #titleInput
+                        />
+                    </tumaet-ui-form-field>
+                }
             </div>
-        }
 
-        @if (lectures().length > 0) {
-            <div class="form-check target-option mt-3" [class.selected]="targetType() === 'existing'">
-                <input
-                    class="form-check-input"
-                    type="radio"
-                    name="targetType"
-                    id="targetExisting"
-                    [checked]="targetType() === 'existing'"
-                    (change)="onTargetTypeChange('existing')"
-                />
-                <label class="form-check-label" for="targetExisting">
-                    <fa-icon [icon]="faFolderOpen" class="me-2" />
-                    <span jhiTranslate="artemisApp.lecture.pdfUpload.existingLecture"></span>
-                </label>
-            </div>
-        }
-
-        @if (targetType() === 'existing' && lectures().length > 0) {
-            <div class="lecture-select mt-3 ms-4">
-                <label for="lectureSelect" class="form-label" jhiTranslate="artemisApp.lecture.pdfUpload.selectLecture"></label>
-                <select class="form-select" id="lectureSelect" [value]="selectedLectureId() ?? ''" (change)="onLectureSelect($event)">
-                    <option value="" disabled>{{ 'artemisApp.lecture.pdfUpload.selectLecturePlaceholder' | artemisTranslate }}</option>
-                    @for (lecture of lectures(); track lecture.id) {
-                        <option [value]="lecture.id">{{ lecture.title }}</option>
+            @if (lectures().length > 0) {
+                <div class="pdf-upload-target flex flex-col gap-3.5 rounded-lg p-6" [class.pdf-upload-target-selected]="targetType() === 'existing'">
+                    <div class="flex items-center gap-3.5">
+                        <tumaet-ui-radio-button inputId="targetExisting" name="targetType" value="existing" [ngModel]="targetType()" (ngModelChange)="onTargetTypeChange($event)" />
+                        <label for="targetExisting" class="m-0 flex cursor-pointer items-center gap-2 font-medium">
+                            <fa-icon [icon]="faFolderOpen" />
+                            <span jhiTranslate="artemisApp.lecture.pdfUpload.existingLecture"></span>
+                        </label>
+                    </div>
+                    @if (targetType() === 'existing') {
+                        <tumaet-ui-form-field class="ps-7" controlId="lectureSelect" [label]="'artemisApp.lecture.pdfUpload.selectLecture' | artemisTranslate" required>
+                            <tumaet-ui-select
+                                inputId="lectureSelect"
+                                [options]="lectures()"
+                                optionLabel="title"
+                                optionValue="id"
+                                [filter]="true"
+                                [placeholder]="'artemisApp.lecture.pdfUpload.selectLecturePlaceholder' | artemisTranslate"
+                                [ngModel]="selectedLectureId()"
+                                (ngModelChange)="selectedLectureId.set($event)"
+                            />
+                        </tumaet-ui-form-field>
                     }
-                </select>
-            </div>
-        }
+                </div>
+            }
+        </div>
+        <p class="pdf-upload-target-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.pdfUpload.targetHint"></p>
     </div>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-    <button type="button" class="btn btn-primary" [disabled]="!isValid()" (click)="confirm()" jhiTranslate="artemisApp.lecture.pdfUpload.confirm"></button>
-</div>
+    <ng-template #footer>
+        <button tumAetUiButton type="button" severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+        <button
+            tumAetUiButton
+            type="button"
+            data-testid="pdf-upload-confirm"
+            [disabled]="!isValid()"
+            (click)="confirm()"
+            [jhiTranslate]="targetType() === 'new' ? 'artemisApp.lecture.pdfUpload.confirm' : 'artemisApp.lecture.pdfUpload.confirmExisting'"
+        ></button>
+    </ng-template>
+</tumaet-ui-dialog>

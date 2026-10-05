@@ -1,11 +1,9 @@
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
 
 import { test } from '../../support/fixtures';
 import { ExerciseType } from '../../support/constants';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin, studentOne } from '../../support/users';
-import { generateUUID } from '../../support/utils';
 
 const course = { id: SEED_COURSES.examParticipation.id } as any;
 
@@ -29,19 +27,16 @@ test.describe('Exam text editor scroll stability', { tag: '@slow' }, () => {
 
     test.beforeEach('Create an exam with a text exercise', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
-        exam = await examAPIRequests.createExam({
-            course,
-            title: 'exam' + generateUUID(),
-            visibleDate: dayjs().subtract(3, 'minutes'),
-            startDate: dayjs().subtract(2, 'minutes'),
-            endDate: dayjs().add(1, 'hour'),
-            examMaxPoints: 10,
-            numberOfExercisesInExam: 1,
-        });
+        exam = await examAPIRequests.createRunningExam({ course });
         textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture: 'loremIpsum.txt' });
         await examAPIRequests.registerStudentForExam(exam, studentOne);
         await examAPIRequests.generateMissingIndividualExams(exam);
         await examAPIRequests.prepareExerciseStartForExam(exam);
+    });
+
+    test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+        await login(admin);
+        await examAPIRequests.deleteExam(exam);
     });
 
     test('keeps the scroll bar steady and only shows it when the exercise really is taller', async ({ page, examParticipation, examNavigation }) => {

@@ -57,6 +57,7 @@ import jakarta.persistence.OrderColumn;
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.util.SystemReader;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -921,6 +922,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testHibernatePropertyInitializedNotUsed() {
+        String reason = """
+                Hibernate.isPropertyInitialized takes the attribute name as a string, and a name that matches \
+                no attribute is not an error: for an entity without bytecode enhancement it answers true whatever the name, \
+                so the check passes without checking anything and the code behind it reads a lazy association that was never \
+                loaded. Static analysis also models the call as passing the entity to a logger inside Hibernate, so a client \
+                supplied entity reaching it is reported as log injection (SonarQube Cloud javasecurity:S5145).
+                Ask the standard JPA call instead, Persistence.getPersistenceUtil().isLoaded(entity, Entity_.ATTRIBUTE), \
+                with the constant of the generated static metamodel; checkstyle rejects a string literal there.""";
+
+        ArchRule noHibernatePropertyInitialized = noClasses().should().callMethod(Hibernate.class, "isPropertyInitialized", Object.class, String.class).because(reason);
+
+        noHibernatePropertyInitialized.check(allClasses);
+    }
+
+    @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
@@ -930,7 +947,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // failure to a status, and the access checks made inside the method rather than by its annotations. They call
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
                 "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest", "ProgrammingExerciseParticipationResourceResetTest",
-                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest" };
+                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest", "IrisGlobalSearchResourceTest",
+                "IngestionCoverageResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

@@ -280,6 +280,25 @@ class AtlasResponsesChatModelTest {
     }
 
     @Test
+    void replaysToolResponseWithMissingResultAsEmptyOutput() {
+        var response = response(List.of(ResponseOutputItem.ofMessage(message("done"))), "tool-response");
+        when(responseService.create(any(ResponseCreateParams.class))).thenReturn(response);
+        var adapter = new AtlasResponsesChatModel(openAIClient, new JsonMapper(), "default-model");
+        var toolResponse = org.springframework.ai.chat.messages.ToolResponseMessage.builder()
+                .responses(List.of(new org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse("call-9", "lookup", null))).build();
+
+        adapter.call(new Prompt(List.of(toolResponse), OpenAiChatOptions.builder().deploymentName("default-model").build()));
+
+        var request = ArgumentCaptor.forClass(ResponseCreateParams.class);
+        org.mockito.Mockito.verify(responseService).create(request.capture());
+        var input = request.getValue().input().orElseThrow().asResponse();
+        assertThat(input).hasSize(1);
+        var output = input.getFirst().asFunctionCallOutput();
+        assertThat(output.callId()).isEqualTo("call-9");
+        assertThat(output.output().asString()).isEmpty();
+    }
+
+    @Test
     void malformedToolSchemaNeverContactsProvider() {
         var callback = mock(ToolCallback.class);
         when(callback.getToolDefinition())
@@ -288,6 +307,26 @@ class AtlasResponsesChatModelTest {
         assertThatThrownBy(() -> adapter.call(new Prompt("work", OpenAiChatOptions.builder().toolCallbacks(callback).build()))).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid JSON schema for Atlas tool broken");
         org.mockito.Mockito.verifyNoInteractions(responseService);
+    }
+
+    @Test
+    void toolResponseWithoutResultIsReplayedAsEmptyOutput() {
+        var response = response(List.of(ResponseOutputItem.ofMessage(message("done"))), "tool-response");
+        when(responseService.create(any(ResponseCreateParams.class))).thenReturn(response);
+        var toolResponses = org.springframework.ai.chat.messages.ToolResponseMessage.builder()
+                .responses(List.of(new org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse("call-1", "lookup", null),
+                        new org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse("call-2", "lookup", "result")))
+                .build();
+
+        new AtlasResponsesChatModel(openAIClient, new JsonMapper(), "luna").call(new Prompt(List.of(toolResponses)));
+
+        var request = ArgumentCaptor.forClass(ResponseCreateParams.class);
+        org.mockito.Mockito.verify(responseService).create(request.capture());
+        var input = request.getValue().input().orElseThrow().asResponse();
+        assertThat(input).hasSize(2);
+        assertThat(input.get(0).asFunctionCallOutput().callId()).isEqualTo("call-1");
+        assertThat(input.get(0).asFunctionCallOutput().output().asString()).isEmpty();
+        assertThat(input.get(1).asFunctionCallOutput().output().asString()).isEqualTo("result");
     }
 
     private static void withUsage(Response response, long input, long output) {

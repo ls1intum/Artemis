@@ -284,32 +284,32 @@ $md-editor-background: $body-bg;
 $md-file-input-border-color: $border-color;
 $md-resize-icon-color: $gray-400;
 
-// Metis
-$metis-conversation-sidebar: $gray-500;
-$metis-conversation-sidebar-active: $gray-100;
-$metis-conversation-sidebar-muted: $gray-600;
-$metis-conversation-sidebar-button-background-hover: $gray-700;
+// Communication
+$communication-conversation-sidebar: $gray-500;
+$communication-conversation-sidebar-active: $gray-100;
+$communication-conversation-sidebar-muted: $gray-600;
+$communication-conversation-sidebar-button-background-hover: $gray-700;
 
-$metis-light-gray: #979797;
-$metis-gray: #6a737d;
-$metis-blue: $link-color;
-$metis-light-blue: #0e252d;
-$metis-green: #33cd32;
-$metis-course-discussion-select-bg: $neutral-dark;
+$communication-light-gray: #979797;
+$communication-gray: #6a737d;
+$communication-blue: $link-color;
+$communication-light-blue: #0e252d;
+$communication-green: #33cd32;
+$communication-course-discussion-select-bg: $neutral-dark;
 
-$metis-pinned-post-highlight-color: darken($metis-blue, 44%);
+$communication-pinned-post-highlight-color: darken($communication-blue, 44%);
 
-$metis-answer-post-background-color: rgba(255, 255, 255, 0.02);
+$communication-answer-post-background-color: rgba(255, 255, 255, 0.02);
 
 $reaction-button-default-color: $gray-800;
 $reaction-button-hover-color: $gray-700;
 $reaction-button-reacted-color: $gray-800;
 $reaction-button-reacted-color: $gray-800;
-$reaction-button-reacted-accent-color: $metis-blue;
+$reaction-button-reacted-accent-color: $communication-blue;
 $reaction-button-emoji-count-color: $gray-200;
 
-$metis-selection-option-background: $neutral-dark;
-$metis-selection-option-hover-background: $neutral-dark-l-5;
+$communication-selection-option-background: $neutral-dark;
+$communication-selection-option-hover-background: $neutral-dark-l-5;
 
 // Component: plagiarism-case-instructor-detail-view.component.scss
 $plagiarism-verdict-disabled-overlay-color: rgba(0, 0, 0, 0.9);
@@ -496,7 +496,6 @@ $lecture-unit-card-body-background: $neutral-dark;
 $lecture-unit-card-header-background: $neutral-dark-l-5;
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
-$lecture-unit-create-row-hover-background: $neutral-dark-l-10;
 
 // Notification sidebar
 $notification-sb-background: $body-bg;
@@ -513,7 +512,6 @@ $text-editor-color: $white;
 $text-editor-border-color: $gray-800;
 
 // Exam (Manage)
-$exam-checklist-exercise-group-table-background: $gray-800;
 
 $exercise-group-border-color: $neutral-dark-l-10;
 $exercise-group-header-background: $neutral-dark-l-5;
@@ -555,7 +553,6 @@ $exam-navigation-bar-exercise-index-color: white;
 $exam-timer-label-color: white;
 $exam-timer-remaining-time-background: black;
 $exam-timer-critical-background: $warning;
-$exam-exercise-overview-table-background: $neutral-dark-l-5;
 $exam-participation-footer-background: $neutral-dark;
 $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #114d4f;

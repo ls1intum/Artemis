@@ -185,13 +185,15 @@ public class PyrisDTOService {
      * the episode it was given in. The tag text is the one channel that carries this, since {@code sent_at} is
      * dropped before the history reaches the model.
      *
-     * @param messages         the chat-history messages, in chronological order
+     * @param allMessages      the chat-history messages, in chronological order; SUMMARY messages are left out
      * @param currentEpisodeId the episode this run belongs to, or null when the caller has none. Null marks
      *                             NOTHING as earlier: with the episode relation unknown, keeping every hint under
      *                             today's tags can only ever suppress a repeat, never license one.
      * @return the converted DTOs with proactive messages outcome-tagged
      */
-    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> messages, @Nullable String currentEpisodeId) {
+    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> allMessages, @Nullable String currentEpisodeId) {
+        // Summaries are hidden from the student. Left in, one between a hint and the student's reply would hide the reply.
+        var messages = allMessages.stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).toList();
         // One reverse pass instead of a forward scan per proactive message: "superseded" only asks whether a LATER
         // proactive message exists, so the index of the last one answers it for every message at once.
         int lastProactiveIndex = -1;

@@ -119,7 +119,7 @@ describe('IrisPointOutMarkerComponent', () => {
     });
 
     it('should render one kit button per marker and navigate with forceOpen on click', async () => {
-        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, lectureId: 27, page: 3, displayPage: 9, timestamp: 150 }));
+        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, lectureId: 27, page: 3, displayPage: 9, timestamp: 150, materialType: 'video', materialVersion: 7 }));
 
         const buttons = fixture.nativeElement.querySelectorAll('button[tumAetUiButton]');
         expect(buttons).toHaveLength(1);
@@ -138,6 +138,7 @@ describe('IrisPointOutMarkerComponent', () => {
             page: 3,
             displayPage: 9,
             timestamp: 150,
+            pinnedVersion: { kind: 'video', version: 7 },
             forceOpen: true,
         });
     });

@@ -113,9 +113,9 @@ public class PlagiarismCaseService {
     public void createOrAddToPlagiarismCasesForComparison(long plagiarismComparisonId) {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
         // handle student A
-        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), false);
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionAElseThrow(), false);
         // handle student B
-        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), false);
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionBElseThrow(), false);
     }
 
     /**
@@ -188,22 +188,22 @@ public class PlagiarismCaseService {
     public void removeSubmissionsInPlagiarismCasesForComparison(long plagiarismComparisonId) {
         // remove plagiarism case from both submissions
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
-        plagiarismComparison.getSubmissionA().setPlagiarismCase(null);
-        plagiarismComparison.getSubmissionB().setPlagiarismCase(null);
+        plagiarismComparison.getSubmissionAElseThrow().setPlagiarismCase(null);
+        plagiarismComparison.getSubmissionBElseThrow().setPlagiarismCase(null);
         // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them
         // we actually use a custom modifying query to avoid all issues with Cascade ALL
-        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionA().getId(), null);
-        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionB().getId(), null);
+        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionAElseThrow().getId(), null);
+        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionBElseThrow().getId(), null);
 
         // delete plagiarism case of Student A if it doesn't contain any submissions now
-        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionA().getStudentLogin(),
+        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionAElseThrow().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseA.isPresent() && plagiarismCaseA.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseA.get());
         }
 
         // delete plagiarism case of Student B if it doesn't contain any submissions now
-        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionB().getStudentLogin(),
+        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionBElseThrow().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseB.isPresent() && plagiarismCaseB.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseB.get());

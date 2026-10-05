@@ -195,19 +195,21 @@ public class QuizExerciseImportService extends ExerciseImportService {
         DragAndDropQuestion copy = new DragAndDropQuestion();
 
         // Copy background file
-        if (original.getBackgroundFilePath() != null) {
+        String originalBackgroundFilePath = original.getBackgroundFilePath();
+        if (originalBackgroundFilePath != null) {
             // Validate the value before any filesystem access to prevent path traversal
-            FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(original.getBackgroundFilePath());
-            Path oldPath = new FileSystemLocation.DragAndDropBackground(original.getBackgroundFilePath()).path().normalize();
+            FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(originalBackgroundFilePath);
+            Path oldPath = new FileSystemLocation.DragAndDropBackground(originalBackgroundFilePath).path().normalize();
             if (!oldPath.startsWith(FilePathConverter.getDragAndDropBackgroundFilePath().normalize())) {
                 throw new IllegalArgumentException("Invalid background file path: resolved path is outside the expected directory");
             }
             if (Files.exists(oldPath)) {
                 Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragAndDropBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND);
-                copy.setBackgroundFilePath(newPath.getFileName().toString());
+                // copyExistingFileToTarget returns null when the copy fails, and one unreadable background must not abort the whole quiz import
+                copy.setBackgroundFilePath(newPath == null ? originalBackgroundFilePath : newPath.getFileName().toString());
             }
             else {
-                copy.setBackgroundFilePath(original.getBackgroundFilePath());
+                copy.setBackgroundFilePath(originalBackgroundFilePath);
             }
         }
         else {
@@ -240,12 +242,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     private void copyDragItemFile(DragItem source, DragItem target) {
-        if (source.getPictureFilePath() == null) {
+        String sourcePictureFilePath = source.getPictureFilePath();
+        if (sourcePictureFilePath == null) {
             return;
         }
         // Validate the value before any filesystem access to prevent path traversal
-        FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(source.getPictureFilePath());
-        Path oldPath = new FileSystemLocation.DragItem(source.getPictureFilePath()).path().normalize();
+        FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(sourcePictureFilePath);
+        Path oldPath = new FileSystemLocation.DragItem(sourcePictureFilePath).path().normalize();
         if (!oldPath.startsWith(FilePathConverter.getDragItemFilePath().normalize())) {
             throw new IllegalArgumentException("Invalid drag item file path: resolved path is outside the expected directory");
         }

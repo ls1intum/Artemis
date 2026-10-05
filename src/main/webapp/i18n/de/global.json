@@ -156,8 +156,28 @@
             "irisAnswerShowLess": "Weniger anzeigen",
             "irisAnswerMore": "weitere",
             "irisAnswerThinking": "Nachdenken…",
+            "irisAnswerStageSearching": "Kursmaterial wird durchsucht…",
+            "irisAnswerStageRanking": "Suchergebnisse werden bewertet…",
+            "irisAnswerStageFoundSources": "Material gefunden in {{summary}}…",
+            "irisAnswerStageFoundSourcesAndMore": "Material gefunden in {{summary}} +{{extra}} weiteren…",
+            "irisAnswerStageGenerating": "Antwort wird verfasst…",
+            "irisAnswerNoneRelevant": "Iris hat gesucht, aber nichts Gefundenes ist relevant genug für eine verlässliche Antwort.",
+            "irisAnswerNoneRelevantHint": "Die Ergebnisse unten helfen vielleicht trotzdem weiter.",
+            "irisAnswerFailed": "Bei der Antwort von Iris ist ein Problem aufgetreten. Die Suchergebnisse sind davon nicht betroffen.",
+            "irisAnswerRetry": "Erneut versuchen",
             "irisCollapseSources": "Weniger Quellen anzeigen",
-            "irisAiBadge": "KI"
+            "irisAiBadge": "KI",
+            "entityType": {
+                "exercise": "Aufgabe",
+                "lecture": "Vorlesung",
+                "lecture_unit": "Vorlesungseinheit",
+                "exam": "Klausur",
+                "faq": "FAQ",
+                "channel": "Kanal",
+                "course": "Kurs",
+                "post": "Beitrag",
+                "answer_post": "Antwort"
+            }
         },
         "menu": {
             "home": "Startseite",
@@ -224,11 +244,9 @@
                     "fileUpload": "Datei-Upload",
                     "quiz": "Quiz"
                 },
-                "metis": {
-                    "post": "Beitrag",
-                    "answerPost": "Antwort"
-                },
                 "messages": {
+                    "post": "Beitrag",
+                    "answerPost": "Antwort",
                     "conversation": "Konversation",
                     "conversationParticipant": "Unterhaltungsdetails"
                 }
@@ -292,7 +310,8 @@
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume",
                     "dependencies": "Abhängigkeiten",
-                    "irisDashboard": "Iris Dashboard"
+                    "irisDashboard": "Iris Dashboard",
+                    "courseIngestionDashboard": "Index-Dashboard"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
                 "expandMenu": "Menü ausklappen (Strg + M)",
@@ -419,7 +438,10 @@
             "invalidTime": "Bitte eine gültige Uhrzeit eingeben.",
             "openTime": "Uhr öffnen",
             "timeDialog": "Uhrzeit wählen",
-            "timePlaceholder": "HH:mm"
+            "timePlaceholder": "HH:mm",
+            "dateDialog": "Datum auswählen",
+            "invalidDate": "Bitte ein gültiges Datum eingeben.",
+            "datePlaceholder": "DD.MM.YYYY"
         },
         "imageCropper": {
             "sourceImage": "Bild zum Zuschneiden"
@@ -431,6 +453,7 @@
         "controlCenter": "Kontrollzentrum",
         "action": {
             "add": "Hinzufügen",
+            "create": "Erstellen",
             "addblob": "Blob hinzufügen",
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
@@ -474,6 +497,7 @@
             "retry": "Erneut versuchen",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
+            "dismiss": "Ausblenden",
             "done": "Fertig",
             "finish": "Abschließen",
             "import": "Import",

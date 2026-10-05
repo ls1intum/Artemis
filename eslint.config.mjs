@@ -721,11 +721,21 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
-            'src/main/webapp/app/exam/manage/exercise-groups/**/*.html',
+            // The whole exam mode: instructor pages, student pages and the pieces they share, and the example solution that only the exam summary shows.
+            'src/main/webapp/app/exam/**/*.html',
+            'src/main/webapp/app/exercise/example-solution/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
+            'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/account/**/*.html',
+            // The lecture editor with its content, the pages that create, edit and split content, and the PDF drop zone and dialog.
+            'src/main/webapp/app/lecture/manage/lecture-update/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-period/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
+            'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
+            'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {
@@ -736,6 +746,32 @@ export default tseslint.config(
         },
         rules: {
             'localRules/no-bootstrap-classes': 'error',
+        },
+    },
+    // The exam mode is migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
+    // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
+    {
+        files: ['src/main/webapp/app/exam/**/*.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
+                        ...noDirectCloneDeepImports,
+                    ],
+                    patterns: [
+                        ...tumAetUiConsumerImportPatterns,
+                        {
+                            group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
+                            message:
+                                'The exam mode uses TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+                        },
+                    ],
+                },
+            ],
         },
     },
 );

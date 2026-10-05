@@ -114,7 +114,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new PlagiarismResult();
-        textPlagiarismResult.setComparisons(Set.of(new PlagiarismComparison()));
+        textPlagiarismResult.setComparisons(Set.of(createPlagiarismComparison(11, 1, 2)));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
         var programmingPlagiarismResult = new PlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);

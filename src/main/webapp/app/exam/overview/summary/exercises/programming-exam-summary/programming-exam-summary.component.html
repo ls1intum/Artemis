@@ -1,7 +1,7 @@
 <ng-container>
     <div>
-        <div class="row gx-5">
-            <div class="col-md-4">
+        <div class="grid grid-cols-1 gap-x-12 md:grid-cols-3">
+            <div class="min-w-0 md:col-span-1">
                 <div class="mb-4">
                     @if (submission()) {
                         <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
@@ -40,7 +40,7 @@
                     }
                 }
             </div>
-            <div class="col-md-8">
+            <div class="min-w-0 md:col-span-2">
                 <h5 jhiTranslate="artemisApp.exam.examSummary.problemStatement"></h5>
                 @if (exercise().problemStatement) {
                     <jhi-programming-exercise-instructions [exercise]="exercise()" [participation]="participation()" [personalParticipation]="!instructorView()" />
@@ -50,7 +50,7 @@
     </div>
     @if ((exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise().allowComplaintsForAutomaticAssessments) && submission() && isAfterStudentReviewStart()) {
         <jhi-complaint-student-view
-            class="mb-2 mt-2 ms-3"
+            class="mt-2 mb-2 ml-4"
             [exercise]="exercise()"
             [participation]="participation()"
             [result]="submission()?.results?.[0]"
