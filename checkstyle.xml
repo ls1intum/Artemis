@@ -4,6 +4,23 @@
     <property name="charset" value="UTF-8" />
     <property name="severity" value="error" />
     <property name="fileExtensions" value="java, properties, xml" />
+    <!--
+        The name of a JPA attribute is given to isLoaded (and Hibernate.isPropertyInitialized) as a string, and a name
+        that matches no attribute is not an error: JPA answers "loaded" whenever it cannot tell, so a misspelling makes
+        the check pass silently, and the code behind it then reads a lazy association that was never loaded. Take the
+        name from the generated static metamodel instead, for example Exercise_.PLAGIARISM_DETECTION_CONFIG, which is
+        checked by the compiler and follows a rename of the attribute.
+
+        Checked here rather than with ArchUnit on purpose, for the same reason as requireNonNull below: ArchUnit reads
+        bytecode, and javac inlines the metamodel constant, so in bytecode Exercise_.X and a typed-in "x" are the same
+        string and cannot be told apart. Checkstyle reads source, so it sees what was written. The expression spans
+        lines, hence a multiline rule, which is also why comments that quote such a call are matched.
+    -->
+    <module name="RegexpMultiline">
+        <property name="format" value="\b(?:isLoaded|isPropertyInitialized)\s*\([^;{}]*?,\s*&quot;" />
+        <property name="message" value="Do not pass the attribute name to isLoaded or isPropertyInitialized as a string literal: a misspelled name reports the attribute as loaded without an error. Use the constant of the generated JPA metamodel, for example Exercise_.PLAGIARISM_DETECTION_CONFIG." />
+        <property name="severity" value="error" />
+    </module>
     <module name="TreeWalker">
         <module name="JavadocMethod">
             <property name="accessModifiers" value="public" />

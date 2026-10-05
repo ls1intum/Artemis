@@ -204,8 +204,8 @@ public class ContinuousPlagiarismControlService {
     }
 
     private void createOrUpdatePlagiarismCases(PlagiarismComparison comparison, User author) {
-        var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
-                plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
+        var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionAElseThrow(), true),
+                plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionBElseThrow(), true));
 
         plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null && plagiarismCase.getStudent() != null)
                 .map(plagiarismCase -> buildCpcPost(plagiarismCase, author)).forEach(post -> {

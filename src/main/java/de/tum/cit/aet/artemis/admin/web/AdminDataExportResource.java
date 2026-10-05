@@ -95,12 +95,12 @@ public class AdminDataExportResource {
      */
     @PostMapping("data-exports/{login}")
     public ResponseEntity<RequestDataExportDTO> requestDataExportForUser(@PathVariable String login, @RequestParam(defaultValue = "false") boolean executeNow) {
-        log.debug("REST request to create data export for user {} with executeNow={}", login, executeNow);
+        log.debug("REST request to create data export for a user with executeNow={}", executeNow);
         RequestDataExportDTO result = dataExportService.requestDataExportForUserAsAdmin(login);
 
         if (executeNow) {
             DataExport dataExport = dataExportRepository.findByIdElseThrow(result.id());
-            log.info("Executing data export immediately for user {}", login);
+            log.info("Executing data export {} immediately", result.id());
             boolean success = dataExportCreationService.createDataExport(dataExport);
             if (success) {
                 // Reload the data export to get the updated state

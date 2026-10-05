@@ -36,7 +36,7 @@
             "cloudSecurity5Title": "Fully encrypted:",
             "cloudSecurity5": "All data is encrypted in transit",
             "localHeader": "Local AI (Experimental)",
-            "localWhatIsIt": "Local AI uses open-source models such as Gemma and Llama, running entirely on the Technical University of Munich's own GPU servers. Your data never leaves the university network.",
+            "localWhatIsIt": "Local AI uses open-source models such as Qwen, running entirely on the Technical University of Munich's own GPU servers. Your data never leaves the university network.",
             "localHowDoesItWork": "Everything happens on university-owned hardware in our data center. The same types of data are processed as with Cloud AI, but nothing is sent to external servers.",
             "localDataProcessed": "The same data as Cloud AI, but processed entirely within TUM infrastructure.",
             "localBenefit1Title": "Maximum privacy:",

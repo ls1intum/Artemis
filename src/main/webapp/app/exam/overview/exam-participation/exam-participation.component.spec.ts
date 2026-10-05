@@ -51,7 +51,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
 import { NEVER, Subject, of, throwError } from 'rxjs';
 import { skip } from 'rxjs/operators';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
@@ -162,7 +161,6 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
                 MockProvider(ExamManagementService),
-                MockProvider(DialogService),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         }).compileComponents();
@@ -1999,7 +1997,7 @@ describe('ExamParticipationComponent', () => {
         const column = fixture.debugElement.query(By.css('.content-exam-height > div'));
         expect(column).toBeTruthy();
         const columnClasses: string[] = [...column.nativeElement.classList];
-        expect(columnClasses).toEqual(expect.arrayContaining(['min-h-100', 'd-flex', 'flex-column']));
+        expect(columnClasses).toEqual(expect.arrayContaining(['min-h-100', 'flex', 'flex-col']));
         expect(columnClasses).not.toContain('h-100');
     });
 

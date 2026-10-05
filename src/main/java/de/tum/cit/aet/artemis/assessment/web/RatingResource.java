@@ -150,7 +150,7 @@ public class RatingResource {
     private void checkIfUserIsOwnerOfSubmissionElseThrow(Long resultId) {
         User user = userRepository.getUser();
         Result result = resultRepository.findByIdElseThrow(resultId);
-        if (!authCheckService.isOwnerOfParticipation((StudentParticipation) result.getSubmission().getParticipation(), user)) {
+        if (!(result.getSubmission().getParticipation() instanceof StudentParticipation participation) || !authCheckService.isOwnerOfParticipation(participation, user)) {
             log.warn("User {} has tried to access rating for result {}", user.getLogin(), resultId);
             throw new AccessForbiddenException();
         }

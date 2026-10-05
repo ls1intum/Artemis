@@ -721,6 +721,10 @@
                         "name": "Iris dashboard",
                         "description": "Usage, cost and alerts of Iris."
                     },
+                    "INGESTION_DASHBOARD": {
+                        "name": "Index dashboard",
+                        "description": "Coverage of the global search index against what the database expects."
+                    },
                     "UPCOMING_EXAMS_AND_EXERCISES": {
                         "name": "Upcoming exams and exercises",
                         "description": "An overview of what is coming up across all courses."
