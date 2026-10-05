@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { User } from 'app/account/user/user.model';
+import { UserCourseRole } from 'app/account/user/shared/user-course-role.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -54,6 +55,20 @@ describe('AdminUserService', () => {
                 status: 404,
                 statusText: 'Bad Request',
             });
+        });
+    });
+
+    describe('getCourseRoles', () => {
+        it('should request the course roles of the user and return them', () => {
+            const courseRoles: UserCourseRole[] = [{ courseId: 1, courseTitle: 'Algorithms', courseShortName: 'ALGO', role: 'STUDENT' }];
+            let received: UserCourseRole[] | undefined;
+
+            adminService.getCourseRoles('user').subscribe((roles) => (received = roles));
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            expect(req.request.url).toBe(`${resourceUrl}/user/course-roles`);
+            req.flush(courseRoles);
+            expect(received).toEqual(courseRoles);
         });
     });
 

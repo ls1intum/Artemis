@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { User } from 'app/account/user/user.model';
+import { UserCourseRole } from 'app/account/user/shared/user-course-role.model';
 import { UserFilter } from 'app/admin/user-management/user-management.component';
 import { BulkUserDeletionImpact, BulkUserDeletionRequest, UserDeletionImpact, UserDeletionResult } from 'app/account/user/shared/user-deletion.model';
 
@@ -87,6 +88,15 @@ export class AdminUserService {
      */
     findUser(login: string): Observable<User> {
         return this.http.get<User>(`${this.resourceUrl}/${login}`);
+    }
+
+    /**
+     * Get the courses in which a user holds a role, with one entry per course and role.
+     * @param login The login of the user.
+     * @return Observable<UserCourseRole[]> with the course roles of the user, ordered by course title.
+     */
+    getCourseRoles(login: string): Observable<UserCourseRole[]> {
+        return this.http.get<UserCourseRole[]>(`${this.resourceUrl}/${login}/course-roles`);
     }
 
     /**

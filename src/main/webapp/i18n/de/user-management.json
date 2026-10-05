@@ -79,6 +79,20 @@
             "detail": {
                 "title": "User"
             },
+            "courseRoles": {
+                "title": "Kursrollen",
+                "loadError": "Die Kursrollen dieser Person konnten nicht geladen werden.",
+                "empty": {
+                    "title": "Keine Kursrollen",
+                    "description": "Diese Person ist in keinem Kurs eingeschrieben."
+                },
+                "roles": {
+                    "instructor": "Lehrende",
+                    "editor": "Editor:innen",
+                    "tutor": "Tutor:innen",
+                    "student": "Studierende"
+                }
+            },
             "login": "Login",
             "firstName": "Vorname",
             "lastName": "Nachname",
