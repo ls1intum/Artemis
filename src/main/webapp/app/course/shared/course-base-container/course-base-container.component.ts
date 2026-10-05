@@ -26,7 +26,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODU
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { CourseAccessStorageService } from '../services/course-access-storage.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
@@ -52,7 +52,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected courseManagementService = inject(CourseManagementService);
     protected courseStorageService = inject(CourseStorageService);
     protected route = inject(ActivatedRoute);
-    protected metisConversationService = inject(MetisConversationService);
+    protected courseConversationsService = inject(CourseConversationsService);
     protected router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
     protected profileService = inject(ProfileService);
@@ -215,7 +215,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     private disableConversationService() {
         this.conversationServiceInstantiated.set(false);
-        this.metisConversationService.disableConversationService();
+        this.courseConversationsService.disableConversationService();
     }
 
     /**
@@ -275,7 +275,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             return;
         }
         if (!this.conversationServiceInstantiated() && this.communicationRouteLoaded()) {
-            this.metisConversationService
+            this.courseConversationsService
                 .setUpConversationService(currentCourse)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe({
@@ -290,14 +290,14 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                     },
                 });
         } else if (!this.checkedForUnreadMessages() && isMessagingEnabled(currentCourse)) {
-            this.metisConversationService.checkForUnreadMessages(currentCourse);
+            this.courseConversationsService.checkForUnreadMessages(currentCourse);
             this.subscribeToHasUnreadMessages();
             this.checkedForUnreadMessages.set(true);
         }
     }
 
     protected subscribeToHasUnreadMessages() {
-        this.metisConversationService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
+        this.courseConversationsService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
             this.hasUnreadMessages.set(hasUnreadMessages ?? false);
         });
     }

@@ -165,6 +165,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         this.buildPlanRepository = buildPlanRepository;
     }
 
+    private static String getCourseShortName(ProgrammingExercise exercise) {
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("The course of programming exercise " + exercise.getId() + " could not be resolved");
+        }
+        return course.getShortName();
+    }
+
     /**
      * Export programming exercise material for instructors including instructor repositories, problem statement (.md) and exercise detail (.json).
      * <p>
@@ -278,8 +286,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         Path exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-        String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
-                + "-" + timestamp + ".zip";
+        String exportedExerciseZipFileName = "Material-" + getCourseShortName(exercise) + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
         String cleanFilename = FileUtil.sanitizeFilename(exportedExerciseZipFileName);
         Path pathToZippedExercise = exportDir.resolve(cleanFilename);
         // Create the zip folder of the exported programming exercise and return the path to the created folder
@@ -337,7 +344,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-        String filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
+        String filename = getCourseShortName(exercise) + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
         String cleanFilename = FileUtil.sanitizeFilename(filename);
         Path pathToZippedExercise = Path.of(outputDir.toString(), cleanFilename);
 
@@ -643,8 +650,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         log.debug("Create zip file for {} repositorie(s) of programming exercise: {}", pathsToZippedRepos.size(), programmingExercise.getTitle());
-        String filename = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis()
-                + ".zip";
+        String filename = getCourseShortName(programmingExercise) + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip";
 
         Path zipFilePath = Path.of(outputDir.toString(), filename);
         zipFileService.createZipFile(zipFilePath, pathsToZippedRepos);

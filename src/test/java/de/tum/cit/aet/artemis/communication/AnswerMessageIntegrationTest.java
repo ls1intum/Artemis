@@ -401,6 +401,45 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsResolved_asAuthorOfOriginalMessage_keepsContentOfOtherUsersAnswer() throws Exception {
+        AnswerPost otherUsersAnswer = answerOfStudent1sMessageWrittenByTutor1();
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + otherUsersAnswer.getId(),
+                new UpdatePostingDTO(otherUsersAnswer.getId(), otherUsersAnswer.getContent(), null, true), AnswerPostResponseDTO.class, HttpStatus.OK);
+
+        AnswerPost stored = answerPostRepository.findByIdElseThrow(otherUsersAnswer.getId());
+        assertThat(stored.doesResolvePost()).isTrue();
+        assertThat(stored.getContent()).isEqualTo(otherUsersAnswer.getContent());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsResolved_asAuthorOfOriginalMessage_cannotChangeContentOfOtherUsersAnswer() throws Exception {
+        AnswerPost otherUsersAnswer = answerOfStudent1sMessageWrittenByTutor1();
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + otherUsersAnswer.getId(),
+                new UpdatePostingDTO(otherUsersAnswer.getId(), "Content the author of the question wants the answer to say", null, true), AnswerPostResponseDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        AnswerPost stored = answerPostRepository.findByIdElseThrow(otherUsersAnswer.getId());
+        assertThat(stored.getContent()).isEqualTo(otherUsersAnswer.getContent());
+        assertThat(stored.doesResolvePost()).isFalse();
+        assertThat(stored.getUpdatedDate()).isNull();
+    }
+
+    /**
+     * An answer by tutor1 to a message of student1, so that student1 may mark it as resolving but may not edit it.
+     */
+    private AnswerPost answerOfStudent1sMessageWrittenByTutor1() {
+        AnswerPost answer = existingConversationPostsWithAnswers.get(3).getAnswers().iterator().next();
+        assertThat(answer.getPost().getAuthor().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+        answer.setAuthor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        answer.setResolvesPost(false);
+        return answerPostRepository.save(answer);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseWideMessages_WithUnresolvedPosts() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
@@ -1121,7 +1160,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
      * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
      * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
      * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
-     * nothing else - in particular neither the retired {@code /topic/metis/} mirror nor an unrelated destination, both
+     * nothing else - in particular neither the retired legacy mirror topic nor an unrelated destination, both
      * of which a bare {@code anyString()} would have accepted.
      *
      * @return a Mockito matcher for a canonical post broadcast destination

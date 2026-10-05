@@ -40,8 +40,13 @@ export class IrisChat {
         return this.page.locator('.chat-input textarea');
     }
 
+    /**
+     * The native button inside `jhi-button#irisSendButton`. The wrapper element is a custom element, which Playwright
+     * always considers enabled, so waiting on it (or clicking it) does not wait for the disabled state the inner button
+     * carries.
+     */
     getSendButton(): Locator {
-        return this.page.locator('#irisSendButton');
+        return this.page.locator('#irisSendButton button');
     }
 
     getLlmMessages(): Locator {
@@ -122,6 +127,10 @@ export class IrisChat {
         const input = this.getMessageInput();
         await expect(input).toBeVisible();
         await input.fill(text);
+        // The textarea is usable before the chat session has loaded, but the send button stays disabled until then, because a
+        // message sent without a session cannot be delivered. Waiting here makes that wait explicit, so a session that never
+        // loads fails as exactly that rather than as an assistant reply that never arrives 60 seconds later.
+        await expect(this.getSendButton()).toBeEnabled({ timeout: 30_000 });
         await this.getSendButton().click();
     }
 }

@@ -1,30 +1,27 @@
 <!-- The heading stays outside the result guard below: without it the exam title bar would show the exam name and
      nothing else while the scores load, and permanently for an exam that has no results yet. -->
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0">
+    <h5 class="mb-0!">
         <span jhiTranslate="entity.action.scores"></span>
     </h5>
 </div>
 <div>
     @if (isLoading()) {
-        <div class="d-flex justify-content-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="loading"></span>
-            </div>
+        <div class="flex justify-center">
+            <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
         </div>
     }
     @if (!isLoading() && (!studentResults()?.length || !exerciseGroups()?.length)) {
         <div>
             @if (!exerciseGroups()?.length) {
-                <div class="alert alert-warning">
-                    <fa-icon [icon]="faExclamationTriangle" />
+                <tumaet-ui-message severity="warn" class="mb-4" [icon]="faExclamationTriangle">
                     <span jhiTranslate="artemisApp.examScores.noExerciseGroupAvailable"></span>
-                </div>
+                </tumaet-ui-message>
             }
             @if (!studentResults()?.length) {
-                <div class="alert alert-info">
+                <tumaet-ui-message severity="info" class="mb-4">
                     <span jhiTranslate="artemisApp.examScores.noStudentResultAvailable"></span>
-                </div>
+                </tumaet-ui-message>
             }
         </div>
     }
@@ -50,319 +47,316 @@
                     {{ aggregatedExamResults().noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}
                 </a>
             </div>
-            <div class="mt-4 mb-3">
-                <h4 class="mb-0">
+            <div class="mt-6 mb-4">
+                <h4 class="mb-0!">
                     <span jhiTranslate="artemisApp.examScores.examStatisticsTitle"></span>
                 </h4>
             </div>
             <!-- Filter settings -->
-            <div class="mb-3 flex flex-wrap content-center items-center">
-                <div class="form-check form-check-inline">
-                    <input
-                        id="toggleFilterForSubmittedExam"
-                        class="form-check-input"
-                        type="checkbox"
-                        [checked]="filterForSubmittedExams()"
-                        (change)="toggleFilterForSubmittedExam()"
-                    />
-                    <label for="toggleFilterForSubmittedExam" class="form-check-label" jhiTranslate="artemisApp.examScores.filterForSubmittedExams"></label>
+            <div class="mb-4 flex flex-wrap content-center items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <tumaet-ui-checkbox inputId="toggleFilterForSubmittedExam" [checked]="filterForSubmittedExams()" (checkedChange)="toggleFilterForSubmittedExam()" />
+                    <label for="toggleFilterForSubmittedExam" jhiTranslate="artemisApp.examScores.filterForSubmittedExams"></label>
                 </div>
-                <div class="form-check form-check-inline">
-                    <input
-                        id="toggleFilterForNonEmptySubmission"
-                        class="form-check-input"
-                        type="checkbox"
+                <div class="flex items-center gap-2">
+                    <tumaet-ui-checkbox
+                        inputId="toggleFilterForNonEmptySubmission"
                         [checked]="filterForNonEmptySubmissions()"
-                        (change)="toggleFilterForNonEmptySubmission()"
+                        (checkedChange)="toggleFilterForNonEmptySubmission()"
                     />
-                    <label for="toggleFilterForNonEmptySubmission" class="form-check-label" jhiTranslate="artemisApp.examScores.filterForNonEmptySubmissions"></label>
+                    <label for="toggleFilterForNonEmptySubmission" jhiTranslate="artemisApp.examScores.filterForNonEmptySubmissions"></label>
                 </div>
             </div>
             <!-- Exam Point Statistics -->
-            <table class="table table-bordered table-striped table-clear-width mb-3">
-                @if (hasSecondCorrectionAndStarted()) {
-                    <thead class="table-dark">
+            <div class="mb-4 overflow-x-auto">
+                <table tumAetUiTable striped class="w-auto!">
+                    @if (hasSecondCorrectionAndStarted()) {
+                        <thead>
+                            <tr>
+                                <th></th>
+                                @if (gradingScaleExists() && !isBonus()) {
+                                    <th colspan="3" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
+                                }
+                                @if (gradingScaleExists() && !isBonus()) {
+                                    <th colspan="3" class="correction-divider" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
+                                }
+                                @if (!gradingScaleExists() || isBonus()) {
+                                    <th colspan="2" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
+                                }
+                                @if (!gradingScaleExists() || isBonus()) {
+                                    <th colspan="2" class="correction-divider" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
+                                }
+                            </tr>
+                        </thead>
+                    }
+                    <thead>
                         <tr>
                             <th></th>
                             @if (gradingScaleExists() && !isBonus()) {
-                                <th colspan="3" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
+                                <th jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
-                            @if (gradingScaleExists() && !isBonus()) {
-                                <th colspan="3" style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
+                            <th jhiTranslate="artemisApp.examScores.submittedColumn"></th>
+                            <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
+                            @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
+                                <th scope="col" class="correction-divider" jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
-                            @if (!gradingScaleExists() || isBonus()) {
-                                <th colspan="2" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
+                            @if (hasSecondCorrectionAndStarted()) {
+                                <th scope="col" [class.correction-divider]="!gradingScaleExists() || isBonus()" jhiTranslate="artemisApp.examScores.submittedColumn"></th>
                             }
-                            @if (!gradingScaleExists() || isBonus()) {
-                                <th colspan="2" style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
+                            @if (hasSecondCorrectionAndStarted()) {
+                                <th scope="col" jhiTranslate="artemisApp.examScores.totalColumn"></th>
                             }
                         </tr>
                     </thead>
-                }
-                <thead class="table-dark">
-                    <tr>
-                        <th></th>
-                        @if (gradingScaleExists() && !isBonus()) {
-                            <th jhiTranslate="artemisApp.examScores.passedColumn"></th>
-                        }
-                        <th jhiTranslate="artemisApp.examScores.submittedColumn"></th>
-                        <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
-                        @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                            <th style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.passedColumn"></th>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <th [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid grey' : undefined" jhiTranslate="artemisApp.examScores.submittedColumn"></th>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th scope="row" jhiTranslate="artemisApp.examScores.noOfExams"></th>
-                        @if (gradingScaleExists() && !isBonus()) {
-                            <td>
-                                {{ aggregatedExamResults().noOfExamsFilteredForPassed }}
-                                ({{ tableState.relativeAmountOfPassedExams }}%)
-                            </td>
-                        }
-                        <td>
-                            {{ tableState.absoluteAmountOfSubmittedExams }}
-                            ({{ tableState.relativeAmountOfSubmittedExams }}%)
-                        </td>
-                        <td>
-                            {{ tableState.absoluteAmountOfTotalExams }}
-                        </td>
-                        @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                            <td style="border-left: 3px solid lightgrey"></td>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <td [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid lightgrey' : undefined"></td>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <td></td>
-                        }
-                    </tr>
-                    <tr>
-                        <th scope="row" jhiTranslate="artemisApp.examScores.averagePointsColumn"></th>
-                        @if (gradingScaleExists() && !isBonus()) {
-                            <td>
-                                {{ aggregatedExamResults().meanPointsPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsPassed) : '-' }}
-                                ({{
-                                    aggregatedExamResults().meanPointsRelativePassed !== null
-                                        ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsRelativePassed)
-                                        : '-'
-                                }}
-                                %)
-                            </td>
-                        }
-                        <td>{{ tableState.averagePointsSubmitted }} ({{ tableState.averageScoreSubmitted }}%)</td>
-                        <td>{{ tableState.averagePointsTotal }} ({{ tableState.averageScoreTotal }}%)</td>
-                        @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                            <td style="border-left: 3px solid lightgrey">
-                                {{
-                                    aggregatedExamResults().meanPointsPassedInFirstCorrection !== null
-                                        ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsPassedInFirstCorrection)
-                                        : '-'
-                                }}
-                                ({{
-                                    aggregatedExamResults().meanPointsRelativePassedInFirstCorrection !== null
-                                        ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsRelativePassedInFirstCorrection)
-                                        : '-'
-                                }}
-                                %)
-                            </td>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <td [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid lightgrey' : undefined">
-                                {{ tableState.averagePointsSubmittedInFirstCorrection }}
-                                ({{ tableState.averageScoreSubmittedInFirstCorrection }}%)
-                            </td>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <td>
-                                {{ tableState.averagePointsTotalInFirstCorrection }}
-                                ({{ tableState.averageScoreTotal }}%)
-                            </td>
-                        }
-                    </tr>
-                    @if (gradingScaleExists()) {
+                    <tbody>
                         <tr>
-                            <th scope="row" jhiTranslate="{{ isBonus() ? 'artemisApp.examScores.averageBonusColumn' : 'artemisApp.examScores.averageGradeColumn' }}"></th>
-                            @if (!isBonus()) {
-                                <td>{{ aggregatedExamResults().meanGradePassed !== null ? aggregatedExamResults().meanGradePassed : '-' }}</td>
+                            <th scope="row" jhiTranslate="artemisApp.examScores.noOfExams"></th>
+                            @if (gradingScaleExists() && !isBonus()) {
+                                <td>
+                                    {{ aggregatedExamResults().noOfExamsFilteredForPassed }}
+                                    ({{ tableState.relativeAmountOfPassedExams }}%)
+                                </td>
                             }
-                            <td>{{ tableState.averageGradeSubmitted }}</td>
-                            <td>{{ tableState.averageGradeTotal }}</td>
-                            @if (hasSecondCorrectionAndStarted() && !isBonus()) {
-                                <td style="border-left: 3px solid lightgrey">
-                                    {{ aggregatedExamResults().meanGradePassedInFirstCorrection !== null ? aggregatedExamResults().meanGradePassedInFirstCorrection : '-' }}
+                            <td>
+                                {{ tableState.absoluteAmountOfSubmittedExams }}
+                                ({{ tableState.relativeAmountOfSubmittedExams }}%)
+                            </td>
+                            <td>
+                                {{ tableState.absoluteAmountOfTotalExams }}
+                            </td>
+                            @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
+                                <td class="correction-divider"></td>
+                            }
+                            @if (hasSecondCorrectionAndStarted()) {
+                                <td [class.correction-divider]="!gradingScaleExists() || isBonus()"></td>
+                            }
+                            @if (hasSecondCorrectionAndStarted()) {
+                                <td></td>
+                            }
+                        </tr>
+                        <tr>
+                            <th scope="row" jhiTranslate="artemisApp.examScores.averagePointsColumn"></th>
+                            @if (gradingScaleExists() && !isBonus()) {
+                                <td>
+                                    {{ aggregatedExamResults().meanPointsPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsPassed) : '-' }}
+                                    ({{
+                                        aggregatedExamResults().meanPointsRelativePassed !== null
+                                            ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsRelativePassed)
+                                            : '-'
+                                    }}
+                                    %)
+                                </td>
+                            }
+                            <td>{{ tableState.averagePointsSubmitted }} ({{ tableState.averageScoreSubmitted }}%)</td>
+                            <td>{{ tableState.averagePointsTotal }} ({{ tableState.averageScoreTotal }}%)</td>
+                            @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
+                                <td class="correction-divider">
+                                    {{
+                                        aggregatedExamResults().meanPointsPassedInFirstCorrection !== null
+                                            ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsPassedInFirstCorrection)
+                                            : '-'
+                                    }}
+                                    ({{
+                                        aggregatedExamResults().meanPointsRelativePassedInFirstCorrection !== null
+                                            ? roundAndPerformLocalConversion(aggregatedExamResults().meanPointsRelativePassedInFirstCorrection)
+                                            : '-'
+                                    }}
+                                    %)
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <td [style.border-left]="isBonus() ? '3px solid lightgrey' : undefined">
-                                    {{ tableState.averageGradeSubmittedInFirstCorrection }}
+                                <td [class.correction-divider]="!gradingScaleExists() || isBonus()">
+                                    {{ tableState.averagePointsSubmittedInFirstCorrection }}
+                                    ({{ tableState.averageScoreSubmittedInFirstCorrection }}%)
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
                                 <td>
-                                    {{ tableState.averageGradeTotalInFirstCorrection }}
+                                    {{ tableState.averagePointsTotalInFirstCorrection }}
+                                    ({{ tableState.averageScoreTotal }}%)
                                 </td>
                             }
                         </tr>
-                    }
-                    <tr>
-                        <th scope="row" jhiTranslate="artemisApp.examScores.medianColumn"></th>
-                        @if (gradingScaleExists() && !isBonus()) {
-                            <td>
-                                {{ aggregatedExamResults().medianPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults().medianPassed) : '-' }}
-                                ({{ aggregatedExamResults().medianRelativePassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults().medianRelativePassed) : '-' }}
-                                %)
-                            </td>
+                        @if (gradingScaleExists()) {
+                            <tr>
+                                <th scope="row" jhiTranslate="{{ isBonus() ? 'artemisApp.examScores.averageBonusColumn' : 'artemisApp.examScores.averageGradeColumn' }}"></th>
+                                @if (!isBonus()) {
+                                    <td>{{ aggregatedExamResults().meanGradePassed !== null ? aggregatedExamResults().meanGradePassed : '-' }}</td>
+                                }
+                                <td>{{ tableState.averageGradeSubmitted }}</td>
+                                <td>{{ tableState.averageGradeTotal }}</td>
+                                @if (hasSecondCorrectionAndStarted() && !isBonus()) {
+                                    <td class="correction-divider">
+                                        {{ aggregatedExamResults().meanGradePassedInFirstCorrection !== null ? aggregatedExamResults().meanGradePassedInFirstCorrection : '-' }}
+                                    </td>
+                                }
+                                @if (hasSecondCorrectionAndStarted()) {
+                                    <td [class.correction-divider]="isBonus()">
+                                        {{ tableState.averageGradeSubmittedInFirstCorrection }}
+                                    </td>
+                                }
+                                @if (hasSecondCorrectionAndStarted()) {
+                                    <td>
+                                        {{ tableState.averageGradeTotalInFirstCorrection }}
+                                    </td>
+                                }
+                            </tr>
                         }
-                        <td>
-                            {{ tableState.medianPointsSubmitted }}
-                            ({{ tableState.medianScoreSubmitted }}%)
-                        </td>
-                        <td>
-                            {{ tableState.medianPointsTotal }}
-                            ({{ tableState.medianScoreTotal }}%)
-                        </td>
-                        @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                            <td style="border-left: 3px solid lightgrey">
-                                {{
-                                    aggregatedExamResults().medianPassedInFirstCorrection !== null
-                                        ? roundAndPerformLocalConversion(aggregatedExamResults().medianPassedInFirstCorrection)
-                                        : '-'
-                                }}
-                                ({{
-                                    aggregatedExamResults().medianRelativePassedInFirstCorrection !== null
-                                        ? roundAndPerformLocalConversion(aggregatedExamResults().medianRelativePassedInFirstCorrection)
-                                        : '-'
-                                }}
-                                %)
-                            </td>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <td [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid lightgrey' : undefined">
-                                {{ tableState.medianPointsSubmittedInFirstCorrection }}
-                                ({{ tableState.medianScoreSubmittedInFirstCorrection }}%)
-                            </td>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <td>
-                                {{ tableState.medianPointsTotalInFirstCorrection }}
-                                ({{ tableState.medianScoreTotalInFirstCorrection }}%)
-                            </td>
-                        }
-                    </tr>
-                    @if (gradingScaleExists()) {
                         <tr>
-                            <th scope="row" jhiTranslate="{{ isBonus() ? 'artemisApp.examScores.medianBonusColumn' : 'artemisApp.examScores.medianGradeColumn' }}"></th>
-                            @if (!isBonus()) {
-                                <td>{{ aggregatedExamResults().medianGradePassed !== null ? aggregatedExamResults().medianGradePassed : '-' }}</td>
+                            <th scope="row" jhiTranslate="artemisApp.examScores.medianColumn"></th>
+                            @if (gradingScaleExists() && !isBonus()) {
+                                <td>
+                                    {{ aggregatedExamResults().medianPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults().medianPassed) : '-' }}
+                                    ({{
+                                        aggregatedExamResults().medianRelativePassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults().medianRelativePassed) : '-'
+                                    }}
+                                    %)
+                                </td>
                             }
-                            <td>{{ tableState.medianGradeSubmitted }}</td>
-                            <td>{{ tableState.medianGradeTotal }}</td>
-                            @if (!isBonus() && hasSecondCorrectionAndStarted()) {
-                                <td style="border-left: 3px solid lightgrey">
-                                    >{{ aggregatedExamResults().medianGradePassedInFirstCorrection !== null ? aggregatedExamResults().medianGradePassedInFirstCorrection : '-' }}
+                            <td>
+                                {{ tableState.medianPointsSubmitted }}
+                                ({{ tableState.medianScoreSubmitted }}%)
+                            </td>
+                            <td>
+                                {{ tableState.medianPointsTotal }}
+                                ({{ tableState.medianScoreTotal }}%)
+                            </td>
+                            @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
+                                <td class="correction-divider">
+                                    {{
+                                        aggregatedExamResults().medianPassedInFirstCorrection !== null
+                                            ? roundAndPerformLocalConversion(aggregatedExamResults().medianPassedInFirstCorrection)
+                                            : '-'
+                                    }}
+                                    ({{
+                                        aggregatedExamResults().medianRelativePassedInFirstCorrection !== null
+                                            ? roundAndPerformLocalConversion(aggregatedExamResults().medianRelativePassedInFirstCorrection)
+                                            : '-'
+                                    }}
+                                    %)
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <td [style.border-left]="isBonus() ? '3px solid lightgrey' : undefined">
-                                    {{ tableState.medianGradeSubmittedInFirstCorrection }}
+                                <td [class.correction-divider]="!gradingScaleExists() || isBonus()">
+                                    {{ tableState.medianPointsSubmittedInFirstCorrection }}
+                                    ({{ tableState.medianScoreSubmittedInFirstCorrection }}%)
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
                                 <td>
-                                    {{ tableState.medianGradeTotalInFirstCorrection }}
+                                    {{ tableState.medianPointsTotalInFirstCorrection }}
+                                    ({{ tableState.medianScoreTotalInFirstCorrection }}%)
                                 </td>
                             }
                         </tr>
-                    }
-                    <tr>
-                        <th scope="row" jhiTranslate="artemisApp.examScores.standardDeviationColumn"></th>
-                        @if (gradingScaleExists() && !isBonus()) {
-                            <td>
-                                {{
-                                    aggregatedExamResults().standardDeviationPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults().standardDeviationPassed) : '-'
-                                }}
-                            </td>
+                        @if (gradingScaleExists()) {
+                            <tr>
+                                <th scope="row" jhiTranslate="{{ isBonus() ? 'artemisApp.examScores.medianBonusColumn' : 'artemisApp.examScores.medianGradeColumn' }}"></th>
+                                @if (!isBonus()) {
+                                    <td>{{ aggregatedExamResults().medianGradePassed !== null ? aggregatedExamResults().medianGradePassed : '-' }}</td>
+                                }
+                                <td>{{ tableState.medianGradeSubmitted }}</td>
+                                <td>{{ tableState.medianGradeTotal }}</td>
+                                @if (!isBonus() && hasSecondCorrectionAndStarted()) {
+                                    <td class="correction-divider">
+                                        {{ aggregatedExamResults().medianGradePassedInFirstCorrection !== null ? aggregatedExamResults().medianGradePassedInFirstCorrection : '-' }}
+                                    </td>
+                                }
+                                @if (hasSecondCorrectionAndStarted()) {
+                                    <td [class.correction-divider]="isBonus()">
+                                        {{ tableState.medianGradeSubmittedInFirstCorrection }}
+                                    </td>
+                                }
+                                @if (hasSecondCorrectionAndStarted()) {
+                                    <td>
+                                        {{ tableState.medianGradeTotalInFirstCorrection }}
+                                    </td>
+                                }
+                            </tr>
                         }
-                        <td>
-                            {{ tableState.standardDeviationSubmitted }}
-                        </td>
-                        <td>{{ tableState.standardDeviationTotal }}</td>
-                        @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
-                            <td style="border-left: 3px solid lightgrey">
-                                {{
-                                    aggregatedExamResults().standardDeviationPassedInFirstCorrection !== null
-                                        ? roundAndPerformLocalConversion(aggregatedExamResults().standardDeviationPassedInFirstCorrection)
-                                        : '-'
-                                }}
-                            </td>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <td [style.border-left]="!gradingScaleExists() || isBonus() ? '3px solid lightgrey' : undefined">
-                                {{ tableState.standardDeviationSubmittedInFirstCorrection }}
-                            </td>
-                        }
-                        @if (hasSecondCorrectionAndStarted()) {
-                            <td>
-                                {{ tableState.standardDeviationTotalInFirstCorrection }}
-                            </td>
-                        }
-                    </tr>
-                    @if (gradingScaleExists() && hasNumericGrades()) {
                         <tr>
-                            <th scope="row" jhiTranslate="artemisApp.examScores.standardGradeDeviationColumn"></th>
-                            @if (!isBonus()) {
+                            <th scope="row" jhiTranslate="artemisApp.examScores.standardDeviationColumn"></th>
+                            @if (gradingScaleExists() && !isBonus()) {
                                 <td>
                                     {{
-                                        aggregatedExamResults().standardGradeDeviationPassed !== null
-                                            ? roundAndPerformLocalConversion(aggregatedExamResults().standardGradeDeviationPassed)
+                                        aggregatedExamResults().standardDeviationPassed !== null
+                                            ? roundAndPerformLocalConversion(aggregatedExamResults().standardDeviationPassed)
                                             : '-'
                                     }}
                                 </td>
                             }
                             <td>
-                                {{ tableState.standardGradeDeviationSubmitted }}
+                                {{ tableState.standardDeviationSubmitted }}
                             </td>
-                            <td>
-                                {{ tableState.standardGradeDeviationTotal }}
-                            </td>
-                            @if (hasSecondCorrectionAndStarted() && !isBonus()) {
-                                <td style="border-left: 3px solid lightgrey">
+                            <td>{{ tableState.standardDeviationTotal }}</td>
+                            @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
+                                <td class="correction-divider">
                                     {{
-                                        aggregatedExamResults().standardGradeDeviationPassedInFirstCorrection !== null
-                                            ? roundAndPerformLocalConversion(aggregatedExamResults().standardGradeDeviationPassedInFirstCorrection)
+                                        aggregatedExamResults().standardDeviationPassedInFirstCorrection !== null
+                                            ? roundAndPerformLocalConversion(aggregatedExamResults().standardDeviationPassedInFirstCorrection)
                                             : '-'
                                     }}
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
-                                <td [style.border-left]="isBonus() ? '3px solid lightgrey' : undefined">
-                                    {{ tableState.standardGradeDeviationSubmittedInFirstCorrection }}
+                                <td [class.correction-divider]="!gradingScaleExists() || isBonus()">
+                                    {{ tableState.standardDeviationSubmittedInFirstCorrection }}
                                 </td>
                             }
                             @if (hasSecondCorrectionAndStarted()) {
                                 <td>
-                                    {{ tableState.standardGradeDeviationTotalInFirstCorrection }}
+                                    {{ tableState.standardDeviationTotalInFirstCorrection }}
                                 </td>
                             }
                         </tr>
-                    }
-                </tbody>
-            </table>
-            <div class="d-block">
+                        @if (gradingScaleExists() && hasNumericGrades()) {
+                            <tr>
+                                <th scope="row" jhiTranslate="artemisApp.examScores.standardGradeDeviationColumn"></th>
+                                @if (!isBonus()) {
+                                    <td>
+                                        {{
+                                            aggregatedExamResults().standardGradeDeviationPassed !== null
+                                                ? roundAndPerformLocalConversion(aggregatedExamResults().standardGradeDeviationPassed)
+                                                : '-'
+                                        }}
+                                    </td>
+                                }
+                                <td>
+                                    {{ tableState.standardGradeDeviationSubmitted }}
+                                </td>
+                                <td>
+                                    {{ tableState.standardGradeDeviationTotal }}
+                                </td>
+                                @if (hasSecondCorrectionAndStarted() && !isBonus()) {
+                                    <td class="correction-divider">
+                                        {{
+                                            aggregatedExamResults().standardGradeDeviationPassedInFirstCorrection !== null
+                                                ? roundAndPerformLocalConversion(aggregatedExamResults().standardGradeDeviationPassedInFirstCorrection)
+                                                : '-'
+                                        }}
+                                    </td>
+                                }
+                                @if (hasSecondCorrectionAndStarted()) {
+                                    <td [class.correction-divider]="isBonus()">
+                                        {{ tableState.standardGradeDeviationSubmittedInFirstCorrection }}
+                                    </td>
+                                }
+                                @if (hasSecondCorrectionAndStarted()) {
+                                    <td>
+                                        {{ tableState.standardGradeDeviationTotalInFirstCorrection }}
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="block">
                 @if (gradingScaleExists() && this.aggregatedExamResults().medianRelativePassed !== null) {
-                    <div class="form-check">
-                        <input id="toggleMedianPassed" class="form-check-input" type="checkbox" [checked]="showPassedMedian()" (change)="toggleMedian(medianType.PASSED)" />
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox inputId="toggleMedianPassed" [checked]="showPassedMedian()" (checkedChange)="toggleMedian(medianType.PASSED)" />
                         <label
                             for="toggleMedianPassed"
-                            class="form-check-label"
                             jhiTranslate="artemisApp.examScores.highlightPassedMedian"
                             [translateValues]="{
                                 median: this.aggregatedExamResults().medianRelativePassed
@@ -372,22 +366,17 @@
                         ></label>
                     </div>
                 }
-                <div class="form-check">
-                    <input id="toggleMedianOverall" class="form-check-input" type="checkbox" [checked]="showOverallMedian()" (change)="toggleMedian(overallChartMedianType())" />
-                    <label
-                        for="toggleMedianOverall"
-                        class="form-check-label"
-                        jhiTranslate="artemisApp.examScores.highlightOverallMedian"
-                        [translateValues]="{ median: this.overallChartMedian }"
-                    ></label>
+                <div class="flex items-center gap-2">
+                    <tumaet-ui-checkbox inputId="toggleMedianOverall" [checked]="showOverallMedian()" (checkedChange)="toggleMedian(overallChartMedianType())" />
+                    <label for="toggleMedianOverall" jhiTranslate="artemisApp.examScores.highlightOverallMedian" [translateValues]="{ median: this.overallChartMedian }"></label>
                 </div>
                 <!-- Histogram -->
                 @if (hasBonus()) {
-                    <h4 class="text-center mt-4 mb-0" jhiTranslate="artemisApp.examScores.gradesBeforeBonus"></h4>
+                    <h4 class="mt-6! mb-0! text-center" jhiTranslate="artemisApp.examScores.gradesBeforeBonus"></h4>
                 } @else {
-                    <h5 class="mt-4 mb-2 text-center text-base font-semibold" jhiTranslate="artemisApp.examScores.scoreDistributionTitle"></h5>
+                    <h5 class="mt-4! mb-2! text-center text-base font-semibold" jhiTranslate="artemisApp.examScores.scoreDistributionTitle"></h5>
                 }
-                <div class="row d-flex justify-content-center">
+                <div class="flex justify-center">
                     <!-- The accessible name mirrors the heading above, so the two distributions on this page
                          (before / after bonus) are distinguishable without seeing them. -->
                     <jhi-participant-scores-distribution
@@ -397,15 +386,15 @@
                         [isCourseScore]="false"
                         [dataLabelFormatting]="dataLabelFormatting"
                         [ariaLabel]="(hasBonus() ? 'artemisApp.examScores.gradesBeforeBonus' : 'artemisApp.examScores.scoreDistributionTitle') | artemisTranslate"
-                        class="col-lg-11"
+                        class="w-full lg:w-11/12"
                     />
                 </div>
                 <!-- Histogram with bonus -->
                 @if (hasBonus()) {
-                    <h4 class="text-center mt-5 mb-0" jhiTranslate="artemisApp.examScores.gradesAfterBonus"></h4>
+                    <h4 class="mt-12! mb-0! text-center" jhiTranslate="artemisApp.examScores.gradesAfterBonus"></h4>
                 }
                 @if (hasBonus()) {
-                    <div class="row d-flex justify-content-center">
+                    <div class="flex justify-center">
                         <jhi-participant-scores-distribution
                             [gradeNames]="gradesWithBonus()"
                             [scoreToHighlight]="highlightedValue()"
@@ -413,7 +402,7 @@
                             [isCourseScore]="false"
                             [dataLabelFormatting]="dataLabelFormatting"
                             [ariaLabel]="'artemisApp.examScores.gradesAfterBonus' | artemisTranslate"
-                            class="col-lg-11"
+                            class="w-full lg:w-11/12"
                         />
                     </div>
                 }
@@ -421,7 +410,7 @@
             <!-- Exercise Statistics -->
             @if (aggregatedExerciseGroupResults()) {
                 <div>
-                    <h4 class="mt-5 mb-3">
+                    <h4 class="mt-12! mb-4!">
                         <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle"></span>
                     </h4>
                     @if (course()) {
@@ -433,9 +422,9 @@
                         </div>
                     }
                     <!-- Exercise Statistics Table -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered body-striped">
-                            <thead class="table-dark">
+                    <div class="overflow-x-auto">
+                        <table tumAetUiTable class="body-striped">
+                            <thead>
                                 <tr>
                                     <th>#</th>
                                     <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></th>
@@ -525,91 +514,78 @@
                 </div>
             }
             <!-- Student Result Table -->
-            <h4 class="mt-5 mb-3">
+            <h4 class="mt-12! mb-4!">
                 <span jhiTranslate="artemisApp.examScores.studentResultsTitle"></span>
             </h4>
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered">
-                    <thead class="table-dark">
-                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+            <div class="overflow-x-auto">
+                <table tumAetUiTable striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
+                    <thead>
+                        <tr>
                             <th>#</th>
-                            <th jhiSortBy="name">
+                            <th tumAetUiSortableColumn="name">
                                 <span jhiTranslate="artemisApp.examScores.nameColumn"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="login">
+                            <th tumAetUiSortableColumn="login">
                                 <span jhiTranslate="artemisApp.examScores.loginColumn"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="email">
+                            <th tumAetUiSortableColumn="email">
                                 <span jhiTranslate="artemisApp.examScores.eMailColumn"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="registrationNumber">
+                            <th tumAetUiSortableColumn="registrationNumber">
                                 <span jhiTranslate="artemisApp.examScores.registrationNumberColumn"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
                             @for (exerciseGroup of examScoreDTO().exerciseGroups; track exerciseGroup.id) {
-                                <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
+                                <th [tumAetUiSortableColumn]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
                                     <span>{{ exerciseGroup.title }}</span>
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
-                            <th jhiSortBy="overallPointsAchieved">
+                            <th tumAetUiSortableColumn="overallPointsAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallPointsColumn"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="overallScoreAchieved">
+                            <th tumAetUiSortableColumn="overallScoreAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallScoreColumn"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
                             @if (gradingScaleExists()) {
-                                <th jhiSortBy="overallScoreAchieved">
+                                <th tumAetUiSortableColumn="overallScoreAchieved">
                                     <span jhiTranslate="{{ isBonus() ? 'artemisApp.examScores.overallBonusColumn' : 'artemisApp.examScores.overallGradeColumn' }}"></span>
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (hasBonus()) {
                                 @if (presentationScoreThreshold() !== undefined) {
-                                    <th jhiSortBy="gradeWithBonus.achievedPresentationScore">
+                                    <th tumAetUiSortableColumn="gradeWithBonus.achievedPresentationScore">
                                         <span
                                             jhiTranslate="artemisApp.examScores.presentationScoreThresholdColumn"
                                             [translateValues]="{ threshold: presentationScoreThreshold() }"
                                         ></span>
-                                        <fa-icon [icon]="faSort" />
                                     </th>
                                 }
-                                <th jhiSortBy="gradeWithBonus.bonusGrade">
+                                <th tumAetUiSortableColumn="gradeWithBonus.bonusGrade">
                                     <span
                                         [jhiTranslate]="hasBonus() === BonusStrategy.POINTS ? 'artemisApp.examScores.bonusPointsColumn' : 'artemisApp.examScores.bonusGradeColumn'"
                                     ></span>
-                                    <fa-icon [icon]="faSort" />
                                 </th>
-                                <th jhiSortBy="gradeWithBonus.finalGrade">
+                                <th tumAetUiSortableColumn="gradeWithBonus.finalGrade">
                                     <span jhiTranslate="artemisApp.examScores.finalGradeColumn"></span>
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (gradingScaleExists() && !isBonus()) {
                                 <th jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
                             @if (hasPlagiarismVerdicts()) {
-                                <th jhiSortBy="mostSeverePlagiarismVerdict">
+                                <th tumAetUiSortableColumn="mostSeverePlagiarismVerdict">
                                     <span jhiTranslate="artemisApp.examScores.mostSeverePlagiarismVerdictColumn"></span>
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (hasPlagiarismVerdictsInBonusSource()) {
-                                <th jhiSortBy="gradeWithBonus.mostSeverePlagiarismVerdict">
+                                <th tumAetUiSortableColumn="gradeWithBonus.mostSeverePlagiarismVerdict">
                                     <span jhiTranslate="artemisApp.examScores.mostSeverePlagiarismVerdictInBonusColumn"></span>
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                         </tr>
                     </thead>
                     <tbody>
                         @for (studentResult of studentResults(); track studentResult.userId; let i = $index) {
-                            <tr>
+                            <tr data-testid="student-result-row" [attr.data-login]="studentResult.login">
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ studentResult.name }}</td>
                                 <td>{{ studentResult.login }}</td>
@@ -629,10 +605,10 @@
                                         <td>-</td>
                                     }
                                 }
-                                <td>{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved) }}</td>
-                                <td>{{ roundAndPerformLocalConversion(studentResult.overallScoreAchieved) }}</td>
+                                <td data-testid="overall-points">{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved) }}</td>
+                                <td data-testid="overall-score">{{ roundAndPerformLocalConversion(studentResult.overallScoreAchieved) }}</td>
                                 @if (gradingScaleExists()) {
-                                    <td>
+                                    <td data-testid="overall-grade">
                                         {{ studentResult.overallGrade !== null ? studentResult.overallGrade : '-' }}
                                     </td>
                                 }
@@ -650,13 +626,13 @@
                                     </td>
                                 }
                                 @if (gradingScaleExists() && !isBonus() && studentResult.overallGrade && studentResult.hasPassed) {
-                                    <td style="text-align: center">
-                                        <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em" />
+                                    <td class="text-center">
+                                        <fa-icon [icon]="faCheckCircle" class="text-2xl text-state-success" />
                                     </td>
                                 }
                                 @if (gradingScaleExists() && !isBonus() && studentResult.overallGrade && !studentResult.hasPassed) {
-                                    <td style="text-align: center">
-                                        <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em" />
+                                    <td class="text-center">
+                                        <fa-icon [icon]="faTimes" class="text-2xl text-state-danger" />
                                     </td>
                                 }
                                 @if (hasPlagiarismVerdicts()) {

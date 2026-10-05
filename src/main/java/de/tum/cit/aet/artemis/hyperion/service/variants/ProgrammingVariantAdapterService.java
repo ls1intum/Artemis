@@ -11,9 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -311,14 +310,19 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         // just deferred) when Gate 1 isn't clean yet, because its result would otherwise not be true (see below).
         // Synchronized: a cancelled consistency task can still be writing here after the bounded wait gave up.
         List<VerificationReport.VerificationFinding> consistencyFindings = Collections.synchronizedList(new ArrayList<>());
-        ExecutorService virtualThreads = Executors.newVirtualThreadPerTaskExecutor();
+        // Not an executor: there is no pool to shut down, and cancelling the task interrupts its virtual thread, which
+        // is all an unfinished consistency check needs when the bounded wait gives up.
+        FutureTask<Void> consistencyTask = new FutureTask<>(() -> {
+            checkConsistency(exercise, consistencyFindings);
+            return null;
+        });
         try {
             // Gate 3 (LLM consistency check) only reads the problem statement and repository content — it never
             // depends on a build result — so it runs CONCURRENTLY with Gate 1's build wait instead of after it,
             // on its own virtual thread. Never submit blocking work like this to the bounded
             // hyperionVariantTaskExecutor pool the job itself is already occupying a thread of: that pool is
             // sized for one thread per running job, so a saturated pool would deadlock waiting on itself.
-            Future<?> consistencyTask = virtualThreads.submit(() -> checkConsistency(exercise, consistencyFindings));
+            Thread.ofVirtual().name("variant-consistency-check").start(consistencyTask);
             try {
                 // Gate 1: fresh builds for BOTH repositories — solution must pass 100%, template must fail with
                 // tests present. Triggered together and awaited jointly, since the builds run concurrently in CI
@@ -346,9 +350,9 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
             }
         }
         finally {
-            // Not try-with-resources: close() waits for termination without a timeout, which is the very block
-            // awaitConsistencyTask exists to prevent. shutdownNow() interrupts and returns.
-            virtualThreads.shutdownNow();
+            // Interrupts a straggling consistency check without waiting for it, which is the very block
+            // awaitConsistencyTask exists to prevent. A task that already completed is unaffected.
+            consistencyTask.cancel(true);
         }
         synchronized (consistencyFindings) {
             findings.addAll(consistencyFindings);

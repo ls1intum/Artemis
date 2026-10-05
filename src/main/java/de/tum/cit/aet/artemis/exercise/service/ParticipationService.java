@@ -151,6 +151,24 @@ public class ParticipationService {
      * @return the `StudentParticipation` connecting the given exercise and participant
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
+        return startExercise(exercise, participant, createInitialSubmission, false);
+    }
+
+    /**
+     * Starts the exercise on one side of the test run divide, see {@link #startExercise(Exercise, Participant, boolean)}.
+     * <p>
+     * A test run and a graded attempt keep separate participations for the same exercise and participant, and each side
+     * only ever reads back its own. The requested side therefore has to reach both the lookup and the creation: looking
+     * up the graded participation while preparing a test run would hand back the graded row, and writing to it would
+     * relabel the graded attempt together with its submissions.
+     *
+     * @param exercise                the exercise that is being started. For programming exercises, template and solution participations should be eagerly loaded.
+     * @param participant             the user or team starting the exercise
+     * @param createInitialSubmission whether an initial empty submission should be created for non-programming exercises such as text, modeling, quiz, or file-upload
+     * @param testRun                 whether the participation belongs to a test run rather than to a graded attempt
+     * @return the `StudentParticipation` connecting the given exercise and participant
+     */
+    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission, boolean testRun) {
 
         StudentParticipation participation;
         Optional<StudentParticipation> optionalStudentParticipation = Optional.empty();
@@ -169,7 +187,9 @@ public class ParticipationService {
         if (exercise.isTestExamExercise()) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), participant.getId());
             participations.forEach(studentParticipation -> studentParticipation.setInitializationState(InitializationState.FINISHED));
-            participation = createNewParticipation(exercise, participant);
+            // An instructor test run of a test exam takes this branch as well, and its participations have to be stored as test run ones from the first insert.
+            participation = createNewParticipation(exercise, participant, testRun);
+            // A test exam counts its attempts itself, which already keeps every one of them insertable next to the others.
             participation.setAttempt(participations.size());
             participations.add(participation);
             // NOTE: saveAll rather than a bulk modifying UPDATE plus a save: the new participation has to be persisted in
@@ -179,7 +199,7 @@ public class ParticipationService {
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
+            optionalStudentParticipation = findOneByExerciseAndParticipantAndTestRun(exercise, participant, testRun);
             persistedState = optionalStudentParticipation.map(StudentParticipation::getInitializationState).orElse(null);
             persistedInitializationDate = optionalStudentParticipation.map(StudentParticipation::getInitializationDate).orElse(null);
             loadedWithSubmissions = optionalStudentParticipation.isPresent();
@@ -188,11 +208,11 @@ public class ParticipationService {
                 optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
                 studentParticipationRepository.updateInitializationState(optionalStudentParticipation.get().getId(), InitializationState.INACTIVE);
 
-                optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
+                optionalStudentParticipation = findOneByExerciseAndParticipantAndTestRun(exercise, participant, testRun);
             }
             // Check if participation already exists
             if (optionalStudentParticipation.isEmpty()) {
-                StartedParticipation started = createParticipationOrFetchConcurrentlyCreatedOne(exercise, participant);
+                StartedParticipation started = createParticipationOrFetchConcurrentlyCreatedOne(exercise, participant, testRun);
                 participation = started.participation();
                 participationCreatedConcurrently = !started.createdHere();
             }
@@ -243,7 +263,7 @@ public class ParticipationService {
         // field written above (repository uri, branch, build plan id) was persisted by the step that set it. Writing
         // those two columns directly avoids the read that saving a detached entity performs before its write.
         //
-        // Restricted to a participation that was loaded by findOneGradedByExerciseAndParticipant, which fetches the
+        // Restricted to a participation that was loaded by findOneByExerciseAndParticipantAndTestRun, which fetches the
         // submissions. Callers read those off the instance this method returns
         // (StudentExamService#setUpTestExamExerciseParticipationsAndSubmissions does), and only that instance is safe to
         // hand back without going through a merge. A newly created participation still needs a real insert.
@@ -269,15 +289,24 @@ public class ParticipationService {
      * @return the newly created participation, or the one a concurrent request created, together with which of the two
      *         it is
      */
-    private StartedParticipation createParticipationOrFetchConcurrentlyCreatedOne(Exercise exercise, Participant participant) {
-        try {
-            return new StartedParticipation(createNewParticipation(exercise, participant), true);
-        }
-        catch (DataIntegrityViolationException concurrentStart) {
-            // Only a lost race explains this: re-read, and if nothing is there the violation was something else and has
-            // to reach the caller rather than be reported as a participation that could not be found.
-            StudentParticipation concurrentlyCreated = findOneGradedByExerciseAndParticipant(exercise, participant).orElseThrow(() -> concurrentStart);
-            return new StartedParticipation(concurrentlyCreated, false);
+    private StartedParticipation createParticipationOrFetchConcurrentlyCreatedOne(Exercise exercise, Participant participant, boolean testRun) {
+        for (int attempt = 1;; attempt++) {
+            try {
+                return new StartedParticipation(createNewParticipation(exercise, participant, testRun), true);
+            }
+            catch (DataIntegrityViolationException concurrentStart) {
+                // A lost race explains this: re-read what the other request created.
+                Optional<StudentParticipation> concurrentlyCreated = findOneByExerciseAndParticipantAndTestRun(exercise, participant, testRun);
+                if (concurrentlyCreated.isPresent()) {
+                    return new StartedParticipation(concurrentlyCreated.get(), false);
+                }
+                // Nothing of this side is there, so the attempt was taken, by a start of the other side that inserted between the moment this one read the attempts
+                // and its own insert. The attempt is picked once more, and the row of the other side is in the way of the same pick now. A violation that has another
+                // cause occurs again, and then has to reach the caller rather than be reported as a participation that could not be found.
+                if (attempt == 2) {
+                    throw concurrentStart;
+                }
+            }
         }
     }
 
@@ -296,9 +325,11 @@ public class ParticipationService {
      *
      * @param exercise    the exercise for which a participation should be created
      * @param participant the participant for the participation
+     * @param testRun     whether the participation belongs to a test run. It is stored with the first insert, so that a setup which fails
+     *                        halfway leaves a row that the lookup of the same side finds again on retry
      * @return a StudentParticipation for the exercise and participant with an optional specified initializationDate
      */
-    private StudentParticipation createNewParticipation(Exercise exercise, Participant participant) {
+    private StudentParticipation createNewParticipation(Exercise exercise, Participant participant, boolean testRun) {
         StudentParticipation participation;
         // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
@@ -310,6 +341,8 @@ public class ParticipationService {
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
+        participation.setTestRun(testRun);
+        participation.setAttempt(firstFreeAttempt(exercise, participant, testRun));
 
         participation = studentParticipationRepository.saveAndFlush(participation);
 
@@ -337,7 +370,6 @@ public class ParticipationService {
         Supplier<String> branch = memoize(() -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()));
         // Step 1a) create the student repository (based on the template repository).
         participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, participation);
-
         return startProgrammingParticipation(participation);
     }
 
@@ -656,7 +688,10 @@ public class ParticipationService {
                         + programmingExercise.getId() + " is missing");
             }
             final var projectKey = programmingExercise.getProjectKey();
-            final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+            // An exam test run is flagged from its first insert, but its repository never carried the practice prefix. Its slug is told apart from the
+            // graded one by the attempt instead, which copyRepositoryWithoutHistory appends. The build plan name has no attempt, so it keeps the prefix.
+            final var repoName = programmingExercise.isExamExercise() ? participation.getParticipantIdentifier()
+                    : participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
             VersionControlService vcs = versionControlService.orElseThrow();
@@ -787,8 +822,23 @@ public class ParticipationService {
      * @return the graded participation of the given participant and exercise in any state
      */
     public Optional<StudentParticipation> findOneGradedByExerciseAndParticipant(Exercise exercise, Participant participant) {
+        return findOneByExerciseAndParticipantAndTestRun(exercise, participant, false);
+    }
+
+    /**
+     * Get one participation (in any state) by its participant and exercise, on the given side of the test run divide.
+     * <p>
+     * A team owns its participation rather than a user does, and a test run is always conducted by a single instructor,
+     * so a team exercise only ever has the one participation and the flag does not narrow it further.
+     *
+     * @param exercise    the exercise for which to find a participation
+     * @param participant the participant for which to find a participation
+     * @param testRun     whether to look for the test run participation or for the graded one
+     * @return the participation of the given participant and exercise in any state
+     */
+    public Optional<StudentParticipation> findOneByExerciseAndParticipantAndTestRun(Exercise exercise, Participant participant, boolean testRun) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), false);
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), testRun);
         }
         else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
@@ -796,6 +846,38 @@ public class ParticipationService {
         else {
             throw new Error("Unknown Participant type");
         }
+    }
+
+    /**
+     * The attempt a new participation for this exercise and participant may take.
+     * <p>
+     * The participation table is unique on (student_id, exercise_id, initialization_state, attempt). A test run and a
+     * graded attempt both reach INITIALIZED, so the second one to be set up would collide with the first while they
+     * share an attempt. The lowest free one is taken rather than one above the highest: a programming repository carries
+     * the attempt in its slug only above 0, so every participation that can keep 0 keeps the name it has today, and only
+     * the second participation of the same student and exercise - which could not be created at all before - moves up.
+     * <p>
+     * Only the attempts of the other side are looked at. A participation of the requested side that already exists is found
+     * by the lookup before this is called, so two overlapping starts of one side compute the same attempt here and the
+     * second insert still violates the unique constraint, which hands it the row the first one created. Avoiding the
+     * attempts of the same side as well would let the second start take the next free attempt and insert a duplicate.
+     *
+     * @param exercise    the exercise the participation belongs to
+     * @param participant the participant it belongs to
+     * @param testRun     whether the new participation belongs to a test run
+     * @return the attempt to set on the new participation
+     */
+    private int firstFreeAttempt(Exercise exercise, Participant participant, boolean testRun) {
+        if (!(participant instanceof User user)) {
+            // A team exercise has the one participation per team, and the constraint it is unique on names the team.
+            return 0;
+        }
+        Set<Integer> attemptsInUse = studentParticipationRepository.findAttemptsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), !testRun);
+        int attempt = 0;
+        while (attemptsInUse.contains(attempt)) {
+            attempt++;
+        }
+        return attempt;
     }
 
     /**
