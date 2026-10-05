@@ -1,0 +1,87 @@
+<div class="tumaet:relative tumaet:inline-flex tumaet:w-full">
+    <div
+        #trigger
+        [id]="resolvedInputId()"
+        [class]="triggerClasses()"
+        [attr.name]="name()"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-autocomplete="none"
+        [attr.aria-disabled]="isDisabled() ? 'true' : null"
+        [attr.tabindex]="isDisabled() ? -1 : 0"
+        [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
+        [attr.aria-controls]="isOpen() ? listboxId : null"
+        [attr.aria-activedescendant]="isOpen() ? activeOptionId() : null"
+        [attr.aria-label]="ariaLabel()"
+        [attr.aria-describedby]="describedBy()"
+        [attr.aria-invalid]="isInvalid() ? 'true' : null"
+        [attr.aria-required]="required() ? 'true' : null"
+        (click)="toggle()"
+        (keydown)="onTriggerKeydown($event)"
+    >
+        @if (selectedItemsTemplate(); as template) {
+            <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: selectedOptions() }" />
+            @if (!hasSelection() && placeholder()) {
+                <span class="tumaet:flex-1 tumaet:truncate tumaet:text-muted">{{ placeholder() }}</span>
+            }
+        } @else if (!hasSelection()) {
+            <span class="tumaet:flex-1 tumaet:truncate tumaet:text-muted">{{ placeholder() }}</span>
+        } @else if (showCount()) {
+            <span class="tumaet:flex-1 tumaet:truncate">{{ 'tumAetUi.multiSelect.selected' | tumAetUiTranslate: { count: selectedOptions().length } }}</span>
+        } @else {
+            <span class="tumaet:flex-1 tumaet:truncate">{{ summaryText() }}</span>
+        }
+    </div>
+    <span
+        class="tumaet:pointer-events-none tumaet:absolute tumaet:inset-y-0 tumaet:end-0 tumaet:flex tumaet:w-10 tumaet:items-center tumaet:justify-center"
+        [class]="chevronClasses()"
+    >
+        <fa-icon [icon]="faChevronDown" />
+    </span>
+</div>
+
+<ng-template #panel>
+    <div
+        class="tumaet-ui-multi-select-panel tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:text-text tumaet:shadow-md"
+    >
+        <ul
+            [id]="listboxId"
+            role="listbox"
+            aria-multiselectable="true"
+            [attr.aria-label]="ariaLabel()"
+            class="tumaet:m-0 tumaet:flex tumaet:max-h-60 tumaet:list-none tumaet:flex-col tumaet:gap-0.5 tumaet:overflow-y-auto tumaet:p-1 tumaet:outline-none"
+        >
+            @for (option of options(); track $index; let i = $index) {
+                <li
+                    [id]="optionId(i)"
+                    role="option"
+                    [attr.aria-selected]="isSelected(option) ? 'true' : 'false'"
+                    [class]="optionClasses(i)"
+                    tabindex="-1"
+                    (click)="toggleOption(option)"
+                    (keydown.enter)="toggleOption(option)"
+                    (mouseenter)="setActive(i)"
+                >
+                    <span
+                        class="tumaet:flex tumaet:size-4 tumaet:shrink-0 tumaet:items-center tumaet:justify-center tumaet:rounded-sm tumaet:border tumaet:text-xs"
+                        [class]="boxClasses(option)"
+                        aria-hidden="true"
+                    >
+                        @if (isSelected(option)) {
+                            <fa-icon [icon]="faCheck" />
+                        }
+                    </span>
+                    @if (optionTemplate(); as template) {
+                        <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: option, selected: isSelected(option) }" />
+                    } @else {
+                        <span class="tumaet:flex-1 tumaet:truncate">{{ label(option) }}</span>
+                    }
+                </li>
+            } @empty {
+                <li role="option" aria-selected="false" aria-disabled="true" class="tumaet:px-3 tumaet:py-2 tumaet:text-muted">
+                    {{ emptyMessage() ?? ('tumAetUi.select.empty' | tumAetUiTranslate) }}
+                </li>
+            }
+        </ul>
+    </div>
+</ng-template>

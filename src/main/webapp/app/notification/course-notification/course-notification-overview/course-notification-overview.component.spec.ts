@@ -286,6 +286,35 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(elementContainsSpy).toHaveBeenCalledOnce();
     });
 
+    it('should not hide overlay when clicking an entry of the preset menu, which is rendered in an overlay outside the component', () => {
+        componentAsAny.isShown.set(true);
+        const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const menu = document.createElement('tumaet-ui-menu');
+        const menuEntry = document.createElement('button');
+        menu.appendChild(menuEntry);
+        document.body.appendChild(menu);
+
+        componentAsAny.onClickOutside(menuEntry);
+        menu.remove();
+
+        expect(componentAsAny.isShown()).toBe(true);
+        expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should hide overlay when clicking inside an unrelated overlay outside the component', () => {
+        componentAsAny.isShown.set(true);
+        const unrelatedOverlay = document.createElement('div');
+        unrelatedOverlay.className = 'cdk-overlay-container';
+        const entry = document.createElement('button');
+        unrelatedOverlay.appendChild(entry);
+        document.body.appendChild(unrelatedOverlay);
+
+        componentAsAny.onClickOutside(entry);
+        unrelatedOverlay.remove();
+
+        expect(componentAsAny.isShown()).toBe(false);
+    });
+
     it('should load more notifications when scrolling to bottom', () => {
         componentAsAny.pagesFinished = false;
         componentAsAny.isLoading.set(false);

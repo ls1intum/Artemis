@@ -1,70 +1,80 @@
-<div [ngClass]="{ 'is-small-button': isSmallButton(), 'is-recently-selected': isRecentlySelected() }" class="course-notification-preset-picker" ngbDropdown>
-    <button pButton severity="secondary" [outlined]="true" [size]="isSmallButton() ? 'small' : undefined" class="d-flex align-items-center" type="button" ngbDropdownToggle>
-        <fa-icon [icon]="selectedPresetIcon()" class="course-notification-preset-picker-toggle-icon" />
-        <span class="course-notification-preset-picker-text">
+<div class="course-notification-preset-picker" [class.is-small-button]="isSmallButton()" [class.is-recently-selected]="isRecentlySelected()">
+    <button
+        type="button"
+        tumAetUiButton
+        severity="secondary"
+        variant="outlined"
+        data-testid="course-notification-preset-picker-toggle"
+        [size]="isSmallButton() ? 'small' : 'default'"
+        [tumAetUiMenuTrigger]="presetMenu"
+    >
+        <fa-icon [icon]="selectedPresetIcon()" />
+        <span class="course-notification-preset-picker-text whitespace-nowrap">
             <span jhiTranslate="artemisApp.courseNotification.preset.dropdown"></span>:
             <span [jhiTranslate]="selectedPresetLangKey()"></span>
         </span>
+        <fa-icon [icon]="faChevronDown" size="xs" />
     </button>
-    <div ngbDropdownMenu>
+</div>
+
+<ng-template #presetMenu>
+    <tumaet-ui-menu class="max-h-88 w-72 max-w-[calc(100vw-2rem)] overflow-y-auto" [attr.aria-label]="'artemisApp.courseNotification.preset.dropdown' | artemisTranslate">
         @for (preset of availableCourseSettingPresets(); track preset) {
-            <div
-                class="course-notification-preset-picker-item"
-                [class.is-selected]="selectedCourseSettingPreset()?.identifier === preset.identifier"
-                ngbDropdownItem
-                (click)="presetSelected(preset.typeId)"
-                [attr.aria-pressed]="selectedCourseSettingPreset()?.identifier === preset.identifier"
-                #keyboardAction11
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
+            <button
+                type="button"
+                tumAetUiMenuItem
+                class="course-notification-preset-picker-item items-start! px-4! py-3! text-wrap"
+                data-testid="course-notification-preset-picker-item"
+                [attr.aria-current]="selectedCourseSettingPreset()?.identifier === preset.identifier ? 'true' : null"
+                (triggered)="presetSelected(preset.typeId)"
             >
-                <div class="course-notification-preset-picker-item-title">
-                    <fa-icon [icon]="getPresetIcon(preset.identifier)" class="course-notification-preset-picker-item-icon" />
-                    @if (selectedCourseSettingPreset()?.identifier === preset.identifier) {
-                        <strong [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></strong>
-                    } @else {
-                        <span [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></span>
-                    }
-                </div>
-                <div>
+                <span class="flex flex-col gap-1">
+                    <span class="flex items-center gap-2">
+                        <fa-icon
+                            class="w-4 shrink-0 text-center text-(--tumaet-ui-muted-color)"
+                            [class.text-primary!]="selectedCourseSettingPreset()?.identifier === preset.identifier"
+                            [icon]="getPresetIcon(preset.identifier)"
+                        />
+                        @if (selectedCourseSettingPreset()?.identifier === preset.identifier) {
+                            <strong [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></strong>
+                        } @else {
+                            <span [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></span>
+                        }
+                    </span>
                     <span
-                        class="course-notification-preset-picker-item-description"
+                        class="ms-6 text-sm text-(--tumaet-ui-muted-color) italic"
                         [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.description'"
                     ></span>
-                </div>
-            </div>
+                </span>
+            </button>
         }
 
-        <div
-            class="course-notification-preset-picker-item"
-            [class.is-selected]="selectedCourseSettingPreset() === undefined"
-            ngbDropdownItem
-            (click)="presetSelected(0)"
-            [attr.aria-pressed]="selectedCourseSettingPreset() === undefined"
-            #keyboardAction34
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
-            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
+        <button
+            type="button"
+            tumAetUiMenuItem
+            class="course-notification-preset-picker-item items-start! px-4! py-3! text-wrap"
+            data-testid="course-notification-preset-picker-item"
+            [attr.aria-current]="selectedCourseSettingPreset() === undefined ? 'true' : null"
+            (triggered)="presetSelected(0)"
         >
-            <div class="course-notification-preset-picker-item-title">
-                <fa-icon [icon]="getPresetIcon('customUserCourseNotificationSettingPreset')" class="course-notification-preset-picker-item-icon" />
-                @if (selectedCourseSettingPreset() === undefined) {
-                    <strong [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title'"></strong>
-                } @else {
-                    <span [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title'"></span>
-                }
-            </div>
-            <div>
+            <span class="flex flex-col gap-1">
+                <span class="flex items-center gap-2">
+                    <fa-icon
+                        class="w-4 shrink-0 text-center text-(--tumaet-ui-muted-color)"
+                        [class.text-primary!]="selectedCourseSettingPreset() === undefined"
+                        [icon]="getPresetIcon('customUserCourseNotificationSettingPreset')"
+                    />
+                    @if (selectedCourseSettingPreset() === undefined) {
+                        <strong [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title'"></strong>
+                    } @else {
+                        <span [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title'"></span>
+                    }
+                </span>
                 <span
-                    class="course-notification-preset-picker-item-description"
+                    class="ms-6 text-sm text-(--tumaet-ui-muted-color) italic"
                     [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.description'"
                 ></span>
-            </div>
-        </div>
-    </div>
-</div>
+            </span>
+        </button>
+    </tumaet-ui-menu>
+</ng-template>

@@ -1,8 +1,9 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
 import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
-import { Popover, PopoverModule } from 'primeng/popover';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faClock, faLocationDot, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
 import * as utils from 'app/calendar/shared/util/calendar-util';
@@ -19,9 +20,8 @@ interface EventData {
 
 @Component({
     selector: 'jhi-calendar-event-detail-popover-component',
-    imports: [PopoverModule, TranslateDirective, FaIconComponent],
+    imports: [TumAetUiButtonDirective, TumAetUiPopoverComponent, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     templateUrl: './calendar-event-detail-popover.component.html',
-    styleUrl: './calendar-event-detail-popover.component.scss',
 })
 export class CalendarEventDetailPopoverComponent {
     private static EVENT_TYPE_NAME_KEY_MAP: Record<CalendarEventTypeEnum, string> = {
@@ -42,28 +42,26 @@ export class CalendarEventDetailPopoverComponent {
 
     event = signal<IdentifiableCalendarEvent | undefined>(undefined);
     eventData = computed(() => this.computeEventData());
-    popover = viewChild<Popover>('popover');
+    popover = viewChild<TumAetUiPopoverComponent>('popover');
     isOpen = signal(false);
 
     open(mouseEvent: MouseEvent, event: IdentifiableCalendarEvent) {
         const popover = this.popover();
         if (popover && !this.isOpen()) {
             this.event.set(event);
-            popover.show(mouseEvent, mouseEvent.currentTarget);
+            popover.open(mouseEvent.currentTarget as HTMLElement);
         }
     }
 
     close() {
-        this.popover()?.hide();
+        this.popover()?.close();
     }
 
-    onHide() {
-        this.isOpen.set(false);
-        this.event.set(undefined);
-    }
-
-    onShow() {
-        this.isOpen.set(true);
+    onOpenChange(isOpen: boolean) {
+        this.isOpen.set(isOpen);
+        if (!isOpen) {
+            this.event.set(undefined);
+        }
     }
 
     private computeEventData(): EventData | undefined {
