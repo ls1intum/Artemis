@@ -16,6 +16,8 @@ export enum FeedbackHighlightColor {
     GREEN = 'rgba(40, 167, 69, 0.6)',
 }
 
+export type FeedbackSeverity = 'high' | 'medium' | 'low';
+
 export enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
     MANUAL = 'MANUAL',
@@ -75,6 +77,7 @@ export class Feedback implements BaseEntity {
     public hasLongFeedbackText?: boolean;
     public reference?: string;
     public credits?: number;
+    public severity?: FeedbackSeverity;
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;

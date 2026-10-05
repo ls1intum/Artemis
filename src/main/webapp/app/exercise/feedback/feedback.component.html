@@ -121,7 +121,7 @@
                 }
 
                 <div class="feedback-list">
-                    @for (feedbackItemNode of feedbackItemNodes(); track feedbackItemNode) {
+                    @for (feedbackItemNode of feedbackItemNodes(); track $index) {
                         <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course()" [isPrinting]="isPrinting()" />
                     }
                 </div>
