@@ -35,13 +35,12 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
     private TextExerciseRepository textExerciseRepository;
 
     @Test
-    void aFailingSettingsInsertIsReportedToTheCallerAndTheNextSaveRepairsIt() throws SQLException {
+    void aFailingSettingsInsertRollsBackTheCourseAndAllItsSettings() throws SQLException {
         var course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
         course.setShortName("failingdefaultstest");
         var jdbc = new JdbcTemplate(dataSource);
 
-        // A constraint scoped to this test's prefix forces a real database failure of one of the settings inserts. There is no
-        // transaction around the statements, so the course is not rolled back; the caller gets the error and decides.
+        // A constraint scoped to this test's prefix forces a real database failure after the course and cascade inserts.
         setConfigurationInsertFailure(true);
         try {
             assertThatThrownBy(() -> courseRepository.saveWithDefaultConfigurations(course)).isInstanceOf(DataIntegrityViolationException.class);
@@ -49,13 +48,14 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         finally {
             setConfigurationInsertFailure(false);
         }
-        assertThat(course.getId()).as("the course itself was stored").isNotNull();
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM online_course_configuration WHERE course_id = ?", Long.class, course.getId())).isZero();
 
-        // the next save adds what the failed creation left out
-        courseRepository.saveWithDefaultConfigurations(course);
+        assertThat(course.getId()).isNotNull();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course WHERE id = ?", Long.class, course.getId())).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course WHERE short_name = ?", Long.class, "failingdefaultstest")).as("the short name is free again").isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course_configuration WHERE id = ?", Long.class, course.getCourseConfiguration().getId())).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course_athena_config WHERE id = ?", Long.class, course.getAthenaConfig().getId())).isZero();
         for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
-            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isZero();
         }
     }
 

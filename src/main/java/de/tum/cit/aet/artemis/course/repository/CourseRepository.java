@@ -57,18 +57,32 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * optional modules. Later edits only update the course. Athena and general settings are persisted through the course's
      * creation cascade; the remaining configurations own the course key and are inserted after the course exists.
      * <p>
-     * There is deliberately no transaction around the statements: each one commits on its own, so no lock is held across
-     * them. If one of the later inserts fails, the exception reaches the caller and the course stays without the settings
-     * that were not inserted yet. The next save through this method repairs that (see
-     * {@link #ensureDefaultConfigurations(long)}); creating the course again is refused until then, because its short name
-     * is taken.
+     * The course and all its default settings are stored in one short transaction, so a failing insert rolls back the course
+     * together with the settings inserted before it. No half-created course is left behind: the caller sees the exception,
+     * no default channels are missing afterwards, and the creation can be repeated with the same short name. No row lock is
+     * taken beyond the rows the statements insert themselves.
+     * <p>
+     * A course that was stored before the settings became permanent, or whose settings were lost, gets the missing ones with
+     * its next save through this method; a course update does the same through {@link #ensureDefaultConfigurations(long)}.
      *
      * @param course the course to store
      * @return the stored course
      */
+    @Transactional // ok because the new course and all its default settings are stored together or not at all
     default Course saveWithDefaultConfigurations(Course course) {
         Course saved = save(course);
-        ensureDefaultConfigurations(saved.getId());
+        long courseId = saved.getId();
+        // No tolerance for a concurrent insert here, unlike ensureDefaultConfigurations: a failed insert aborts the
+        // transaction on PostgreSQL, so it could not be recovered from anyway, and the whole creation rolls back.
+        if (!hasOnlineCourseConfiguration(courseId)) {
+            initializeOnlineCourseConfiguration(courseId);
+        }
+        if (!hasTutorialGroupsConfiguration(courseId)) {
+            initializeTutorialGroupsConfiguration(courseId);
+        }
+        if (!hasIrisCourseSettings(courseId)) {
+            initializeIrisCourseSettings(courseId);
+        }
         return saved;
     }
 
