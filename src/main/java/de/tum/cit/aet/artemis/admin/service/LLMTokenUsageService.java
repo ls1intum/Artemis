@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -245,7 +246,7 @@ public class LLMTokenUsageService {
                     || cachedInputTokens != null && (cachedInputTokens < 0 || cachedInputTokens > promptTokens)) {
                 return false;
             }
-            String model = metadata.getModel() != null ? metadata.getModel() : "";
+            String model = Objects.requireNonNullElse(metadata.getModel(), "");
             LLMRequest llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
             recordedUsageSink.accept(llmRequest);

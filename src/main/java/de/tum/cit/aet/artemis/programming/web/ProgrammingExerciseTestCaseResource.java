@@ -149,7 +149,7 @@ public class ProgrammingExerciseTestCaseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-            programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+            programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
 
             List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(programmingExercise);
             exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);

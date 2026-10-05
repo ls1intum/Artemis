@@ -14,7 +14,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { faCheck, faPlus, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -38,7 +38,7 @@ import {
         TranslateDirective,
         RouterLink,
         FaIconComponent,
-        DeleteButtonDirective,
+        ExamDeleteDialogComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
@@ -58,6 +58,9 @@ export class TestRunManagementComponent implements OnInit {
     private examManagementService = inject(ExamManagementService);
     private accountService = inject(AccountService);
     private sortService = inject(SortService);
+
+    readonly deleteDialogVisible = signal(false);
+    readonly testRunToDelete = signal<StudentExamDTO | undefined>(undefined);
 
     course = signal<Course | undefined>(undefined);
     exam = signal<Exam | undefined>(undefined);
@@ -134,6 +137,11 @@ export class TestRunManagementComponent implements OnInit {
                 onError(this.alertService, error);
             },
         });
+    }
+
+    openDeleteDialog(testRun: StudentExamDTO) {
+        this.testRunToDelete.set(testRun);
+        this.deleteDialogVisible.set(true);
     }
 
     /**

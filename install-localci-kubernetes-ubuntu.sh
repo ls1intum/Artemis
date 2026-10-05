@@ -25,6 +25,14 @@ readonly MINIMUM_CPUS=6
 readonly MINIMUM_MEMORY_GIB=12
 readonly MINIMUM_DISK_GIB=40
 
+# Update the release, immutable installer commit and checksum together (see Builds and Dependency Management).
+readonly K3S_VERSION="v1.37.1+k3s1"
+readonly K3S_INSTALLER_URL="https://raw.githubusercontent.com/k3s-io/k3s/356c025475bbefaa09cf0d7e48e8e2adbbde57db/install.sh"
+readonly K3S_INSTALLER_SHA256="ed01f89fd977bf20ac1516bbebf8370bf3ddbaa55dac8aba610956a4c78cc00b"
+readonly HELM_VERSION="v3.22.0"
+readonly HELM_INSTALLER_URL="https://raw.githubusercontent.com/helm/helm/144ca65f8501953fa8b41cd1d37c7223051c85b7/scripts/get-helm-3"
+readonly HELM_INSTALLER_SHA256="e4a604efcff328eef2b2c7e67445d609f333e3875b34420ebf4e5ae379d259bb"
+
 COMMAND="${1:-install}"
 if [[ $# -gt 0 ]]; then
     shift
@@ -112,6 +120,22 @@ require_command() {
     command -v "$1" >/dev/null 2>&1 || fail "Required command '$1' was not found"
 }
 
+# A private temporary directory and a subshell-local trap keep failed downloads and installer failures tidy.
+# Verify before executing anything with elevated privileges. Never fetch the expected checksum at install time.
+run_verified_installer() (
+    local url="$1" expected_sha256="$2" temporary_directory
+    shift 2
+    require_command curl
+    require_command sha256sum
+    temporary_directory="$(mktemp -d)" || fail "Cannot create an installer directory"
+    trap 'rm -rf "$temporary_directory"' EXIT
+    curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
+        "$url" --output "$temporary_directory/installer" || fail "Installer download failed: $url"
+    printf '%s  %s\n' "$expected_sha256" "$temporary_directory/installer" | sha256sum -c - >/dev/null \
+        || fail "Installer checksum mismatch: $url"
+    sudo "$@" "$temporary_directory/installer"
+)
+
 # k3s writes a root-owned kubeconfig, so every kubectl and helm call goes through sudo with it pointed at that file
 # rather than asking the operator to copy it into their home directory first.
 kube() {
@@ -144,11 +168,12 @@ install_k3s() {
     if command -v k3s >/dev/null 2>&1; then
         log "k3s is already installed"
     else
-        require_command curl
         # Traefik is disabled because this install is reached through a NodePort, and an unused ingress controller
         # would only take memory away from the builds.
-        log "Installing k3s"
-        curl -sfL https://get.k3s.io | sudo sh -s - --disable=traefik --write-kubeconfig-mode=0600
+        log "Installing k3s ${K3S_VERSION}"
+        run_verified_installer "$K3S_INSTALLER_URL" "$K3S_INSTALLER_SHA256" \
+            env "INSTALL_K3S_VERSION=$K3S_VERSION" \
+            INSTALL_K3S_EXEC='server --disable=traefik --write-kubeconfig-mode=0600' sh
     fi
 
     local attempt
@@ -170,9 +195,9 @@ install_helm() {
         log "Helm is already installed"
         return
     fi
-    require_command curl
-    log "Installing Helm"
-    curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sudo bash >/dev/null
+    log "Installing Helm ${HELM_VERSION}"
+    run_verified_installer "$HELM_INSTALLER_URL" "$HELM_INSTALLER_SHA256" \
+        env "DESIRED_VERSION=$HELM_VERSION" VERIFY_CHECKSUM=true bash >/dev/null
 }
 
 load_images() {

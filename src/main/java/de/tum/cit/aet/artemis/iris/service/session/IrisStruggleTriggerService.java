@@ -207,7 +207,7 @@ public class IrisStruggleTriggerService {
         if (exercise.isExamExercise()) {
             return TriggerPreparation.courseOff();
         }
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled() || !settings.proactiveStruggleEffective()) {
             return TriggerPreparation.courseOff();

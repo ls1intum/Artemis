@@ -40,6 +40,8 @@ export class LectureEditFooterComponent {
     readonly changedSections = input<string[]>([]);
     /** Content that could not be saved; the content saves itself, so Save does not cover it, but leaving would lose it. */
     readonly hasUnsavedContent = input(false);
+    /** Content that is still being saved; the content saves itself, so Save does not cover it, and leaving asks first. */
+    readonly isSavingContent = input(false);
     /** Whether the lecture already exists, so its content can be edited on the page. */
     readonly isEditMode = input(false);
 

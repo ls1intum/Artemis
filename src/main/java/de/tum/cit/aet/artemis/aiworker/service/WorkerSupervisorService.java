@@ -59,6 +59,8 @@ public class WorkerSupervisorService implements AutoCloseable {
 
     private static final int MAX_RECENT_ASSIGNMENTS = 1_024;
 
+    static final long MAX_PENDING_EVENT_BYTES = 128L * 1024 * 1024;
+
     private final WorkerMessageCodecApi codec = new WorkerMessageCodecApi();
 
     private final WorkerSettings settings;
@@ -96,6 +98,8 @@ public class WorkerSupervisorService implements AutoCloseable {
     private final Map<UUID, WorkerEventDTO> pendingRejections = new LinkedHashMap<>();
 
     private final Deque<WorkerEventDTO> pendingEvents = new ArrayDeque<>();
+
+    private long pendingEventBytes;
 
     private final Set<UUID> publishingPending = new HashSet<>();
 
@@ -320,14 +324,28 @@ public class WorkerSupervisorService implements AutoCloseable {
     }
 
     private void retainEvent(WorkerEventDTO update) {
+        long retainedBytes = retainedBytes(update);
+        synchronized (this) {
+            requireEventCapacity(retainedBytes);
+        }
         codec.encode(update);
         synchronized (this) {
-            if (pendingEvents.size() >= 4_096) {
-                throw new IllegalStateException("Worker event delivery backlog is full");
-            }
+            requireEventCapacity(retainedBytes);
             pendingEvents.addLast(update);
+            pendingEventBytes += retainedBytes;
         }
         flushTerminal();
+    }
+
+    private void requireEventCapacity(long retainedBytes) {
+        if (pendingEvents.size() >= 4_096 || retainedBytes > MAX_PENDING_EVENT_BYTES - pendingEventBytes) {
+            throw new IllegalStateException("Worker event delivery backlog is full");
+        }
+    }
+
+    private static long retainedBytes(WorkerEventDTO event) {
+        // Reserve two bytes per character even for compact ASCII strings, plus bounded event metadata.
+        return 1_024L + 2L * ((event.payload() == null ? 0 : event.payload().length()) + (event.message() == null ? 0 : event.message().length()));
     }
 
     private void retainCheckpoint(ExecutionIdentityDTO identity, String checkpoint) {
@@ -366,6 +384,7 @@ public class WorkerSupervisorService implements AutoCloseable {
                 synchronized (this) {
                     if (published) {
                         pendingEvents.remove(event);
+                        pendingEventBytes -= retainedBytes(event);
                     }
                     publishingPending.remove(executionId);
                 }
