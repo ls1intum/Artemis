@@ -129,6 +129,10 @@ describe('CourseRequestService', () => {
                         createdDate: '2025-01-10T08:00:00Z',
                         requester: { id: 1, login: 'user1' },
                         instructorCourseCount: 2,
+                        instructorCourses: [
+                            { id: 11, title: 'Intro', shortName: 'INTRO', semester: 'WS24/25' },
+                            { id: 12, title: 'Advanced', shortName: 'ADV', semester: 'SS25' },
+                        ],
                     },
                 ],
                 decidedRequests: [
@@ -153,6 +157,7 @@ describe('CourseRequestService', () => {
                 expect(result.pendingRequests[0].id).toBe(1);
                 expect(result.pendingRequests[0].status).toBe(CourseRequestStatus.PENDING);
                 expect(result.pendingRequests[0].instructorCourseCount).toBe(2);
+                expect(result.pendingRequests[0].instructorCourses?.map((course) => course.id)).toEqual([11, 12]);
                 expect(result.decidedRequests).toHaveLength(1);
                 expect(result.decidedRequests[0].id).toBe(2);
                 expect(result.decidedRequests[0].status).toBe(CourseRequestStatus.ACCEPTED);
