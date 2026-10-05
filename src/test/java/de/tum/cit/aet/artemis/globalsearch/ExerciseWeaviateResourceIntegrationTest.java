@@ -1083,17 +1083,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             visibleExam = examRepository.save(visibleExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorVisibleExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+            await().pollInSameThread().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorVisibleExam&types=exam&courseIds=" + course.getId(), HttpStatus.OK,
+                        GlobalSearchResultDTO.class);
+                assertThat(getResultTitles(results)).contains(SEARCH_PREFIX + " TutorVisibleExam");
             });
-
-            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorVisibleExam&types=exam&courseIds=" + course.getId(), HttpStatus.OK,
-                    GlobalSearchResultDTO.class);
-            var titles = getResultTitles(results);
-
-            assertThat(titles).contains(SEARCH_PREFIX + " TutorVisibleExam");
         }
 
         /**

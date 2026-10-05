@@ -683,7 +683,7 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         ZonedDateTime exerciseStartDate = participation.getExercise().getParticipationStartDate();
         if (exerciseStartDate != null) {
-            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null);
+            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
             boolean exerciseNotStarted = exerciseStartDate.isAfter(ZonedDateTime.now());
             if (isStudent && exerciseNotStarted) {
                 throw new AccessForbiddenException("Participation not yet started");
@@ -703,7 +703,8 @@ public class ProgrammingExerciseParticipationResource {
         if (participation.isTestRun()) {
             return false;
         }
-        if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
+        var exercise = participation.getExercise();
+        if (exercise.isExamExercise() && !exercise.isTestExamExercise()) {
             var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
             var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
             User student = participation.getStudent()

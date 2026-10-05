@@ -287,22 +287,43 @@ outside.
 
 ### Verifying a Release
 
-Every GitHub release carries, next to `Artemis.war`:
+Check the assets of the release you downloaded before choosing a verification command. Releases
+produced by the current release workflow publish the following files next to `Artemis.war`.
+Older releases may omit checksums, SBOMs, or build provenance.
 
 - `SHA256SUMS`, covering the WAR and both SBOMs
 - `artemis-server-sbom.cdx.json` and `artemis-client-sbom.cdx.json`, the CycloneDX SBOMs extracted from
   the WAR that ships, so they describe exactly the bytes you downloaded
-- a signed [build provenance attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds),
+- `Artemis.war.sigstore.json`, a signed [build provenance attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds),
   which binds the artifact to the workflow run and commit that produced it
+- `Artemis.war.intoto.jsonl`, the same signed provenance envelope in in-toto JSON Lines format;
+  use the Sigstore bundle above when verifying certificates and transparency-log evidence
 
 ```bash
+# If the release includes SHA256SUMS and both SBOMs:
 sha256sum --check SHA256SUMS
+# For releases with build provenance stored in GitHub:
 gh attestation verify Artemis.war --repo ls1intum/Artemis
+# For releases with a build provenance bundle attached:
+gh attestation verify Artemis.war --bundle Artemis.war.sigstore.json --repo ls1intum/Artemis
 ```
 
-Container images pushed to `ghcr.io/ls1intum/artemis` carry the same guarantees. Both artefacts are
-keyless: the signing identity is the GitHub Actions workflow that produced the image, proven through an
-OIDC token, so there is no private key to store or rotate.
+Releases 9.9.2, 9.9.3, and 9.9.4 carry a retrospective signature in `Artemis.war.sigstore.json`.
+These signatures endorse the existing published WARs; they do not establish original build
+provenance, and those releases have no `Artemis.war.intoto.jsonl` attachment. Verify their downloaded
+bundles using the retrospective endorsement predicate:
+
+```bash
+gh attestation verify Artemis.war --bundle Artemis.war.sigstore.json --repo ls1intum/Artemis \
+  --predicate-type https://artemis.tum.de/attestations/retrospective-release-endorsement/v1 \
+  --signer-workflow ls1intum/Artemis/.github/workflows/retrospective-release-signatures.yml
+```
+
+Container images pushed by the current release workflow to `ghcr.io/ls1intum/artemis` carry build
+provenance and a cosign signature. Signing is keyless: an OIDC token identifies the GitHub Actions
+workflow that signed the artifact, so there is no private key to store or rotate. For build provenance,
+this is the workflow that produced the artifact; for retrospective endorsements, it is the signing
+workflow above.
 
 ```bash
 # GitHub build provenance, pushed to the registry next to the image

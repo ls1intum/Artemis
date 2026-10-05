@@ -1,1 +1,54 @@
-<jhi-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatusChange.emit($event)" />
+<div class="flex flex-col" data-testid="exam-timeline">
+    @for (internalItem of internalTimelineItems(); track internalItem.item.key; let index = $index) {
+        <div class="flex flex-row gap-3">
+            <div class="flex flex-col items-center justify-end" aria-hidden="true">
+                <div class="w-[3px] flex-1 bg-(--border-color)"></div>
+                <div
+                    class="box-border flex size-8 items-center justify-center rounded-full border-[3px]"
+                    [class]="internalItem.isInvalid ? 'border-state-danger' : 'border-state-success'"
+                >
+                    @if (internalItem.date !== undefined) {
+                        <div class="size-[0.8rem] rounded-full" [class]="internalItem.isInvalid ? 'bg-state-danger' : 'bg-state-success'"></div>
+                    }
+                </div>
+                <div class="h-[5px] w-[3px] flex-none bg-(--border-color)"></div>
+            </div>
+            <div class="flex flex-col items-start gap-2" [class.pt-2]="index > 0">
+                <div class="flex items-end gap-2">
+                    <div class="w-64" [class]="internalItem.hasWarning && !internalItem.isInvalid ? '[&_.tumaet-ui-date-picker-input]:border-state-warning!' : ''">
+                        <tumaet-ui-date-picker
+                            [inputId]="internalItem.inputId"
+                            [attr.data-testid]="internalItem.inputId"
+                            [labelName]="internalItem.item.labelStringKey"
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [hideValidationMessage]="true"
+                            [ariaDescribedBy]="internalItem.isInvalid || internalItem.hasWarning ? internalItem.inputId + '-info' : undefined"
+                            [ariaRequired]="true"
+                            [value]="internalItem.date"
+                            [invalid]="internalItem.isInvalid"
+                            (valueChange)="internalItem.item.setDate($event)"
+                            (inputValidityChange)="setInputValidity(internalItem.item.key, $event)"
+                            (touch)="markTouched(internalItem.item.key)"
+                        />
+                    </div>
+                    @if (internalItem.isInvalid || internalItem.hasWarning) {
+                        @let tooltip = internalItem.tooltipStringKey ? (internalItem.tooltipStringKey | artemisTranslate) : '';
+                        <span
+                            [id]="internalItem.inputId + '-info'"
+                            class="mb-2.5 w-4"
+                            [class]="internalItem.hasWarning && !internalItem.isInvalid ? 'text-state-warning' : 'text-state-danger'"
+                            tabindex="0"
+                            role="img"
+                            [attr.aria-label]="tooltip"
+                            [tumAetUiTooltip]="tooltip"
+                            tumAetUiTooltipPlacement="right"
+                            [attr.data-testid]="internalItem.inputId + '-info'"
+                        >
+                            <fa-icon [icon]="faCircleInfo" />
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
