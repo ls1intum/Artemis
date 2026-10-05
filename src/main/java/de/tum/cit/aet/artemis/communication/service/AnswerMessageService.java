@@ -444,13 +444,26 @@ public class AnswerMessageService extends PostingService {
         }
         // The isVerified() check above is only a fast rejection for the common case; two tutors pressing approve at the
         // same moment both pass it. This is the one that decides, because the guard lives inside the statement.
-        if (!answerPostRepository.verifyIfUnverified(answerMessageId, user, ZonedDateTime.now(), updatedContent)) {
+        // The approval changes what the thread's Course Memory entry has to hold, so its version is bumped in the same
+        // transaction.
+        if (!answerPostRepository.verifyIfUnverifiedAndInvalidateCourseMemory(answerMessageId, existingAnswerMessage.getPost().getId(), user, ZonedDateTime.now(),
+                updatedContent)) {
             throw new BadRequestAlertException("Answer message is already verified", ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
 
         // The update above is a bulk statement and does not touch the instance read before it, so re-read what is
         // broadcast and returned. Each repository call runs in its own session, so this read sees the committed row.
         AnswerPost verifiedAnswerMessage = answerPostRepository.findAnswerMessageWithPostConversationAndVerifierByIdElseThrow(answerMessageId);
+
+        // A tutor approved (IRIS_AUTO) or edited (IRIS_CORRECTED) an Iris draft; the thread's entry is rebuilt from the
+        // current state, in which the approval is recorded. Right after the approval, before the work below that can fail.
+        try {
+            courseMemoryIngestionApi.ifPresent(api -> api.onAnswerVerified(verifiedAnswerMessage, user, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to ingest verified answer post {} into course memory", verifiedAnswerMessage.getId(), e);
+        }
+
         Conversation conversation = conversationService.getConversationById(verifiedAnswerMessage.getPost().getConversation().getId());
         verifiedAnswerMessage.getPost().setConversation(conversation);
 
@@ -459,15 +472,6 @@ public class AnswerMessageService extends PostingService {
 
         sendMentionNotificationForAnswerMessage(course, conversation, verifiedAnswerMessage, mentionedUsers);
         this.preparePostAndBroadcast(verifiedAnswerMessage, course);
-
-        // A tutor approved (IRIS_AUTO) or edited (IRIS_CORRECTED) an Iris draft; the thread's entry is rebuilt from the
-        // current state, in which the approval is recorded.
-        try {
-            courseMemoryIngestionApi.ifPresent(api -> api.onAnswerVerified(verifiedAnswerMessage, user, course));
-        }
-        catch (Exception e) {
-            log.error("Failed to ingest verified answer post {} into course memory", verifiedAnswerMessage.getId(), e);
-        }
         return verifiedAnswerMessage;
     }
 

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -16,6 +17,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -275,16 +278,22 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * {@code @ManyToOne} that the thread-loading query does not fetch, and adding it there would put an extra user join
      * on a hot read path.
      *
+     * <p>
+     * Only an active account counts: closing an account (deactivation, or the first step of deleting it) withdraws its
+     * approvals at once, in the transaction that also outdates the Course Memory entries involving it. An approval that
+     * arrives later, or a reference cleared later, then changes nothing Course Memory relies on.
+     *
      * @param answerPostId the ID of the {@link AnswerPost} to check
-     * @return {@code true} if a user is recorded as the verifier, {@code false} if none is or the answer post does not exist
+     * @return {@code true} if an active user is recorded as the verifier, {@code false} otherwise or if the answer post does
+     *         not exist
      */
     @Query("""
             SELECT CASE WHEN COUNT(answerPost) > 0 THEN TRUE ELSE FALSE END
             FROM AnswerPost answerPost
             WHERE answerPost.id = :answerPostId
-                AND answerPost.verifiedBy IS NOT NULL
+                AND answerPost.verifiedBy.activated = TRUE
             """)
-    boolean hasHumanVerifier(@Param("answerPostId") long answerPostId);
+    boolean hasActiveHumanVerifier(@Param("answerPostId") long answerPostId);
 
     /**
      * Returns, for every resolving answer of a thread that records an endorser, who marked it resolving.
@@ -295,16 +304,19 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * endorser was recorded are absent from the result and are treated as community-resolved.
      * <p>
      * Queried as a projection: {@code resolvedBy} is lazy and not part of the eager thread fetch. One query for the whole thread rather than one per answer.
+     * <p>
+     * Only active endorsers are returned, for the same reason as in {@link #hasActiveHumanVerifier}: closing an account
+     * withdraws its endorsements together with outdating the entries involving it.
      *
      * @param postId the id of the thread's root post
-     * @return one entry per resolving answer that carries an endorser
+     * @return one entry per resolving answer that carries an active endorser
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO(answerPost.id, answerPost.resolvedBy.login)
             FROM AnswerPost answerPost
             WHERE answerPost.post.id = :postId
                 AND answerPost.resolvesPost = TRUE
-                AND answerPost.resolvedBy IS NOT NULL
+                AND answerPost.resolvedBy.activated = TRUE
             """)
     List<ResolvingAnswerEndorserDTO> findResolvingAnswerEndorsersByPostId(@Param("postId") long postId);
 
@@ -345,5 +357,109 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
     default void deleteAndInvalidateCourseMemory(long answerPostId, long postId) {
         deleteById(answerPostId);
         bumpCourseMemoryVersionOfThreadIfTracked(postId);
+    }
+
+    /**
+     * Verifies an unverified Iris answer, like {@link #verifyIfUnverified}, and outdates its thread's Course Memory entry in
+     * the same transaction: the approval changes what the entry has to hold.
+     *
+     * @param answerPostId the id of the answer message to verify
+     * @param postId       the id of the thread's root post
+     * @param verifier     the tutor verifying the answer
+     * @param verifiedAt   the verification time
+     * @param content      the updated content, or null to keep the existing content
+     * @return whether this call verified the answer message; false when it was already verified
+     */
+    @Transactional // ok because the approval and the version bump have to commit together
+    default boolean verifyIfUnverifiedAndInvalidateCourseMemory(long answerPostId, long postId, User verifier, ZonedDateTime verifiedAt, @Nullable String content) {
+        if (!verifyIfUnverified(answerPostId, verifier, verifiedAt, content)) {
+            return false;
+        }
+        bumpCourseMemoryVersionOfThreadIfTracked(postId);
+        return true;
+    }
+
+    /**
+     * Locks the given conversations with a shared lock until the transaction ends. A change to them, such as making a
+     * channel private, waits for the transaction.
+     *
+     * @param conversationIds the conversations
+     * @return the ids of the locked conversations
+     */
+    @Query(value = "SELECT id FROM conversation WHERE id IN (:conversationIds) FOR SHARE", nativeQuery = true)
+    List<Long> lockConversationsForShare(@Param("conversationIds") Collection<Long> conversationIds);
+
+    /**
+     * Locks the exercises of the given conversations with a shared lock until the transaction ends. A change to them, such
+     * as moving the release date into the future, waits for the transaction.
+     *
+     * @param conversationIds the conversations
+     * @return the ids of the locked exercises
+     */
+    @Query(value = "SELECT id FROM exercise WHERE id IN (SELECT exercise_id FROM conversation WHERE id IN (:conversationIds) AND exercise_id IS NOT NULL) FOR SHARE", nativeQuery = true)
+    List<Long> lockExercisesOfConversationsForShare(@Param("conversationIds") Collection<Long> conversationIds);
+
+    /**
+     * How many of the given conversations are channels of the course that every student can read right now, by the rule
+     * Course Memory uses everywhere ({@link ChannelRepository#READABLE_BY_ALL_STUDENTS}).
+     *
+     * @param conversationIds the conversations
+     * @param courseId        the course
+     * @param now             the current time
+     * @return the number of readable channels among them
+     */
+    @Query("""
+            SELECT COUNT(channel)
+            FROM Channel channel
+                LEFT JOIN channel.exercise exercise
+            WHERE channel.id IN :conversationIds
+                AND channel.course.id = :courseId
+                AND""" + " " + ChannelRepository.READABLE_BY_ALL_STUDENTS)
+    long countChannelsReadableByAllStudents(@Param("conversationIds") Collection<Long> conversationIds, @Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Marks an unverified answer as verified without a human verifier, which publishes it to the students.
+     *
+     * @param answerPostId the answer
+     * @param verifiedAt   the publication time
+     * @return the number of updated rows
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE AnswerPost answerPost
+            SET answerPost.verified = TRUE, answerPost.verifiedAt = :verifiedAt
+            WHERE answerPost.id = :answerPostId
+                AND answerPost.verified = FALSE
+            """)
+    int publishUnverified(@Param("answerPostId") long answerPostId, @Param("verifiedAt") ZonedDateTime verifiedAt);
+
+    /**
+     * Publishes an autonomous tutor reply saved as a draft, but only if every Course Memory channel it drew from is still
+     * readable by every student of the course. The check and the publication run in one transaction, and the channels and
+     * their exercises stay locked until it commits: a channel made private or an exercise hidden again waits, and counts
+     * as a change after the publication.
+     * <p>
+     * Read committed, so that the readability check after the locks sees a change that committed while this transaction
+     * waited for them. Under repeatable read (the MySQL default) the check could read the snapshot an earlier statement of
+     * this transaction established.
+     *
+     * @param answerPostId    the draft
+     * @param courseId        the course
+     * @param conversationIds the channels the reply's Course Memory entries came from
+     * @param now             the current time
+     * @return whether the reply was published
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED) // ok because the readability check and the publication have to see the same channel state
+    default boolean publishIfConversationsReadable(long answerPostId, long courseId, Collection<Long> conversationIds, ZonedDateTime now) {
+        Set<Long> distinctIds = new HashSet<>(conversationIds);
+        if (!distinctIds.isEmpty()) {
+            lockConversationsForShare(distinctIds);
+            lockExercisesOfConversationsForShare(distinctIds);
+            if (countChannelsReadableByAllStudents(distinctIds, courseId, now) != distinctIds.size()) {
+                return false;
+            }
+        }
+        return publishUnverified(answerPostId, now) == 1;
     }
 }

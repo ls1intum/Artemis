@@ -250,15 +250,36 @@ public class UserOwnedContentDeletionService {
     }
 
     /**
-     * Deactivates the account in the same transaction that outdates the Course Memory entries holding its messages. If the
-     * deletion then stops part of the way, the account stays closed with messages of an inactive author, and the nightly
-     * Course Memory sync retracts the entries that still contain them.
+     * Deactivates the account in the same transaction that outdates the Course Memory entries involving it: those holding
+     * its messages and those whose answer it signed off on. If the deletion then stops part of the way, the nightly Course
+     * Memory sync retracts what the outdated entries still contain.
      *
      * @param userId       the account being deleted
      * @param deactivation the deactivation; its repository call joins the transaction
+     * @return the threads whose entries were outdated, to be rebuilt once the account is gone
      */
-    public void deactivateAndInvalidateCourseMemory(long userId, Runnable deactivation) {
-        courseMemoryIngestionApi.ifPresentOrElse(api -> api.changeAccountAndInvalidate(userId, deactivation), deactivation);
+    public List<Long> deactivateAndInvalidateCourseMemory(long userId, Runnable deactivation) {
+        if (courseMemoryIngestionApi.isEmpty()) {
+            deactivation.run();
+            return List.of();
+        }
+        return courseMemoryIngestionApi.get().changeAccountAndInvalidate(userId, deactivation);
+    }
+
+    /**
+     * Rebuilds the given threads' Course Memory entries in the background, once the deleted account's messages and
+     * sign-offs are gone. Best-effort: the entries are already outdated, so the nightly sync retracts them if this does
+     * not get through.
+     *
+     * @param postIds the threads' root post ids
+     */
+    public void refreshCourseMemory(List<Long> postIds) {
+        try {
+            courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(postIds));
+        }
+        catch (Exception e) {
+            log.error("Failed to update course memory after deleting an account", e);
+        }
     }
 
     /**
