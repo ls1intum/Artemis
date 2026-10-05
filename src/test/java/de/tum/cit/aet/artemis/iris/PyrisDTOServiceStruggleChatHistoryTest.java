@@ -171,4 +171,17 @@ class PyrisDTOServiceStruggleChatHistoryTest {
 
         assertThat(tagsFor(List.of(legacy), "ep-now")).containsExactly("(proactive hint, dismissed) try edge cases");
     }
+
+    @Test
+    void hiddenCompactionBetweenHintAndReplyKeepsTheHintEngaged() {
+        var hint = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, null, null, "check the loop bound", 0);
+        var compaction = msg(IrisMessageSender.SUMMARY, null, null, null, "summary", 1);
+        var reply = msg(IrisMessageSender.USER, null, null, null, "thanks!", 2);
+
+        var out = new PyrisDTOService(null, null, null, new IrisProactiveProperties()).toPyrisMessageDTOListForStruggle(List.of(hint, compaction, reply), null);
+
+        assertThat(out).hasSize(2);
+        assertThat(firstText(out.get(0))).isEqualTo("(proactive hint, engaged) check the loop bound");
+        assertThat(firstText(out.get(1))).isEqualTo("thanks!");
+    }
 }

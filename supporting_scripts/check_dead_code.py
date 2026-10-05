@@ -60,7 +60,7 @@ from collections import defaultdict
 #
 # Naming a class in a comment anywhere under these roots makes it look referenced -- the name-collision
 # limitation in the module docstring. Do not name candidate classes here.
-REFERENCE_ROOTS = ["src/main", "docker", "supporting_scripts", "documentation", ".github", "gradle"]
+REFERENCE_ROOTS = ["src/main", "deployment/docker", "supporting_scripts", "documentation", ".github", "gradle"]
 
 # Only classes below this root are *candidates* for removal. Test-only classes are out of scope:
 # a test helper that no test uses yet is a different problem with a different fix.
