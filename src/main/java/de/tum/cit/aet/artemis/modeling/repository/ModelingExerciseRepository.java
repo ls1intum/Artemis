@@ -44,8 +44,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     // exerciseVariantGroup is deliberately not listed: a sixth path would cross the query-quality over-fetch threshold.
     // The single caller sets it from ExerciseVariantGroupService.findOwningGroup instead, the same by-id resolution the
     // write path uses.
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
-            "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "competencyLinks.competency", "exampleSubmissions.submission.results", "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
@@ -59,7 +58,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 LEFT JOIN FETCH submission.results results
                 LEFT JOIN FETCH results.feedbacks
                 LEFT JOIN FETCH results.assessor
-                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
                 LEFT JOIN FETCH modelingExercise.gradingCriteria
             WHERE modelingExercise.id = :exerciseId
             """)
@@ -73,7 +71,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 LEFT JOIN FETCH submission.results results
                 LEFT JOIN FETCH results.feedbacks
                 LEFT JOIN FETCH results.assessor
-                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
                 LEFT JOIN FETCH modelingExercise.gradingCriteria
                 LEFT JOIN FETCH modelingExercise.competencyLinks cl
                 LEFT JOIN FETCH cl.competency
@@ -103,7 +100,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
      * @param exerciseId the id of the exercise to fetch
      * @return {@link ModelingExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "gradingCriteria", "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findForVersioningById(long exerciseId);
 
     /**

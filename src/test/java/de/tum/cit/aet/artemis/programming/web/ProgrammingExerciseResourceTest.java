@@ -474,7 +474,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExercise_withTooLongBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
         addInstructorToCourse();
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // A structurally valid phases configuration whose script pushes the serialized configuration past the maximum allowed length.
         // This ensures the request passes the build phase name parsing and is rejected specifically by the size validation.
@@ -491,7 +491,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExercise_withTooLongDockerFlags_shouldReturnBadRequest() throws Exception {
         addInstructorToCourse();
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // Structurally valid docker flags (parse successfully, each env variable below the per-variable limit) whose raw JSON
         // exceeds the maximum allowed length, so the request is rejected specifically by the size validation.
@@ -546,7 +546,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_validPlagiarismDetectionConfig_updatesExistingConfigInPlace() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
@@ -564,7 +564,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
                 HttpStatus.OK);
 
-        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(updated.id()).orElseThrow();
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(updated.id()).orElseThrow();
         // Same config row is mutated in place (no duplicate row), and the new values are persisted.
         assertThat(fromDb.getPlagiarismDetectionConfig().getId()).isEqualTo(configId);
         assertThat(fromDb.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(66);
@@ -577,7 +577,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
@@ -597,7 +597,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
 
-        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         PlagiarismDetectionConfig reloadedConfig = reloaded.getPlagiarismDetectionConfig();
         assertThat(reloadedConfig).isNotNull();
         assertThat(reloadedConfig.getId()).isEqualTo(configId);
@@ -613,7 +613,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testReEvaluateAndUpdateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequestAndPreservesExistingConfig() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
@@ -632,7 +632,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
 
-        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise reloaded = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         PlagiarismDetectionConfig reloadedConfig = reloaded.getPlagiarismDetectionConfig();
         assertThat(reloadedConfig).isNotNull();
         assertThat(reloadedConfig.getId()).isEqualTo(configId);
@@ -648,7 +648,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_omittedPlagiarismDetectionConfig_preservesExisting() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         PlagiarismDetectionConfig config = ensurePlagiarismDetectionConfig(programmingExercise);
@@ -671,7 +671,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 base.releaseTestsWithExampleSolution(), base.assessmentType(), base.buildConfig(), null);
         var updated = request.putWithResponseBody("/api/programming/programming-exercises", withoutConfig, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
-        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(updated.id()).orElseThrow();
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(updated.id()).orElseThrow();
         // The existing config is preserved unchanged when the DTO omits it.
         assertThat(fromDb.getPlagiarismDetectionConfig()).isNotNull();
         assertThat(fromDb.getPlagiarismDetectionConfig().getId()).isEqualTo(configId);
@@ -721,13 +721,13 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
      */
     private void prepareExerciseWithoutPlagiarismDetectionConfig() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         setValidBuildPlanConfiguration();
 
         programmingExercise.setPlagiarismDetectionConfig(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        assertThat(programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow()
-                .getPlagiarismDetectionConfig()).as("the exercise must start without a plagiarism detection config").isNull();
+        assertThat(programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow().getPlagiarismDetectionConfig())
+                .as("the exercise must start without a plagiarism detection config").isNull();
     }
 
     /** The (valid) values the request submits for an exercise that has no plagiarism detection config yet. */
@@ -744,7 +744,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     /** Asserts that the exercise now owns a persisted config carrying exactly the submitted values. */
     private void assertCreatedPlagiarismDetectionConfig(long exerciseId) {
-        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(exerciseId).orElseThrow();
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(exerciseId).orElseThrow();
         PlagiarismDetectionConfig createdConfig = fromDb.getPlagiarismDetectionConfig();
         assertThat(createdConfig).as("the resource must create the missing config").isNotNull();
         assertThat(createdConfig.getId()).as("the created config must be persisted").isNotNull();
@@ -782,7 +782,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_preservesBuildAndTestDateOffset() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // Setup exercise with an AFTER_DUE_DATE phase
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
@@ -818,7 +818,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforeAuxiliaryRepositoryChanges() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
         var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
@@ -858,7 +858,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExercise_preservesExamBuildAndTestDateOffset() throws Exception {
         programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
         var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
@@ -899,7 +899,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProgrammingExerciseTimeline_preservesExamBuildAndTestDateOffset() throws Exception {
         programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
         var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
@@ -1000,7 +1000,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_responseCarriesClientReadContract_courseExercise() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         var response = request.putWithResponseBody("/api/programming/programming-exercises",
                 UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
@@ -1035,7 +1035,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         course = programmingExercise.getExerciseGroup().getExam().getCourse();
         addInstructorToCourse();
         var exerciseGroup = programmingExercise.getExerciseGroup();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         clearDatesOfExamExercise();
 
         var response = request.putWithResponseBody("/api/programming/programming-exercises",
@@ -1062,7 +1062,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_clientShapedBodyRebuiltFromResponse_courseExercise() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         var firstResponse = request.putWithResponseBody("/api/programming/programming-exercises",
                 UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExerciseResponseDTO.class,
@@ -1082,7 +1082,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         course = programmingExercise.getExerciseGroup().getExam().getCourse();
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         clearDatesOfExamExercise();
 
         var firstResponse = request.putWithResponseBody("/api/programming/programming-exercises",
@@ -1107,7 +1107,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var criteriaBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         assertThat(criteriaBefore).hasSize(3);
         var criterionIdsBefore = criteriaBefore.stream().map(criterion -> criterion.getId()).collect(java.util.stream.Collectors.toSet());
@@ -1138,7 +1138,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
         long policyId = policy.getId();
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         // the submission policy is a lazy relation of the loaded exercise; re-attach the loaded one the way the client
         // re-sends the policy object it received
         programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByIdElseThrow(policyId));
@@ -1169,7 +1169,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var auxRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
         long auxRepositoryId = auxRepository.getId();
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         // re-attach the loaded auxiliary repositories the way the client re-sends the ones it received
         programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId())));
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
@@ -1193,7 +1193,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var criterionIdsBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId()).stream().map(criterion -> criterion.getId())
                 .collect(java.util.stream.Collectors.toSet());
         var instructionIdsBefore = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId()).stream()
@@ -1279,7 +1279,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_doesNotFanOutQueries() throws Exception {
         addInstructorToCourse();
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
 
         assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
@@ -1417,7 +1417,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         group.setDueDate(GROUP_DUE_DATE);
         group.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE);
 
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         // Without an AFTER_DUE_DATE phase the automatic service clears the build-and-test date on every update, which
         // would hide whether the group guard leaves that exercise-owned date alone.
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -74,7 +76,7 @@ class ProgrammingExerciseExportServiceCourseTest {
     void setUp() {
         exportService = new ProgrammingExerciseExportService(programmingExerciseRepository, programmingExerciseTaskService, studentParticipationRepository, fileService, gitService,
                 gitRepositoryExportService, repositoryExportGitService, zipFileService, JsonMapper.builder().build(), auxiliaryRepositoryRepository, buildPlanRepository,
-                programmingExerciseBuildConfigRepository);
+                programmingExerciseBuildConfigRepository, mock(TeamAssignmentConfigRepository.class));
     }
 
     @Test

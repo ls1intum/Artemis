@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -109,6 +110,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     /**
@@ -141,7 +144,9 @@ public class ProgrammingExerciseCreationUpdateService {
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -226,6 +231,9 @@ public class ProgrammingExerciseCreationUpdateService {
         // We save once in order to generate an id for the programming exercise. The build configuration names the
         // exercise, so it is written afterwards rather than before.
         var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Like the build configuration, the team assignment configuration names the exercise, so it is written afterwards.
+        // The re-fetches below do not carry it, so the stored one is put back on the exercise that is returned.
+        final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.replaceFor(savedProgrammingExercise, programmingExercise.getTeamAssignmentConfig());
 
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
         savedProgrammingExercise.generateAndSetProjectKey();
@@ -272,6 +280,7 @@ public class ProgrammingExerciseCreationUpdateService {
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
         ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        createdProgrammingExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
 
         // Pre-provision repository-scoped VCS access tokens for all current course staff for the exercise's base repositories. Done asynchronously (after the exercise is saved) so
         // exercise creation does not block on token generation for potentially many staff members; the clone-dialog lazy fallback covers the brief window before the tokens exist.
@@ -386,6 +395,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration.
+        teamAssignmentConfigRepository.attachTo(savedProgrammingExercise);
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 

@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 public abstract class ExerciseImportService {
@@ -38,14 +39,17 @@ public abstract class ExerciseImportService {
 
     private final FeedbackService feedbackService;
 
+    protected final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private static final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
     protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FeedbackService feedbackService) {
+            FeedbackService feedbackService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.feedbackService = feedbackService;
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
     }
 
     /**
@@ -148,6 +152,11 @@ public abstract class ExerciseImportService {
                 newExercise.setCategories(new HashSet<>(categoriesSource.getCategories()));
             }
             if (newExercise.getMode() == ExerciseMode.TEAM) {
+                // The source comes straight from a query, which does not carry the configuration: read it explicitly, and
+                // only here, because only a team exercise that brought none of its own needs it.
+                if (!hasTeamAssignmentConfig(newExercise)) {
+                    teamAssignmentConfigRepository.attachTo(sourceExercise);
+                }
                 Exercise teamConfigSource = hasTeamAssignmentConfig(newExercise) ? newExercise : sourceExercise;
                 if (hasTeamAssignmentConfig(teamConfigSource)) {
                     // Always a fresh copy: a caller-supplied configuration may still carry the source's id.
@@ -183,7 +192,19 @@ public abstract class ExerciseImportService {
     }
 
     private static boolean hasTeamAssignmentConfig(Exercise exercise) {
-        return getPersistenceUtil().isLoaded(exercise, Exercise_.TEAM_ASSIGNMENT_CONFIG) && exercise.getTeamAssignmentConfig() != null;
+        return exercise.getTeamAssignmentConfig() != null;
+    }
+
+    /**
+     * Stores the team assignment configuration {@link #copyExerciseBasis} left on {@code newExercise}, now that the
+     * exercise is saved: the configuration holds the key to its exercise, so it can only be written afterwards, and the
+     * merged copy a second save returns does not carry the slot, so it receives the stored configuration here.
+     *
+     * @param persistedExercise the saved exercise that the caller goes on to return
+     * @param newExercise       the exercise {@link #copyExerciseBasis} prepared, which carries the configuration to store
+     */
+    protected void saveTeamAssignmentConfig(Exercise persistedExercise, Exercise newExercise) {
+        teamAssignmentConfigRepository.replaceFor(persistedExercise, newExercise.getTeamAssignmentConfig());
     }
 
     /**

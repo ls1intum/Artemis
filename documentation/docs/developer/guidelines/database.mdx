@@ -215,6 +215,8 @@ from the course module through `TutorialGroupApi` and `LtiApi`. Because the conf
 returns a configuration whose course the caller reads has to fetch it (`JOIN FETCH t.course`); with open-in-view disabled,
 an unfetched proxy fails with a `LazyInitializationException` rather than loading quietly.
 
+`TeamAssignmentConfig` has the same shape for `Exercise`: `Exercise` keeps a `@Transient` slot, nothing fills it by itself, and a flow that needs it reads it through `TeamAssignmentConfigRepository`, attaching a single exercise with `attachTo(Exercise)` or a list of them in one query with `attachTo(Collection)`. Writing goes through `replaceFor`, after the exercise is saved: it updates the stored row in place and removes it when the exercise is no longer a team exercise, so a replaced configuration is never left behind. `ExerciseConfigurationLoadProfileTest` pins that reading an exercise never reads the table.
+
 `CourseConfiguration` and `CourseAthenaConfig` have the same shape. `Course` keeps a `@Transient` slot for each so that code which already asks the course keeps working, but nothing ever fills the slot: a flow reads the configuration through `CourseConfigurationRepository` or `CourseAthenaConfigRepository` and attaches it with `attachTo`, and a flow that looks at many courses attaches them in one query with `CourseConfigurationRepository.attachTo(Collection)`. An empty slot reads as the defaults, so a flow that forgets to attach reports a course as grade-relevant with Athena switched off rather than failing; `CourseConfigurationLoadProfileTest` pins which statements a course read may and may not contain.
 
 #### Turning an existing association lazy

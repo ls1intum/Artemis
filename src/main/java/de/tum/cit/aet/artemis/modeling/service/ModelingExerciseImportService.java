@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
@@ -48,8 +49,9 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            Optional<CompetencyProgressApi> competencyProgressApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
+            Optional<CompetencyProgressApi> competencyProgressApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, teamAssignmentConfigRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
@@ -86,6 +88,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         // The channel name is transient, so a merged copy does not carry it. Restore it so the serialized import response
         // reports the channel the caller asked for.
         persistedExercise.setChannelName(newExercise.getChannelName());
+        saveTeamAssignmentConfig(persistedExercise, newExercise);
 
         channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(persistedExercise.getChannelName()));
         persistedExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, persistedExercise, gradingInstructionCopyTracker));

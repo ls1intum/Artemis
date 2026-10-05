@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -73,6 +74,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -102,7 +105,8 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -120,6 +124,7 @@ public class ProgrammingExerciseImportBasicService {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
     }
 
     /**
@@ -182,9 +187,12 @@ public class ProgrammingExerciseImportBasicService {
         // the test cases and the tasks created below can reference it. Competency links are added afterwards because they
         // must point at the persisted exercise.
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        // An exam exercise is always individual and must not keep a team assignment configuration a client brought along.
+        final var desiredTeamAssignmentConfig = newExercise.isExamExercise() ? null : newExercise.getTeamAssignmentConfig();
         newExercise = programmingExerciseRepository.save(newExercise);
-        // The configuration names the exercise, so it is written once that exercise exists.
+        // The configurations name the exercise, so they are written once that exercise exists.
         programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
+        final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.replaceFor(newExercise, desiredTeamAssignmentConfig);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
@@ -234,6 +242,7 @@ public class ProgrammingExerciseImportBasicService {
         // than relying on lazy proxies. saveForCreation re-fetches the complete new-exercise graph for exactly this
         // reason, so we reuse it here (the import produces a new exercise just like a regular creation).
         newExercise = programmingExerciseRepository.saveForCreation(newExercise);
+        newExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
         // Restore the transient channel name on the re-fetched exercise, so the serialized import response reports the
         // channel the caller asked for.
         newExercise.setChannelName(channelName);

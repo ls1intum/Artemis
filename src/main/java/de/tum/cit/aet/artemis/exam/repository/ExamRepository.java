@@ -298,8 +298,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.plagiarismDetectionConfig",
-            "exerciseGroups.exercises.teamAssignmentConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.plagiarismDetectionConfig" })
     Optional<Exam> findWithExerciseGroupsAndExercisesAndExerciseDetailsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "examUsers" })

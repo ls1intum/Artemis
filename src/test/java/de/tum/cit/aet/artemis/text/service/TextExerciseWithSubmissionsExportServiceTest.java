@@ -45,9 +45,9 @@ class TextExerciseWithSubmissionsExportServiceTest extends AbstractSpringIntegra
     void exportTextExerciseWithSubmissions_writesTheExerciseDetailsWithoutTheEntityGraph() throws Exception {
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise(TEST_PREFIX);
         TextExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig());
         exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         exercise = exerciseRepository.save(exercise);
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig());
         assertThat(exercise.getTeamAssignmentConfig().getId()).as("the fixture stores both configurations").isNotNull();
         assertThat(exercise.getPlagiarismDetectionConfig().getId()).isNotNull();
         List<String> exportErrors = new ArrayList<>();

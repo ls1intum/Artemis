@@ -1666,8 +1666,10 @@ public class CourseTestService {
     public void testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes() throws Exception {
         Course course = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, false, false, 0).getFirst();
 
+        // The ceiling includes the one query that reads the team assignment configurations of all the exercises together,
+        // which the exercises do not carry by themselves and the response reports.
         CourseWithExercisesDTO withExercises = assertThatDb(queryInterceptor,
-                () -> request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class)).hasBeenCalledAtMostTimes(3);
+                () -> request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class)).hasBeenCalledAtMostTimes(4);
         assertThat(withExercises.exercises()).hasSize(5);
 
         CourseWithContentDTO withContent = assertThatDb(queryInterceptor,

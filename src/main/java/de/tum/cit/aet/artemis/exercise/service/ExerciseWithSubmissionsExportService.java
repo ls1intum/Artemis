@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 
 /**
  * Service for exporting Exercises with the student submissions.
@@ -61,9 +62,13 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private final SubmissionExportService submissionExportService;
 
-    protected ExerciseWithSubmissionsExportService(JsonMapper objectMapper, SubmissionExportService submissionExportService) {
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    protected ExerciseWithSubmissionsExportService(JsonMapper objectMapper, SubmissionExportService submissionExportService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
         this.objectMapper = objectMapper;
         this.submissionExportService = submissionExportService;
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
     }
 
     /**
@@ -240,6 +245,8 @@ public abstract class ExerciseWithSubmissionsExportService {
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         String cleanExerciseDetailsFileName = FileUtil.sanitizeFilename(exerciseDetailsFileName);
         var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
+        // The exported details report the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(exercise);
         pathsToBeZipped.add(FileUtil.writeObjectToJsonFile(exerciseDetailsForExport(exercise), this.objectMapper, exerciseDetailsExportPath));
     }
 

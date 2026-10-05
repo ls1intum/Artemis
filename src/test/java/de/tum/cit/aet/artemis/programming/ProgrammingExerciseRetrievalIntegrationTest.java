@@ -179,8 +179,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         // Every later GET must reuse the row written by the first one instead of creating another.
         assertThat(second.plagiarismDetectionConfig().id()).isNotNull().isEqualTo(third.plagiarismDetectionConfig().id());
 
-        var reloaded = programmingExerciseRepository
-                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exercise.getId());
+        var reloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exercise.getId());
         assertThat(reloaded.getPlagiarismDetectionConfig()).isNotNull();
         assertThat(reloaded.getPlagiarismDetectionConfig().getId()).isEqualTo(second.plagiarismDetectionConfig().id());
     }

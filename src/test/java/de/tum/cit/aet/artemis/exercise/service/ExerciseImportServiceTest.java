@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -37,7 +39,7 @@ class ExerciseImportServiceTest {
     private static final class TestableExerciseImport extends ExerciseImportService {
 
         private TestableExerciseImport() {
-            super(null, null, null, null);
+            super(null, null, null, null, mock(TeamAssignmentConfigRepository.class));
         }
 
         private void copyBasis(Exercise newExercise, Exercise sourceExercise) {

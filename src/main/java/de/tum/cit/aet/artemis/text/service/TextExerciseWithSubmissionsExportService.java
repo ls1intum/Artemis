@@ -12,6 +12,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -26,8 +27,9 @@ import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 @Service
 public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public TextExerciseWithSubmissionsExportService(TextSubmissionExportService textSubmissionExportService, JsonMapper objectMapper) {
-        super(objectMapper, textSubmissionExportService);
+    public TextExerciseWithSubmissionsExportService(TextSubmissionExportService textSubmissionExportService, JsonMapper objectMapper,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        super(objectMapper, textSubmissionExportService, teamAssignmentConfigRepository);
     }
 
     /**

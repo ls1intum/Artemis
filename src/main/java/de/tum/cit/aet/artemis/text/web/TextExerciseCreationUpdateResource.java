@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
@@ -93,6 +94,8 @@ public class TextExerciseCreationUpdateResource {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private final UserRepository userRepository;
 
     private final ParticipationRepository participationRepository;
@@ -108,7 +111,8 @@ public class TextExerciseCreationUpdateResource {
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyApi> competencyApi,
             Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ExerciseVariantGroupService exerciseVariantGroupService) {
+            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -179,6 +183,8 @@ public class TextExerciseCreationUpdateResource {
             savedExercise = textExerciseRepository.save(savedExercise);
         }
         final TextExercise result = savedExercise;
+        // The configuration holds the key to its exercise, so it is stored once the exercise exists.
+        teamAssignmentConfigRepository.replaceFor(result, textExercise.getTeamAssignmentConfig());
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -266,6 +272,8 @@ public class TextExerciseCreationUpdateResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         TextExercise persistedExercise = textExerciseRepository.save(updatedExercise);
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration.
+        teamAssignmentConfigRepository.attachTo(persistedExercise);
 
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
@@ -331,6 +339,7 @@ public class TextExerciseCreationUpdateResource {
 
         // Save directly instead of delegating to updateTextExercise() to avoid double side effects.
         TextExercise savedExercise = textExerciseRepository.save(exerciseForReevaluation);
+        teamAssignmentConfigRepository.attachTo(savedExercise);
 
         // Apply all post-save side effects once with the captured originals.
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);

@@ -80,7 +80,7 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
         when(programmingExerciseRepository.findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(1L))
                 .thenReturn(Optional.of(original));
         when(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of());
-        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(1L)).thenReturn(Optional.empty());
+        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(1L)).thenReturn(Optional.empty());
         when(programmingExerciseValidationService.preCheckProjectExistsOnVCSOrCI(any(), any())).thenReturn(false);
 
         imported = mock(ProgrammingExercise.class);

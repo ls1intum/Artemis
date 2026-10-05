@@ -289,8 +289,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // The configuration is a row of its own and is not loaded with the exercise.
         buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
         programmingExerciseInExam = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(userPrefix);
-        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
-                .orElseThrow();
+        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseInExam.getId()).orElseThrow();
 
         participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student2");
@@ -1583,7 +1582,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_asInstrutor() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -1606,7 +1605,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getTemplateParticipation());
 
@@ -1693,7 +1692,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void resetTestCaseWeights_asInstructor() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";

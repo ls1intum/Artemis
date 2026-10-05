@@ -528,8 +528,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithExerciseGroupExamAndCourse(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "exerciseVariantGroup" })
-    Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "exerciseVariantGroup" })
+    Optional<Exercise> findWithEagerCategoriesById(Long exerciseId);
 
     @Query("""
             SELECT DISTINCT e
@@ -639,8 +639,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return the entity
      */
     @NonNull
-    default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
-        return getValueElseThrow(findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId), exerciseId);
+    default Exercise findByIdWithCategoriesElseThrow(Long exerciseId) {
+        return getValueElseThrow(findWithEagerCategoriesById(exerciseId), exerciseId);
     }
 
     /**

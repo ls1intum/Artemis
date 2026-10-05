@@ -337,7 +337,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(response.teamAssignmentConfig().minTeamSize()).as("min team size was persisted").isEqualTo(2);
         assertThat(response.teamAssignmentConfig().maxTeamSize()).as("max team size was persisted").isEqualTo(5);
 
-        TextExercise reloaded = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(response.id()).orElseThrow();
+        TextExercise reloaded = exerciseUtilService.attachTeamAssignmentConfig(textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(response.id()).orElseThrow());
         assertThat(reloaded.getMode()).as("team mode was persisted on the entity").isEqualTo(ExerciseMode.TEAM);
         assertThat(reloaded.getTeamAssignmentConfig()).as("team assignment config was persisted on the entity").isNotNull();
         assertThat(reloaded.getTeamAssignmentConfig().getMinTeamSize()).as("min team size was persisted on the entity").isEqualTo(2);
@@ -1736,7 +1736,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExerciseResponseDTO importedDto = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + sourceExercise.getId(),
                 ImportTextExerciseDTO.of(exerciseToBeImported), TextExerciseResponseDTO.class, HttpStatus.CREATED);
         // Reload the imported exercise (with eager team assignment config) to assert team-mode wiring not on the response DTO.
-        TextExercise importedExercise = textExerciseRepository.findForVersioningById(importedDto.id()).orElseThrow();
+        TextExercise importedExercise = exerciseUtilService.attachTeamAssignmentConfig(textExerciseRepository.findForVersioningById(importedDto.id()).orElseThrow());
 
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.TEAM);

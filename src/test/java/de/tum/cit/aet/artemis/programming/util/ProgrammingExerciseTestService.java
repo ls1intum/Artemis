@@ -116,6 +116,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.jenkins.service.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -258,6 +259,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
@@ -1501,9 +1505,8 @@ public class ProgrammingExerciseTestService {
 
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        await().timeout(20, TimeUnit.SECONDS)
-                .until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent()
-                        && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
+        await().timeout(20, TimeUnit.SECONDS).until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exercise.getId()).isPresent()
+                && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
 
         // Fetch updated participation and assert
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
@@ -1698,8 +1701,8 @@ public class ProgrammingExerciseTestService {
         teamAssignmentConfig.setExercise(exercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exercise = saveWithBuildConfig(exercise);
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         programmingExerciseUtilService.saveBuildConfigIfMissing(exercise);
 
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, false, false);

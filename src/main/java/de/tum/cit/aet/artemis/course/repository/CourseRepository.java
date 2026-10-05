@@ -245,7 +245,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     // The variant group is LAZY on Exercise, so it must be loaded explicitly here: the exercise management view and the
     // instructor scores page both read it off this response, and an unloaded proxy would serialize as null.
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.exerciseVariantGroup" })
     Course findWithEagerExercisesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
@@ -260,7 +260,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * @param courseId The id of the course to find
      * @return the populated course or an empty optional if no course was found
      */
-    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup", "lectures" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.exerciseVariantGroup", "lectures" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites" })

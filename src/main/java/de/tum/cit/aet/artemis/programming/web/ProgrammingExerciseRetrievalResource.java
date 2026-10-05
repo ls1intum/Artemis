@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -91,6 +92,8 @@ public class ProgrammingExerciseRetrievalResource {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final GradingCriterionRepository gradingCriterionRepository;
@@ -110,7 +113,8 @@ public class ProgrammingExerciseRetrievalResource {
             GradingCriterionRepository gradingCriterionRepository, ChannelRepository channelRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService,
-            RepositoryParticipationService repositoryParticipationService) {
+            RepositoryParticipationService repositoryParticipationService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.courseRepository = courseRepository;
@@ -155,11 +159,11 @@ public class ProgrammingExerciseRetrievalResource {
     private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
         if (includePlagiarismDetectionConfig) {
             var programmingExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
+                    .findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
             return programmingExercise;
         }
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
+        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
     }
 
     /**
@@ -175,6 +179,8 @@ public class ProgrammingExerciseRetrievalResource {
             @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig);
+        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(programmingExercise);
         // Fetch grading criterion into exercise of participation
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
@@ -284,7 +290,7 @@ public class ProgrammingExerciseRetrievalResource {
     @GetMapping("programming-exercises/{exerciseId}/test-case-state")
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> getTestCaseState(@PathVariable long exerciseId) {
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         boolean hasAtLeastOneResult = programmingExerciseService.hasAtLeastOneResult(programmingExercise);
         boolean isReleased = programmingExercise.isReleased();

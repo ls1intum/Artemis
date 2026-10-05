@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -107,6 +108,8 @@ public class ModelingExerciseResource {
     private String applicationName;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
+
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
     private final UserRepository userRepository;
 
@@ -159,7 +162,8 @@ public class ModelingExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
             Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExerciseGroupApi> exerciseGroupApi,
-            ExerciseVariantGroupService exerciseVariantGroupService) {
+            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -232,6 +236,8 @@ public class ModelingExerciseResource {
         // not stored as null. Done after the competency-link save so it operates on the fully persisted exercise.
         PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(savedExercise, modelingExerciseRepository);
         final ModelingExercise result = savedExercise;
+        // The configuration holds the key to its exercise, so it is stored once the exercise exists.
+        teamAssignmentConfigRepository.replaceFor(result, modelingExercise.getTeamAssignmentConfig());
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
@@ -336,6 +342,8 @@ public class ModelingExerciseResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration.
+        teamAssignmentConfigRepository.attachTo(persistedExercise);
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
@@ -397,6 +405,8 @@ public class ModelingExerciseResource {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
+        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(modelingExercise);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
 
@@ -564,6 +574,7 @@ public class ModelingExerciseResource {
 
         // Save directly instead of delegating to updateModelingExercise() to avoid double side effects.
         ModelingExercise savedExercise = modelingExerciseRepository.save(exerciseForReevaluation);
+        teamAssignmentConfigRepository.attachTo(savedExercise);
 
         // Apply all post-save side effects once with the captured originals.
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);

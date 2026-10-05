@@ -528,7 +528,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         programmingExercise.setGradingCriteria(ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
                 courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
 
@@ -578,7 +578,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         final long sourceBuildConfigId = programmingExerciseUtilService.buildConfigOf(programmingExercise).getId();
         programmingExercise.setGradingCriteria(ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("InitTitle", "initimp", programmingExercise,
                 courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
@@ -600,8 +600,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         // The grading criteria and build config are deep-copied from the source: the grading criteria are preserved and
         // the build config is a fresh entity (different id).
-        ProgrammingExercise importedWithReferences = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(importedExercise.getId())
-                .orElseThrow();
+        ProgrammingExercise importedWithReferences = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(importedExercise.getId()).orElseThrow();
         assertThat(importedWithReferences.getGradingCriteria()).hasSize(1);
         assertThat(programmingExerciseUtilService.buildConfigOf(importedWithReferences).getId()).isNotEqualTo(sourceBuildConfigId);
 
@@ -641,7 +640,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExerciseBuildConfigRepository.save(buildConfig);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportADDTitle", "addimport", programmingExercise,
                 courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
@@ -672,12 +671,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void testImportProgrammingExercise_withOversizedInheritedBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
         // The source exercise carries an oversized build plan configuration, as could exist for data created before the size limit
         // was introduced. It is written directly to the entity to bypass the create/update validation.
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
         var oversizedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
         oversizedBuildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(oversizedBuildConfig);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportOversizedTitle", "importoversized",
                 programmingExercise, courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
@@ -853,7 +852,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         dockerClientTestService.mockInspectImage(dockerClient);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // the competency belongs to the target course, so nothing but the deliberate drop can keep it out of the database
         Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);

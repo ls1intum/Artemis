@@ -34,10 +34,12 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -67,6 +69,9 @@ public class ExerciseUtilService {
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepo;
@@ -488,5 +493,33 @@ public class ExerciseUtilService {
             plagiarismCase.setVerdictPointDeduction(1);
         }
         plagiarismCaseRepository.save(plagiarismCase);
+    }
+
+    /**
+     * Stores a team assignment configuration for an exercise that is saved already. The configuration holds the key to its
+     * exercise and the exercise carries no mapped association to it, so saving an exercise that carries one in its slot does
+     * not store it.
+     *
+     * @param exercise the saved exercise
+     * @param config   the configuration to store for it, or null for none
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E saveTeamAssignmentConfig(E exercise, TeamAssignmentConfig config) {
+        teamAssignmentConfigRepository.replaceFor(exercise, config);
+        return exercise;
+    }
+
+    /**
+     * Reads the stored team assignment configuration of an exercise onto it, as the flows that report it do. An exercise read
+     * from the database does not carry it.
+     *
+     * @param exercise the exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E attachTeamAssignmentConfig(E exercise) {
+        teamAssignmentConfigRepository.attachTo(exercise);
+        return exercise;
     }
 }

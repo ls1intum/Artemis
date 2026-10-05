@@ -180,7 +180,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         // Exercise.categories is a lazy @ElementCollection NOT covered by the import fetch graph above (the REST
         // import path receives categories in the request payload instead) — reading it on this detached instance
         // in buildVariantSkeleton threw a LazyInitializationException in the first real-CI run. Hydrate separately.
-        programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(source.getId())
+        programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(source.getId())
                 .ifPresent(withCategories -> original.setCategories(withCategories.getCategories()));
 
         ProgrammingExercise newExercise = buildVariantSkeleton(original, plan, request);

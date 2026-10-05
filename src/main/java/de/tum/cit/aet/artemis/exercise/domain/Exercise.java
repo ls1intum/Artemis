@@ -117,7 +117,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "categories")
     private Set<String> categories = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // Not mapped: the team assignment configuration holds the key to its exercise and nothing ever fills this slot by
+    // itself, so reading an exercise never reads the configuration. Attach it with TeamAssignmentConfigRepository.attachTo
+    // where a flow needs it; an empty slot reads as "no team assignment configuration".
+    @Transient
     @JsonIgnoreProperties("exercise")
     private TeamAssignmentConfig teamAssignmentConfig;
 
