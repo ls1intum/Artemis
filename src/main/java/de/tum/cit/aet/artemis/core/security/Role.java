@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.security;
 
+import java.util.Locale;
+
 /**
  * Constants for Spring Security authorities.
  */
@@ -36,7 +38,7 @@ public enum Role {
      * @return the corresponding role
      */
     public static Role fromString(String courseGroup) {
-        return switch (courseGroup.toLowerCase()) {
+        return switch (courseGroup.toLowerCase(Locale.ROOT)) {
             case "students" -> STUDENT;
             case "tutors" -> TEACHING_ASSISTANT;
             case "instructors" -> INSTRUCTOR;

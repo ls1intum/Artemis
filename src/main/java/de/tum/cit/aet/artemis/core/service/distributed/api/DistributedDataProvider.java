@@ -70,7 +70,7 @@ public interface DistributedDataProvider {
      * that need a different lifetime for individual entries use
      * {@link DistributedMap#put(Object, Object, java.time.Duration)}. Maps from {@link #getMap(String)} never expire and
      * reject the per-entry TTL overload, so the expiry requirement is visible at the call site rather than buried in
-     * backend configuration.
+     * provider configuration.
      *
      * @param <K>               key type
      * @param <V>               value type
@@ -93,7 +93,7 @@ public interface DistributedDataProvider {
      * Returns a topic that does not drop messages when a subscriber is briefly disconnected or slow.
      *
      * <p>
-     * {@link #getTopic(String)} is fire-and-forget on every backend, which is fine for state that self-heals on the next
+     * {@link #getTopic(String)} is fire-and-forget on every provider, which is fine for state that self-heals on the next
      * heartbeat (a pause command, a broker reconnect hint). Use a reliable topic where losing a single message has a
      * lasting effect, such as the scheduling messages: a dropped one means an exercise or quiz is never scheduled.
      *
@@ -173,6 +173,30 @@ public interface DistributedDataProvider {
      * @return a set of connected client names, or empty set if running as a client or not supported
      */
     Set<String> getConnectedClientNames();
+
+    /**
+     * The connected client names and the cluster member addresses, read as one snapshot.
+     * <p>
+     * Callers that need both should ask for them here rather than calling the two methods in turn. On a provider where
+     * the two are answered by the same underlying query - Redis answers both from a single {@code CLIENT LIST} - this
+     * is the difference between one round trip and two, and the caller that needs both runs on every build agent
+     * update. Providers that hold the information locally simply return both.
+     *
+     * @return both identifier sets, never null
+     */
+    @NonNull
+    default ClusterMembership getClusterMembership() {
+        return new ClusterMembership(getConnectedClientNames(), getClusterMemberAddresses());
+    }
+
+    /**
+     * Both views the cluster offers of who is currently attached.
+     *
+     * @param connectedClientNames   the client identifiers the provider reports, empty when it cannot tell
+     * @param clusterMemberAddresses the identifiers of the nodes the provider reports as alive
+     */
+    record ClusterMembership(@NonNull Set<String> connectedClientNames, @NonNull Set<String> clusterMemberAddresses) {
+    }
 
     /**
      * Gets the remote addresses each connected client is observed to connect from, keyed by client name.

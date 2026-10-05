@@ -41,17 +41,22 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
     }
 
     /**
-     * Trigger B: a thread's resolution state changed — an answer was marked resolving, un-marked, or
-     * deleted. Ingests the thread while it still holds an answer someone stands behind, and deletes
-     * its entry once none remains.
+     * Trigger B: a thread's resolution state changed — an answer was marked resolving, un-marked, deleted
+     * or edited, or the question itself was edited. Ingests the thread while it still holds an answer
+     * someone stands behind, and deletes its entry once none remains.
+     * <p>
+     * The trust tier of the resulting entry is derived from who <em>endorsed</em> the anchoring answer, as
+     * recorded on the answer when it was marked resolving — not from {@code actor}, who may merely have
+     * edited a typo or un-marked some other answer.
      *
      * @param post             the thread's root post
-     * @param triggeringAnswer the answer whose flag changed, or {@code null} when it was deleted
-     * @param marker           the user who changed the resolution state, if known
+     * @param triggeringAnswer the answer whose flag or content changed, or {@code null} when it was deleted or
+     *                             the change was to the question
+     * @param actor            the user whose action triggered this refresh, if known; notified about the run
      * @param course           the course the thread belongs to
      */
-    public void onThreadResolutionChanged(Post post, @Nullable AnswerPost triggeringAnswer, @Nullable User marker, Course course) {
-        courseMemoryIngestionService.handleResolutionChange(post, triggeringAnswer, marker, course);
+    public void onThreadResolutionChanged(Post post, @Nullable AnswerPost triggeringAnswer, @Nullable User actor, Course course) {
+        courseMemoryIngestionService.handleResolutionChange(post, triggeringAnswer, actor, course);
     }
 
     /**

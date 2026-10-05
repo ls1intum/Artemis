@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
+import java.util.Locale;
+
 import org.springframework.boot.diagnostics.AbstractFailureAnalyzer;
 import org.springframework.boot.diagnostics.FailureAnalysis;
 
@@ -37,7 +39,7 @@ public class InvalidAdminConfigurationFailureAnalyzer extends AbstractFailureAna
                 + "artemis:%n" + "  user-management:%n" + "    internal-admin:%n" + "      username: <choose-a-username>  # %s%n"
                 + "      password: <choose-a-strong-password>  # %s%n%n"
                 + "Do not reuse the example values from the Artemis repository: under the 'prod' profile they are rejected at startup.")
-                .formatted(cause.getPropertyPath().replace("artemis.user-management.", "").replace(".", "_").replace("-", "_").toUpperCase(),
+                .formatted(cause.getPropertyPath().replace("artemis.user-management.", "").replace(".", "_").replace("-", "_").toUpperCase(Locale.ROOT),
                         cause.getPropertyPath().replace("artemis.user-management.", ""), cause.getPropertyPath().replace("artemis.user-management.", ""), cause.getConstraint(),
                         getConstraintForProperty("username"), getConstraintForProperty("password"));
     }

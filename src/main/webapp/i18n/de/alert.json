@@ -3,6 +3,8 @@
         "disconnectedAlert": "Du bist nicht mehr mit dem Artemis Server verbunden. Bitte überprüfe deine Internetverbindung.",
         "outdatedAlert": "<b>Du verwendest eine veraltete Version von Artemis.</b> Bitte aktualisiere Artemis auf die neueste Version.",
         "outdatedAction": "Update",
+        "lazyRouteLoadFailedAlert": "<b>Diese Seite konnte nicht geladen werden.</b> Möglicherweise wurde Artemis inzwischen aktualisiert oder die Verbindung war unterbrochen. Ein Neuladen behebt das in der Regel.",
+        "lazyRouteLoadFailedAction": "Neu laden",
         "alerts": {
             "dismissAll": "Alle verwerfen"
         }

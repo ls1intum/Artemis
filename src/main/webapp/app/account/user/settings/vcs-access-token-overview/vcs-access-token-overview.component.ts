@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { CellTemplateRef, ColumnDef, TumUiButtonComponent, TumUiTableComponent, TumUiTableQueryEvent } from '@tumaet/ui-angular';
+import { CellTemplateRef, ColumnDef, TumAetUiButtonComponent, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -21,13 +21,13 @@ const TYPE_LABEL_KEY_PREFIX = 'artemisApp.userSettings.vcsAccessTokensOverview.t
 /**
  * User-settings page listing the VCS access tokens the current user owns (participation tokens plus repository-scoped staff tokens) and letting them revoke individual tokens.
  * The token secret is never shown here — only display metadata (course, exercise, a short repository type and the repository URI). Revoking a token simply lets the next
- * clone-dialog visit re-mint a fresh one. The list is small, so it is loaded in full and the tum-ui table paginates, sorts, and filters it client-side.
+ * clone-dialog visit re-mint a fresh one. The list is small, so it is loaded in full and the tumaet-ui table paginates, sorts, and filters it client-side.
  */
 @Component({
     selector: 'jhi-vcs-access-token-overview',
     templateUrl: './vcs-access-token-overview.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiTableComponent, TumUiButtonComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    imports: [TumAetUiTableComponent, TumAetUiButtonComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class VcsAccessTokenOverviewComponent implements OnInit {
     private readonly service = inject(VcsAccessTokenOverviewService);
@@ -65,7 +65,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
     protected readonly VcsAccessTokenType = VcsAccessTokenType;
     protected readonly RepositoryType = RepositoryType;
 
-    private lastQuery: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 20 };
+    private lastQuery: TumAetUiTableQueryEvent = { pageIndex: 0, pageSize: 20 };
 
     ngOnInit(): void {
         this.loadTokens();
@@ -92,10 +92,10 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
     }
 
     /**
-     * The tum-ui table emits this whenever its page, sort, or search term changes (and once after first render). Because the full token list is held in memory, the query is
+     * The tumaet-ui table emits this whenever its page, sort, or search term changes (and once after first render). Because the full token list is held in memory, the query is
      * applied client-side.
      */
-    onDataRequest(event: TumUiTableQueryEvent): void {
+    onDataRequest(event: TumAetUiTableQueryEvent): void {
         this.lastQuery = event;
         this.applyQuery(event);
     }
@@ -105,7 +105,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
      *
      * @param event the current table query (page, page size, optional sort and search term)
      */
-    private applyQuery(event: TumUiTableQueryEvent): void {
+    private applyQuery(event: TumAetUiTableQueryEvent): void {
         let filtered = this.allTokens();
         const term = event.searchTerm?.toLowerCase();
         if (term) {

@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.COURSE_MEMORY;
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.GLOBAL_SEARCH_ANSWER;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -13,7 +16,6 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseMemoryStatusDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
-import de.tum.cit.aet.artemis.iris.service.CourseMemoryIngestionService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFa
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -32,9 +35,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -45,8 +51,6 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 public class PyrisStatusUpdateService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
-
-    private static final String GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC = "global-search-answer";
 
     private final PyrisJobService pyrisJobService;
 
@@ -62,9 +66,14 @@ public class PyrisStatusUpdateService {
 
     private final IrisWebsocketService irisWebsocketService;
 
+    private final IrisStruggleInterventionService irisStruggleInterventionService;
+
+    private final IrisStruggleTriggerService irisStruggleTriggerService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService,
+            IrisStruggleInterventionService irisStruggleInterventionService, IrisStruggleTriggerService irisStruggleTriggerService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
@@ -72,6 +81,88 @@ public class PyrisStatusUpdateService {
         this.autonomousTutorService = autonomousTutorService;
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.irisWebsocketService = irisWebsocketService;
+        this.irisStruggleInterventionService = irisStruggleInterventionService;
+        this.irisStruggleTriggerService = irisStruggleTriggerService;
+    }
+
+    /**
+     * Handle a struggle-intervention callback, routed by the authoritative {@code job.intent()}. Each mode commits
+     * on its own terminal frame: {@code confirm_close} when {@code resolved != null}, every other intent when
+     * {@code action != null}. A leading {@code RUNNING} frame must not fire the handler early, because that removes
+     * the job and the real terminal frame would then 403.
+     *
+     * <p>
+     * On the terminal frame the marker is re-stamped first, then the job is removed so the trailing duplicate 403s,
+     * and the marker is released only after the handler returns. An error frame that carries no terminal field
+     * releases the marker through {@code removeJobIfTerminatedElseUpdate}; an intermediate frame keeps the job alive.
+     *
+     * @param job          the struggle-intervention job that is updated
+     * @param statusUpdate the status update received
+     */
+    public void handleStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        // Serialize per job id and re-read the entry under the lock. The resource authenticates by reading the job
+        // before this method, so two concurrent callbacks can hold the same object and would both run the handler.
+        // The re-read is what claims the callback; locking around the stale argument would not.
+        pyrisJobService.runWithJobLock(job.jobId(), () -> {
+            if (!(pyrisJobService.getJob(job.jobId()) instanceof StruggleInterventionJob claimed)) {
+                // Another callback already claimed this job, and the winner owns the side effects.
+                log.debug("Skipping struggle status update for job {} because the job is no longer in the map", job.jobId());
+                return null;
+            }
+            handleClaimedStatusUpdate(claimed, statusUpdate);
+            return null;
+        });
+    }
+
+    // The body of #handleStatusUpdate, running under the job lock on a job re-read from the map. Records token usage first, so spend is
+    // accounted for on every frame, including those that reach no decision handler.
+    private void handleClaimedStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        // Before routing, so every frame is counted exactly once regardless of which branch claims it.
+        irisStruggleInterventionService.recordTokenUsage(job, statusUpdate);
+        boolean close = "confirm_close".equals(job.intent());
+        // Each intent recognises its terminal frame by the field its own contract fills. What that frame triggers
+        // is the same for both, so it is written once.
+        if (close ? statusUpdate.resolved() != null : statusUpdate.action() != null) {
+            // The marker carries whatever is left of its last keep-alive, and the persist and push run while that
+            // drains. Re-stamp it for the handler's own runtime, or a late terminal frame hands a second trigger the
+            // slot mid-handler.
+            // Before the job is dropped, because this talks to the distributed store and can fail: a failure has to
+            // leave the callback retriable rather than strand a run whose credential is already gone.
+            pyrisJobService.refreshStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+            // Drop the job entry so the trailing duplicate is rejected. Removing it second costs nothing: a
+            // concurrent callback drops on the re-read, and a concurrent trigger is held off by the marker.
+            pyrisJobService.removeJob(job);
+            try {
+                if (close) {
+                    irisStruggleInterventionService.handleConfirmClose(job, statusUpdate);
+                }
+                else {
+                    irisStruggleInterventionService.handleDecision(job, statusUpdate);
+                }
+            }
+            catch (Exception e) {
+                // Both handlers complete their own early returns, but an unexpected failure would escape after the
+                // job was already removed and leave the client hanging. Complete it here, before the release.
+                log.error("Handling the terminal {} frame failed for struggle job {} exercise {} user {}; emitting terminal completion", close ? "confirm_close" : "decide",
+                        job.jobId(), job.exerciseId(), job.userId(), e);
+                irisStruggleTriggerService.emitTerminalCompletion(job);
+            }
+            finally {
+                // Free the marker only after the handler returns; earlier reopens the re-trigger race.
+                pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+            }
+        }
+        else if (statusUpdate.runState() != null && removeJobIfTerminatedElseUpdate(statusUpdate.runState(), job)) {
+            // Non-decision terminal callback: the job left the map, so release the marker token-conditionally
+            // rather than waiting for the TTL self-heal.
+            // Deliberately not resolveRunState, which maps a missing run state to FAILED: a frame without one must
+            // not drop the job before the real decision callback arrives.
+            // The run produced no decision, so complete the client's in-flight request here; every other drop path in
+            // the handlers already emits its completion frame for exactly this reason.
+            irisStruggleTriggerService.emitTerminalCompletion(job);
+            pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+        }
+        // else: non-terminal intermediate frame -> job kept alive (updateJob), marker held for the terminal frame.
     }
 
     /**
@@ -85,7 +176,10 @@ public class PyrisStatusUpdateService {
         var runState = resolveRunState(statusUpdate.runState(), job);
         var normalizedStatusUpdate = withRunState(statusUpdate, runState);
         if (statusUpdate.partialResult() != null && runState == PyrisRunState.RUNNING) {
-            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+            if (!irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate)) {
+                // The session no longer exists, so no later callback of this job can be delivered either.
+                pyrisJobService.removeJob(job);
+            }
             return;
         }
         if (statusUpdate.partialResult() != null) {
@@ -94,6 +188,11 @@ public class PyrisStatusUpdateService {
         }
 
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, normalizedStatusUpdate);
+        if (updatedJob == null) {
+            // The session no longer exists, so no later callback of this job can be delivered either.
+            pyrisJobService.removeJob(job);
+            return;
+        }
 
         removeJobIfTerminatedElseUpdate(runState, updatedJob);
     }
@@ -130,12 +229,28 @@ public class PyrisStatusUpdateService {
         boolean isThinking = runState == PyrisRunState.RUNNING;
 
         if (isThinking) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
+            if (statusUpdate.partialResult() != null) {
+                // Streamed draft of the answer while the LLM generates; the terminal update carries the authoritative answer.
+                // An empty partialResult is the provider's retry-clear signal for a stale draft (see PartialResultSender on
+                // the Pyris side); it is forwarded as clearDraft=true with partialResult omitted, since an empty string
+                // would not survive this DTO's NON_EMPTY serialization and reach the client indistinguishable from absent.
+                boolean clearDraft = statusUpdate.partialResult().isEmpty();
+                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(), new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null,
+                        clearDraft ? null : statusUpdate.partialResult(), statusUpdate.partialSeq(), clearDraft));
+            }
+            else {
+                // No streamed text yet: forward the stage name (and, once found, the distinct course names) so
+                // the client can show what is actually happening instead of one static "thinking" message for
+                // the whole wait. Both are null/empty for an older Pyris that never sends them, which the client
+                // already falls back on its own generic message for.
+                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(),
+                        IrisGlobalSearchAnswerWebsocketDTO.thinking(job.jobId(), statusUpdate.stage(), statusUpdate.stageSources()));
+            }
             pyrisJobService.updateJob(job);
         }
         else if (isTerminal) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
-                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources()));
+            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(), new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(),
+                    statusUpdate.sources(), null, null, statusUpdate.entitySources(), false, runState == PyrisRunState.FAILED, null, null, statusUpdate.citationSourceTypes()));
             pyrisJobService.removeJob(job);
         }
         else {
@@ -152,14 +267,23 @@ public class PyrisStatusUpdateService {
      *
      * @param runState the run state of the status update
      * @param job      the job to remove or to update
+     * @return {@code true} if the job was terminal and removed, {@code false} if it was kept alive and updated
      */
-    private void removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
-        if (runState.isTerminal()) {
+    private boolean removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
+        var isDone = runState.isTerminal();
+        if (isDone) {
             pyrisJobService.removeJob(job);
         }
         else {
             pyrisJobService.updateJob(job);
+            if (job instanceof StruggleInterventionJob struggleJob) {
+                // The job entry just got a fresh TTL; the in-flight reservation would otherwise keep its original
+                // one and expire under a long-running run, letting a second trigger reserve the same pair while
+                // this one is still going. Keep the two lifetimes together.
+                pyrisJobService.refreshStruggleInFlightMarker(struggleJob.jobId(), struggleJob.userId(), struggleJob.exerciseId());
+            }
         }
+        return isDone;   // lets the struggle overload release the in-flight marker on a terminal non-decision callback
     }
 
     /**
@@ -226,7 +350,7 @@ public class PyrisStatusUpdateService {
         if (runState.isTerminal() && job.userLogin() != null) {
             var status = runState == PyrisRunState.FINISHED ? IrisCourseMemoryStatusDTO.completed(job.operation(), job.courseId(), job.postId())
                     : IrisCourseMemoryStatusDTO.failed(job.operation(), job.courseId(), job.postId(), statusUpdate.error() != null ? statusUpdate.error().message() : null);
-            irisWebsocketService.send(job.userLogin(), CourseMemoryIngestionService.COURSE_MEMORY_TOPIC_PREFIX + job.courseId(), status);
+            irisWebsocketService.send(job.userLogin(), COURSE_MEMORY.at(job.courseId()), status);
         }
         removeJobIfTerminatedElseUpdate(runState, job);
     }
@@ -240,6 +364,11 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(TutorSuggestionJob job, TutorSuggestionStatusUpdateDTO statusUpdate) {
         var runState = resolveRunState(statusUpdate.runState(), job);
         var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, withRunState(statusUpdate, runState));
+        if (updatedJob == null) {
+            // The session no longer exists, so no later callback of this job can be delivered either.
+            pyrisJobService.removeJob(job);
+            return;
+        }
 
         removeJobIfTerminatedElseUpdate(runState, updatedJob);
     }
@@ -271,7 +400,7 @@ public class PyrisStatusUpdateService {
         }
         return new PyrisChatStatusUpdateDTO(statusUpdate.result(), runState, statusUpdate.error(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
                 statusUpdate.accessedMemories(), statusUpdate.createdMemories(), statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(),
-                statusUpdate.activitySeq(), statusUpdate.finalResult());
+                statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.compaction());
     }
 
     private PyrisCompetencyStatusUpdateDTO withRunState(PyrisCompetencyStatusUpdateDTO statusUpdate, PyrisRunState runState) {

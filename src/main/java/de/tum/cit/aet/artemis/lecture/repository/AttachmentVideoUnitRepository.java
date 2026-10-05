@@ -4,13 +4,10 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.persistence.LockModeType;
-
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -91,14 +88,6 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             """)
     Optional<AttachmentVideoUnit> findWithAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT attachmentVideoUnit
-            FROM AttachmentVideoUnit attachmentVideoUnit
-            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
-            """)
-    Optional<AttachmentVideoUnit> findByIdForUpdate(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
-
     /**
      * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet.
      * Used by the backfill scheduler to process legacy units that existed before the processing pipeline was deployed.
@@ -111,6 +100,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             SELECT avu FROM AttachmentVideoUnit avu
             JOIN avu.lecture l
             JOIN l.course c
+            LEFT JOIN avu.attachment attachment
             LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = avu.id
             WHERE ps.id IS NULL
                 AND (c.startDate <= :now OR c.startDate IS NULL)
@@ -120,7 +110,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)
@@ -131,6 +121,19 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
      * This supports a bounded rollout backfill for units created before retryable synchronization
      * was introduced.
      *
+     * <p>
+     * The attachment is joined explicitly rather than navigated to as {@code avu.attachment.link}, which is an implicit
+     * inner join: it dropped every unit without an attachment before the surrounding {@code OR} was evaluated, so a unit
+     * carrying only a video was never backfilled.
+     *
+     * <p>
+     * Only units whose content processing finished are considered. Pyris answers a synchronization for anything else
+     * with "lecture unit has not been ingested", so creating a state for one manufactures work that can only fail:
+     * before this condition existed, every eligible unit that had never been ingested was pushed once an hour for as
+     * long as its course stayed active. Reaching {@code DONE} is a good indication rather than a guarantee, since a
+     * unit whose course has Iris disabled also completes without being ingested; such a unit reports its
+     * synchronization as skipped instead of failing.
+     *
      * @param now      the current time for determining active courses
      * @param pageable pagination to limit results
      * @return attachment video units without an Iris synchronization state
@@ -139,8 +142,14 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             SELECT avu FROM AttachmentVideoUnit avu
             JOIN avu.lecture l
             JOIN l.course c
+            LEFT JOIN avu.attachment attachment
             LEFT JOIN IrisLectureUnitSyncState syncState ON syncState.lectureUnitId = avu.id AND syncState.visibilityHash IS NOT NULL
             WHERE syncState.id IS NULL
+                AND EXISTS (
+                    SELECT 1 FROM LectureUnitProcessingState processingState
+                    WHERE processingState.lectureUnit.id = avu.id
+                        AND processingState.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE
+                )
                 AND (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
@@ -148,7 +157,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)

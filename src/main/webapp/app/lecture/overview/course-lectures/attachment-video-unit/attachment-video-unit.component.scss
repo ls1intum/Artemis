@@ -17,6 +17,13 @@ jhi-attachment-video-unit {
 }
 
 jhi-attachment-video-unit {
+    .lecture-sync {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 0;
+    }
+
     .lecture-sync-toggle {
         display: flex;
         align-items: center;
@@ -29,6 +36,12 @@ jhi-attachment-video-unit {
         font-size: 0.95rem;
         line-height: 1.3;
         color: var(--bs-body-color);
+    }
+
+    .lecture-sync__notice {
+        font-size: 0.8rem;
+        line-height: 1.3;
+        color: var(--p-text-muted-color);
     }
 
     .sidebar-content {

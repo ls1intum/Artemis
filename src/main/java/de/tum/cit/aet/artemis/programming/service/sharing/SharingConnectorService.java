@@ -135,6 +135,9 @@ public class SharingConnectorService {
 
     private static final Logger log = LoggerFactory.getLogger(SharingConnectorService.class);
 
+    /** A bearer token in an authorization header, with the token itself as the one group. */
+    private static final Pattern BEARER_TOKEN = Pattern.compile("^Bearer\\s+(\\S+)$");
+
     /**
      * Base URL used by Artemis to call back into the Sharing Platform.
      * <p>
@@ -258,8 +261,7 @@ public class SharingConnectorService {
 
             return false;
         }
-        Pattern pattern = Pattern.compile("^Bearer\\s+(\\S+)$");
-        Matcher matcher = pattern.matcher(apiKey);
+        Matcher matcher = BEARER_TOKEN.matcher(apiKey);
         if (matcher.matches()) {
             apiKey = matcher.group(1);
         }

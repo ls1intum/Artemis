@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -68,6 +69,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 // ExecutionMode.SAME_THREAD ensures that all tests within this class are executed sequentially in the same thread, rather than in parallel or in a different thread.
@@ -93,7 +95,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
      */
     private static final Duration EXTERNAL_BUILD_TIMEOUT = Duration.ofMinutes(5);
 
-    private static File java17Home;
+    /**
+     * The JDK the template builds run on. The Java templates compile for Java 25, which is the JDK this test runs on as well.
+     */
+    private static final File JAVA_HOME = new File(System.getProperty("java.home"));
 
     private ProgrammingExercise exercise;
 
@@ -116,7 +121,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
             var lines = runProcess(new ProcessBuilder(mvnExecutable, "-version"));
             String prefix = "maven home:";
-            Optional<String> home = lines.stream().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
+            Optional<String> home = lines.stream().filter(line -> line.toLowerCase(Locale.ROOT).startsWith(prefix)).findFirst();
             home.ifPresent(homeLocation -> System.setProperty("maven.home", homeLocation.substring(prefix.length()).strip()));
         }
         catch (Exception e) {
@@ -129,67 +134,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         String mavenHome = System.getProperty("maven.home");
 
         return m2Home != null || mavenHome != null;
-    }
-
-    @BeforeAll
-    static void findAndSetJava17Home() throws Exception {
-        if (Os.isFamily(Os.FAMILY_UNIX) || Os.isFamily(Os.FAMILY_MAC)) {
-            findAndSetJava17UnixSystems();
-        }
-        else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            findAndSetJava17Windows();
-        }
-    }
-
-    private static void findAndSetJava17UnixSystems() throws Exception {
-        // Use which to find all java installations on Linux
-        var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
-        for (String path : javaInstallations) {
-            File binFolder = Path.of(path).toFile().getParentFile();
-            if (checkJavaVersion(binFolder, "./java", "-version")) {
-                return;
-            }
-        }
-
-        // Mac systems have additional locations where Java could potentially be
-        if (Os.isFamily(Os.FAMILY_MAC)) {
-            findAndSetJava17Mac();
-        }
-    }
-
-    private static void findAndSetJava17Mac() throws Exception {
-        var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
-        for (String path : alternativeInstallations) {
-            File binFolder = Path.of(path).toFile().getParentFile();
-            binFolder = binFolder.toPath().resolve("Home/bin").toFile();
-            if (checkJavaVersion(binFolder, "./java", "-version")) {
-                return;
-            }
-        }
-    }
-
-    private static void findAndSetJava17Windows() {
-        // Use PATH to find all java installations on windows
-        String[] path = System.getenv("PATH").split(";");
-        Arrays.stream(path).map(Path::of).filter(p -> p.endsWith("bin")).filter(Files::isDirectory).filter(binDir -> Files.exists(binDir.resolve("java.exe"))).forEach(binDir -> {
-            try {
-                checkJavaVersion(binDir.toFile(), "cmd", "/c", "java.exe", "-version");
-            }
-            catch (Exception e) {
-                // ignore: we still continue to find another Java installation
-            }
-        });
-    }
-
-    private static boolean checkJavaVersion(File binFolder, String... command) throws Exception {
-        ProcessBuilder processBuilder = new ProcessBuilder(command).directory(binFolder);
-        var version = runProcess(processBuilder);
-        if (!version.isEmpty() && version.getFirst().contains("version \"17")) {
-            java17Home = binFolder.getParentFile(); // JAVA_HOME/bin/java
-            log.debug("Using {} as JAVA_HOME.", java17Home);
-            return true;
-        }
-        return false;
     }
 
     private static List<String> runProcess(ProcessBuilder processBuilder) throws Exception {
@@ -511,7 +455,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         if (projectType == null || projectType.isMaven()) {
             assumeTrue(isMavenHomeSet(), "Could not find Maven. Skipping execution of template tests.");
         }
-        assumeTrue(java17Home != null, "Could not find Java 17. Skipping execution of template tests.");
     }
 
     /**
@@ -528,8 +471,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class,
-                        HttpStatus.CREATED);
+                ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                        CreateProgrammingExerciseDTO.of(exercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
                 log.info("Successfully created exercise on attempt {}/{}", attempt, maxAttempts);
                 return createdExercise;
             }
@@ -596,6 +539,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         String uniqueId = UUID.randomUUID().toString().substring(0, 8).replace("-", "");
         String originalShortName = exercise.getShortName();
         exercise.setShortName(originalShortName + uniqueId);
+        // The factory already derived a project key (and the test repository URI) from the original short name. The
+        // server derives the key from course and short name itself and never takes it from the request body, so the
+        // fixture has to re-derive it here or the connector mocks below would be registered for the stale key.
+        exercise.forceNewProjectKey();
         log.debug("Running test with unique exercise short name: {}", exercise.getShortName());
 
         exercise.setProgrammingLanguage(language);
@@ -685,7 +632,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         log.info("Using isolated Maven local repository: {}", localMavenRepo);
 
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
-        mvnRequest.setJavaHome(java17Home);
+        mvnRequest.setJavaHome(JAVA_HOME);
         mvnRequest.setPomFile(testRepositoryPath.toFile());
         mvnRequest.addArgs(List.of("clean", "test", "-Dmaven.repo.local=" + localMavenRepo.toAbsolutePath(), "-B"));
         mvnRequest.setShowVersion(true);
@@ -820,7 +767,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             future = executor.submit(() -> {
                 try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepositoryPath.toFile()).useBuildDistribution().connect()) {
                     BuildLauncher launcher = connector.newBuild();
-                    launcher.setJavaHome(java17Home);
+                    launcher.setJavaHome(JAVA_HOME);
                     // Isolate Gradle user home to avoid transform cache corruption from parallel builds
                     launcher.addArguments("-g", gradleUserHome.toAbsolutePath().toString());
                     // Resolve through the Maven Central mirror instead of Maven Central itself, which rate-limits CI runners.

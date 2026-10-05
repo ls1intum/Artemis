@@ -15,13 +15,17 @@
 
     <p>
         <!-- th:text rather than th:utext: the address is user-supplied, so it must be escaped, not rendered as markup -->
-        <span th:text="#{email.notification.emailChanged.text(${newEmail})}">
+        <span th:if="${!emailRemoved}" th:text="#{email.notification.emailChanged.text(${newEmail})}">
             The e-mail address of your Artemis account was changed.
+        </span>
+        <span th:if="${emailRemoved}" th:text="#{email.notification.emailRemoved.text}">
+            The e-mail address was removed from your Artemis account.
         </span>
     </p>
 
     <p>
-        <span th:text="#{email.notification.emailChanged.actionRequired}">If you did not make this change, someone else may have access to your account. Password reset messages now go to the new address, so please contact support immediately</span>:
+        <span th:if="${!emailRemoved}" th:text="#{email.notification.emailChanged.actionRequired}">If you did not make this change, someone else may have access to your account. Password reset messages now go to the new address, so please contact support immediately</span>
+        <span th:if="${emailRemoved}" th:text="#{email.notification.emailRemoved.actionRequired}">If you did not make this change, someone else may have access to your account. Contact your Artemis administrator immediately</span>:
 
         <a th:with="url=(@{|${baseUrl}/|})" th:href="${url}" th:text="${url}">Artemis</a>
     </p>

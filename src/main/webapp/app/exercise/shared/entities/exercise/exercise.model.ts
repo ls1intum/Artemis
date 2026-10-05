@@ -5,7 +5,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -102,7 +101,6 @@ export abstract class Exercise implements BaseEntity {
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
     public allowComplaintsForAutomaticAssessments?: boolean;
-    public allowFeedbackRequests?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
@@ -116,7 +114,6 @@ export abstract class Exercise implements BaseEntity {
     public tutorParticipations?: TutorParticipation[];
     public course?: Course;
     public exampleSubmissions?: ExampleSubmission[];
-    public attachments?: Attachment[];
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
@@ -147,7 +144,6 @@ export abstract class Exercise implements BaseEntity {
 
     // helper attributes
     public secondCorrectionEnabled = false;
-    public feedbackSuggestionModule?: string;
     public isAtLeastTutor?: boolean;
     public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
@@ -156,7 +152,6 @@ export abstract class Exercise implements BaseEntity {
     public dueDateError?: boolean;
     public startDateError?: boolean;
     public exampleSolutionPublicationDateError?: boolean;
-    public exampleSolutionPublicationDateWarning?: boolean;
     public loading?: boolean;
     public numberOfParticipationsWithRatedResult?: number;
     public numberOfSuccessfulParticipations?: number;
@@ -178,7 +173,6 @@ export abstract class Exercise implements BaseEntity {
         this.exampleSolutionPublicationDateError = false;
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
-        this.allowFeedbackRequests = false; // default value;
     }
 
     /**
@@ -298,7 +292,6 @@ export function resetForImport(exercise: Exercise) {
 
     // without dates set, they can only be false
     exercise.allowComplaintsForAutomaticAssessments = false;
-    exercise.allowFeedbackRequests = false;
 
     exercise.competencyLinks = [];
 }

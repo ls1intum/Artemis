@@ -5,7 +5,8 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
+
+import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
@@ -51,7 +52,9 @@ public record Lti13LaunchRequest(String iss, String sub, String deploymentId, St
         if (resourceLinkClaim != null) {
             JsonNode resourceLinkJson = JsonObjectMapper.get().convertValue(resourceLinkClaim, JsonNode.class);
             JsonNode idNode = resourceLinkJson.get("id");
-            return idNode != null ? idNode.asText() : null;
+            // asString(null): the claim comes from a third-party LMS, and Jackson 3 throws on a non-string node where
+            // Jackson 2's asText() returned "".
+            return idNode != null ? idNode.asString(null) : null;
         }
         return null;
     }

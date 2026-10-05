@@ -2,7 +2,7 @@ import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, sig
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -25,7 +25,6 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
@@ -35,7 +34,6 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -46,6 +44,9 @@ import { InformationBox, InformationBoxComponent, InformationBoxContent } from '
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
+/** Shown when a deep link points at a lecture unit that no longer exists. Worded for the mechanism rather than for one caller, since a citation is only one way to get here. */
+const DEEP_LINK_UNIT_GONE_ERROR_KEY = 'artemisApp.lectureUnit.deepLink.unitGone';
+
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
     completed: boolean;
@@ -54,7 +55,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss', '../../../shared/course-lectures/course-lectures.scss'],
+    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss'],
     imports: [
         TranslateDirective,
         ExerciseUnitComponent,
@@ -64,9 +65,7 @@ export interface LectureUnitCompletionEvent {
         FaIconComponent,
         CourseSidebarToggleButtonComponent,
         DiscussionSectionComponent,
-        UpperCasePipe,
         ArtemisDatePipe,
-        ArtemisTranslatePipe,
         MarkdownDirective,
         IrisBaseChatbotComponent,
         IrisLogoComponent,
@@ -87,6 +86,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly destroyRef = inject(DestroyRef);
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
+    private readonly courseStorageService = inject(CourseStorageService);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -98,7 +98,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
 
     lectureId?: number;
-    private readonly courseStorageService = inject(CourseStorageService);
 
     readonly courseId = signal<number | undefined>(undefined);
 
@@ -152,6 +151,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
+    /**
+     * Whether the deep link asks for the combined view rather than the unit on the page. Set by the Iris point-out
+     * markers, which point at a position Iris named in that view; a lecture citation leaves it off and stays inline.
+     */
+    readonly targetCombinedView = signal<boolean>(false);
 
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
@@ -208,13 +212,15 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
                 const pageNum = Number(params['page']);
                 this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
+                this.targetCombinedView.set(params['combined'] === 'true');
             } else {
                 this.targetUnitId.set(undefined);
                 this.targetVideoTimestamp.set(undefined);
                 this.targetPdfPage.set(undefined);
+                this.targetCombinedView.set(false);
             }
 
-            if (this.lectureUnits().length > 0) {
+            if (this.isRequestedLectureLoaded()) {
                 this.ensureValidDeepLinkTargets();
             }
         });
@@ -234,12 +240,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                     next: (findLectureResult) => {
                         const lecture = findLectureResult.body!;
                         this.lecture.set(lecture);
-                        lecture.attachments?.forEach((attachment) => {
-                            if (attachment.link) {
-                                attachment.linkUrl = addPublicFilePrefix(attachment.link);
-                            }
-                        });
-
                         this.lectureUnits.set(lecture.lectureUnits ?? []);
                         this.ensureValidDeepLinkTargets();
                         this.hasPdfLectureUnit.set(
@@ -314,6 +314,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** The router updates its snapshot before emitting query parameters and then lecture parameters. */
+    private isRequestedLectureLoaded(): boolean {
+        return this.lecture()?.id === Number(this.activatedRoute.snapshot.params['lectureId']);
+    }
+
     private ensureValidDeepLinkTargets(): void {
         const targetUnitId = this.targetUnitId();
         if (!targetUnitId) {
@@ -322,9 +327,19 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         const targetUnit = this.lectureUnits().find((unit) => unit.id === targetUnitId);
         if (!targetUnit) {
+            // While switching from one lecture to another the previous lecture's units are still in the signal, so every target looks missing for a moment. Keep the target
+            // pending until the requested lecture has loaded — clearing it here would leave the deep link with nothing to jump to once the right units arrive, and the unit
+            // that is genuinely gone could never be reported.
+            if (!this.isRequestedLectureLoaded()) {
+                return;
+            }
+            // Asking for a unit that is gone is worth saying out loud, since landing on the lecture with nothing highlighted otherwise looks like the link simply did
+            // nothing. Reaching this point already means a unit was asked for, so the request to navigate to one is the signal — no separate flag is needed to mark it.
+            this.alertService.error(DEEP_LINK_UNIT_GONE_ERROR_KEY);
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);
+            this.targetCombinedView.set(false);
             return;
         }
 

@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +18,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactDTO;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
-import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionMode;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanService;
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
+import de.tum.cit.aet.artemis.admin.dto.CleanupConfigurationDTO;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
@@ -34,13 +41,16 @@ import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.repository.CleanupJobExecutionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackCleanupRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackMessageCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.LongFeedbackTextCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.PlagiarismComparisonCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.RatingCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.ResultCleanupRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.ScaFeedbackCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.StudentScoreCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.SubmissionVersionCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TeamScoreCleanupRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.TestCaseFeedbackCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseDataRetentionService;
@@ -65,6 +75,19 @@ public class DataCleanupService {
 
     private final FeedbackCleanupRepository feedbackCleanupRepository;
 
+    private final TestCaseFeedbackCleanupRepository testCaseFeedbackCleanupRepository;
+
+    private final ScaFeedbackCleanupRepository scaFeedbackCleanupRepository;
+
+    private final FeedbackMessageCleanupRepository feedbackMessageCleanupRepository;
+
+    /**
+     * A message row is committed before the feedback rows that reference it (there is no surrounding transaction), so
+     * only messages that have been unreferenced for longer than this are collected. The count preview uses the same
+     * window, otherwise it would offer to delete rows the deletion then spares.
+     */
+    private static final int FEEDBACK_MESSAGE_GRACE_PERIOD_DAYS = 1;
+
     private final TextBlockCleanupRepository textBlockCleanupRepository;
 
     private final LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository;
@@ -79,7 +102,9 @@ public class DataCleanupService {
 
     private final CourseDataRetentionService courseDataRetentionService;
 
-    private final UserService userService;
+    private final PermanentUserDeletionService permanentUserDeletionService;
+
+    private final UserDeletionPlanService userDeletionPlanService;
 
     private final UserRepository userRepository;
 
@@ -102,8 +127,10 @@ public class DataCleanupService {
             TextBlockCleanupRepository textBlockCleanupRepository, LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository,
             StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository,
             SubmissionVersionCleanupRepository submissionVersionCleanupRepository, DataCleanupProperties dataCleanupProperties,
-            CourseDataRetentionService courseDataRetentionService, UserService userService, UserRepository userRepository, MailSendingService mailSendingService,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, UserActivityService userActivityService) {
+            CourseDataRetentionService courseDataRetentionService, PermanentUserDeletionService permanentUserDeletionService, UserDeletionPlanService userDeletionPlanService,
+            UserRepository userRepository, MailSendingService mailSendingService, Optional<PlagiarismCaseApi> plagiarismCaseApi, UserActivityService userActivityService,
+            TestCaseFeedbackCleanupRepository testCaseFeedbackCleanupRepository, ScaFeedbackCleanupRepository scaFeedbackCleanupRepository,
+            FeedbackMessageCleanupRepository feedbackMessageCleanupRepository) {
         this.userActivityService = userActivityService;
         this.resultCleanupRepository = resultCleanupRepository;
         this.ratingCleanupRepository = ratingCleanupRepository;
@@ -117,28 +144,24 @@ public class DataCleanupService {
         this.submissionVersionCleanupRepository = submissionVersionCleanupRepository;
         this.dataCleanupProperties = dataCleanupProperties;
         this.courseDataRetentionService = courseDataRetentionService;
-        this.userService = userService;
+        this.permanentUserDeletionService = permanentUserDeletionService;
+        this.userDeletionPlanService = userDeletionPlanService;
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
         this.plagiarismCaseApi = plagiarismCaseApi;
+        this.testCaseFeedbackCleanupRepository = testCaseFeedbackCleanupRepository;
+        this.scaFeedbackCleanupRepository = scaFeedbackCleanupRepository;
+        this.feedbackMessageCleanupRepository = feedbackMessageCleanupRepository;
     }
 
     /**
      * Deletes orphaned entities that are no longer associated with valid results or participations.
-     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     * This is everything hanging off a result that has lost its submission or participation, plus scores naming
+     * neither a student nor a team, ratings whose result went the same way, and unreferenced feedback messages.
      *
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteOrphans() {
-        int deletedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForOrphanedFeedback();
-        log.info("Deleted {} orphaned long feedback texts", deletedLongFeedbackTexts);
-
-        int deletedTextBlocks = textBlockCleanupRepository.deleteTextBlockForEmptyFeedback();
-        log.info("Deleted {} text blocks for empty feedback", deletedTextBlocks);
-
-        int deletedOrphanFeedback = feedbackCleanupRepository.deleteOrphanFeedback();
-        log.info("Deleted {} orphaned feedback entries", deletedOrphanFeedback);
-
         int deletedOrphanStudentScores = studentScoreCleanupRepository.deleteOrphanStudentScore();
         log.info("Deleted {} orphaned student scores", deletedOrphanStudentScores);
 
@@ -153,6 +176,18 @@ public class DataCleanupService {
 
         int deletedFeedbackForOrphanResults = feedbackCleanupRepository.deleteFeedbackForOrphanResults();
         log.info("Deleted {} feedback entries for orphan results", deletedFeedbackForOrphanResults);
+
+        int deletedTestCaseFeedbackForOrphanResults = testCaseFeedbackCleanupRepository.deleteTestCaseFeedbackForOrphanResults();
+        log.info("Deleted {} test case feedback entries for orphan results", deletedTestCaseFeedbackForOrphanResults);
+
+        int deletedScaFeedbackForOrphanResults = scaFeedbackCleanupRepository.deleteScaFeedbackForOrphanResults();
+        log.info("Deleted {} SCA feedback entries for orphan results", deletedScaFeedbackForOrphanResults);
+
+        // the one-day grace period protects messages created by an in-flight build-result transaction
+        // whose referencing feedback rows are not committed yet (the columns carry no foreign key)
+        int deletedUnreferencedFeedbackMessages = feedbackMessageCleanupRepository
+                .deleteUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(FEEDBACK_MESSAGE_GRACE_PERIOD_DAYS));
+        log.info("Deleted {} unreferenced feedback messages", deletedUnreferencedFeedbackMessages);
 
         int deletedOrphanRatings = ratingCleanupRepository.deleteOrphanRating();
         log.info("Deleted {} orphan ratings", deletedOrphanRatings);
@@ -179,10 +214,6 @@ public class DataCleanupService {
         // Delete all plagiarism elements that are part of the plagiarism submissions
         int deletedPlagiarismElements = plagiarismComparisonCleanupRepository.deletePlagiarismSubmissionElementsByComparisonIdsIn(pcIds);
         log.info("Deleted {} plagiarism elements that are part of the plagiarism submissions", deletedPlagiarismElements);
-
-        // NOTE: we need to set submissionA and submissionB to null first to avoid foreign key constraints
-        int updatedPlagiarismComparisons = plagiarismComparisonCleanupRepository.setPlagiarismSubmissionsToNullInComparisonsWithIds(pcIds);
-        log.info("Updated {} plagiarism comparisons to set plagiarism submissions to null", updatedPlagiarismComparisons);
 
         // Delete all plagiarism submissions that reference plagiarism comparisons
         int deletedPlagiarismSubmissions = plagiarismComparisonCleanupRepository.deletePlagiarismSubmissionsByComparisonIdsIn(pcIds);
@@ -216,6 +247,12 @@ public class DataCleanupService {
         int deletedFeedback = feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
         log.info("Deleted {} feedback entries for non-rated results between {} and {}", deletedFeedback, deleteFrom, deleteTo);
 
+        int deletedTestCaseFeedback = testCaseFeedbackCleanupRepository.deleteOldNonRatedTestCaseFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
+        log.info("Deleted {} test case feedback entries for non-rated results between {} and {}", deletedTestCaseFeedback, deleteFrom, deleteTo);
+
+        int deletedScaFeedback = scaFeedbackCleanupRepository.deleteOldNonRatedScaFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
+        log.info("Deleted {} SCA feedback entries for non-rated results between {} and {}", deletedScaFeedback, deleteFrom, deleteTo);
+
         return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.NON_RATED_RESULTS, deleteFrom, deleteTo));
     }
 
@@ -237,6 +274,12 @@ public class DataCleanupService {
         int deletedFeedback = feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         log.info("Deleted {} feedback entries for rated results between {} and {}", deletedFeedback, deleteFrom, deleteTo);
 
+        int deletedTestCaseFeedback = testCaseFeedbackCleanupRepository.deleteOldTestCaseFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        log.info("Deleted {} test case feedback entries for rated results between {} and {}", deletedTestCaseFeedback, deleteFrom, deleteTo);
+
+        int deletedScaFeedback = scaFeedbackCleanupRepository.deleteOldScaFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        log.info("Deleted {} SCA feedback entries for rated results between {} and {}", deletedScaFeedback, deleteFrom, deleteTo);
+
         return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
     }
 
@@ -249,25 +292,24 @@ public class DataCleanupService {
 
     /**
      * Counts orphaned entities that are no longer associated with valid results or participations.
-     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     * This is everything hanging off a result that has lost its submission or participation, plus scores naming
+     * neither a student nor a team, ratings whose result went the same way, and unreferenced feedback messages.
      *
      * @return an {@link OrphanCleanupCountDTO} representing the counts of orphaned entities that would be deleted
      */
     public OrphanCleanupCountDTO countOrphans() {
-        int orphanFeedbackCount = feedbackCleanupRepository.countOrphanFeedback();
-        int orphanLongFeedbackTextCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForOrphanedFeedback();
-        int orphanTextBlockCount = textBlockCleanupRepository.countTextBlockForEmptyFeedback();
         int orphanStudentScoreCount = studentScoreCleanupRepository.countOrphanStudentScore();
         int orphanTeamScoreCount = teamScoreCleanupRepository.countOrphanTeamScore();
         int orphanLongFeedbackTextForOrphanResultsCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForOrphanResult();
         int orphanTextBlockForOrphanResultsCount = textBlockCleanupRepository.countTextBlockForOrphanResults();
-        int orphanFeedbackForOrphanResultsCount = feedbackCleanupRepository.countFeedbackForOrphanResults();
+        int orphanFeedbackForOrphanResultsCount = feedbackCleanupRepository.countFeedbackForOrphanResults()
+                + testCaseFeedbackCleanupRepository.countTestCaseFeedbackForOrphanResults() + scaFeedbackCleanupRepository.countScaFeedbackForOrphanResults();
         int orphanRatingCount = ratingCleanupRepository.countOrphanRating();
         int orphanResultsWithoutParticipationCount = resultCleanupRepository.countResultWithoutParticipationAndSubmission();
+        int orphanFeedbackMessageCount = feedbackMessageCleanupRepository.countUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(FEEDBACK_MESSAGE_GRACE_PERIOD_DAYS));
 
-        return new OrphanCleanupCountDTO(orphanFeedbackCount, orphanLongFeedbackTextCount, orphanTextBlockCount, orphanStudentScoreCount, orphanTeamScoreCount,
-                orphanFeedbackForOrphanResultsCount, orphanLongFeedbackTextForOrphanResultsCount, orphanTextBlockForOrphanResultsCount, orphanRatingCount,
-                orphanResultsWithoutParticipationCount);
+        return new OrphanCleanupCountDTO(orphanStudentScoreCount, orphanTeamScoreCount, orphanFeedbackForOrphanResultsCount, orphanLongFeedbackTextForOrphanResultsCount,
+                orphanTextBlockForOrphanResultsCount, orphanRatingCount, orphanResultsWithoutParticipationCount, orphanFeedbackMessageCount);
     }
 
     /**
@@ -300,7 +342,9 @@ public class DataCleanupService {
     public NonLatestNonRatedResultsCleanupCountDTO countNonLatestNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         int longFeedbackTextCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         int textBlockCount = textBlockCleanupRepository.countTextBlockForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        int feedbackCount = feedbackCleanupRepository.countOldNonRatedFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
+        int feedbackCount = feedbackCleanupRepository.countOldNonRatedFeedbackWhereCourseDateBetween(deleteFrom, deleteTo)
+                + testCaseFeedbackCleanupRepository.countOldNonRatedTestCaseFeedbackWhereCourseDateBetween(deleteFrom, deleteTo)
+                + scaFeedbackCleanupRepository.countOldNonRatedScaFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
 
         return new NonLatestNonRatedResultsCleanupCountDTO(longFeedbackTextCount, textBlockCount, feedbackCount);
     }
@@ -316,7 +360,9 @@ public class DataCleanupService {
     public NonLatestRatedResultsCleanupCountDTO countNonLatestRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         int longFeedbackTextCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         int textBlockCount = textBlockCleanupRepository.countTextBlockForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        int feedbackCount = feedbackCleanupRepository.countOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        int feedbackCount = feedbackCleanupRepository.countOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo)
+                + testCaseFeedbackCleanupRepository.countOldTestCaseFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo)
+                + scaFeedbackCleanupRepository.countOldScaFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
 
         return new NonLatestRatedResultsCleanupCountDTO(longFeedbackTextCount, textBlockCount, feedbackCount);
     }
@@ -382,12 +428,16 @@ public class DataCleanupService {
         // Rated: delete referencing rows (long feedback texts, text blocks) before the feedback they belong to.
         int ratedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
         int ratedTextBlocks = textBlockCleanupRepository.deleteTextBlockForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
-        int ratedFeedback = feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+        int ratedFeedback = feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + testCaseFeedbackCleanupRepository.deleteOldTestCaseFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + scaFeedbackCleanupRepository.deleteOldScaFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
 
         // Non-rated
         int nonRatedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
         int nonRatedTextBlocks = textBlockCleanupRepository.deleteTextBlockForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
-        int nonRatedFeedback = feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
+        int nonRatedFeedback = feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff)
+                + testCaseFeedbackCleanupRepository.deleteOldNonRatedTestCaseFeedbackWhereCourseDateBetween(FAR_PAST, cutoff)
+                + scaFeedbackCleanupRepository.deleteOldNonRatedScaFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
 
         log.info("Deleted feedback of non-latest results of old courses (ended before {}): {} long feedback texts, {} text blocks, {} feedback entries", cutoff,
                 ratedLongFeedbackTexts + nonRatedLongFeedbackTexts, ratedTextBlocks + nonRatedTextBlocks, ratedFeedback + nonRatedFeedback);
@@ -407,7 +457,11 @@ public class DataCleanupService {
         int textBlock = textBlockCleanupRepository.countTextBlockForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
                 + textBlockCleanupRepository.countTextBlockForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
         int feedback = feedbackCleanupRepository.countOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
-                + feedbackCleanupRepository.countOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
+                + feedbackCleanupRepository.countOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff)
+                + testCaseFeedbackCleanupRepository.countOldTestCaseFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + testCaseFeedbackCleanupRepository.countOldNonRatedTestCaseFeedbackWhereCourseDateBetween(FAR_PAST, cutoff)
+                + scaFeedbackCleanupRepository.countOldScaFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + scaFeedbackCleanupRepository.countOldNonRatedScaFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
         return new OldFeedbackCleanupCountDTO(longFeedbackText, textBlock, feedback);
     }
 
@@ -450,14 +504,22 @@ public class DataCleanupService {
             var inactiveBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
             List<User> usersToWarn = userRepository.findNotEnrolledUsersToWarn(inactiveBefore).stream().filter(user -> !user.isBot()).toList();
             Map<String, Object> contextVariables = Map.of("gracePeriodDays", dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays());
+            // Counted once for the whole batch rather than per user: createImpact walks every reference policy, so the
+            // per-user call repeated that count for every candidate.
+            List<User> warnableUsers = usersToWarn.stream().filter(user -> user.getActivated() && user.getEmail() != null).toList();
+            Set<Long> eligibleUserIds = userDeletionPlanService.createBulkImpact(warnableUsers, UserDeletionMode.AUTOMATIC).users().stream()
+                    .filter(UserDeletionImpactDTO::automaticEligible).map(UserDeletionImpactDTO::userId).collect(Collectors.toSet());
             for (User user : usersToWarn) {
                 if (!user.getActivated() || user.getEmail() == null) {
                     continue; // cannot warn this user, so do not schedule their account for deletion
                 }
+                if (!eligibleUserIds.contains(user.getId())) {
+                    continue;
+                }
                 try {
                     // Send synchronously and only stamp the warning once it was actually delivered. Otherwise an SMTP
                     // outage would stamp every user as "warned" (async enqueue never reports the later delivery failure)
-                    // and phase 2 would soft-delete and anonymize accounts that never received any notice.
+                    // and phase 2 would permanently delete accounts that never received any notice.
                     boolean sent = mailSendingService.buildAndSendSyncReporting(MailRecipientDTO.from(user), NOT_ENROLLED_DELETION_WARNING_SUBJECT_KEY, List.of(),
                             NOT_ENROLLED_DELETION_WARNING_EMAIL_TEMPLATE, contextVariables);
                     if (sent) {
@@ -483,12 +545,13 @@ public class DataCleanupService {
         var inactiveBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
         // Mirror the exact filter of warnNotEnrolledUsers (not a bot, activated, has an email); otherwise the preview
         // would keep counting accounts that can never be warned (nor deleted), so the count would never drain to zero.
-        long count = userRepository.findNotEnrolledUsersToWarn(inactiveBefore).stream().filter(user -> !user.isBot() && user.getActivated() && user.getEmail() != null).count();
-        return new NotEnrolledUsersCleanupCountDTO((int) count);
+        List<User> candidates = userRepository.findNotEnrolledUsersToWarn(inactiveBefore).stream().filter(user -> !user.isBot() && user.getActivated() && user.getEmail() != null)
+                .toList();
+        return countDeletionEligibility(candidates);
     }
 
     /**
-     * Phase 2 of the not-enrolled-user cleanup: soft-deletes (and anonymizes) every user who was warned, whose grace
+     * Phase 2 of the not-enrolled-user cleanup: physically deletes every eligible user who was warned, whose grace
      * period has elapsed, who is still enrolled in no course, and who has not logged in since the warning. Users who
      * "came back" (re-enrolled or logged in after the warning) first have their warning cleared and are spared. The Iris
      * bot is never deleted; admins and super-admins are already excluded by the repository query.
@@ -497,37 +560,70 @@ public class DataCleanupService {
      */
     public CleanupServiceExecutionRecordDTO deleteNotEnrolledUsers() {
         userActivityService.clearDeletionWarningForReturnedUsers();
+        var warnedBefore = ZonedDateTime.now().minusDays(dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays()).toInstant();
         List<String> logins = notEnrolledUserLoginsToDelete();
-        log.info("Soft-deleting {} not-enrolled, inactive, warned user(s)", logins.size());
-        logins.forEach(login -> {
+        int deleted = 0;
+        int blocked = 0;
+        for (String login : logins) {
             try {
-                userService.softDeleteUser(login);
+                Optional<User> user = userRepository.findOneByLogin(login);
+                if (user.isEmpty()) {
+                    continue;
+                }
+                var result = permanentUserDeletionService.deleteAutomatically(user.get().getId(), warnedBefore);
+                if (result.status() == UserDeletionResultStatus.DELETED) {
+                    deleted++;
+                }
+                else {
+                    blocked++;
+                }
             }
             catch (Exception e) {
-                log.error("Failed to soft-delete not-enrolled user {}", login, e);
+                log.error("Failed to permanently delete one not-enrolled user", e);
             }
-        });
+        }
+
+        int legacyPurged = 0;
+        for (Long legacyUserId : userDeletionPlanService.findLegacyDeletedUserIds()) {
+            try {
+                if (permanentUserDeletionService.deleteLegacyTombstone(legacyUserId).status() == UserDeletionResultStatus.DELETED) {
+                    legacyPurged++;
+                }
+            }
+            catch (Exception e) {
+                log.error("Failed to purge legacy user tombstone {}", legacyUserId, e);
+            }
+        }
+        log.info("Permanently deleted {} warned user(s), blocked {} user(s), and purged {} legacy tombstone(s)", deleted, blocked, legacyPurged);
         return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.NOT_ENROLLED_USERS, null, null));
     }
 
     /**
-     * Counts the warned, past-grace, still-inactive users who would be soft-deleted by phase 2.
+     * Counts the warned, past-grace, still-inactive users who would be permanently deleted or blocked by remaining references in phase 2.
      *
      * @return a {@link NotEnrolledUsersCleanupCountDTO} with the affected user count
      */
     public NotEnrolledUsersCleanupCountDTO countNotEnrolledUsers() {
-        return new NotEnrolledUsersCleanupCountDTO(notEnrolledUserLoginsToDelete().size());
+        List<User> candidates = notEnrolledUserLoginsToDelete().stream().map(userRepository::findOneByLogin).flatMap(Optional::stream).toList();
+        return countDeletionEligibility(candidates);
     }
 
     /**
      * Resolves the logins of warned users whose grace period has elapsed and who are still not-enrolled and inactive
-     * (no login since the warning), excluding the Iris bot (admins/super-admins are already excluded by the query).
+     * (no login since the warning). The query excludes administrators, super-administrators, and the Iris bot.
      *
-     * @return the logins to soft-delete
+     * @return the logins to evaluate for permanent deletion
      */
     private List<String> notEnrolledUserLoginsToDelete() {
         var warnedBefore = ZonedDateTime.now().minusDays(dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays()).toInstant();
-        return userRepository.findNotEnrolledUserLoginsToDelete(warnedBefore).stream().filter(login -> !User.IRIS_BOT_LOGIN.equals(login)).toList();
+        return userRepository.findNotEnrolledUserLoginsToDelete(warnedBefore);
+    }
+
+    private NotEnrolledUsersCleanupCountDTO countDeletionEligibility(List<User> candidates) {
+        int eligible = (int) userDeletionPlanService.createBulkImpact(candidates, UserDeletionMode.AUTOMATIC).users().stream().filter(UserDeletionImpactDTO::automaticEligible)
+                .count();
+        int blocked = candidates.size() - eligible;
+        return new NotEnrolledUsersCleanupCountDTO(eligible, blocked);
     }
 
     /**
@@ -558,6 +654,16 @@ public class DataCleanupService {
 
     private OldCoursesCleanupCountDTO toOldCoursesCleanupCountDTO(List<Course> courses) {
         return new OldCoursesCleanupCountDTO(courses.size());
+    }
+
+    /**
+     * Returns the configured retention periods together with the cutoffs the age-based operations would apply right now,
+     * so the admin UI can name the affected data instead of only referring to "the configured cutoff".
+     *
+     * @return the effective cleanup configuration
+     */
+    public CleanupConfigurationDTO getCleanupConfiguration() {
+        return CleanupConfigurationDTO.of(dataCleanupProperties, ZonedDateTime.now());
     }
 
     /**

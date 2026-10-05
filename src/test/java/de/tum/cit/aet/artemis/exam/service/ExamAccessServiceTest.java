@@ -478,7 +478,10 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAllowedToGetExamResult_nonExamExercise() {
-        var exercise = new FileUploadExercise(); // implicitly, no exam exercise
+        var exercise = new FileUploadExercise();
+        // A course exercise, which is what makes it not an exam exercise. It needs an owner either way: an exercise
+        // belongs to a course or to an exercise group, and CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP refuses neither.
+        exercise.setCourse(course1);
         exerciseRepository.save(exercise);
 
         StudentParticipation participation = new StudentParticipation();

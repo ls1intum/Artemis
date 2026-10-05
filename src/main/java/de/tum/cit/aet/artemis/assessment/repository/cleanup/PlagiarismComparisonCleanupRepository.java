@@ -68,15 +68,6 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
     int countPlagiarismSubmissionsByComparisonIdsIn(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE PlagiarismComparison pc
-            SET pc.submissionA = NULL, pc.submissionB = NULL
-            WHERE pc.id IN :plagiarismComparisonIds
-            """)
-    int setPlagiarismSubmissionsToNullInComparisonsWithIds(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
-
-    @Modifying
     @Transactional // ok because of delete
     @Query(nativeQuery = true, value = """
             DELETE

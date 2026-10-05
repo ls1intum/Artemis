@@ -15,10 +15,10 @@ async function selectTaxonomy(page: Page, taxonomy: string) {
         .locator('p-select')
         .filter({ has: page.locator('#taxonomy') })
         .click();
-    const overlay = page.locator('.p-select-overlay');
+    const overlay = page.getByTestId('taxonomy-select-overlay');
     await expect(overlay).toBeVisible();
     await overlay
-        .locator('.p-select-option')
+        .getByTestId('taxonomy-select-option')
         .filter({ hasText: new RegExp(taxonomy.trim(), 'i') })
         .first()
         .click();

@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
@@ -24,9 +23,6 @@ import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 
 class LearnerProfileServiceTest {
-
-    @Mock
-    private UserTestRepository userRepository;
 
     @Mock
     private LearnerProfileRepository learnerProfileRepository;
@@ -50,14 +46,13 @@ class LearnerProfileServiceTest {
     void createProfile_shouldCreateAndSaveProfile() {
         User user = new User();
         user.setId(1L);
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(learnerProfileRepository.save(any(LearnerProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         LearnerProfile profile = learnerProfileService.createProfile(user);
 
         assertThat(profile).isNotNull();
         assertThat(profile.getUser()).isEqualTo(user);
-        assertThat(user.getLearnerProfile()).isEqualTo(profile);
-        verify(userRepository).save(user);
+        verify(learnerProfileRepository).save(profile);
     }
 
     @Test
@@ -71,7 +66,7 @@ class LearnerProfileServiceTest {
         LearnerProfile result = learnerProfileService.getOrCreateLearnerProfile(user);
         assertThat(result).isEqualTo(existingProfile);
         verify(learnerProfileRepository).findByUser(user);
-        verifyNoInteractions(userRepository);
+        verify(learnerProfileRepository, never()).save(any(LearnerProfile.class));
     }
 
     @Test
@@ -79,13 +74,12 @@ class LearnerProfileServiceTest {
         User user = new User();
         user.setId(3L);
         when(learnerProfileRepository.findByUser(user)).thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(learnerProfileRepository.save(any(LearnerProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         LearnerProfile result = learnerProfileService.getOrCreateLearnerProfile(user);
         assertThat(result).isNotNull();
         assertThat(result.getUser()).isEqualTo(user);
-        assertThat(user.getLearnerProfile()).isEqualTo(result);
-        verify(userRepository).save(user);
+        verify(learnerProfileRepository).save(result);
     }
 
     @Test

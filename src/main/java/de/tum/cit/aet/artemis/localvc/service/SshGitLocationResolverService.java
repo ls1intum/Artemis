@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -13,7 +11,6 @@ import java.util.Optional;
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -103,18 +100,19 @@ public class SshGitLocationResolverService implements GitLocationResolver {
             // Audited like the https path, and for the same reason: an agent reads student code, so the read has to be
             // attributable. This branch returns before the user authorization below, which is what writes the log for
             // everyone else, and a build agent session carries no user to attribute an entry to anyway.
-            localVCServletService.saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.get().id(), hostOf(session.getClientAddress()), AuthenticationMechanism.SSH);
+            localVCServletService.saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.get().id(), AuthenticationContext.hostAddressOf(session.getClientAddress()),
+                    AuthenticationMechanism.SSH);
         }
         else {
             try {
                 var participation = localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, true);
-                localVCServletService.cacheAttributesInSshSession(user, participation, repositoryAction, AuthenticationMechanism.SSH, session.getClientAddress().toString(),
-                        localVCRepositoryUri, session);
+                localVCServletService.cacheAttributesInSshSession(user, participation, repositoryAction, AuthenticationMechanism.SSH,
+                        AuthenticationContext.hostAddressOf(session.getClientAddress()), localVCRepositoryUri, session);
             }
             catch (LocalVCForbiddenException e) {
                 log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);
-                localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Session(session), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user,
-                        repositoryAction);
+                localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Session(session), repositoryTypeOrUserName, exercise.getId(), localVCRepositoryUri,
+                        user, repositoryAction);
                 throw new AccessDeniedException("User does not have access to this repository", e);
             }
         }
@@ -148,17 +146,5 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         var tokenService = buildJobCloneTokenService.get();
         return distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName).stream()
                 .filter(buildJob -> tokenService.coversRepository(buildJob, localVCRepositoryUri)).findFirst();
-    }
-
-    /**
-     * @param address the ssh client address, already the real client where the proxy protocol is in use
-     * @return the address as a plain host string for the access log, or null if it is not an ip socket
-     */
-    @Nullable
-    private static String hostOf(@Nullable SocketAddress address) {
-        if (address instanceof InetSocketAddress inetSocketAddress && inetSocketAddress.getAddress() != null) {
-            return inetSocketAddress.getAddress().getHostAddress();
-        }
-        return null;
     }
 }

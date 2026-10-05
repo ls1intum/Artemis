@@ -51,6 +51,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -64,6 +66,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.CHANNELS)
 @RestController
 @RequestMapping("api/communication/courses/")
 public class ChannelResource extends ConversationManagementResource {
@@ -508,6 +511,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @throws URISyntaxException       if the URI for the created resource cannot be constructed.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
+    @FeatureUsage(UserFeature.RESULTS_AND_FEEDBACK_ANALYSIS)
     @PostMapping("{courseId}/exercises/{exerciseId}/feedback-channel")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId,
@@ -531,6 +535,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param courseId the id of the course.
      * @return ResponseEntity with status 200 (Ok).
      */
+    @FeatureUsage(UserFeature.CONVERSATION_ORGANIZATION)
     @PostMapping("{courseId}/channels/mark-as-read")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> markAllChannelsOfCourseAsRead(@PathVariable Long courseId) {

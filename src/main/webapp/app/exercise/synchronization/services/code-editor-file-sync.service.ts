@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
@@ -91,7 +91,7 @@ type FileSyncEntry = {
  * (`CodeEditorInstructorAndEditorContainerComponent`) is always destroyed and recreated on
  * navigation, ensuring a clean lifecycle.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorFileSyncService {
     private syncService = inject(ExerciseEditorSyncService);
     private accountService = inject(AccountService);

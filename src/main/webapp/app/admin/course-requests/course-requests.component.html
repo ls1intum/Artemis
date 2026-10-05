@@ -1,16 +1,16 @@
 <div class="container py-4">
     <h5 *adminTitleBarTitle id="course-requests-heading" class="mb-0" jhiTranslate="artemisApp.courseRequest.admin.title"></h5>
     <div *adminTitleBarActions>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="load()" [disabled]="loading()" data-testid="refresh-button">
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="load()" [disabled]="loading()" data-testid="refresh-button">
             <fa-icon [icon]="faSync" />
             <span jhiTranslate="health.refresh.button"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
     <p class="text-muted-color mb-3" jhiTranslate="artemisApp.courseRequest.admin.subtitle"></p>
 
     <!-- Pending Requests Table -->
     <h4 class="mb-3" jhiTranslate="artemisApp.courseRequest.admin.pendingTitle"></h4>
-    <table tumUiTable size="small" [striped]="true" class="mb-5" data-testid="pending-table">
+    <table tumAetUiTable size="small" [striped]="true" class="mb-5" data-testid="pending-table">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
@@ -29,7 +29,7 @@
                         <div class="font-semibold">{{ request.title }}</div>
                         <div class="text-muted-color">{{ request.shortName }}</div>
                         @if (request.testCourse) {
-                            <tum-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
+                            <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
                         }
                     </td>
                     <td>{{ request.semester }}</td>
@@ -73,39 +73,39 @@
                     <td class="break-words">{{ request.reason }}</td>
                     <td class="text-end">
                         <div class="flex items-center justify-end gap-2">
-                            <tum-ui-button
+                            <tumaet-ui-button
                                 severity="warn"
                                 size="small"
                                 (clicked)="openEditModal(request)"
-                                [tumUiTooltip]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
                                 [ariaLabel]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
                                 data-testid="edit-button"
                             >
                                 <fa-icon [icon]="faPencil" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.courseRequest.admin.edit"></span>
-                            </tum-ui-button>
-                            <tum-ui-button
+                            </tumaet-ui-button>
+                            <tumaet-ui-button
                                 severity="success"
                                 size="small"
                                 (clicked)="accept(request)"
-                                [tumUiTooltip]="'artemisApp.courseRequest.admin.accept' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.courseRequest.admin.accept' | artemisTranslate"
                                 [ariaLabel]="'artemisApp.courseRequest.admin.accept' | artemisTranslate"
                                 data-testid="accept-button"
                             >
                                 <fa-icon [icon]="faCheck" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.courseRequest.admin.accept"></span>
-                            </tum-ui-button>
-                            <tum-ui-button
+                            </tumaet-ui-button>
+                            <tumaet-ui-button
                                 severity="danger"
                                 size="small"
                                 (clicked)="openRejectModal(request)"
-                                [tumUiTooltip]="'artemisApp.courseRequest.admin.reject' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.courseRequest.admin.reject' | artemisTranslate"
                                 [ariaLabel]="'artemisApp.courseRequest.admin.reject' | artemisTranslate"
                                 data-testid="reject-button"
                             >
                                 <fa-icon [icon]="faTimes" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.courseRequest.admin.reject"></span>
-                            </tum-ui-button>
+                            </tumaet-ui-button>
                         </div>
                     </td>
                 </tr>
@@ -119,7 +119,7 @@
 
     <!-- Decided Requests Table -->
     <h4 class="mb-3" jhiTranslate="artemisApp.courseRequest.admin.decidedTitle"></h4>
-    <table tumUiTable size="small" [striped]="true" data-testid="decided-table">
+    <table tumAetUiTable size="small" [striped]="true" data-testid="decided-table">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
@@ -137,10 +137,10 @@
                         <div class="font-semibold">{{ request.title }}</div>
                         <div class="text-muted-color">{{ request.shortName }}</div>
                         @if (request.testCourse) {
-                            <tum-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
+                            <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
                         }
                         <div class="mt-1">
-                            <tum-ui-tag
+                            <tumaet-ui-tag
                                 [severity]="badgeSeverity(request.status)"
                                 [value]="'artemisApp.courseRequest.status.' + (request.status ?? 'PENDING') | artemisTranslate"
                             />
@@ -198,7 +198,7 @@
     <!-- Pagination for Decided Requests -->
     @if (totalDecidedCount() > decidedPageSize) {
         <div class="flex justify-center mt-3">
-            <tum-ui-paginator
+            <tumaet-ui-paginator
                 [page]="decidedPage() - 1"
                 [pageSize]="decidedPageSize"
                 [totalRecords]="totalDecidedCount()"
@@ -210,12 +210,12 @@
     }
 </div>
 
-<tum-ui-dialog [(visible)]="rejectModalVisible" size="medium" header="{{ 'artemisApp.courseRequest.admin.reject' | artemisTranslate }}">
+<tumaet-ui-dialog [(visible)]="rejectModalVisible" size="medium" header="{{ 'artemisApp.courseRequest.admin.reject' | artemisTranslate }}">
     <div class="flex flex-col gap-2 mb-3">
         <label class="font-semibold" for="rejectReason" jhiTranslate="artemisApp.courseRequest.admin.rejectReasonLabel"></label>
         <textarea
             id="rejectReason"
-            tumUiTextarea
+            tumAetUiTextarea
             rows="4"
             class="w-full"
             [ngModel]="decisionReason()"
@@ -227,27 +227,27 @@
         }
     </div>
     <ng-template #footer>
-        <tum-ui-button severity="secondary" size="small" (clicked)="rejectModalVisible.set(false)" data-testid="cancel-reject-button">{{
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="rejectModalVisible.set(false)" data-testid="cancel-reject-button">{{
             'entity.action.cancel' | artemisTranslate
-        }}</tum-ui-button>
-        <tum-ui-button severity="danger" size="small" (clicked)="reject()" data-testid="confirm-reject-button">
+        }}</tumaet-ui-button>
+        <tumaet-ui-button severity="danger" size="small" (clicked)="reject()" data-testid="confirm-reject-button">
             <fa-icon [icon]="faTimes" />
             <span>{{ 'artemisApp.courseRequest.admin.rejectConfirm' | artemisTranslate }}</span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>
 
-<tum-ui-dialog [(visible)]="editModalVisible" size="medium" header="{{ 'artemisApp.courseRequest.admin.editTitle' | artemisTranslate }}">
+<tumaet-ui-dialog [(visible)]="editModalVisible" size="medium" header="{{ 'artemisApp.courseRequest.admin.editTitle' | artemisTranslate }}">
     <form [formGroup]="editForm" novalidate>
         <jhi-course-request-form [form]="editForm" [semesters]="semesters" [dateRangeInvalid]="editDateRangeInvalid()" [showReasonPlaceholder]="false" idPrefix="edit" />
     </form>
     <ng-template #footer>
-        <tum-ui-button severity="secondary" size="small" (clicked)="editModalVisible.set(false)" data-testid="cancel-edit-button">{{
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="editModalVisible.set(false)" data-testid="cancel-edit-button">{{
             'entity.action.cancel' | artemisTranslate
-        }}</tum-ui-button>
-        <tum-ui-button size="small" (clicked)="saveEdit()" [disabled]="isSubmittingEdit()" data-testid="save-edit-button">
+        }}</tumaet-ui-button>
+        <tumaet-ui-button size="small" (clicked)="saveEdit()" [disabled]="isSubmittingEdit()" data-testid="save-edit-button">
             <fa-icon [icon]="faCheck" />
             <span>{{ 'entity.action.save' | artemisTranslate }}</span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

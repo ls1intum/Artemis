@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.service.conversation;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import jakarta.validation.Valid;
 
@@ -27,7 +28,7 @@ public class GroupChatService {
 
     public static final String GROUP_CHAT_ENTITY_NAME = "messages.groupchat";
 
-    private static final String GROUP_NAME_REGEX = "^[a-z0-9-]{0,20}$";
+    private static final Pattern GROUP_NAME_PATTERN = Pattern.compile("^[a-z0-9-]{0,20}$");
 
     private final UserRepository userRepository;
 
@@ -102,7 +103,7 @@ public class GroupChatService {
      * @param groupChat the group chat to check
      */
     public void groupChatIsValidOrThrow(@Valid GroupChat groupChat) {
-        if (groupChat.getName() != null && !groupChat.getName().matches(GROUP_NAME_REGEX)) {
+        if (groupChat.getName() != null && !GROUP_NAME_PATTERN.matcher(groupChat.getName()).matches()) {
             throw new BadRequestAlertException("Group names can only contain lowercase letters, numbers, and dashes.", GROUP_CHAT_ENTITY_NAME, "namePatternInvalid");
         }
     }

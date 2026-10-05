@@ -43,11 +43,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [HasAnyAuthorityDirective, FormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class PresentationScoreComponent implements DoCheck, OnDestroy {
+    private readonly gradingService = inject(GradingService);
+
     protected readonly faQuestionCircle = faQuestionCircle;
 
     protected readonly IS_AT_LEAST_EDITOR = IS_AT_LEAST_EDITOR;
-
-    private readonly gradingService = inject(GradingService);
 
     readonly exercise = input<Exercise>(undefined!);
 

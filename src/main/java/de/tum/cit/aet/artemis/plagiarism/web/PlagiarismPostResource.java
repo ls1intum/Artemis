@@ -32,6 +32,8 @@ import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
@@ -46,6 +48,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
  */
 @Conditional(PlagiarismEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.PLAGIARISM_CASES)
 @RestController
 @RequestMapping("api/plagiarism/")
 public class PlagiarismPostResource {

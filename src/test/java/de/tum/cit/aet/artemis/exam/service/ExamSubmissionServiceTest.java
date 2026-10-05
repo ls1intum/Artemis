@@ -24,10 +24,16 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -62,6 +68,9 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
 
     private User student1;
 
@@ -183,10 +192,63 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
         existingSubmission = participationUtilService.addSubmission(participation, existingSubmission);
         Submission receivedSubmission = ParticipationFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
         // The submission is modified in place; what comes back is the participation the caller may reuse for its save.
-        StudentParticipation resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
         assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
         assertThat(resolvedParticipation).isNotNull();
-        assertThat(resolvedParticipation.getId()).isEqualTo(participation.getId());
+        assertThat(resolvedParticipation.id()).isEqualTo(participation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPreventMultipleSubmissionsLeavesFileUploadToItsOwnLookup() {
+        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepository
+                .save(FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exercise.getExerciseGroup()));
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, TEST_PREFIX + "student1");
+        Submission existingSubmission = participationUtilService.addSubmission(participation, ParticipationFactory.generateFileUploadSubmission(true));
+        Submission receivedSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(fileUploadExercise, receivedSubmission, student1);
+
+        assertThat(receivedSubmission.getId()).as("the existing submission is still the one that gets overwritten").isEqualTo(existingSubmission.getId());
+        assertThat(resolvedParticipation).as("FileUploadSubmissionService reads the previous file off participation.submissions, which the projection does not carry, "
+                + "so it has to run its own eager lookup").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPreventMultipleSubmissionsForTeamWithoutOwner() {
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise = exerciseRepository.save(exercise);
+        // an instructor may create a team without an owner, and the gate still has to answer for its members
+        Team team = teamUtilService.addTeamForExercise(exercise, null, TEST_PREFIX + "teamstudent");
+        StudentParticipation participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+        Submission existingSubmission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("Team text", Language.ENGLISH, true));
+        Submission receivedSubmission = ParticipationFactory.generateTextSubmission("New team text", Language.ENGLISH, true);
+
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission,
+                team.getStudents().iterator().next());
+
+        assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
+        assertThat(resolvedParticipation).as("a team participation is owned by a Team, so the caller resolves it itself").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testWorkingPeriodIsReadFromTheOwnAttemptRatherThanATestRun() {
+        // an instructor can hold a test run next to their own attempt, and it is the newer of the two, so picking the
+        // greatest id alone would let the test run decide when their own attempt has to be handed in
+        StudentExam testRun = examUtilService.addStudentExam(exam);
+        testRun.setUser(student1);
+        testRun.setTestRun(true);
+        testRun.setSubmitted(true);
+        testRun.setWorkingTime(1);
+        studentExamRepository.save(testRun);
+
+        var workingPeriod = studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(exam.getId(), student1.getId());
+
+        assertThat(workingPeriod).isPresent();
+        assertThat(workingPeriod.get().testRun()).isNotEqualTo(Boolean.TRUE);
+        assertThat(workingPeriod.get().workingTime()).as("the student's own attempt decides the working period").isEqualTo(7200);
     }
 
 }

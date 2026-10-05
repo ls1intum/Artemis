@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { LtiService } from 'app/foundation/service/lti.service';
@@ -19,6 +19,7 @@ import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/compon
 import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
 import { observeShellMetrics, reattachShellMetricsObserver } from 'app/foundation/util/navbar.util';
+import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recovery.service';
 
 @Component({
     selector: 'jhi-app',
@@ -28,7 +29,6 @@ import { observeShellMetrics, reattachShellMetricsObserver } from 'app/foundatio
         AlertOverlayComponent,
         CdkScrollable,
         NgClass,
-        NgStyle,
         PageRibbonComponent,
         RouterOutlet,
         FooterComponent,
@@ -39,8 +39,6 @@ import { observeShellMetrics, reattachShellMetricsObserver } from 'app/foundatio
     ],
 })
 export class AppComponent implements OnInit, OnDestroy {
-    protected readonly FeatureToggle = FeatureToggle;
-
     private jhiLanguageHelper = inject(JhiLanguageHelper);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -52,6 +50,9 @@ export class AppComponent implements OnInit, OnDestroy {
     private ltiService = inject(LtiService);
     private featureToggleService = inject(FeatureToggleService);
     private embedPdfPreloadService = inject(EmbedPdfPreloadService);
+    private lazyRouteRecoveryService = inject(LazyRouteRecoveryService);
+
+    protected readonly FeatureToggle = FeatureToggle;
 
     readonly globalSearchEnabled = signal(false);
     private examStartedSubscription?: Subscription;
@@ -149,9 +150,17 @@ export class AppComponent implements OnInit, OnDestroy {
                     }
                 }
             }
-            if (event instanceof NavigationError && event.error.status === 404) {
-                // noinspection JSIgnoredPromiseFromCall
-                void this.router.navigate(['/404']);
+            if (event instanceof NavigationError) {
+                // Optional access: the router types this as any, so a guard rejecting with null or undefined would
+                // otherwise throw here and take the recovery below down with it.
+                if (event.error?.status === 404) {
+                    // noinspection JSIgnoredPromiseFromCall
+                    void this.router.navigate(['/404']);
+                } else {
+                    // A route whose lazily loaded chunk could not be fetched fails here with no status, and callers
+                    // routinely discard the navigation promise, so without this the click silently does nothing.
+                    this.lazyRouteRecoveryService.handleNavigationError(event.error, event.url);
+                }
             }
         });
 

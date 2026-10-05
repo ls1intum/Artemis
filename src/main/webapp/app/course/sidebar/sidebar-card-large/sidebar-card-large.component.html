@@ -1,10 +1,10 @@
-<div
+<a
     id="test-sidebar-card-large"
-    class="pointer item-border rounded-3 col-12 px-1 py-2 border-5 highlight-card bg-module"
+    class="block text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-2 pointer item-border rounded-3 col-12 px-1 py-2 border-5 highlight-card bg-module"
     [routerLink]="'./' + sidebarItem()?.id"
-    (click)="emitStoreAndRefresh(sidebarItem().id)"
+    (click)="emitStoreAndRefresh(sidebarItem().id, $event)"
     [routerLinkActive]="'bg-selected border-selected'"
 >
     <!-- groupKey is used to determine the display format of channel names in different sidebar sections -->
     <jhi-sidebar-card-item [groupKey]="groupKey()" [sidebarType]="sidebarType()" [sidebarItem]="sidebarItem()" />
-</div>
+</a>

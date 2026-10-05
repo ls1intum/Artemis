@@ -80,7 +80,7 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
             long faq1Id = faq1.getId();
             long faq2Id = faq2.getId();
 
-            request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
             assertFaqNotInWeaviate(weaviateService, faq1Id);
             assertFaqNotInWeaviate(weaviateService, faq2Id);

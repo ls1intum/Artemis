@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -54,6 +56,24 @@ public class FileDownloadService {
      * @param contentRange optional content-range header value for partial responses
      */
     public record FileDownloadPayload(HttpStatus status, byte[] content, HttpHeaders headers, MediaType mediaType, Optional<String> contentRange) {
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof FileDownloadPayload(HttpStatus otherStatus, byte[] otherContent, HttpHeaders otherHeaders, MediaType otherMediaType, Optional<String> otherRange)
+                    && status == otherStatus && Arrays.equals(content, otherContent) && Objects.equals(headers, otherHeaders) && Objects.equals(mediaType, otherMediaType)
+                    && Objects.equals(contentRange, otherRange);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Objects.hash(status, headers, mediaType, contentRange) + Arrays.hashCode(content);
+        }
+
+        @Override
+        public String toString() {
+            return "FileDownloadPayload[status=" + status + ", content=" + content.length + " bytes" + ", headers=" + headers + ", mediaType=" + mediaType + ", contentRange="
+                    + contentRange + "]";
+        }
     }
 
     /**
@@ -71,7 +91,7 @@ public class FileDownloadService {
      */
     public FileDownloadPayload prepareAttachmentDownload(Path path, String filename, Optional<String> replaceFilename, List<HttpRange> ranges, int maxPdfRangeBytes) {
         Path actualPath = path.resolve(filename);
-        if (!filename.toLowerCase().endsWith(".pdf")) {
+        if (!filename.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
             return buildFullFilePayload(actualPath, filename, replaceFilename);
         }
         if (!Files.exists(actualPath)) {
@@ -133,8 +153,10 @@ public class FileDownloadService {
     public HttpHeaders createFileHeaders(String filename, Optional<String> replaceFilename) {
         HttpHeaders headers = new HttpHeaders();
 
-        String contentType = filename.toLowerCase().endsWith("htm") || filename.toLowerCase().endsWith("html") || filename.toLowerCase().endsWith("svg")
-                || filename.toLowerCase().endsWith("svgz") ? "attachment" : "inline";
+        String lowerCaseFilename = filename.toLowerCase(Locale.ROOT);
+        String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
+                ? "attachment"
+                : "inline";
         String headerFilename = FileUtil.sanitizeFilename(replaceFilename.orElse(filename));
         headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
         headers.set("Filename", headerFilename);

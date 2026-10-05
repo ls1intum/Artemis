@@ -1,25 +1,40 @@
-<p-menu #menu [model]="model()" [popup]="true" appendTo="body">
-    <ng-template #item let-item>
-        <span class="p-menu-item-link" [class]="item.styleClass || ''" [title]="item.tooltip ? (item.tooltip | artemisTranslate) : ''">
-            @if (item.icon) {
-                <i [class]="item.icon + ' me-1'"></i>
-            }
-            <span class="p-menu-item-label" [jhiTranslate]="item.label"></span>
-        </span>
-    </ng-template>
-</p-menu>
-
 <button
     type="button"
-    pButton
+    tumAetUiButton
+    size="small"
+    variant="outlined"
     [disabled]="disabled()"
-    [class]="buttonClass()"
-    (click)="toggleMenu($event)"
+    [tumAetUiMenuTrigger]="menu"
     [title]="label() | artemisTranslate"
     [attr.aria-label]="label() | artemisTranslate"
     [severity]="severity()"
 >
-    <i [class]="buttonIconClass() + ' me-1'"></i>
-    <span class="d-none d-sm-inline" [jhiTranslate]="label()"></span>
-    <i class="pi pi-chevron-down fs-6"></i>
+    <fa-icon [icon]="buttonIcon()" />
+    <span class="title-bar-collapsible-label" [jhiTranslate]="label()"></span>
+    <fa-icon [icon]="faChevronDown" size="xs" />
 </button>
+<ng-template #menu>
+    <tumaet-ui-menu [attr.aria-label]="label() | artemisTranslate">
+        @for (item of model(); track item.label) {
+            <button
+                type="button"
+                tumAetUiMenuItem
+                data-testid="exam-students-menu-entry"
+                [disabled]="item.disabled ?? false"
+                [class.text-state-danger]="item.danger"
+                (triggered)="item.command()"
+            >
+                @if (item.icon) {
+                    <fa-icon [fixedWidth]="true" [icon]="item.icon" />
+                }
+                <!-- A disabled entry ignores the pointer, so the label takes it back to show why the entry is unavailable. -->
+                <span
+                    data-testid="exam-students-menu-item"
+                    class="pointer-events-auto"
+                    [tumAetUiTooltip]="item.tooltip ? (item.tooltip | artemisTranslate) : ''"
+                    [jhiTranslate]="item.label"
+                ></span>
+            </button>
+        }
+    </tumaet-ui-menu>
+</ng-template>

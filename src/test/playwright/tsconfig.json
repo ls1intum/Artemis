@@ -2,8 +2,18 @@
     "compilerOptions": {
         "target": "es2022",
         "module": "es2022",
-        "moduleResolution": "node",
-        "ignoreDeprecations": "6.0",
+        // Matches the root config. The Playwright suite imports Angular entry points such as
+        // `@angular/common/http`, which are only reachable through the package exports map that node10
+        // resolution cannot read.
+        "moduleResolution": "bundler",
+        // This project is only ever type checked: Playwright compiles the specs itself at run time. Emitting
+        // would drop JavaScript next to the TypeScript sources it shares with the Angular app, which then
+        // shadows them for Node and breaks the test runner.
+        "noEmit": true,
+        // The suite deliberately imports the Angular app's models, so its sources span both `src/test/playwright`
+        // and `src/main/webapp/app`. Without a root that contains both, every one of those imports is reported as
+        // living outside the project.
+        "rootDir": "../../..",
         "sourceMap": false
     },
     "extends": "../../../tsconfig.json",

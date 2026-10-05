@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -18,7 +18,7 @@ export interface AuditsQuery {
     logType?: AuditLogType;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AuditsService {
     private http = inject(HttpClient);
 

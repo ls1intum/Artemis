@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -38,9 +39,7 @@ public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedD
      * @return the corresponding DTO
      * @throws NullPointerException if required fields are missing
      */
-    public static ComplaintResponseDTO of(ComplaintResponse entity) {
-        Objects.requireNonNull(entity, "The complaint response must be set");
-        Objects.requireNonNull(entity.getComplaint(), "The associated complaint must exist");
+    public static ComplaintResponseDTO of(@NonNull ComplaintResponse entity) {
 
         UserPublicInfoDTO reviewerDTO = null;
         if (entity.getReviewer() != null) {

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
+import java.util.Locale;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -109,7 +110,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
             return FuzzySearch.ratio(submittedText.trim(), solution.trim()) >= similarityValue;
         }
         // also use lowercase to allow different cases in the submitted text
-        return FuzzySearch.ratio(submittedText.toLowerCase().trim(), solution.toLowerCase().trim()) >= similarityValue;
+        return FuzzySearch.ratio(submittedText.toLowerCase(Locale.ROOT).trim(), solution.toLowerCase(Locale.ROOT).trim()) >= similarityValue;
     }
 
     @Override

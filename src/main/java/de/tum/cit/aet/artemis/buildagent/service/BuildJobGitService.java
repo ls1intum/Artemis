@@ -119,6 +119,14 @@ public class BuildJobGitService extends AbstractGitService {
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
     private Optional<String> sshUrlTemplate;
 
+    /**
+     * Per-transport-phase JGit timeout (in seconds) for build-agent SSH clones. The previous hardcoded value of 5
+     * seconds tripped on multi-repo (auxiliary-repository) builds, where every SSH read pays per-command
+     * authorization and can legitimately take longer than that.
+     */
+    @Value("${artemis.version-control.build-agent-clone-timeout-seconds:60}")
+    private int buildAgentCloneTimeoutSeconds;
+
     private CredentialsProvider credentialsProvider;
 
     private JGitKeyCache jgitKeyCache;
@@ -199,7 +207,7 @@ public class BuildJobGitService extends AbstractGitService {
         sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
         sshCallback = transport -> {
             if (transport instanceof SshTransport sshTransport) {
-                transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
+                transport.setTimeout(buildAgentCloneTimeoutSeconds);
                 sshTransport.setSshSessionFactory(sshdSessionFactory);
             }
             else {

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { IrisCourseMemoryStatusDTO } from 'app/iris/shared/entities/iris-course-memory-status-dto.model';
@@ -11,7 +11,7 @@ type SubscribedChannel = { wsSubscription: Subscription; subject: Subject<IrisCo
  * Separate from IrisWebsocketService because that one is keyed by chat session, while these events
  * are course-scoped: one subscription covers every thread the user resolves in a course.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisCourseMemoryStatusService implements OnDestroy {
     private websocketService = inject(WebsocketService);
 

@@ -1,12 +1,25 @@
-<div class="question card">
-    <div class="card-header d-flex align-items-center justify-content-between" (click)="toggleCollapse()()">
+<div
+    class="mb-[18px] box-border w-full min-w-0 rounded-md border border-(--course-exercise-card-border-color) bg-(--course-exercise-card-background) break-words first-of-type:mt-4"
+>
+    <div
+        class="flex cursor-pointer items-center justify-between border-b border-(--course-exercise-card-border-color) px-4 py-2"
+        data-testid="collapsible-card-toggle"
+        (click)="toggleCollapse()()"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        [attr.aria-expanded]="!isCardContentCollapsed()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
         <ng-content select=".header" />
-        <button class="btn rotate-icon" [class.rotated]="!isCardContentCollapsed()" [attr.aria-expanded]="isCardContentCollapsed()" [attr.aria-controls]="isCardContentCollapsed()">
+        <span class="inline-flex px-3 py-1.5 transition-transform duration-300" [class.rotate-90]="!isCardContentCollapsed()" aria-hidden="true">
             <fa-icon size="2x" [icon]="faAngleRight" />
-        </button>
+        </span>
     </div>
 
-    <div class="card-body question-card-body" [ngbCollapse]="isCardContentCollapsed()">
+    <div class="px-[0.85rem] py-[0.6rem]" data-testid="collapsible-card-content" [class.hidden]="isCardContentCollapsed()">
         <ng-content select=".collapsible-content" />
     </div>
 </div>

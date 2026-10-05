@@ -62,6 +62,22 @@ describe('CourseNotificationPresetPickerComponent', () => {
         fixture.detectChanges();
     });
 
+    it('announces the selected preset including the custom choice', () => {
+        const options = Array.from(fixture.nativeElement.querySelectorAll('.course-notification-preset-picker-item')) as HTMLElement[];
+        const selected = vi.spyOn(component.onPresetSelected, 'emit');
+        expect(options.map((option) => option.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
+        options[1].dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(selected).toHaveBeenCalledWith(mockPresets[1].typeId);
+        fixture.componentRef.setInput('selectedCourseSettingPreset', mockPresets[1]);
+        fixture.detectChanges();
+        expect(options.map((option) => option.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+        options[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(selected).toHaveBeenLastCalledWith(0);
+        fixture.componentRef.setInput('selectedCourseSettingPreset', undefined);
+        fixture.detectChanges();
+        expect(options.map((option) => option.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'true']);
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });

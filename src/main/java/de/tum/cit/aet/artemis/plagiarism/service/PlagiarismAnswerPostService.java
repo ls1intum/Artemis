@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostUpdateRequestDT
 @Service
 public class PlagiarismAnswerPostService extends PostingService {
 
-    private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
+    private static final String ANSWER_POST_ENTITY_NAME = "messages.answerPost";
 
     private final AnswerPostRepository answerPostRepository;
 
@@ -111,7 +111,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         // instructor can toggle resolve on someone else's answer without being allowed to rewrite its
         // content.
         // * If the resolve flag is actually changing, the request is treated primarily as a resolve
-        // operation. Sending the existing content alongside (a common frontend pattern) does not trigger
+        // operation. Sending the existing content alongside (a common client pattern) does not trigger
         // the content-edit authorization. If the request additionally carries *different* content, the
         // content edit is independently authorized — this closes the CodeRabbit-flagged corner case where
         // a single PUT that changed both fields silently dropped the content because only the resolve
@@ -125,7 +125,8 @@ public class PlagiarismAnswerPostService extends PostingService {
         boolean resolveFlagChanging = request.resolvesPost() != null && !Objects.equals(existingAnswerPost.doesResolvePost(), request.resolvesPost());
         if (resolveFlagChanging) {
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
-            existingAnswerPost.setResolvesPost(request.resolvesPost());
+            // Keeps the flag and its endorsement in step, as AnswerMessageService does for messages.
+            existingAnswerPost.setResolution(request.resolvesPost(), user);
             // re-evaluate the parent post's resolved status — any resolving answer keeps the post marked as resolved
             existingAnswerPost.getPost().setResolved(existingAnswerPost.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerPost.getPost());
@@ -180,7 +181,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerPostId);
         preparePostForBroadcast(post);
-        broadcastForPost(post, MetisCrudAction.UPDATE, course.getId(), null);
+        broadcastForPost(post, CommunicationCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -188,7 +189,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      */
     @Override
     public String getEntityName() {
-        return METIS_ANSWER_POST_ENTITY_NAME;
+        return ANSWER_POST_ENTITY_NAME;
     }
 
     /**

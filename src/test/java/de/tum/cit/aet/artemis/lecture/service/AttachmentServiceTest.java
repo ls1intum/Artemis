@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -13,8 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -65,8 +63,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testRegenerateStudentVersion_withNoHiddenSlides() {
-        String originalPath = testAttachment1.getStudentVersion();
-        Path actualFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
+        Path actualFilePath = new FileSystemLocation.StudentVersionSlides(testAttachment1.getAttachmentVideoUnit().getId(), testAttachment1.getStudentVersion()).path();
 
         attachmentService.regenerateStudentVersion(testAttachment1);
         assertThat(testAttachment1.getStudentVersion()).isNull();
@@ -80,7 +77,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         attachmentService.regenerateStudentVersion(testAttachment2);
         String firstStudentVersionPath = testAttachment2.getStudentVersion();
-        Path actualFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(firstStudentVersionPath), FilePathType.STUDENT_VERSION_SLIDES);
+        Path actualFilePath = new FileSystemLocation.StudentVersionSlides(testAttachment2.getAttachmentVideoUnit().getId(), firstStudentVersionPath).path();
 
         assertThat(testAttachment2.getStudentVersion()).isNotNull();
         assertThat(Files.exists(actualFilePath)).isTrue();
@@ -113,7 +110,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         List<Slide> hiddenSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachment2.getAttachmentVideoUnit().getId());
 
         byte[] pdfData = attachmentService.generateStudentVersionPdf(
-                FilePathConverter.fileSystemPathForExternalUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT).toFile(), hiddenSlides);
+                new FileSystemLocation.AttachmentVideoUnitFile(testAttachment2.getAttachmentVideoUnit().getId(), testAttachment2.getLink()).path().toFile(), hiddenSlides);
 
         // Verify output
         assertThat(pdfData).isNotNull();

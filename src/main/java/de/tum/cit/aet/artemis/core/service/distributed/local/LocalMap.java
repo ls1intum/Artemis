@@ -32,7 +32,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     /**
      * Nano-time deadlines for entries stored with a time-to-live. The local provider has no background eviction, so
-     * expiry is enforced by purging on every read; that keeps reads consistent with the Hazelcast and Redis backends,
+     * expiry is enforced by purging on every read; that keeps reads consistent with the Hazelcast and Redis providers,
      * which also never return an entry whose time-to-live has elapsed.
      */
     private final ConcurrentHashMap<K, Long> expiryDeadlines = new ConcurrentHashMap<>();
@@ -131,7 +131,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         for (K key : keys) {
             V value = get(key);
             // Absent keys are left out rather than mapped to null, matching Hazelcast's IMap.getAll and Redisson's
-            // RMap.getAll. Mapping them to null would make result.size() and containsKey() disagree between backends.
+            // RMap.getAll. Mapping them to null would make result.size() and containsKey() disagree between providers.
             if (value != null) {
                 result.put(key, value);
             }

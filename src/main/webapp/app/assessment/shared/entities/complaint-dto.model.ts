@@ -15,6 +15,10 @@ export class ComplaintDTO {
     public complaintResponse?: ComplaintResponseDTO;
     public result?: ResultSimpleDTO;
     public participant?: ParticipantDTO;
+    /** Privacy-safe stable assessor id for tutor All-scope filtering (not login). */
+    public assessorKey?: string;
+    /** Privacy-safe assessor display name (first/last only; no login). */
+    public assessorLabel?: string;
 }
 
 /**

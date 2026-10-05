@@ -1,6 +1,6 @@
 services:
   redis:
-    image: redis/redis-stack-server:${REDIS_STACK_VERSION}
+    image: valkey/valkey:${VALKEY_VERSION}
     restart: always
     ports:
       - "6379:6379"
@@ -13,7 +13,7 @@ services:
       "--requirepass ${REDIS_PASSWORD:-artemis}",
       "--user artemis on >${REDIS_PASSWORD:-artemis} +@all &* ~*",
       "--user default off nopass nocommands",
-      "--protected-mode no" # Needed, as redis does not detect that the default user has a password if it is disabled
+      "--protected-mode no" # Needed, as the server does not detect that the default user has a password if it is disabled
     ]
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-artemis}", "ping"]

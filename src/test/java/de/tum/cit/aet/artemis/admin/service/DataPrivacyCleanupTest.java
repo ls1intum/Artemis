@@ -51,9 +51,11 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -66,8 +68,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * ({@link CourseDataRetentionService#warnAndArchiveDueCourses()}) produces a real archive that actually contains the
  * students' submissions, and the real reset phase ({@link CourseDataRetentionService#resetDueCourses()}) then deletes the
  * student data while keeping the course material and the archive backup, and</li>
- * <li>the not-enrolled-user soft-delete ({@link DataCleanupService#deleteNotEnrolledUsers()}), which anonymizes user
- * accounts.</li>
+ * <li>the not-enrolled-user permanent deletion ({@link DataCleanupService#deleteNotEnrolledUsers()}), which only removes
+ * accounts after all blocking domain references have been cleaned.</li>
  * </ul>
  * These are the operations where a wrong gate would silently destroy data, so every test asserts both the intended
  * deletion <b>and</b> that everything outside the gate survives. The selection/gating logic in isolation is additionally
@@ -125,6 +127,9 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -248,14 +253,14 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         User enrolled = enrolledUser(TEST_PREFIX + "enrolled", longAgo); // enrolled -> keep
         User recent = notEnrolledUser(TEST_PREFIX + "recent", ZonedDateTime.now().toInstant()); // recently active -> keep
 
-        // The Iris bot matches the query but is explicitly excluded by the service; set it up (already warned past grace)
-        // only if the deployment did not already seed it, so that ONLY the service's bot filter can save it on delete.
+        // The Iris bot is excluded from both query phases; set it up (already warned past grace) only if the deployment
+        // did not already seed it, so this test also verifies that it remains untouched.
         User irisBot = userUtilService.userExistsWithLogin(User.IRIS_BOT_LOGIN) ? null : notEnrolledUser(User.IRIS_BOT_LOGIN, longAgo);
         if (irisBot != null) {
             userActivityService.recordDeletionWarning(User.IRIS_BOT_LOGIN, ZonedDateTime.now().minusDays(31).toInstant());
         }
 
-        // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the already-warned bot excluded).
+        // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the bot excluded).
         assertThat(dataCleanupService.countNotEnrolledUsersWarning().users()).isEqualTo(baselineWarnCount + 1);
         dataCleanupService.warnNotEnrolledUsers();
         verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
@@ -271,11 +276,8 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         userActivityService.recordDeletionWarning(originalLogin, ZonedDateTime.now().minusDays(31).toInstant());
         dataCleanupService.deleteNotEnrolledUsers();
 
-        // The warned, past-grace account is soft-deleted and anonymized (login/email replaced, deactivated).
-        User deleted = userRepository.findById(toDeleteId).orElseThrow();
-        assertThat(deleted.isDeleted()).isTrue();
-        assertThat(deleted.getActivated()).isFalse();
-        assertThat(deleted.getLogin()).isNotEqualTo(originalLogin);
+        // The warned, past-grace account has no blocking references and is physically deleted.
+        assertThat(userRepository.findById(toDeleteId)).isEmpty();
 
         // Enrolled and recently-active users are untouched; the Iris bot is never deleted even when warned past grace.
         assertThat(userRepository.findById(enrolled.getId())).get().extracting(User::isDeleted).isEqualTo(false);
@@ -423,9 +425,14 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // Attach a plagiarism submission whose plagiarism_case_id FK is RESTRICT. The delete must null this FK (via the
         // per-submission modifying query) BEFORE removing the case; without that null-out the case delete would throw an
         // FK violation. This makes the test fail if that null-out loop is ever removed.
+        PlagiarismComparison oldComparison = new PlagiarismComparison();
+        oldComparison.setPlagiarismResult(textExerciseUtilService.createPlagiarismResultForExercise(oldExercise));
+        oldComparison = plagiarismComparisonRepository.save(oldComparison);
         PlagiarismSubmission oldSubmission = new PlagiarismSubmission();
         oldSubmission.setStudentLogin(student.getLogin());
         oldSubmission.setSubmissionId(123L);
+        // A plagiarism submission belongs to the comparison it came out of; the case is the secondary link this test is about.
+        oldComparison.setSubmissionA(oldSubmission);
         oldSubmission.setPlagiarismCase(oldCasesBefore.getFirst());
         long oldSubmissionId = plagiarismSubmissionRepository.save(oldSubmission).getId();
 

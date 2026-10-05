@@ -68,6 +68,18 @@ export enum DoughnutChartType {
     ],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
+    private eventManager = inject(EventManager);
+    private courseManagementService = inject(CourseManagementService);
+    private organizationService = inject(OrganizationManagementService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private router = inject(Router);
+    private markdownService = inject(ArtemisMarkdownService);
+    private destroyRef = inject(DestroyRef);
+
     protected readonly DoughnutChartType = DoughnutChartType;
     protected readonly FeatureToggle = FeatureToggle;
 
@@ -83,18 +95,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly faQuestion = faQuestion;
     protected readonly faBolt = faBolt;
     protected readonly faFileImport = faFileImport;
-
-    private eventManager = inject(EventManager);
-    private courseManagementService = inject(CourseManagementService);
-    private organizationService = inject(OrganizationManagementService);
-    private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
-    private accountService = inject(AccountService);
-    private irisSettingsService = inject(IrisSettingsService);
-    private router = inject(Router);
-    private markdownService = inject(ArtemisMarkdownService);
-    private destroyRef = inject(DestroyRef);
 
     private readonly exploreSection = viewChild<ElementRef>('exploreSection');
 
@@ -223,23 +223,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         return [];
     }
 
-    getAthenaDetails(): Detail[] {
-        const currentCourse = this.course();
-        const athenaDetails: Detail[] = [];
-        if (this.isAthenaEnabled()) {
-            athenaDetails.push({
-                type: DetailType.Boolean,
-                title: 'artemisApp.course.restrictedAthenaModulesAccess.label',
-                data: { boolean: currentCourse?.restrictedAthenaModulesAccess },
-            });
-        }
-        return athenaDetails;
-    }
-
     getModeDetailSection(): DetailOverviewSection {
         const currentCourse = this.course();
         const complaintsDetails = this.getComplaintsDetails();
-        const athenaDetails = this.getAthenaDetails();
 
         const details: Detail[] = [
             {
@@ -265,7 +251,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
                 data: { boolean: currentCourse?.testCourse },
             },
             ...complaintsDetails,
-            ...athenaDetails,
         ];
 
         // inserting optional details in reversed order, so that no index calculation is needed

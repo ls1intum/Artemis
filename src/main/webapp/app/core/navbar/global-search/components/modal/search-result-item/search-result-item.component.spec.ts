@@ -7,6 +7,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { By } from '@angular/platform-browser';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 describe('SearchResultItemComponent', () => {
     let component: SearchResultItemComponent;
@@ -99,18 +101,31 @@ describe('SearchResultItemComponent', () => {
         } as GlobalSearchResult);
         fixture.detectChanges();
 
-        const descriptionEl: HTMLElement = fixture.nativeElement.querySelector('.result-description');
-        expect(descriptionEl).toBeTruthy();
+        const markdownElement = fixture.debugElement.query(By.directive(MarkdownDirective));
+        expect(markdownElement).toBeTruthy();
+        const descriptionEl: HTMLElement = markdownElement.nativeElement;
 
-        // The link text should be visible (markdown is rendered asynchronously via the lazy [jhiMarkdown] directive).
-        await vi.waitFor(() => {
-            fixture.detectChanges();
-            expect(descriptionEl.textContent).toContain('docs');
+        // Await the real lazy conversion instead of imposing a separate polling deadline on chunk loading.
+        await new Promise<void>((resolve) => {
+            markdownElement.injector.get(MarkdownDirective).markdownRendered.subscribe(resolve);
         });
+        fixture.detectChanges();
+        expect(descriptionEl.textContent).toContain('docs');
 
         // But no <a> element should be present
         const anchor = descriptionEl.querySelector('a');
         expect(anchor).toBeNull();
+    });
+
+    describe('badgeLabelKey', () => {
+        // The server-to-i18n contract (every emittable badge key has an en + de label) is guarded authoritatively in
+        // the server test GlobalSearchResultDTOTest; here we only assert the computed namespaces the key correctly.
+        it('namespaces the stable badge key under the results.badge i18n path', () => {
+            fixture.componentRef.setInput('result', { id: '1', title: 'T', type: 'exercise', badge: 'File Upload', badgeKey: 'file-upload', metadata: {} } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['badgeLabelKey']()).toBe('global.search.results.badge.file-upload');
+        });
     });
 
     describe('cleanedDescription', () => {
@@ -244,6 +259,70 @@ describe('SearchResultItemComponent', () => {
             const result = component['cleanedDescription']()!;
             expect(result).toHaveLength(301);
             expect(result.endsWith('…')).toBe(true);
+        });
+    });
+
+    describe('lecture_content location line', () => {
+        it('should render course, lecture name and the page location for a slide hit', () => {
+            fixture.componentRef.setInput('result', {
+                id: 'lecture-content-30-4',
+                title: 'Introduction to Signals',
+                type: 'lecture_content',
+                metadata: { courseName: 'Advanced Web Development', lectureName: 'Angular Basics', pageNumber: 4 },
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['isLectureContent']()).toBe(true);
+            const metadata: HTMLElement = fixture.nativeElement.querySelector('.result-metadata');
+            expect(metadata.textContent).toContain('Advanced Web Development');
+            expect(metadata.textContent).toContain('Angular Basics');
+            expect(metadata.textContent).toContain('global.search.pageAbbreviation');
+            expect(metadata.textContent).toContain('4');
+            expect(metadata.textContent).not.toContain('global.search.results.video');
+        });
+
+        it('should render the displayMeta timestamp for a video hit', () => {
+            fixture.componentRef.setInput('result', {
+                id: 'lecture-content-31--1',
+                title: 'B-Trees Explained',
+                type: 'lecture_content',
+                metadata: { courseName: 'Databases', lectureName: 'Indexing', pageNumber: -1, displayMeta: '3:41' },
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const metadata: HTMLElement = fixture.nativeElement.querySelector('.result-metadata');
+            expect(metadata.textContent).toContain('Indexing');
+            expect(metadata.textContent).toContain('3:41');
+            expect(metadata.textContent).not.toContain('global.search.pageAbbreviation');
+        });
+
+        it('should fall back to the localized "Video" label when a video hit has no displayMeta', () => {
+            fixture.componentRef.setInput('result', {
+                id: 'lecture-content-31--1',
+                title: 'B-Trees Explained',
+                type: 'lecture_content',
+                metadata: { courseName: 'Databases', lectureName: 'Indexing', pageNumber: -1 },
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const metadata: HTMLElement = fixture.nativeElement.querySelector('.result-metadata');
+            expect(metadata.textContent).toContain('global.search.results.video');
+        });
+
+        it('should NOT render the location line for a non-content result', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'Test Exercise',
+                type: 'exercise',
+                metadata: { courseName: 'Test Course' },
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['isLectureContent']()).toBe(false);
+            const metadata: HTMLElement = fixture.nativeElement.querySelector('.result-metadata');
+            expect(metadata.textContent).toContain('Test Course');
+            expect(metadata.textContent).not.toContain('global.search.pageAbbreviation');
+            expect(metadata.textContent).not.toContain('global.search.results.video');
         });
     });
 });

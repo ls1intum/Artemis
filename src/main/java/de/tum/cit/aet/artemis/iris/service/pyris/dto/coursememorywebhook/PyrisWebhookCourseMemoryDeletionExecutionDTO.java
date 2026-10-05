@@ -27,6 +27,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  * @param courseId       scopes the deletion; entries are stored per course
  * @param postId         stringified id of the thread's root post whose entry should be removed, or
  *                           {@code null} when deleting a whole channel
+ * @param version        monotonic per-thread operation version for the {@code postId} scope, {@code null} for
+ *                           the other two. Pyris writes the retraction as a tombstone carrying this version,
+ *                           so an ingestion of the thread that was accepted earlier but finishes later finds
+ *                           a newer version and cannot resurrect the entry. {@link Long#MAX_VALUE} when the
+ *                           thread itself was deleted: its row is gone, so no version can be minted for it,
+ *                           and nothing legitimate can ever follow
  * @param conversationId stringified id of the channel whose entries should all be removed, or
  *                           {@code null} when deleting a single thread
  * @param wholeCourse    {@code true} to remove every entry of the course, for the course being deleted.
@@ -34,8 +40,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  *                           rejected instead of silently escalating into a course-wide wipe
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutionSettingsDTO settings, long courseId, @Nullable String postId, @Nullable String conversationId,
-        boolean wholeCourse) {
+public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutionSettingsDTO settings, long courseId, @Nullable String postId, @Nullable Long version,
+        @Nullable String conversationId, boolean wholeCourse) {
 
     /**
      * Deletion of a single thread's entry.
@@ -43,10 +49,11 @@ public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutio
      * @param settings pipeline execution settings
      * @param courseId the course the entry is scoped to
      * @param postId   the thread's root post id
+     * @param version  the operation version ordering this retraction against the thread's ingestions
      * @return a DTO targeting exactly that thread
      */
-    public static PyrisWebhookCourseMemoryDeletionExecutionDTO forThread(PyrisPipelineExecutionSettingsDTO settings, long courseId, String postId) {
-        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, postId, null, false);
+    public static PyrisWebhookCourseMemoryDeletionExecutionDTO forThread(PyrisPipelineExecutionSettingsDTO settings, long courseId, String postId, long version) {
+        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, postId, version, null, false);
     }
 
     /**
@@ -58,7 +65,7 @@ public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutio
      * @return a DTO targeting the whole channel
      */
     public static PyrisWebhookCourseMemoryDeletionExecutionDTO forConversation(PyrisPipelineExecutionSettingsDTO settings, long courseId, String conversationId) {
-        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, null, conversationId, false);
+        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, null, null, conversationId, false);
     }
 
     /**
@@ -69,6 +76,6 @@ public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutio
      * @return a DTO targeting the whole course
      */
     public static PyrisWebhookCourseMemoryDeletionExecutionDTO forCourse(PyrisPipelineExecutionSettingsDTO settings, long courseId) {
-        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, null, null, true);
+        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, null, null, null, true);
     }
 }

@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +26,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
+import de.tum.cit.aet.artemis.exercise.dto.TeamMemberDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamResponseDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -116,7 +120,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         if (type == ImportType.FROM_LIST) {
             url = importFromListUrl(importStrategy);
         }
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(url, body, Team.class, HttpStatus.OK);
+        List<TeamResponseDTO> destinationTeamsAfter = request.putWithResponseBodyList(url, body, TeamResponseDTO.class, HttpStatus.OK);
         assertCorrectnessOfImport(addedTeams, destinationTeamsAfter);
     }
 
@@ -333,13 +337,38 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
      * @param expectedTeamsAfterImport List of teams that are expected to be in the destination exercise now after the import
      * @param actualTeamsAfterImport   List of teams that are actually in the destination exercise after the import according to response
      */
-    private void assertCorrectnessOfImport(List<Team> expectedTeamsAfterImport, List<Team> actualTeamsAfterImport) {
+    private void assertCorrectnessOfImport(List<Team> expectedTeamsAfterImport, List<TeamResponseDTO> actualTeamsAfterImport) {
         List<Team> destinationTeamsInDatabase = teamRepo.findAllByExerciseId(destinationExercise.getId());
-        assertThat(actualTeamsAfterImport).as("Imported teams were persisted into destination exercise.").isEqualTo(destinationTeamsInDatabase);
+        // Keyed by id rather than compared as two sets, so that a response which carries the right ids and the right
+        // team data but pairs them up wrongly fails here.
+        assertThat(actualTeamsAfterImport.stream().collect(Collectors.toMap(TeamResponseDTO::id, TeamImportIntegrationTest::signatureOf)))
+                .as("Imported teams were persisted into destination exercise, each response id carrying that team's data.")
+                .isEqualTo(destinationTeamsInDatabase.stream().collect(Collectors.toMap(Team::getId, TeamImportIntegrationTest::signatureOf)));
 
-        assertThat(actualTeamsAfterImport).as("Teams were correctly imported.").usingRecursiveComparison()
-                .ignoringFields("id", "exercise", "createdDate", "createdBy", "lastModifiedDate", "lastModifiedBy").usingOverriddenEquals()
-                .ignoringOverriddenEqualsForTypes(Team.class).ignoringCollectionOrder().isEqualTo(expectedTeamsAfterImport);
+        assertThat(actualTeamsAfterImport.stream().map(TeamImportIntegrationTest::signatureOf).toList()).as("Teams were correctly imported.")
+                .containsExactlyInAnyOrderElementsOf(expectedTeamsAfterImport.stream().map(TeamImportIntegrationTest::signatureOf).toList());
+    }
+
+    /**
+     * The identity of an imported team as the import must preserve it: what it is called, who is in it and who owns it.
+     *
+     * @param name          the team name
+     * @param shortName     the team short name
+     * @param image         the team image, which the import carries over as well
+     * @param studentLogins the logins of the team members
+     * @param ownerLogin    the login of the owning tutor, or null when the team has none
+     */
+    private record TeamSignature(String name, String shortName, String image, Set<String> studentLogins, String ownerLogin) {
+    }
+
+    private static TeamSignature signatureOf(TeamResponseDTO team) {
+        return new TeamSignature(team.name(), team.shortName(), team.image(), team.students().stream().map(TeamMemberDTO::login).collect(Collectors.toSet()),
+                team.owner() == null ? null : team.owner().login());
+    }
+
+    private static TeamSignature signatureOf(Team team) {
+        return new TeamSignature(team.getName(), team.getShortName(), team.getImage(), team.getStudents().stream().map(User::getLogin).collect(Collectors.toSet()),
+                team.getOwner() == null ? null : team.getOwner().getLogin());
     }
 
     static <T> List<T> addLists(List<T> a, List<T> b) {

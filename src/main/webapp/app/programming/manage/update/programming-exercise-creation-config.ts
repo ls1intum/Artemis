@@ -17,7 +17,6 @@ export type ProgrammingExerciseCreationConfig = {
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryDuplicateNames: boolean;
     checkoutSolutionRepositoryAllowed: boolean;
-    customBuildPlansSupported: string;
     invalidDirectoryNamePattern: RegExp;
     invalidRepositoryNamePattern: RegExp;
     isImportFromExistingExercise: boolean;
@@ -46,11 +45,8 @@ export type ProgrammingExerciseCreationConfig = {
     validOnlineIdeSelection: () => boolean | undefined;
     inProductionEnvironment: boolean;
     recreateBuildPlans: boolean;
-    onRecreateBuildPlanOrUpdateTemplateChange: () => void;
-    updateTemplate: boolean;
-    recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
+    recreateBuildPlanChange: () => void; // default false
     isExamMode: boolean;
     isEdit: boolean;
     showSummary: boolean;
-    buildPlanLoaded: boolean;
 };

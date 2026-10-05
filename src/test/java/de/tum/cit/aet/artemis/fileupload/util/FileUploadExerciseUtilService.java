@@ -327,6 +327,19 @@ public class FileUploadExerciseUtilService {
     }
 
     /**
+     * Updates the file pattern of the exercise with the passed id. The updated exercise is saved in the repository.
+     *
+     * @param exerciseId  The id of the exercise which should be updated
+     * @param filePattern The comma separated list of file endings the exercise accepts
+     */
+    public void updateFilePattern(long exerciseId, String filePattern) {
+        FileUploadExercise exercise = (FileUploadExercise) exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
+        exercise.setFilePattern(filePattern);
+        exerciseRepository.save(exercise);
+    }
+
+    /**
      * Creates and saves a FileUploadSubmission for the given FileUploadExercise and loginPrefix. Also creates an empty file for the submission.
      *
      * @param loginPrefix        The loginPrefix of the user the FileUploadSubmission should belong to (the loginPrefix will be suffixed with "student1")

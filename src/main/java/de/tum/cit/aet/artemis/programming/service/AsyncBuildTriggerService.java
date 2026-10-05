@@ -60,8 +60,8 @@ public class AsyncBuildTriggerService {
      */
     @Async("buildTriggerExecutor")
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) {
-        // The pushing user is not logged into Artemis, so custom repository methods need an authorization object on this
-        // thread as well; the calling thread's one does not carry over.
+        // A push carries no logged-in user, so this stands in. When the trigger does come from a request, the
+        // caller's context now reaches this thread and is kept instead.
         SecurityUtils.setAuthorizationObject();
         try {
             attachExerciseDetailsNeededByTheTrigger(participation);
@@ -74,28 +74,19 @@ public class AsyncBuildTriggerService {
     }
 
     /**
-     * Loads the build config and the auxiliary repositories onto the exercise before the trigger reads them.
+     * Loads the auxiliary repositories onto the exercise before the trigger reads them.
      * <p>
-     * Both are per-exercise values that the trigger otherwise resolves with a query each, on every push, for the same
-     * handful of exercises. Their loaders return the association when it is already initialized, so one load here
-     * replaces both queries. Nothing is retained between pushes, so there is nothing to invalidate when an instructor
+     * They are a per-exercise value that the trigger otherwise resolves with a query on every push, for the same
+     * handful of exercises. Nothing is retained between pushes, so there is nothing to invalidate when an instructor
      * changes the exercise: the next push reads it again.
      *
      * @param participation the participation whose exercise should carry the details the trigger needs
      */
     private void attachExerciseDetailsNeededByTheTrigger(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
-        if (exercise == null) {
+        if (exercise == null || Hibernate.isInitialized(exercise.getAuxiliaryRepositories())) {
             return;
         }
-        boolean buildConfigLoaded = exercise.getBuildConfig() != null && Hibernate.isInitialized(exercise.getBuildConfig());
-        boolean auxiliaryRepositoriesLoaded = Hibernate.isInitialized(exercise.getAuxiliaryRepositories());
-        if (buildConfigLoaded && auxiliaryRepositoriesLoaded) {
-            return;
-        }
-        programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exercise.getId()).ifPresent(loaded -> {
-            exercise.setBuildConfig(loaded.getBuildConfig());
-            exercise.setAuxiliaryRepositories(loaded.getAuxiliaryRepositories());
-        });
+        programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exercise.getId()).ifPresent(loaded -> exercise.setAuxiliaryRepositories(loaded.getAuxiliaryRepositories()));
     }
 }

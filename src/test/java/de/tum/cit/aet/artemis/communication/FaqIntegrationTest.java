@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +47,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void initTestCase() throws Exception {
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
-        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.course2 = courses.getLast();
         this.faq = FaqFactory.generateFaq(course1, FaqState.PROPOSED, "answer", "title");
@@ -55,7 +56,16 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
         userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
         irisRequestMockProvider.enableMockingOfRequests();
+    }
 
+    /**
+     * Releases the Pyris mock again. The mock replaces the request factory of the shared Pyris {@code RestTemplate},
+     * and without this it stayed bound for every later test class in the same JVM: any of their Pyris calls, such
+     * as the Course Memory purge of a deleted exercise channel, then failed on a mock that expected no requests.
+     */
+    @AfterEach
+    void tearDown() throws Exception {
+        irisRequestMockProvider.reset();
     }
 
     private void testAllPreAuthorize() throws Exception {

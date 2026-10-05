@@ -6,9 +6,9 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -27,6 +27,7 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -38,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -54,7 +56,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "submissionExerciseType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "submissionExerciseType", visible = true)
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
@@ -79,6 +81,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     private Boolean exampleSubmission;
 
     @ManyToOne
+    @Parent
     private Participation participation;
 
     @JsonIgnore
@@ -138,7 +141,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(Objects::nonNull).max(BY_ID).orElse(null);
+        Result latestResult = results.stream().filter(Objects::nonNull).max(BY_ID).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -157,7 +160,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+        Result latestResult = results.stream().filter(result -> result != null && result.getCompletionDate() != null)
                 .max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID)).orElse(null);
 
         if (latestResult != null) {
@@ -224,6 +227,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
+    @NonNull
     public Set<Result> getResults() {
         return results;
     }
@@ -268,7 +272,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        if (results == null || results.isEmpty()) {
+        if (results.isEmpty()) {
             return null;
         }
         return results.stream().filter(Objects::nonNull).min(BY_ID).orElse(null);
@@ -284,9 +288,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     public Result getFirstManualResult() {
         // The earliest manual result, which is the one of the first correction round. Guard on the manual results, not
         // on all results: a submission can carry only automatic or Athena results and then there is none.
-        if (results == null) {
-            return null;
-        }
         return getManualResults().stream().min(BY_ID).orElse(null);
     }
 
@@ -303,9 +304,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getLatestManualResult() {
         // The most recent manual result, which is the one of the highest correction round.
-        if (results == null) {
-            return null;
-        }
         return getManualResults().stream().max(BY_ID).orElse(null);
     }
 
@@ -315,16 +313,19 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * <p>
      * This is where the round used to come from implicitly: the results were an ordered list and the position carried
      * the round, so adding a result to the list decided which round it belonged to. The round now lives on the result,
-     * and this is the same moment, so the behaviour is unchanged for every caller that does not set it itself.
-     * {@code SubmissionService.lockSubmission} does set it, from the round the tutor asked for, and that takes
-     * precedence. Automatic and Athena results are not correction rounds and keep no round.
+     * and this is the same moment. {@code SubmissionService.lockSubmission} does set it, from the round the tutor asked
+     * for, and that takes precedence. Automatic and Athena results are not correction rounds and keep no round.
+     * <p>
+     * The next round is the one after the highest existing round, not the number of existing results: after a result
+     * of an earlier round is deleted the two differ, and counting would hand the new result a round that is still taken.
      *
      * @param result the result to add
      */
     public void addResult(Result result) {
         if (result != null) {
             if (result.getCorrectionRound() == null && !result.isAutomatic() && !result.isAthenaBased()) {
-                result.setCorrectionRound(countCorrectionRoundResults(result));
+                result.setCorrectionRound(
+                        nextCorrectionRound(results.stream().filter(other -> other != null && other != result && !other.isAutomatic() && !other.isAthenaBased())));
             }
             // Keep both ends of the association in sync. The results are mapped on the inverse side and cascade, so
             // without this Hibernate inserts the cascaded result with an empty submission_id and only fills it in with
@@ -335,11 +336,17 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * @param resultToAdd the result that is about to be added, which must not count itself
-     * @return how many correction-round results this submission already holds
+     * The one definition of "next round", shared with the test fixtures so that the two cannot drift apart again.
+     * <p>
+     * A result without a round is deliberately treated as holding no round yet: the backfill in changeset
+     * {@code 20260825-02-backfill-result-correction-round} gave every persisted correction-round result its round, so
+     * none is expected here, and one that does show up must not shadow a round that is in use.
+     *
+     * @param existingCorrectionRoundResults the manual results the submission already holds, without the one being added
+     * @return the round after the highest one among them, or 0 if none holds a round
      */
-    private int countCorrectionRoundResults(Result resultToAdd) {
-        return (int) results.stream().filter(other -> other != null && other != resultToAdd && !other.isAutomatic() && !other.isAthenaBased()).count();
+    public static int nextCorrectionRound(Stream<Result> existingCorrectionRoundResults) {
+        return existingCorrectionRoundResults.map(Result::getCorrectionRound).filter(Objects::nonNull).mapToInt(round -> round + 1).max().orElse(0);
     }
 
     /**

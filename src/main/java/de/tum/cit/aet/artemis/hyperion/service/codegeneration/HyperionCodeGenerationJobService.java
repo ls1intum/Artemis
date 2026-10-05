@@ -45,7 +45,7 @@ public class HyperionCodeGenerationJobService {
     }
 
     /**
-     * Initializes the job map. The entry lifetime is requested here rather than configured on the backend, because a
+     * Initializes the job map. The entry lifetime is requested here rather than configured on the provider, because a
      * map-level TTL is not expressible on every provider.
      */
     @PostConstruct

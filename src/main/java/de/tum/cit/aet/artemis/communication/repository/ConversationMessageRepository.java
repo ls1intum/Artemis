@@ -12,6 +12,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,9 +24,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -114,6 +117,52 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
 
     default Post findMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return getValueElseThrow(findById(postId).filter(post -> post.getConversation() != null), postId);
+    }
+
+    /**
+     * Increments a thread's Course Memory version atomically in the database, as the first half of minting the
+     * version of an ingestion or deletion about to be dispatched (see {@code CourseMemoryIngestionService}).
+     * <p>
+     * A native statement rather than an entity save on purpose: the increment has to be atomic across Artemis
+     * nodes, and the row lock it takes serialises concurrent minting so no two operations on a thread ever
+     * share a version. The entity maps the column as neither insertable nor updatable, so this is the only
+     * writer. {@link #mintCourseMemoryVersion(long)} reads the minted value back inside the same transaction,
+     * while the lock is still held; call that rather than this directly.
+     *
+     * @param postId the id of the thread's root post
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id = :postId", nativeQuery = true)
+    void incrementCourseMemoryVersion(@Param("postId") long postId);
+
+    /**
+     * Reads a thread's current Course Memory version straight from the database, bypassing any loaded entity
+     * whose copy may be stale.
+     *
+     * @param postId the id of the thread's root post
+     * @return the version, or empty if the post no longer exists
+     */
+    @Query("""
+            SELECT p.courseMemoryVersion
+            FROM Post p
+            WHERE p.id = :postId
+            """)
+    Optional<Long> findCourseMemoryVersion(@Param("postId") long postId);
+
+    /**
+     * Mints the next Course Memory version of a thread: increments the counter and reads the result back in one
+     * transaction, so the row lock taken by the increment still serialises concurrent minting when the value is
+     * read. Two operations on one thread can therefore never share a version, on however many nodes they run.
+     * The boundary lives here rather than in the calling service, which is where Artemis defines them.
+     *
+     * @param postId the id of the thread's root post
+     * @return the minted version, or empty if the post no longer exists
+     */
+    @Transactional // ok because the increment and the read-back of the minted value have to share the row lock
+    default Optional<Long> mintCourseMemoryVersion(long postId) {
+        incrementCourseMemoryVersion(postId);
+        return findCourseMemoryVersion(postId);
     }
 
     Integer countByConversationId(Long conversationId);

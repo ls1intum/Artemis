@@ -71,6 +71,7 @@
             <div class="d-flex flex-wrap gap-1">
                 @if (isTeamAvailable()) {
                     <button
+                        type="button"
                         class="view-team"
                         jhi-exercise-action-button
                         [buttonIcon]="faUsers"
@@ -83,6 +84,7 @@
                 @if (isStartExerciseAvailable()) {
                     <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                         <button
+                            type="button"
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
                             jhi-exercise-action-button
@@ -130,7 +132,13 @@
                             [repositoryUri]="''"
                         />
                     }
-                    @if (exercise().allowFeedbackRequests && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
+                    @if (
+                        exercise().course?.athenaFormativeFeedbackEnabled &&
+                        athenaEnabled &&
+                        gradedParticipation() &&
+                        exercise().type === ExerciseType.PROGRAMMING &&
+                        exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC
+                    ) {
                         <jhi-request-feedback-button
                             [exercise]="exercise()"
                             [smallButtons]="smallButtons()"
@@ -146,6 +154,7 @@
                     isResumeExerciseAvailable(gradedParticipation())
                 ) {
                     <button
+                        type="button"
                         [id]="'resume-exercise-' + exercise().id"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
@@ -163,6 +172,7 @@
                     isResumeExerciseAvailable(practiceParticipation())
                 ) {
                     <button
+                        type="button"
                         [id]="'resume-practice-exercise-' + exercise().id"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
@@ -182,6 +192,7 @@
             <div class="btn-group gap-1">
                 @if (isTeamAvailable()) {
                     <button
+                        type="button"
                         class="view-team"
                         jhi-exercise-action-button
                         [buttonIcon]="faUsers"
@@ -194,6 +205,7 @@
                 <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                     @if (!gradedParticipation() && isStartExerciseAvailable()) {
                         <button
+                            type="button"
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
                             jhi-exercise-action-button
@@ -209,6 +221,7 @@
                 </span>
                 @if (allowEditing) {
                     <button
+                        type="button"
                         [id]="'open-exercise-' + exercise().id"
                         class="open-exercise"
                         jhi-exercise-action-button
@@ -228,7 +241,10 @@
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().type + '-exercises', exercise().id, 'participate', gradedParticipation()!.id]"
                     ></button>
                     @if (
-                        exercise().allowFeedbackRequests && athenaEnabled && (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) && beforeDueDate()
+                        exercise().course?.athenaFormativeFeedbackEnabled &&
+                        athenaEnabled &&
+                        (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) &&
+                        beforeDueDate()
                     ) {
                         <jhi-request-feedback-button
                             [exercise]="exercise()"
@@ -246,6 +262,7 @@
 
 <ng-template #quizActionButton let-button>
     <button
+        type="button"
         jhi-exercise-action-button
         [id]="button.id"
         [buttonIcon]="button.icon"

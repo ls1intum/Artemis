@@ -237,12 +237,11 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
-    void scheduledDeleteNotEnrolledUsersSoftDeletesOnlyWarnedPastGraceWhenEnabled() {
+    void scheduledDeleteNotEnrolledUsersPermanentlyDeletesOnlyWarnedPastGraceWhenEnabled() {
         Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
         // Warned > 30-day grace ago, no login since the warning -> deleted.
         User due = warnedNotEnrolledUser(TEST_PREFIX + "delcand", longAgo, ZonedDateTime.now().minusDays(31).toInstant());
         long dueId = due.getId();
-        String dueLogin = due.getLogin();
         // Warned only 5 days ago (still within grace) -> survives.
         User withinGrace = warnedNotEnrolledUser(TEST_PREFIX + "delgrace", longAgo, ZonedDateTime.now().minusDays(5).toInstant());
         // Warned > grace ago, but logged in AFTER the warning -> came back, so survives and the warning is cleared.
@@ -250,10 +249,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
 
         scheduleService(false, false, false, false, false, true, false).deleteNotEnrolledUsers();
 
-        User deleted = userRepository.findById(dueId).orElseThrow();
-        assertThat(deleted.isDeleted()).isTrue();
-        assertThat(deleted.getActivated()).isFalse();
-        assertThat(deleted.getLogin()).isNotEqualTo(dueLogin); // anonymized
+        assertThat(userRepository.findById(dueId)).isEmpty();
         assertThat(userRepository.findById(withinGrace.getId())).get().extracting(User::isDeleted).isEqualTo(false);
         User returnedAfter = userRepository.findById(returned.getId()).orElseThrow();
         assertThat(returnedAfter.isDeleted()).isFalse();
@@ -266,10 +262,10 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Result nonLatest = participationUtilService.generateResult(submission, instructor); // rated
-        Feedback nonLatestFeedback = feedbackRepository.save(new Feedback());
+        Feedback nonLatestFeedback = new Feedback();
         participationUtilService.addFeedbackToResult(nonLatestFeedback, nonLatest);
         Result latest = participationUtilService.generateResult(submission, instructor); // rated, newer id -> latest
-        Feedback latestFeedback = feedbackRepository.save(new Feedback());
+        Feedback latestFeedback = new Feedback();
         participationUtilService.addFeedbackToResult(latestFeedback, latest);
 
         scheduleService(false, false, true, false, false, false, false).deleteOldFeedback();
@@ -356,7 +352,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Result nonLatest = participationUtilService.generateResult(submission, instructor);
-        Feedback feedback = feedbackRepository.save(new Feedback());
+        Feedback feedback = new Feedback();
         participationUtilService.addFeedbackToResult(feedback, nonLatest);
         // A newer rated result makes the first one non-latest (so its feedback is a deletion candidate).
         participationUtilService.generateResult(submission, instructor);

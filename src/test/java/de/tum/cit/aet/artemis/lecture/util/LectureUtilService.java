@@ -193,7 +193,7 @@ public class LectureUtilService {
      * @return The updated Lecture
      */
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
-        Lecture existingLecture = lectureRepo.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        Lecture existingLecture = lectureRepo.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         for (LectureUnit lectureUnit : lectureUnits) {
             if (!existingLecture.getLectureUnits().contains(lectureUnit)) {
                 existingLecture.addLectureUnit(lectureUnit);
@@ -277,7 +277,7 @@ public class LectureUtilService {
         attachmentVideoUnit.setDescription("Lorem Ipsum");
         attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
-        Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId(), true)
+        Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId())
                 : LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true);
         attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
@@ -292,8 +292,11 @@ public class LectureUtilService {
             // we have to set a dummy value here, as null is not allowed. The correct value is set below.
             slide.setSlideImagePath("dummy");
             slide = slideRepository.save(slide);
+            // The slide number, not the slide id: that is the directory SlideSplitterService writes to and the one
+            // FileSystemLocation.Slide resolves. Using the id happens to coincide while ids start at one, which made
+            // this helper order dependent and let a rollback assertion pass without ever finding a file.
             Path slidePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath()
-                    .resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", slide.getId().toString(), testFileName));
+                    .resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()), testFileName));
             try {
                 FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), slidePath.toFile());
             }

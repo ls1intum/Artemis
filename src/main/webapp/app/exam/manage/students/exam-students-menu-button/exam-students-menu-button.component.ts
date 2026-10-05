@@ -1,27 +1,49 @@
-import { Component, input, viewChild } from '@angular/core';
-import { MenuItem } from 'primeng/api';
-import { ButtonDirective, ButtonSeverity } from 'primeng/button';
-import { Menu } from 'primeng/menu';
+import { Component, input } from '@angular/core';
+import { IconDefinition, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiButtonSeverity,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
+export interface ExamStudentsMenuItem {
+    /** Translation key of the entry label. */
+    label: string;
+    icon?: IconDefinition;
+    /** Translation key of the hint shown on hover. */
+    tooltip?: string;
+    disabled?: boolean;
+    /** Renders the entry in the danger colour, for destructive actions. */
+    danger?: boolean;
+    command: () => void;
+}
+
 @Component({
     selector: 'jhi-exam-students-menu-button',
-    standalone: true,
     templateUrl: './exam-students-menu-button.component.html',
-    imports: [Menu, ButtonDirective, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
 })
 export class ExamStudentsMenuButtonComponent {
-    readonly model = input.required<MenuItem[]>();
+    readonly model = input.required<ExamStudentsMenuItem[]>();
     readonly label = input.required<string>();
-    readonly buttonIconClass = input.required<string>();
+    readonly buttonIcon = input.required<IconDefinition>();
     readonly disabled = input(false);
-    readonly buttonClass = input('');
-    readonly severity = input<ButtonSeverity>('primary');
+    readonly severity = input<TumAetUiButtonSeverity>('primary');
 
-    readonly menu = viewChild<Menu>('menu');
-
-    toggleMenu(event: Event): void {
-        this.menu()?.toggle(event);
-    }
+    protected readonly faChevronDown = faChevronDown;
 }

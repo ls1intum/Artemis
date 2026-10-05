@@ -14,8 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 
 describe('ForwardedMessageComponent', () => {
     let component: ForwardedMessageComponent;
@@ -54,7 +54,7 @@ describe('ForwardedMessageComponent', () => {
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
             ],
         }).overrideComponent(ForwardedMessageComponent, {
             remove: { imports: [ProfilePictureComponent, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe] },
@@ -114,11 +114,11 @@ describe('ForwardedMessageComponent', () => {
         expect(component.sourceName()).toBe('a thread in a direct message ');
     });
 
-    it('should set todayFlag to "artemisApp.metis.today" if post is created today', () => {
+    it('should set todayFlag to "artemisApp.communication.today" if post is created today', () => {
         fixture.componentRef.setInput('originalPostDetails', mockAnswerPost);
         fixture.detectChanges();
         expect(component.postingIsOfToday()).toBe(true);
-        expect(component.todayFlag()).toBe('artemisApp.metis.today');
+        expect(component.todayFlag()).toBe('artemisApp.communication.today');
     });
 
     it('should set todayFlag to undefined if post is not created today', () => {
