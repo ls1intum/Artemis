@@ -1301,6 +1301,19 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(reasons).not.toContainEqual(gradingReason);
         });
 
+        it.each([
+            { maxPoints: 1.111, bonusPoints: 0, translateKey: 'artemisApp.exercise.form.points.pattern' },
+            { maxPoints: 10, bonusPoints: 1.111, translateKey: 'artemisApp.exercise.form.bonusPoints.pattern' },
+        ])('should not add the generic grading reason on top of $translateKey', ({ maxPoints, bonusPoints, translateKey }) => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = maxPoints;
+            comp.programmingExercise.bonusPoints = bonusPoints;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({ translateKey, translateValues: { max: 2 } });
+            expect(reasons).not.toContainEqual(gradingReason);
+        });
+
         // An invalid timeline is a separate cause that only the generic message names, so deduplicating it against
         // a field error would hide it until that field is fixed.
         it('should keep the generic grading reason alongside a field reason when the timeline is also invalid', () => {
