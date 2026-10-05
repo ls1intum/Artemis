@@ -150,7 +150,7 @@ class DifferentialVerifierTest {
     }
 
     private static String aresGradle() {
-        try (var stream = new GenerationResources().getResource(java.nio.file.Path.of("templates/java/test/gradle/projectTemplate/build.gradle")).getInputStream()) {
+        try (var stream = new GenerationResources().getResource(java.nio.file.Path.of("hyperion/legacy-ares1-build.gradle")).getInputStream()) {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         }
         catch (IOException exception) {

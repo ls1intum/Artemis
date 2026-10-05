@@ -143,3 +143,17 @@
         <jhi-exam-import [subsequentExerciseGroupSelection]="true" [targetCourseId]="courseId()" [targetExamId]="examId()" (imported)="onExerciseGroupsImported($event)" />
     </tumaet-ui-dialog>
 }
+
+@if (exerciseImportType(); as importType) {
+    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" (imported)="onExerciseImported($event)" />
+}
+
+<jhi-exam-delete-dialog
+    [(visible)]="deleteGroupVisible"
+    [entityTitle]="groupToDelete()?.title || ''"
+    [deleteQuestion]="deleteGroupQuestion()"
+    deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+    [additionalChecks]="deleteGroupChecks()"
+    [dialogError]="dialogError"
+    (confirmed)="deleteExerciseGroup(groupToDelete()!.id!, $event)"
+/>

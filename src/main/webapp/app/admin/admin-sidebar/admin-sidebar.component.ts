@@ -15,6 +15,7 @@ import {
     faKey,
     faList,
     faLock,
+    faMagnifyingGlassChart,
     faPlug,
     faPuzzlePiece,
     faRobot,
@@ -72,6 +73,7 @@ export class AdminSidebarComponent {
     isSuperAdmin = input<boolean>(false);
     irisEnabled = input<boolean>(false);
     hyperionGenerationEnabled = input(false);
+    weaviateEnabled = input<boolean>(false);
 
     toggleCollapseState = output<void>();
 
@@ -250,6 +252,17 @@ export class AdminSidebarComponent {
                 title: 'Generations',
                 translation: 'artemisApp.hyperion.workers.title',
                 testId: 'admin-hyperion-workers',
+            });
+        }
+
+        // Only surface the ingestion dashboard when the global search (Weaviate) integration is enabled for this instance.
+        if (this.weaviateEnabled()) {
+            monitoringItems.push({
+                routerLink: '/admin/course-ingestion-dashboard',
+                icon: faMagnifyingGlassChart,
+                title: 'Ingestion Dashboard',
+                translation: 'global.menu.admin.sidebar.courseIngestionDashboard',
+                testId: 'admin-course-ingestion-dashboard',
             });
         }
 

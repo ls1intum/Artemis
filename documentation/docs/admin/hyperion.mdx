@@ -255,7 +255,13 @@ starting a supervisor process is not evidence that generation is available.
 Generation accepts only unreleased Java Gradle exercises (`PLAIN_GRADLE` or
 `GRADLE_GRADLE`; both share the Gradle test harness) without auxiliary
 repositories, sequential test runs, or static code analysis. Maven projects are
-not supported. The worker receives a frozen, bounded repository snapshot, not credentials or repository paths. Core validates returned artifacts
+not supported. The current offline sandbox uses the canonical Java 25 / Ares 2
+harness. Rebuild and qualify `docker/hyperion/gradle-sandbox.Dockerfile` when its
+canonical toolchain or dependencies change; an older Java 17 sandbox cannot grade
+this harness. Keep `SecurityPolicy.yaml` explicit. Generation may update only its
+instructor-test class list, not its supervised package or resource permissions.
+The pre-provider readiness build rejects incompatible exercise harnesses before
+model authoring starts. The worker receives a frozen, bounded repository snapshot, not credentials or repository paths. Core validates returned artifacts
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
@@ -383,13 +389,13 @@ Administrator-only APIs expose the same metadata and controls:
 - `DELETE /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}?reason=...`
   (202 when accepted, 409 if no longer cancellable).
 
-| State | Meaning |
-| --- | --- |
-| Offline | No unexpired heartbeat is available. A core reservation can still exist. |
-| Not ready | The worker has not advertised usable capacity. |
-| Available | At least one slot is free; other slots can already be running. |
-| Reserved by core | Slots have been reserved but no active execution is reported yet. |
-| Running | The worker reports active executions and no free slot. |
+| State            | Meaning                                                                  |
+| ---------------- | ------------------------------------------------------------------------ |
+| Offline          | No unexpired heartbeat is available. A core reservation can still exist. |
+| Not ready        | The worker has not advertised usable capacity.                           |
+| Available        | At least one slot is free; other slots can already be running.           |
+| Reserved by core | Slots have been reserved but no active execution is reported yet.        |
+| Running          | The worker reports active executions and no free slot.                   |
 
 This view contains no prompts, generated artifacts, or credentials. It cannot
 execute commands, terminate a worker, or release an exercise mutation slot.

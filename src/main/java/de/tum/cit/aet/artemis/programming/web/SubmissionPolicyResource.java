@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,7 +219,7 @@ public class SubmissionPolicyResource {
      */
     @PutMapping("programming-exercises/{exerciseId}/submission-policy")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> toggleSubmissionPolicy(@PathVariable Long exerciseId, @RequestParam Boolean activate) {
+    public ResponseEntity<Void> toggleSubmissionPolicy(@PathVariable Long exerciseId, @RequestParam boolean activate) {
         log.debug("REST request to toggle the submission policy for programming exercise {}", exerciseId);
         HttpHeaders responseHeaders;
 
@@ -242,14 +243,14 @@ public class SubmissionPolicyResource {
         }
     }
 
-    private static SubmissionPolicy getSubmissionPolicy(Boolean activate, ProgrammingExercise exercise) {
+    private static SubmissionPolicy getSubmissionPolicy(boolean activate, ProgrammingExercise exercise) {
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
             throw new BadRequestAlertException("The submission policy could not be toggled, because the programming exercise does not have a submission policy.", ENTITY_NAME,
                     "submissionPolicyToggleFailedPolicyNotExist");
         }
         submissionPolicy.setProgrammingExercise(exercise);
-        if (activate == submissionPolicy.isActive()) {
+        if (Objects.equals(activate, submissionPolicy.isActive())) {
             String errorKey = activate ? "submissionPolicyAlreadyEnabled" : "submissionPolicyAlreadyDisabled";
             String defaultMessage = activate ? "The submission policy could not be enabled, because it is already active."
                     : "The submission policy could not be disabled, because it is not active.";

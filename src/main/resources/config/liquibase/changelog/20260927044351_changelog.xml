@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Keep fractional seconds in weaviate_outbox.next_attempt_at on MySQL.
+
+        Liquibase "datetime" is DATETIME(0) on MySQL, which rounds a value's fraction to the nearest second. A row
+        enqueued in the second half of a second is therefore stored as the next second, and the dispatcher's
+        after-commit nudge (next_attempt_at <= now) does not see it yet: about half of all writes waited for the next
+        scheduled drain instead of being applied immediately. PostgreSQL already keeps microseconds for "datetime", so
+        this changeset only runs on MySQL, where DATETIME(6) gives it the same precision.
+
+        modifyDataType drops the NOT NULL constraint on MySQL, so it is re-added explicitly afterwards.
+    -->
+    <changeSet id="20260927044351-01-outbox-next-attempt-at-fractional-seconds" author="nayerkotry" dbms="mysql">
+        <modifyDataType tableName="weaviate_outbox" columnName="next_attempt_at" newDataType="datetime(6)"/>
+        <addNotNullConstraint tableName="weaviate_outbox" columnName="next_attempt_at" columnDataType="datetime(6)"/>
+    </changeSet>
+</databaseChangeLog>

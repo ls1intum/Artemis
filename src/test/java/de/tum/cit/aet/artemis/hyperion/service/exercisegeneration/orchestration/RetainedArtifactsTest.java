@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
@@ -39,6 +42,19 @@ class RetainedArtifactsTest {
 
         assertThat(complete.specDocument()).isEqualTo("# Contract");
         assertThat(complete.problemStatement()).isEqualTo("# Exercise");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "solution/src/B.java", "SPEC.md", "problem-statement.md" })
+    void incrementalUpdatesPreservePartialUntilAFullCandidateReplacesIt(String path) {
+        for (Map<String, String> files : List.of(Map.of("Big.txt", "a".repeat(RetainedArtifacts.MAX_FILE_CHARS + 1)), Map.of("id_rsa", "withheld"))) {
+            var partial = RetainedArtifacts.of("job-1", Map.of(RepositoryType.TEMPLATE, files), null, null);
+            assertThat(partial.completeness()).isEqualTo(ExerciseGenerationArtifactCompleteness.PARTIAL);
+            var updated = RetainedArtifacts.withFileUpdate("job-1", partial, ExerciseGenerationFileChangeDTO.of(path, ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1), "small");
+            assertThat(updated.completeness()).isEqualTo(ExerciseGenerationArtifactCompleteness.PARTIAL);
+            var rebuilt = RetainedArtifacts.of("job-1", Map.of(RepositoryType.TEMPLATE, Map.of("Big.txt", "restored")), updated.problemStatement(), updated.specDocument());
+            assertThat(rebuilt.completeness()).isEqualTo(ExerciseGenerationArtifactCompleteness.COMPLETE);
+        }
     }
 
     @Test

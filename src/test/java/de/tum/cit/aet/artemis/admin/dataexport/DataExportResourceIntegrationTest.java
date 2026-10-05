@@ -425,6 +425,22 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testRequestDataExportExecuteNow_exportIsProcessedImmediately() throws Exception {
+        var usernameToRequest = TEST_PREFIX + "student1";
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("executeNow", "true");
+
+        var response = request.postWithResponseBody("/api/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, params, HttpStatus.OK);
+
+        assertThat(response.id()).isNotNull();
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(response.id());
+        assertThat(dataExportFromDb.getUser().getLogin()).isEqualTo(usernameToRequest);
+        // the export was executed right away instead of being left for the scheduled job
+        assertThat(dataExportFromDb.getDataExportState()).isNotEqualTo(DataExportState.REQUESTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDownloadDataExportAsAdmin_success() throws Exception {
         var dataExport = prepareDataExportForDownload();
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));

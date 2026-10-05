@@ -25,6 +25,7 @@ import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
@@ -39,6 +40,8 @@ import { FileService } from 'app/foundation/service/file.service';
         ExamExerciseUpdateHighlighterComponent,
         UpperCasePipe,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {

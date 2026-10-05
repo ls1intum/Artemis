@@ -4,14 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.test.api.BlacklistPath;
-import de.tum.in.test.api.StrictTimeout;
-import de.tum.in.test.api.WhitelistPath;
-import de.tum.in.test.api.jupiter.Public;
+import de.tum.cit.ase.ares.api.StrictTimeout;
+import de.tum.cit.ase.ares.api.Policy;
+import de.tum.cit.ase.ares.api.jupiter.Public;
 
 @Public
-@WhitelistPath("build")
-@BlacklistPath("build/classes/java/test")
+@Policy(value = "SecurityPolicy.yaml")
 class ScoreCalculatorTest {
 
     @Test

@@ -94,6 +94,53 @@ class WorkerSupervisorTest {
         }
     }
 
+    @ParameterizedTest
+    @EnumSource(value = WorkerEventType.class, names = { "CHECKPOINT", "PROGRESS" })
+    void retainedPayloadBudgetStopsExecutionWithoutLosingEarlierEvents(WorkerEventType type) throws Exception {
+        var events = new LinkedBlockingQueue<WorkerEventDTO>();
+        var unavailable = new AtomicBoolean(true);
+        var stopped = new CountDownLatch(1);
+        var produced = new AtomicInteger();
+        TestWorkload engine = (assignment, cancelled, observer, checkpoint) -> {
+            for (char content : new char[] { 'a', 'b', 'c' }) {
+                String payload = String.valueOf(content).repeat(24 * 1024 * 1024);
+                produced.incrementAndGet();
+                if (type == WorkerEventType.CHECKPOINT) {
+                    checkpoint.accept(payload);
+                }
+                else {
+                    observer.progress("progress", payload, false);
+                }
+            }
+            return result();
+        };
+        try (var worker = new WorkerSupervisorService(settings(), event -> {
+            if (unavailable.get() && event.type() != WorkerEventType.HEARTBEAT) {
+                throw new IllegalStateException("publisher is unavailable");
+            }
+            events.add(event);
+        }, () -> engine, stopped::countDown, () -> IMAGE, System::nanoTime)) {
+            var command = start(worker, events);
+            worker.accept(command);
+            assertThat(stopped.await(10, TimeUnit.SECONDS)).isTrue();
+            assertThat(produced).hasValue(3);
+            assertThat(events).noneMatch(event -> event.type() != WorkerEventType.HEARTBEAT);
+            unavailable.set(false);
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).until(() -> {
+                worker.heartbeat();
+                return events.stream().anyMatch(event -> event.type() == WorkerEventType.ERROR || event.type() == WorkerEventType.FINISHED);
+            });
+            List<WorkerEventDTO> delivered = events.stream().filter(event -> event.type() != WorkerEventType.HEARTBEAT).toList();
+            assertThat(delivered.stream().map(WorkerEventDTO::type).toList()).containsExactly(WorkerEventType.STARTED, type, type, WorkerEventType.ERROR);
+            assertThat(delivered.get(1).payload()).startsWith("aaa").hasSize(24 * 1024 * 1024);
+            assertThat(delivered.get(2).payload()).startsWith("bbb").hasSize(24 * 1024 * 1024);
+            assertThat(delivered.get(3).identity()).isEqualTo(command.identity());
+            events.clear();
+            worker.accept(start(worker, events));
+            assertThat(take(events, WorkerEventType.FINISHED).payload()).isEqualTo(result());
+        }
+    }
+
     @Test
     void escapedPayloadsBecomeDeliverableErrorTerminals() throws InterruptedException {
         String payload = "\"".repeat(34 * 1024 * 1024);

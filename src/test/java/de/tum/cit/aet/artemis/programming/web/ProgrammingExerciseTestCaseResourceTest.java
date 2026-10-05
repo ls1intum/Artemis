@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -147,7 +148,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         doAnswer(invocation -> {
             assertThat(leaseHeld).isTrue();
             return null;
-        }).when(testCaseService).logTestCaseReset(user, fresh, null);
+        }).when(testCaseService).logTestCaseReset(user, fresh, fresh.getCourseViaExerciseGroupOrCourseMemberElseThrow());
         List<ProgrammingExerciseTestCase> resetTestCases = List.of(mock(ProgrammingExerciseTestCase.class));
         doAnswer(invocation -> {
             assertThat(leaseHeld).isTrue();
@@ -239,6 +240,7 @@ class ProgrammingExerciseTestCaseResourceTest {
     private static ProgrammingExercise exercise(long exerciseId) {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
+        exercise.setCourse(new Course());
         exercise.setTitle("Exercise");
         return exercise;
     }
