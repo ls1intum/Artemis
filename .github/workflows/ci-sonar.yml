@@ -85,7 +85,7 @@ jobs:
           java-version: '${{ env.java }}'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
 
       # Before Setup Node.js, so that its `cache: 'pnpm'` finds the package manager it keys on.
       - name: Setup pnpm
