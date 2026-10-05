@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.api;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -7,14 +10,13 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
-import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.CourseMemoryIngestionService;
 
 /**
- * Public facade for Course Memory ingestion, consumed by the communication module via an
+ * Public facade for Course Memory, consumed by the communication and account modules via an
  * {@code Optional<CourseMemoryIngestionApi>} so it stays a no-op when Iris is disabled.
  */
 @Conditional(IrisEnabled.class)
@@ -29,68 +31,70 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
     }
 
     /**
-     * Trigger A: a tutor approved (optionally edited) an Iris-generated answer in the verification dashboard.
+     * A tutor approved (optionally edited) an Iris-generated answer in the verification dashboard.
      *
      * @param verifiedAnswer the now-verified Iris answer post
-     * @param edited         whether the tutor edited the draft before approving
-     * @param verifier       the tutor who verified the answer
+     * @param verifier       the tutor who verified the answer, notified about the run
      * @param course         the course the answer belongs to
      */
-    public void onAnswerVerified(AnswerPost verifiedAnswer, boolean edited, User verifier, Course course) {
-        courseMemoryIngestionService.ingestVerifiedAnswer(verifiedAnswer, edited, verifier, course);
+    public void onAnswerVerified(AnswerPost verifiedAnswer, User verifier, Course course) {
+        courseMemoryIngestionService.refreshThread(verifiedAnswer.getPost().getId(), verifier, course);
     }
 
     /**
-     * Trigger B: a thread's resolution state changed — an answer was marked resolving, un-marked, deleted
-     * or edited, or the question itself was edited. Ingests the thread while it still holds an answer
-     * someone stands behind, and deletes its entry once none remains.
-     * <p>
-     * The trust tier of the resulting entry is derived from who <em>endorsed</em> the anchoring answer, as
-     * recorded on the answer when it was marked resolving — not from {@code actor}, who may merely have
-     * edited a typo or un-marked some other answer.
+     * Something that can change a thread's entry happened: an answer was marked or un-marked as resolving, or a message of
+     * the thread was edited or deleted. The entry is rebuilt from the current state of the thread, or retracted when
+     * nothing memory-worthy remains.
      *
-     * @param post             the thread's root post
-     * @param triggeringAnswer the answer whose flag or content changed, or {@code null} when it was deleted or
-     *                             the change was to the question
-     * @param actor            the user whose action triggered this refresh, if known; notified about the run
-     * @param course           the course the thread belongs to
-     */
-    public void onThreadResolutionChanged(Post post, @Nullable AnswerPost triggeringAnswer, @Nullable User actor, Course course) {
-        courseMemoryIngestionService.handleResolutionChange(post, triggeringAnswer, actor, course);
-    }
-
-    /**
-     * The whole thread was deleted, so its Course Memory entry is removed with it.
-     *
-     * @param post   the thread's root post, before deletion
-     * @param actor  the user who deleted the thread, notified about the removal
+     * @param postId the thread's root post id
+     * @param actor  the user whose action triggered the refresh, notified about the run
      * @param course the course the thread belongs to
      */
-    public void onThreadDeleted(Post post, @Nullable User actor, Course course) {
-        courseMemoryIngestionService.handleThreadDeleted(post, actor, course);
+    public void onThreadChanged(long postId, @Nullable User actor, Course course) {
+        courseMemoryIngestionService.refreshThread(postId, actor, course);
     }
 
     /**
-     * A channel was deleted or stopped being public, so every Course Memory entry mined from it is
-     * removed. Eligibility is only checked when an entry is written, so an entry would otherwise keep
-     * being served after its source channel was restricted or removed.
+     * The whole thread was deleted, so its entry is retracted for good.
      *
-     * @param channel the channel whose entries should be removed
-     * @param actor   the user who deleted or restricted the channel, notified about the removal
-     * @param course  the course the channel belongs to
+     * @param postId   the deleted thread's root post id
+     * @param courseId the course it belonged to
+     * @param actor    the user who deleted it, notified about the removal
      */
-    public void onChannelNoLongerEligible(Channel channel, @Nullable User actor, Course course) {
-        courseMemoryIngestionService.handleChannelNoLongerEligible(channel, actor, course);
+    public void onThreadDeleted(long postId, long courseId, @Nullable User actor) {
+        courseMemoryIngestionService.retractDeletedThread(postId, courseId, actor);
     }
 
     /**
-     * The course itself was deleted, so every Course Memory entry of that course is removed. Its
-     * conversations are dropped in one bulk statement, so no channel id survives to purge individually.
+     * Applies an account change after which the user's messages may no longer be stored (an opt-out from AI, a
+     * deactivation) together with outdating the entries that hold them, in one transaction. Pass the result to
+     * {@link #refreshThreadsInBackground} once it returned.
      *
-     * @param course the course being deleted
-     * @param actor  the user who deleted the course, notified about the removal
+     * @param userId        the user
+     * @param accountChange the account change; its repository calls join the transaction
+     * @return the affected threads' root post ids
      */
-    public void onCourseDeleted(Course course, @Nullable User actor) {
-        courseMemoryIngestionService.handleCourseDeleted(course, actor);
+    public List<Long> changeAccountAndInvalidate(long userId, Runnable accountChange) {
+        return courseMemoryIngestionService.changeAccountAndInvalidate(userId, accountChange);
+    }
+
+    /**
+     * Rebuilds the given threads' entries in the background.
+     *
+     * @param postIds the threads' root post ids
+     */
+    public void refreshThreadsInBackground(Collection<Long> postIds) {
+        if (!postIds.isEmpty()) {
+            courseMemoryIngestionService.refreshThreadsAsync(postIds);
+        }
+    }
+
+    /**
+     * An account's messages were deleted: deleted threads are retracted, the others rebuilt without those messages.
+     *
+     * @param threads the threads that held content by the account, as captured before the deletion
+     */
+    public void onAccountContentDeleted(List<CourseMemoryThreadDTO> threads) {
+        refreshThreadsInBackground(courseMemoryIngestionService.retractDeletedThreadsOf(threads));
     }
 }

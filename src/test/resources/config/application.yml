@@ -116,6 +116,9 @@ artemis:
     # Iris configuration - disabled by default, enabled in application-artemis.yml for tests
     iris:
         enabled: false
+        # The nightly Course Memory sync must not fire inside integration tests; tests call it directly.
+        course-memory:
+            sync-cron: "-"
 
     # Theia configuration for tests
     theia:

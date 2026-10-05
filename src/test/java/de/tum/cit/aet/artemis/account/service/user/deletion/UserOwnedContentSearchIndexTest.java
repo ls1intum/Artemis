@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.account.service.user.deletion;
 
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -20,9 +22,11 @@ import de.tum.cit.aet.artemis.account.repository.cleanup.CourseContextDataCleanu
 import de.tum.cit.aet.artemis.account.repository.cleanup.ExerciseDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.LearningDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.PlatformDataCleanupRepository;
+import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 
 /**
  * Holds the deletion to taking messages out of the search index as well.
@@ -44,6 +48,8 @@ class UserOwnedContentSearchIndexTest {
 
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
+    private CourseMemoryIngestionApi courseMemoryIngestionApi;
+
     private UserOwnedContentDeletionService userOwnedContentDeletionService;
 
     @BeforeEach
@@ -51,9 +57,11 @@ class UserOwnedContentSearchIndexTest {
         communicationDataCleanupRepository = mock(CommunicationDataCleanupRepository.class);
         platformDataCleanupRepository = mock(PlatformDataCleanupRepository.class);
         searchableEntityWeaviateService = mock(SearchableEntityWeaviateService.class);
+        courseMemoryIngestionApi = mock(CourseMemoryIngestionApi.class);
+        when(communicationDataCleanupRepository.deleteCommunicationContentAndInvalidateCourseMemory(anyLong())).thenReturn(List.of());
         userOwnedContentDeletionService = new UserOwnedContentDeletionService(mock(ParticipationDeletionService.class), communicationDataCleanupRepository,
                 mock(AssessmentDataCleanupRepository.class), mock(ExerciseDataCleanupRepository.class), mock(CourseContextDataCleanupRepository.class),
-                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.of(searchableEntityWeaviateService));
+                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.of(searchableEntityWeaviateService), Optional.of(courseMemoryIngestionApi));
     }
 
     @Test
@@ -80,7 +88,7 @@ class UserOwnedContentSearchIndexTest {
         InOrder order = inOrder(communicationDataCleanupRepository, searchableEntityWeaviateService);
         order.verify(communicationDataCleanupRepository).findPostIdsAuthoredBy(USER_ID);
         order.verify(communicationDataCleanupRepository).findAnswerPostIdsAuthoredBy(USER_ID);
-        order.verify(communicationDataCleanupRepository).deletePosts(USER_ID);
+        order.verify(communicationDataCleanupRepository).deleteCommunicationContentAndInvalidateCourseMemory(USER_ID);
         order.verify(searchableEntityWeaviateService).deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, 11L);
     }
 
@@ -110,11 +118,31 @@ class UserOwnedContentSearchIndexTest {
     void aDeploymentWithoutGlobalSearchStillDeletes() {
         UserOwnedContentDeletionService withoutSearch = new UserOwnedContentDeletionService(mock(ParticipationDeletionService.class), communicationDataCleanupRepository,
                 mock(AssessmentDataCleanupRepository.class), mock(ExerciseDataCleanupRepository.class), mock(CourseContextDataCleanupRepository.class),
-                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.empty());
+                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.empty(), Optional.empty());
         when(communicationDataCleanupRepository.findPostIdsAuthoredBy(USER_ID)).thenReturn(List.of(11L));
 
         withoutSearch.deleteCommunicationContent(USER_ID);
 
-        verify(communicationDataCleanupRepository).deletePosts(USER_ID);
+        verify(communicationDataCleanupRepository).deleteCommunicationContentAndInvalidateCourseMemory(USER_ID);
+    }
+
+    @Test
+    void theThreadsThatHeldTheMessagesAreHandedToCourseMemory() {
+        var threads = List.of(new CourseMemoryThreadDTO(11L, 3L, 7L, 4L));
+        when(communicationDataCleanupRepository.deleteCommunicationContentAndInvalidateCourseMemory(USER_ID)).thenReturn(threads);
+
+        userOwnedContentDeletionService.deleteCommunicationContent(USER_ID);
+
+        verify(courseMemoryIngestionApi).onAccountContentDeleted(threads);
+    }
+
+    @Test
+    void aFailingCourseMemoryUpdateDoesNotFailTheDeletion() {
+        when(communicationDataCleanupRepository.deleteCommunicationContentAndInvalidateCourseMemory(USER_ID)).thenReturn(List.of(new CourseMemoryThreadDTO(11L, 3L, 7L, 4L)));
+        doThrow(new IllegalStateException("pyris down")).when(courseMemoryIngestionApi).onAccountContentDeleted(anyList());
+
+        userOwnedContentDeletionService.deleteCommunicationContent(USER_ID);
+
+        verify(communicationDataCleanupRepository).deleteCommunicationContentAndInvalidateCourseMemory(USER_ID);
     }
 }

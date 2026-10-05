@@ -373,27 +373,19 @@ public class ConversationMessagingService extends PostingService {
         existingMessage.setTitle(messagePost.title());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
-        Post updatedPost = conversationMessageRepository.save(existingMessage);
+        // Saved together with a bump of the thread's Course Memory version: the stored question is derived from this
+        // post, so an entry built from the old wording is outdated the moment this commits.
+        Post updatedPost = conversationMessageRepository.saveAndInvalidateCourseMemory(existingMessage);
         updatedPost.setConversation(conversation);
+
+        // Right after the change, before the work below that can fail; only a thread with an entry needs it.
+        refreshCourseMemoryIfTracked(updatedPost.getId(), user, course);
 
         syncPostWithWeaviate(updatedPost, conversation);
 
         // emit a post update via websocket
         preparePostForBroadcast(updatedPost);
         broadcastForPost(updatedPost, CommunicationCrudAction.UPDATE, course.getId(), null);
-
-        // The stored Course Memory question is derived from this post, so an edited question has to be
-        // re-extracted; otherwise Iris keeps matching future students against the wording that was just
-        // corrected. Only resolved threads have an entry to update, and the upsert is keyed on the thread,
-        // so this replaces the entry rather than adding a second one.
-        if (updatedPost.isResolved()) {
-            try {
-                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolutionChanged(updatedPost, null, user, course));
-            }
-            catch (Exception e) {
-                log.error("Failed to update course memory after edit of thread {}", updatedPost.getId(), e);
-            }
-        }
 
         return updatedPost;
     }
@@ -416,7 +408,19 @@ public class ConversationMessagingService extends PostingService {
         post.setConversation(conversation);
 
         // delete
-        conversationMessageRepository.deleteById(postId);
+        // Only a thread that ever had a Course Memory operation can have an entry. Read under the same row lock as the
+        // deletion, so a first operation that starts concurrently cannot slip in between.
+        boolean hadCourseMemory = conversationMessageRepository.deleteAndReturnCourseMemoryVersion(postId) > 0;
+        // The thread is gone, so its Course Memory entry must go too. Right after the deletion, before the work below
+        // that can fail; the nightly Course Memory sync retracts it if this does not get through.
+        try {
+            if (hadCourseMemory) {
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadDeleted(postId, course.getId(), user));
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to delete course memory for deleted thread {}", postId, e);
+        }
         searchableEntityWeaviateService.ifPresent(service -> {
             service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
             service.deleteAllAnswerPostsForPostAsync(postId);
@@ -431,14 +435,23 @@ public class ConversationMessagingService extends PostingService {
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
         preparePostForBroadcast(post);
         broadcastForPost(post, CommunicationCrudAction.DELETE, course.getId(), null);
+    }
 
-        // The thread is gone, so its Course Memory entry must go too — otherwise Iris keeps serving an
-        // answer whose source no longer exists and whose backlink is dead.
+    /**
+     * Rebuilds the thread's Course Memory entry after an edit of its root post, if it has one. Best-effort: the version was
+     * already bumped with the edit, so the nightly Course Memory sync retracts an entry this does not update.
+     */
+    private void refreshCourseMemoryIfTracked(long postId, User actor, Course course) {
+        if (courseMemoryIngestionApi.isEmpty()) {
+            return;
+        }
         try {
-            courseMemoryIngestionApi.ifPresent(api -> api.onThreadDeleted(post, user, course));
+            if (conversationMessageRepository.findCourseMemoryVersion(postId).orElse(0L) > 0) {
+                courseMemoryIngestionApi.get().onThreadChanged(postId, actor, course);
+            }
         }
         catch (Exception e) {
-            log.error("Failed to delete course memory for deleted thread {}", postId, e);
+            log.error("Failed to update course memory after edit of thread {}", postId, e);
         }
     }
 

@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutono
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryCourseSyncDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -235,6 +236,28 @@ public class IrisRequestMockProvider {
 
     public void mockCourseMemoryDeletionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryDeletionExecutionDTO> responseConsumer) {
         mockWebhookPost("/course-memory/delete", PyrisWebhookCourseMemoryDeletionExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockCourseMemoryDeletionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryDeletionExecutionDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/course-memory/delete", PyrisWebhookCourseMemoryDeletionExecutionDTO.class, responseConsumer, count);
+    }
+
+    public void mockCourseMemoryCourseSyncResponse(Consumer<PyrisCourseMemoryCourseSyncDTO> responseConsumer) {
+        // One request per course with tracked threads; the shared test database may hold other tests' courses too, or none.
+        mockWebhookPost("/course-memory/sync/course", PyrisCourseMemoryCourseSyncDTO.class, responseConsumer, ExpectedCount.between(0, Integer.MAX_VALUE));
+    }
+
+    /**
+     * Nightly instance sync. The consumer receives the raw request body, so a test can check the wire format Pyris
+     * parses, not only what Jackson reads back.
+     *
+     * @param rawBodyConsumer receives the request body as sent
+     */
+    public void mockCourseMemoryInstanceSyncResponse(Consumer<String> rawBodyConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/course-memory/sync/instance")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            rawBodyConsumer.accept(((MockClientHttpRequest) request).getBodyAsString());
+            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+        });
     }
 
     /**

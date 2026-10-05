@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -79,6 +80,11 @@ class PermanentUserDeletionOrderTest {
         when(userDeletionPlanService.createImpact(any(), any())).thenReturn(impact());
         when(userOwnedContentDeletionService.deleteDataExports(anyLong())).thenReturn(List.of());
         when(userOwnedContentDeletionService.deleteExamAttendance(anyLong())).thenReturn(List.of());
+        // The real service runs the deactivation inside its Course Memory transaction.
+        doAnswer(invocation -> {
+            invocation.<Runnable>getArgument(1).run();
+            return null;
+        }).when(userOwnedContentDeletionService).deactivateAndInvalidateCourseMemory(anyLong(), any());
 
         permanentUserDeletionService = new PermanentUserDeletionService(userRepository, userDeletionPlanService, userReferenceCleanupService, userOwnedContentDeletionService,
                 accountCredentialRevocationService, fileService, auditEventRepository, null);
@@ -113,6 +119,20 @@ class PermanentUserDeletionOrderTest {
         order.verify(userRepository).deactivateForDeletion(USER_ID);
         order.verify(userReferenceCleanupService).resolve(UserDeletionReferencePolicy.COURSE_ROLE, USER_ID);
         verify(userRepository, never()).deleteUserRow(anyLong());
+    }
+
+    @Test
+    void theAccountIsClosedTogetherWithOutdatingItsCourseMemoryEntries() {
+        // Closing makes the account an inactive author, whose messages Course Memory must not keep. If the deletion then
+        // stops, nothing else outdates the entries, so the deactivation has to commit together with outdating them.
+        doThrow(new IllegalStateException("something went wrong halfway through")).when(userOwnedContentDeletionService).deleteTeams(anyLong());
+
+        catchThrowable(() -> permanentUserDeletionService.deleteByAdmin(USER_ID, FINGERPRINT, "an-admin"));
+
+        InOrder order = inOrder(userRepository, userOwnedContentDeletionService);
+        order.verify(userOwnedContentDeletionService).deactivateAndInvalidateCourseMemory(eq(USER_ID), any());
+        order.verify(userRepository).deactivateForDeletion(USER_ID);
+        order.verify(userOwnedContentDeletionService).deleteTeams(USER_ID);
     }
 
     @Test

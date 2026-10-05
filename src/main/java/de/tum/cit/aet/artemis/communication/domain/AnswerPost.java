@@ -69,7 +69,8 @@ public class AnswerPost extends Posting {
     private ZonedDateTime verifiedAt;
 
     /**
-     * Who marked this answer as resolving its post, and when. This endorsement is what Course Memory derives
+     * Who marked this answer as resolving its post, and when — the endorser of the current text, see
+     * {@link #withdrawSignOffs()}. This endorsement is what Course Memory derives
      * an entry's trust tier from: a tutor marking an answer resolving vouches for it, a student doing so does
      * not. Recorded per answer because the thread's entry may later be rebuilt from this answer when another
      * one is un-marked or deleted, and the user performing that later action is not who endorsed this one.
@@ -192,6 +193,19 @@ public class AnswerPost extends Posting {
         this.resolvesPost = resolvesPost;
         this.resolvedBy = resolvesPost ? endorser : null;
         this.resolvedAt = resolvesPost ? ZonedDateTime.now() : null;
+    }
+
+    /**
+     * Withdraws every sign-off on this answer's text: who marked it resolving and who approved it in the verification
+     * dashboard, with their timestamps. Called when someone without teaching authority changes the text, because a
+     * tutor's sign-off vouches for the text the tutor read. The {@code resolvesPost} and {@code verified} flags stay, so
+     * the thread stays resolved and the answer stays visible; Course Memory then treats it as community-resolved.
+     */
+    public void withdrawSignOffs() {
+        this.resolvedBy = null;
+        this.resolvedAt = null;
+        this.verifiedBy = null;
+        this.verifiedAt = null;
     }
 
     /**

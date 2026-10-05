@@ -10,6 +10,7 @@ import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUn
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnverifiedIrisAnswersSpecification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -164,6 +166,188 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
         incrementCourseMemoryVersion(postId);
         return findCourseMemoryVersion(postId);
     }
+
+    /**
+     * Reads a thread's Course Memory version and locks its row until the transaction ends.
+     *
+     * @param postId the id of the thread's root post
+     * @return the version, or empty if the post does not exist
+     */
+    @Query(value = "SELECT course_memory_version FROM post WHERE id = :postId FOR UPDATE", nativeQuery = true)
+    Optional<Long> lockCourseMemoryVersion(@Param("postId") long postId);
+
+    /**
+     * Deletes a thread and returns the Course Memory version it had. The row stays locked from the read to the deletion,
+     * so a version minted concurrently is either seen here or never minted at all (the mint waits for the lock and then
+     * finds no row). A caller that sees 0 can therefore skip the retraction: no entry can exist or appear.
+     *
+     * @param postId the id of the thread's root post
+     * @return the thread's Course Memory version before the deletion, 0 if it never had one
+     */
+    @Transactional // ok because the version has to be read under the same row lock as the deletion
+    default long deleteAndReturnCourseMemoryVersion(long postId) {
+        long version = lockCourseMemoryVersion(postId).orElse(0L);
+        deleteById(postId);
+        return version;
+    }
+
+    /**
+     * Bumps a thread's Course Memory version if the thread has one, i.e. if anything was ever dispatched for it. Used in the
+     * same transaction as a change to the thread's content, so the entry Pyris holds is outdated the moment the change
+     * commits; if the refresh that follows never reaches Pyris, the nightly sync retracts the entry.
+     *
+     * @param postId the id of the thread's root post
+     * @return 1 if the version was bumped, 0 if the thread has no Course Memory version
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id = :postId AND course_memory_version > 0", nativeQuery = true)
+    int bumpCourseMemoryVersionIfTracked(@Param("postId") long postId);
+
+    /**
+     * Bumps the Course Memory version of every given thread that has one.
+     *
+     * @param postIds the ids of the threads' root posts
+     * @return how many versions were bumped
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id IN (:postIds) AND course_memory_version > 0", nativeQuery = true)
+    int bumpCourseMemoryVersions(@Param("postIds") Collection<Long> postIds);
+
+    /**
+     * Saves an edited root post and outdates the thread's Course Memory entry in one transaction.
+     *
+     * @param post the edited post
+     * @return the saved post
+     */
+    @Transactional // ok because the edit and the version bump have to commit together
+    default Post saveAndInvalidateCourseMemory(Post post) {
+        Post saved = save(post);
+        bumpCourseMemoryVersionIfTracked(saved.getId());
+        return saved;
+    }
+
+    /**
+     * The threads with a Course Memory version that contain a message by the given user, as root post or as answer.
+     *
+     * @param userId the user
+     * @return the threads' root post ids
+     */
+    @Query("""
+            SELECT DISTINCT post.id
+            FROM Post post
+            WHERE post.courseMemoryVersion > 0
+                AND (post.author.id = :userId
+                    OR EXISTS (SELECT answer.id FROM AnswerPost answer WHERE answer.post.id = post.id AND answer.author.id = :userId))
+            """)
+    List<Long> findCourseMemoryThreadIdsWithContentBy(@Param("userId") long userId);
+
+    /**
+     * Locks the root post row of every thread that contains a message by the given user, as root post or as answer,
+     * whether or not the thread has a Course Memory version, until the transaction ends.
+     *
+     * @param userId the user
+     * @return the threads' root post ids
+     */
+    @Query(value = """
+            SELECT post.id
+            FROM post
+            WHERE post.id IN (
+                SELECT own.id FROM post own WHERE own.author_id = :userId
+                UNION
+                SELECT answer.post_id FROM answer_post answer WHERE answer.author_id = :userId
+            )
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<Long> lockThreadsWithContentBy(@Param("userId") long userId);
+
+    /**
+     * Locks the user's account row until the transaction ends. Writing a post or an answer by the user checks the foreign
+     * key to this row and has to wait for the lock.
+     *
+     * @param userId the user
+     * @return the user id, or empty if the account does not exist
+     */
+    @Query(value = "SELECT id FROM jhi_user WHERE id = :userId FOR UPDATE", nativeQuery = true)
+    Optional<Long> lockAuthor(@Param("userId") long userId);
+
+    /**
+     * Applies an account change that takes the user's messages out of Course Memory (an opt-out from AI, a deactivation)
+     * and outdates the entries holding those messages, in one transaction.
+     * <p>
+     * The account row is locked first, so the user cannot add a message to another thread until this commits. Then every
+     * thread with a message by the user is locked, tracked or not. A rebuild mints its version on that row before it reads
+     * the thread, so a rebuild that starts now waits for this commit and then reads the changed account; one that minted
+     * before has a lower version than the bump below. Either way no entry built from the old account state keeps the
+     * thread's latest version, and the nightly sync retracts whatever a failed rebuild leaves behind.
+     *
+     * @param userId        the user
+     * @param accountChange the account change, run inside this transaction; its repository calls join it
+     * @return the root post ids of the threads that have a Course Memory version and were outdated
+     */
+    @Transactional // ok because the account change and the version bump have to commit together
+    default List<Long> changeAccountAndInvalidateCourseMemory(long userId, Runnable accountChange) {
+        lockAuthor(userId);
+        lockThreadsWithContentBy(userId);
+        List<Long> postIds = findCourseMemoryThreadIdsWithContentBy(userId);
+        if (!postIds.isEmpty()) {
+            bumpCourseMemoryVersions(postIds);
+        }
+        accountChange.run();
+        return postIds;
+    }
+
+    /**
+     * @param postId the id of a post
+     * @return the id of the conversation the post belongs to, or empty if the post does not exist
+     */
+    @Query("""
+            SELECT post.conversation.id
+            FROM Post post
+            WHERE post.id = :postId
+            """)
+    Optional<Long> findConversationIdOfPost(@Param("postId") long postId);
+
+    /**
+     * @param postId the id of a post
+     * @return the id of the course the post's conversation belongs to, or empty if the post does not exist
+     */
+    @Query("""
+            SELECT post.conversation.course.id
+            FROM Post post
+            WHERE post.id = :postId
+            """)
+    Optional<Long> findCourseIdOfPost(@Param("postId") long postId);
+
+    /**
+     * @return the ids of all courses with at least one thread that has a Course Memory version
+     */
+    @Query("""
+            SELECT DISTINCT post.conversation.course.id
+            FROM Post post
+            WHERE post.courseMemoryVersion > 0
+            """)
+    Set<Long> findCourseIdsWithCourseMemory();
+
+    /**
+     * The next threads of a course that have a Course Memory version, in id order after {@code afterPostId}. Keyset paging,
+     * so a thread that gets its first version while the list is read cannot shift a page and hide another thread.
+     *
+     * @param courseId    the course
+     * @param afterPostId the last post id of the previous page, or 0 for the first page
+     * @param pageable    the page size (the page number must be 0)
+     * @return the threads with their channel and current version
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO(post.id, post.conversation.id, post.conversation.course.id, post.courseMemoryVersion)
+            FROM Post post
+            WHERE post.conversation.course.id = :courseId
+                AND post.courseMemoryVersion > 0
+                AND post.id > :afterPostId
+            ORDER BY post.id
+            """)
+    List<CourseMemoryThreadDTO> findCourseMemoryThreadsOfCourseAfter(@Param("courseId") long courseId, @Param("afterPostId") long afterPostId, Pageable pageable);
 
     Integer countByConversationId(Long conversationId);
 

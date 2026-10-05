@@ -38,6 +38,8 @@ import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryCourseSyncDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryInstanceSyncDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
@@ -529,6 +531,38 @@ public class PyrisConnectorService {
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send course memory deletion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Sends the nightly Course Memory sync of one course. Pyris answers {@code 202 Accepted} and reconciles in the
+     * background.
+     *
+     * @param syncDTO the complete list of the course's threads with a Course Memory version
+     * @return {@code true} if Pyris accepted the request
+     */
+    public boolean executeCourseMemoryCourseSync(PyrisCourseMemoryCourseSyncDTO syncDTO) {
+        return postCourseMemorySync("/api/v1/webhooks/course-memory/sync/course", syncDTO, "course " + syncDTO.courseId());
+    }
+
+    /**
+     * Sends the nightly Course Memory sync of the whole instance: the list of courses that exist.
+     *
+     * @param syncDTO the course ids
+     * @return {@code true} if Pyris accepted the request
+     */
+    public boolean executeCourseMemoryInstanceSync(PyrisCourseMemoryInstanceSyncDTO syncDTO) {
+        return postCourseMemorySync("/api/v1/webhooks/course-memory/sync/instance", syncDTO, "instance");
+    }
+
+    private boolean postCourseMemorySync(String endpoint, Object body, String scope) {
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, body, Void.class);
+            return true;
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send the course memory sync of {} to Pyris: {}", scope, e.getMessage());
             return false;
         }
     }

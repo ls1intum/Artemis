@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -28,6 +30,8 @@ import de.tum.cit.aet.artemis.course.service.CourseLoadService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
@@ -85,6 +89,8 @@ public class PyrisPipelineService {
 
     private final FeatureToggleService featureToggleService;
 
+    private final ChannelRepository channelRepository;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
@@ -94,8 +100,9 @@ public class PyrisPipelineService {
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService,
-            IrisLectureMaterialVersionService materialVersionService) {
+            IrisLectureMaterialVersionService materialVersionService, ChannelRepository channelRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
+        this.channelRepository = channelRepository;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.materialVersionService = materialVersionService;
@@ -168,7 +175,10 @@ public class PyrisPipelineService {
             ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
-        var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
+        // The run's user message, which gets the memories the run reports. A run started by an event has no new user message, so the last row can be a stored conversation
+        // summary; it must not get memories, because that would push the summary to the client.
+        var lastMessageId = session.getMessages().reversed().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).findFirst().map(IrisMessage::getId)
+                .orElse(null);
         var jobToken = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId, clientId);
         materialVersionService.capture(jobToken, session.getCourseId());
         // @formatter:off
@@ -321,7 +331,9 @@ public class PyrisPipelineService {
                 executionDto.settings(),
                 programmingExerciseDTO,
                 textExerciseDTO,
-                lectureDTO
+                lectureDTO,
+                // Computed now, at dispatch: Course Memory may only serve entries from channels every student can read.
+                channelRepository.findIdsOfChannelsReadableByAllStudents(course.getId(), ZonedDateTime.now())
             ),
             statusUpdateConsumer
         );

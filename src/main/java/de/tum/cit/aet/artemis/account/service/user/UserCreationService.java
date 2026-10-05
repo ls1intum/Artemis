@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.PatternSyntaxException;
 
 import org.jspecify.annotations.NonNull;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -68,10 +70,12 @@ public class UserCreationService {
 
     private final UserActivityService userActivityService;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
             AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository, UserRecoveryKeyService userRecoveryKeyService,
-            UserActivityService userActivityService) {
+            UserActivityService userActivityService, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -81,6 +85,7 @@ public class UserCreationService {
         this.auditEventRepository = auditEventRepository;
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userActivityService = userActivityService;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
     }
 
     /**
@@ -315,7 +320,7 @@ public class UserCreationService {
 
         log.debug("Changed Information for User: {}", user);
 
-        User savedUser = saveUser(user);
+        User savedUser = isBeingDeactivated ? saveDeactivatedUser(user) : saveUser(user);
         if (credentialsChanged) {
             // Stops sessions established before this change from being extended any further. Stamped after the save so it
             // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.
@@ -413,7 +418,7 @@ public class UserCreationService {
      */
     public void deactivateUser(User user) {
         user.setActivated(false);
-        saveUser(user);
+        saveDeactivatedUser(user);
         // Stops sessions established before the deactivation from being extended any further.
         userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
@@ -427,6 +432,21 @@ public class UserCreationService {
         userRecoveryKeyService.clearAll(user.getId());
         auditAccountStateChange(user, Constants.DEACTIVATE_USER);
         log.info("Deactivated user: {}", user);
+    }
+
+    /**
+     * Saves an account that is being deactivated. A deactivated account's messages are redacted from Course Memory, so the
+     * save commits together with outdating the entries that hold them; those entries are then rebuilt without them.
+     */
+    private User saveDeactivatedUser(User user) {
+        if (courseMemoryIngestionApi.isEmpty()) {
+            return saveUser(user);
+        }
+        CourseMemoryIngestionApi api = courseMemoryIngestionApi.get();
+        AtomicReference<User> saved = new AtomicReference<>();
+        List<Long> courseMemoryThreads = api.changeAccountAndInvalidate(user.getId(), () -> saved.set(saveUser(user)));
+        api.refreshThreadsInBackground(courseMemoryThreads);
+        return saved.get();
     }
 
     /**

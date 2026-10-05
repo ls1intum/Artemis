@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -21,10 +23,12 @@ import de.tum.cit.aet.artemis.account.repository.cleanup.ExamUserImagePaths;
 import de.tum.cit.aet.artemis.account.repository.cleanup.ExerciseDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.LearningDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.PlatformDataCleanupRepository;
+import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 
 /**
  * Removes the content an account owns rather than merely points at.
@@ -50,6 +54,8 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 @Service
 public class UserOwnedContentDeletionService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserOwnedContentDeletionService.class);
+
     private final ParticipationDeletionService participationDeletionService;
 
     private final CommunicationDataCleanupRepository communicationDataCleanupRepository;
@@ -66,10 +72,13 @@ public class UserOwnedContentDeletionService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     public UserOwnedContentDeletionService(ParticipationDeletionService participationDeletionService, CommunicationDataCleanupRepository communicationDataCleanupRepository,
             AssessmentDataCleanupRepository assessmentDataCleanupRepository, ExerciseDataCleanupRepository exerciseDataCleanupRepository,
             CourseContextDataCleanupRepository courseContextDataCleanupRepository, PlatformDataCleanupRepository platformDataCleanupRepository,
-            LearningDataCleanupRepository learningDataCleanupRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            LearningDataCleanupRepository learningDataCleanupRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService,
+            Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi) {
         this.participationDeletionService = participationDeletionService;
         this.communicationDataCleanupRepository = communicationDataCleanupRepository;
         this.assessmentDataCleanupRepository = assessmentDataCleanupRepository;
@@ -78,6 +87,7 @@ public class UserOwnedContentDeletionService {
         this.platformDataCleanupRepository = platformDataCleanupRepository;
         this.learningDataCleanupRepository = learningDataCleanupRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
     }
 
     /**
@@ -223,6 +233,35 @@ public class UserOwnedContentDeletionService {
     }
 
     /**
+     * Takes what was removed out of Course Memory: entries of deleted threads are retracted, the others are rebuilt
+     * without the account's messages. Best-effort: the entries are already outdated, so the nightly Course Memory sync
+     * retracts them if this does not get through.
+     */
+    private void removeFromCourseMemory(List<CourseMemoryThreadDTO> threads) {
+        if (threads.isEmpty()) {
+            return;
+        }
+        try {
+            courseMemoryIngestionApi.ifPresent(api -> api.onAccountContentDeleted(threads));
+        }
+        catch (Exception e) {
+            log.error("Failed to update course memory after deleting the messages of an account", e);
+        }
+    }
+
+    /**
+     * Deactivates the account in the same transaction that outdates the Course Memory entries holding its messages. If the
+     * deletion then stops part of the way, the account stays closed with messages of an inactive author, and the nightly
+     * Course Memory sync retracts the entries that still contain them.
+     *
+     * @param userId       the account being deleted
+     * @param deactivation the deactivation; its repository call joins the transaction
+     */
+    public void deactivateAndInvalidateCourseMemory(long userId, Runnable deactivation) {
+        courseMemoryIngestionApi.ifPresentOrElse(api -> api.changeAccountAndInvalidate(userId, deactivation), deactivation);
+    }
+
+    /**
      * Removes what the account wrote and the discussion that grew below it.
      *
      * <p>
@@ -237,11 +276,9 @@ public class UserOwnedContentDeletionService {
         List<Long> postIds = communicationDataCleanupRepository.findPostIdsAuthoredBy(userId);
         List<Long> answerPostIds = communicationDataCleanupRepository.findAnswerPostIdsAuthoredBy(userId);
 
-        communicationDataCleanupRepository.deleteReactionsOnAnswersAuthoredBy(userId);
-        communicationDataCleanupRepository.deleteAnswersAuthoredBy(userId);
-        communicationDataCleanupRepository.deleteReactionsOnPostsAuthoredBy(userId);
-        communicationDataCleanupRepository.deletePosts(userId);
-        communicationDataCleanupRepository.deleteReactions(userId);
+        // One transaction removes the messages and outdates the Course Memory entries that held any of them.
+        List<CourseMemoryThreadDTO> courseMemoryThreads = communicationDataCleanupRepository.deleteCommunicationContentAndInvalidateCourseMemory(userId);
+        removeFromCourseMemory(courseMemoryThreads);
 
         removeFromSearchIndex(postIds, answerPostIds);
     }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -330,4 +331,52 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             WHERE post.plagiarismCase.id IN :plagiarismCaseIds
             """)
     int deletePlagiarismCasePosts(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
+
+    /**
+     * The threads with a Course Memory version that contain a message by the given user, as root post or as answer.
+     *
+     * @param userId the account being deleted
+     * @return the threads with their channel, course and current version
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO(post.id, post.conversation.id, post.conversation.course.id, post.courseMemoryVersion)
+            FROM Post post
+            WHERE post.courseMemoryVersion > 0
+                AND (post.author.id = :userId
+                    OR EXISTS (SELECT answer.id FROM AnswerPost answer WHERE answer.post.id = post.id AND answer.author.id = :userId))
+            """)
+    List<CourseMemoryThreadDTO> findCourseMemoryThreadsWithContentBy(@Param("userId") long userId);
+
+    /**
+     * Bumps the Course Memory version of every given thread that still exists and has one.
+     *
+     * @param postIds the ids of the threads' root posts
+     * @return how many versions were bumped
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id IN (:postIds) AND course_memory_version > 0", nativeQuery = true)
+    int bumpCourseMemoryVersions(@Param("postIds") Collection<Long> postIds);
+
+    /**
+     * Removes what the account wrote and the discussion that grew below it, and outdates the Course Memory entries of
+     * every thread that held one of those messages — in one transaction, so no entry can keep the deleted text without
+     * also being outdated. The nightly Course Memory sync retracts an outdated entry even if the follow-up never runs.
+     *
+     * @param userId the account being deleted
+     * @return the threads that held content by the account, as they were before the deletion
+     */
+    @Transactional // ok because the deletion and the version bump have to commit together
+    default List<CourseMemoryThreadDTO> deleteCommunicationContentAndInvalidateCourseMemory(long userId) {
+        List<CourseMemoryThreadDTO> threads = findCourseMemoryThreadsWithContentBy(userId);
+        deleteReactionsOnAnswersAuthoredBy(userId);
+        deleteAnswersAuthoredBy(userId);
+        deleteReactionsOnPostsAuthoredBy(userId);
+        deletePosts(userId);
+        deleteReactions(userId);
+        if (!threads.isEmpty()) {
+            bumpCourseMemoryVersions(threads.stream().map(CourseMemoryThreadDTO::postId).toList());
+        }
+        return threads;
+    }
 }

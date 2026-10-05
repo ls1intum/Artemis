@@ -32,14 +32,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  * @param source          origin of the ingestion request, see {@link PyrisCourseMemorySource}
  * @param isPublicChannel must be {@code true}; non-public channels are skipped by Pyris
  * @param thread          full thread ordered oldest&rarr;newest
- * @param verifiedBy      optional identifier of who verified the answer (Trigger A)
  * @param verifiedAt      optional ISO-8601 verification timestamp
- * @param existingAnswer  the exact text a tutor signed off on, stored verbatim instead of the extractor's
- *                            paraphrase. Required by Pyris for {@link PyrisCourseMemorySource#IRIS_AUTO} and
- *                            {@link PyrisCourseMemorySource#IRIS_CORRECTED}, absent otherwise
+ * @param existingAnswer  the exact text a tutor signed off on, stored verbatim instead of an extracted answer.
+ *                            Required by Pyris for every tutor-verified source ({@link PyrisCourseMemorySource#IRIS_AUTO},
+ *                            {@link PyrisCourseMemorySource#IRIS_CORRECTED}, {@link PyrisCourseMemorySource#TUTOR_WRITTEN}),
+ *                            absent for {@link PyrisCourseMemorySource#THREAD_RESOLVED}
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisWebhookCourseMemoryIngestionExecutionDTO(PyrisPipelineExecutionSettingsDTO settings, long courseId, String conversationId, String postId, String messageId,
         long version, PyrisCourseMemorySource source, @JsonProperty("isPublicChannel") boolean isPublicChannel, List<PyrisCourseMemoryThreadMessageDTO> thread,
-        @Nullable String verifiedBy, @Nullable String verifiedAt, @Nullable String existingAnswer) {
+        @Nullable String verifiedAt, @Nullable String existingAnswer) {
 }

@@ -18,8 +18,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param content          the message content
  * @param createdAt        ISO-8601 creation timestamp
  * @param isIrisDraft      {@code true} if this message was authored by the Iris bot (AI-generated draft)
- * @param isVerifiedAnswer {@code true} for the single answer whose event triggered this ingestion
- *                             (Trigger A: the just-verified Iris draft; Trigger B: the just-marked answer)
+ * @param isVerifiedAnswer {@code true} for the single answer the entry is anchored on, selected from persisted
+ *                             state only
  * @param resolvesPost     {@code true} if this answer carries the durable {@code resolvesPost} flag; a thread
  *                             may contain several, since a post counts as resolved if <em>any</em> answer resolves it
  * @param redacted         {@code true} when the author opted out of AI: {@code content} is empty and the message
