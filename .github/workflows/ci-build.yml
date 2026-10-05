@@ -296,7 +296,7 @@ jobs:
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
         with:
           context: .
-          file: ./docker/artemis/Dockerfile
+          file: ./deployment/docker/artemis/Dockerfile
           platforms: linux/amd64
           # Skip the in-image .war build; COPY the artifact produced by `build-war` instead.
           build-args: WAR_FILE_STAGE=external_builder
@@ -337,7 +337,7 @@ jobs:
       # context, not this ref, so they are unaffected.
       ref: ${{ inputs.commit_sha }}
       image-name: ls1intum/artemis
-      docker-file: ./docker/artemis/Dockerfile
+      docker-file: ./deployment/docker/artemis/Dockerfile
       # `type=ref` gives the release tag or branch name; `sha-<commit>` is the immutable per-commit
       # handle deployments pull by. The reusable turns the bare `sha-<sha>` line into `type=raw`.
       tags: |
