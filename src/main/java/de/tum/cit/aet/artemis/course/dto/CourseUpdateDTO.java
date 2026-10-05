@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.course.dto;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -147,7 +146,7 @@ public record CourseUpdateDTO(
         }
 
         // Update the permanent settings row loaded through its own repository by the caller.
-        CourseConfiguration configuration = Objects.requireNonNull(course.getCourseConfiguration(), "Course configuration must be loaded before updating settings");
+        CourseConfiguration configuration = course.getCourseConfiguration();
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
         // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to

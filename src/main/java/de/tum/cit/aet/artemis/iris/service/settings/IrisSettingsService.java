@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -99,7 +100,8 @@ public class IrisSettingsService {
     }
 
     /**
-     * Updates (or creates if not present) the Iris settings for a course.
+     * Updates the Iris settings of a course. Every course owns a permanent settings row, created with the course, so this
+     * only changes its payload and never inserts a row.
      * <p>
      * Handles null payloads (uses current settings), sanitization, and instructor restrictions.
      *
@@ -124,7 +126,10 @@ public class IrisSettingsService {
             enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);
         }
 
-        irisCourseSettingsRepository.updateSettings(courseId, sanitizedRequest);
+        if (irisCourseSettingsRepository.updateSettings(courseId, sanitizedRequest) != 1) {
+            // Nothing was stored, so answering with the requested values would claim a change that did not happen
+            throw new EntityNotFoundException("IrisCourseSettings", courseId);
+        }
         var defaults = getApplicationRateLimitDefaults();
         var effective = resolveEffectiveRateLimit(sanitizedRequest, defaults);
         return new IrisCourseSettingsWithRateLimitDTO(courseId, sanitizedRequest, effective, defaults);

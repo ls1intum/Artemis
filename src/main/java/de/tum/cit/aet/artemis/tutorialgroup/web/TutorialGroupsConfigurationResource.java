@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -110,9 +111,16 @@ public class TutorialGroupsConfigurationResource {
         }
         checkCourseTimeZone(course);
         validateTutorialGroupConfiguration(tutorialGroupConfigurationDto);
-        tutorialGroupsConfigurationRepository.updateSettings(courseId, tutorialGroupConfigurationDto.tutorialPeriodStartInclusive(),
+        // Every course owns a permanent settings row, so configuring means activating it. The statement itself refuses a row that is
+        // already configured, which is what keeps two concurrent requests from both creating the channels.
+        if (tutorialGroupsConfigurationRepository.activateSettings(courseId, tutorialGroupConfigurationDto.tutorialPeriodStartInclusive(),
                 tutorialGroupConfigurationDto.tutorialPeriodEndInclusive(), tutorialGroupConfigurationDto.useTutorialGroupChannels(),
-                tutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
+                tutorialGroupConfigurationDto.usePublicTutorialGroupChannels()) != 1) {
+            if (tutorialGroupsConfigurationRepository.findByCourseId(courseId).isPresent()) {
+                throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "alreadyExists");
+            }
+            throw new EntityNotFoundException("TutorialGroupsConfiguration", courseId);
+        }
         var persistedConfiguration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
 
         if (persistedConfiguration.getUseTutorialGroupChannels()) {

@@ -34,7 +34,7 @@ public interface IrisCourseSettingsRepository extends ArtemisJpaRepository<IrisC
      * @return the number of updated rows
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of the update
     @Query("UPDATE IrisCourseSettingsEntity entity SET entity.settings = :settings WHERE entity.courseId = :courseId")
     int updateSettings(@Param("courseId") long courseId, @Param("settings") IrisCourseSettings settings);
 

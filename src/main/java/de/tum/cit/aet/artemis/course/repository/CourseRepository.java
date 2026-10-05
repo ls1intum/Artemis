@@ -58,7 +58,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * @param course the course to store
      * @return the stored course
      */
-    @Transactional
+    @Transactional // ok because the new course and all its default settings are stored together or not at all
     default Course saveWithDefaultConfigurations(Course course) {
         boolean newCourse = course.getId() == null;
         Course saved = save(course);
@@ -76,7 +76,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * @param courseId the new course id
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of the insert
     @Query(value = """
             INSERT INTO online_course_configuration (course_id, user_prefix, require_existing_user)
             SELECT id, COALESCE(short_name, CONCAT('course', id)), FALSE FROM course WHERE id = :courseId
@@ -89,7 +89,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * @param courseId the new course id
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of the insert
     @Query(value = """
             INSERT INTO tutorial_groups_configuration (course_id, use_tutorial_group_channels, use_public_tutorial_group_channels)
             VALUES (:courseId, FALSE, FALSE)
@@ -102,7 +102,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * @param courseId the new course id
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of the insert
     @Query(value = """
             INSERT INTO course_iris_settings (course_id, settings)
             VALUES (:courseId, '{"enabled":true,"variant":"default","supportLevel":"moderate"}')

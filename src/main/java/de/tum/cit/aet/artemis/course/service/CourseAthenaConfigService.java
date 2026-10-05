@@ -41,7 +41,7 @@ public class CourseAthenaConfigService {
      * Returns the Athena configuration of the given course.
      *
      * @param courseId the id of the course to read the configuration of
-     * @return the course's Athena configuration, all flags disabled when the course has no configuration yet
+     * @return the course's Athena configuration; every course owns one, created with the course
      */
     public CourseAthenaConfigDTO getConfig(long courseId) {
         return courseAthenaConfigRepository.findConfigByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
@@ -60,7 +60,7 @@ public class CourseAthenaConfigService {
      * @return the stored configuration
      */
     public CourseAthenaConfigDTO updateConfig(long courseId, CourseAthenaConfigUpdateDTO update) {
-        long configId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(courseId).orElseThrow();
+        long configId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("CourseAthenaConfig", courseId));
 
         boolean gradingFeedbackChanged = update.gradingFeedbackEnabled() != null
                 && courseAthenaConfigRepository.updateGradingFeedbackEnabled(configId, update.gradingFeedbackEnabled()) > 0;

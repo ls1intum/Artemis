@@ -450,6 +450,11 @@ public class Course extends DomainObject {
         return Hibernate.isInitialized(courseConfiguration) ? courseConfiguration : null;
     }
 
+    /**
+     * Sets the course configuration. On a stored course the replacement updates the permanent row and a null is ignored.
+     *
+     * @param courseConfiguration the settings to carry from now on
+     */
     public void setCourseConfiguration(CourseConfiguration courseConfiguration) {
         if (getId() != null && this.courseConfiguration != null) {
             if (courseConfiguration == null) {
@@ -830,6 +835,11 @@ public class Course extends DomainObject {
         return athenaConfig;
     }
 
+    /**
+     * Sets the Athena configuration. On a stored course the replacement updates the permanent row and a null is ignored.
+     *
+     * @param athenaConfig the settings to carry from now on
+     */
     public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
         if (getId() != null && this.athenaConfig != null) {
             if (athenaConfig == null) {

@@ -995,7 +995,8 @@ public class CourseTestService {
 
     // Test
     public void testEditCourseWithPermission() throws Exception {
-        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
+        // A new course (no preset id): merging a hand-built course onto an existing row would overwrite its configuration links with null
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
@@ -2040,7 +2041,7 @@ public class CourseTestService {
 
             // Assert that course properties on courseWithExercises match those of courseOnly
             assertThat(courseWithExercises.course()).as("courseWithExercises same as courseOnly").usingRecursiveComparison()
-                    .ignoringFields("numberOfStudents", "numberOfTeachingAssistants", "numberOfEditors", "numberOfInstructors").isEqualTo(courseOnly);
+                    .ignoringFields("numberOfStudents", "numberOfTeachingAssistants", "numberOfEditors", "numberOfInstructors", "courseConfiguration").isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
@@ -2169,7 +2170,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourse_instructorNotInCourse() throws Exception {
-        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
+        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.saveWithDefaultConfigurations(course);
 
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isForbidden());

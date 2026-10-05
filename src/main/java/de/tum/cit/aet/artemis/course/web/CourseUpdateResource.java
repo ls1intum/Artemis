@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -146,7 +147,8 @@ public class CourseUpdateResource {
         // Attach the (lazily-stored) course configuration so applyTo can update its permanent row,
         // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
         // via its own repository to keep the course update entity graph small.
-        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElseThrow());
+        existingCourse
+                .setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("CourseConfiguration", courseId)));
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");

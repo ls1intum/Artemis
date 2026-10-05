@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -80,6 +81,17 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
+    void courseWithoutShortNameGetsAnLtiPrefixDerivedFromItsId() {
+        // short_name is nullable in the schema, so legacy courses can lack one; the default prefix then falls back to the id
+        var course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
+        course.setShortName(null);
+        var saved = courseRepository.saveWithDefaultConfigurations(course);
+
+        var jdbc = new JdbcTemplate(dataSource);
+        assertThat(jdbc.queryForObject("SELECT user_prefix FROM online_course_configuration WHERE course_id = ?", String.class, saved.getId())).isEqualTo("course" + saved.getId());
+    }
+
+    @Test
     void exerciseSettingsSurviveTeamModeChangesAndRetainTheirIdsOnUpdate() {
         var course = courseUtilService.createCourse();
         var exercise = textExerciseUtilService.createSampleTextExercise(course);
@@ -111,6 +123,35 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         assertThat(loaded.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(5);
         assertThat(loaded.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(77);
         assertThat(jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", exercise.getId())).isEqualTo(ids);
+    }
+
+    @Test
+    void anExerciseBuiltFromALoadedOneGetsItsOwnSettingsRowsNotTheSources() {
+        var course = courseUtilService.createCourse();
+        var source = textExerciseUtilService.createSampleTextExercise(course);
+        var jdbc = new JdbcTemplate(dataSource);
+        var sourceIds = jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", source.getId());
+
+        // What an import does: a new exercise that still carries the source's stored (detached, id-bearing) settings
+        var loadedSource = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(source.getId()).orElseThrow();
+        var copy = new TextExercise();
+        copy.setCourse(course);
+        copy.setTitle("Imported");
+        copy.setShortName("Imported");
+        copy.setMaxPoints(10.0);
+        copy.setBonusPoints(0.0);
+        copy.setMode(ExerciseMode.TEAM);
+        copy.setTeamAssignmentConfig(loadedSource.getStoredTeamAssignmentConfig());
+        copy.setPlagiarismDetectionConfig(loadedSource.getPlagiarismDetectionConfig());
+        assertThat(copy.getStoredTeamAssignmentConfig().getId()).isEqualTo(sourceIds.get("team_assignment_config_id"));
+
+        var saved = textExerciseRepository.save(copy);
+
+        var copyIds = jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", saved.getId());
+        assertThat(copyIds.values()).doesNotContainNull();
+        assertThat(copyIds.get("team_assignment_config_id")).isNotEqualTo(sourceIds.get("team_assignment_config_id"));
+        assertThat(copyIds.get("plagiarism_detection_config_id")).isNotEqualTo(sourceIds.get("plagiarism_detection_config_id"));
+        assertThat(jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", source.getId())).isEqualTo(sourceIds);
     }
 
     private void setConfigurationInsertFailure(boolean enabled) throws SQLException {

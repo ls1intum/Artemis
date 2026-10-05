@@ -66,7 +66,7 @@ public interface TutorialGroupsConfigurationRepository extends ArtemisJpaReposit
      * @return the number of updated rows
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of the update
     @Query("""
             UPDATE TutorialGroupsConfiguration configuration
             SET configuration.tutorialPeriodStartInclusive = :start, configuration.tutorialPeriodEndInclusive = :end,
@@ -74,5 +74,27 @@ public interface TutorialGroupsConfigurationRepository extends ArtemisJpaReposit
             WHERE configuration.course.id = :courseId
             """)
     int updateSettings(@Param("courseId") long courseId, @Param("start") String start, @Param("end") String end, @Param("channels") boolean channels,
+            @Param("publicChannels") boolean publicChannels);
+
+    /**
+     * Configures tutorial groups for a course whose settings are still inactive. The condition is part of the statement, so
+     * of two concurrent requests only one changes the row; no lock or transaction spanning several statements is needed.
+     *
+     * @param courseId       the course id
+     * @param start          the tutorial period start
+     * @param end            the tutorial period end
+     * @param channels       whether tutorial group channels are used
+     * @param publicChannels whether the channels are public
+     * @return 1 if the settings were activated, 0 if they were already configured or the course has no row
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE TutorialGroupsConfiguration configuration
+            SET configuration.tutorialPeriodStartInclusive = :start, configuration.tutorialPeriodEndInclusive = :end,
+                configuration.useTutorialGroupChannels = :channels, configuration.usePublicTutorialGroupChannels = :publicChannels
+            WHERE configuration.course.id = :courseId AND (configuration.tutorialPeriodStartInclusive IS NULL OR configuration.tutorialPeriodEndInclusive IS NULL)
+            """)
+    int activateSettings(@Param("courseId") long courseId, @Param("start") String start, @Param("end") String end, @Param("channels") boolean channels,
             @Param("publicChannels") boolean publicChannels);
 }

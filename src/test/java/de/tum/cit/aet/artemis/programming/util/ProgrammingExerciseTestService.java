@@ -1695,6 +1695,7 @@ public class ProgrammingExerciseTestService {
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
+        exercise.setMode(ExerciseMode.TEAM);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exercise = saveWithBuildConfig(exercise);
         programmingExerciseUtilService.saveBuildConfigIfMissing(exercise);

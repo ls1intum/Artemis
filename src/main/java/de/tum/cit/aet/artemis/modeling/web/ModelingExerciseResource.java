@@ -228,8 +228,6 @@ public class ModelingExerciseResource {
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = modelingExerciseRepository.save(savedExercise);
         }
-        // A client may omit the plagiarism detection config; fill and persist the default for course exercises so it is
-        // not stored as null. Done after the competency-link save so it operates on the fully persisted exercise.
         final ModelingExercise result = savedExercise;
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));

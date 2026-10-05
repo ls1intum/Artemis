@@ -151,7 +151,7 @@ public abstract class ExerciseImportService {
                 Exercise teamConfigSource = hasTeamAssignmentConfig(newExercise) ? newExercise : sourceExercise;
                 if (hasTeamAssignmentConfig(teamConfigSource)) {
                     // Always a fresh copy: a caller-supplied configuration may still carry the source's id.
-                    newExercise.setTeamAssignmentConfig(teamConfigSource.getTeamAssignmentConfig().copyTeamAssignmentConfig());
+                    newExercise.setTeamAssignmentConfig(teamConfigSource.getStoredTeamAssignmentConfig().copyTeamAssignmentConfig());
                 }
             }
             else {
@@ -183,7 +183,8 @@ public abstract class ExerciseImportService {
     }
 
     private static boolean hasTeamAssignmentConfig(Exercise exercise) {
-        return getPersistenceUtil().isLoaded(exercise, Exercise_.TEAM_ASSIGNMENT_CONFIG) && exercise.getTeamAssignmentConfig() != null;
+        // The stored settings, not the mode-filtered ones: an individual source keeps settings that a team-mode copy should inherit.
+        return getPersistenceUtil().isLoaded(exercise, Exercise_.TEAM_ASSIGNMENT_CONFIG) && exercise.getStoredTeamAssignmentConfig() != null;
     }
 
     /**

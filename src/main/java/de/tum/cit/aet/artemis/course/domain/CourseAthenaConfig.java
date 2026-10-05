@@ -2,21 +2,16 @@ package de.tum.cit.aet.artemis.course.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+
 @Entity
 @Table(name = "course_athena_config")
-public class CourseAthenaConfig {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class CourseAthenaConfig extends DomainObject {
 
     @Transient
     @JsonIgnore
@@ -27,14 +22,6 @@ public class CourseAthenaConfig {
 
     @Column(name = "formative_feedback_enabled", nullable = false)
     private boolean formativeFeedbackEnabled = false;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Course getCourse() {
         return course;

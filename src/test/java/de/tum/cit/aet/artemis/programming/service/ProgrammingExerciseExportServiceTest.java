@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -766,6 +767,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     void testExportProgrammingExerciseForDownload_writesNoConfigurationIds() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
@@ -793,6 +795,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     void testExportProgrammingExerciseForDownload_detailsImportUnderAnIdCopyingImporter() throws Exception {
         createAndSeedBaseRepositories();
         programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
@@ -868,6 +871,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
         programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
         programmingExercise.setGradingCriteria(new HashSet<>(Set.of(criterionWithInstruction())));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

@@ -49,7 +49,7 @@ public interface OnlineCourseConfigurationRepository extends ArtemisJpaRepositor
      * @return the number of updated rows
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of the update
     @Query("""
             UPDATE OnlineCourseConfiguration configuration
             SET configuration.userPrefix = :prefix, configuration.requireExistingUser = :requireExistingUser,

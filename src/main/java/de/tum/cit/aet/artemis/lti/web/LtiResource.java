@@ -35,6 +35,7 @@ import tools.jackson.databind.node.ObjectNode;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
@@ -147,11 +148,14 @@ public class LtiResource {
         }
 
         onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
-        onlineCourseConfigurationRepository.updateSettings(courseId, existingConfiguration.getId(), onlineCourseConfiguration.getUserPrefix(),
-                onlineCourseConfiguration.isRequireExistingUser(), onlineCourseConfiguration.getLtiPlatformConfiguration());
-        OnlineCourseConfiguration savedConfiguration = onlineCourseConfigurationRepository.findByCourseId(courseId).orElseThrow();
+        if (onlineCourseConfigurationRepository.updateSettings(courseId, existingConfiguration.getId(), onlineCourseConfiguration.getUserPrefix(),
+                onlineCourseConfiguration.isRequireExistingUser(), onlineCourseConfiguration.getLtiPlatformConfiguration()) != 1) {
+            throw new EntityNotFoundException(OnlineCourseConfiguration.ENTITY_NAME, existingConfiguration.getId());
+        }
 
-        return ResponseEntity.ok(OnlineCourseConfigurationDTO.of(savedConfiguration));
+        // Answer with what was just stored rather than reading it again: the row keeps its id, and a course switched offline in the
+        // meantime would no longer be found by the read, although the update succeeded.
+        return ResponseEntity.ok(OnlineCourseConfigurationDTO.of(onlineCourseConfiguration));
     }
 
     /**

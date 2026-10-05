@@ -42,7 +42,7 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
      * Reads the tutorial groups configuration of a course. A course does not carry it, so this is the one way to get it.
      *
      * @param courseId the id of the course
-     * @return the configuration, or empty when the course has none yet
+     * @return the configuration, or empty until the course's tutorial period is configured
      */
     public Optional<TutorialGroupsConfiguration> findConfigurationByCourseId(long courseId) {
         return tutorialGroupsConfigurationRepository.findByCourseId(courseId);

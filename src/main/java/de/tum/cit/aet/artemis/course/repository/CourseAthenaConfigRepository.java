@@ -127,7 +127,7 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      * Returns the id of a course's Athena configuration, reading the foreign key without loading either entity.
      *
      * @param courseId the id of the course to read the configuration id of
-     * @return the id of the course's Athena configuration, or empty if the course has none yet
+     * @return the id of the course's Athena configuration, or empty if there is no such course
      */
     @Query("""
             SELECT course.athenaConfig.id

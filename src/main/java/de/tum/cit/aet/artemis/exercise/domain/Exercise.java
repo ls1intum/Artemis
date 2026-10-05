@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
-import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -266,29 +263,34 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.gradingInstructions = gradingInstructions;
     }
 
-    /** Creates permanent default settings for every exercise type before its first persistence. */
+    /** Gives every exercise type its own permanent settings rows before its first persistence, never a row of the exercise it was imported from. */
     @PrePersist
     void initializeDefaultConfigurations() {
-        if (teamAssignmentConfig == null) {
-            teamAssignmentConfig = new TeamAssignmentConfig();
-        }
-        if (plagiarismDetectionConfig == null) {
-            plagiarismDetectionConfig = PlagiarismDetectionConfig.createDefault();
-        }
+        teamAssignmentConfig = ExerciseConfigurationDefaults.forNewExercise(teamAssignmentConfig);
+        plagiarismDetectionConfig = ExerciseConfigurationDefaults.forNewExercise(plagiarismDetectionConfig);
     }
 
     public TeamAssignmentConfig getTeamAssignmentConfig() {
         return isTeamMode() ? teamAssignmentConfig : null;
     }
 
+    /**
+     * The stored team settings whatever the mode: an individual exercise keeps them for the day it is switched to team mode.
+     *
+     * @return the stored team settings
+     */
+    @JsonIgnore
+    public TeamAssignmentConfig getStoredTeamAssignmentConfig() {
+        return teamAssignmentConfig;
+    }
+
+    /**
+     * Sets the team settings. On a stored exercise the replacement updates the permanent row and a null is ignored.
+     *
+     * @param teamAssignmentConfig the settings to carry from now on
+     */
     public void setTeamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
-        if (getId() != null && this.teamAssignmentConfig != null) {
-            if (teamAssignmentConfig == null) {
-                return;
-            }
-            teamAssignmentConfig.setId(this.teamAssignmentConfig.getId());
-        }
-        this.teamAssignmentConfig = teamAssignmentConfig;
+        this.teamAssignmentConfig = ExerciseConfigurationDefaults.replaceKeepingStoredId(this.teamAssignmentConfig, teamAssignmentConfig, getId() != null);
     }
 
     public Set<Team> getTeams() {
@@ -462,14 +464,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return plagiarismDetectionConfig;
     }
 
+    /**
+     * Sets the plagiarism detection settings. On a stored exercise the replacement updates the permanent row and a null is ignored.
+     *
+     * @param plagiarismDetectionConfig the settings to carry from now on
+     */
     public void setPlagiarismDetectionConfig(PlagiarismDetectionConfig plagiarismDetectionConfig) {
-        if (getId() != null && this.plagiarismDetectionConfig != null) {
-            if (plagiarismDetectionConfig == null) {
-                return;
-            }
-            plagiarismDetectionConfig.setId(this.plagiarismDetectionConfig.getId());
-        }
-        this.plagiarismDetectionConfig = plagiarismDetectionConfig;
+        this.plagiarismDetectionConfig = ExerciseConfigurationDefaults.replaceKeepingStoredId(this.plagiarismDetectionConfig, plagiarismDetectionConfig, getId() != null);
     }
 
     @Override
@@ -894,40 +895,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /** Validates the date ordering shared by every exercise type. {@code final} so it stays callable on a QuizExercise whose lazy {@code quizBatches} are uninitialized. */
     public final void validateBaseDates() {
-        // All fields are optional, so there is no error if none of them is set
-        if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
-            return;
-        }
-        if (isExamExercise()) {
-            throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
-        }
-
-        boolean releaseDateValid = validateStrictDateSequence(List.of(), getReleaseDate(),
-                Arrays.asList(getStartDate(), getDueDate(), getAssessmentDueDate(), getExampleSolutionPublicationDate()));
-        boolean startDateValid = validateStrictDateSequence(Collections.singletonList(getReleaseDate()), getStartDate(),
-                Arrays.asList(getDueDate(), getAssessmentDueDate(), getExampleSolutionPublicationDate()));
-        boolean dueDateValid = validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate()), getDueDate(),
-                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
-        boolean assessmentDueDateValid = validateAssessmentDueDate();
-        boolean exampleSolutionPublicationDateValid = validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate(), getAssessmentDueDate()),
-                getExampleSolutionPublicationDate(), List.of());
-
-        boolean areDatesValid = releaseDateValid && startDateValid && dueDateValid && assessmentDueDateValid && exampleSolutionPublicationDateValid;
-
-        if (!areDatesValid) {
-            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
-        }
-    }
-
-    private boolean validateAssessmentDueDate() {
-        if (getAssessmentDueDate() == null) {
-            return true;
-        }
-        if (getDueDate() == null) {
-            return false;
-        }
-        return validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), getAssessmentDueDate(),
-                Collections.singletonList(getExampleSolutionPublicationDate()));
+        ExerciseDateValidator.validate(this);
     }
 
     /**

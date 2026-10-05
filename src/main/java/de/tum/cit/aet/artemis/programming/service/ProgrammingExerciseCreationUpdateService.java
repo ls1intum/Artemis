@@ -243,9 +243,6 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
-        // Make sure that plagiarism detection config does not use existing id
-        Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
-
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         if (!skipRepositoryAndBuildTrigger) {
