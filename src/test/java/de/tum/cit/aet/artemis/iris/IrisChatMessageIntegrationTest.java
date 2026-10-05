@@ -646,6 +646,19 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_rejectsAMessageOfAnotherSessionForAnEmptySession() throws Exception {
+        IrisChatSession emptySession = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisChatSession otherUsersSession = createSessionForUser(IrisChatMode.COURSE_CHAT, "student2");
+        IrisMessage otherUsersMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(otherUsersSession), otherUsersSession,
+                IrisMessageSender.USER);
+
+        request.postWithoutResponseBody(messagesUrl(emptySession) + "/" + otherUsersMessage.getId() + "/resend", null, HttpStatus.BAD_REQUEST);
+
+        assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(emptySession.getId()).getMessages()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resendMessage_rejectsOversizedClientId() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
