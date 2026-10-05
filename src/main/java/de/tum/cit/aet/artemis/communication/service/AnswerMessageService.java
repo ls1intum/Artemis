@@ -225,14 +225,21 @@ public class AnswerMessageService extends PostingService {
         }
 
         parseUserMentions(course, answerMessage.content());
-        // only the content of the message can be updated
-        existingAnswerMessage.setContent(answerMessage.content());
 
-        // determine if the update operation changes whether the answer message resolves the original post
+        // Changing the resolve flag and changing the content are authorized separately: the author of the original
+        // message may mark someone else's answer as resolving, but that does not allow them to rewrite its content.
+        // A request that toggles the flag usually sends the stored content back unchanged; any different content is
+        // checked like an ordinary edit.
         boolean resolutionChanged = false;
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
             mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
+            if (!Objects.equals(existingAnswerMessage.getContent(), answerMessage.content())) {
+                // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
+                mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
+                existingAnswerMessage.setContent(answerMessage.content());
+                existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
+            }
             // Records the endorser along with the flag: Course Memory derives the trust tier of the thread's entry
             // from who marked the answer resolving, and has to be able to re-derive it later from this answer alone.
             existingAnswerMessage.setResolution(answerMessage.resolvesPost(), user);
