@@ -1792,6 +1792,71 @@ describe('AttachmentVideoUnitComponent', () => {
                 expect(seekTo).toHaveBeenCalledExactlyOnceWith(0, false);
             });
 
+            describe('a deep link to the page the viewer already shows', () => {
+                // The real viewer reports a page only when it changes, which the shared mock does not copy.
+                const showPage = (shownPage: number) => {
+                    const { seekTo } = mockViewers(signal(3));
+                    const goToPage = vi.fn((page: number) => {
+                        if (page !== shownPage) {
+                            shownPage = page;
+                            component['onPdfCurrentPageChange'](page);
+                        }
+                        return true;
+                    });
+                    Object.defineProperty(component, 'pdfViewer', {
+                        value: () => ({ goToPage, getCurrentPage: () => shownPage }),
+                        writable: true,
+                        configurable: true,
+                    });
+                    component.lectureUnitCard()!.isCollapsed.set(false);
+                    return { goToPage, seekTo };
+                };
+
+                it('returns the video to the start of the slide and the view to the top of the page', () => {
+                    // Page 2 is slide 8, which starts at 10s. The student has played on to 15s and asks for it again.
+                    const { goToPage, seekTo } = showPage(2);
+
+                    fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2 });
+                    fixture.detectChanges();
+
+                    expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                    expect(seekTo).toHaveBeenCalledExactlyOnceWith(10, false);
+                });
+
+                it('keeps an explicit timestamp on that page and leaves no target waiting for a page report that never comes', () => {
+                    const { goToPage, seekTo } = showPage(2);
+
+                    fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2, timestamp: 15 });
+                    fixture.detectChanges();
+
+                    expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                    expect(seekTo).toHaveBeenCalledExactlyOnceWith(15, false);
+                    expect(component['pendingPdfTargetPage']).toBeUndefined();
+                });
+
+                it('does not synchronize when the toggle is off', () => {
+                    const { goToPage, seekTo } = showPage(2);
+                    component.synchronizeVideoAndSlides.set(false);
+
+                    fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2 });
+                    fixture.detectChanges();
+
+                    expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                    expect(seekTo).not.toHaveBeenCalled();
+                });
+            });
+
+            it('leaves no target waiting when the viewer cannot move to the requested page yet', () => {
+                const { goToPage } = mockViewers(signal(3), 300, signal(false));
+                component.lectureUnitCard()!.isCollapsed.set(false);
+
+                fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2, timestamp: 12 });
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveReturnedWith(false);
+                expect(component['pendingPdfTargetPage']).toBeUndefined();
+            });
+
             it('drops the explanation once the student decides about the toggle themselves', () => {
                 mockViewers(signal(3));
                 component['handlePointOut'](pointOutRequest({ correlationId: 's5', page: 2, displayPage: 8, timestamp: 25 }));

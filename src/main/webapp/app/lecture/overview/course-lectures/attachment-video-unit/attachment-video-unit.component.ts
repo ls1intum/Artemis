@@ -403,15 +403,34 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private applyDeepLink(deepLink: LectureDeepLink): void {
+        const pdfViewer = this.pdfViewer();
+        const pageShownBefore = pdfViewer?.getCurrentPage();
+
         if (deepLink.timestamp !== undefined) {
             this.activePlayer()?.seekTo(deepLink.timestamp, false);
         }
 
-        const pdfViewer = this.pdfViewer();
-        if (deepLink.page !== undefined && pdfViewer && pdfViewer.getCurrentPage() !== deepLink.page) {
-            // A page-only request lets synchronization seek the video; an explicit timestamp must take precedence.
-            this.pendingPdfTargetPage = deepLink.timestamp !== undefined ? deepLink.page : undefined;
-            pdfViewer.goToPage(deepLink.page);
+        if (deepLink.page === undefined || !pdfViewer) {
+            return;
+        }
+
+        // The viewer reports a page only when it changes, and that report is what makes synchronization move the video.
+        // A request for the page already shown therefore reports nothing: the view still has to return to the top of the
+        // page, and the video to the start of its slide, which the student may have played or scrolled past.
+        const isCurrentPage = pdfViewer.getCurrentPage() === deepLink.page;
+        if (isCurrentPage && pageShownBefore !== deepLink.page) {
+            // Seeking the video has already synchronized the view to this page.
+            return;
+        }
+
+        // A page-only request lets synchronization seek the video; an explicit timestamp must take precedence. There is
+        // no report to wait for on the current page, and a target left waiting would swallow the next real change.
+        this.pendingPdfTargetPage = deepLink.timestamp !== undefined && !isCurrentPage ? deepLink.page : undefined;
+        const moved = pdfViewer.goToPage(deepLink.page);
+        if (!moved) {
+            this.pendingPdfTargetPage = undefined;
+        } else if (isCurrentPage && deepLink.timestamp === undefined) {
+            this.synchronizeVideoToPdfPage(deepLink.page);
         }
     }
 
@@ -858,6 +877,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
+        this.synchronizeVideoToPdfPage(page);
+    }
+
+    /** Moves the video to the start of the slide the given PDF page shows, while slides and video are synchronized. */
+    private synchronizeVideoToPdfPage(page: number): void {
         if (!this.synchronizeVideoAndSlides()) {
             return;
         }
