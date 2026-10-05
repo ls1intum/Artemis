@@ -141,14 +141,14 @@ An Iris response that refers to an earlier verified answer:
 
 <Image src={autonomousTutorMemoryReferenceImg} alt={"autonomous-tutor-memory-reference"} size={ImageSize.medium} />
 
-The Autonomous Tutor is only available in public course channels; private conversations are excluded. The feature is disabled by default, and an administrator must enable it for the whole Artemis instance. It then runs in every course where Iris is enabled. Iris is enabled for a course unless an instructor disables it in the course's Iris settings. The AI choice of the student who asks decides whether Iris answers with on-premise or cloud models. Students who have opted out of AI interaction are excluded from every processing step, including reading, embedding, and storage.
+The Autonomous Tutor answers in course channels, including private channels. Group chats and direct messages are excluded. Course Memory only stores answers from channels that every student of the course can read. The feature is disabled by default, and an administrator must enable it for the whole Artemis instance. It then runs in every course where Iris is enabled. Iris is enabled for a course unless an instructor disables it in the course's Iris settings. The AI choice of the student who writes the message decides whether Iris answers with on-premise or cloud models. The same models also read the other messages of the thread and the stored answers that Iris uses. Students who have opted out of AI interaction are excluded from every processing step, including reading, embedding, and storage.
 
 <Callout variant={CalloutVariant.warning}>
 
   <strong>Privacy and activation at a glance</strong>
 
   <ul>
-    <li><strong>Model choice</strong>: The AI choice of the student who asks decides the models. For students who chose cloud AI, the thread can be sent to cloud providers.</li>
+    <li><strong>Model choice</strong>: The AI choice of the student who writes the message decides the models. If that student chose cloud AI, the whole thread and the stored answers that Iris uses can be sent to cloud providers. This includes messages of other students who chose local AI.</li>
     <li><strong>Activation</strong>: The feature is not active by default. An administrator enables it for the whole instance. Instructors can turn it off for their course by disabling Iris.</li>
     <li><strong>Student opt-out</strong>: Students who have opted out of AI interaction are excluded from all processing steps, including reading, embedding, and storage of their messages.</li>
     <li><strong>Transparency</strong>: Every Iris-generated message carries the Iris icon and a bot tag. Responses awaiting tutor review remain hidden from students until a tutor approves or edits them.</li>
