@@ -51,12 +51,13 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
     private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     @Test
-    void configurationInsertFailureRollsBackTheCourseAndItsCascade() throws SQLException {
+    void aFailingSettingsInsertIsReportedToTheCallerAndTheNextSaveRepairsIt() throws SQLException {
         var course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
-        course.setShortName("rollbackdefaultstest");
+        course.setShortName("failingdefaultstest");
         var jdbc = new JdbcTemplate(dataSource);
 
-        // A constraint scoped to this test's prefix forces a real database failure after the course and cascade inserts.
+        // A constraint scoped to this test's prefix forces a real database failure of one of the settings inserts. There is no
+        // transaction around the statements, so the course is not rolled back; the caller gets the error and decides.
         setConfigurationInsertFailure(true);
         try {
             assertThatThrownBy(() -> courseRepository.saveWithDefaultConfigurations(course)).isInstanceOf(DataIntegrityViolationException.class);
@@ -64,13 +65,35 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         finally {
             setConfigurationInsertFailure(false);
         }
+        assertThat(course.getId()).as("the course itself was stored").isNotNull();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM online_course_configuration WHERE course_id = ?", Long.class, course.getId())).isZero();
 
-        assertThat(course.getId()).isNotNull();
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course WHERE id = ?", Long.class, course.getId())).isZero();
+        // the next save adds what the failed creation left out
+        courseRepository.saveWithDefaultConfigurations(course);
         for (String table : new String[] { "course_configuration", "course_athena_config", "online_course_configuration", "tutorial_groups_configuration",
                 "course_iris_settings" }) {
-            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
         }
+    }
+
+    @Test
+    void aSaveAddsOnlyTheMissingSettingsAndNeverDuplicatesOrReplacesAny() {
+        var course = courseUtilService.createCourse();
+        var jdbc = new JdbcTemplate(dataSource);
+        var onlineId = jdbc.queryForObject("SELECT id FROM online_course_configuration WHERE course_id = ?", Long.class, course.getId());
+        assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("a complete course needs nothing").isZero();
+
+        // an incomplete creation: the tutorial group and Iris settings are missing
+        deleteRows("tutorial_groups_configuration", course.getId());
+        deleteRows("course_iris_settings", course.getId());
+        assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).isEqualTo(2);
+        assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("repairing twice adds nothing").isZero();
+
+        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
+        }
+        assertThat(jdbc.queryForObject("SELECT id FROM online_course_configuration WHERE course_id = ?", Long.class, course.getId())).as("an existing row is kept")
+                .isEqualTo(onlineId);
     }
 
     @Test
@@ -172,12 +195,24 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         assertThat(jdbc.queryForObject("SELECT id FROM plagiarism_detection_config WHERE exercise_id = ?", Long.class, source.getId())).isEqualTo(sourcePlagiarismRowId);
     }
 
+    private void deleteRows(String table, long courseId) {
+        // The test pool disables auto-commit, so the delete is committed on a connection of its own.
+        try (var connection = dataSource.getConnection(); var statement = connection.prepareStatement("DELETE FROM " + table + " WHERE course_id = ?")) {
+            connection.setAutoCommit(true);
+            statement.setLong(1, courseId);
+            statement.executeUpdate();
+        }
+        catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     private void setConfigurationInsertFailure(boolean enabled) throws SQLException {
         // The test pool disables auto-commit. Commit the test-only DDL before exercising the repository transaction.
         try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
             connection.setAutoCommit(true);
             if (enabled) {
-                statement.execute("ALTER TABLE online_course_configuration ADD CONSTRAINT fail_default_config_insert CHECK (user_prefix <> 'rollbackdefaultstest')");
+                statement.execute("ALTER TABLE online_course_configuration ADD CONSTRAINT fail_default_config_insert CHECK (user_prefix <> 'failingdefaultstest')");
             }
             else {
                 String constraintType = connection.getMetaData().getDatabaseProductName().contains("MySQL") ? "CHECK" : "CONSTRAINT";

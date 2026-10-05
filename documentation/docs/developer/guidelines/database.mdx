@@ -228,9 +228,13 @@ including settings for optional modules that are disabled on that server. Backfi
 a migration, preserving their existing settings. Do not insert or delete configurations when enabling or disabling a
 feature: update its flag and keep its settings for the next time it is enabled.
 
-Create courses through `CourseRepository.saveWithDefaultConfigurations`. Its short repository transaction persists the
-new course and all default settings together. Course edits and feature toggles do not use a course-row lock or a
-transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
+Create courses through `CourseRepository.saveWithDefaultConfigurations`. It stores the course and then inserts the
+default settings with plain statements, without a transaction around them, so no lock is held across the statements. A
+failure between two of them leaves the course without the settings not yet inserted, and the caller sees the exception.
+Every later save through `saveWithDefaultConfigurations` and every course update adds the missing rows
+(`CourseRepository.ensureDefaultConfigurations`), so the course repairs itself without being deleted. A row that
+already exists is never replaced, and a concurrent save that inserts the same row first is tolerated. Course edits and
+feature toggles do not use a course-row lock or a transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
 is true. Tutorial-group settings remain inactive until both tutorial-period dates are configured; configure those defaults
 through the configuration repository's modifying query.
 
@@ -240,8 +244,11 @@ stored: every path that stores a new exercise (creation, every kind of import, c
 `ExerciseConfigurationService.initialize` right after the first save, which checks for each row with a plain read, inserts
 the missing one with a plain `INSERT ... VALUES` (never an `INSERT ... SELECT ... WHERE NOT EXISTS`, which locks an index
 range on MySQL) through the `insertDefaultsFor` statements of the two repositories, and then applies the settings the request carried with their `applyTo`. No callback
-and no lazy fill creates a missing row, so a new creation path has to call the service itself; a row that is missing is
-reported as an `EntityNotFoundException` rather than created behind the caller's back. Updates only change the stored
+and no lazy fill creates a row for a new exercise, so a new creation path has to call the service itself. No
+transaction spans these statements, so a failure between them leaves the exercise without the rows not yet inserted;
+the caller sees the exception, and the next save repairs it, because `applyTo` adds a missing default row
+(`ensureExistsFor`, a plain read and a plain insert that tolerates a concurrent insert of the same row) before it updates
+the row in place. Updates only change the stored
 row in place with a modifying query, so its id survives and nothing is inserted or deleted when a setting changes, and
 team settings are exposed only for team-mode exercises (`Exercise.getTeamAssignmentConfig`). Programming creation and
 import persist the build settings after the exercise exists through

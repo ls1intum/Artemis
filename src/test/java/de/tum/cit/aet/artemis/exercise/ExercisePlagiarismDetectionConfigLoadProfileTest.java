@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -267,11 +266,18 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
     }
 
     @Test
-    void anExerciseStoredWithoutItsRowIsReportedInsteadOfHealedBehindTheCallersBack() {
+    void anExerciseStoredWithoutItsRowGetsTheDefaultsOnItsNextSaveAndKeepsTheRowAfterwards() {
         Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseRepository.findByIdElseThrow(examExerciseId).getExerciseGroup()));
-
-        assertThatThrownBy(() -> plagiarismDetectionConfigRepository.applyTo(exercise, null)).isInstanceOf(EntityNotFoundException.class);
         assertThat(plagiarismDetectionConfigRepository.findByExerciseId(exercise.getId())).isEmpty();
+
+        var repaired = plagiarismDetectionConfigRepository.applyTo(exercise, null);
+
+        assertThat(repaired.getId()).isNotNull();
+        PlagiarismDetectionConfig requested = PlagiarismDetectionConfig.createDefault();
+        requested.setSimilarityThreshold(73);
+        var updated = plagiarismDetectionConfigRepository.applyTo(exercise, requested);
+        assertThat(updated.getId()).as("the repaired row is updated in place, not replaced").isEqualTo(repaired.getId());
+        assertThat(updated.getSimilarityThreshold()).isEqualTo(73);
     }
 
     @Test

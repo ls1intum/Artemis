@@ -16,7 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.JsonNode;
 
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -244,11 +243,20 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
     }
 
     @Test
-    void anExerciseStoredWithoutItsRowIsReportedInsteadOfHealedBehindTheCallersBack() {
+    void anExerciseStoredWithoutItsRowGetsTheDefaultsOnItsNextSaveAndKeepsTheRowAfterwards() {
         Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(examExercise().getExerciseGroup()));
-
-        assertThatThrownBy(() -> teamAssignmentConfigRepository.applyTo(exercise, null)).isInstanceOf(EntityNotFoundException.class);
         assertThat(teamAssignmentConfigRepository.findByExerciseId(exercise.getId())).isEmpty();
+
+        var repaired = teamAssignmentConfigRepository.applyTo(exercise, null);
+
+        assertThat(repaired.getMinTeamSize()).isEqualTo(1);
+        var requested = new TeamAssignmentConfig();
+        requested.setMinTeamSize(2);
+        requested.setMaxTeamSize(4);
+        var updated = teamAssignmentConfigRepository.applyTo(exercise, requested);
+        assertThat(updated.getId()).as("the repaired row is updated in place, not replaced").isEqualTo(repaired.getId());
+        assertThat(updated.getMaxTeamSize()).isEqualTo(4);
+        assertThat(teamAssignmentConfigRepository.findAllByExerciseIdIn(List.of(exercise.getId()))).hasSize(1);
     }
 
     @Test

@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -145,6 +146,31 @@ public interface PlagiarismDetectionConfigRepository extends ArtemisJpaRepositor
     }
 
     /**
+     * Adds the default settings row of an exercise that has none, which is what a creation that failed after storing the
+     * exercise leaves behind. Every save of the exercise calls this, so the exercise repairs itself on its next save.
+     * <p>
+     * It takes no lock and needs no transaction: a missing row is found by a plain read and added by a plain insert. If two
+     * saves repair the same exercise at the same moment, the unique key lets one insert win and the other finds the row
+     * already there. An existing row is never replaced.
+     *
+     * @param exerciseId the id of the stored exercise
+     */
+    default void ensureExistsFor(long exerciseId) {
+        if (existsByExerciseId(exerciseId)) {
+            return;
+        }
+        try {
+            insertDefaultsFor(exerciseId);
+        }
+        catch (DataIntegrityViolationException e) {
+            // a concurrent save adding the same row first is what was wanted; any other violation is a real failure
+            if (!existsByExerciseId(exerciseId)) {
+                throw e;
+            }
+        }
+    }
+
+    /**
      * Gives a newly stored exercise its permanent plagiarism detection row and applies the requested settings to it. Calling
      * this again for the same exercise is safe.
      *
@@ -153,9 +179,6 @@ public interface PlagiarismDetectionConfigRepository extends ArtemisJpaRepositor
      * @return the stored settings
      */
     default PlagiarismDetectionConfig initializeFor(Exercise exercise, @Nullable PlagiarismDetectionConfig requested) {
-        if (!existsByExerciseId(exercise.getId())) {
-            insertDefaultsFor(exercise.getId());
-        }
         return applyTo(exercise, requested);
     }
 
@@ -166,9 +189,10 @@ public interface PlagiarismDetectionConfigRepository extends ArtemisJpaRepositor
      * @param exercise  the saved exercise
      * @param requested the settings the exercise should have afterwards, or null to keep the stored ones
      * @return the stored settings
-     * @throws EntityNotFoundException if the exercise has no settings row, which means it was stored without its defaults
+     * @throws EntityNotFoundException if the exercise does not exist
      */
     default PlagiarismDetectionConfig applyTo(Exercise exercise, @Nullable PlagiarismDetectionConfig requested) {
+        ensureExistsFor(exercise.getId());
         if (requested != null && updateSettings(exercise.getId(), requested.isContinuousPlagiarismControlEnabled(),
                 requested.isContinuousPlagiarismControlPostDueDateChecksEnabled(), requested.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(),
                 requested.getSimilarityThreshold(), requested.getMinimumScore(), requested.getMinimumSize()) != 1) {
