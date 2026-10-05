@@ -5,6 +5,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DatePickerModule } from 'primeng/datepicker';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faGear } from '@fortawesome/free-solid-svg-icons';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -32,11 +35,25 @@ export function tutorialPeriodRangeValidator(control: AbstractControl): Validati
 @Component({
     selector: 'jhi-tutorial-groups-configuration-form',
     templateUrl: './tutorial-groups-configuration-form.component.html',
+    styleUrl: './tutorial-groups-configuration-form.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, DatePickerModule, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        DatePickerModule,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
+        FaIconComponent,
+    ],
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit {
     private fb = inject(FormBuilder);
+
+    protected readonly faGear = faGear;
 
     readonly formData = input<TutorialGroupsConfigurationFormData>({
         period: undefined,
@@ -49,6 +66,12 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
     readonly course = input.required<Course>();
 
     readonly isMessagingEnabled = isMessagingEnabled;
+
+    /** Public vs. private channel, as the two sides of the select button. */
+    protected readonly channelVisibilityOptions = [
+        { value: true, labelKey: 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' },
+        { value: false, labelKey: 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' },
+    ];
 
     existingChannelSetting?: boolean;
 

@@ -203,7 +203,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorForExercise(@NonNull Exercise exercise) {
-        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
     }
 
     /**
@@ -216,7 +216,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorForExercise(@NonNull Exercise exercise, @Nullable User user) {
-        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -293,7 +293,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantForExercise(@NonNull Exercise exercise) {
-        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
     }
 
     /**
@@ -307,7 +307,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantForExercise(@NonNull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -331,7 +331,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentForExercise(@NonNull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
+        return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 
     /**
@@ -432,7 +432,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorForExercise(@NonNull Exercise exercise, @Nullable User user) {
-        return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -467,7 +467,7 @@ public class AuthorizationCheckService {
      * @param user     the user whose permissions should be checked
      */
     public void checkHasAtLeastRoleForExerciseElseThrow(@NonNull Role role, @NonNull Exercise exercise, @Nullable User user) {
-        checkHasAtLeastRoleInCourseElseThrow(role, exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        checkHasAtLeastRoleInCourseElseThrow(role, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -707,7 +707,7 @@ public class AuthorizationCheckService {
         if (hasAdminAccess(user)) {
             return true;
         }
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 

@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -365,7 +364,7 @@ public class ExerciseSharingService {
      * </p>
      *
      * @param b64Token URL-safe Base64 token (no padding)
-     * @return path to the ZIP if it exists; otherwise {@link Optional#empty()}
+     * @return path to the ZIP if it exists; {@link Optional#empty()} for malformed tokens or missing files
      */
     public Optional<Path> getExportedExerciseByToken(String b64Token) {
         if (isInvalidToken(b64Token)) {
@@ -375,21 +374,19 @@ public class ExerciseSharingService {
 
         Path zipPath;
         try {
-            // Decode strictly: a token that is not valid UTF-8 was never issued by exportExerciseToSharing and must not reach the file system,
-            // where replacement characters may be unmappable for the platform's file name encoding.
-            String decodedToken = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
-                    .decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(b64Token))).toString();
+            // Reject malformed UTF-8 instead of replacing invalid bytes with characters that some file systems cannot encode.
+            String decodedToken = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(b64Token))).toString();
             zipPath = Path.of(repoDownloadClonePath, decodedToken + ".zip");
         }
         catch (IllegalArgumentException | CharacterCodingException e) {
-            // IllegalArgumentException also covers InvalidPathException
-            log.warn("Undecodable token received: {}", b64Token);
+            // Base64 decoding and path construction can fail even when the token only contains permitted characters.
+            log.warn("Invalid token received: {}", b64Token);
             return Optional.empty();
         }
         if (!Files.isRegularFile(zipPath)) {
             return Optional.empty();
         }
-        // Integrity is ensured via HMAC validation; decodedToken is a safe relative path segment
+        // Integrity is ensured via HMAC validation.
         return Optional.of(zipPath);
     }
 

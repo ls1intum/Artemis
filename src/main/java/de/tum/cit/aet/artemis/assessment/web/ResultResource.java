@@ -285,7 +285,8 @@ public class ResultResource {
         }
 
         Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
-        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), student.get())) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();
         }

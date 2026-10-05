@@ -49,6 +49,7 @@
                     "number": "Raumnummer",
                     "name": "Name",
                     "building": "Gebäude",
+                    "registeredStudentsUnknown": "Die Anzahl der registrierten Studierenden liegt noch nicht vor oder konnte nicht geladen werden. Du kannst die Studierenden verteilen, sobald sie bekannt ist; falls diese Meldung bleibt, schließe den Dialog und öffne ihn erneut.",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
@@ -584,6 +585,8 @@
                 "setup": "Testlauf Erstellen",
                 "author": "Autor:in",
                 "setWorkingTime": "Lege eine Bearbeitungszeit fest (Minuten und Sekunden):",
+                "workingTimeMinutes": "Bearbeitungszeit Minuten",
+                "workingTimeSeconds": "Bearbeitungszeit Sekunden",
                 "setupHint": "Wähle für jede Aufgabengruppe eine Aufgabe aus, indem du auf die Aufgabe klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Aufgaben erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis enthalten.",
                 "assess": "Deine Testläufe Bewerten",
                 "manage": "Arbeitszeit verwalten",
@@ -660,10 +663,6 @@
                     "DidNotAttend": "Nicht teilgenommen",
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
                     "AttendanceChecked": "Anwesenheitsprüfung bestanden"
-                },
-                "filterGroup": {
-                    "progress": "Fortschritt",
-                    "attendance": "Anwesenheit"
                 },
                 "menu": {
                     "manageStudents": "Studierende",

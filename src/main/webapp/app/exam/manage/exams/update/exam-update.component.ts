@@ -3,10 +3,8 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Dialog } from 'primeng/dialog';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -30,8 +28,17 @@ import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiDialogComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
@@ -42,7 +49,6 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
-    styleUrl: './exam-update.component.scss',
     imports: [
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
@@ -53,15 +59,20 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         TitleChannelNameComponent,
         HelpIconComponent,
         ExamModePickerComponent,
-        NgbTooltip,
         FaIconComponent,
         WorkingTimeChangeComponent,
-        FormDateTimePickerComponent,
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
         ConfirmEntityNameComponent,
-        Dialog,
+        TumAetUiCheckboxComponent,
+        TumAetUiDatePickerComponent,
+        TumAetUiDialogComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         ExamImportProgressDialogComponent,
         ExamTimelineComponent,
     ],
@@ -114,6 +125,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
     examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
+    /**
+     * The date fields of the review, publication and example solution dates. A date field keeps its last committed date while the
+     * typed text is not a date and flags itself, but it is no form control, so the save button has to ask the fields.
+     */
+    private readonly datePickers = viewChildren(TumAetUiDatePickerComponent);
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])
@@ -248,6 +264,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
      */
     handleSubmit() {
+        // The save button is disabled for an invalid configuration, but a submit can also come from the form itself (for example Enter in a field).
+        if (!this.isValidConfiguration) {
+            return;
+        }
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
 
         if (datesChanged && this.isOngoingExam) {
@@ -414,7 +434,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             examValidSummaryPublicationDate &&
             examValidNumberOfExercises &&
             examValidGracePeriod &&
-            this.areExamTextsValid
+            this.areExamTextsValid &&
+            this.datePickers().every((picker) => picker.isValid())
         );
     }
 

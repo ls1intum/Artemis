@@ -95,9 +95,6 @@ public class CourseOperationProgressService {
             claimInserted = true;
             renewal = taskScheduler.scheduleAtFixedRate(() -> renewOperationClaim(operationClaim), Instant.now().plus(COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL),
                     COURSE_OPERATION_CLAIM_RENEWAL_INTERVAL);
-            if (renewal == null) {
-                throw new IllegalStateException("Could not schedule renewal of the course operation claim");
-            }
             claimRenewals.put(operationClaim, renewal);
             var status = CourseOperationProgressDTO.inProgress(operationType, firstStep, 0, totalSteps, 0, 0, 0, startedAt, 0.0);
             sendAndCacheProgress(courseId, status);

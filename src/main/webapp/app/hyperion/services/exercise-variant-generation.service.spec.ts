@@ -28,8 +28,8 @@ describe('ExerciseVariantGenerationService', () => {
     };
     let eventSubjects: Map<string, Subject<VariantGenerationEvent>>;
     let userIdentity: ReturnType<typeof signal<User | undefined>>;
-    let isEditor: boolean;
-    let hyperionEnabled: boolean;
+    let editorAccess: boolean;
+    let activeFeatures: Set<string>;
 
     beforeEach(() => {
         eventSubjects = new Map();
@@ -51,15 +51,18 @@ describe('ExerciseVariantGenerationService', () => {
             unsubscribeFromJob: vi.fn(),
         };
         userIdentity = signal<User | undefined>(undefined);
-        isEditor = true;
-        hyperionEnabled = true;
+        editorAccess = true;
+        activeFeatures = new Set([MODULE_FEATURE_HYPERION]);
         TestBed.configureTestingModule({
             providers: [
                 ExerciseVariantGenerationService,
                 { provide: HyperionExerciseVariantApi, useValue: apiMock },
                 { provide: ExerciseVariantWebsocketService, useValue: websocketMock },
-                { provide: AccountService, useValue: { userIdentity, hasAnyAuthorityDirect: () => isEditor } },
-                { provide: ProfileService, useValue: { isModuleFeatureActive: (feature: string) => feature === MODULE_FEATURE_HYPERION && hyperionEnabled } },
+                {
+                    provide: AccountService,
+                    useValue: { userIdentity, hasEditorAccess: () => editorAccess },
+                },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: (feature: string) => activeFeatures.has(feature) } },
             ],
         });
         service = TestBed.inject(ExerciseVariantGenerationService);
@@ -86,8 +89,8 @@ describe('ExerciseVariantGenerationService', () => {
         expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('persisted-1');
     });
 
-    it('does not load persisted jobs for a user below editor authority', () => {
-        isEditor = false;
+    it('does not load persisted jobs for a user without editor access', () => {
+        editorAccess = false;
         userIdentity.set({ login: 'student1' } as User);
         TestBed.tick();
 
@@ -96,13 +99,53 @@ describe('ExerciseVariantGenerationService', () => {
     });
 
     it('does not load persisted jobs when Hyperion is disabled', () => {
-        hyperionEnabled = false;
+        activeFeatures.delete(MODULE_FEATURE_HYPERION);
         userIdentity.set({ login: 'editor1' } as User);
         TestBed.tick();
 
         expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
         expect(service.jobs()).toEqual([]);
         expect(service.hasJobs()).toBe(false);
+    });
+
+    it('loads persisted jobs once the user gains editor access in the same session', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
+        editorAccess = false;
+        userIdentity.set({ login: 'admin' } as User);
+        TestBed.tick();
+        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
+
+        editorAccess = true;
+        userIdentity.set({ login: 'admin' } as User);
+        TestBed.tick();
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+    });
+
+    it('clears the jobs once the user loses editor access in the same session', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([{ jobId: 'persisted-1', phase: 'VERIFYING' }]));
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+        expect(service.hasJobs()).toBe(true);
+
+        editorAccess = false;
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('persisted-1');
+    });
+
+    it('ignores a pending load once the user logs out', () => {
+        const pendingJobs = new Subject<VariantJob[]>();
+        apiMock.getJobsOfCurrentUser.mockReturnValue(pendingJobs.asObservable());
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+
+        userIdentity.set(undefined);
+        TestBed.tick();
+        pendingJobs.next([{ jobId: 'late-1', phase: 'VERIFYING' }]);
+
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.subscribeToJob).not.toHaveBeenCalled();
     });
 
     it('startGeneration posts the request, adds a running entry, and subscribes to the per-job topic', () => {
