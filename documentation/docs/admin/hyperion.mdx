@@ -301,6 +301,11 @@ before reopening authoring.
 
 ### Authoring history and version restoration
 
+The capabilities in this section require the later unified authoring/history
+layer. The worker and core integration layers alone provide memory-backed
+retention and operational recovery guards, but no durable SQL authoring journal,
+history endpoints, or restoration after a full cluster restart.
+
 Programming Create, Adapt, and Variant share the worker lifecycle. Variant
 preparation copies a protected source to a separately reserved destination;
 quiz generation remains separate. Programming exam authoring is available only
