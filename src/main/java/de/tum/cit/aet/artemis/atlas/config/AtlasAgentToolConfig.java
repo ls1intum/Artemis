@@ -170,7 +170,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("workerTerminalToolCallbackProvider")
     public AtlasToolSurface workerTerminalToolCallbackProvider(AtlasWorkerTerminalToolService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
@@ -183,7 +182,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     @Lazy
-    @Qualifier("orchestratorDelegationToolCallbackProvider")
     public AtlasToolSurface orchestratorDelegationToolCallbackProvider(OrchestratorDelegationToolsService service) {
         return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
