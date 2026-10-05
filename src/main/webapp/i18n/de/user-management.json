@@ -91,6 +91,29 @@
                     "editor": "Editor:innen",
                     "tutor": "Tutor:innen",
                     "student": "Studierende"
+                },
+                "immediateHint": "Änderungen an den Kursrollen werden sofort gespeichert, unabhängig von der Schaltfläche Speichern unten.",
+                "role": {
+                    "instructor": "Lehrende",
+                    "editor": "Editor:in",
+                    "tutor": "Tutor:in",
+                    "student": "Studierende"
+                },
+                "add": {
+                    "title": "Zu einem Kurs hinzufügen",
+                    "course": "Kurs",
+                    "coursePlaceholder": "Nach Titel oder Kurzname suchen",
+                    "noCourseFound": "Kein Kurs gefunden",
+                    "role": "Rolle",
+                    "alreadyHasRole": "Diese Person hat diese Rolle im ausgewählten Kurs bereits.",
+                    "success": "Die Rolle {{ role }} von {{ login }} in {{ course }} wurde hinzugefügt."
+                },
+                "remove": {
+                    "label": "Rolle {{ role }} in {{ course }} entfernen",
+                    "header": "Kursrolle entfernen",
+                    "message": "Die Rolle {{ role }} von {{ login }} im Kurs {{ course }} entfernen? Die Person verliert den Zugriff, den diese Rolle im Kurs gewährt.",
+                    "accept": "Entfernen",
+                    "success": "Die Rolle {{ role }} von {{ login }} in {{ course }} wurde entfernt."
                 }
             },
             "login": "Login",

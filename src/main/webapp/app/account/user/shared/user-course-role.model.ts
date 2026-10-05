@@ -10,3 +10,32 @@ export interface UserCourseRole {
     courseShortName?: string;
     role: CourseRoleName;
 }
+
+/** The URL path segment the course membership endpoints use for every role. */
+export const COURSE_ROLE_SLUGS: Record<CourseRoleName, string> = {
+    INSTRUCTOR: 'instructors',
+    EDITOR: 'editors',
+    TEACHING_ASSISTANT: 'tutors',
+    STUDENT: 'students',
+};
+
+/** A course an administrator can choose when assigning a course role. */
+export interface CourseForRoleAssignment {
+    id: number;
+    title?: string;
+    shortName?: string;
+    semester?: string;
+}
+
+const ROLE_TRANSLATION_KEYS: Record<CourseRoleName, string> = {
+    INSTRUCTOR: 'instructor',
+    EDITOR: 'editor',
+    TEACHING_ASSISTANT: 'tutor',
+    STUDENT: 'student',
+};
+
+/** Translation key of the name of a role in the singular, e.g. "Tutor". */
+export const courseRoleTranslationKey = (role: CourseRoleName): string => `artemisApp.userManagement.courseRoles.role.${ROLE_TRANSLATION_KEYS[role]}`;
+
+/** Translation key of the name of a role in the plural, e.g. "Tutors". */
+export const courseRolePluralTranslationKey = (role: CourseRoleName): string => `artemisApp.userManagement.courseRoles.roles.${ROLE_TRANSLATION_KEYS[role]}`;

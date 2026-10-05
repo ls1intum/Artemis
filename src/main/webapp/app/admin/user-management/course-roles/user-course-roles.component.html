@@ -1,37 +1,64 @@
-<tumaet-ui-card [header]="'artemisApp.userManagement.courseRoles.title' | artemisTranslate" data-testid="user-course-roles">
-    @if (courseRolesResource.isLoading()) {
+<tumaet-ui-card
+    [header]="'artemisApp.userManagement.courseRoles.title' | artemisTranslate"
+    [subheader]="editable() ? ('artemisApp.userManagement.courseRoles.immediateHint' | artemisTranslate) : undefined"
+    data-testid="user-course-roles"
+>
+    @if (courseRolesResource.status() === 'loading') {
         <div class="flex justify-center py-4">
             <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" data-testid="user-course-roles-loading" />
         </div>
     } @else if (courseRolesResource.error()) {
         <tumaet-ui-message severity="error" [text]="'artemisApp.userManagement.courseRoles.loadError' | artemisTranslate" data-testid="user-course-roles-error" />
-    } @else if (groups().length === 0) {
-        <tumaet-ui-empty-state
-            [icon]="faGraduationCap"
-            [title]="'artemisApp.userManagement.courseRoles.empty.title' | artemisTranslate"
-            [description]="'artemisApp.userManagement.courseRoles.empty.description' | artemisTranslate"
-            data-testid="user-course-roles-empty"
-        />
     } @else {
-        <div class="flex flex-col gap-4">
-            @for (group of groups(); track group.role) {
-                <section [attr.data-testid]="'user-course-roles-group-' + group.role" [attr.aria-labelledby]="'user-course-roles-heading-' + group.role">
-                    <h3 class="mb-2 flex items-center gap-2 text-base font-semibold" [id]="'user-course-roles-heading-' + group.role">
-                        <span [jhiTranslate]="translationKey(group.role)"></span>
-                        <tumaet-ui-tag severity="secondary" rounded [value]="'' + group.courses.length" />
-                    </h3>
-                    <ul class="m-0 flex list-none flex-col gap-1 p-0">
-                        @for (course of group.courses; track course.courseId) {
-                            <li class="flex flex-wrap items-baseline gap-x-2" data-testid="user-course-roles-course">
-                                <a [routerLink]="['/course-management', course.courseId]">{{ course.courseTitle }}</a>
-                                @if (course.courseShortName) {
-                                    <span class="text-sm text-muted-color">{{ course.courseShortName }}</span>
-                                }
-                            </li>
-                        }
-                    </ul>
-                </section>
-            }
-        </div>
+        @if (groups().length === 0) {
+            <tumaet-ui-empty-state
+                [icon]="faGraduationCap"
+                [title]="'artemisApp.userManagement.courseRoles.empty.title' | artemisTranslate"
+                [description]="'artemisApp.userManagement.courseRoles.empty.description' | artemisTranslate"
+                data-testid="user-course-roles-empty"
+            />
+        } @else {
+            <div class="flex flex-col gap-4">
+                @for (group of groups(); track group.role) {
+                    <section [attr.data-testid]="'user-course-roles-group-' + group.role" [attr.aria-labelledby]="'user-course-roles-heading-' + group.role">
+                        <h3 class="mb-2 flex items-center gap-2 text-base font-semibold" [id]="'user-course-roles-heading-' + group.role">
+                            <span [jhiTranslate]="translationKey(group.role)"></span>
+                            <tumaet-ui-tag severity="secondary" rounded [value]="'' + group.courses.length" />
+                        </h3>
+                        <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                            @for (course of group.courses; track course.courseId) {
+                                <li class="flex items-center justify-between gap-2" data-testid="user-course-roles-course">
+                                    <span class="flex flex-wrap items-baseline gap-x-2">
+                                        <a [routerLink]="['/course-management', course.courseId]">{{ course.courseTitle }}</a>
+                                        @if (course.courseShortName) {
+                                            <span class="text-sm text-muted-color">{{ course.courseShortName }}</span>
+                                        }
+                                    </span>
+                                    @if (editable()) {
+                                        <tumaet-ui-button
+                                            severity="danger"
+                                            variant="text"
+                                            size="small"
+                                            data-testid="user-course-roles-remove"
+                                            [icon]="faTrash"
+                                            [ariaLabel]="removeLabel(course)"
+                                            [loading]="isRemoving(course)"
+                                            [disabled]="removing() !== undefined"
+                                            (clicked)="confirmRemove(course)"
+                                        />
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+            </div>
+        }
+        @if (editable()) {
+            <jhi-user-course-role-add [login]="login()" [existingRoles]="courseRoles()" (added)="onRoleAdded()" />
+        }
     }
 </tumaet-ui-card>
+@if (editable()) {
+    <tumaet-ui-confirm-dialog />
+}

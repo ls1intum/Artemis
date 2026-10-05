@@ -91,6 +91,29 @@
                     "editor": "Editors",
                     "tutor": "Tutors",
                     "student": "Students"
+                },
+                "immediateHint": "Changes to the course roles are saved immediately, independent of the Save button below.",
+                "role": {
+                    "instructor": "Instructor",
+                    "editor": "Editor",
+                    "tutor": "Tutor",
+                    "student": "Student"
+                },
+                "add": {
+                    "title": "Add to a course",
+                    "course": "Course",
+                    "coursePlaceholder": "Search by title or short name",
+                    "noCourseFound": "No course found",
+                    "role": "Role",
+                    "alreadyHasRole": "The user already has this role in the selected course.",
+                    "success": "Added the role {{ role }} of {{ login }} in {{ course }}."
+                },
+                "remove": {
+                    "label": "Remove {{ role }} role in {{ course }}",
+                    "header": "Remove course role",
+                    "message": "Remove the role {{ role }} of {{ login }} in the course {{ course }}? The user loses the access this role grants in the course.",
+                    "accept": "Remove",
+                    "success": "Removed the role {{ role }} of {{ login }} in {{ course }}."
                 }
             },
             "login": "Login",

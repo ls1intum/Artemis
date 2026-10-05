@@ -2,15 +2,17 @@
  * Vitest tests for UserCourseRolesComponent.
  * Verifies that the course roles of a user are loaded for the given login and rendered grouped by role.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 
 import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles/user-course-roles.component';
 import { UserCourseRole } from 'app/account/user/shared/user-course-role.model';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('UserCourseRolesComponent', () => {
     let fixture: ComponentFixture<UserCourseRolesComponent>;
@@ -41,6 +43,10 @@ describe('UserCourseRolesComponent', () => {
                         loadError: 'Could not load',
                         empty: { title: 'No course roles', description: 'No course.' },
                         roles: { instructor: 'Instructors', editor: 'Editors', tutor: 'Tutors', student: 'Students' },
+                        role: { instructor: 'Instructor', editor: 'Editor', tutor: 'Tutor', student: 'Student' },
+                        immediateHint: 'Saved immediately',
+                        add: { title: 'Add to a course' },
+                        remove: { label: 'Remove {{ role }} in {{ course }}', header: 'Remove', message: 'Remove {{ role }} of {{ login }} in {{ course }}?', accept: 'Remove' },
                     },
                 },
             },
@@ -90,7 +96,7 @@ describe('UserCourseRolesComponent', () => {
 
         expect(courseTitles(groups[0])).toEqual(['Algorithms']);
         expect(courseTitles(groups[1])).toEqual(['Databases', 'Algorithms', 'Compilers']);
-        expect(groups[1].querySelector('[data-testid="user-course-roles-course"] span')?.textContent).toBe('DB');
+        expect(groups[1].querySelector('[data-testid="user-course-roles-course"] a + span')?.textContent).toBe('DB');
         expect(groups[1].querySelector('h3')?.textContent).toContain('Students');
         expect(groups[1].querySelector('h3')?.textContent).toContain('3');
     });
@@ -129,5 +135,99 @@ describe('UserCourseRolesComponent', () => {
         fixture.detectChanges();
 
         expect(element().querySelectorAll('[data-testid="user-course-roles-course"]')).toHaveLength(1);
+    });
+
+    describe('when editable', () => {
+        let courseRolesChanged: number;
+
+        beforeEach(() => {
+            courseRolesChanged = 0;
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentInstance.courseRolesChanged.subscribe(() => courseRolesChanged++);
+        });
+
+        function removeButtons(): HTMLElement[] {
+            return Array.from(element().querySelectorAll('[data-testid="user-course-roles-remove"] button'));
+        }
+
+        it('offers no way to change the roles when read only', async () => {
+            fixture.componentRef.setInput('editable', false);
+            await respondWith(courseRoles);
+
+            expect(removeButtons()).toHaveLength(0);
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).toBeNull();
+        });
+
+        it('shows a remove button for every role and the form to add a role', async () => {
+            await respondWith(courseRoles);
+
+            expect(removeButtons()).toHaveLength(4);
+            expect(removeButtons()[0].getAttribute('aria-label')).toBe('Remove Instructor in Algorithms');
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).not.toBeNull();
+        });
+
+        it('shows the add form below the empty state for a user without roles', async () => {
+            await respondWith([]);
+
+            expect(element().querySelector('[data-testid="user-course-roles-empty"]')).not.toBeNull();
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).not.toBeNull();
+        });
+
+        it('asks for confirmation before it removes a role and removes nothing when the request is rejected', async () => {
+            await respondWith(courseRoles);
+
+            removeButtons()[0].click();
+
+            const request = fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined);
+            expect(request?.message).toBe('Remove Instructor of student1 in Algorithms?');
+            request?.reject?.();
+            httpMock.expectNone({ method: 'DELETE' });
+            expect(courseRolesChanged).toBe(0);
+        });
+
+        it('removes the role once confirmed, reloads the roles and reports the change', async () => {
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            await respondWith(courseRoles);
+
+            removeButtons()[0].click();
+            fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)?.accept();
+
+            httpMock.expectOne({ method: 'DELETE', url: 'api/course/courses/1/instructors/student1' }).flush(null);
+            fixture.detectChanges();
+            httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles.slice(1));
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.userManagement.courseRoles.remove.success', expect.objectContaining({ login: 'student1', course: 'Algorithms' }));
+            expect(courseRolesChanged).toBe(1);
+            expect(element().querySelector('[data-testid="user-course-roles-group-INSTRUCTOR"]')).toBeNull();
+        });
+
+        it('keeps the role and does not report a change when the removal fails', async () => {
+            await respondWith(courseRoles);
+
+            removeButtons()[0].click();
+            fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)?.accept();
+            httpMock.expectOne({ method: 'DELETE' }).flush('error', { status: 500, statusText: 'Server Error' });
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(courseRolesChanged).toBe(0);
+            expect(removeButtons()).toHaveLength(4);
+            expect(removeButtons()[0].hasAttribute('disabled')).toBe(false);
+        });
+
+        it('reloads the roles and reports the change when a role was added', async () => {
+            await respondWith([]);
+
+            fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.added.emit();
+            fixture.detectChanges();
+            httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(courseRolesChanged).toBe(1);
+            expect(element().querySelectorAll('[data-testid="user-course-roles-course"]')).toHaveLength(4);
+        });
     });
 });

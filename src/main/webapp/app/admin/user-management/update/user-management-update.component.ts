@@ -35,6 +35,7 @@ import { CredentialRevocationConfirmationService } from 'app/account/shared/cred
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
+import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles/user-course-roles.component';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -58,6 +59,7 @@ import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes
         FaIconComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
+        UserCourseRolesComponent,
     ],
 })
 export class UserManagementUpdateComponent implements OnInit {
@@ -145,6 +147,12 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Original login for detecting changes */
     private oldLogin?: string;
 
+    /** The login the server knows the edited user by. Unlike the login field of the form, it does not change while typing, so it identifies the user in course role requests. */
+    readonly persistedLogin = signal<string | undefined>(undefined);
+
+    /** The global authorities of the edited user as last seen on the server, to tell what a change of course roles did to them. */
+    private serverAuthorities = new Set<string>();
+
     /** Whether Jenkins profile is active */
     private isJenkins = false;
 
@@ -158,6 +166,9 @@ export class UserManagementUpdateComponent implements OnInit {
             if (user) {
                 this.user.set(user.body ? user.body : user);
                 this.oldLogin = this.user().login;
+                // A user who is being created has no login on the server yet.
+                this.persistedLogin.set(this.user().id === undefined ? undefined : this.oldLogin);
+                this.serverAuthorities = new Set(this.user().authorities);
                 this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
                     // Rebuild the user reference so the async organization update renders under zoneless.
                     this.user.update((currentUser) => cloneWith(currentUser, { organizations }));
@@ -263,6 +274,28 @@ export class UserManagementUpdateComponent implements OnInit {
         if (useRandomPassword) {
             this.revokeCredentials.set(false);
         }
+    }
+
+    /**
+     * Applies what a change of the course roles did to the global authorities of the user to the authorities in the form.
+     * Giving or taking a tutor, editor or instructor role grants or revokes the matching global authority on the server at once.
+     * Saving the form submits its authorities, so without this they would still be the old ones and the save would silently undo that change.
+     * Only the difference is applied, so authorities the administrator changed in the form but did not save yet are kept.
+     */
+    onCourseRolesChanged(): void {
+        const login = this.persistedLogin();
+        if (!login) {
+            return;
+        }
+        this.userService.findUser(login).subscribe((reloadedUser) => {
+            const latest = reloadedUser.authorities ?? [];
+            const added = latest.filter((authority) => !this.serverAuthorities.has(authority));
+            const removed = [...this.serverAuthorities].filter((authority) => !latest.includes(authority));
+            this.serverAuthorities = new Set(latest);
+            const authoritiesControl = this.editForm.get('authorities');
+            const current: string[] = authoritiesControl?.value ?? [];
+            authoritiesControl?.setValue([...current.filter((authority) => !removed.includes(authority)), ...added.filter((authority) => !current.includes(authority))]);
+        });
     }
 
     /**

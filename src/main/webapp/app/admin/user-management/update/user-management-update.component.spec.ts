@@ -798,6 +798,54 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 
+    describe('course roles', () => {
+        beforeEach(() => {
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([]));
+            vi.spyOn(TestBed.inject(OrganizationManagementService), 'getOrganizationsByUser').mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should identify the edited user by the login the server knows', () => {
+            component.editForm.get('login')?.setValue('typed-but-unsaved');
+
+            expect(component.persistedLogin()).toBe('user');
+        });
+
+        it('should add an authority the server granted because of a new course role and keep unsaved authority changes', () => {
+            component.editForm.get('authorities')?.setValue([Authority.STUDENT, Authority.ADMIN]);
+            const findUserSpy = vi
+                .spyOn(adminUserService, 'findUser')
+                .mockReturnValue(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])));
+
+            component.onCourseRolesChanged();
+
+            expect(findUserSpy).toHaveBeenCalledWith('user');
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.ADMIN, Authority.INSTRUCTOR]);
+        });
+
+        it('should drop an authority the server revoked because the last course role was removed', () => {
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(
+                of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])),
+            );
+            component.onCourseRolesChanged();
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT])));
+            component.onCourseRolesChanged();
+
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT]);
+        });
+
+        it('should leave the authorities untouched when the server changed none', () => {
+            component.editForm.get('authorities')?.setValue([Authority.STUDENT, Authority.EDITOR]);
+            vi.spyOn(adminUserService, 'findUser').mockReturnValue(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT])));
+
+            component.onCourseRolesChanged();
+
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.EDITOR]);
+        });
+    });
+
     describe('authority management', () => {
         beforeEach(() => {
             component.user.set(new User(123));
@@ -910,6 +958,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         }).compileComponents();
 
         vi.spyOn(TestBed.inject(AdminUserService), 'authorities').mockReturnValue(of([]));
+        vi.spyOn(TestBed.inject(AdminUserService), 'getCourseRoles').mockReturnValue(of([]));
         vi.spyOn(TestBed.inject(OrganizationManagementService), 'getOrganizationsByUser').mockReturnValue(of([]));
     });
 
@@ -936,6 +985,22 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         const label = fixture.nativeElement.querySelector(`label[for="${controlId}"]`);
         expect(label).not.toBeNull();
         expect(fixture.nativeElement.querySelector(`#${controlId}`)).not.toBeNull();
+    });
+
+    it('shows the editable course roles of an existing user, identified by the login saved on the server', async () => {
+        await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
+        component.editForm.get('login')?.setValue('typed-but-unsaved');
+        fixture.detectChanges();
+
+        const courseRoles = fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-roles');
+        expect(courseRoles).not.toBeNull();
+        expect(courseRoles.componentInstance.editable()).toBe(true);
+        expect(courseRoles.componentInstance.login()).toBe('test_user');
+    });
+
+    it('does not offer course roles while a user is being created', async () => {
+        await render(new User(undefined, 'new_user', 'New', 'User', 'new@example.com', true, 'en', [Authority.STUDENT]));
+        expect(fixture.nativeElement.querySelector('jhi-user-course-roles')).toBeNull();
     });
 
     it('labels the password field, which previously only carried a placeholder', async () => {

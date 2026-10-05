@@ -219,6 +219,9 @@
                         }
                     </div>
                 </div>
+                @if (persistedLogin(); as login) {
+                    <jhi-user-course-roles class="mb-3 block" editable [login]="login" (courseRolesChanged)="onCourseRolesChanged()" />
+                }
             </div>
             <div class="flex gap-2">
                 <tumaet-ui-button severity="secondary" size="small" (clicked)="previousState()"

@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -505,6 +506,21 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 )
             """)
     Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * Searches all courses by a part of their title or short name, ignoring case. Selects the minimal DTO directly, so no course entity is loaded.
+     *
+     * @param searchTerm the text to look for in the title and the short name
+     * @param pageable   the page to return, including the sort order
+     * @return the matching courses of the requested page
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO(c.id, c.title, c.shortName, c.semester)
+            FROM Course c
+            WHERE LOWER(c.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                OR LOWER(c.shortName) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+            """)
+    List<CourseForRoleAssignmentDTO> searchForRoleAssignment(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
