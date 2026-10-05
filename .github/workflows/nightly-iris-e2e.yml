@@ -123,7 +123,7 @@ jobs:
           # good night and about 3 minutes on the slowest. Twice the runner's default keeps a slow start on a shared
           # runner from failing the run; a healthy one still returns as soon as the readiness probe is green.
           SERVER_READY_TIMEOUT: '600'
-        run: RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"
+        run: RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Iris"
 
       - name: Upload Playwright report + service logs
         if: always()

@@ -26,7 +26,7 @@ shows dependency-pinning findings alongside other repository security checks.
 The Ubuntu LocalCI installer downloads k3s and Helm installer scripts from immutable upstream commits,
 checks their committed SHA-256 hashes before invoking `sudo`, and selects explicit release versions.
 When updating an installer, update the version, commit URL and checksum together in
-`install-localci-kubernetes-ubuntu.sh`. Download the script from the reviewed upstream release commit
+`deployment/kubernetes/install-localci-kubernetes-ubuntu.sh`. Download the script from the reviewed upstream release commit
 and compute its hash locally; the installer must never download its expected hash alongside the script.
 The upstream installers also verify their release binary checksums.
 
