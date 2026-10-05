@@ -3,6 +3,7 @@
         "assessmentInstructions": {
             "instructions": {
                 "instructions": "Instructions",
+                "resize": "Resize instructions",
                 "editor": {
                     "addCredits": "[credits] Points",
                     "addInstruction": "[instruction] Assessment Instructions",

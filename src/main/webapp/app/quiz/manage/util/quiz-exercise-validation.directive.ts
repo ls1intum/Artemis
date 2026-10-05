@@ -1,4 +1,7 @@
-import { Directive, inject, signal } from '@angular/core';
+import { Directive, computed, inject, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { translateValidationReasons } from 'app/exercise/util/exercise-validation.util';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -13,6 +16,7 @@ import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-qu
 export abstract class QuizExerciseValidationDirective {
     protected dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     protected shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    protected readonly translateService = inject(TranslateService);
 
     // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -34,6 +38,14 @@ export abstract class QuizExerciseValidationDirective {
 
     readonly invalidReasons = signal<ValidationReason[]>([]);
     readonly invalidWarnings = signal<ValidationReason[]>([]);
+
+    protected readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    /** The reasons as plain strings, for the save button's tooltip. */
+    readonly invalidReasonTexts = computed<string[]>(() => {
+        this.currentLocale();
+        return translateValidationReasons(this.invalidReasons(), this.translateService);
+    });
 
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     readonly pendingChangesCache = signal<boolean>(false);

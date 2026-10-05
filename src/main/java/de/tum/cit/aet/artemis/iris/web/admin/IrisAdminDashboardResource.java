@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardBreakdownDimension;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisAdminDashboardService;
 
+@FeatureUsage(UserFeature.IRIS_ADMIN_DASHBOARD)
 @RestController
 @RequestMapping("api/iris/admin/dashboard/")
 @Profile(PROFILE_CORE)

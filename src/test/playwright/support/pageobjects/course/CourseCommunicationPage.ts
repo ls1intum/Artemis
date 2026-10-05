@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { readResponseJson, setMonacoEditorContentByLocator } from '../../utils';
@@ -25,7 +25,7 @@ export class CourseCommunicationPage {
      * @returns The locator for the context selector.
      */
     getContextSelectorInModal() {
-        return this.page.locator('.p-dialog-content #context');
+        return this.page.getByRole('dialog').locator('#context');
     }
 
     /**
@@ -33,8 +33,9 @@ export class CourseCommunicationPage {
      * @param title - The title to be set.
      */
     async setTitleInModal(title: string) {
-        await this.page.locator('.p-dialog-content').locator('#title').fill('');
-        await this.page.locator('.p-dialog-content').locator('#title').fill(title);
+        const titleInput = this.page.getByRole('dialog').locator('#title');
+        await titleInput.fill('');
+        await titleInput.fill(title);
     }
 
     /**
@@ -42,7 +43,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInModal(content: string) {
-        const contentField = this.page.locator('.p-dialog-content .markdown-editor .monaco-editor');
+        const contentField = this.page.getByRole('dialog').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, contentField, content);
     }
 
@@ -51,7 +52,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInline(content: string) {
-        const contentField = this.page.locator('.markdown-editor-wrapper .markdown-editor .monaco-editor');
+        const contentField = this.page.getByTestId('markdown-editor').first();
         await setMonacoEditorContentByLocator(this.page, contentField, content);
     }
 
@@ -154,10 +155,10 @@ export class CourseCommunicationPage {
      */
     async reply(postID: number, content: string) {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .monaco-editor');
+        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, postReplyField, content);
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-posts`);
-        await postElement.locator('.new-reply-inline-input #save').click();
+        await postElement.getByTestId('inline-reply-input').locator('#save').click();
         await responsePromise;
     }
 
@@ -169,10 +170,10 @@ export class CourseCommunicationPage {
      */
     async replyWithMessage(postID: number, content: string): Promise<Post> {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .monaco-editor');
+        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor');
         await setMonacoEditorContentByLocator(this.page, postReplyField, content);
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-messages`);
-        await this.getSinglePost(postID).locator('.new-reply-inline-input #save').click();
+        await this.getSinglePost(postID).getByTestId('inline-reply-input').locator('#save').click();
         const response = await responsePromise;
         return readResponseJson(response);
     }
@@ -196,30 +197,6 @@ export class CourseCommunicationPage {
      */
     async pinPost(postID: number) {
         await this.getSinglePost(postID).locator('.pin').click();
-    }
-
-    /**
-     * Deletes the specified post.
-     * @param postID - The ID of the post to delete.
-     */
-    async deletePost(postID: number) {
-        const deleteIcon = this.getSinglePost(postID).locator('.deleteIcon');
-        await deleteIcon.click();
-        await deleteIcon.click();
-    }
-
-    /**
-     * Edits the content of a message in a specified post.
-     * @param postID - The ID of the post containing the message to edit.
-     * @param content - The new content for the message.
-     */
-    async editMessage(postID: number, content: string) {
-        const post = this.getSinglePost(postID);
-        await post.locator('.editIcon').click();
-        await this.setContentInline(content);
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
-        await this.page.locator('#save').click();
-        await responsePromise;
     }
 
     /**

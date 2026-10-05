@@ -12,8 +12,8 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 
 /**
  * Verifies that caches reach the manager appropriate to their value shape. Routing the wrong way is not a visible
- * failure: a blob cache on the distributed manager just quietly transfers megabytes per read, and a small cache on the
- * per-node manager quietly goes incoherent across nodes.
+ * failure: a blob cache on the distributed manager just quietly transfers megabytes per read, and a cache that has to
+ * be identical on every node quietly goes incoherent on the per-node manager.
  */
 class RoutingCacheManagerTest {
 
@@ -25,7 +25,7 @@ class RoutingCacheManagerTest {
 
     @BeforeEach
     void setUp() {
-        distributedCacheManager = new ConcurrentMapCacheManager("courseTitle", "exerciseTitle");
+        distributedCacheManager = new ConcurrentMapCacheManager("atlas-session-pending-operations", "atlas-execution-plan");
         blobCacheManager = new ConcurrentMapCacheManager(BlobCacheConfiguration.BLOB_CACHE_NAMES.toArray(String[]::new));
         routingCacheManager = new RoutingCacheManager(distributedCacheManager, blobCacheManager);
     }
@@ -41,16 +41,16 @@ class RoutingCacheManagerTest {
 
     @Test
     void shouldRouteEveryOtherCacheToTheDistributedManager() {
-        Cache cache = routingCacheManager.getCache("courseTitle");
+        Cache cache = routingCacheManager.getCache("atlas-session-pending-operations");
 
-        assertThat(cache).isSameAs(distributedCacheManager.getCache("courseTitle"));
+        assertThat(cache).isSameAs(distributedCacheManager.getCache("atlas-session-pending-operations"));
     }
 
     @Test
-    void shouldReportCacheNamesOfBothManagersSorted() {
+    void shouldReportCacheNamesOfEveryManagerSorted() {
         List<String> names = List.copyOf(routingCacheManager.getCacheNames());
 
-        assertThat(names).contains("courseTitle", "exerciseTitle").containsAll(BlobCacheConfiguration.BLOB_CACHE_NAMES);
+        assertThat(names).contains("atlas-session-pending-operations", "atlas-execution-plan").containsAll(BlobCacheConfiguration.BLOB_CACHE_NAMES);
         assertThat(names).as("a stable order keeps the admin cache overview from reshuffling").isSorted();
     }
 }

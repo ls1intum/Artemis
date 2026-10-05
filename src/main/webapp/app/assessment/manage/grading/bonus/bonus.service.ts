@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -10,7 +10,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Bonus>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BonusService {
     private http = inject(HttpClient);
     private gradingService = inject(GradingService);

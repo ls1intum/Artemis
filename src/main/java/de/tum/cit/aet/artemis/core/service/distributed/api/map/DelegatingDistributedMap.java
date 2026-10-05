@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapListe
  * Forwards every operation to another {@link DistributedMap}.
  *
  * <p>
- * Exists so that behaviour shared by all backends can be layered on in one provider-agnostic place instead of being
+ * Exists so that behaviour shared by all providers can be layered on in one provider-agnostic place instead of being
  * reimplemented three times. Subclasses override only what they change.
  *
  * @param <K> key type

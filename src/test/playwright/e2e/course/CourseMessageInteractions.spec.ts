@@ -52,7 +52,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             // would leave the page somewhere the message cannot be; restoreRouteIfDrifted returns to it.
             // No retry beyond that: the conversation used to fail to re-activate from the conversationId query
             // parameter, since the route emits it while the request that loads the conversations is still in flight
-            // and the activation was dropped rather than deferred. MetisConversationService now remembers it and
+            // and the activation was dropped rather than deferred. CourseConversationsService now remembers it and
             // applies it when the list arrives, so one reload has to be enough.
             const conversationUrl = page.url();
             await Commands.reloadAndRestoreRoute(page, conversationUrl);
@@ -295,17 +295,17 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             for (let attempt = 0; attempt < 3; attempt++) {
                 await postLocator.locator('.message-container').click({ button: 'right' });
                 try {
-                    await page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                    await page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
                     break;
                 } catch {
                     if (attempt === 2) throw new Error('Context menu did not appear');
                 }
             }
             // Verify the pin option is NOT in the dropdown
-            await expect(page.locator('.dropdown-menu.show .dropdown-item', { hasText: /pin/i })).toHaveCount(0);
+            await expect(page.getByTestId('posting-menu-pin')).toHaveCount(0);
             // Verify other options ARE present (bookmark, reply, forward)
-            await expect(page.locator('.dropdown-menu.show .dropdown-item', { hasText: /save|bookmark/i })).toBeVisible();
-            await expect(page.locator('.dropdown-menu.show .dropdown-item', { hasText: /reply/i })).toBeVisible();
+            await expect(page.getByTestId('posting-menu-bookmark')).toBeVisible();
+            await expect(page.getByTestId('posting-menu-reply')).toBeVisible();
         });
     });
 

@@ -212,10 +212,10 @@ public class SubmissionPolicyService {
             updateSubmissionPenaltyPolicy((SubmissionPenaltyPolicy) originalPolicy, (SubmissionPenaltyPolicy) newPolicy);
         }
 
-        // Case 3: The original and new submission policies have different types. In this case we want to remove
-        // all effects of the original policy and enforce the effects of the new policy.
+        // Case 3: A policy type change replaces the @OneToOne entity. Clearing the old id makes JPA insert the
+        // replacement instead of merging the previous policy.
         else {
-            removeSubmissionPolicyFromProgrammingExercise(programmingExercise);
+            newPolicy.setId(null);
             newPolicy = addSubmissionPolicyToProgrammingExercise(newPolicy, programmingExercise);
             return enableSubmissionPolicy(newPolicy);
         }

@@ -34,7 +34,7 @@ describe('ModelingExercise Management Detail Component', () => {
 
     const model = {
         id: 'test-diagram-id',
-        version: '4.0.0',
+        version: '4.2.0',
         title: 'Test Diagram',
         type: 'ClassDiagram',
         nodes: [],
@@ -86,7 +86,6 @@ describe('ModelingExercise Management Detail Component', () => {
     });
 
     it('should load exercise on init', async () => {
-        // GIVEN
         const subscribeSpy = vi.spyOn(eventManager, 'subscribe');
         const headers = new HttpHeaders().append('link', 'link;link');
         const findStub = vi.spyOn(modelingExerciseService, 'find').mockReturnValue(
@@ -99,10 +98,8 @@ describe('ModelingExercise Management Detail Component', () => {
         );
         const statisticsServiceStub = vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(modelingExerciseStatistics));
 
-        // WHEN
         comp.ngOnInit();
 
-        // THEN
         expect(findStub).toHaveBeenCalledOnce();
         expect(statisticsServiceStub).toHaveBeenCalledOnce();
         expect(comp.modelingExercise()).toEqual(modelingExercise);

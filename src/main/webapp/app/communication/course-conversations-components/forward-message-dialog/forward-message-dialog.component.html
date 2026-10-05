@@ -1,9 +1,10 @@
 <div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.metis.forward.forwardMessage"></h4>
+    <h4 class="modal-title" jhiTranslate="artemisApp.communication.forward.forwardMessage"></h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="dialogRef.destroy()"></button>
 </div>
 <div class="modal-body">
     <div class="autocomplete-container mt-1 mb-2 form-group">
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Pointer clicks on the wrapper focus the native input, which is already keyboard focusable. -->
         <div class="tag-input-container form-control" (click)="focusInput()">
             @for (channel of selectedChannels; track channel) {
                 <ng-container>
@@ -25,7 +26,7 @@
                 #searchInput
                 type="text"
                 class="tag-input"
-                placeholder="{{ 'artemisApp.metis.forward.searchBar' | artemisTranslate }}"
+                placeholder="{{ 'artemisApp.communication.forward.searchBar' | artemisTranslate }}"
                 [(ngModel)]="searchTerm"
                 (input)="filterItems($event)"
                 (focus)="onInputFocus()"
@@ -37,6 +38,7 @@
                 @for (option of filteredOptions(); track option) {
                     <li
                         class="list-group-item list-group-item-action"
+                        data-testid="forward-destination-option"
                         [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"
                         (mousedown)="selectOption(option)"
                     >
@@ -63,7 +65,7 @@
         }
     </div>
 
-    <h5 jhiTranslate="artemisApp.metis.forward.addMessage"></h5>
+    <h5 jhiTranslate="artemisApp.communication.forward.addMessage"></h5>
     <jhi-markdown-editor-monaco
         class="markdown-editor background-editor-color w-100"
         [markdown]="newPost.content"
@@ -108,12 +110,16 @@
                         [isEdited]="!!postToForward()?.updatedDate"
                         [posting]="postToForward()!"
                         [isReply]="false"
-                        [isSubscribeToMetis]="false"
+                        [subscribesToPosts]="false"
                     />
                 </div>
                 @if (isContentLong()) {
                     <button type="button" class="btn btn-link p-0" style="width: fit-content" (click)="toggleShowFullForwardedMessage()">
-                        {{ showFullForwardedMessage() ? ('artemisApp.metis.forward.showLess' | artemisTranslate) : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
+                        {{
+                            showFullForwardedMessage()
+                                ? ('artemisApp.communication.forward.showLess' | artemisTranslate)
+                                : ('artemisApp.communication.forward.showMore' | artemisTranslate)
+                        }}
                     </button>
                 }
             </div>
@@ -124,6 +130,7 @@
     <button
         type="button"
         class="btn btn-primary"
+        data-testid="forward-send-button"
         [disabled]="!hasSelections() || !isMessageValid()"
         (click)="send()"
         jhiTranslate="artemisApp.conversationsLayout.sendMessage"

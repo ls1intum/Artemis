@@ -296,6 +296,8 @@
                 "selectLecture": " Please select a Lecture."
             },
             "exerciseDetails": {
+                "moreActions": "More actions",
+                "details": "Exercise Details",
                 "dueDate": "Due date",
                 "runTestsAfterDueDate": "Tests run after due date:",
                 "complaintDueDate": "Complaint due date:",

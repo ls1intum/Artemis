@@ -1,17 +1,17 @@
 @if (details()) {
-    <div class="mb-2 text-break">{{ details()!.content }}</div>
+    <div class="mb-2 break-words">{{ details()!.content }}</div>
     <div class="mb-2">
         <div class="fw-semibold" jhiTranslate="artemisApp.iris.memories.details.learnings"></div>
         @if (details()!.learnings?.length === 0) {
-            <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.details.none"></div>
+            <div class="text-sm text-muted-color" jhiTranslate="artemisApp.iris.memories.details.none"></div>
         } @else {
             <ul class="mb-0">
                 @for (l of details()!.learnings; track l.id) {
                     <li>
                         <span class="fw-semibold">{{ l.title || l.id }}</span>
-                        <div class="small text-break">{{ l.content }}</div>
+                        <div class="text-sm break-words">{{ l.content }}</div>
                         @if (l.reference) {
-                            <div class="small text-muted">
+                            <div class="text-sm text-muted-color">
                                 <span jhiTranslate="artemisApp.iris.memories.details.reference"></span>
                                 : {{ l.reference }}
                             </div>
@@ -28,7 +28,7 @@
                 @for (c of details()!.connections; track c.id) {
                     <li>
                         <span class="fw-semibold">{{ c.connectionType }}</span>
-                        <div class="small text-muted">
+                        <div class="text-sm text-muted-color">
                             <span jhiTranslate="artemisApp.iris.memories.details.weight"></span>
                             : {{ c.weight }}
                         </div>
@@ -37,7 +37,7 @@
                             : {{ c.memories?.join(', ') }}
                         </div>
                         @if (c.description) {
-                            <div class="small text-break">{{ c.description }}</div>
+                            <div class="text-sm break-words">{{ c.description }}</div>
                         }
                     </li>
                 }
@@ -45,5 +45,5 @@
         </div>
     }
 } @else {
-    <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.details.noDetails"></div>
+    <div class="text-sm text-muted-color" jhiTranslate="artemisApp.iris.memories.details.noDetails"></div>
 }

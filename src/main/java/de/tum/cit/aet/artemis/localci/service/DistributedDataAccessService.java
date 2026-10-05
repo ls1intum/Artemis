@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -228,10 +229,12 @@ public class DistributedDataAccessService {
         // Get current processing jobs to enrich agent information with accurate running jobs data
         List<BuildJobQueueItem> currentProcessingJobs = getProcessingJobs();
 
-        // The identifiers of the clients and of the cluster members the provider currently sees. Only core nodes can
-        // answer the first one.
-        Set<String> connectedClientIdentifiers = distributedDataProvider.getConnectedClientNames();
-        Set<String> liveNodeIdentifiers = distributedDataProvider.getClusterMemberAddresses();
+        // The identifiers of the clients and of the cluster members the provider currently sees, read as one snapshot.
+        // Only core nodes can answer the first one. Asking for the two separately made Redis answer the same
+        // CLIENT LIST twice per call, on a method that runs on every build agent update.
+        var membership = distributedDataProvider.getClusterMembership();
+        Set<String> connectedClientIdentifiers = membership.connectedClientNames();
+        Set<String> liveNodeIdentifiers = membership.clusterMemberAddresses();
 
         // Enrich and filter agents
         return allAgents.stream()
@@ -244,7 +247,26 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * Decides whether a build agent entry belongs to a node the provider still sees.
+     * Decides whether a build agent entry should be shown: when the provider cannot tell which clients are connected, every entry is, and otherwise only
+     * the entries {@link #appearsInMembership} matches.
+     *
+     * @param agent                      the stored build agent entry
+     * @param connectedClientIdentifiers the client identifiers the provider reports, empty if it cannot tell
+     * @param liveNodeIdentifiers        the identifiers of the nodes the provider reports as alive
+     * @return true if the agent should be shown
+     */
+    private static boolean isConnected(BuildAgentInformation agent, Set<String> connectedClientIdentifiers, Set<String> liveNodeIdentifiers) {
+        // An empty client list means connectivity could not be determined (a build agent asking, or a failed lookup).
+        // Showing every agent is the safe answer there: hiding them all would make a healthy cluster look like it has no
+        // build capacity at all.
+        if (connectedClientIdentifiers.isEmpty()) {
+            return true;
+        }
+        return appearsInMembership(agent.buildAgent(), connectedClientIdentifiers, liveNodeIdentifiers);
+    }
+
+    /**
+     * Decides whether a build agent belongs to a node the provider still sees.
      *
      * <p>
      * A build agent can reach the cluster in three ways, and each shows up in a different place:
@@ -261,24 +283,17 @@ public class DistributedDataAccessService {
      * which is the node identity and therefore exactly what the agent stored as its {@code memberAddress}; its short
      * name never appears.</li>
      * </ul>
-     * Accepting any of the three avoids asking the provider which shape it uses, which is the backend-specific knowledge
+     * Accepting any of the three avoids asking the provider which shape it uses, which is the provider-specific knowledge
      * this abstraction exists to keep out of the call sites.
      *
-     * @param agent                      the stored build agent entry
-     * @param connectedClientIdentifiers the client identifiers the provider reports, empty if it cannot tell
+     * @param buildAgent                 the build agent of a stored entry
+     * @param connectedClientIdentifiers the client identifiers the provider reports
      * @param liveNodeIdentifiers        the identifiers of the nodes the provider reports as alive
-     * @return true if the agent should be shown
+     * @return true if the provider lists the agent's node in one of the three ways
      */
-    private static boolean isConnected(BuildAgentInformation agent, Set<String> connectedClientIdentifiers, Set<String> liveNodeIdentifiers) {
-        // An empty client list means connectivity could not be determined (a build agent asking, or a failed lookup).
-        // Showing every agent is the safe answer there: hiding them all would make a healthy cluster look like it has no
-        // build capacity at all.
-        if (connectedClientIdentifiers.isEmpty()) {
-            return true;
-        }
-        String name = agent.buildAgent().name();
-        String memberAddress = agent.buildAgent().memberAddress();
-        return connectedClientIdentifiers.contains(name) || connectedClientIdentifiers.contains(memberAddress) || liveNodeIdentifiers.contains(memberAddress);
+    public static boolean appearsInMembership(BuildAgentDTO buildAgent, Set<String> connectedClientIdentifiers, Set<String> liveNodeIdentifiers) {
+        String memberAddress = buildAgent.memberAddress();
+        return connectedClientIdentifiers.contains(buildAgent.name()) || connectedClientIdentifiers.contains(memberAddress) || liveNodeIdentifiers.contains(memberAddress);
     }
 
     /**

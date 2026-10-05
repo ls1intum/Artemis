@@ -15,6 +15,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
@@ -104,8 +106,10 @@ public class Feedback extends DomainObject {
     @Column(name = "visibility")
     private Visibility visibility;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "result_id", nullable = false)
     @JsonIgnoreProperties("feedbacks")
+    @Parent
     private Result result;
 
     @ManyToOne
@@ -520,5 +524,13 @@ public class Feedback extends DomainObject {
     @Override
     public int hashCode() {
         return Feedback.class.hashCode();
+    }
+
+    /**
+     * Id-based equality as inherited from {@link DomainObject}; declared here so that it is visibly paired with the constant {@link #hashCode()}.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
     }
 }

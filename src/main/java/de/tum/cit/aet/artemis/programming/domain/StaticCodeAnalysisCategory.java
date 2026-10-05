@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 
 /**
@@ -38,6 +40,8 @@ public class StaticCodeAnalysisCategory extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("staticCodeAnalysisCategories")
+    @JoinColumn(nullable = false)
+    @Parent
     private ProgrammingExercise exercise;
 
     public String getName() {

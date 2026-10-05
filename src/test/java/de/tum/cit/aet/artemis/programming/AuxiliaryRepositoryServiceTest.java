@@ -3,8 +3,9 @@ package de.tum.cit.aet.artemis.programming;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,11 +30,11 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExerciseBeforeUpdate = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseBeforeUpdate.setReleaseDate(null);
-        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(new ArrayList<>());
+        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(new LinkedHashSet<>());
         programmingExerciseRepository.save(programmingExerciseBeforeUpdate);
 
         updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExerciseBeforeUpdate.getId()).orElseThrow();
-        updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
+        updatedProgrammingExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         auxiliaryRepositoryRepository.deleteAll();
     }
 
@@ -56,7 +57,7 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
         AuxiliaryRepository auxiliaryRepository = createAuxiliaryRepository("test", "test", "test", programmingExerciseBeforeUpdate, null);
         AuxiliaryRepository auxiliaryRepository2 = createAuxiliaryRepository("test2", "test2", "test2", programmingExerciseBeforeUpdate, null);
         auxiliaryRepositoryRepository.save(auxiliaryRepository);
-        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
 
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExerciseBeforeUpdate, List.of(auxiliaryRepository2));
 
@@ -93,7 +94,7 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
         AuxiliaryRepository auxiliaryRepository = createAuxiliaryRepository("test", "test", "test", programmingExerciseBeforeUpdate, null);
         List<AuxiliaryRepository> newAuxiliaryRepos = List.of(createAuxiliaryRepository("test", "test2", "test2", programmingExerciseBeforeUpdate, null));
         auxiliaryRepositoryRepository.save(auxiliaryRepository);
-        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
 
         assertThatThrownBy(() -> auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExerciseBeforeUpdate, newAuxiliaryRepos))
                 .isInstanceOf(BadRequestAlertException.class).hasMessage("The name 'test' is not allowed for auxiliary repositories!");
@@ -145,8 +146,8 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
         AuxiliaryRepository auxiliaryRepository = createAuxiliaryRepository("test", "test", "test", programmingExerciseBeforeUpdate, null);
         AuxiliaryRepository auxiliaryRepository2 = createAuxiliaryRepository("test2", "test2", "test2", updatedProgrammingExercise, null);
         auxiliaryRepositoryRepository.save(auxiliaryRepository);
-        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(List.of(auxiliaryRepository));
-        updatedProgrammingExercise.setAuxiliaryRepositories(List.of(auxiliaryRepository2));
+        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
+        updatedProgrammingExercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository2));
 
         // Check if the repository was created
         assertThat(auxiliaryRepositoryRepository.findAll()).containsExactly(auxiliaryRepository);
@@ -162,8 +163,8 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
         AuxiliaryRepository auxiliaryRepository = createAuxiliaryRepository("test", "test", "test", programmingExerciseBeforeUpdate, null);
         AuxiliaryRepository auxiliaryRepository2 = createAuxiliaryRepository("test2", "test2", "test2", updatedProgrammingExercise, 2L);
         auxiliaryRepositoryRepository.save(auxiliaryRepository);
-        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(List.of(auxiliaryRepository));
-        updatedProgrammingExercise.setAuxiliaryRepositories(List.of(auxiliaryRepository2));
+        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
+        updatedProgrammingExercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository2));
 
         assertThatThrownBy(() -> auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise))
                 .isInstanceOf(IllegalStateException.class).hasMessage("Edited an existing repository that is not in the database!");
@@ -175,8 +176,8 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
         AuxiliaryRepository auxiliaryRepository2 = createAuxiliaryRepository("", "test", "test", updatedProgrammingExercise, null);
         auxiliaryRepositoryRepository.save(auxiliaryRepository);
         auxiliaryRepository2.setId(auxiliaryRepository.getId());
-        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(List.of(auxiliaryRepository));
-        updatedProgrammingExercise.setAuxiliaryRepositories(List.of(auxiliaryRepository2));
+        programmingExerciseBeforeUpdate.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
+        updatedProgrammingExercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository2));
 
         assertThatThrownBy(() -> auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise))
                 .isInstanceOf(BadRequestAlertException.class).hasMessage("Cannot set empty name for auxiliary repositories!");

@@ -16,6 +16,9 @@ export const courseManagementRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'global.generic.create',
+            // The page renders its own shell (title bar above a scrolling card), like the course management container
+            // below, so it must not be wrapped in the app-level card as well.
+            usesModuleBackground: false,
         },
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
     },
@@ -138,14 +141,6 @@ export const courseManagementRoutes: Routes = [
             },
             {
                 path: ':courseId/plagiarism-cases',
-                loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
-                // Preload-only authorities (no canActivate): least-privileged authority the plagiarism routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                data: {
-                    authorities: IS_AT_LEAST_INSTRUCTOR,
-                },
-            },
-            {
-                path: ':courseId/exams/:examId/plagiarism-cases',
                 loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
                 // Preload-only authorities (no canActivate): least-privileged authority the plagiarism routes require, so eligible staff warm this lazy subtree while students stay pruned.
                 data: {

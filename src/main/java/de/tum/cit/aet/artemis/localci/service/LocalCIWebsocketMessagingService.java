@@ -1,11 +1,18 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_BUILD_AGENT;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_BUILD_AGENTS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_BUILD_JOB;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_FINISHED_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_QUEUED_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_RUNNING_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_BUILD_JOB;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_FINISHED_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_QUEUED_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_RUNNING_JOBS;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +39,6 @@ public class LocalCIWebsocketMessagingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private static final Pattern COURSE_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs|finished-jobs)$");
-
-    private static final Pattern COURSE_BUILD_JOB_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/build-job/.+$");
-
     /**
      * Constructor for dependency injection
      *
@@ -53,7 +56,7 @@ public class LocalCIWebsocketMessagingService {
      */
 
     public void sendQueuedBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/courses/" + courseId + "/queued-jobs";
+        var channel = COURSE_QUEUED_JOBS.at(courseId);
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
@@ -65,7 +68,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobsRunning the running build jobs
      */
     public void sendRunningBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobsRunning) {
-        String channel = "/topic/courses/" + courseId + "/running-jobs";
+        var channel = COURSE_RUNNING_JOBS.at(courseId);
         log.debug("Sending message on topic {}: {}", channel, buildJobsRunning);
         websocketMessagingService.sendMessage(channel, buildJobsRunning);
     }
@@ -76,7 +79,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobQueue the queued build jobs
      */
     public void sendQueuedBuildJobs(List<BuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/admin/queued-jobs";
+        var channel = ADMIN_QUEUED_JOBS.at();
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
@@ -87,7 +90,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobQueue the running build jobs
      */
     public void sendRunningBuildJobs(List<BuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/admin/running-jobs";
+        var channel = ADMIN_RUNNING_JOBS.at();
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
@@ -98,7 +101,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildAgentInfo the build agent information
      */
     public void sendBuildAgentSummary(List<BuildAgentInformation> buildAgentInfo) {
-        String channel = "/topic/admin/build-agents";
+        var channel = ADMIN_BUILD_AGENTS.at();
         log.debug("Sending message on topic {}: {}", channel, buildAgentInfo);
         websocketMessagingService.sendMessage(channel, buildAgentInfo);
     }
@@ -110,11 +113,11 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJob the build job to send the update for
      */
     public void sendBuildJobUpdate(BuildJobQueueItem buildJob) {
-        String adminChannel = "/topic/admin/build-job/" + buildJob.id();
+        var adminChannel = ADMIN_BUILD_JOB.at(buildJob.id());
         log.debug("Sending build job update on topic {}", adminChannel);
         websocketMessagingService.sendMessage(adminChannel, buildJob);
 
-        String courseChannel = "/topic/courses/" + buildJob.courseId() + "/build-job/" + buildJob.id();
+        var courseChannel = COURSE_BUILD_JOB.at(buildJob.courseId(), buildJob.id());
         log.debug("Sending build job update on topic {}", courseChannel);
         websocketMessagingService.sendMessage(courseChannel, buildJob);
     }
@@ -127,11 +130,11 @@ public class LocalCIWebsocketMessagingService {
      * @param finishedBuildJob the finished build job DTO to send
      */
     public void sendFinishedBuildJobUpdate(FinishedBuildJobDTO finishedBuildJob) {
-        String adminChannel = "/topic/admin/finished-jobs";
+        var adminChannel = ADMIN_FINISHED_JOBS.at();
         log.debug("Sending finished build job update on topic {}", adminChannel);
         websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
 
-        String courseChannel = "/topic/courses/" + finishedBuildJob.courseId() + "/finished-jobs";
+        var courseChannel = COURSE_FINISHED_JOBS.at(finishedBuildJob.courseId());
         log.debug("Sending finished build job update on topic {}", courseChannel);
         websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
     }
@@ -144,89 +147,18 @@ public class LocalCIWebsocketMessagingService {
      * @param finishedBuildJob the finished build job DTO to send
      */
     public void sendFinishedBuildJobDetailUpdate(FinishedBuildJobDTO finishedBuildJob) {
-        String adminChannel = "/topic/admin/build-job/" + finishedBuildJob.id();
+        var adminChannel = ADMIN_BUILD_JOB.at(finishedBuildJob.id());
         log.debug("Sending finished build job detail update on topic {}", adminChannel);
         websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
 
-        String courseChannel = "/topic/courses/" + finishedBuildJob.courseId() + "/build-job/" + finishedBuildJob.id();
+        var courseChannel = COURSE_BUILD_JOB.at(finishedBuildJob.courseId(), finishedBuildJob.id());
         log.debug("Sending finished build job detail update on topic {}", courseChannel);
         websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
     }
 
     public void sendBuildAgentDetails(BuildAgentInformation buildAgentDetails) {
-        String channel = "/topic/admin/build-agent/" + buildAgentDetails.buildAgent().name();
+        var channel = ADMIN_BUILD_AGENT.at(buildAgentDetails.buildAgent().name());
         log.debug("Sending message on topic {}: {}", channel, buildAgentDetails);
         websocketMessagingService.sendMessage(channel, buildAgentDetails);
-    }
-
-    /**
-     * Checks if the given destination is a build queue admin destination.
-     * This is the case if the destination is /topic/admin/queued-jobs, /topic/admin/running-jobs, or /topic/admin/finished-jobs.
-     *
-     * @param destination the destination to check
-     * @return true if the destination is a build queue admin destination, false otherwise
-     */
-    public static boolean isBuildQueueAdminDestination(String destination) {
-        return "/topic/admin/queued-jobs".equals(destination) || "/topic/admin/running-jobs".equals(destination) || "/topic/admin/finished-jobs".equals(destination);
-    }
-
-    /**
-     * Checks if the given destination is a build queue course destination. This is the case if the destination is
-     * /topic/courses/{courseId}/queued-jobs, /topic/courses/{courseId}/running-jobs, or /topic/courses/{courseId}/finished-jobs.
-     * If the destination is a build queue course destination, the courseId is returned.
-     *
-     * @param destination the destination to check
-     * @return the courseId if the destination is a build queue course destination, empty otherwise
-     */
-    public static Optional<Long> isBuildQueueCourseDestination(String destination) {
-        // Define a pattern to match the expected course-related topic format
-        Matcher matcher = COURSE_DESTINATION_PATTERN.matcher(destination);
-
-        // Check if the destination matches the pattern
-        if (matcher.matches()) {
-            // Extract the courseId from the matched groups
-            return Optional.of(Long.parseLong(matcher.group(1)));
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Checks if the given destination is a build agent destination.
-     * This is the case if the destination is /topic/admin/build-agents.
-     *
-     * @param destination the destination to check
-     * @return true if the destination is a build agent destination, false otherwise
-     */
-    public static boolean isBuildAgentDestination(String destination) {
-        return "/topic/admin/build-agents".equals(destination);
-    }
-
-    /**
-     * Checks if the given destination is a build job admin detail destination.
-     * This is the case if the destination matches /topic/admin/build-job/{buildJobId}.
-     *
-     * @param destination the destination to check
-     * @return true if the destination is a build job admin detail destination, false otherwise
-     */
-    public static boolean isBuildJobAdminDestination(String destination) {
-        return destination != null && destination.startsWith("/topic/admin/build-job/");
-    }
-
-    /**
-     * Checks if the given destination is a build job course detail destination.
-     * This is the case if the destination matches /topic/courses/{courseId}/build-job/{buildJobId}.
-     *
-     * @param destination the destination to check
-     * @return the course ID if the destination is a build job course detail destination, empty otherwise
-     */
-    public static Optional<Long> isBuildJobCourseDestination(String destination) {
-        if (destination == null) {
-            return Optional.empty();
-        }
-        Matcher matcher = COURSE_BUILD_JOB_DESTINATION_PATTERN.matcher(destination);
-        if (matcher.matches()) {
-            return Optional.of(Long.parseLong(matcher.group(1)));
-        }
-        return Optional.empty();
     }
 }

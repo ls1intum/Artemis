@@ -40,7 +40,7 @@ export class ExamExerciseGroupsPage {
         }
         // The action collapsed into the row's ellipsis overflow menu, which the kit renders in an overlay popover.
         await overflowTrigger.click();
-        await this.page.locator('.tum-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
+        await this.page.locator('.tumaet-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
     }
 
     /**
@@ -51,7 +51,14 @@ export class ExamExerciseGroupsPage {
         const addButton = this.page.locator(`#group-${groupID}`).getByTestId('add-exercise-button');
         await addButton.waitFor({ state: 'visible', timeout: 30000 });
         await addButton.click();
+        // The form of a new exam exercise is only complete once the exercise group it belongs to has been loaded: a save before that is
+        // rejected with "An exercise must have either a course or an exerciseGroup". So the group's response is awaited before the test
+        // starts filling in the form.
+        const groupLoaded = this.page.waitForResponse(
+            (response) => response.request().method() === 'GET' && new RegExp(`/exercise-groups/${groupID}(\\?.*)?$`).test(response.url()),
+        );
         await this.page.getByTestId(`create-${type}-exercise`).click();
+        await groupLoaded;
     }
 
     async clickDeleteGroup(groupID: number, groupName: string) {
@@ -65,7 +72,7 @@ export class ExamExerciseGroupsPage {
 
     async shouldShowNumberOfExerciseGroups(numberOfGroups: number) {
         // The count is now part of the page's title-bar heading ("Exercise Groups (N)") rather than a separate line.
-        const titleLocator = this.page.locator('#exercise-groups-title');
+        const titleLocator = this.page.locator('[data-testid="exercise-groups-title"]');
         await titleLocator.waitFor({ state: 'visible', timeout: 30000 });
         await expect(titleLocator).toContainText(`(${numberOfGroups})`, { timeout: 30000 });
     }
@@ -97,11 +104,11 @@ export class ExamExerciseGroupsPage {
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {
-        // Reload once if the exercise-groups lazy chunk fails to render `#exercise-groups-title`
+        // Reload once if the exercise-groups lazy chunk fails to render `[data-testid="exercise-groups-title"]`
         // within 30s under multi-node CI load (same pattern as other navigateToXxxPage
         // helpers in this codebase).
         const url = `/course-management/${courseId}/exams/${examId}/exercise-groups`;
-        const marker = this.page.locator('#exercise-groups-title');
+        const marker = this.page.locator('[data-testid="exercise-groups-title"]');
         await this.page.goto(url);
         const visible = await marker
             .waitFor({ state: 'visible', timeout: 30000 })

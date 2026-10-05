@@ -229,8 +229,8 @@ public class LocalCIResultProcessingService {
         BuildJob savedBuildJob;
         Result result = null;
 
-        SecurityUtils.setAuthorizationObject();
-        Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
+        SecurityUtils.setSystemAuthorizationObject();
+        Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
 
         try {
             if (participationOptional.isPresent()) {
@@ -238,7 +238,7 @@ public class LocalCIResultProcessingService {
 
                 // In case the participation does not contain the exercise, we have to load it from the database
                 if (participation.getProgrammingExercise() == null) {
-                    participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
+                    participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
                 }
 
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
@@ -253,7 +253,7 @@ public class LocalCIResultProcessingService {
             processedResults.incrementAndGet();
             ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participationOptional.orElse(null);
             if (programmingExerciseParticipation != null && programmingExerciseParticipation.getExercise() == null) {
-                ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(programmingExerciseParticipation);
+                ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
                 programmingExerciseParticipation.setExercise(exercise);
                 programmingExerciseParticipation.setProgrammingExercise(exercise);
             }
@@ -304,11 +304,10 @@ public class LocalCIResultProcessingService {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
                 // Run async to not block the result processing thread
-                CompletableFuture.runAsync(() -> {
-                    SecurityUtils.setAuthorizationObject();
-                    programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().testCommitHash(), SubmissionType.TEST,
-                            buildJob.repositoryInfo().triggeredByPushTo());
-                });
+                // runAsync uses the common ForkJoinPool, which the Artemis async executors do not wrap, so this
+                // lambda establishes its own context.
+                CompletableFuture.runAsync(() -> SecurityUtils.runAsSystem(() -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
+                        buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo())));
             }
             catch (EntityNotFoundException e) {
                 // Something went wrong while retrieving the template participation.

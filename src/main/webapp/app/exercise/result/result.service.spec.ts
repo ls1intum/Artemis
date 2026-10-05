@@ -362,6 +362,15 @@ describe('ResultService', () => {
             expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
 
+        it('builds the string for a result without a participation and does not report it to Sentry', () => {
+            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+            captureExceptionSpy.mockClear();
+
+            expect(resultService.getResultString(modelingResult, modelingExercise, undefined, true)).toBe('artemisApp.result.resultString.short');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+            expect(captureExceptionSpy).not.toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+
         it('reports to Sentry if result or exercise is undefined', () => {
             // Re-mock to get reference because direct import doesn't work here
             const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');

@@ -4,6 +4,7 @@
         (gradedParticipation()?.initializationState === INITIALIZED && beforeIndividualDueDate())
     ) {
         <button
+            type="button"
             jhi-exercise-action-button
             class="btn-danger"
             [buttonIcon]="faBackward"
@@ -45,11 +46,11 @@
                 />
             }
             <div class="button-footer">
-                <button class="btn btn-danger" type="submit" [disabled]="resetForm.invalid" (click)="resetRepository()">
+                <button class="btn btn-danger" type="submit" [disabled]="resetForm.invalid || isLoading()" (click)="resetRepository()">
                     <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate"></span>
                 </button>
                 @if (gradedParticipation() && practiceParticipation()) {
-                    <button class="btn btn-danger ms-2" type="submit" [disabled]="resetForm.invalid" (click)="resetRepository(gradedParticipation()?.id)">
+                    <button class="btn btn-danger ms-2" type="submit" [disabled]="resetForm.invalid || isLoading()" (click)="resetRepository(gradedParticipation()?.id)">
                         <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation"></span>
                     </button>
                 }

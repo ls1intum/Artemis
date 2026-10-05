@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +22,7 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserLastSubmissionDTO;
 import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -90,13 +90,37 @@ class MetricsBeanUnitTest {
 
     @Test
     void shouldExposeFailedBuildsFromBuildJobStatistics() {
-        when(buildJobRepository.getBuildJobsResultsStatistics(any(ZonedDateTime.class), isNull())).thenReturn(List.of(new BuildJobResultCountDTO(BuildStatus.FAILED, 2),
+        when(buildJobRepository.getBuildJobsResultsStatistics(any(ZonedDateTime.class))).thenReturn(List.of(new BuildJobResultCountDTO(BuildStatus.FAILED, 2),
                 new BuildJobResultCountDTO(BuildStatus.ERROR, 3), new BuildJobResultCountDTO(BuildStatus.MISSING, 1), new BuildJobResultCountDTO(BuildStatus.SUCCESSFUL, 4)));
 
         metricsBean.calculateBuildJobResultMetrics();
 
         assertThat(meterRegistry.get("artemis.global.buildjobs.failed").gauge().value()).isEqualTo(5);
         assertThat(meterRegistry.get("artemis.global.buildjobs.missing_results").gauge().value()).isEqualTo(1);
-        verify(buildJobRepository).getBuildJobsResultsStatistics(any(ZonedDateTime.class), isNull());
+        verify(buildJobRepository).getBuildJobsResultsStatistics(any(ZonedDateTime.class));
+    }
+
+    /**
+     * The database only reports the last submission date per active user; the rolling windows and the test user
+     * exclusion are applied here, so the gauge has to reflect both.
+     */
+    @Test
+    void shouldExposeActiveUsersPerWindowWithoutTestUsers() {
+        var now = ZonedDateTime.now();
+        when(statisticsRepository.findLastSubmissionPerActiveUser(any(ZonedDateTime.class), any(ZonedDateTime.class)))
+                .thenReturn(List.of(new ActiveUserLastSubmissionDTO(1L, now.minusHours(1)), new ActiveUserLastSubmissionDTO(2L, now.minusDays(10)),
+                        new ActiveUserLastSubmissionDTO(3L, now.minusHours(2))));
+        when(userRepository.findAllTestUserIds()).thenReturn(Set.of(3L));
+
+        metricsBean.updatePublicArtemisMetrics();
+
+        assertThat(activeUserGaugeValue("1")).isEqualTo(1);
+        assertThat(activeUserGaugeValue("7")).isEqualTo(1);
+        assertThat(activeUserGaugeValue("14")).isEqualTo(2);
+        assertThat(activeUserGaugeValue("30")).isEqualTo(2);
+    }
+
+    private double activeUserGaugeValue(String period) {
+        return meterRegistry.get("artemis.statistics.public.active_users").tag("period", period).gauge().value();
     }
 }

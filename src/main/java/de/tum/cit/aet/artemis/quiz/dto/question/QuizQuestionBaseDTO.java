@@ -9,8 +9,12 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record QuizQuestionBaseDTO(Long id, String title, String text, String hint, double points, ScoringType scoringType, Boolean randomizeOrder, Boolean invalid, String type) {
+public record QuizQuestionBaseDTO(Long id, String title, String text, String hint, double points, ScoringType scoringType, Boolean randomizeOrder, Boolean invalid, String type) {
 
+    /**
+     * @param quizQuestion the question to project
+     * @return the fields shared by every question type, including the {@code type} discriminator
+     */
     public static QuizQuestionBaseDTO of(QuizQuestion quizQuestion) {
         String type;
         switch (quizQuestion) {

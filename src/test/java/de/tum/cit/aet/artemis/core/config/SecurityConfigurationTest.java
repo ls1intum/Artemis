@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.filter.CorsFilter;
 
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnCon
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -53,8 +55,10 @@ class SecurityConfigurationTest {
      * @return the configuration, if the constructor accepts the lifetime
      */
     private SecurityConfiguration createSecurityConfiguration(long maxSessionLifetimeInSeconds) {
+        // Never resolved here: these tests only exercise the session lifetime validation in the constructor.
+        ObjectProvider<ElevatedAccessService> elevatedAccessService = mock();
         return new SecurityConfiguration(mock(CorsFilter.class), Optional.empty(), Optional.empty(), mock(PasswordService.class), mock(TokenProvider.class),
-                mock(JWTCookieService.class), mock(PasskeyTokenRenewalService.class), moduleFeatureService, maxSessionLifetimeInSeconds);
+                mock(JWTCookieService.class), mock(PasskeyTokenRenewalService.class), moduleFeatureService, elevatedAccessService, maxSessionLifetimeInSeconds);
     }
 
     @Test

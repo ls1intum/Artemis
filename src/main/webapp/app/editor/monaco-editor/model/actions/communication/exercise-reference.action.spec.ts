@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { ExerciseReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/exercise-reference.action';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
@@ -12,7 +12,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
  */
 describe('ExerciseReferenceAction', () => {
     let exerciseService: ExerciseService;
-    let metisService: MetisService;
+    let communicationService: CommunicationService;
     let getTitles: ReturnType<typeof vi.fn>;
 
     /** loadTitles is private; the completion provider is the only production caller and reaches it the same way. */
@@ -21,11 +21,11 @@ describe('ExerciseReferenceAction', () => {
     beforeEach(() => {
         getTitles = vi.fn().mockReturnValue(of([{ id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING }]));
         exerciseService = { getTitlesForCourse: getTitles } as unknown as ExerciseService;
-        metisService = { getCourse: () => ({ id: 7 }) } as unknown as MetisService;
+        communicationService = { getCourse: () => ({ id: 7 }) } as unknown as CommunicationService;
     });
 
     it('should resolve the exercises even when they are requested before the response lands', async () => {
-        const action = new ExerciseReferenceAction(metisService, exerciseService);
+        const action = new ExerciseReferenceAction(communicationService, exerciseService);
 
         const values = await loadTitles(action);
 
@@ -33,7 +33,7 @@ describe('ExerciseReferenceAction', () => {
     });
 
     it('should ask the server once and share the result between concurrent invocations', async () => {
-        const action = new ExerciseReferenceAction(metisService, exerciseService);
+        const action = new ExerciseReferenceAction(communicationService, exerciseService);
 
         const [first, second] = await Promise.all([loadTitles(action), loadTitles(action)]);
 
@@ -48,7 +48,7 @@ describe('ExerciseReferenceAction', () => {
                 { id: 2, title: 'Named' },
             ]),
         );
-        const action = new ExerciseReferenceAction(metisService, exerciseService);
+        const action = new ExerciseReferenceAction(communicationService, exerciseService);
 
         const values = await loadTitles(action);
 
@@ -57,7 +57,7 @@ describe('ExerciseReferenceAction', () => {
 
     it('should retry after a failure rather than leaving the editor empty for the rest of the session', async () => {
         getTitles.mockReturnValueOnce(throwError(() => new Error('offline')));
-        const action = new ExerciseReferenceAction(metisService, exerciseService);
+        const action = new ExerciseReferenceAction(communicationService, exerciseService);
 
         await expect(loadTitles(action)).resolves.toEqual([]);
 
@@ -68,7 +68,7 @@ describe('ExerciseReferenceAction', () => {
     });
 
     it('should not ask the server until the completion provider needs the exercises', () => {
-        new ExerciseReferenceAction(metisService, exerciseService);
+        new ExerciseReferenceAction(communicationService, exerciseService);
 
         expect(getTitles).not.toHaveBeenCalled();
     });

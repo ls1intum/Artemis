@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
 
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
 @Entity
 @Table(name = "system_notification")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Server-wide banner, belongs to nothing.")
 public class SystemNotification extends DomainObject {
 
     @Column(name = "title")

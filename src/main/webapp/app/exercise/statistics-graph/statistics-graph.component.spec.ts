@@ -8,8 +8,6 @@ import { of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
-import { MockComponent } from 'ng-mocks';
-import { ChartModule, UIChart } from 'primeng/chart';
 import { vi } from 'vitest';
 
 describe('StatisticsGraphComponent', () => {
@@ -22,12 +20,7 @@ describe('StatisticsGraphComponent', () => {
         await TestBed.configureTestingModule({
             imports: [StatisticsGraphComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
-        })
-            .overrideComponent(StatisticsGraphComponent, {
-                remove: { imports: [ChartModule] },
-                add: { imports: [MockComponent(UIChart)] },
-            })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(StatisticsGraphComponent);
         component = fixture.componentInstance;
         service = TestBed.inject(StatisticsService);

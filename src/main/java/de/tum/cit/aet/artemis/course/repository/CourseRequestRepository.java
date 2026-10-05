@@ -27,9 +27,6 @@ import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequest, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "requester" })
-    List<CourseRequest> findAllByOrderByCreatedDateDesc();
-
-    @EntityGraph(type = LOAD, attributePaths = { "requester" })
     Optional<CourseRequest> findOneWithEagerRelationshipsById(long id);
 
     Optional<CourseRequest> findOneByShortNameIgnoreCase(String shortName);

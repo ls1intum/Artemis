@@ -29,7 +29,8 @@
                 "info": "Wähle ein neues Passwort",
                 "success": "Dein Passwort wurde zurückgesetzt.",
                 "success-part2": "Bitte melde dich an.",
-                "keymissing": "Der Reset-Schlüssel fehlt.",
+                "keyidmissing": "Der ID des Reset-Schlüssel fehlt.",
+                "keysecretmissing": "Das Geheimnis Reset-Schlüssel fehlt.",
                 "error": "Dein Passwort konnte nicht zurückgesetzt werden. Der Link ist entweder ungültig, wurde bereits verwendet oder ist abgelaufen (24 Stunden gültig)."
             },
             "revocation": {

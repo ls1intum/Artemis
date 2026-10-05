@@ -5,8 +5,6 @@ import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleEntityUsa
 /**
  * Architecture test to verify that REST controllers in the Exercise module
  * do not use @Entity types directly. Controllers should use DTOs instead.
- * <p>
- * TODO: Reduce violation counts to 0 by introducing DTOs for all endpoints.
  */
 class ExerciseEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitectureTest {
 
@@ -15,10 +13,9 @@ class ExerciseEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchi
         return ARTEMIS_PACKAGE + ".exercise";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 23;
+        return 0;
     }
 
     // This module is already compliant for input violations
@@ -27,9 +24,9 @@ class ExerciseEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchi
         return 0;
     }
 
-    // TODO: Reduce this to 0 by removing entity references from DTOs
+    // This module is already compliant for DTO entity field violations
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 3;
+        return 0;
     }
 }

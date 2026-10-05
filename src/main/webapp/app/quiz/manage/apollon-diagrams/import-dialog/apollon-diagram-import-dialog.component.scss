@@ -1,0 +1,13 @@
+/* The dialog is auto-height: the list is a short table, the detail view is a diagram
+   editor. Each view states its own height and owns its own header/footer padding, so
+   this shell only keeps the flex chain intact. */
+:host,
+.apollon-diagram-dialog {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.apollon-diagram-dialog > * {
+    min-height: 0;
+}

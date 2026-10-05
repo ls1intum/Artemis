@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,7 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -249,7 +249,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public static Object convertBuildResultToJsonObject(BuildResultNotification requestBodyMap) {
-        ObjectMapper mapper = JsonObjectMapper.get();
+        JsonMapper mapper = JsonObjectMapper.get();
         return mapper.convertValue(requestBodyMap, Object.class);
     }
 
@@ -345,8 +345,9 @@ public class ProgrammingExerciseResultTestService {
                 userPrefix + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ParticipationFactory.generateManualFeedback();
-        feedback = feedbackRepository.saveAll(feedback);
+        // Attached before it is written: result_id is not nullable, so a detached insert fails outright.
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
+        feedbackRepository.saveAll(feedback);
         resultRepository.save(programmingSubmission.getFirstResult());
 
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
@@ -415,9 +416,10 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, BuildResultNotification resultNotification) {
-        programmingExercise.getBuildConfig().setBranch(defaultBranch);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.saveBuildConfigIfMissing(programmingExercise);
+        buildConfig.setBranch(defaultBranch);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         participationUtilService.addSubmission(solutionParticipation,
@@ -441,7 +443,7 @@ public class ProgrammingExerciseResultTestService {
         postResult(resultNotification);
 
         // ensure that hidden feedback got filtered out (test2 is not active, test3 is hidden -> only 1 feedback visible)
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), argThat(arg -> {
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), userTopic("/topic/newResults"), argThat(arg -> {
             if (!(arg instanceof ResultDTO resultDTO)) {
                 return false;
             }
@@ -481,7 +483,7 @@ public class ProgrammingExerciseResultTestService {
         postResult(resultNotification);
 
         // ensure that the test case is set but the name does not get send to the student
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC),
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), userTopic("/topic/newResults"),
                 argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().getFirst().testCase().testName() == null));
     }
 

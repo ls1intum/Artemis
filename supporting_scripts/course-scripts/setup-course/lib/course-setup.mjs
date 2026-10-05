@@ -31,7 +31,7 @@ export async function createCourseSetup(config) {
     let course;
     if (config.existingCourseId) {
         console.log(`[2/13] Using existing course ID: ${config.existingCourseId}`);
-        const courseResponse = await client.get(`/api/core/courses/${config.existingCourseId}`);
+        const courseResponse = await client.get(`/api/course/courses/${config.existingCourseId}`);
         course = courseResponse.data;
     } else {
         console.log('[2/13] Creating course...');
@@ -142,7 +142,7 @@ async function createCourse(client) {
 
     const { body, contentType } = createMultipartFormData({ course });
 
-    const response = await client.post('/api/core/admin/courses', body, {
+    const response = await client.post('/api/admin/courses', body, {
         headers: { 'Content-Type': contentType },
         contentType: 'multipart',
     });
@@ -241,14 +241,14 @@ async function createUser(client, userData) {
     };
 
     try {
-        const response = await client.post('/api/core/admin/users', user);
+        const response = await client.post('/api/account/admin/users', user);
         return { ...response.data, isNew: true };
     } catch (error) {
         // User might already exist (400 or 409)
         if (error.response?.status === 400 || error.response?.status === 409) {
             // Try to fetch the existing user
             try {
-                const existingUserResponse = await client.get(`/api/core/admin/users/${userData.login}`);
+                const existingUserResponse = await client.get(`/api/account/admin/users/${userData.login}`);
                 return { ...existingUserResponse.data, isNew: false };
             } catch {
                 // If we can't fetch, return minimal user object
@@ -261,7 +261,7 @@ async function createUser(client, userData) {
 
 async function addUserToCourse(client, courseId, group, username) {
     try {
-        await client.post(`/api/core/courses/${courseId}/${group}/${username}`);
+        await client.post(`/api/course/courses/${courseId}/${group}/${username}`);
         return true;
     } catch (error) {
         // Ignore if already added (400) or other expected errors

@@ -49,9 +49,17 @@
                     "name": "Atlas (Adaptive Learning)",
                     "description": "Enables competency-based learning features including learning paths, competency tracking, and analytics."
                 },
+                "atlasllm": {
+                    "name": "Atlas AI (LLM)",
+                    "description": "Enables the Atlas course chat agent and the autonomous competency orchestrator. Requires a configured chat model. Competencies, learning paths and analytics work without it."
+                },
                 "hyperion": {
                     "name": "Hyperion (Exercise Creation)",
                     "description": "Enables AI-assisted exercise creation using Hyperion for generating programming exercises."
+                },
+                "deimos": {
+                    "name": "Deimos (Malicious Participation Analysis)",
+                    "description": "Enables the Deimos module that lets instructors screen programming-exercise participations for malicious behavior using an LLM."
                 },
                 "exam": {
                     "name": "Exam Mode",
@@ -188,6 +196,26 @@
                     "name": "Global Search",
                     "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
                     "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
+                },
+                "Deimos": {
+                    "name": "Deimos Analysis",
+                    "description": "Enables manual malicious participation analysis runs for programming exercises.",
+                    "disableWarning": "Instructors will not be able to trigger Deimos analysis runs."
+                },
+                "IrisProactiveStruggle": {
+                    "name": "Iris Proactive Struggle Detection",
+                    "description": "Lets Iris watch for students who are stuck in a programming exercise and offer help unprompted. Instructors switch it on per course; this switch decides whether they can.",
+                    "disableWarning": "Iris will not offer help on its own in any course. Students can still start a chat themselves, and a course keeps its own setting for when this is switched back on."
+                },
+                "GlobalSearchReconcile": {
+                    "name": "Global Search Reconcile",
+                    "description": "Periodically re-syncs the global search index against the database: indexes entities the search index never confirmed holding, repairs ones whose stored content has drifted from what was last written, and removes an entity's row once it is directly confirmed deleted or no longer visible. Every removal here is confirmed against the database itself, unlike \"Remove Orphaned Entries\" below, which infers removals from the index alone.",
+                    "disableWarning": "Search results may go stale where an entity was never indexed, its content has drifted, or it was deleted or hidden, until this is switched back on."
+                },
+                "GlobalSearchReconcileOrphan": {
+                    "name": "Global Search Reconcile: Remove Orphaned Entries",
+                    "description": "Scans the global search index for entries whose entity no longer exists and removes them, inferred from the index alone rather than confirmed per entity against the database. Switch on Global Search Reconcile first and observe it before enabling this.",
+                    "disableWarning": "Search results may include entries for entities that were deleted, until this is switched back on."
                 }
             }
         }

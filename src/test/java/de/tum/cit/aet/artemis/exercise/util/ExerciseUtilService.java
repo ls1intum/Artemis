@@ -243,7 +243,9 @@ public class ExerciseUtilService {
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
                     var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
-                    modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user, null);
+                    submission = modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user, null).submission();
+                    // the save wrote the foreign key from an id; this utility holds the participation itself
+                    submission.setParticipation(participation);
                     studentParticipationRepo.save(participation);
                 }
                 return course;

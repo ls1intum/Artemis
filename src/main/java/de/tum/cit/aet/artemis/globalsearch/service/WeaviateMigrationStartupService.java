@@ -16,11 +16,12 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateMigrationProperties;
 
 /**
  * Runs pending Weaviate schema migrations once, in the background, on the scheduling node only.
  * <p>
- * Migrations move data between Weaviate collections and can be long-running (and, when the embedding backend is slow or cold, can time out per object). Running them inline
+ * Migrations move data between Weaviate collections and can be long-running (and, when the embedding service is slow or cold, can time out per object). Running them inline
  * during bean initialization (as the {@code @PostConstruct} of {@link WeaviateService} previously did) blocks Spring's singleton creation on the main thread and, in turn, the
  * whole UI; it also ran on every node simultaneously. To avoid that, this service:
  * <ul>
@@ -38,31 +39,43 @@ public class WeaviateMigrationStartupService {
 
     private static final Logger log = LoggerFactory.getLogger(WeaviateMigrationStartupService.class);
 
-    /**
-     * Delay before the first migration attempt, so it does not compete with application startup. The migration runs on a background thread, so this only affects when the one-off
-     * background work begins, not whether it blocks anything.
-     */
-    private static final long INITIAL_DELAY_SECONDS = 30;
-
-    /**
-     * Bounded in-process retry. An attempt can fail if the embedding backend is cold or temporarily unavailable when it runs; retrying in-process (rather than only on the next
-     * scheduling-node restart) lets the migration self-heal once the backend recovers. Re-running is safe because the migration is idempotent: target UUIDs are deterministic and
-     * the schema version is bumped only on full success, so a retry either re-applies the same writes or is a no-op once complete.
-     */
-    private static final int MAX_MIGRATION_ATTEMPTS = 5;
-
-    private static final long RETRY_DELAY_SECONDS = 120;
-
     private final WeaviateMigrationService migrationService;
 
     private final WeaviateService weaviateService;
 
     private final TaskScheduler taskScheduler;
 
-    public WeaviateMigrationStartupService(WeaviateMigrationService migrationService, WeaviateService weaviateService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+    private final WeaviateOutboxDispatcher outboxDispatcher;
+
+    /**
+     * Delay before the first migration attempt, so it does not compete with application startup. The migration runs on a background thread, so this only affects when the one-off
+     * background work begins, not whether it blocks anything. Overridable via {@code artemis.weaviate.migration.initial-delay-seconds} (default 30).
+     */
+    private final long initialDelaySeconds;
+
+    /**
+     * Bounded in-process retry. An attempt can fail if the embedding service is cold or temporarily unavailable when it runs; retrying in-process (rather than only on the next
+     * scheduling-node restart) lets the migration self-heal once the embedding service recovers. Re-running is safe because the migration is idempotent: target UUIDs are
+     * deterministic and
+     * the schema version is bumped only on full success, so a retry either re-applies the same writes or is a no-op once complete. Overridable via
+     * {@code artemis.weaviate.migration.max-attempts} (default 5).
+     */
+    private final int maxMigrationAttempts;
+
+    /**
+     * Delay between failed migration attempts, overridable via {@code artemis.weaviate.migration.retry-delay-seconds} (default 120).
+     */
+    private final long retryDelaySeconds;
+
+    public WeaviateMigrationStartupService(WeaviateMigrationService migrationService, WeaviateService weaviateService, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
+            WeaviateMigrationProperties migrationProperties, WeaviateOutboxDispatcher outboxDispatcher) {
         this.migrationService = migrationService;
         this.weaviateService = weaviateService;
         this.taskScheduler = taskScheduler;
+        this.outboxDispatcher = outboxDispatcher;
+        this.initialDelaySeconds = migrationProperties.initialDelaySeconds();
+        this.maxMigrationAttempts = migrationProperties.maxAttempts();
+        this.retryDelaySeconds = migrationProperties.retryDelaySeconds();
     }
 
     /**
@@ -77,7 +90,7 @@ public class WeaviateMigrationStartupService {
      */
     @PostConstruct
     public void scheduleMigrationOnStartup() {
-        scheduleMigrationAttempt(1, INITIAL_DELAY_SECONDS);
+        scheduleMigrationAttempt(1, initialDelaySeconds);
     }
 
     private void scheduleMigrationAttempt(int attempt, long delaySeconds) {
@@ -85,26 +98,30 @@ public class WeaviateMigrationStartupService {
     }
 
     /**
-     * Runs all pending Weaviate migrations and reconciles collections afterwards, on a background thread. A failure (for example, the embedding backend being cold or unavailable)
+     * Runs all pending Weaviate migrations and reconciles collections afterwards, on a background thread. A failure (for example, the embedding service being cold or unavailable)
      * is logged and never propagated, so it can never crash or block the node; the attempt is retried a bounded number of times, and otherwise re-runs on the next scheduling-node
      * restart. Search may return incomplete results until a migration completes.
+     * <p>
+     * Outbox drains are paused while the migration runs, so a dispatcher write cannot land between the migration's
+     * existence check and its batch insert and then be overwritten with older content (see
+     * {@link WeaviateOutboxDispatcher#runWithDrainsPaused}). Changes made meanwhile are applied right after it.
      */
     private void runPendingMigrations(int attempt) {
         try {
-            migrationService.runPendingMigrations();
+            outboxDispatcher.runWithDrainsPaused(migrationService::runPendingMigrations);
             // Future-proofing: if a later migration drops one of the managed collections, recreate it here. The current
             // V0→V1 migration drops only the unmanaged legacy collection, so this is a no-op for it.
             weaviateService.ensureAllCollectionsExist();
         }
         catch (Exception exception) {
-            if (attempt < MAX_MIGRATION_ATTEMPTS) {
-                log.warn("Weaviate migration attempt {}/{} failed; retrying in {}s. Search may return incomplete results until it succeeds.", attempt, MAX_MIGRATION_ATTEMPTS,
-                        RETRY_DELAY_SECONDS, exception);
-                scheduleMigrationAttempt(attempt + 1, RETRY_DELAY_SECONDS);
+            if (attempt < maxMigrationAttempts) {
+                log.warn("Weaviate migration attempt {}/{} failed; retrying in {}s. Search may return incomplete results until it succeeds.", attempt, maxMigrationAttempts,
+                        retryDelaySeconds, exception);
+                scheduleMigrationAttempt(attempt + 1, retryDelaySeconds);
             }
             else {
                 log.error("Weaviate migration failed after {} attempts; it will retry on the next scheduling-node restart. Search may return incomplete results until then.",
-                        MAX_MIGRATION_ATTEMPTS, exception);
+                        maxMigrationAttempts, exception);
             }
         }
     }

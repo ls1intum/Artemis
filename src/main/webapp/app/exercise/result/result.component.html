@@ -76,9 +76,15 @@
                 <span
                     [class]="textColorClass()"
                     class="result leading-tight"
-                    [ngClass]="{ 'clickable-result': !isInSidebarCard() && resolvedExercise()?.type !== ExerciseType.QUIZ }"
+                    [class.clickable-result]="canShowDetails()"
                     id="result-score"
-                    (click)="!isInSidebarCard() ? showDetails(currentResult) : ''"
+                    (click)="showDetails(currentResult)"
+                    #keyboardAction76
+                    [attr.role]="canShowDetails() ? 'button' : null"
+                    [attr.tabindex]="canShowDetails() ? 0 : null"
+                    (keydown.enter)="canShowDetails() && $event.target === $event.currentTarget ? keyboardAction76.click() : undefined"
+                    (keydown.space)="canShowDetails() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="canShowDetails() && $event.target === $event.currentTarget ? keyboardAction76.click() : undefined"
                 >
                     <span [pTooltip]="resultTooltip() | artemisTranslate">{{ resultString() }}</span>
                     @if (short() && currentResult.codeIssueCount) {
@@ -136,14 +142,21 @@
                             jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"
                         ></span>
                     }
+                    @default {}
                 }
                 @if (result(); as missingResult) {
                     @if (resolvedExercise()?.type !== ExerciseType.QUIZ) {
                         <span
-                            [ngClass]="{ 'clickable-result': !isInSidebarCard() }"
+                            [class.clickable-result]="canShowDetails()"
                             class="result"
                             (click)="showDetails(missingResult)"
                             jhiTranslate="artemisApp.result.missing.viewPrevious"
+                            #keyboardAction137
+                            [attr.role]="canShowDetails() ? 'button' : null"
+                            [attr.tabindex]="canShowDetails() ? 0 : null"
+                            (keydown.enter)="canShowDetails() && $event.target === $event.currentTarget ? keyboardAction137.click() : undefined"
+                            (keydown.space)="canShowDetails() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="canShowDetails() && $event.target === $event.currentTarget ? keyboardAction137.click() : undefined"
                         ></span>
                     }
                 }

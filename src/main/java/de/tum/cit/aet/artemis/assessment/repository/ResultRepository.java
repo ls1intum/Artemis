@@ -295,9 +295,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
                 AND r.rated = TRUE
-                AND r.submission.submitted = TRUE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
+                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
@@ -318,9 +318,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
                 AND r.rated = TRUE
-                AND r.submission.submitted = TRUE
+                AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
+                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -396,7 +396,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.assessmentType IN :types
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
+                AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
             """)
     long countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
 
@@ -411,7 +411,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.rated = FALSE
                 AND r.completionDate IS NOT NULL
                 AND p.exercise.dueDate IS NOT NULL
-                AND r.submission.submissionDate > p.exercise.dueDate
+                AND s.submissionDate > p.exercise.dueDate
             """)
     long countNumberOfAssessmentsByTypeForExerciseAfterDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
 
@@ -490,6 +490,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return true if a result exists for the given submission ID, false otherwise.
      */
     boolean existsBySubmissionId(long submissionId);
+
+    /**
+     * Checks if the given submission has a manual result (manual or semi-automatic) for the given correction round.
+     *
+     * @param submissionId    the ID of the submission to check.
+     * @param correctionRound the correction round of the result.
+     * @return true if the submission has a manual result for the given correction round, false otherwise.
+     */
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM Result r
+            WHERE r.submission.id = :submissionId
+                AND r.correctionRound = :correctionRound
+                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+            """)
+    boolean existsManualResultBySubmissionIdAndCorrectionRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
 
     /**
      * Returns the manual results of the given submissions together with the correction round each belongs to.

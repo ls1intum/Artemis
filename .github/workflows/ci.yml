@@ -21,12 +21,20 @@ on:
         type: boolean
         default: false
 
+# One run per pull request, superseding the previous one, and one run per distinct commit everywhere
+# else. A pull request is the only case where a newer event replaces an older one: the head moves and
+# the old run is about a revision nobody will merge. A push, a merge group and a release each describe
+# a commit of their own, so they are keyed by that commit and never wait for one another — keying
+# pushes by `github.ref` alone put every push to a branch in one group, and since `cancel-in-progress`
+# is false for them, a push to develop could not start a single job until the previous push's run had
+# finished all of its server test shards and both E2E phases. That held back the `.war` and the Docker
+# image, which are what a deployment of that commit needs, for the better part of an hour.
 concurrency:
   group: >-
     ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number)
      || github.event_name == 'merge_group'  && format('ci-mq-{0}', github.event.merge_group.head_sha)
      || github.event_name == 'release'      && format('ci-release-{0}', github.event.release.tag_name)
-     || format('ci-{0}', github.ref) }}
+     || format('ci-{0}-{1}', github.ref, github.sha) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions: {}
@@ -34,6 +42,7 @@ permissions: {}
 jobs:
 
   detect-changes:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Detect Changed Areas
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -49,9 +58,10 @@ jobs:
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
       has_version: ${{ steps.decide.outputs.has_version }}
       has_beans: ${{ steps.decide.outputs.has_beans }}
-      has_tum_ui: ${{ steps.decide.outputs.has_tum_ui }}
+      has_skills: ${{ steps.decide.outputs.has_skills }}
+      has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 2
 
@@ -100,16 +110,25 @@ jobs:
               - 'src/main/resources/**'
               - 'build.gradle'
               - 'gradle/**'
+            has_skills:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-skills.yml'
+              - 'skills/**'
+              - 'supporting_scripts/check_skill_references.py'
+              - 'AGENTS.md'
+              - 'documentation/docs/developer/work-with-ai.mdx'
+              - '.claude-plugin/**'
             has_docs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
               - 'documentation/**'
-              - 'packages/tum-ui/**'
+              - 'packages/tum-aet-ui/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
-              - 'supporting_scripts/generate-tum-ui-reference-page.mjs'
-            has_tum_ui:
+              - 'supporting_scripts/generate-tum-aet-ui-reference-page.mjs'
+            has_tum_aet_ui:
+              - '.github/workflows/release-tum-aet-ui.yml'
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-quality.yml'
               - 'angular.json'
@@ -117,12 +136,13 @@ jobs:
               - 'gradle/profile_dev.gradle'
               - 'gradle/profile_prod.gradle'
               - 'package.json'
-              - 'packages/tum-ui/**'
+              - 'packages/tum-aet-ui/**'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'prebuild.mjs'
-              - 'rules/tum-ui-package.spec.mjs'
-              - 'src/main/webapp/app/shared-ui/tum-ui-integration/**'
+              - 'rules/tum-aet-ui-package.spec.mjs'
+              - 'rules/tum-aet-ui-release.spec.mjs'
+              - 'src/main/webapp/app/shared-ui/tum-aet-ui-integration/**'
               - 'src/main/webapp/tailwind.css'
               - 'tsconfig.json'
               - 'tsconfig.app.json'
@@ -142,6 +162,9 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
+              - 'install-localci-kubernetes-ubuntu.sh'
+              - 'supporting_scripts/test_verified_installers.py'
+              - 'supporting_scripts/update_python_dependency_locks.sh'
             has_version:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-version-consistency.yml'
@@ -166,11 +189,12 @@ jobs:
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
           F_VERSION: ${{ steps.area.outputs.has_version }}
           F_BEANS: ${{ steps.area.outputs.has_beans }}
-          F_TUM_UI: ${{ steps.area.outputs.has_tum_ui }}
+          F_SKILLS: ${{ steps.area.outputs.has_skills }}
+          F_TUM_AET_UI: ${{ steps.area.outputs.has_tum_aet_ui }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_tum_ui; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_skills has_tum_aet_ui; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -183,7 +207,8 @@ jobs:
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
               echo "has_beans=${F_BEANS:-false}"
-              echo "has_tum_ui=${F_TUM_UI:-false}"
+              echo "has_skills=${F_SKILLS:-false}"
+              echo "has_tum_aet_ui=${F_TUM_AET_UI:-false}"
             } >> "$GITHUB_OUTPUT"
           fi
 
@@ -264,7 +289,7 @@ jobs:
       group: coverage-inrun-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Detect changed files
@@ -272,21 +297,21 @@ jobs:
         # Advisory poster: a transient listFiles blip must not red this job. On failure the outputs
         # are empty, the generate/update steps below skip, and the next push retries.
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
       - name: Download server JaCoCo XML
         if: steps.changes.outputs.has_server_changes == 'true'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         continue-on-error: true
         with:
           name: Server JaCoCo XML
           path: build/reports/jacoco/
       - name: Download client coverage summaries
         if: steps.changes.outputs.has_client_changes == 'true'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         continue-on-error: true
         with:
           name: Client Coverage Summaries
@@ -295,7 +320,7 @@ jobs:
           path: build/test-results/vitest/coverage/
       - name: Setup Node.js
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '24'
       - name: Generate coverage table
@@ -315,7 +340,7 @@ jobs:
         # must not red this advisory job either.
         if: steps.changes.outcome == 'success'
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -342,7 +367,7 @@ jobs:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
-      has_tum_ui: ${{ needs.detect-changes.outputs.has_tum_ui == 'true' }}
+      has_tum_aet_ui: ${{ needs.detect-changes.outputs.has_tum_aet_ui == 'true' }}
 
   gradle-wrapper:
     name: Validate Gradle Wrapper
@@ -363,7 +388,12 @@ jobs:
   docs:
     name: Build Documentation
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_docs == 'true'
+    # Every develop push builds the current tree, even when its immediate diff has no docs changes.
+    # GitHub concurrency keeps only one pending run: a newer push can evict a queued docs-changing
+    # run, so relying only on the per-commit path filter can otherwise leave Pages permanently stale.
+    if: >-
+      needs.detect-changes.outputs.has_docs == 'true'
+      || (github.event_name == 'push' && github.ref == 'refs/heads/develop')
     uses: ./.github/workflows/ci-docs.yml
     permissions:
       contents: read
@@ -379,7 +409,7 @@ jobs:
   deploy-docs:
     name: Deploy Documentation
     needs: [detect-changes, docs]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.detect-changes.outputs.has_docs == 'true' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -394,7 +424,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
   # Publishes the combined server + client line-coverage figure that the README badge renders,
   # replacing the Codacy coverage badge (Codacy stopped reporting a value and the badge read 0%).
@@ -429,7 +459,7 @@ jobs:
     # so a second group would only add a way for the job to be cancelled while pending.
     steps:
       - name: Check out the badge tooling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           sparse-checkout: supporting_scripts/code-coverage/coverage-badge
           # This checkout only supplies the script; the push happens from the `badges` checkout below.
@@ -440,7 +470,7 @@ jobs:
         # `continue-on-error` keeps the job advisory: if the orphan branch is missing or unreadable,
         # the guard step below warns and every later step no-ops.
         continue-on-error: true
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: badges
           path: badges-branch
@@ -456,7 +486,7 @@ jobs:
       - name: Download the server JaCoCo report
         if: steps.badges-checkout.outcome == 'success'
         continue-on-error: true
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: Server JaCoCo XML
           path: server-coverage
@@ -464,7 +494,7 @@ jobs:
       - name: Download the client coverage summary
         if: steps.badges-checkout.outcome == 'success'
         continue-on-error: true
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: Client Coverage Summaries
           path: client-coverage
@@ -474,7 +504,7 @@ jobs:
       # a warning and the badge would silently stop updating.
       - name: Setup Node.js
         if: steps.badges-checkout.outcome == 'success'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '24'
 
@@ -540,6 +570,31 @@ jobs:
           fi
           exit 0
 
+  # SonarQube Cloud analysis, running alongside Codacy so the two code-quality grades can be compared
+  # on the same code before either is trusted with a README badge. Scope is pinned to Codacy's in
+  # `gradle/sonar.gradle`; see README.md ("The code quality analyses").
+  #
+  # Develop-push only, and gated on `test` having SUCCEEDED, for the same reason `coverage-badge`
+  # above is: coverage imported from a partially failed run is artificially low, and unlike a badge
+  # this would persist into Sonar's own history as a real dip. Skipping instead leaves the last
+  # analysis standing. `ci-sonar.yml` is separately dispatchable for an on-demand grade.
+  #
+  # ADVISORY: never in another job's `needs:` and never gating — the called job is
+  # `continue-on-error`, so a Sonar outage or an expired token cannot turn develop red.
+  sonar:
+    name: Sonar
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
+    uses: ./.github/workflows/ci-sonar.yml
+    permissions:
+      contents: read
+      actions: read  # ci-sonar.yml lists runs and downloads artifacts when it is dispatched on its own
+    with:
+      commit_sha: ${{ github.sha }}
+      with_coverage: true
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   translation:
     name: Check Translation Keys
     needs: detect-changes
@@ -563,6 +618,48 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.has_beans == 'true'
     uses: ./.github/workflows/ci-bean-instantiations.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Not folded into `quality`: that job is gated on `build_relevant`, which is false when every
+  # changed file is markdown. A PR editing only skills/ would then skip the check that guards it.
+  skills:
+    name: Agent Skills
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_skills == 'true'
+    uses: ./.github/workflows/ci-skills.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Prose changes need terminology checks regardless of which area changed.
+  terminology:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    name: Terminology
+    uses: ./.github/workflows/ci-terminology.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Deleting the last caller can orphan code in any area of the repository.
+  dead-code:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    name: Dead Code
+    uses: ./.github/workflows/ci-dead-code.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Check baseline consistency and misplaced migrations regardless of which area changed.
+  liquibase:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    name: Liquibase Schema
+    uses: ./.github/workflows/ci-liquibase.yml
     permissions:
       contents: read
     with:
@@ -651,6 +748,10 @@ jobs:
       - workflows
       - version-consistency
       - bean-instantiations
+      - skills
+      - terminology
+      - dead-code
+      - liquibase
       - e2e
     runs-on: ubuntu-latest
     permissions: {}  # reads only the `needs` context; no checkout, no token scope
@@ -717,6 +818,10 @@ jobs:
       - translation
       - version-consistency
       - bean-instantiations
+      - skills
+      - terminology
+      - dead-code
+      - liquibase
       - e2e
       - codeql
       - coverage-report
@@ -778,7 +883,7 @@ jobs:
               echo "|---------|---------|"
               echo "| Server formatting (Spotless) | \`./gradlew spotlessApply\` |"
               echo "| Client lint / formatting | \`pnpm run lint:fix && pnpm run prettier:write\` |"
-              echo "| Java checkstyle | \`./gradlew checkstyleMain\` |"
+              echo "| Java checkstyle | \`./gradlew checkstyleMain checkstyleTest\` |"
               echo
               echo "Failed test details are in the **Test** and **E2E** checks above."
               echo "</details>"

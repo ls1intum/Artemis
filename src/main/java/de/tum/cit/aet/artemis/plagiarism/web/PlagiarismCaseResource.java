@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
@@ -46,6 +48,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
  */
 @Conditional(PlagiarismEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.PLAGIARISM_CASES)
 @RestController
 @RequestMapping("api/plagiarism/")
 public class PlagiarismCaseResource {
@@ -80,6 +83,7 @@ public class PlagiarismCaseResource {
      * @param courseId the id of the course
      * @return all plagiarism cases of the course
      */
+    @FeatureUsage(UserFeature.COURSE_SCORES)
     @GetMapping("courses/{courseId}/plagiarism-cases/for-scores")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PlagiarismCaseDTO>> getPlagiarismCasesForCourseScores(@PathVariable long courseId) {

@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import jakarta.annotation.PostConstruct;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
 import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
 import org.springframework.messaging.tcp.TcpOperations;
@@ -71,11 +74,17 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
      */
     private final AtomicBoolean manualDisconnectRequested = new AtomicBoolean(false);
 
-    private volatile ScheduledFuture<?> reconnectTask;
+    private final AtomicReference<ScheduledFuture<?>> reconnectTask = new AtomicReference<>();
 
-    private volatile ScheduledFuture<?> statusPublishTask;
+    private final AtomicReference<ScheduledFuture<?>> statusPublishTask = new AtomicReference<>();
 
     private volatile boolean lastKnownBrokerAvailable = false;
+
+    /**
+     * Set as soon as the application context closes, i.e. before any bean is destroyed. From then on, the distributed data provider may already be shut down,
+     * and a broker that becomes unavailable is part of the shutdown rather than a reason to update the status or to reconnect.
+     */
+    private volatile boolean shuttingDown = false;
 
     public WebsocketBrokerReconnectionService(@Qualifier("messageBrokerTaskScheduler") TaskScheduler messageBrokerTaskScheduler,
             Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler,
@@ -95,9 +104,14 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         scheduleStatusPublisher();
     }
 
+    @EventListener(ContextClosedEvent.class)
+    void onContextClosed() {
+        shuttingDown = true;
+    }
+
     @Override
     public void onApplicationEvent(BrokerAvailabilityEvent event) {
-        if (stompBrokerRelayMessageHandler.isEmpty()) {
+        if (stompBrokerRelayMessageHandler.isEmpty() || shuttingDown) {
             return;
         }
 
@@ -170,7 +184,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
             log.warn("Starting websocket broker reconnect attempts because {}", reason);
             updateBrokerStatus(false);
             restartBrokerRelay();
-            reconnectTask = messageBrokerTaskScheduler.scheduleWithFixedDelay(this::restartBrokerRelay, Instant.now(), RECONNECT_INTERVAL);
+            reconnectTask.set(messageBrokerTaskScheduler.scheduleWithFixedDelay(this::restartBrokerRelay, Instant.now(), RECONNECT_INTERVAL));
         }
     }
 
@@ -220,9 +234,9 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     private void stopReconnectAttempts(String reason) {
         if (reconnectTaskRunning.getAndSet(false)) {
             log.info("Stopping websocket broker reconnect attempts because {}", reason);
-            if (reconnectTask != null) {
-                reconnectTask.cancel(false);
-                reconnectTask = null;
+            ScheduledFuture<?> task = reconnectTask.getAndSet(null);
+            if (task != null) {
+                task.cancel(false);
             }
         }
     }
@@ -232,11 +246,18 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         stopReconnectAttempts("application shutdown");
         if (brokerStatusMap != null) {
             if (lastPublishedMemberId != null) {
-                brokerStatusMap.remove(lastPublishedMemberId);
+                try {
+                    brokerStatusMap.remove(lastPublishedMemberId);
+                }
+                catch (RuntimeException e) {
+                    // The distributed data provider may already be shut down; its entries of this node are gone with it
+                    log.debug("Could not remove the websocket broker status of this node during shutdown: {}", e.getMessage());
+                }
             }
         }
-        if (statusPublishTask != null) {
-            statusPublishTask.cancel(false);
+        ScheduledFuture<?> publishTask = statusPublishTask.get();
+        if (publishTask != null) {
+            publishTask.cancel(false);
         }
     }
 
@@ -262,7 +283,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
      * eventually see an up-to-date value.
      */
     private void scheduleStatusPublisher() {
-        statusPublishTask = messageBrokerTaskScheduler.scheduleWithFixedDelay(() -> {
+        statusPublishTask.set(messageBrokerTaskScheduler.scheduleWithFixedDelay(() -> {
             try {
                 String currentMemberId = currentMemberId();
                 if (lastPublishedMemberId != null && !lastPublishedMemberId.equals(currentMemberId)) {
@@ -275,7 +296,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
             catch (Exception ex) {
                 log.debug("Failed to publish websocket broker status: {}", ex.getMessage());
             }
-        }, Instant.now().plusSeconds(5), STATUS_PUBLISH_INTERVAL);
+        }, Instant.now().plusSeconds(5), STATUS_PUBLISH_INTERVAL));
     }
 
     private String currentMemberId() {

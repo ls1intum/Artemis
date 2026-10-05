@@ -13,6 +13,9 @@ export enum IrisSender {
     USER = 'USER',
     ARTIFACT = 'ARTIFACT',
     CTXSWAP = 'CTXSWAP',
+    COMMAND = 'COMMAND',
+    /** A stored summary of the earlier conversation that Iris reads instead of the older messages. Never shown. */
+    SUMMARY = 'SUMMARY',
 }
 
 /** Kept as a class because it is used as a value (constructor) with the `as` pipe in templates; fields are populated from server data after construction, hence the definite-assignment (!) markers. */
@@ -56,4 +59,28 @@ export class IrisContextSwitchMessage implements BaseEntity {
     createdMemories?: never;
 }
 
-export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage | IrisContextSwitchMessage;
+/**
+ * A system-generated marker recording an action Iris performed on the client, such as pointing the
+ * student to a slide page / video timestamp in the combined view. Its content is JSON describing the
+ * action; the client renders it as a clickable navigation marker.
+ */
+export class IrisCommandMessage implements BaseEntity {
+    id?: number;
+    content!: IrisMessageContent[];
+    sentAt?: dayjs.Dayjs;
+    sender!: IrisSender.COMMAND;
+    accessedMemories?: MemirisMemory[];
+    createdMemories?: MemirisMemory[];
+}
+
+/** A stored summary of the earlier conversation. Iris reads it in place of the older messages; the client filters it out. */
+export interface IrisCompactionMessage extends BaseEntity {
+    id?: number;
+    content: IrisMessageContent[];
+    sentAt?: dayjs.Dayjs;
+    sender: IrisSender.SUMMARY;
+    accessedMemories?: never;
+    createdMemories?: never;
+}
+
+export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage | IrisContextSwitchMessage | IrisCommandMessage | IrisCompactionMessage;

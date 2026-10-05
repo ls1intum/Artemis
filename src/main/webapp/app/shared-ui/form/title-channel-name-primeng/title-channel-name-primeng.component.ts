@@ -29,6 +29,8 @@ export class TitleChannelNamePrimengComponent implements AfterViewInit, OnDestro
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     alreadyUsedTitles = input<Set<string>>(new Set());
+    /** Renders a * next to the title and channel-name labels. Opt-in so lectures and exams are unaffected. */
+    showRequiredMarker = input<boolean>(false);
 
     titleOnPageLoad = signal<string | undefined>(undefined);
 

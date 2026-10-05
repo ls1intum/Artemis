@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "iris_message_content")
@@ -36,6 +37,7 @@ public abstract class IrisMessageContent extends DomainObject {
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "message_id", nullable = false)
+    @Parent
     IrisMessage message;
 
     public IrisMessage getMessage() {

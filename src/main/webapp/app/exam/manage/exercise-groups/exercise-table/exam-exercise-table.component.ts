@@ -1,4 +1,4 @@
-import { TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,7 +36,7 @@ export interface ExamTableGroupChange {
     imports: [
         RouterLink,
         FaIconComponent,
-        TumUiTableDirective,
+        TumAetUiTableDirective,
         CdkDropList,
         CdkDrag,
         CdkDragHandle,

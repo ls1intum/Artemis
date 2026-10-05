@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
@@ -54,7 +57,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -106,6 +108,8 @@ public class ResultService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final GradingInstructionRepository gradingInstructionRepository;
+
     private final ComplaintRepository complaintRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
@@ -150,7 +154,8 @@ public class ResultService {
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
             Optional<ParticipantScoreScheduleService> participantScoreScheduleService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            ScaFeedbackRepository scaFeedbackRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
+            GradingInstructionRepository gradingInstructionRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.assessmentNoteRepository = assessmentNoteRepository;
@@ -159,6 +164,7 @@ public class ResultService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
         this.feedbackRepository = feedbackRepository;
+        this.gradingInstructionRepository = gradingInstructionRepository;
         this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
@@ -185,6 +191,7 @@ public class ResultService {
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean ratedResult) {
+        validateGradingInstructions(result.getFeedbacks(), result.getExerciseId());
         User user = userRepository.getUserWithAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -215,6 +222,21 @@ public class ResultService {
 
     public void createNewRatedManualResult(Result result) {
         createNewManualResult(result, true);
+    }
+
+    /**
+     * Rejects feedback referencing missing instructions or instructions from another exercise. Ownership is checked
+     * against the database, not against instruction data supplied by the caller. Call before any assessment writes.
+     *
+     * @param feedbacks  the new feedback
+     * @param exerciseId the trusted id of the exercise being assessed
+     */
+    public void validateGradingInstructions(Collection<Feedback> feedbacks, long exerciseId) {
+        Set<Long> instructionIds = feedbacks.stream().map(Feedback::getGradingInstruction).filter(Objects::nonNull).map(GradingInstruction::getId).collect(Collectors.toSet());
+        if (!instructionIds.isEmpty()
+                && (instructionIds.contains(null) || gradingInstructionRepository.countByIdInAndGradingCriterionExerciseId(instructionIds, exerciseId) != instructionIds.size())) {
+            throw new BadRequestAlertException("Every grading instruction must belong to the assessed exercise.", "feedback", "invalidGradingInstruction");
+        }
     }
 
     /**
@@ -366,7 +388,7 @@ public class ResultService {
      * @return the updated (and potentially saved) result
      */
     @NonNull
-    public Result addFeedbackToResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+    public Result addFeedbackToResult(@NonNull Result result, @NonNull List<Feedback> feedbackList, boolean shouldSave) {
         List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.addFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
@@ -567,26 +589,6 @@ public class ResultService {
     }
 
     /**
-     * Returns the result for the given id with authorization checks.
-     *
-     * @param participationId the id of the participation
-     * @param resultId        the id of the result
-     * @param role            the minimum role required to access the result
-     * @return the result
-     */
-    public Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
-        Result result = resultRepository.findByIdElseThrow(resultId);
-        Participation participation = result.getSubmission().getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
-                    "Participation", "400");
-        }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
-        return result;
-    }
-
-    /**
      * Get a map of result ids to the respective build job ids if build log files for this build job exist.
      *
      * @param participationId the participation id for which the results and build logs should be checked
@@ -612,7 +614,8 @@ public class ResultService {
     }
 
     @NonNull
-    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, List<Feedback> feedbackList) {
+    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, @NonNull List<Feedback> feedbackList) {
+        validateGradingInstructions(feedbackList, result.getExerciseId());
         List<Feedback> savedFeedbacks = new ArrayList<>();
 
         // Fetch long feedback texts associated with the provided feedback list
@@ -645,7 +648,13 @@ public class ResultService {
             }
             else {
                 LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-                feedback.setLongFeedbackText(Set.of(longFeedback));
+                if (longFeedback != null) {
+                    feedback.setLongFeedbackText(Set.of(longFeedback));
+                }
+                else {
+                    // the flag is stale: no long feedback text exists behind it
+                    feedback.setHasLongFeedbackText(false);
+                }
             }
         }
 
@@ -738,7 +747,7 @@ public class ResultService {
 
         // 9. Query the database based on groupFeedback attribute to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(Locale.ROOT), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
                 maxOccurrence, filterErrorCategories, pageable);
 
         List<FeedbackDetailDTO> processedDetails;
@@ -959,7 +968,7 @@ public class ResultService {
             entry.setValue(rounded);
         });
 
-        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
+        return new ResultWithPointsPerGradingCriterionDTO(ResultWithPointsPerGradingCriterionDTO.ResultForExportDTO.of(result), totalPoints, pointsPerCriterion);
     }
 
 }

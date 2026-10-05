@@ -10,6 +10,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
@@ -63,6 +65,10 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @MockitoSpyBean
     protected GitService gitServiceSpy;
 
+    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
+    @MockitoSpyBean
+    protected BareGitRepositoryService bareGitRepositoryServiceSpy;
+
     @Autowired
     protected LocalVCService versionControlService;
 
@@ -89,7 +95,8 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUri(URI localVCBaseUri) {
         this.localVCBaseUri = localVCBaseUri;
-        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
+        // Hand the factory this context's LocalVC URL, so exercises it builds for this test address this context's server.
+        ProgrammingExerciseFactory.setLocalVCBaseUri(localVCBaseUri);
     }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
@@ -98,8 +105,8 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, gitServiceSpy, programmingMessagingService, resultWebsocketService, examLiveEventsService, groupNotificationScheduleService,
-                continuousIntegrationTriggerService);
+        Mockito.reset(continuousIntegrationService, gitServiceSpy, bareGitRepositoryServiceSpy, programmingMessagingService, resultWebsocketService, examLiveEventsService,
+                groupNotificationScheduleService, continuousIntegrationTriggerService);
         super.resetSpyBeans();
     }
 
@@ -215,7 +222,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @Override
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
-        final var repoName = projectKey.toLowerCase() + "-" + username;
+        final var repoName = projectKey.toLowerCase(Locale.ROOT) + "-" + username;
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, repoName);
     }
 
@@ -339,7 +346,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
         planNames.add(TEMPLATE.getName());
         planNames.add(SOLUTION.getName());
         for (final String planName : planNames) {
-            jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
     }
 

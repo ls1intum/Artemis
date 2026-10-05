@@ -23,10 +23,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.service.AuditEventService;
 import de.tum.cit.aet.artemis.core.config.audit.AuditLogType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 
 /**
@@ -35,9 +36,10 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage(UserFeature.MONITORING)
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminAuditResource {
 
     private final AuditEventService auditEventService;

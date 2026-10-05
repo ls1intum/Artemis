@@ -4,11 +4,14 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * The class ist used to track the progress of a quiz question for a user.
  * The attributes are based on the SM-2 algorithm and the Leitner system.
  * <a href="https://supermemo.guru/wiki/SuperMemo_1.0_for_DOS_(1987)#Algorithm_SM-2">Resource for a quick lookup</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QuizQuestionProgressData {
 
     private double lastScore;
@@ -37,6 +40,7 @@ public class QuizQuestionProgressData {
 
     private List<Attempt> attempts;
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Attempt {
 
         private ZonedDateTime answeredAt;

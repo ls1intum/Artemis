@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import java.util.Locale;
+
 public enum RepositoryType {
 
     TEMPLATE("exercise"), SOLUTION("solution"), TESTS("tests"), AUXILIARY("auxiliary"), USER("user");
@@ -29,6 +31,6 @@ public enum RepositoryType {
      * @throws IllegalArgumentException if the name does not match any enum constant
      */
     public static RepositoryType fromString(String name) {
-        return RepositoryType.valueOf(name.toUpperCase());
+        return RepositoryType.valueOf(name.toUpperCase(Locale.ROOT));
     }
 }

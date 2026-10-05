@@ -28,10 +28,12 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ConsistencyErrorDTO;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
@@ -84,8 +86,11 @@ public class ConsistencyCheckTestService {
         course1 = courseUtil.addEmptyCourse();
         exercise1 = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course1);
 
-        // course2: The exercise gets created via the util, hence, no actual repositories get created
+        // course2: the exercise is only persisted, and its version control project is then removed from disk, so the tests below see an exercise whose repositories are
+        // genuinely missing. The fixture creates the repositories, so a test that wants them gone has to say so instead of relying on them never having existed.
         course2 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var exerciseWithoutRepositories = (ProgrammingExercise) course2.getExercises().iterator().next();
+        RepositoryExportTestUtil.deleteLocalVcProjectIfPresent(localVCBasePath, exerciseWithoutRepositories.getProjectKey());
 
         User user = userUtilService.createAndSaveUser("instructor1");
         userUtilService.enrollUserInCourse(user, course1, CourseRole.INSTRUCTOR);
@@ -112,7 +117,8 @@ public class ConsistencyCheckTestService {
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
 
-        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
+        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(exercise1, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
         var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise1.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).isEmpty();
@@ -146,7 +152,8 @@ public class ConsistencyCheckTestService {
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
 
-        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
+        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(exercise1, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
         submissionRepository.deleteAll(submissionRepository.findAllByParticipationId(exercise1.getTemplateParticipation().getId()));
         submissionRepository.deleteAll(submissionRepository.findAllByParticipationId(exercise1.getSolutionParticipation().getId()));
@@ -175,7 +182,8 @@ public class ConsistencyCheckTestService {
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
 
-        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
+        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(exercise1, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
         exercise1 = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise1.getId());
 
         // Delete the template repository from disk while keeping the (syntactically valid) URI in the database
@@ -199,7 +207,8 @@ public class ConsistencyCheckTestService {
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
 
-        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
+        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(exercise1, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
         exercise1 = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise1.getId());
 
         // Replace the template repository on disk with an empty directory: the path still exists, but it is no longer a valid git repository
@@ -215,11 +224,11 @@ public class ConsistencyCheckTestService {
     @NonNull
     private List<ConsistencyErrorDTO> getConsistencyErrorDTOS() {
         List<ConsistencyErrorDTO> expectedErrors = new ArrayList<>();
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
         return expectedErrors;
     }
 
@@ -237,9 +246,9 @@ public class ConsistencyCheckTestService {
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), false, false);
 
         List<ConsistencyErrorDTO> expectedErrors = new ArrayList<>();
-        expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise), ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise), ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise), ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
 
         var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).hasSize(3);

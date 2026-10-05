@@ -11,8 +11,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { UIChart } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiChartTooltipConfig, TumAetUiDoughnutChartComponent } from '@tumaet/ui-angular';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
@@ -33,7 +33,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
             ],
         }).overrideComponent(CourseDetailDoughnutChartComponent, {
             set: {
-                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockComponent(UIChart), MockPipe(ArtemisTranslatePipe)],
+                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), TumAetUiDoughnutChartComponent],
             },
         });
         await TestBed.compileComponents();
@@ -53,6 +53,29 @@ describe('CourseDetailDoughnutChartComponent', () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });
+
+    it.each([DoughnutChartType.CURRENT_LLM_COST, DoughnutChartType.AVERAGE_EXERCISE_SCORE, DoughnutChartType.ASSESSMENT])(
+        'only enables chart navigation when a destination exists (%s)',
+        (contentType) => {
+            componentRef.setInput('contentType', contentType);
+            fixture.detectChanges();
+            const active = !!component.titleLink();
+            const chart = fixture.nativeElement.querySelector('.doughnut-chart-container') as HTMLElement;
+            const navigate = vi.spyOn(component, 'openCorrespondingPage').mockImplementation(() => {});
+            expect(chart.getAttribute('role')).toBe(active ? 'button' : null);
+            expect(chart.tabIndex).toBe(active ? 0 : -1);
+            for (const repeat of [false, true]) {
+                const event = new KeyboardEvent('keydown', { key: ' ', repeat, bubbles: true, cancelable: true });
+                chart.dispatchEvent(event);
+                expect(event.defaultPrevented).toBe(active);
+            }
+            expect(navigate).not.toHaveBeenCalled();
+            chart.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            expect(navigate).toHaveBeenCalledTimes(active ? 1 : 0);
+            chart.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(navigate).toHaveBeenCalledTimes(active ? 2 : 0);
+        },
+    );
 
     it('should initialize', () => {
         fixture.detectChanges();
@@ -105,8 +128,8 @@ describe('CourseDetailDoughnutChartComponent', () => {
 
     it('should show only the value in the tooltip body', () => {
         fixture.detectChanges();
-        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+        const tooltip = component.chartConfig().tooltip as TumAetUiChartTooltipConfig;
 
-        expect(callbacks.label({ parsed: 20 })).toBe('20');
+        expect(tooltip.label!({ seriesIndex: 0, index: 0, label: 'Done', value: 20 })).toBe('20');
     });
 });

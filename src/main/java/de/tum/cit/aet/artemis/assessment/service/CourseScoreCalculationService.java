@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -47,7 +48,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
@@ -73,21 +73,18 @@ public class CourseScoreCalculationService {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
     private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
 
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
             Optional<PlagiarismCaseApi> plagiarismCaseApi, PresentationPointsCalculationService presentationPointsCalculationService,
-            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, Optional<IrisSettingsApi> irisSettingsApi) {
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
-        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -255,17 +252,16 @@ public class CourseScoreCalculationService {
      * Get all the items needed for the CourseForDashboardDTO.
      * This includes scoresPerExerciseType and participationResults.
      *
-     * @param course                     the course to calculate the items for.
-     * @param gradingScale               the grading scale with the presentation configuration to use for calculating the presentation points.
-     * @param userId                     the id of the students whose scores in the course will be calculated.
-     * @param includeIrisEnabledInCourse whether the enabled state of Iris in this course should be included in the CourseForDashboardDTO
+     * @param course       the course to calculate the items for.
+     * @param gradingScale the grading scale with the presentation configuration to use for calculating the presentation points.
+     * @param userId       the id of the students whose scores in the course will be calculated.
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId, boolean includeIrisEnabledInCourse) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId) {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
-            // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
+            // This method is used in the CourseOverviewResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
             // CourseService and added to the course if found.
             // If no participations are found for the course, no value is set to the course's participations and trying to access them here would throw a
             // LazyInitializationException. This is why we first need to check if the participations are initialized before adding them to the list of participations.
@@ -287,8 +283,7 @@ public class CourseScoreCalculationService {
 
         List<PlagiarismCase> plagiarismCases = new ArrayList<>();
         for (Exercise exercise : courseExercises) {
-            // TODO: Look into refactoring the fetchPlagiarismCasesForCourseExercises method in the CourseService to always initialize the participations (to an
-            // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
+            // TODO: implement this differently
             if (Hibernate.isInitialized(exercise.getPlagiarismCases())) {
                 plagiarismCases.addAll(exercise.getPlagiarismCases());
             }
@@ -318,10 +313,10 @@ public class CourseScoreCalculationService {
             studentParticipation.setExercise(null);
         }
 
-        return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
-                scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
-                includeIrisEnabledInCourse ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null, achievedPointsPerVariantGroup);
+        return new CourseForDashboardDTO(CourseDashboardDTO.of(course), totalScores, scoresPerExerciseType.get(ExerciseType.TEXT),
+                scoresPerExerciseType.get(ExerciseType.PROGRAMMING), scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD),
+                scoresPerExerciseType.get(ExerciseType.QUIZ), participationResults,
+                userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()), achievedPointsPerVariantGroup);
     }
 
     /**

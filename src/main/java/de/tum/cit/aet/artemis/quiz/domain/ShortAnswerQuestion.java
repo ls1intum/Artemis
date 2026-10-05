@@ -10,7 +10,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -81,7 +80,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
 
     /**
      * Mint a fresh, question-scoped id for any spot or solution added without one (e.g. via {@code getSpots().add(...)} / {@code getSolutions().add(...)}, which bypass
-     * {@link #addSpot} / {@link #addSolution}). Called before persisting so the statistics counters (keyed by spot id) and the stored JSON content stay id-consistent.
+     * {@link #addSpot} / {@link #addSolution}). Called before persisting so stored question content and submitted-answer selections use stable ids.
      */
     public void assignMissingComponentIds() {
         assignMissingComponentIds(getSpots());
@@ -349,22 +348,10 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
 
     @Override
-    @JsonIgnore
-    public void initializeStatistic() {
-        setQuizQuestionStatistic(new ShortAnswerQuestionStatistic());
-    }
-
-    @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
         saContent().setCorrectMappings(new ArrayList<>());
         saContent().setSolutions(new ArrayList<>());
-    }
-
-    @Override
-    public void filterForStatisticWebsocket() {
-        super.filterForStatisticWebsocket();
-        saContent().setCorrectMappings(new ArrayList<>());
     }
 
     /**

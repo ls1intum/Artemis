@@ -12,9 +12,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -30,13 +31,13 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
     }
 
-    private Course updateCourse(Course courseToUpdate) throws Exception {
-        ObjectMapper mapper = request.getObjectMapper();
+    private CourseManagementDTO updateCourse(Course courseToUpdate) throws Exception {
+        JsonMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
-        return mapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        return mapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
     }
 
     @Test
@@ -54,9 +55,9 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     void updateCourse_setOnboardingDoneTrue_shouldPersist() throws Exception {
         course.setOnboardingDone(true);
 
-        Course updatedCourse = updateCourse(course);
+        CourseManagementDTO updated = updateCourse(course);
 
-        assertThat(updatedCourse.isOnboardingDone()).isTrue();
+        assertThat(updated.onboardingDone()).isTrue();
 
         // Verify from the database
         Course fromDb = courseRepository.findByIdElseThrow(course.getId());
@@ -68,15 +69,15 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     void updateCourse_onboardingDoneTrue_cannotBeResetToFalse() throws Exception {
         // First, set onboardingDone to true
         course.setOnboardingDone(true);
-        Course updatedCourse = updateCourse(course);
-        assertThat(updatedCourse.isOnboardingDone()).isTrue();
+        CourseManagementDTO updated = updateCourse(course);
+        assertThat(updated.onboardingDone()).isTrue();
 
         // Now try to reset onboardingDone to false via the update endpoint
-        updatedCourse.setOnboardingDone(false);
-        Course secondUpdate = updateCourse(updatedCourse);
+        course.setOnboardingDone(false);
+        CourseManagementDTO secondUpdate = updateCourse(course);
 
         // The protection logic should prevent the reset
-        assertThat(secondUpdate.isOnboardingDone()).isTrue();
+        assertThat(secondUpdate.onboardingDone()).isTrue();
 
         // Verify from the database that the value is still true
         Course fromDb = courseRepository.findByIdElseThrow(course.getId());
@@ -91,9 +92,9 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
 
         // Update the course with onboardingDone = true
         course.setOnboardingDone(true);
-        Course updatedCourse = updateCourse(course);
+        CourseManagementDTO updated = updateCourse(course);
 
-        assertThat(updatedCourse.isOnboardingDone()).isTrue();
+        assertThat(updated.onboardingDone()).isTrue();
     }
 
     @Test
@@ -101,9 +102,9 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     void updateCourse_onboardingDoneFalse_staysFalseIfNotChanged() throws Exception {
         // Update the course without changing onboardingDone (remains false by default)
         course.setDescription("Updated description");
-        Course updatedCourse = updateCourse(course);
+        CourseManagementDTO updated = updateCourse(course);
 
-        assertThat(updatedCourse.isOnboardingDone()).isFalse();
+        assertThat(updated.onboardingDone()).isFalse();
 
         Course fromDb = courseRepository.findByIdElseThrow(course.getId());
         assertThat(fromDb.isOnboardingDone()).isFalse();
@@ -114,14 +115,14 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     void updateCourse_onboardingDoneTrue_preservedOnUnrelatedUpdate() throws Exception {
         // Set onboardingDone to true
         course.setOnboardingDone(true);
-        Course updatedCourse = updateCourse(course);
-        assertThat(updatedCourse.isOnboardingDone()).isTrue();
+        CourseManagementDTO updated = updateCourse(course);
+        assertThat(updated.onboardingDone()).isTrue();
 
         // Perform an unrelated update (e.g., change description) with onboardingDone still set to true
-        updatedCourse.setDescription("New description after onboarding");
-        Course secondUpdate = updateCourse(updatedCourse);
+        course.setDescription("New description after onboarding");
+        CourseManagementDTO secondUpdate = updateCourse(course);
 
-        assertThat(secondUpdate.isOnboardingDone()).isTrue();
-        assertThat(secondUpdate.getDescription()).isEqualTo("New description after onboarding");
+        assertThat(secondUpdate.onboardingDone()).isTrue();
+        assertThat(secondUpdate.description()).isEqualTo("New description after onboarding");
     }
 }

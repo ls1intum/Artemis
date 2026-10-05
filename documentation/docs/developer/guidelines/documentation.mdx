@@ -1,0 +1,296 @@
+---
+id: documentation
+title: Writing Documentation
+sidebar_label: Documentation
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+This page is about the documentation site itself: where a page belongs, how to structure it, how to name what the
+reader sees on screen, and how to keep screenshots and screencasts from going stale. It applies to every page under
+`documentation/docs/`, whichever audience it is written for.
+
+Each rule below states why it exists. Most of them exist because the opposite was tried first and broke something.
+
+<Callout variant={CalloutVariant.info}>
+
+  Two neighbouring guidelines cover the words rather than the page, and both apply here:
+  [Terminology](/developer/guidelines/terminology) for naming components precisely, and
+  [Language](/developer/guidelines/language) for inclusive, diversity-sensitive and appreciative language.
+
+</Callout>
+
+## Where a page belongs
+
+Documentation lives under `documentation/docs/`, split by audience: `admin/`, `instructor/`, `student/`,
+`developer/`, `about/`. Write for the audience of the folder. An instructor page explains what an instructor
+configures; a student page explains what a student sees and does. When both need to know about the same feature,
+write two pages and link them, rather than one page that describes the other side's screens.
+
+A new page is only reachable once it is listed in the matching `documentation/sidebar-*.ts`. Add it there and link
+it from the related pages in the same change.
+
+Screenshots and diagrams go into the nearest `assets/` directory, in a subdirectory named after the page or the
+feature. Do not copy an asset into a second audience's tree so that a second page can use it — either the two pages
+should link to each other, or one of them should not be showing that screen at all.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Do not commit design documents, specifications, plans or scratch notes. Working notes belong in the pull request
+  description or the issue. What is worth keeping becomes a proper page here, for a named audience.
+
+</Callout>
+
+## Frontmatter and the page title
+
+Every page carries three frontmatter keys, and **no H1 of its own**:
+
+```yaml
+---
+id: exam-timeline
+title: Timeline of an Artemis Online Exam
+sidebar_label: Exam Timeline
+---
+```
+
+- **`id`** is what the sidebar file and other pages refer to. Keep it equal to the filename without its extension.
+- **`title`** is the browser tab title, the on-page heading, the search result heading, and the name the page is
+  known by.
+- **`sidebar_label`** is the entry in the navigation tree. It is usually shorter than the title, because the sidebar
+  is narrow and the surrounding category already supplies context.
+
+**Do not write an H1 in the body.** Docusaurus renders one from `title` whenever the body has no top-level heading
+of its own: `DocItemContent` in `@docusaurus/theme-classic` synthesises the heading when `contentTitle` is
+undefined. Writing the title once means it cannot drift out of sync with the tab, the sidebar entry and the search
+result — which is exactly what happens when the same page states it twice.
+
+The body therefore opens with its first paragraph, below any component imports. Every heading you write in the body
+is an H2 or deeper. Two `<h1>` elements on one page break the document outline that screen readers and search
+engines rely on, and a body H1 next to a frontmatter title is the way that happens by accident.
+
+## Headings and anchors
+
+**A heading's anchor is derived from its text.** `## Configure Grading` becomes `#configure-grading`. Two
+consequences follow.
+
+**Do not number headings manually.** `## 1. Creation and Configuration` produces the anchor
+`#1-creation-and-configuration`, and `### 1.6 Manage Student Exams` produces `#16-manage-student-exams`. Every link
+to that section then encodes a section number, so inserting one section silently redirects a dozen links to the
+wrong place — silently, because the anchors stay syntactically valid and the build cannot tell that the meaning
+moved. Let the heading say what the section is about and let the sidebar supply the ordering. Numbered *steps*
+belong in an ordered list, not in headings.
+
+**To pin an anchor, put it in an MDX comment.** Sometimes a heading needs an id its own text would not produce —
+keeping an inbound link alive after a rewrite, most often. The documented Docusaurus form, `{#custom-id}`, cannot be
+used here: MDX reads the braces as a JSX expression and the build fails with `Could not parse expression with
+acorn`. Wrapping it in a comment works, and is what this repository already does:
+
+```markdown
+### Naming Conventions for GitHub Pull Requests {/* #pr-naming-conventions */}
+```
+
+That renders as `<h3 id="pr-naming-conventions">Naming Conventions for GitHub Pull Requests</h3>`. Use it to
+preserve an existing anchor, not to invent a shorter one — a heading whose id has nothing to do with its text is
+hard to find again.
+
+Two further rules:
+
+- Do not skip heading levels. The body starts at H2, so an H4 directly under an H2 leaves a hole in the outline.
+- Keep heading text unique within a page. Repeated text produces `#the-heading` and `#the-heading-1`, and neither
+  link tells the reader which one it goes to. Nesting a heading inside an identically named parent is the common
+  version of this mistake.
+
+## Naming what the reader sees
+
+**Write the name of a control in bold, exactly as the interface spells it.**
+
+> Check **Enable manual assessment**, then set the **Release Date of Results**.
+
+Do not put control names in backticks. Backticks mean code, so `` `Generate individual exams` `` reads as an
+identifier rather than a button, and a reader looking for that string in the interface does not know whether the
+capitalisation is real.
+
+Backticks are for what actually is code: file and directory paths, class and method names, configuration keys,
+commands, and literal values a reader types or a build produces.
+
+**The translation file is the authority for a label, not your memory of the screen.** Before naming a control, check
+it in `src/main/webapp/i18n/en/*.json`. Labels get reworded, and documentation that names a control the interface no
+longer has costs a reader more time than no documentation at all. The same check applies to whether a control exists
+at all: several fields are hidden depending on configuration — anything gated on `isLocalCIEnabled`, for example,
+does not appear on an instance running Integrated Code Lifecycle — so say which setup a control belongs to.
+
+Do not leak internal vocabulary into instructor and student pages. Students have no concept named "VC server" or
+"build plan"; they have repositories and builds. Naming a component precisely is a separate obligation that applies
+to every page — see [Terminology](/developer/guidelines/terminology).
+
+## Screenshots
+
+Use the `Image` component rather than a raw `<img>` tag, so that every figure gets the same frame, sizing and
+caption treatment:
+
+```mdx
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import configureGrading from './assets/exams/configure-grading.png';
+
+<Image src={configureGrading} alt="Configure Grading page" size={ImageSize.large}
+       caption="Test case configuration on the Configure Grading page" />
+```
+
+The number of `../` segments depends on how deep the page sits, so copy the import from a neighbouring page in the
+same directory rather than from here.
+
+**Crop to the subject.** A figure about one panel should show that panel, not the whole browser window with the
+navigation bar and the course sidebar around it. The chrome adds pixels, dates the screenshot faster than its
+content does, and pushes the thing being explained down to a corner. Capture the element rather than cropping by
+pixel coordinates where you can — pixel crops cut off text as soon as anything reflows.
+
+**Do not photograph a button.** A cropped picture of a labelled control, embedded inline in a sentence, has to be
+recaptured on every restyle, is invisible to the site's search index, carries a light background into dark mode, and
+tells a reader less than the label written in bold does. Write the label instead.
+
+The `inline` prop on `Image` exists for the genuine case: an icon that carries no text of its own, such as the hint
+icon next to a form field. A control that has a name is named.
+
+**Capture with realistic data.** A screenshot of an empty table, a course called `test`, or a student named
+`student1` teaches the reader nothing about what they will see. Populate the local instance with plausible course,
+exercise and participant data first. An older screenshot with real content in it is worth more than a fresh one that
+is empty — if a recapture would come out emptier than what is already there, leave the old one and note why.
+
+**Retire what you replace.** When a screenshot stops being referenced, delete the file. Unreferenced assets
+accumulate invisibly; they are never noticed until someone measures.
+
+## Screencasts
+
+Embed TUM-Live recordings with the `TumLiveVideo` component, passing the **bare recording id**:
+
+```mdx
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+
+<TumLiveVideo src="67223" title="Quiz Training Mode Tutorial" height={400} />
+```
+
+The component turns a bare id into `https://tum.live/w/artemisintro/<id>/PRES` and passes a full URL through
+unchanged. Prefer the bare id: it is the short form, it is what the component's own documentation shows, and it does
+not pin the page to a hostname.
+
+The suffix names a view — `PRES` for the presentation, `CAM` for the camera, `COMB` for the two combined. It makes
+no difference to any recording the Artemis documentation embeds, because each of those is published with a combined
+view only and TUM-Live serves what exists. Do not read that as a reason to trust a URL you have not opened: the
+site answers HTTP 200 for any recording id and any suffix, invented ones included, so a status code says nothing
+about whether either is real.
+
+To find out how old a screencast is, open its TUM-Live page — the recording date and time sit under the title. The
+manifest the page loads carries the same date in its filename, `artemisintro_2026_04_13_10_00COMB.mp4`, which is
+the more convenient form when checking many recordings at once.
+
+**A stale screencast is worse than none.** A reader who follows a video through an interface that no longer looks
+like that loses the time twice: once watching, once working out which parts still apply. When a recording no longer
+matches the product, re-record it or remove the embed. Do not leave it in place next to screenshots that contradict
+it.
+
+## Callouts, tables and separators
+
+Use the `Callout` component for anything set apart from the flow, with the variant that matches the message —
+`info`, `tip`, `success`, `warning` or `danger`:
+
+```mdx
+<Callout variant={CalloutVariant.warning}>
+
+  Checkout paths can only be changed while the exercise is being created.
+
+</Callout>
+```
+
+Reserve `warning` and `danger` for consequences a reader cannot undo. A page where every third paragraph is a
+warning has no warnings.
+
+Use a table when the reader is comparing values across a fixed set of things — languages against supported
+features, settings against their effects. Markdown tables are enough for that. Reach for raw `<table>` markup only
+when you need `rowSpan` or `colSpan`, which Markdown cannot express.
+
+Do not separate sections with `---` horizontal rules. Headings already separate sections, and the rules add a second
+inconsistent visual rhythm on top of them.
+
+## Prose over bullet lists
+
+A bullet list is for things that genuinely are a list: options, steps, requirements, alternatives. It is not a way
+to avoid writing sentences. Three bullets that are three sentences of one argument read worse than the paragraph,
+because the reader has to reconstruct the connection between them that the bullets threw away.
+
+Write in the present tense, describing what the reader sees and does. Do not reference pull requests, issues or
+commits, and do not describe a feature relative to a previous release — the reader is looking at the version that is
+deployed, not at a changelog.
+
+## Links
+
+**Link across sections and audiences with an absolute site path:**
+
+```mdx
+See [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle).
+```
+
+Relative links resolve against the page's own directory, so they break the moment a page moves into a
+subdirectory — `../assessment-grading/plagiarism-check` starts pointing one level too deep and the build fails.
+Relative links between two pages in the same directory are fine and are the exception.
+
+`onBrokenLinks`, `onBrokenAnchors` and `onBrokenMarkdownLinks` are all set to `throw`, so the build catches a link
+to a page or an anchor that does not exist. It cannot catch two things: a link whose target moved but whose anchor
+still resolves somewhere (see the numbering rule above), and a placeholder `](#)`, which is syntactically a valid
+link to the top of the page. Do not leave placeholders behind.
+
+When a feature has both an instructor and a student page, link each from the other. An instructor deciding how to
+configure something needs to see what the student will get, and a student reading about a limit needs to know who
+sets it.
+
+## Page size and landing pages
+
+Once a page passes roughly 300 lines, check whether it is still about one thing. A long reference page — a table of
+supported languages, a catalogue of analysis rules — is fine at any length, because a reader arrives looking up one
+row. A long *task* page is not, because a reader arrives with one task and has to scroll past five others.
+
+Split the second kind into a category: a landing page at the original URL, and focused pages beneath it. Splitting
+later is more expensive than it looks, because every inbound link and in-product help URL has to keep resolving —
+so check the anchors before moving text, not after.
+
+A category landing page opens with one or two sentences saying what the area is for, followed by a table of the
+pages beneath it:
+
+```markdown
+| Page | Description |
+|------|-------------|
+| [Create an Exercise](/instructor/exercises/programming-exercise/create-an-exercise) | The creation form field by field, simple and advanced mode, and import |
+| [Write Code and Tests](/instructor/exercises/programming-exercise/write-code-and-tests) | Repositories, the problem statement, and the supported test frameworks |
+```
+
+The description says what the reader will find, not what the page is called again.
+
+## Checking your work
+
+Build the site before opening a pull request:
+
+```bash
+cd documentation
+pnpm install --frozen-lockfile
+pnpm run build
+```
+
+The build is the only check for broken links and anchors, and it is strict: a single bad link fails it. Run
+`pnpm run start` while writing to preview a page, but run the full build before pushing — `start` tolerates things
+`build` rejects.
+
+The terminology check runs over documentation too, and it only sees tracked files, so stage a new page before
+running it:
+
+```bash
+git add documentation/docs/<audience>/<your-page>.mdx
+python3 supporting_scripts/check_terminology.py
+```
+
+## Related
+
+* [Terminology](/developer/guidelines/terminology) — naming components instead of layers, and the check that
+  enforces it.
+* [Language](/developer/guidelines/language) — inclusive, diversity-sensitive and appreciative language.
+* [Work with AI](/developer/work-with-ai) — how the agent skills in `skills/` relate to these guidelines, and which
+  ones to update when a convention changes.

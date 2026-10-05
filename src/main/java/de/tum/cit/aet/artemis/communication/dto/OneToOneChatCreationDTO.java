@@ -1,15 +1,14 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
-import java.io.IOException;
-
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Request body for creating a one-to-one chat. A one-to-one chat always has exactly one other participant, identified by exactly one of {@code userId} or {@code login}.
@@ -27,10 +26,10 @@ public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String lo
     /**
      * Accepts both the canonical object form ({@code {"userId": 1}} or {@code {"login": "ab12cde"}}) and the deprecated single-login array form ({@code ["ab12cde"]}).
      */
-    static class OneToOneChatCreationDeserializer extends JsonDeserializer<OneToOneChatCreationDTO> {
+    static class OneToOneChatCreationDeserializer extends ValueDeserializer<OneToOneChatCreationDTO> {
 
         @Override
-        public OneToOneChatCreationDTO deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+        public OneToOneChatCreationDTO deserialize(JsonParser parser, DeserializationContext context) {
             JsonNode node = parser.readValueAsTree();
             if (node.isArray()) {
                 // Deprecated legacy format: a single-element array of the partner login.
@@ -38,7 +37,9 @@ public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String lo
                     // Reported as an input mismatch so Spring maps it to 400 Bad Request (not 500).
                     return context.reportInputMismatch(OneToOneChatCreationDTO.class, "A one-to-one chat must specify exactly one partner login, but got %d", node.size());
                 }
-                return new OneToOneChatCreationDTO(null, node.get(0).asText());
+                // asString(null) on a client-supplied array: Jackson 3 throws on a non-string element where Jackson 2's
+                // asText() returned "".
+                return new OneToOneChatCreationDTO(null, node.get(0).asString(null));
             }
             Long userId = null;
             if (node.hasNonNull("userId")) {
@@ -46,11 +47,11 @@ public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String lo
                 // Require an integral JSON number in long range. isIntegralNumber() rejects fractional nodes (e.g. 1.9) that canConvertToLong() would accept and asLong()
                 // would silently truncate to a different id; reported as an input mismatch so Spring maps it to 400 Bad Request (asLong() would otherwise coerce "abc" to 0L).
                 if (!userIdNode.isIntegralNumber() || !userIdNode.canConvertToLong()) {
-                    return context.reportInputMismatch(OneToOneChatCreationDTO.class, "userId must be an integer id, but got: %s", userIdNode.asText());
+                    return context.reportInputMismatch(OneToOneChatCreationDTO.class, "userId must be an integer id, but got: %s", userIdNode.asString());
                 }
                 userId = userIdNode.asLong();
             }
-            String login = node.hasNonNull("login") ? node.get("login").asText() : null;
+            String login = node.hasNonNull("login") ? node.get("login").asString() : null;
             return new OneToOneChatCreationDTO(userId, login);
         }
     }

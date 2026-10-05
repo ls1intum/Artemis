@@ -38,8 +38,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -76,6 +76,9 @@ public class ProblemStatementRenderingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
+    /** The fixed pixel size PlantUML writes into a rendered diagram, which is dropped so the diagram scales. */
+    private static final Pattern FIXED_SVG_SIZE = Pattern.compile("style=\"width:\\d+px;height:\\d+px;");
+
     private static final String RENDERER_VERSION = "1.0.0";
 
     /**
@@ -98,9 +101,9 @@ public class ProblemStatementRenderingService {
 
     private static final int MAX_INLINE_IMAGES = 20;
 
-    private static final long MAX_INLINE_FILE_SIZE = 5 * 1024 * 1024;
+    private static final long MAX_INLINE_FILE_SIZE = 5L * 1024 * 1024;
 
-    private static final long MAX_INLINE_TOTAL_SIZE = 10 * 1024 * 1024;
+    private static final long MAX_INLINE_TOTAL_SIZE = 10L * 1024 * 1024;
 
     private static final String MARKDOWN_FILE_API_PATH = "/api/core/files/markdown/";
 
@@ -151,7 +154,7 @@ public class ProblemStatementRenderingService {
 
     private final PlantUmlService plantUmlService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final MessageSource messageSource;
 
@@ -161,7 +164,7 @@ public class ProblemStatementRenderingService {
 
     private final HtmlRenderer commonMarkRenderer;
 
-    public ProblemStatementRenderingService(PlantUmlService plantUmlService, ObjectMapper objectMapper, MessageSource messageSource, FileService fileService,
+    public ProblemStatementRenderingService(PlantUmlService plantUmlService, JsonMapper objectMapper, MessageSource messageSource, FileService fileService,
             @Value("${server.url}") String serverUrl) {
         this.plantUmlService = plantUmlService;
         this.objectMapper = objectMapper;
@@ -169,7 +172,7 @@ public class ProblemStatementRenderingService {
         this.fileService = fileService;
         this.serverUrl = serverUrl;
         this.commonMarkRenderer = HtmlRenderer.builder().extensions(COMMONMARK_EXTENSIONS)
-                .attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
+                .attributeProviderFactory(_ -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
     }
 
     /**
@@ -295,7 +298,7 @@ public class ProblemStatementRenderingService {
             try {
                 String rawSvg = plantUmlService.generateSvg(resolvedSource, darkMode);
                 rawSvg = rawSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
-                rawSvg = rawSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
+                rawSvg = FIXED_SVG_SIZE.matcher(rawSvg).replaceFirst("style=\"");
                 rawSvg = rawSvg.replace("background:#FFFFFF;", "");
                 String sanitized = SvgSanitizer.sanitize(rawSvg);
                 inlineSvg = sanitized != null ? sanitized : "<div class=\"alert alert-danger\">Failed to render diagram</div>";
@@ -411,7 +414,7 @@ public class ProblemStatementRenderingService {
         try {
             return HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(feedbackList));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Failed to serialize feedback JSON", e);
             return "[]";
         }
@@ -424,7 +427,7 @@ public class ProblemStatementRenderingService {
         try {
             return " data-result=\"" + HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(resultSummary)) + "\"";
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Failed to serialize result summary JSON", e);
             return "";
         }
@@ -670,7 +673,7 @@ public class ProblemStatementRenderingService {
             String json = objectMapper.writeValueAsString(i18n).replace("</", "<\\/");
             return "var __i18n = " + json + ";\n" + INTERACTIVE_JS;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Failed to serialize i18n JSON for interactive script", e);
             return INTERACTIVE_JS;
         }

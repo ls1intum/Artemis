@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -59,7 +61,7 @@ class IrisChatSessionServicePartialUpdateTest {
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class), mock(IrisRateLimitService.class),
                 JsonObjectMapper.get(), mock(ExerciseRepository.class), mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
                 mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), mock(PyrisJobService.class),
-                mock(UserAiPreferenceService.class));
+                mock(UserAiPreferenceService.class), new IrisProactiveProperties());
     }
 
     @Test
@@ -69,11 +71,11 @@ class IrisChatSessionServicePartialUpdateTest {
         var session = new IrisChatSession();
         session.setId(2L);
         session.setUserId(5L);
-        when(irisSessionRepository.findByIdElseThrow(2L)).thenReturn(session);
+        when(irisSessionRepository.findById(2L)).thenReturn(Optional.of(session));
 
-        irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+        assertThat(irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate)).isTrue();
 
-        verify(irisSessionRepository).findByIdElseThrow(2L);
+        verify(irisSessionRepository).findById(2L);
         verify(irisChatWebsocketService).sendPartialUpdate(session, "partial", 4, "run-1");
         verifyNoInteractions(irisMessageService, irisMessageRepository);
     }

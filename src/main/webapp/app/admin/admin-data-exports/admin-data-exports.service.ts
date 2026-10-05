@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AdminDataExport, DataExport } from 'app/admin/admin-data-exports/data-export.model';
@@ -17,7 +17,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
  *
  * All operations require admin privileges and are protected by @EnforceAdmin on the server.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AdminDataExportsService {
     private http = inject(HttpClient);
 

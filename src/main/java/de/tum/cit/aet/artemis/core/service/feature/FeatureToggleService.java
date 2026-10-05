@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.feature;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.web.CoreWebsocketTopics.FEATURE_TOGGLES;
 
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,6 @@ public class FeatureToggleService {
 
     private static final Logger log = LoggerFactory.getLogger(FeatureToggleService.class);
 
-    private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/feature-toggles";
-
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
 
@@ -35,6 +34,16 @@ public class FeatureToggleService {
     private boolean lectureContentProcessingEnabledOnStart;
 
     private final boolean globalSearchEnabledOnStart;
+
+    // The reconcile passes have their own static config (artemis.weaviate.reconcile.*) precisely because their
+    // numeric tuning (batch sizes, the outbox depth limit) still needs a deliberate, restart-time decision — see
+    // WeaviateReconcileProperties. These two booleans exist only to seed the runtime toggle's very first value, the
+    // same role globalSearchEnabledOnStart plays for Feature.GlobalSearch; from then on the toggle is the live,
+    // restart-free switch. missing and drift share one toggle because neither deletes; orphan stays separate
+    // because it does.
+    private final boolean globalSearchReconcileEnabledOnStart;
+
+    private final boolean globalSearchReconcileOrphanEnabledOnStart;
 
     private final RateLimitConfigurationService rateLimitConfigurationService;
 
@@ -47,12 +56,19 @@ public class FeatureToggleService {
     private DistributedMap<Feature, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, DistributedDataProvider distributedDataProvider, ProfileService profileService,
-            RateLimitConfigurationService rateLimitConfigurationService, @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart) {
+            RateLimitConfigurationService rateLimitConfigurationService, @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.missing-sweep-enabled:true}") boolean missingSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.drift-sweep-enabled:true}") boolean driftSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.orphan-sweep-enabled:false}") boolean orphanSweepEnabledOnStart) {
         this.websocketMessagingService = websocketMessagingService;
         this.distributedDataProvider = distributedDataProvider;
         this.profileService = profileService;
         this.rateLimitConfigurationService = rateLimitConfigurationService;
         this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
+        // A single combined toggle can't honor two conflicting YAML values, so an asymmetric seed (one true, one
+        // false) resolves to off rather than guessing which pass the operator actually meant to enable.
+        this.globalSearchReconcileEnabledOnStart = missingSweepEnabledOnStart && driftSweepEnabledOnStart;
+        this.globalSearchReconcileOrphanEnabledOnStart = orphanSweepEnabledOnStart;
     }
 
     private Optional<DistributedMap<Feature, Boolean>> getFeatures() {
@@ -88,11 +104,13 @@ public class FeatureToggleService {
         features = distributedDataProvider.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, GlobalSearch, and AutonomousTutor) are
-        // enabled once the system starts up
+        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, GlobalSearch, AutonomousTutor, and Deimos) are enabled once
+        // the
+        // system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
-                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor) {
+                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
+                    && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile && feature != Feature.GlobalSearchReconcileOrphan) {
                 features.put(feature, true);
             }
         }
@@ -121,8 +139,20 @@ public class FeatureToggleService {
             features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
         }
 
+        if (!features.containsKey(Feature.GlobalSearchReconcile)) {
+            features.put(Feature.GlobalSearchReconcile, globalSearchReconcileEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.GlobalSearchReconcileOrphan)) {
+            features.put(Feature.GlobalSearchReconcileOrphan, globalSearchReconcileOrphanEnabledOnStart);
+        }
+
         if (!features.containsKey(Feature.AutonomousTutor)) {
             features.put(Feature.AutonomousTutor, false);
+        }
+
+        if (!features.containsKey(Feature.Deimos)) {
+            features.put(Feature.Deimos, false);
         }
 
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
@@ -175,7 +205,7 @@ public class FeatureToggleService {
     private void sendUpdate() {
         try {
             if (isDistributedDataAvailable()) {
-                websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures());
+                websocketMessagingService.sendMessage(FEATURE_TOGGLES.at(), enabledFeatures());
             }
         }
         catch (RuntimeException e) {

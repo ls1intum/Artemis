@@ -1,22 +1,16 @@
-import { Locator, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
-import { enterDate, fillDateTimePicker, setMonacoEditorContent } from '../../utils';
-
-const VISIBLE_DATE_PICKER_INDEX = 0;
-const START_DATE_PICKER_INDEX = 1;
-const END_DATE_PICKER_INDEX = 2;
+import { fillDateTimePicker, setMonacoEditorContent } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.
  */
 export class ExamCreationPage {
     private readonly page: Page;
-    private readonly examTimelineDatePickers: Locator;
 
     constructor(page: Page) {
         this.page = page;
-        this.examTimelineDatePickers = page.locator('jhi-exam-timeline p-datepicker');
     }
 
     /**
@@ -32,61 +26,60 @@ export class ExamCreationPage {
      * Sets exam to test mode
      */
     async setTestMode() {
-        await this.page.locator('#exam-mode-picker #test-mode').click();
+        await this.page.locator('[data-testid="exam-mode-picker"] [data-testid="test-mode"]').click();
     }
 
     /**
      * @param date the date from when the exam should be visible
      */
     async setVisibleDate(date: dayjs.Dayjs) {
-        await this.setTimelineDate(VISIBLE_DATE_PICKER_INDEX, date);
+        await this.setTimelineDate('exam-visibleDate', date);
     }
 
     /**
      * @param date the date when the exam starts
      */
     async setStartDate(date: dayjs.Dayjs) {
-        await this.setTimelineDate(START_DATE_PICKER_INDEX, date);
+        await this.setTimelineDate('exam-startDate', date);
     }
 
     /**
      * @param date the date when the exam will end
      */
     async setEndDate(date: dayjs.Dayjs) {
-        await this.setTimelineDate(END_DATE_PICKER_INDEX, date);
+        await this.setTimelineDate('exam-endDate', date);
     }
 
-    private async setTimelineDate(index: number, date: dayjs.Dayjs) {
-        const dateInput = this.examTimelineDatePickers.nth(index).locator('input');
-        await fillDateTimePicker(dateInput, date);
+    private async setTimelineDate(inputId: string, date: dayjs.Dayjs) {
+        await fillDateTimePicker(this.page.locator('jhi-exam-timeline').locator(`#${inputId}`), date);
     }
 
     /**
      * @param date the date when the exam results will be published
      */
     async setPublishResultsDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#publishResultsDate', date);
+        await fillDateTimePicker(this.page.locator('#publishResultsDate'), date);
     }
 
     /**
      * @param date the date when the exam student review starts
      */
     async setStudentReviewStartDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#examStudentReviewStart', date);
+        await fillDateTimePicker(this.page.locator('#examStudentReviewStart'), date);
     }
 
     /**
      * @param date the date from which the submission overview (summary) becomes visible to students
      */
     async setExamSummaryPublicationDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#examSummaryPublicationDate', date);
+        await fillDateTimePicker(this.page.locator('#examSummaryPublicationDate'), date);
     }
 
     /**
      * @param date the date when the exam student review ends
      */
     async setStudentReviewEndDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#examStudentReviewEnd', date);
+        await fillDateTimePicker(this.page.locator('#examStudentReviewEnd'), date);
     }
 
     /**

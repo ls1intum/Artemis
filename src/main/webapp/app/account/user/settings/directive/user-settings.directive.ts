@@ -21,7 +21,9 @@ export abstract class UserSettingsDirective implements OnInit {
     // userSettings logic related
     userSettingsCategory!: UserSettingsCategory; // set in the overriding ngOnInit() of each child-settings component before loadSetting() reads it
     changeEventMessage!: string; // set in the ngOnInit() of each child-settings component before createApplyChangesEvent() reads it
-    readonly userSettings = signal<UserSettingsStructure<Setting>>(undefined!);
+    // A child component may revert a single setting in place after a failed save, so this signal must
+    // notify even when its reference is unchanged; otherwise the reverted switch never re-renders.
+    readonly userSettings = signal<UserSettingsStructure<Setting>>(undefined!, { equal: () => false });
     readonly settings = signal<Array<Setting>>(undefined!);
     page = 0;
     error?: string;

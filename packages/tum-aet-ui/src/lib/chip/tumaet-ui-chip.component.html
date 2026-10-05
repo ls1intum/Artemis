@@ -1,0 +1,18 @@
+<span [class]="chipClasses()">
+    @if (label(); as chipLabel) {
+        <span class="tumaet-ui-chip-label tumaet:truncate">{{ chipLabel }}</span>
+    } @else {
+        <span class="tumaet-ui-chip-label tumaet:truncate"><ng-content /></span>
+    }
+    @if (removable()) {
+        <button
+            type="button"
+            class="tumaet-ui-chip-remove tumaet:inline-flex tumaet:shrink-0 tumaet:cursor-pointer tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:leading-none tumaet:text-inherit"
+            [attr.aria-label]="removeAriaLabel() ?? ('tumAetUi.chip.remove' | tumAetUiTranslate)"
+            (click)="remove($event)"
+            (keydown)="onRemoveKeydown($event)"
+        >
+            <fa-icon [icon]="faXmark" />
+        </button>
+    }
+</span>

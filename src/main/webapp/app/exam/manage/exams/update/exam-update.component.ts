@@ -3,11 +3,10 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Dialog } from 'primeng/dialog';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,7 +14,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { EXAM_TEXT_MAX_LENGTH, EXAM_TITLE_MAX_LENGTH } from 'app/foundation/constants/input.constants';
-import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -28,10 +26,21 @@ import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiDialogComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
@@ -40,24 +49,30 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
-    styleUrl: './exam-update.component.scss',
     imports: [
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumAetUiButtonDirective,
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,
         TitleChannelNameComponent,
         HelpIconComponent,
         ExamModePickerComponent,
-        NgbTooltip,
         FaIconComponent,
         WorkingTimeChangeComponent,
-        FormDateTimePickerComponent,
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
-        ButtonComponent,
         ConfirmEntityNameComponent,
-        Dialog,
+        TumAetUiCheckboxComponent,
+        TumAetUiDatePickerComponent,
+        TumAetUiDialogComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         ExamImportProgressDialogComponent,
         ExamTimelineComponent,
     ],
@@ -66,16 +81,14 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
     private calendarService = inject(CalendarService);
     private router = inject(Router);
+    private eventManager = inject(EventManager);
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly documentationType: DocumentationType = 'Exams';
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly EXAM_TEXT_MAX_LENGTH = EXAM_TEXT_MAX_LENGTH;
     protected readonly EXAM_TITLE_MAX_LENGTH = EXAM_TITLE_MAX_LENGTH;
 
@@ -93,7 +106,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     readonly isSaving = signal(false);
     readonly isImport = signal(false);
     readonly isImportInSameCourse = signal(false);
-    readonly timelineStatus = signal<TimelineStatus>({ valid: false, empty: true });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: false, empty: true, invalidItems: [] });
 
     readonly hideChannelNameInput = signal(false);
     private originalStartDate?: dayjs.Dayjs;
@@ -112,6 +125,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
     examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
+    /**
+     * The date fields of the review, publication and example solution dates. A date field keeps its last committed date while the
+     * typed text is not a date and flags itself, but it is no form control, so the save button has to ask the fields.
+     */
+    private readonly datePickers = viewChildren(TumAetUiDatePickerComponent);
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])
@@ -188,12 +206,15 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state, and we edited an existing exam
-     * Returns to the overview page if there is no previous state, and we created a new exam
+     * Returns to the detail page if we edited an existing exam
+     * Returns to the overview page if we created a new exam
      */
     resetToPreviousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
+        if (this.exam.id) {
+            void this.router.navigate(['course-management', this.course.id, 'exams', this.exam.id]);
+        } else {
+            void this.router.navigate(['course-management', this.course.id, 'exams']);
+        }
     }
 
     /**
@@ -243,6 +264,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
      */
     handleSubmit() {
+        // The save button is disabled for an invalid configuration, but a submit can also come from the form itself (for example Enter in a field).
+        if (!this.isValidConfiguration) {
+            return;
+        }
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
 
         if (datesChanged && this.isOngoingExam) {
@@ -339,6 +364,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     private async onSaveSuccess(exam: Exam) {
         this.isSaving.set(false);
+        this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
         this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
@@ -408,7 +434,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             examValidSummaryPublicationDate &&
             examValidNumberOfExercises &&
             examValidGracePeriod &&
-            this.areExamTextsValid
+            this.areExamTextsValid &&
+            this.datePickers().every((picker) => picker.isValid())
         );
     }
 

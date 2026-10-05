@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
@@ -30,11 +31,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import tools.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -45,18 +49,22 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "programmingsubmission";
+
+    @Autowired
+    private ResultTestRepository resultRepository;
 
     private ProgrammingExercise exercise;
 
@@ -67,7 +75,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     private final Map<String, String> participationCommitHashes = new HashMap<>();
 
-    private final List<LocalRepository> createdRepos = new ArrayList<>();
+    private final List<LocalVCTestRepository> createdRepos = new ArrayList<>();
 
     @BeforeEach
     void init() throws Exception {
@@ -96,7 +104,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @AfterEach
     void tearDown() throws Exception {
         RepositoryExportTestUtil.cleanupTrackedRepositories();
-        RepositoryExportTestUtil.resetRepos(createdRepos.toArray(LocalRepository[]::new));
+        RepositoryExportTestUtil.resetRepos(createdRepos.toArray(LocalVCTestRepository[]::new));
         createdRepos.clear();
         jenkinsRequestMockProvider.reset();
     }
@@ -268,7 +276,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(optionalUpdatedProgrammingExercise).isPresent();
         ProgrammingExercise updatedProgrammingExercise = optionalUpdatedProgrammingExercise.get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
-        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
+        verify(websocketMessagingService).sendMessage(topic("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed"), eq(false));
     }
 
     @Test
@@ -381,7 +389,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         final Long submissionId = submission.getId();
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq(NEW_SUBMISSION_TOPIC),
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), userTopic("/topic/newSubmissions"),
                 argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.id().equals(submissionId)));
 
         // Perform the request again and make sure no new submission was created
@@ -486,6 +494,29 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(responseSubmissions).containsExactly(submissions.toArray(ProgrammingSubmission[]::new));
     }
 
+    /**
+     * The service replaces the submission set with a count before returning: it nulls
+     * {@code participation.submissions} and stores the size in {@code participation.submissionCount}. The count has to
+     * survive onto the wire, otherwise the service computes it for nothing.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getAllProgrammingSubmissions_participationCarriesSubmissionCountAndStudent() throws Exception {
+        programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submissions";
+        final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmissionForAssessmentDTO.class);
+
+        assertThat(responseSubmissions).isNotEmpty();
+        assertThat(responseSubmissions).allSatisfy(submission -> {
+            var participation = submission.participation();
+            // the response sends the count instead of the submissions themselves
+            assertThat(participation.submissions()).isNull();
+            assertThat(participation.submissionCount()).isEqualTo(submissionRepository.findAllByParticipationIdWithResults(participation.id()).size());
+            assertThat(participation.student().login()).startsWith(TEST_PREFIX + "student");
+        });
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllProgrammingSubmissionsAssessedByTutorAllSubmissionsReturned() throws Exception {
@@ -552,6 +583,29 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
         assertThat(exercise.getGradingCriteria().stream().map(GradingCriterion::getStructuredGradingInstructions).map(Set::size)).containsExactlyInAnyOrder(1, 1, 3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionForTheResultOfAComplaintResponse() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(50), submission);
+        // The response to a complaint is stored as an additional manual result with the next correction round
+        Result complaintResponseResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(10), submission);
+        complaintResponseResult.setCorrectionRound(1);
+        resultRepository.save(complaintResponseResult);
+        long numberOfResults = resultRepository.countBySubmissionId(submission.getId());
+
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        // the course exercise has one correction round, but the result of the complaint response exists and can be opened
+        paramMap.add("correction-round", "1");
+        request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
+
+        assertThat(resultRepository.countBySubmissionId(submission.getId())).as("opening the existing result creates no further result").isEqualTo(numberOfResults);
     }
 
     @Test
@@ -642,6 +696,25 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingSubmissionWithoutAssessmentAndLock_negativeCorrectionRound_badRequest() throws Exception {
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, "1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        final Result resultBefore = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true&correction-round=-1";
+        request.get(url, HttpStatus.BAD_REQUEST, ProgrammingSubmission.class);
+
+        assertThat(resultRepository.countBySubmissionId(submission.getId())).as("no result is created for a negative correction round").isOne();
+        final Result resultAfter = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+        assertThat(resultAfter.getId()).isEqualTo(resultBefore.getId());
+        assertThat(resultAfter.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+        assertThat(resultAfter.getAssessor()).as("the existing result is not claimed").isNull();
+        assertThat(resultAfter.getCorrectionRound()).isEqualTo(resultBefore.getCorrectionRound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
         final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, true, "1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
@@ -669,10 +742,61 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        final String[] ignoringFields = { "results", "submissionDate", "participation" };
-        assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(submission);
+        // Pin the fields the assessment surfaces read instead of a recursive comparison against the entity: the
+        // response is a DTO now, so a recursive comparison would only assert which entity fields it happens to omit.
+        assertThat(storedSubmission.getId()).as("submission was found").isEqualTo(submission.getId());
+        assertThat(storedSubmission.isSubmitted()).isEqualTo(submission.isSubmitted());
+        assertThat(storedSubmission.getType()).isEqualTo(submission.getType());
+        assertThat(storedSubmission.getCommitHash()).isEqualTo(submission.getCommitHash());
+        assertThat(storedSubmission.isBuildFailed()).isEqualTo(submission.isBuildFailed());
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
+        assertThat(storedSubmission.getParticipation()).as("participation is set").isNotNull();
+        assertThat(storedSubmission.getParticipation().getId()).isEqualTo(submission.getParticipation().getId());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
+    }
+
+    /**
+     * The dashboard asks for the next unassessed submission WITHOUT locking it. That selection query deliberately
+     * omits feedback and test cases, so the response must stay a summary: no feedback, no test case anywhere in the
+     * payload. It must still carry the empty {@code results} array (positional indexing by correction round) and the
+     * participation with its nested exercise.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingSubmissionWithoutAssessmentUnlockedIsASummaryWithoutFeedback() throws Exception {
+        exerciseUtilService.addGradingInstructionsToExercise(exercise);
+        programmingExerciseRepository.save(exercise);
+        // Only student1's participation holds submissions, which makes the selection deterministic.
+        final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true),
+                TEST_PREFIX + "student1");
+        var automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+        participationUtilService.addSampleFeedbackToResults(automaticResult);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+        String rawResponse = request.get(url, HttpStatus.OK, String.class);
+        JsonNode body = objectMapper.readTree(rawResponse);
+
+        assertThat(body.get("id").asLong()).isEqualTo(submission.getId());
+        assertThat(body.get("submissionExerciseType").asString()).isEqualTo("programming");
+        // The automatic results are filtered out, but the array itself must survive: the dashboard indexes it by
+        // correction round.
+        assertThat(body.get("results").isArray()).isTrue();
+        assertThat(body.get("results")).isEmpty();
+        assertThat(body.get("participation").get("id").asLong()).isEqualTo(submission.getParticipation().getId());
+        assertThat(body.get("participation").get("type").asString()).isEqualTo("programming");
+        assertThat(body.get("participation").get("exercise").get("id").asLong()).isEqualTo(exercise.getId());
+        assertThat(rawResponse).doesNotContain("\"feedbacks\"").doesNotContain("\"testCase\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAllProgrammingSubmissionsDoesNotFanOutQueries() throws Exception {
+        programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
+        programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student2");
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submissions";
+        assertThatDb(() -> request.getList(url, HttpStatus.OK, ProgrammingSubmission.class)).hasBeenCalledAtMostTimes(10);
     }
 
     @Test
@@ -695,6 +819,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         var automaticResults = storedSubmission.getLatestResult().getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).toList();
         assertThat(storedSubmission.getLatestResult().getFeedbacks()).hasSameSizeAs(automaticResults);
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(storedSubmission.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
         assertThat(submission.getLatestResult()).isNotNull();
 
         // Make sure no new submissions are created
@@ -705,6 +830,63 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
         assertThat(exercise.getGradingCriteria().stream().map(GradingCriterion::getStructuredGradingInstructions).map(Set::size)).containsExactlyInAnyOrder(1, 1, 3);
+    }
+
+    /**
+     * Counterpart of {@link #testGetProgrammingSubmissionWithoutAssessmentUnlockedIsASummaryWithoutFeedback()}: with
+     * {@code lock=true} the editor gets the full assessment payload — the locked result with its assessor and the
+     * automatic feedback including its test-case reference, which the editor echoes back on save.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingSubmissionWithoutAssessmentLockedCarriesFeedbackWithTestCases() throws Exception {
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "lockedTestCase");
+        // Only student1's participation holds submissions, which makes the selection deterministic.
+        final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true),
+                TEST_PREFIX + "student1");
+        var automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+        // The automatic feedback lives in the typed table; locking copies it and the endpoint synthesizes the view.
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "failed");
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true";
+        JsonNode body = objectMapper.readTree(request.get(url, HttpStatus.OK, String.class));
+
+        assertThat(body.get("results")).hasSize(1);
+        JsonNode lockedResult = body.get("results").get(0);
+        assertThat(lockedResult.get("assessor").get("id").asLong()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId());
+        assertThat(lockedResult.get("feedbacks")).hasSize(1);
+        JsonNode copiedFeedback = lockedResult.get("feedbacks").get(0);
+        assertThat(copiedFeedback.get("type").asString()).isEqualTo("AUTOMATIC");
+        assertThat(copiedFeedback.get("testCase").get("id").asLong()).isEqualTo(testCase.getId());
+        assertThat(copiedFeedback.get("testCase").get("testName").asString()).isEqualTo("lockedTestCase");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingSubmissionWithoutAssessmentDoesNotFanOutQueries() throws Exception {
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, "1");
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+        assertThatDb(() -> request.get(url, HttpStatus.OK, String.class)).hasBeenCalledAtMostTimes(20);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionDoesNotFanOutQueries() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        submission.setParticipation(programmingExerciseStudentParticipation);
+        submission = submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
+
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock";
+        assertThatDb(() -> request.get(url, HttpStatus.OK, String.class)).hasBeenCalledAtMostTimes(20);
     }
 
     @Test
@@ -783,6 +965,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
         assertThat(storedSubmission).isNull();
+        // The dashboard reads "no submission left to assess" from a genuinely empty 200 body, not from an empty object.
+        assertThat(request.get(url, HttpStatus.OK, String.class)).isNullOrEmpty();
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {
@@ -795,7 +979,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     private void seedRepositoryForParticipation(ProgrammingExerciseStudentParticipation participation, String filename) throws Exception {
-        LocalRepository repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, participation, localVCBasePath);
+        LocalVCTestRepository repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
         createdRepos.add(repo);
         RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of(filename, "class %s {}".formatted(filename.replace('.', '_'))), "seed " + filename);
         participationRepository.save(participation);

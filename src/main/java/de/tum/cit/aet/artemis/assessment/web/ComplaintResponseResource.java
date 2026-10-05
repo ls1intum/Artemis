@@ -30,12 +30,15 @@ import de.tum.cit.aet.artemis.assessment.service.ComplaintResponseService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for managing complaints.
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.COMPLAINTS)
 @RestController
 @RequestMapping("api/assessment/")
 public class ComplaintResponseResource {

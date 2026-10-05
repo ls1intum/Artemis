@@ -36,6 +36,8 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -49,6 +51,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCompactionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
@@ -90,7 +93,8 @@ class IrisChatSessionServiceStatusUpdateTest {
                 irisChatWebsocketService, mock(AuthorizationCheckService.class), irisSessionRepository, mock(IrisChatSessionRepository.class),
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class), mock(IrisRateLimitService.class),
                 JsonObjectMapper.get(), mock(ExerciseRepository.class), mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
-                mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService, mock(UserAiPreferenceService.class));
+                mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService, mock(UserAiPreferenceService.class),
+                new IrisProactiveProperties());
     }
 
     @Test
@@ -247,5 +251,39 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         verify(irisChatWebsocketService).sendMessage(eq(session), eq(savedMessage), eq(PyrisRunState.RUNNING), isNull(), isNull(), anyList(), eq("run-1"), isNull(), isNull(),
                 eq(false));
+    }
+
+    @Test
+    void finishedUpdateStoresTheCompactionAsHiddenMessage() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        when(irisSessionRepository.findById(2L)).thenReturn(Optional.of(session));
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null,
+                new PyrisCompactionDTO("- the student asked about heaps", 41L));
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
+        verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.SUMMARY));
+        var content = (IrisJsonMessageContent) messageCaptor.getValue().getContent().getFirst();
+        assertThat(content.getJsonNode().get("summary").asString()).isEqualTo("- the student asked about heaps");
+        assertThat(content.getJsonNode().get("coversThroughMessageId").asLong()).isEqualTo(41L);
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
+    }
+
+    @Test
+    void updateWithoutCompactionStoresNoCompaction() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        when(irisSessionRepository.findById(2L)).thenReturn(Optional.of(session));
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FINISHED, null, null, null, null, null, null);
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        verify(irisMessageService, never()).saveMessage(any(), any(), eq(IrisMessageSender.SUMMARY));
     }
 }

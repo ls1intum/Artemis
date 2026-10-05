@@ -1,12 +1,12 @@
 import { ChartFilter } from 'app/exercise/chart/chart-filter';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 type CategoryFilterOperatingType = CourseManagementStatisticsModel | Exercise;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ChartCategoryFilter extends ChartFilter {
     exerciseCategories = new Set<string>();
     allCategoriesSelected = true;

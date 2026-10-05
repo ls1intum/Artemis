@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -25,7 +25,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamParticipationService {
     private httpClient = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);
@@ -50,10 +50,27 @@ export class ExamParticipationService {
     // (e.g. the in-exercise save button's `disabled`/icon) reads this version to re-evaluate reactively.
     private readonly submissionSyncVersionSignal = signal(0);
     readonly submissionSyncVersion = this.submissionSyncVersionSignal.asReadonly();
+    private readonly savingSubmissions = signal<ReadonlySet<Submission>>(new Set());
 
     /** Notify sync-state-dependent UI that a submission's `isSynced` flag changed (see {@link submissionSyncVersion}). */
     notifySubmissionSyncStateChanged(): void {
         this.submissionSyncVersionSignal.update((version) => version + 1);
+    }
+
+    setSubmissionSaving(submission: Submission, saving: boolean): void {
+        this.savingSubmissions.update((current) => {
+            const updated = new Set(current);
+            if (saving) {
+                updated.add(submission);
+            } else {
+                updated.delete(submission);
+            }
+            return updated;
+        });
+    }
+
+    isSubmissionSaving(submission: Submission | undefined): boolean {
+        return !!submission && this.savingSubmissions().has(submission);
     }
 
     public getResourceURL(courseId: number, examId: number): string {

@@ -16,12 +16,14 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 /**
  * Service responsible for initializing the database with specific testdata related to complaints for use in integration tests.
@@ -153,12 +155,14 @@ public class ComplaintUtilService {
      * @param tutorLogin login of the tutor responding to the complaint.
      * @return an assessment update with the complaint response.
      */
-    public AssessmentUpdateDTO createComplaintAndResponse(Result textResult, String tutorLogin) {
-        Complaint complaint = new Complaint().result(textResult).complaintText("This is not fair");
+    public AssessmentUpdate createComplaintAndResponse(Result textResult, String tutorLogin) {
+        // A complaint is made by the participant of the assessed submission, and a complaint row names a student or a team.
+        Participant participant = ((StudentParticipation) textResult.getSubmission().getParticipation()).getParticipant();
+        Complaint complaint = new Complaint().participant(participant).result(textResult).complaintText("This is not fair");
         complaintRepo.save(complaint);
         ComplaintResponse complaintResponse = createInitialEmptyResponse(tutorLogin, complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
-        return new AssessmentUpdateDTO(null, complaintResponse, null);
+        return new AssessmentUpdate(null, complaintResponse, null);
     }
 }
