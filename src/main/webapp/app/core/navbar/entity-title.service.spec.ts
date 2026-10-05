@@ -202,7 +202,7 @@ describe('EntityTitleService - authentication state changes', () => {
     it('should cancel pending title fetches when the injector is destroyed', () => {
         vi.useFakeTimers();
         const http = TestBed.inject(HttpClient);
-        const httpSpy = vi.spyOn(http, 'get');
+        const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Late Title' })));
 
         scoped.getTitle(EntityType.COURSE, [1]).subscribe();
 
@@ -253,8 +253,7 @@ describe('EntityTitleService - authentication state changes', () => {
         const inFlight = new Subject<HttpResponse<string>>();
         vi.spyOn(http, 'get').mockReturnValue(inFlight.asObservable());
 
-        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test
-        // synchronous and immune to injector teardown between tests.
+        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test synchronous.
         (scoped as unknown as { fetchTitle: (type: EntityType, ids: number[]) => void }).fetchTitle(EntityType.COURSE, [1]);
 
         authState.next(undefined);
