@@ -10,7 +10,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.PatternSyntaxException;
 
 import org.jspecify.annotations.NonNull;
@@ -435,18 +434,15 @@ public class UserCreationService {
     }
 
     /**
-     * Saves an account that is being deactivated. A deactivated account's messages are redacted from Course Memory, so the
-     * save commits together with outdating the entries that hold them; those entries are then rebuilt without them.
+     * Saves an account that is being deactivated. A deactivated account's messages are redacted from Course Memory: the
+     * entries holding them are outdated before the save and rebuilt after it. If the rebuild never runs, the nightly sync
+     * retracts them.
      */
     private User saveDeactivatedUser(User user) {
-        if (courseMemoryIngestionApi.isEmpty()) {
-            return saveUser(user);
-        }
-        CourseMemoryIngestionApi api = courseMemoryIngestionApi.get();
-        AtomicReference<User> saved = new AtomicReference<>();
-        List<Long> courseMemoryThreads = api.changeAccountAndInvalidate(user.getId(), () -> saved.set(saveUser(user)));
-        api.refreshThreadsInBackground(courseMemoryThreads);
-        return saved.get();
+        List<Long> courseMemoryThreads = courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of());
+        User savedUser = saveUser(user);
+        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
+        return savedUser;
     }
 
     /**

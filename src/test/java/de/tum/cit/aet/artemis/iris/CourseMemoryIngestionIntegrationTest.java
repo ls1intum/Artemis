@@ -1,19 +1,11 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -29,11 +21,10 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CommunicationDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserOwnedContentDeletionService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
-import de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -126,6 +117,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private UserAiPreferenceService userAiPreferenceService;
+
+    @Autowired
+    private UserOwnedContentDeletionService userOwnedContentDeletionService;
 
     private Course course;
 
@@ -1398,7 +1392,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void anAccountChangeOfAUser_bumpsExactlyTheThreadsWithTheirContent() {
+    void invalidatingTheThreadsOfAUser_bumpsExactlyTheThreadsWithTheirContent() {
         Post withReply = createQuestion("Thread with a reply by student2");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         saveAnswer(withReply, student2, "Reply.", false);
@@ -1407,209 +1401,11 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         markAsStoredInCourseMemory(unrelated);
         long withReplyBefore = conversationMessageRepository.findCourseMemoryVersion(withReply.getId()).orElseThrow();
         long unrelatedBefore = conversationMessageRepository.findCourseMemoryVersion(unrelated.getId()).orElseThrow();
-        AtomicBoolean changed = new AtomicBoolean();
+        List<Long> affected = courseMemoryIngestionService.invalidateThreadsWithContentBy(student2.getId());
 
-        List<Long> affected = courseMemoryIngestionService.changeAccountAndInvalidate(student2.getId(), () -> changed.set(true));
-
-        assertThat(changed).isTrue();
         assertThat(affected).contains(withReply.getId()).doesNotContain(unrelated.getId());
         assertThat(conversationMessageRepository.findCourseMemoryVersion(withReply.getId()).orElseThrow()).isEqualTo(withReplyBefore + 1);
         assertThat(conversationMessageRepository.findCourseMemoryVersion(unrelated.getId()).orElseThrow()).isEqualTo(unrelatedBefore);
-    }
-
-    @Test
-    void anAccountChange_alsoOutdatesThreadsTheUserOnlySignedOffOn() {
-        // The trust label of an entry follows who marked its answer resolving; deleting that account removes the sign-off.
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        Post endorsedOnly = createQuestion("Thread the tutor only endorsed");
-        saveResolvingAnswer(endorsedOnly, student2, "A student's answer.", true, tutor);
-        markAsStoredInCourseMemory(endorsedOnly);
-        long before = conversationMessageRepository.findCourseMemoryVersion(endorsedOnly.getId()).orElseThrow();
-
-        List<Long> affected = courseMemoryIngestionService.changeAccountAndInvalidate(tutor.getId(), () -> {
-        });
-
-        assertThat(affected).contains(endorsedOnly.getId());
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(endorsedOnly.getId()).orElseThrow()).isEqualTo(before + 1);
-    }
-
-    @Test
-    void accountDeletion_removingASignOffBumpsTheVersionInTheSameTransaction() {
-        // Between closing the account and removing its sign-offs a rebuild may store an entry that still carries the
-        // tutor label; removing the sign-off has to outdate that entry by itself.
-        User tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        Post resolved = createQuestion("Resolved by the tutor being deleted");
-        saveResolvingAnswer(resolved, student2, "A student's answer.", true, tutor2);
-        markAsStoredInCourseMemory(resolved);
-        Post approved = createQuestion("Approved by the tutor being deleted");
-        AnswerPost draft = saveAnswer(approved, botUser, "An Iris answer.", false);
-        answerPostRepository.verifyIfUnverified(draft.getId(), tutor2, ZonedDateTime.now(), null);
-        markAsStoredInCourseMemory(approved);
-        long resolvedBefore = conversationMessageRepository.findCourseMemoryVersion(resolved.getId()).orElseThrow();
-        long approvedBefore = conversationMessageRepository.findCourseMemoryVersion(approved.getId()).orElseThrow();
-
-        communicationDataCleanupRepository.detachResolvedAnswerPosts(tutor2.getId());
-        communicationDataCleanupRepository.detachVerifiedAnswerPosts(tutor2.getId());
-
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(resolved.getId()).orElseThrow()).isEqualTo(resolvedBefore + 1);
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(approved.getId()).orElseThrow()).isEqualTo(approvedBefore + 1);
-        assertThat(answerPostRepository.hasActiveHumanVerifier(draft.getId())).isFalse();
-    }
-
-    @Test
-    void signOffsOfAClosedAccount_noLongerCount() {
-        // Closing an account withdraws its endorsements and approvals at once, so a late approval request or a reference
-        // cleared later cannot keep or create a tutor-verified entry.
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        Post endorsed = createQuestion("Endorsed by an account that is then closed");
-        AnswerPost endorsedAnswer = saveResolvingAnswer(endorsed, student2, "A student's answer.", true, tutor);
-        Post approved = createQuestion("Approved by an account that is then closed");
-        AnswerPost draft = saveAnswer(approved, botUser, "An Iris answer.", false);
-        answerPostRepository.verifyIfUnverified(draft.getId(), tutor, ZonedDateTime.now(), null);
-        List<PyrisWebhookCourseMemoryIngestionExecutionDTO> ingested = new ArrayList<>();
-        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(ingested::add, ExpectedCount.times(2));
-        courseMemoryIngestionService.refreshThread(endorsed.getId(), null, course);
-        assertThat(ingested.getFirst().source()).isEqualTo(PyrisCourseMemorySource.TUTOR_WRITTEN);
-        assertThat(answerPostRepository.findResolvingAnswerEndorsersByPostId(endorsed.getId())).extracting(ResolvingAnswerEndorserDTO::answerPostId)
-                .containsExactly(endorsedAnswer.getId());
-        assertThat(answerPostRepository.hasActiveHumanVerifier(draft.getId())).isTrue();
-
-        tutor.setActivated(false);
-        userTestRepository.save(tutor);
-        try {
-            assertThat(answerPostRepository.findResolvingAnswerEndorsersByPostId(endorsed.getId())).isEmpty();
-            assertThat(answerPostRepository.hasActiveHumanVerifier(draft.getId())).isFalse();
-            courseMemoryIngestionService.refreshThread(endorsed.getId(), null, course);
-            assertThat(ingested.getLast().source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
-        }
-        finally {
-            tutor.setActivated(true);
-            userTestRepository.save(tutor);
-        }
-    }
-
-    @Test
-    void accountDeletion_removingASignOffLocksAlsoThreadsThatWereNeverStored() throws Exception {
-        // A first ingestion mints on the root row of a thread that was never stored. If removing the sign-off left that
-        // row unlocked, the ingestion could read the answer with its endorser and store it at the latest version.
-        User endorser = userUtilService.createAndSaveUser(TEST_PREFIX + "signoff");
-        Post neverStored = createQuestion("Never stored, resolved by an account being deleted");
-        saveResolvingAnswer(neverStored, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), "A student's answer.", true, endorser);
-        CountDownLatch rowLocked = new CountDownLatch(1);
-        CountDownLatch releaseRow = new CountDownLatch(1);
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            // Holds the root row of the thread (the question's author is involved in it) in another transaction.
-            Future<List<Long>> holder = executor.submit(() -> courseMemoryIngestionService.changeAccountAndInvalidate(student.getId(), () -> {
-                rowLocked.countDown();
-                try {
-                    releaseRow.await(30, TimeUnit.SECONDS);
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }));
-            assertThat(rowLocked.await(30, TimeUnit.SECONDS)).isTrue();
-
-            Future<Integer> detach = executor.submit(() -> communicationDataCleanupRepository.detachResolvedAnswerPosts(endorser.getId()));
-
-            assertThatThrownBy(() -> detach.get(2, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
-            releaseRow.countDown();
-            holder.get(30, TimeUnit.SECONDS);
-            assertThat(detach.get(30, TimeUnit.SECONDS)).isEqualTo(1);
-        }
-        finally {
-            releaseRow.countDown();
-            executor.shutdownNow();
-        }
-    }
-
-    @Test
-    void dashboardApproval_bumpsTheVersionTogetherWithTheApproval() {
-        Post question = createQuestion("Approved in the dashboard?");
-        AnswerPost draft = saveAnswer(question, botUser, "An Iris draft.", false);
-        markAsStoredInCourseMemory(question);
-        long before = conversationMessageRepository.findCourseMemoryVersion(question.getId()).orElseThrow();
-
-        boolean verified = answerPostRepository.verifyIfUnverifiedAndInvalidateCourseMemory(draft.getId(), question.getId(), tutor, ZonedDateTime.now(), null);
-
-        assertThat(verified).isTrue();
-        assertThat(answerPostRepository.findById(draft.getId()).orElseThrow().isVerified()).isTrue();
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(question.getId()).orElseThrow()).isEqualTo(before + 1);
-        // A second approval of the same draft changes nothing.
-        assertThat(answerPostRepository.verifyIfUnverifiedAndInvalidateCourseMemory(draft.getId(), question.getId(), tutor, ZonedDateTime.now(), null)).isFalse();
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(question.getId()).orElseThrow()).isEqualTo(before + 1);
-    }
-
-    @Test
-    void publication_happensOnlyWhileEverySourceChannelIsReadable() {
-        Post question = createQuestion("Published from readable sources only?");
-        Channel source = conversationUtilService.createPublicChannel(course, "publication-source");
-        AnswerPost refused = saveAnswer(question, botUser, "Draft citing a channel that became private.", false);
-        AnswerPost published = saveAnswer(question, botUser, "Draft citing readable channels.", false);
-        AnswerPost withoutSources = saveAnswer(question, botUser, "Draft citing nothing.", false);
-
-        assertThat(answerPostRepository.publishIfConversationsReadable(published.getId(), course.getId(), List.of(channel.getId(), source.getId()), ZonedDateTime.now())).isTrue();
-        assertThat(answerPostRepository.publishIfConversationsReadable(withoutSources.getId(), course.getId(), List.of(), ZonedDateTime.now())).isTrue();
-
-        source.setIsPublic(false);
-        conversationRepository.save(source);
-        assertThat(answerPostRepository.publishIfConversationsReadable(refused.getId(), course.getId(), List.of(channel.getId(), source.getId()), ZonedDateTime.now())).isFalse();
-
-        assertThat(answerPostRepository.findById(published.getId()).orElseThrow().isVerified()).isTrue();
-        assertThat(answerPostRepository.findById(withoutSources.getId()).orElseThrow().isVerified()).isTrue();
-        assertThat(answerPostRepository.findById(refused.getId()).orElseThrow().isVerified()).isFalse();
-    }
-
-    @Test
-    void anAccountChangeThatFails_leavesTheVersionsAsTheyWere() {
-        // The account change and the bump commit together or not at all: a bump without the change would only cost a
-        // rebuild, but a change without the bump could leave an entry built from the old account state at the latest version.
-        Post thread = createQuestion("Thread of student1");
-        markAsStoredInCourseMemory(thread);
-        long before = conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow();
-
-        assertThatThrownBy(() -> courseMemoryIngestionService.changeAccountAndInvalidate(student.getId(), () -> {
-            throw new IllegalStateException("account change failed");
-        })).hasMessageContaining("account change failed");
-
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow()).isEqualTo(before);
-    }
-
-    @Test
-    void aMessageTheUserWritesDuringTheAccountChange_waitsForItsCommit() throws Exception {
-        // A thread the user has not written in is not among the locked threads. A reply they add while the account change
-        // runs would let a rebuild read the old account state; it has to wait until the change has committed instead.
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        Post othersThread = createQuestion("Thread student2 has not written in yet");
-        markAsStoredInCourseMemory(othersThread);
-        CountDownLatch insideTheChange = new CountDownLatch(1);
-        CountDownLatch finishTheChange = new CountDownLatch(1);
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            Future<List<Long>> change = executor.submit(() -> courseMemoryIngestionService.changeAccountAndInvalidate(student2.getId(), () -> {
-                insideTheChange.countDown();
-                try {
-                    finishTheChange.await(30, TimeUnit.SECONDS);
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }));
-            assertThat(insideTheChange.await(30, TimeUnit.SECONDS)).isTrue();
-
-            Future<AnswerPost> reply = executor.submit(() -> saveAnswer(othersThread, student2, "Written during the account change.", false));
-
-            assertThatThrownBy(() -> reply.get(2, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
-            finishTheChange.countDown();
-            change.get(30, TimeUnit.SECONDS);
-            assertThat(reply.get(30, TimeUnit.SECONDS).getId()).isNotNull();
-        }
-        finally {
-            finishTheChange.countDown();
-            executor.shutdownNow();
-        }
     }
 
     @Test
@@ -1641,18 +1437,24 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void accountContentDeletion_deletesTheMessagesAndBumpsTheSurvivingThreadsInOneGo() {
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        Post othersThread = createQuestion("Thread with a reply by student2");
-        AnswerPost reply = saveAnswer(othersThread, student2, "Reply that will be deleted.", false);
+    void accountContentDeletion_deletesTheMessagesAndRebuildsTheSurvivingThreads() {
+        // An account of its own: the shared test users have content in the threads of other tests, all of which a deletion
+        // would rebuild in the background.
+        User deleted = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedcontent");
+        Post othersThread = createQuestion("Thread with a reply by the deleted account");
+        AnswerPost reply = saveAnswer(othersThread, deleted, "Reply that will be deleted.", false);
         markAsStoredInCourseMemory(othersThread);
         long before = conversationMessageRepository.findCourseMemoryVersion(othersThread.getId()).orElseThrow();
+        // Without the reply the thread has nothing left to store, so its rebuild retracts the entry.
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> retraction = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(retraction::set);
 
-        var threads = communicationDataCleanupRepository.deleteCommunicationContentAndInvalidateCourseMemory(student2.getId());
+        userOwnedContentDeletionService.deleteCommunicationContent(deleted.getId());
 
-        assertThat(threads).extracting(CourseMemoryThreadDTO::postId).contains(othersThread.getId());
         assertThat(answerPostRepository.findById(reply.getId())).isEmpty();
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(othersThread.getId()).orElseThrow()).isEqualTo(before + 1);
+        await().until(() -> retraction.get() != null);
+        // Bumped before the deletion, then minted once more by the rebuild.
+        assertThat(retraction.get().version()).isEqualTo(before + 2);
     }
 
     @Test

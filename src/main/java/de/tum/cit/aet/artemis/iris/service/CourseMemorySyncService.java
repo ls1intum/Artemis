@@ -38,8 +38,8 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  * version is older), whose thread may no longer be stored, or whose thread or course was deleted.
  * <p>
  * Everything Artemis dispatches right away when something changes is best-effort: a Pyris outage, a crash or a lost
- * callback can leave an entry that should be gone. Every such change bumps the thread's version in the same transaction as
- * the change, so this sync finds what the immediate update missed within a day. It runs on the scheduling node only; set
+ * callback can leave an entry that should be gone. Every such change bumps the thread's version right before it is saved,
+ * so this sync finds what the immediate update missed within a day. It runs on the scheduling node only; set
  * {@code artemis.iris.course-memory.sync-cron} to {@code -} to switch it off.
  */
 @Lazy

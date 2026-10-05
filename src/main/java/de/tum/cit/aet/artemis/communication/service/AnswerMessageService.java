@@ -262,9 +262,12 @@ public class AnswerMessageService extends PostingService {
             existingAnswerMessage.withdrawSignOffs();
         }
 
-        // Saved together with a bump of the thread's Course Memory version, so an entry built from the old text is
-        // outdated the moment this commits, even if the refresh below never reaches Pyris.
-        updatedAnswerMessage = answerPostRepository.saveAndInvalidateCourseMemory(existingAnswerMessage);
+        // The thread's Course Memory version is bumped first, so an entry built from the old text is outdated once the
+        // change is saved, even if the refresh below never reaches Pyris.
+        if (resolutionChanged || contentChanged) {
+            conversationMessageRepository.bumpCourseMemoryVersionIfTracked(existingAnswerMessage.getPost().getId());
+        }
+        updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);
 
         // Right after the change, before the work below that can fail. A resolution change can start the thread's first
@@ -349,12 +352,13 @@ public class AnswerMessageService extends PostingService {
         updatedMessage.removeAnswerPost(answerMessage);
         updatedMessage.setResolved(updatedMessage.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
         updatedMessage.setConversation(conversation);
-        // Update on the message properties. Saving the message already deletes the removed answer (orphan removal), so
-        // the thread's Course Memory version is bumped in the same transaction: the entry may contain this answer's text.
-        conversationMessageRepository.saveAndInvalidateCourseMemory(updatedMessage);
+        // The thread's Course Memory version is bumped first: the entry may contain this answer's text.
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(updatedMessage.getId());
+        // update on the message properties
+        conversationMessageRepository.save(updatedMessage);
 
-        // delete explicitly as well, in case the answer was not part of the loaded message
-        answerPostRepository.deleteAndInvalidateCourseMemory(answerMessageId, updatedMessage.getId());
+        // delete
+        answerPostRepository.deleteById(answerMessageId);
         refreshCourseMemory(updatedMessage.getId(), user, course, false);
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerMessageId));
         preparePostForBroadcast(updatedMessage);
@@ -444,10 +448,7 @@ public class AnswerMessageService extends PostingService {
         }
         // The isVerified() check above is only a fast rejection for the common case; two tutors pressing approve at the
         // same moment both pass it. This is the one that decides, because the guard lives inside the statement.
-        // The approval changes what the thread's Course Memory entry has to hold, so its version is bumped in the same
-        // transaction.
-        if (!answerPostRepository.verifyIfUnverifiedAndInvalidateCourseMemory(answerMessageId, existingAnswerMessage.getPost().getId(), user, ZonedDateTime.now(),
-                updatedContent)) {
+        if (!answerPostRepository.verifyIfUnverified(answerMessageId, user, ZonedDateTime.now(), updatedContent)) {
             throw new BadRequestAlertException("Answer message is already verified", ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
 

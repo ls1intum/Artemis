@@ -187,29 +187,29 @@ public class AutonomousTutorService {
     }
 
     /**
-     * Publishes a reply that was saved as a draft, if its Course Memory sources are still readable by every student. The
-     * check and the publication run in one repository transaction that locks the source channels, so a channel made
-     * private at the same moment either waits or prevents the publication. Any failure leaves the draft for review: a
-     * reply is never left published by mistake.
+     * Publishes a reply that was saved as a draft, if its Course Memory sources are still readable by every student. Any
+     * failure, of the check or of the save, leaves the draft for review: a reply is never left published by mistake.
      *
      * @return whether the reply was published
      */
     private boolean publishIfSourcesStillReadable(AnswerPost draft, PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate, long courseId) {
-        ZonedDateTime now = ZonedDateTime.now();
         try {
-            if (!answerPostRepository.publishIfConversationsReadable(draft.getId(), courseId, statusUpdate.usedCourseMemoryConversationIds(), now)) {
+            if (!courseMemorySourcesReadable(statusUpdate, courseId)) {
                 log.info("Holding autonomous tutor answer {} for review: a Course Memory source channel stopped being readable", draft.getId());
                 return false;
             }
+            draft.setVerified(true);
+            // auto-verified answers are implicitly approved by the system, there is no human reviewer
+            draft.setVerifiedAt(ZonedDateTime.now());
+            answerPostRepository.save(draft);
+            return true;
         }
         catch (RuntimeException e) {
+            draft.setVerified(false);
+            draft.setVerifiedAt(null);
             log.warn("Could not publish autonomous tutor answer {}; holding it for review", draft.getId(), e);
             return false;
         }
-        draft.setVerified(true);
-        // auto-verified answers are implicitly approved by the system, there is no human reviewer
-        draft.setVerifiedAt(now);
-        return true;
     }
 
     private void ensureBotIsParticipant(User botUser, Conversation conversation) {

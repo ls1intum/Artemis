@@ -77,34 +77,7 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             SET answerPost.verifiedBy = NULL
             WHERE answerPost.verifiedBy.id = :userId
             """)
-    int clearVerifierOfAnswerPosts(@Param("userId") long userId);
-
-    @Modifying
-    @Transactional // ok because of update
-    @Query(value = """
-            UPDATE post SET course_memory_version = course_memory_version + 1
-            WHERE course_memory_version > 0 AND id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.verified_by_id = :userId)
-            """, nativeQuery = true)
-    int bumpCourseMemoryVersionsOfThreadsVerifiedBy(@Param("userId") long userId);
-
-    /**
-     * Forgets who approved the answers in the verification dashboard. The approval is what makes an Iris answer
-     * tutor-verified in Course Memory, so the threads' entries are outdated in the same transaction.
-     *
-     * @param userId the account being deleted
-     * @return how many answer posts lost their verifier
-     */
-    @Query(value = "SELECT id FROM post WHERE id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.verified_by_id = :userId) FOR UPDATE", nativeQuery = true)
-    List<Long> lockThreadsVerifiedBy(@Param("userId") long userId);
-
-    @Transactional // ok because the detachment and the version bump have to commit together
-    default int detachVerifiedAnswerPosts(long userId) {
-        // Every affected thread is locked, also one never stored: a first ingestion mints on that row and has to wait,
-        // so it reads the answer without its verifier.
-        lockThreadsVerifiedBy(userId);
-        bumpCourseMemoryVersionsOfThreadsVerifiedBy(userId);
-        return clearVerifierOfAnswerPosts(userId);
-    }
+    int detachVerifiedAnswerPosts(@Param("userId") long userId);
 
     @Query("""
             SELECT answerPost.resolvedBy.id AS userId, COUNT(answerPost) AS count
@@ -114,6 +87,13 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             """)
     List<UserReferenceCount> countResolvedAnswerPosts(@Param("userIds") Collection<Long> userIds);
 
+    /**
+     * Forgets who marked the answers as resolving without un-marking them: the resolution belongs to the thread, only the
+     * endorsement was the account's. Course Memory treats such an answer as community-resolved from then on.
+     *
+     * @param userId the account being deleted
+     * @return how many answer posts lost their endorser
+     */
     @Modifying
     @Transactional // ok because of update
     @Query("""
@@ -121,35 +101,7 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             SET answerPost.resolvedBy = NULL
             WHERE answerPost.resolvedBy.id = :userId
             """)
-    int clearResolverOfAnswerPosts(@Param("userId") long userId);
-
-    @Modifying
-    @Transactional // ok because of update
-    @Query(value = """
-            UPDATE post SET course_memory_version = course_memory_version + 1
-            WHERE course_memory_version > 0 AND id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.resolved_by_id = :userId)
-            """, nativeQuery = true)
-    int bumpCourseMemoryVersionsOfThreadsResolvedBy(@Param("userId") long userId);
-
-    /**
-     * Forgets who marked the answers as resolving without un-marking them: the resolution belongs to the thread, only the
-     * endorsement was the account's. Course Memory treats such an answer as community-resolved from then on, so the
-     * threads' entries are outdated in the same transaction.
-     *
-     * @param userId the account being deleted
-     * @return how many answer posts lost their endorser
-     */
-    @Query(value = "SELECT id FROM post WHERE id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.resolved_by_id = :userId) FOR UPDATE", nativeQuery = true)
-    List<Long> lockThreadsResolvedBy(@Param("userId") long userId);
-
-    @Transactional // ok because the detachment and the version bump have to commit together
-    default int detachResolvedAnswerPosts(long userId) {
-        // Every affected thread is locked, also one never stored: a first ingestion mints on that row and has to wait,
-        // so it reads the answer without its endorser.
-        lockThreadsResolvedBy(userId);
-        bumpCourseMemoryVersionsOfThreadsResolvedBy(userId);
-        return clearResolverOfAnswerPosts(userId);
-    }
+    int detachResolvedAnswerPosts(@Param("userId") long userId);
 
     @Query("""
             SELECT reaction.user.id AS userId, COUNT(reaction) AS count
@@ -405,26 +357,4 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
     @Transactional // ok because of modifying query
     @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id IN (:postIds) AND course_memory_version > 0", nativeQuery = true)
     int bumpCourseMemoryVersions(@Param("postIds") Collection<Long> postIds);
-
-    /**
-     * Removes what the account wrote and the discussion that grew below it, and outdates the Course Memory entries of
-     * every thread that held one of those messages — in one transaction, so no entry can keep the deleted text without
-     * also being outdated. The nightly Course Memory sync retracts an outdated entry even if the follow-up never runs.
-     *
-     * @param userId the account being deleted
-     * @return the threads that held content by the account, as they were before the deletion
-     */
-    @Transactional // ok because the deletion and the version bump have to commit together
-    default List<CourseMemoryThreadDTO> deleteCommunicationContentAndInvalidateCourseMemory(long userId) {
-        List<CourseMemoryThreadDTO> threads = findCourseMemoryThreadsWithContentBy(userId);
-        deleteReactionsOnAnswersAuthoredBy(userId);
-        deleteAnswersAuthoredBy(userId);
-        deleteReactionsOnPostsAuthoredBy(userId);
-        deletePosts(userId);
-        deleteReactions(userId);
-        if (!threads.isEmpty()) {
-            bumpCourseMemoryVersions(threads.stream().map(CourseMemoryThreadDTO::postId).toList());
-        }
-        return threads;
-    }
 }

@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -47,8 +46,6 @@ class PermanentUserDeletionOrderTest {
 
     private static final String FINGERPRINT = "fingerprint";
 
-    private static final long COURSE_MEMORY_THREAD = 7L;
-
     private UserRepository userRepository;
 
     private UserDeletionPlanService userDeletionPlanService;
@@ -82,11 +79,6 @@ class PermanentUserDeletionOrderTest {
         when(userDeletionPlanService.createImpact(any(), any())).thenReturn(impact());
         when(userOwnedContentDeletionService.deleteDataExports(anyLong())).thenReturn(List.of());
         when(userOwnedContentDeletionService.deleteExamAttendance(anyLong())).thenReturn(List.of());
-        // The real service runs the deactivation inside its Course Memory transaction.
-        doAnswer(invocation -> {
-            invocation.<Runnable>getArgument(1).run();
-            return List.of(COURSE_MEMORY_THREAD);
-        }).when(userOwnedContentDeletionService).deactivateAndInvalidateCourseMemory(anyLong(), any());
 
         permanentUserDeletionService = new PermanentUserDeletionService(userRepository, userDeletionPlanService, userReferenceCleanupService, userOwnedContentDeletionService,
                 accountCredentialRevocationService, fileService, auditEventRepository, null);
@@ -124,27 +116,14 @@ class PermanentUserDeletionOrderTest {
     }
 
     @Test
-    void theAccountIsClosedTogetherWithOutdatingItsCourseMemoryEntries() {
+    void courseMemoryIsOutdatedRightBeforeTheAccountIsClosed() {
         // Closing makes the account an inactive author, whose messages Course Memory must not keep. If the deletion then
-        // stops, nothing else outdates the entries, so the deactivation has to commit together with outdating them.
-        doThrow(new IllegalStateException("something went wrong halfway through")).when(userOwnedContentDeletionService).deleteTeams(anyLong());
-
-        catchThrowable(() -> permanentUserDeletionService.deleteByAdmin(USER_ID, FINGERPRINT, "an-admin"));
-
-        InOrder order = inOrder(userRepository, userOwnedContentDeletionService);
-        order.verify(userOwnedContentDeletionService).deactivateAndInvalidateCourseMemory(eq(USER_ID), any());
-        order.verify(userRepository).deactivateForDeletion(USER_ID);
-        order.verify(userOwnedContentDeletionService).deleteTeams(USER_ID);
-    }
-
-    @Test
-    void courseMemoryIsRebuiltOnlyOnceTheAccountIsGone() {
-        // An entry's trust label follows who signed off on its answer; those references disappear with the account row.
+        // stops, nothing else outdates the entries, so this happens before the account is closed.
         permanentUserDeletionService.deleteByAdmin(USER_ID, FINGERPRINT, "an-admin");
 
         InOrder order = inOrder(userRepository, userOwnedContentDeletionService);
-        order.verify(userRepository).deleteUserRow(USER_ID);
-        order.verify(userOwnedContentDeletionService).refreshCourseMemory(List.of(COURSE_MEMORY_THREAD));
+        order.verify(userOwnedContentDeletionService).invalidateCourseMemoryOf(USER_ID);
+        order.verify(userRepository).deactivateForDeletion(USER_ID);
     }
 
     @Test
