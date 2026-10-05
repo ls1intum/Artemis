@@ -7,7 +7,7 @@ import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
-import localRulesPlugin from './rules/index.mjs';
+import localRulesPlugin from './config/eslint/rules/index.mjs';
 
 // Builds `no-restricted-imports` patterns that block importing a sibling client layer
 // (e.g. `shared-ui` or `editor`) from another layer — covering both the absolute alias path
@@ -75,16 +75,16 @@ export default tseslint.config(
             '.venv/',
             'build/',
             'coverage/',
-            'docker/',
+            'deployment/docker/',
             'docs/',
             'documentation/',
             'gradle/',
             'local/',
             'node/',
             'node_modules/',
-            'openapi/',
+            'config/openapi/',
             'out/',
-            'patches/',
+            'config/pnpm/patches/',
             'repos/',
             'repos-download/',
             'supporting_scripts/',
@@ -131,8 +131,8 @@ export default tseslint.config(
                 tsconfigRootDir: import.meta.dirname,
                 project: [
                     './tsconfig.json',
-                    './tsconfig.app.json',
-                    './tsconfig.spec.json',
+                    './config/client/tsconfig.app.json',
+                    './config/client/tsconfig.spec.json',
                     './packages/tum-aet-ui/tsconfig.lib.json',
                     './packages/tum-aet-ui/tsconfig.spec.json',
                     './packages/tum-aet-ui/.storybook/tsconfig.json',
@@ -204,7 +204,7 @@ export default tseslint.config(
             // A computed(), linkedSignal(), effect() or afterRenderEffect() that reads no signal never re-runs: either a
             // signal read is missing (`count` instead of `count()`), or the value is a constant and should be a field.
             // Version 22.5.0 crashes ("config.args is not iterable") on a bare call named like an Object.prototype
-            // member, such as a destructured Signal Forms `valueOf`; patches/@angular-eslint__eslint-plugin@22.5.0.patch
+            // member, such as a destructured Signal Forms `valueOf`; config/pnpm/patches/@angular-eslint__eslint-plugin@22.5.0.patch
             // backports the upstream fix until a release contains it.
             '@angular-eslint/reactive-context-must-read-signal': 'error',
             // A computed() whose function returns nothing is always undefined.
@@ -543,7 +543,7 @@ export default tseslint.config(
             parser: typescriptParser,
             parserOptions: {
                 tsconfigRootDir: import.meta.dirname,
-                project: ['./tsconfig.spec.json'],
+                project: ['./config/client/tsconfig.spec.json'],
             },
         },
         plugins: {
@@ -673,7 +673,7 @@ export default tseslint.config(
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
         // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
         // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
-        // hex/--bs- guard (.stylelintrc.json) is scoped per migrated module. See client-development.mdx (### Styling).
+        // hex/--bs- guard (config/stylelint/stylelint.config.json) is scoped per migrated module. See client-development.mdx (### Styling).
         files: ['src/main/webapp/app/**/*.html', 'packages/tum-aet-ui/src/lib/**/*.html'],
         languageOptions: {
             parser: angularTemplateParser,
