@@ -175,16 +175,12 @@ public class UserResource {
             throw new IllegalArgumentException("LLM selection decision cannot be null");
         }
         AiSelectionDecision before = userAiPreferenceService.findDecision(user.getId());
-        Runnable recordDecision = () -> userAiPreferenceService.recordDecision(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
-        // Opting out of AI: the decision is recorded in the same transaction that outdates the Course Memory entries holding
-        // this user's messages, so no entry built from their text can outlive it; the entries are then rebuilt without it.
-        if (selectedLLMUsage == AiSelectionDecision.NO_AI && before != AiSelectionDecision.NO_AI && courseMemoryIngestionApi.isPresent()) {
-            CourseMemoryIngestionApi api = courseMemoryIngestionApi.get();
-            api.refreshThreadsInBackground(api.changeAccountAndInvalidate(user.getId(), recordDecision));
-        }
-        else {
-            recordDecision.run();
-        }
+        // Opting out of AI: the Course Memory entries holding this user's messages are outdated before the decision is
+        // recorded and rebuilt without them afterwards. If the rebuild never runs, the nightly sync retracts them.
+        boolean optsOut = selectedLLMUsage == AiSelectionDecision.NO_AI && before != AiSelectionDecision.NO_AI;
+        List<Long> courseMemoryThreads = optsOut ? courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of()) : List.of();
+        userAiPreferenceService.recordDecision(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
+        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
         var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.ok().build();

@@ -373,9 +373,10 @@ public class ConversationMessagingService extends PostingService {
         existingMessage.setTitle(messagePost.title());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
-        // Saved together with a bump of the thread's Course Memory version: the stored question is derived from this
-        // post, so an entry built from the old wording is outdated the moment this commits.
-        Post updatedPost = conversationMessageRepository.saveAndInvalidateCourseMemory(existingMessage);
+        // The thread's Course Memory version is bumped first: the stored question is derived from this post, so an entry
+        // built from the old wording is outdated once the edit is saved.
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(postId);
+        Post updatedPost = conversationMessageRepository.save(existingMessage);
         updatedPost.setConversation(conversation);
 
         // Right after the change, before the work below that can fail; only a thread with an entry needs it.
@@ -408,9 +409,9 @@ public class ConversationMessagingService extends PostingService {
         post.setConversation(conversation);
 
         // delete
-        // Only a thread that ever had a Course Memory operation can have an entry. Read under the same row lock as the
-        // deletion, so a first operation that starts concurrently cannot slip in between.
-        boolean hadCourseMemory = conversationMessageRepository.deleteAndReturnCourseMemoryVersion(postId) > 0;
+        // Read before the row is gone: only a thread that ever had a Course Memory operation can have an entry.
+        boolean hadCourseMemory = conversationMessageRepository.findCourseMemoryVersion(postId).orElse(0L) > 0;
+        conversationMessageRepository.deleteById(postId);
         // The thread is gone, so its Course Memory entry must go too. Right after the deletion, before the work below
         // that can fail; the nightly Course Memory sync retracts it if this does not get through.
         try {

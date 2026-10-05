@@ -66,16 +66,14 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
     }
 
     /**
-     * Applies an account change after which the user's messages may no longer be stored (an opt-out from AI, a
-     * deactivation) together with outdating the entries that hold them, in one transaction. Pass the result to
-     * {@link #refreshThreadsInBackground} once it returned.
+     * Outdates the entries of every thread with content by the user. Call it right before an opt-out from AI, a
+     * deactivation or the closing of an account is recorded, then pass the result to {@link #refreshThreadsInBackground}.
      *
-     * @param userId        the user
-     * @param accountChange the account change; its repository calls join the transaction
+     * @param userId the user
      * @return the affected threads' root post ids
      */
-    public List<Long> changeAccountAndInvalidate(long userId, Runnable accountChange) {
-        return courseMemoryIngestionService.changeAccountAndInvalidate(userId, accountChange);
+    public List<Long> invalidateThreadsWithContentBy(long userId) {
+        return courseMemoryIngestionService.invalidateThreadsWithContentBy(userId);
     }
 
     /**

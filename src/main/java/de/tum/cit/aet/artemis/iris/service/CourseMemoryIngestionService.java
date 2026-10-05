@@ -80,8 +80,8 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
  * <ul>
  * <li>Iris only ever serves entries from channels that Artemis lists as readable by every student when it dispatches
  * an autonomous tutor run, and Artemis checks those channels again before publishing a reply unreviewed.</li>
- * <li>Changes that a refresh must reflect bump the version in the same transaction as the change itself, so an update
- * that never reached Pyris leaves an entry with an older version behind.</li>
+ * <li>Changes that a refresh must reflect bump the version right before the change is saved, so an update that never
+ * reached Pyris leaves an entry with an older version behind.</li>
  * <li>The nightly {@link CourseMemorySyncService} retracts every entry whose version is older than Artemis's, whose
  * thread may no longer be stored, or whose thread or course was deleted.</li>
  * </ul>
@@ -268,16 +268,20 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Applies an account change that takes the user's messages out of Course Memory and bumps the version of every thread
-     * with a Course Memory version that contains content by the user, in one transaction. A refresh that never runs leaves
-     * the outdated entries for the nightly sync to retract.
+     * Bumps the version of every thread with a Course Memory version that contains content by the given user. Called right
+     * before an opt-out from AI, a deactivation or the closing of an account is recorded; pass the result to
+     * {@link #refreshThreadsAsync} once it is. A refresh that never runs leaves the outdated entries for the nightly sync
+     * to retract.
      *
-     * @param userId        the user
-     * @param accountChange the account change; runs inside the transaction
+     * @param userId the user
      * @return the affected threads' root post ids
      */
-    public List<Long> changeAccountAndInvalidate(long userId, Runnable accountChange) {
-        return conversationMessageRepository.changeAccountAndInvalidateCourseMemory(userId, accountChange);
+    public List<Long> invalidateThreadsWithContentBy(long userId) {
+        List<Long> postIds = conversationMessageRepository.findCourseMemoryThreadIdsWithContentBy(userId);
+        if (!postIds.isEmpty()) {
+            conversationMessageRepository.bumpCourseMemoryVersionsOfThreadsWithContentBy(userId);
+        }
+        return postIds;
     }
 
     /**
@@ -345,17 +349,17 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Whether a tutor approved this Iris answer in the verification dashboard, with an account that is still active. An Iris
-     * answer published automatically on a high confidence score is also {@code verified}, but records no human verifier.
+     * Whether a tutor approved this Iris answer in the verification dashboard. An Iris answer published automatically on
+     * a high confidence score is also {@code verified}, but records no human verifier.
      */
     private boolean isDashboardVerifiedIrisAnswer(AnswerPost answer) {
-        return isBot(answer.getAuthor()) && answer.isVerified() && answerPostRepository.hasActiveHumanVerifier(answer.getId());
+        return isBot(answer.getAuthor()) && answer.isVerified() && answerPostRepository.hasHumanVerifier(answer.getId());
     }
 
     /**
      * Whether each resolving answer of the thread was marked resolving by someone with teaching authority in the course.
      * The role is resolved now rather than stored with the endorsement: someone who has since left the course's staff no
-     * longer lends their answers the tutor tier, and neither does a closed account, whose endorsements are not returned.
+     * longer lends their answers the tutor tier.
      */
     private Map<Long, Boolean> loadTutorEndorsements(Post fullPost, Course course) {
         Map<String, Boolean> tutorByLogin = new HashMap<>();

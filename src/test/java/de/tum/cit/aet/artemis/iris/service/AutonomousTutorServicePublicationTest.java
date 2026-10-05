@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,9 +40,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 
 /**
- * Publishing an auto-published answer: saved as a draft, published only by the repository's locked check-and-update. Not
- * an integration test because the failure it covers, the publication throwing after the draft was saved, cannot be
- * produced with real beans.
+ * Publishing an auto-published answer: saved as a draft, published only after the check after saving passed. Not an
+ * integration test because the failures it covers, a channel query or a save that throws after the draft was saved,
+ * cannot be produced with real beans.
  */
 @ExtendWith(MockitoExtension.class)
 class AutonomousTutorServicePublicationTest {
@@ -110,7 +111,8 @@ class AutonomousTutorServicePublicationTest {
         when(featureToggleService.isFeatureEnabled(Feature.AutonomousTutor)).thenReturn(true);
         when(conversationMessageRepository.findMessagePostByIdElseThrow(POST_ID)).thenReturn(post);
         when(irisBotUserService.getIrisBotUser()).thenReturn(bot);
-        when(answerPostRepository.save(any(AnswerPost.class))).thenAnswer(this::persist);
+        // lenient: one test replaces this with a save that fails the second time
+        lenient().when(answerPostRepository.save(any(AnswerPost.class))).thenAnswer(this::persist);
     }
 
     /** Records what each successful save wrote; a save that throws writes nothing. */
@@ -126,41 +128,52 @@ class AutonomousTutorServicePublicationTest {
     }
 
     private void assertHeldForReview() {
-        assertThat(persistedVerified).containsExactly(false);
+        assertThat(persistedVerified).last().isEqualTo(false);
         // Only staff are asked; students never get the answer.
         verify(userRepository).findStaffNotificationRecipientsInCourseForConversation(anyLong(), anyLong());
         verify(userRepository, never()).findAllNotificationRecipientsInCourseForConversation(anyLong(), anyLong());
     }
 
     @Test
-    void replyIsSavedAsDraftAndPublishedThroughTheLockedCheck() {
+    void replyIsPublishedOnlyAfterTheSecondCheck() {
         when(channelRepository.findIdsOfChannelsReadableByAllStudents(eq(COURSE_ID), any())).thenReturn(Set.of(CHANNEL_ID));
-        when(answerPostRepository.publishIfConversationsReadable(eq(77L), eq(COURSE_ID), eq(List.of(CHANNEL_ID)), any())).thenReturn(true);
 
         autonomousTutorService.handleStatusUpdate(new AutonomousTutorJob("job", POST_ID, COURSE_ID), confidentReplyFrom(CHANNEL_ID));
 
-        // Saved only as a draft; the publication itself is the repository's check-and-update in one transaction.
-        assertThat(persistedVerified).containsExactly(false);
+        // Saved as a draft first, published by a second save once the check after saving passed.
+        assertThat(persistedVerified).containsExactly(false, true);
         verify(userRepository).findAllNotificationRecipientsInCourseForConversation(anyLong(), anyLong());
     }
 
     @Test
-    void replyStaysADraftWhenTheLockedCheckFails() {
-        when(channelRepository.findIdsOfChannelsReadableByAllStudents(eq(COURSE_ID), any())).thenReturn(Set.of(CHANNEL_ID));
-        when(answerPostRepository.publishIfConversationsReadable(anyLong(), anyLong(), any(), any())).thenThrow(new IllegalStateException("database unavailable"));
+    void replyStaysADraftWhenTheCheckAfterSavingFails() {
+        when(channelRepository.findIdsOfChannelsReadableByAllStudents(eq(COURSE_ID), any())).thenReturn(Set.of(CHANNEL_ID))
+                .thenThrow(new IllegalStateException("database unavailable"));
 
         autonomousTutorService.handleStatusUpdate(new AutonomousTutorJob("job", POST_ID, COURSE_ID), confidentReplyFrom(CHANNEL_ID));
 
+        assertThat(persistedVerified).containsExactly(false);
+        assertHeldForReview();
+    }
+
+    @Test
+    void replyStaysADraftWhenPublishingFails() {
+        when(channelRepository.findIdsOfChannelsReadableByAllStudents(eq(COURSE_ID), any())).thenReturn(Set.of(CHANNEL_ID));
+        when(answerPostRepository.save(any(AnswerPost.class))).thenAnswer(this::persist).thenThrow(new IllegalStateException("database unavailable"));
+
+        autonomousTutorService.handleStatusUpdate(new AutonomousTutorJob("job", POST_ID, COURSE_ID), confidentReplyFrom(CHANNEL_ID));
+
+        assertThat(persistedVerified).containsExactly(false);
         assertHeldForReview();
     }
 
     @Test
     void replyStaysADraftWhenASourceBecameUnreadable() {
-        when(channelRepository.findIdsOfChannelsReadableByAllStudents(eq(COURSE_ID), any())).thenReturn(Set.of(CHANNEL_ID));
-        when(answerPostRepository.publishIfConversationsReadable(anyLong(), anyLong(), any(), any())).thenReturn(false);
+        when(channelRepository.findIdsOfChannelsReadableByAllStudents(eq(COURSE_ID), any())).thenReturn(Set.of(CHANNEL_ID)).thenReturn(Set.of());
 
         autonomousTutorService.handleStatusUpdate(new AutonomousTutorJob("job", POST_ID, COURSE_ID), confidentReplyFrom(CHANNEL_ID));
 
+        assertThat(persistedVerified).containsExactly(false);
         assertHeldForReview();
     }
 }

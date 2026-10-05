@@ -250,36 +250,14 @@ public class UserOwnedContentDeletionService {
     }
 
     /**
-     * Deactivates the account in the same transaction that outdates the Course Memory entries involving it: those holding
-     * its messages and those whose answer it signed off on. If the deletion then stops part of the way, the nightly Course
-     * Memory sync retracts what the outdated entries still contain.
+     * Outdates the Course Memory entries that hold the account's messages. Called right before the account is closed for
+     * deletion: if the deletion then stops part of the way, the account stays closed with messages of an inactive
+     * author, and the nightly Course Memory sync retracts the entries that still contain them.
      *
-     * @param userId       the account being deleted
-     * @param deactivation the deactivation; its repository call joins the transaction
-     * @return the threads whose entries were outdated, to be rebuilt once the account is gone
+     * @param userId the account being deleted
      */
-    public List<Long> deactivateAndInvalidateCourseMemory(long userId, Runnable deactivation) {
-        if (courseMemoryIngestionApi.isEmpty()) {
-            deactivation.run();
-            return List.of();
-        }
-        return courseMemoryIngestionApi.get().changeAccountAndInvalidate(userId, deactivation);
-    }
-
-    /**
-     * Rebuilds the given threads' Course Memory entries in the background, once the deleted account's messages and
-     * sign-offs are gone. Best-effort: the entries are already outdated, so the nightly sync retracts them if this does
-     * not get through.
-     *
-     * @param postIds the threads' root post ids
-     */
-    public void refreshCourseMemory(List<Long> postIds) {
-        try {
-            courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(postIds));
-        }
-        catch (Exception e) {
-            log.error("Failed to update course memory after deleting an account", e);
-        }
+    public void invalidateCourseMemoryOf(long userId) {
+        courseMemoryIngestionApi.ifPresent(api -> api.invalidateThreadsWithContentBy(userId));
     }
 
     /**
@@ -297,8 +275,18 @@ public class UserOwnedContentDeletionService {
         List<Long> postIds = communicationDataCleanupRepository.findPostIdsAuthoredBy(userId);
         List<Long> answerPostIds = communicationDataCleanupRepository.findAnswerPostIdsAuthoredBy(userId);
 
-        // One transaction removes the messages and outdates the Course Memory entries that held any of them.
-        List<CourseMemoryThreadDTO> courseMemoryThreads = communicationDataCleanupRepository.deleteCommunicationContentAndInvalidateCourseMemory(userId);
+        // Course Memory entries holding any of these messages are outdated first: if the follow-up below never reaches
+        // Pyris, the nightly sync retracts them.
+        List<CourseMemoryThreadDTO> courseMemoryThreads = communicationDataCleanupRepository.findCourseMemoryThreadsWithContentBy(userId);
+        if (!courseMemoryThreads.isEmpty()) {
+            communicationDataCleanupRepository.bumpCourseMemoryVersions(courseMemoryThreads.stream().map(CourseMemoryThreadDTO::postId).toList());
+        }
+
+        communicationDataCleanupRepository.deleteReactionsOnAnswersAuthoredBy(userId);
+        communicationDataCleanupRepository.deleteAnswersAuthoredBy(userId);
+        communicationDataCleanupRepository.deleteReactionsOnPostsAuthoredBy(userId);
+        communicationDataCleanupRepository.deletePosts(userId);
+        communicationDataCleanupRepository.deleteReactions(userId);
         removeFromCourseMemory(courseMemoryThreads);
 
         removeFromSearchIndex(postIds, answerPostIds);
