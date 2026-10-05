@@ -57,6 +57,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseMemoryIngestionWebhookJob;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -120,6 +123,12 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private UserOwnedContentDeletionService userOwnedContentDeletionService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private LectureTestRepository lectureTestRepository;
 
     private Course course;
 
@@ -1271,10 +1280,18 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
                 ZonedDateTime.now().plusDays(3));
         Channel releasedChannel = conversationUtilService.addChannelToExercise(released);
         Channel unreleasedChannel = conversationUtilService.addChannelToExercise(unreleased);
+        Lecture lecture = lectureUtilService.createLecture(course);
+        Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+        Lecture tutorialLecture = lectureUtilService.createLecture(course);
+        tutorialLecture.setIsTutorialLecture(true);
+        tutorialLecture = lectureTestRepository.save(tutorialLecture);
+        // Course-wide, but hidden from every channel list.
+        Channel tutorialLectureChannel = lectureUtilService.addLectureChannel(tutorialLecture);
 
         var readable = channelRepository.findIdsOfChannelsReadableByAllStudents(course.getId(), ZonedDateTime.now());
 
-        assertThat(readable).contains(channel.getId(), publicChannel.getId(), releasedChannel.getId()).doesNotContain(privateChannel.getId(), unreleasedChannel.getId());
+        assertThat(readable).contains(channel.getId(), publicChannel.getId(), releasedChannel.getId(), lectureChannel.getId()).doesNotContain(privateChannel.getId(),
+                unreleasedChannel.getId(), tutorialLectureChannel.getId());
         assertThat(channelRepository.isChannelReadableByAllStudents(unreleasedChannel.getId(), ZonedDateTime.now())).isFalse();
         assertThat(channelRepository.isChannelReadableByAllStudents(releasedChannel.getId(), ZonedDateTime.now())).isTrue();
     }

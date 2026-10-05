@@ -24,13 +24,15 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
 
     /**
      * JPQL condition under which every student of a course can read a channel right now: public or course-wide, not an
-     * exam channel, and, for an exercise channel, a course exercise that is released. Expects the aliases {@code channel}
-     * and {@code exercise} (a left join of {@code channel.exercise}) and the parameter {@code :now}. Shared by every query
-     * that decides what Course Memory may use, so they cannot drift apart.
+     * exam channel, not the channel of a tutorial lecture (hidden from every channel list, see
+     * {@link #findChannelsOfUser}), and, for an exercise channel, a course exercise that is released. Expects the aliases
+     * {@code channel} and {@code exercise} (a left join of {@code channel.exercise}) and the parameter {@code :now}. Shared
+     * by every query that decides what Course Memory may use, so they cannot drift apart.
      */
     String READABLE_BY_ALL_STUDENTS = """
             channel.exam IS NULL
                 AND (channel.isPublic = TRUE OR channel.isCourseWide = TRUE)
+                AND NOT EXISTS (SELECT tutorialLecture.id FROM Lecture tutorialLecture WHERE tutorialLecture.id = channel.lecture.id AND tutorialLecture.isTutorialLecture = TRUE)
                 AND (exercise IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate <= :now)))
             """;
 
