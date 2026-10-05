@@ -167,7 +167,7 @@ public class HyperionExerciseVariantResource {
     public ResponseEntity<Void> cancelJob(@PathVariable String jobId) {
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         jobService.requestCancel(jobId, user.getLogin());
-        log.info("Cancellation requested for variant generation job [{}]", jobId);
+        log.info("Cancellation of a variant generation job requested by user {}", user.getId());
         return ResponseEntity.noContent().build();
     }
 

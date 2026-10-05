@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -48,6 +49,7 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
     void setUp() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
+        exercise.setCourse(new Course());
         when(repository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
         when(repository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(EXERCISE_ID)).thenReturn(exercise);
         when(repository.findByIdElseThrow(EXERCISE_ID)).thenReturn(exercise);
@@ -89,6 +91,7 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
     void deleteReleasesTheLeaseAfterDeletionServiceFailsSoASubsequentClaimSucceeds() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
+        exercise.setCourse(new Course());
         ProgrammingExerciseTestRepository deletionRepository = mock(ProgrammingExerciseTestRepository.class);
         when(deletionRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
         UserTestRepository deletionUserTestRepository = mock(UserTestRepository.class);

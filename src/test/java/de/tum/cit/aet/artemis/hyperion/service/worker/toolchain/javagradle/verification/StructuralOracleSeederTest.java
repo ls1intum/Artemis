@@ -269,6 +269,18 @@ class StructuralOracleSeederTest {
         assertThat(producedTestsFiles).containsKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java", "test/sorting/ConstructorTest.java")
                 .doesNotContainKeys("test/sorting/AttributeTest.java");
 
+        producedTestsFiles.put("gradle/AresReservedPackages.gradle",
+                new org.springframework.core.io.ClassPathResource("templates/java/test/gradle/projectTemplate/gradle/AresReservedPackages.gradle")
+                        .getContentAsString(StandardCharsets.UTF_8));
+        String policy = new org.springframework.core.io.ClassPathResource("templates/java/test/gradle/projectTemplate/SecurityPolicy.yaml")
+                .getContentAsString(StandardCharsets.UTF_8);
+        int listStart = policy.indexOf("  theFollowingClassesAreTestClasses:");
+        int listEnd = policy.indexOf("  theFollowingResourceAccessesArePermitted:");
+        String testClasses = producedTestsFiles.keySet().stream().filter(path -> path.endsWith(".java")).sorted()
+                .map(path -> "    - \"" + path.substring("test/".length(), path.length() - ".java".length()).replace('/', '.') + "\"\n")
+                .collect(java.util.stream.Collectors.joining());
+        producedTestsFiles.put("SecurityPolicy.yaml", policy.substring(0, listStart) + "  theFollowingClassesAreTestClasses:\n" + testClasses + policy.substring(listEnd));
+
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(producedTestsFiles))
                 .as("the seeder's own @StrictTimeout(10) structural test classes must pass the integrity gate they are composed with in production").isEmpty();
     }

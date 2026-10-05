@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
@@ -77,7 +78,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     /**
      * Tracks the previously known connected clients for detecting disconnections.
      */
-    private volatile Set<String> previouslyKnownClients = new HashSet<>();
+    private final AtomicReference<Set<String>> previouslyKnownClients = new AtomicReference<>(new HashSet<>());
 
     /**
      * Scheduled executor for polling client connections.
@@ -363,8 +364,9 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
                 });
 
                 // Initialize with current clients to avoid false disconnection events on startup
-                previouslyKnownClients = new HashSet<>(redisClientListResolver.getUniqueClients());
-                log.info("Starting Redis client disconnection polling with interval of {} seconds. Initial clients: {}", CLIENT_POLLING_INTERVAL_SECONDS, previouslyKnownClients);
+                previouslyKnownClients.set(new HashSet<>(redisClientListResolver.getUniqueClients()));
+                log.info("Starting Redis client disconnection polling with interval of {} seconds. Initial clients: {}", CLIENT_POLLING_INTERVAL_SECONDS,
+                        previouslyKnownClients.get());
 
                 clientPollingFuture = clientPollingExecutor.scheduleAtFixedRate(this::checkForDisconnectedClients, CLIENT_POLLING_INTERVAL_SECONDS, CLIENT_POLLING_INTERVAL_SECONDS,
                         TimeUnit.SECONDS);
@@ -416,7 +418,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
                 return;
             }
             Set<String> currentClients = snapshot.clientNames();
-            Set<String> disconnectedClients = new HashSet<>(previouslyKnownClients);
+            Set<String> disconnectedClients = new HashSet<>(previouslyKnownClients.get());
             disconnectedClients.removeAll(currentClients);
 
             for (String disconnectedClient : disconnectedClients) {
@@ -425,7 +427,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
             }
 
             // Update the known clients for the next check
-            previouslyKnownClients = new HashSet<>(currentClients);
+            previouslyKnownClients.set(new HashSet<>(currentClients));
         }
         catch (Exception e) {
             log.warn("Error checking for disconnected Redis clients: {}", e.getMessage());

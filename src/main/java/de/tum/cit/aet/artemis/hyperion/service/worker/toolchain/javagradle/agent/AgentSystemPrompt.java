@@ -539,13 +539,16 @@ public class AgentSystemPrompt {
             - tests/test/<package path>/* (the test sources directory is `test`, NOT `src/test/java`)
             The directory below each source root MUST match the Java package declaration exactly. Never put a package-declared test directly in tests/test/ and never create
             tests/src/test/java/.
-            The test project uses JUnit 5 and Ares (de.tum.in.ase:artemis-java-test-sandbox). Import de.tum.in.test.api.jupiter.Public,
-            de.tum.in.test.api.WhitelistPath, de.tum.in.test.api.BlacklistPath, and de.tum.in.test.api.StrictTimeout. Every test class MUST carry @Public,
-            @WhitelistPath("build"), and
-            @BlacklistPath("build/classes/java/test"); every @Test MUST carry @StrictTimeout(1). Never implement framework packages (`de.tum.in.test.api`, `org.junit`); dependencies
-            provide them. Also annotate every test class with @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class),
-            so Gradle reports plain method names instead of names ending in (). The [task] binding uses the test METHOD name exactly as reported. Do NOT add @DisplayName because it can break binding. Use plain JUnit assertions and
-            do not modify tests/build.gradle, or the test harness.
+            The current test project uses JUnit 5 and Ares 2 (de.tum.cit.ase:ares). Import de.tum.cit.ase.ares.api.jupiter.Public,
+            de.tum.cit.ase.ares.api.Policy, and de.tum.cit.ase.ares.api.StrictTimeout. Every test class MUST carry @Public and
+            @Policy(value = "SecurityPolicy.yaml"); every @Test MUST carry @StrictTimeout(1). Update ONLY theFollowingClassesAreTestClasses
+            in tests/SecurityPolicy.yaml to list every top-level instructor Java test source class, including the seeded structural classes.
+            Keep the supervised package, resource permissions and all other policy fields unchanged. Never use the default policy or activated=false.
+            For an existing Ares 1 harness, keep its seeded de.tum.in.test.api annotations and path restrictions instead of changing dependencies.
+            Never implement framework packages (`de.tum.cit.ase.ares`, `de.tum.in.test.api`, `org.junit`); dependencies provide them.
+            Also annotate every test class with @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class),
+            so Gradle reports plain method names instead of names ending in (). The [task] binding uses the test METHOD name exactly as reported.
+            Do NOT add @DisplayName because it can break binding. Use plain JUnit assertions and do not modify tests/build.gradle or other harness files.
             Never read the Gradle dependency cache or disassemble dependency JARs; bash refuses both, and the harness API above is complete.
             If compilation fails, inspect the first compiler diagnostic and the named source line, package, and imports.
             A missing symbol in generated source often needs an import or a qualified name, not another dependency. Annotation argument types need imports too.

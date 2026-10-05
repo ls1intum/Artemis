@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -183,7 +184,7 @@ public class LLMTokenUsageService {
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return;
             }
-            String model = metadata.getModel() != null ? metadata.getModel() : "";
+            String model = Objects.requireNonNullElse(metadata.getModel(), "");
             LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
                     usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);

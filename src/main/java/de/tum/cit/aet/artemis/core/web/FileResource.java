@@ -329,7 +329,11 @@ public class FileResource {
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(new FileSystemLocation.DragAndDropBackground(question.getBackgroundFilePath()).path());
+        String backgroundFilePath = question.getBackgroundFilePath();
+        if (backgroundFilePath == null) {
+            throw new EntityNotFoundException("Drag and drop question " + questionId + " has no background file");
+        }
+        return responseEntityForFilePath(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path());
     }
 
     /**
@@ -355,10 +359,11 @@ public class FileResource {
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         DragItem dragItem = question.findDragItemById(dragItemId);
-        if (dragItem == null || dragItem.getPictureFilePath() == null) {
+        String pictureFilePath = dragItem == null ? null : dragItem.getPictureFilePath();
+        if (pictureFilePath == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
         }
-        return responseEntityForFilePath(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path());
+        return responseEntityForFilePath(new FileSystemLocation.DragItem(pictureFilePath).path());
     }
 
     /**

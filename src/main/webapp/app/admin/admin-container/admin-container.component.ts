@@ -9,6 +9,7 @@ import {
     MODULE_FEATURE_AIWORKER,
     MODULE_FEATURE_ATLAS,
     MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_GLOBAL_SEARCH,
     MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
     MODULE_FEATURE_IRIS,
     MODULE_FEATURE_LTI,
@@ -57,6 +58,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     readonly irisEnabled = signal(false);
     readonly hyperionGenerationEnabled = signal(false);
     readonly aiWorkerEnabled = signal(false);
+    readonly weaviateEnabled = signal(false);
 
     private standardizedCompetencySubscription?: Subscription;
     private routerSubscription?: Subscription;
@@ -71,6 +73,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
         this.hyperionGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
         this.aiWorkerEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_AIWORKER));
+        this.weaviateEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_GLOBAL_SEARCH));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled.set(isActive);

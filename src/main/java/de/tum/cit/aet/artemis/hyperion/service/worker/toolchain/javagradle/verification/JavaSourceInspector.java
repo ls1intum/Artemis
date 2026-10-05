@@ -35,6 +35,8 @@ final class JavaSourceInspector {
     private static final Pattern ANNOTATION_NAME = Pattern
             .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(?:\\s*\\.\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
 
+    private static final Pattern EXPLICIT_POLICY_ARGUMENT = Pattern.compile("value\\s*=\\s*\"SecurityPolicy\\.yaml\"");
+
     private static final Pattern SIMPLE_ANNOTATION_ARGUMENT = Pattern.compile("[0-9]+|\"(?:build|build/classes/java/test)\"");
 
     private JavaSourceInspector() {
@@ -101,6 +103,10 @@ final class JavaSourceInspector {
      * Resolves simple annotation names against the file's imports, so a package-local look-alike (a self-declared {@code Public}) cannot pass for the trusted annotation.
      */
     static JavaTestAnnotationSummary javaTestAnnotationSummary(String content) {
+        return javaTestAnnotationSummary(content, false);
+    }
+
+    static JavaTestAnnotationSummary javaTestAnnotationSummary(String content, boolean ares2) {
         content = translateUnicodeEscapes(content);
         if (content == null) {
             return new JavaTestAnnotationSummary(true, true, true, true);
@@ -131,6 +137,10 @@ final class JavaSourceInspector {
                 if (annotation == null) {
                     return new JavaTestAnnotationSummary(true, true, true, true);
                 }
+                if (ares2 && hasAnnotation(annotation.text(), "Policy")
+                        && !hasTrustedAnnotation(annotation.text(), imports, "de.tum.cit.ase.ares.api.Policy", "Policy", "value = \"SecurityPolicy.yaml\"")) {
+                    return new JavaTestAnnotationSummary(true, true, true, true);
+                }
                 if (annotation.text().equals("@interface")) {
                     // A meta-annotation can make methods in other files executable. Require direct JUnit annotations instead of guessing a transitive type graph.
                     if (hasJUnitTestAnnotation(annotations.toString())) {
@@ -151,8 +161,8 @@ final class JavaSourceInspector {
                 else if (hasJUnitTestAnnotation(annotationBlock)) {
                     hasTestMethods = true;
                     String classAnnotations = classes.isEmpty() ? "" : classes.peek().annotations();
-                    missingClassAnnotations |= !hasAresClassAnnotations(classAnnotations, imports);
-                    missingTimeouts |= !hasStrictTimeout(annotationBlock, imports) && !hasStrictTimeout(classAnnotations, imports);
+                    missingClassAnnotations |= !hasAresClassAnnotations(classAnnotations, imports, ares2);
+                    missingTimeouts |= !hasStrictTimeout(annotationBlock, imports, ares2) && !hasStrictTimeout(classAnnotations, imports, ares2);
                 }
                 if (current == '{') {
                     depth++;
@@ -209,19 +219,24 @@ final class JavaSourceInspector {
         }
         String argument = source.substring(argumentStart, offset - 1).trim();
         // Only the literal path and integer arguments used by the safety contract can supply evidence.
-        String trustedArgument = SIMPLE_ANNOTATION_ARGUMENT.matcher(argument).matches() ? argument : "?";
+        String trustedArgument = EXPLICIT_POLICY_ARGUMENT.matcher(argument).matches() ? "value = \"SecurityPolicy.yaml\""
+                : SIMPLE_ANNOTATION_ARGUMENT.matcher(argument).matches() ? argument : "?";
         return new JavaAnnotation(annotation + "(" + trustedArgument + ")", offset);
     }
 
-    private static boolean hasAresClassAnnotations(String annotations, Set<String> imports) {
+    private static boolean hasAresClassAnnotations(String annotations, Set<String> imports, boolean ares2) {
+        if (ares2) {
+            return hasTrustedAnnotation(annotations, imports, "de.tum.cit.ase.ares.api.jupiter.Public", "Public", null)
+                    && hasTrustedAnnotation(annotations, imports, "de.tum.cit.ase.ares.api.Policy", "Policy", "value = \"SecurityPolicy.yaml\"");
+        }
         return hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.jupiter.Public", "Public", null)
                 && hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.WhitelistPath", "WhitelistPath", "\"build\"")
                 && hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.BlacklistPath", "BlacklistPath", "\"build/classes/java/test\"");
     }
 
-    private static boolean hasStrictTimeout(String annotations, Set<String> imports) {
-        return hasBoundedStrictTimeout(annotations, "de.tum.in.test.api.StrictTimeout")
-                || (imports.contains("de.tum.in.test.api.StrictTimeout") && hasBoundedStrictTimeout(annotations, "StrictTimeout"));
+    private static boolean hasStrictTimeout(String annotations, Set<String> imports, boolean ares2) {
+        String type = ares2 ? "de.tum.cit.ase.ares.api.StrictTimeout" : "de.tum.in.test.api.StrictTimeout";
+        return hasBoundedStrictTimeout(annotations, type) || (imports.contains(type) && hasBoundedStrictTimeout(annotations, "StrictTimeout"));
     }
 
     private static boolean hasBoundedStrictTimeout(String annotations, String name) {

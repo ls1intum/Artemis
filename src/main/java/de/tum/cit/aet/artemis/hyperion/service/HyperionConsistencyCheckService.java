@@ -129,8 +129,7 @@ public class HyperionConsistencyCheckService {
             return null;
         }
         var usage = response.getMetadata().getUsage();
-        return llmTokenUsageService.buildLLMRequest(response.getMetadata().getModel(), usage.getPromptTokens() != null ? usage.getPromptTokens() : 0,
-                usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, pipelineId);
+        return llmTokenUsageService.buildLLMRequest(response.getMetadata().getModel(), usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
     }
 
     /**

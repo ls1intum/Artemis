@@ -126,8 +126,7 @@ public class SandboxBuildCommands {
         String phaseSection = buildPhaseSection(recipe.phases());
         String isolatedPhaseSection = buildIsolatedGradlePhaseSection(recipe);
         // Each lane replaces the disposable Gradle cache. A persistent daemon would retain its deleted JARs in bounded tmpfs.
-        String javaSecurityManagerAllow = "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\n"
-                + "export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow -Dorg.gradle.daemon=false\"";
+        String gradleOptions = "export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Dorg.gradle.daemon=false\"";
         // The assignment build checks out no sibling solution/, so the solution placeholder collapses to the assignment directory.
         String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
         String solutionPlaceholderValue = "assignment";
@@ -216,7 +215,7 @@ public class SandboxBuildCommands {
                 # Reference marker; collection takes only reports NEWER than it, so a planted report that escaped the delete still cannot be collected.
                 BUILD_START_MARKER="$BUILD_DIR/.hyperion-build-start"
                 : > "$BUILD_START_MARKER"
-                @@JAVA_SECURITY_MANAGER_ALLOW@@
+                @@GRADLE_OPTIONS@@
                 # Run the exercise's real build phases, each from the build root. A non-zero exit (failing tests or a compile error) is expected for the template.
                 rc=0
                 run_phase() {
@@ -252,7 +251,7 @@ public class SandboxBuildCommands {
         return script.replace("@@WORKSPACE@@", GenerationWorkspace.WORKSPACE).replace("@@REPORTS_DIR@@", REPORTS_DIR).replace("@@ASSIGNMENT_DEST@@", assignmentDestination)
                 .replace("@@ASSIGNMENT_DIR@@", recipe.assignmentDir()).replace("@@ASSIGNMENT_PARENT@@", assignmentParentPlaceholderValue).replace("@@TEST_DEST@@", testDestination)
                 .replace("@@SOLUTION_COPY@@", solutionCopySection).replace("@@SOLUTION_DIR@@", solutionPlaceholderValue).replace("@@TEST_DIR@@", testPlaceholderValue)
-                .replace("@@REPORT_FIND@@", findExpression).replace("@@JAVA_SECURITY_MANAGER_ALLOW@@", javaSecurityManagerAllow).replace("@@PHASES@@", phaseSection)
+                .replace("@@REPORT_FIND@@", findExpression).replace("@@GRADLE_OPTIONS@@", gradleOptions).replace("@@PHASES@@", phaseSection)
                 .replace("@@ISOLATED_PHASES@@", isolatedPhaseSection).replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR).replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN)
                 .replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER).replace("@@READINESS_OVERLAY@@", readinessOverlay).replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR)
                 .replace("@@TRUSTED_STRUCTURAL_DIR@@", TRUSTED_STRUCTURAL_DIR).replace("@@PRISTINE_VERIFY_DIR@@", PRISTINE_VERIFY_DIR);

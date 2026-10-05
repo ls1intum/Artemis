@@ -34,7 +34,7 @@ describe('LectureEditFooterComponent', () => {
     });
 
     function setInputs(
-        inputs: Partial<Record<'hasChanges' | 'hasUnsavedContent' | 'isSaving' | 'isEditMode', boolean>> & {
+        inputs: Partial<Record<'hasChanges' | 'hasUnsavedContent' | 'isSaving' | 'isSavingContent' | 'isEditMode', boolean>> & {
             savedAt?: dayjs.Dayjs;
             changedSections?: string[];
             invalidReason?: string;
@@ -111,6 +111,22 @@ describe('LectureEditFooterComponent', () => {
         expect((element('lecture-edit-leave') as HTMLButtonElement).disabled).toBe(true);
         expect(element('lecture-edit-save').getAttribute('aria-disabled')).toBe('true');
         expect(saveTooltip()).toBe('');
+    });
+
+    it('should say that content is being saved instead of claiming there is nothing unsaved, and keep Close', () => {
+        setInputs({ hasChanges: false, isSavingContent: true, savedAt: dayjs('2026-10-01T09:30') });
+
+        expect(text('lecture-edit-footer-status')).toBe('artemisApp.lecture.editFooter.savingContent');
+        // Close asks while content is saved; it does not discard anything, so it is no Cancel.
+        expect(text('lecture-edit-leave')).toBe('entity.action.close');
+        expect((element('lecture-edit-leave') as HTMLButtonElement).disabled).toBe(false);
+        expect(saveTooltip()).toBe('artemisApp.lecture.editFooter.nothingToSave');
+    });
+
+    it('should name unsaved changes before content that is being saved', () => {
+        setInputs({ hasChanges: false, hasUnsavedContent: true, isSavingContent: true, changedSections: ['artemisApp.lecture.sections.units'] });
+
+        expect(text('lecture-edit-footer-status')).toContain('artemisApp.lecture.editFooter.unsavedChanges');
     });
 
     it('should confirm when the details were saved until the next change', () => {

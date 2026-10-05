@@ -127,7 +127,7 @@ final class RetainedArtifacts {
         else if (content != null) {
             files.get(repository).put(path, content);
         }
-        return of(jobId, files, problemStatement, specDocument);
+        return preserveCompleteness(current, of(jobId, files, problemStatement, specDocument));
     }
 
     private static ExerciseGenerationRetainedArtifactsDTO copyWithDocuments(String jobId, @Nullable ExerciseGenerationRetainedArtifactsDTO current,
@@ -138,7 +138,16 @@ final class RetainedArtifacts {
                 files.computeIfAbsent(RepositoryType.valueOf(file.repo().toUpperCase(Locale.ROOT)), ignored -> new HashMap<>()).put(file.path(), file.content());
             }
         }
-        return of(jobId, files, problemStatement, specDocument);
+        return preserveCompleteness(current, of(jobId, files, problemStatement, specDocument));
+    }
+
+    private static ExerciseGenerationRetainedArtifactsDTO preserveCompleteness(@Nullable ExerciseGenerationRetainedArtifactsDTO current,
+            ExerciseGenerationRetainedArtifactsDTO snapshot) {
+        if (current == null || current.completeness() != ExerciseGenerationArtifactCompleteness.PARTIAL) {
+            return snapshot;
+        }
+        return new ExerciseGenerationRetainedArtifactsDTO(snapshot.jobId(), ExerciseGenerationArtifactCompleteness.PARTIAL, snapshot.problemStatement(), snapshot.specDocument(),
+                snapshot.files());
     }
 
     /** A screen that cannot run is not a screen that passed, so an assessment failure counts as unsafe. */

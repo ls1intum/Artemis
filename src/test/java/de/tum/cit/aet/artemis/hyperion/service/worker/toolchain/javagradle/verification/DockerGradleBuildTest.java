@@ -218,9 +218,12 @@ class DockerGradleBuildTest {
             }
         }
         var result = sandbox.exec(session, Duration.ofMinutes(3), "sh", "-c",
-                "set -e; if [ ! -d /tmp/ordinary-gradle-home ]; then mkdir /tmp/ordinary-gradle-home; cp -a /root/.gradle/. /tmp/ordinary-gradle-home/; fi; "
-                        + "cd /tmp/ordinary-ci && export GRADLE_USER_HOME=/tmp/ordinary-gradle-home && " + String.join("\n", phases));
+                "set -e; if [ ! -d /tmp/hyperion-gradle-home ]; then mkdir /tmp/hyperion-gradle-home; cp -a /root/.gradle/. /tmp/hyperion-gradle-home/; fi; "
+                        + "cd /tmp/ordinary-ci && export GRADLE_USER_HOME=/tmp/hyperion-gradle-home GRADLE_OPTS=-Dorg.gradle.daemon=false && " + String.join("\n", phases));
         assertThat(result.timedOut()).as(result.combinedOutput()).isFalse();
+        if (lane.equals("solution")) {
+            assertThat(result.exitCode()).as(result.combinedOutput()).isZero();
+        }
         Map<String, byte[]> reports = new LinkedHashMap<>();
         try (var tar = sandbox.copyOut(session, "/tmp/ordinary-ci/build/test-results/test")) {
             WorkspaceArchive.readTar(tar, "test").forEach((name, content) -> {
@@ -246,7 +249,8 @@ class DockerGradleBuildTest {
 
     private WorkspaceSnapshot snapshot() throws IOException {
         List<WorkspaceFile> files = new ArrayList<>();
-        for (String path : List.of("build.gradle", "settings.gradle", "gradlew", "gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties")) {
+        for (String path : List.of("build.gradle", "settings.gradle", "gradlew", "gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties",
+                "gradle/AresReservedPackages.gradle")) {
             byte[] bytes = read("java/test/gradle/projectTemplate/" + path);
             if (path.endsWith(".gradle")) {
                 String text = new String(bytes, StandardCharsets.UTF_8);
@@ -257,6 +261,7 @@ class DockerGradleBuildTest {
             }
             files.add(new WorkspaceFile("tests/" + path, bytes, path.equals("gradlew")));
         }
+        files.add(new WorkspaceFile("tests/SecurityPolicy.yaml", read("hyperion/readiness/java/tests/SecurityPolicy.yaml"), false));
         String sourcePath = "src/de/tum/cit/aet/reference/ScoreCalculator.java";
         files.add(new WorkspaceFile("solution/" + sourcePath, read("hyperion/readiness/java/solution/" + sourcePath), false));
         files.add(new WorkspaceFile("template/" + sourcePath, """

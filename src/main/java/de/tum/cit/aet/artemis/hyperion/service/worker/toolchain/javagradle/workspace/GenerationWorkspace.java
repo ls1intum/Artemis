@@ -222,6 +222,14 @@ public class GenerationWorkspace {
                 fixture.put("tests/test/" + relativeTestPath, content);
             }
         });
+        try {
+            String policy = new String(resourceLoaderService.getResource(Path.of("templates", READINESS_SOURCE_DIR, "tests", "SecurityPolicy.yaml")).getContentAsByteArray(),
+                    StandardCharsets.UTF_8);
+            fixture.put("tests/SecurityPolicy.yaml", policy);
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not load the trusted readiness security policy", e);
+        }
         return fixture;
     }
 
