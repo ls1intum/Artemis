@@ -1457,6 +1457,42 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void accountDeletion_removingASignOffLocksAlsoThreadsThatWereNeverStored() throws Exception {
+        // A first ingestion mints on the root row of a thread that was never stored. If removing the sign-off left that
+        // row unlocked, the ingestion could read the answer with its endorser and store it at the latest version.
+        User endorser = userUtilService.createAndSaveUser(TEST_PREFIX + "signoff");
+        Post neverStored = createQuestion("Never stored, resolved by an account being deleted");
+        saveResolvingAnswer(neverStored, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), "A student's answer.", true, endorser);
+        CountDownLatch rowLocked = new CountDownLatch(1);
+        CountDownLatch releaseRow = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            // Holds the root row of the thread (the question's author is involved in it) in another transaction.
+            Future<List<Long>> holder = executor.submit(() -> courseMemoryIngestionService.changeAccountAndInvalidate(student.getId(), () -> {
+                rowLocked.countDown();
+                try {
+                    releaseRow.await(30, TimeUnit.SECONDS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }));
+            assertThat(rowLocked.await(30, TimeUnit.SECONDS)).isTrue();
+
+            Future<Integer> detach = executor.submit(() -> communicationDataCleanupRepository.detachResolvedAnswerPosts(endorser.getId()));
+
+            assertThatThrownBy(() -> detach.get(2, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
+            releaseRow.countDown();
+            holder.get(30, TimeUnit.SECONDS);
+            assertThat(detach.get(30, TimeUnit.SECONDS)).isEqualTo(1);
+        }
+        finally {
+            releaseRow.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     void dashboardApproval_bumpsTheVersionTogetherWithTheApproval() {
         Post question = createQuestion("Approved in the dashboard?");
         AnswerPost draft = saveAnswer(question, botUser, "An Iris draft.", false);

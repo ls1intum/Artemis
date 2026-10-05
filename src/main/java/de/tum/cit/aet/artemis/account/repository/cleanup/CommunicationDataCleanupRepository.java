@@ -94,8 +94,14 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
      * @param userId the account being deleted
      * @return how many answer posts lost their verifier
      */
+    @Query(value = "SELECT id FROM post WHERE id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.verified_by_id = :userId) FOR UPDATE", nativeQuery = true)
+    List<Long> lockThreadsVerifiedBy(@Param("userId") long userId);
+
     @Transactional // ok because the detachment and the version bump have to commit together
     default int detachVerifiedAnswerPosts(long userId) {
+        // Every affected thread is locked, also one never stored: a first ingestion mints on that row and has to wait,
+        // so it reads the answer without its verifier.
+        lockThreadsVerifiedBy(userId);
         bumpCourseMemoryVersionsOfThreadsVerifiedBy(userId);
         return clearVerifierOfAnswerPosts(userId);
     }
@@ -133,8 +139,14 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
      * @param userId the account being deleted
      * @return how many answer posts lost their endorser
      */
+    @Query(value = "SELECT id FROM post WHERE id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.resolved_by_id = :userId) FOR UPDATE", nativeQuery = true)
+    List<Long> lockThreadsResolvedBy(@Param("userId") long userId);
+
     @Transactional // ok because the detachment and the version bump have to commit together
     default int detachResolvedAnswerPosts(long userId) {
+        // Every affected thread is locked, also one never stored: a first ingestion mints on that row and has to wait,
+        // so it reads the answer without its endorser.
+        lockThreadsResolvedBy(userId);
         bumpCourseMemoryVersionsOfThreadsResolvedBy(userId);
         return clearResolverOfAnswerPosts(userId);
     }
