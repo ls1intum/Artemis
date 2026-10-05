@@ -1,35 +1,37 @@
-@for (instruction of criterion().structuredGradingInstructions; track instruction) {
-    <li>
-        <a
-            (click)="updateAssessmentWithDropdown(instruction)"
-            class="dropdown-item"
-            [style.background-color]="getInstrColour(instruction)"
-            #keyboardAction3
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction3.click() : undefined"
-            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction3.click() : undefined"
-        >
-            <table role="presentation" class="table layout-table">
-                <tbody>
-                    <tr>
-                        <td class="td-score fw-bold">{{ instruction!.credits }}P</td>
-                        <td>
-                            <span class="td-instruction">{{ instruction!.instructionDescription }}</span>
-                        </td>
-                        <td class="td-usage-count">
-                            @if (instruction!.usageCount) {
-                                <span>{{ instruction!.usageCount }}</span>
-                            } @else {
-                                &#8734;
-                            }
-                            <!-- if the usage count has no limit, the infinity symbol is displayed (= &#8734) -->
-                            <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </a>
-    </li>
-}
+<ul class="m-0 list-none p-0">
+    @for (instruction of criterion().structuredGradingInstructions; track instruction) {
+        <li>
+            <a
+                (click)="updateAssessmentWithDropdown(instruction)"
+                class="dropdown-item"
+                [style.background-color]="getInstrColour(instruction)"
+                #keyboardAction3
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction3.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction3.click() : undefined"
+            >
+                <table role="presentation" class="table layout-table">
+                    <tbody>
+                        <tr>
+                            <td class="td-score fw-bold">{{ instruction!.credits }}P</td>
+                            <td>
+                                <span class="td-instruction">{{ instruction!.instructionDescription }}</span>
+                            </td>
+                            <td class="td-usage-count">
+                                @if (instruction!.usageCount) {
+                                    <span>{{ instruction!.usageCount }}</span>
+                                } @else {
+                                    &#8734;
+                                }
+                                <!-- if the usage count has no limit, the infinity symbol is displayed (= &#8734) -->
+                                <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </a>
+        </li>
+    }
+</ul>

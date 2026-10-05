@@ -30,7 +30,7 @@
                     </thead>
                     <tbody>
                         @for (exercise of studentExamWithGrade()?.studentExam?.exercises; track exercise; let exerciseIndex = $index) {
-                            <tr [class]="rowClass(exercise)" (click)="scrollToExercise(exercise.id)">
+                            <tr [class]="rowClass(exercise)">
                                 <th scope="row">{{ exerciseIndex + 1 }}</th>
                                 <td>
                                     &nbsp;
@@ -40,7 +40,14 @@
                                         </div>
                                     }
                                     &nbsp;
-                                    <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
+                                    <button
+                                        type="button"
+                                        class="border-0 bg-transparent p-0 text-start text-inherit underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                                        (click)="scrollToExercise(exercise.id)"
+                                        data-testid="exam-summary-open-exercise"
+                                    >
+                                        {{ exercise?.exerciseGroup?.title ?? '-' }}
+                                    </button>
                                 </td>
                                 @if (showIncludedInScoreColumn()) {
                                     <td class="text-center">{{ exerciseService.isIncludedInScore(exercise) }}</td>

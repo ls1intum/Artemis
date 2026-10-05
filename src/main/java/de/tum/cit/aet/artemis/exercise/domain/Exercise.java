@@ -413,6 +413,21 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return null;
     }
 
+    /**
+     * Resolves the exam for operations that require an unmasked exam exercise.
+     *
+     * @return the exam of the exercise
+     * @throws IllegalStateException if the exercise has no accessible exam
+     */
+    @JsonIgnore
+    public Exam getExamElseThrow() {
+        Exam exam = getExam();
+        if (exam == null) {
+            throw new IllegalStateException("The exam of exercise " + getId() + " cannot be resolved");
+        }
+        return exam;
+    }
+
     public Set<ExampleSubmission> getExampleSubmissions() {
         return exampleSubmissions;
     }
@@ -795,7 +810,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnore
     public Integer getNumberOfCorrectionRounds() {
         if (isExamExercise()) {
-            return getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            return getExamElseThrow().getNumberOfCorrectionRoundsInExam();
         }
         else {
             return 1;
