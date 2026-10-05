@@ -30,6 +30,22 @@ describe('ProgrammingFeedbackItemService', () => {
         service = TestBed.inject(ProgrammingFeedbackItemService);
     });
 
+    it('should show AI feedback as a stable severity-sorted list regardless of credits', () => {
+        const severities = [undefined, 'low', 'high', 'medium', 'high'] as const;
+        const feedbacks: Feedback[] = severities.map((severity, id) => ({
+            id,
+            severity,
+            type: FeedbackType.AUTOMATIC,
+            text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + `Issue ${id}`,
+            credits: id - 2,
+        }));
+        const items = service.create(feedbacks, true);
+        expect(service.group(items, exercise)).toEqual([items[2], items[4], items[3], items[1], items[0]]);
+        expect(items.every((item) => item.isAiFeedback && item.name === '' && item.credits === undefined)).toBe(true);
+        expect(items.map((item) => item.color)).toEqual([undefined, 'info', 'danger', 'warning', 'danger']);
+        expect(feedbacks.map((feedback) => feedback.credits)).toEqual([-2, -1, 0, 1, 2]);
+    });
+
     it('should create submission policy feedback item', () => {
         const feedback = {
             type: FeedbackType.AUTOMATIC,
