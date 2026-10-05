@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
@@ -171,7 +172,7 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     }
 
     private static ProgrammingFeedbackDTO suggestion(String filePath, String description, Integer lineStart, Integer lineEnd, double credits) {
-        return new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, "title", description, credits, null, filePath, lineStart, lineEnd);
+        return new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, "title", description, credits, null, filePath, lineStart, lineEnd, null);
     }
 
     private List<Feedback> generatedFeedbacks(ProgrammingExerciseCodeReviewFeedbackService service) throws Exception {
@@ -238,15 +239,35 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     }
 
     @Test
-    void generatingFeedback_showsTheSuggestionsThatCostTheMostPointsLast() throws Exception {
+    void severityUsesTheAthenaWireFormatAndRemainsOptional() {
+        var mapper = de.tum.cit.aet.artemis.core.util.JsonObjectMapper.get();
+        for (var severity : FeedbackSeverity.values()) {
+            var dto = new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, "title", "details", 1, null, "src/Main.java", 1, 1, severity);
+            String json = mapper.writeValueAsString(dto);
+            assertThat(json).contains("\"severity\":\"" + severity.name().toLowerCase(java.util.Locale.ROOT) + "\"");
+            assertThat(mapper.readValue(json, ProgrammingFeedbackDTO.class).severity()).isEqualTo(severity);
+        }
+        var legacy = suggestion("src/Main.java", "details", 1, 1, 0);
+        assertThat(mapper.readValue(mapper.writeValueAsString(legacy), ProgrammingFeedbackDTO.class).severity()).isNull();
+    }
+
+    @Test
+    void generatingFeedback_preservesSeverityAndSortsIndependentlyOfCredits() throws Exception {
         var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
         withAnEmptyResultForTheLatestSubmission();
-        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser))).thenReturn(
-                List.of(suggestion("src/C.java", "third", 1, null, 3.0), suggestion("src/A.java", "first", 1, null, -2.0), suggestion("src/B.java", "second", 1, null, 1.0)));
+        var low = new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, "low", "low", -5, null, "src/Main.java", 1, 1, FeedbackSeverity.LOW);
+        var high = new ProgrammingFeedbackDTO(2L, EXERCISE_ID, 50L, "high", "high", 5, null, "src/Main.java", 1, 1, FeedbackSeverity.HIGH);
+        var medium = new ProgrammingFeedbackDTO(3L, EXERCISE_ID, 50L, "medium", "medium", 0, null, "src/Main.java", 1, 1, FeedbackSeverity.MEDIUM);
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion("src/Main.java", "unclassified", 1, 1, -10), low, high, medium));
 
         var feedbacks = generatedFeedbacks(service);
 
-        assertThat(feedbacks).extracting(Feedback::getDetailText).containsExactly("first", "second", "third");
+        assertThat(feedbacks).extracting(Feedback::getSeverity).containsExactly(FeedbackSeverity.HIGH, FeedbackSeverity.MEDIUM, FeedbackSeverity.LOW, null);
+        assertThat(feedbacks).extracting(Feedback::getCredits).containsExactly(5.0, 0.0, -5.0, -10.0);
+        assertThat(ProgrammingFeedbackDTO.of(EXERCISE_ID, 50L, feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
+        assertThat(de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO.of(feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
+        assertThat(de.tum.cit.aet.artemis.programming.dto.ResultDTO.FeedbackDTO.of(feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
     }
 
     @Test

@@ -7,13 +7,14 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 
 /**
  * A DTO representing a Feedback on a ProgrammingExercise, for transferring data to Athena and receiving suggestions from Athena
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingFeedbackDTO(@Nullable Long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
-        String filePath, Integer lineStart, Integer lineEnd) implements FeedbackBaseDTO {
+        String filePath, Integer lineStart, Integer lineEnd, @Nullable FeedbackSeverity severity) implements FeedbackBaseDTO {
 
     /**
      * Creates a ProgrammingFeedbackDTO from a Feedback object
@@ -41,6 +42,6 @@ public record ProgrammingFeedbackDTO(@Nullable Long id, long exerciseId, long su
             gradingInstructionId = feedback.getGradingInstruction().getId();
         }
         return new ProgrammingFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(), gradingInstructionId,
-                filePath, lineStart, lineEnd);
+                filePath, lineStart, lineEnd, feedback.getSeverity());
     }
 }

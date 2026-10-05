@@ -157,8 +157,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         feedback.setHasLongFeedbackText(false);
                         feedback.setType(FeedbackType.AUTOMATIC);
                         feedback.setCredits(individualFeedbackItem.credits());
+                        feedback.setSeverity(individualFeedbackItem.severity());
                         return feedback;
-                    }).sorted(Comparator.comparing(Feedback::getCredits, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+                    }).sorted(Comparator.comparing(Feedback::getSeverity, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
 
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());

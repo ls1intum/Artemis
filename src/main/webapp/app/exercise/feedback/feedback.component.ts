@@ -17,6 +17,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
@@ -297,7 +298,9 @@ export class FeedbackComponent implements OnInit {
                         reference.lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
                     }
                 });
-                this.feedbackItemNodes.update((nodes) => (nodes ? [...nodes] : nodes));
+                // Refresh the node identities as well: updating only the array leaves the OnPush cards
+                // displaying their empty code placeholder until the user interacts with them.
+                this.feedbackItemNodes.update((nodes) => (nodes ? deepClone(nodes) : nodes));
             });
     }
 
