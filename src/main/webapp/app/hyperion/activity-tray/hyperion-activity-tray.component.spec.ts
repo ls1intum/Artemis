@@ -133,23 +133,39 @@ describe('HyperionActivityTrayComponent', () => {
         expect(generation.cancel).not.toHaveBeenCalled();
     });
 
-    it('hides the header entry after dismissing all completed work and remembers it after reload', () => {
-        jobs.set([{ ...quiz, phase: 'FAILED' }]);
+    it.each(['authoring', 'quiz'] as const)('keeps dismissed %s history reachable after reload', (workflow) => {
+        if (workflow === 'authoring') {
+            entries.set([{ ...running, status: 'saved' }]);
+        } else {
+            jobs.set([{ ...quiz, phase: 'FAILED' }]);
+        }
         open();
         query('ai-activity-dismiss')!.click();
         fixture.detectChanges();
-        expect(query('ai-activity-trigger')).toBeNull();
-        jobs.set([{ ...quiz, phase: 'COMPLETED' }]);
-        fixture.detectChanges();
-        expect(query('ai-activity-trigger')).toBeNull();
+        expect(query('ai-activity-trigger')).not.toBeNull();
+        expect(query('ai-activity-entry')).toBeNull();
         fixture.destroy();
         fixture = TestBed.createComponent(HyperionActivityTrayComponent);
-        fixture.detectChanges();
-        expect(query('ai-activity-trigger')).toBeNull();
-        jobs.set([{ ...quiz, jobId: 'new-job', phase: 'ANALYZING' }]);
+        fixture.componentRef.setInput('authoringEnabled', true);
         fixture.detectChanges();
         expect(query('ai-activity-trigger')).not.toBeNull();
+        open();
+        expect(query('ai-activity-entry')).toBeNull();
+        query('ai-activity-history')!.click();
+        fixture.detectChanges();
+        expect(query('ai-activity-entry')).not.toBeNull();
+        expect(query('ai-activity-open')?.textContent).toContain(workflow === 'authoring' ? 'Stack' : 'Quiz');
         expect(variants.cancelJob).not.toHaveBeenCalled();
+        expect(generation.cancel).not.toHaveBeenCalled();
+    });
+
+    it('keeps older history pages reachable without visible or dismissed rows', () => {
+        registry.hasMoreHistory.set(true);
+        open();
+        expect(query('ai-activity-entry')).toBeNull();
+        expect(query('ai-activity-history')).toBeNull();
+        query('ai-activity-load-more')!.click();
+        expect(registry.loadMoreHistory).toHaveBeenCalledOnce();
     });
 
     it('dismisses terminal warnings without deleting their recovery records', () => {

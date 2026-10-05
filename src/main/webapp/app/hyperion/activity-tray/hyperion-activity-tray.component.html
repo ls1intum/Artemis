@@ -1,4 +1,4 @@
-@if (visibleRows().length || loadFailed()) {
+@if (visibleRows().length || hiddenCount() || hasMoreHistory() || loadFailed()) {
     <button
         type="button"
         tumAetUiButton
