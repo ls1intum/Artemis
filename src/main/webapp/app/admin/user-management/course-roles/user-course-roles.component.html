@@ -29,8 +29,8 @@
                             @for (course of group.courses; track course.courseId) {
                                 <li class="flex items-center justify-between gap-2" data-testid="user-course-roles-course">
                                     <span class="flex flex-wrap items-baseline gap-x-2">
-                                        <a [routerLink]="['/course-management', course.courseId]">{{ course.courseTitle }}</a>
-                                        @if (course.courseShortName) {
+                                        <a [routerLink]="['/course-management', course.courseId]">{{ course.courseTitle || course.courseShortName || course.courseId }}</a>
+                                        @if (course.courseTitle && course.courseShortName) {
                                             <span class="text-sm text-muted-color">{{ course.courseShortName }}</span>
                                         }
                                     </span>

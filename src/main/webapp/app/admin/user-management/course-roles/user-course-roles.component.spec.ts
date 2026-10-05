@@ -108,6 +108,17 @@ describe('UserCourseRolesComponent', () => {
         expect(hrefs).toEqual(['/course-management/1', '/course-management/2', '/course-management/1', '/course-management/3']);
     });
 
+    it('labels a course without a title by its short name or id, so the link is never empty', async () => {
+        await respondWith([
+            { courseId: 5, courseShortName: 'NOTITLE', role: 'STUDENT' },
+            { courseId: 6, role: 'STUDENT' },
+        ]);
+
+        const links = Array.from(element().querySelectorAll('[data-testid="user-course-roles-course"] a'));
+        expect(links.map((link) => link.textContent)).toEqual(['NOTITLE', '6']);
+        expect(element().querySelectorAll('[data-testid="user-course-roles-course"] a + span')).toHaveLength(0);
+    });
+
     it('shows the empty state when the user holds no course role', async () => {
         await respondWith([]);
 
