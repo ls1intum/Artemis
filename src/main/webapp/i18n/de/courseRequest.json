@@ -46,6 +46,7 @@
                 "previousInstructor": "Bisheriger Kursleiter",
                 "instructorCourseCountNo": "Nein",
                 "instructorCourseCountYes": "Ja ({{ count }})",
+                "instructorCoursesTitle": "Kurse als Kursleiter",
                 "accept": "Akzeptieren",
                 "reject": "Ablehnen",
                 "rejectReasonLabel": "Ablehnungsgrund",

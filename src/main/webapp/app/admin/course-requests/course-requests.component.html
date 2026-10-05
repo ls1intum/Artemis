@@ -59,16 +59,47 @@
                         <div class="text-muted-color">{{ requester?.email }}</div>
                     </td>
                     <td>
-                        <span
-                            [style.color]="request.instructorCourseCount && request.instructorCourseCount > 0 ? 'var(--success)' : undefined"
-                            [class.font-semibold]="request.instructorCourseCount && request.instructorCourseCount > 0"
-                        >
-                            @if (request.instructorCourseCount) {
+                        @let instructorCourses = request.instructorCourses ?? [];
+                        @if (instructorCourses.length > 0) {
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                variant="text"
+                                severity="success"
+                                size="small"
+                                class="font-semibold"
+                                [tumAetUiPopoverTrigger]="instructorCoursesPopover"
+                                data-testid="instructor-courses-button"
+                            >
+                                {{ 'artemisApp.courseRequest.admin.instructorCourseCountYes' | artemisTranslate: { count: instructorCourses.length } }}
+                            </button>
+                            <tumaet-ui-popover
+                                #instructorCoursesPopover
+                                placement="bottom"
+                                [ariaLabel]="'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate"
+                            >
+                                <div class="w-96 max-w-[calc(100vw-2rem)]" data-testid="instructor-courses-popover">
+                                    <h3 class="mt-0 mb-2 text-base font-semibold">
+                                        {{ 'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate }}
+                                    </h3>
+                                    <!-- Capped and scrollable: a requester with many courses must not grow the popover past the viewport. -->
+                                    <ul class="m-0 flex max-h-64 list-none flex-col gap-2 overflow-y-auto p-0" data-testid="instructor-courses-list">
+                                        @for (course of instructorCourses; track course.id) {
+                                            <li data-testid="instructor-course">
+                                                <a [routerLink]="['/course-management', course.id]" class="font-semibold no-underline">{{ course.title }}</a>
+                                                <div class="text-muted-color">{{ course.shortName }} &middot; {{ course.semester }}</div>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </tumaet-ui-popover>
+                        } @else if (request.instructorCourseCount) {
+                            <span class="font-semibold text-state-success">
                                 {{ 'artemisApp.courseRequest.admin.instructorCourseCountYes' | artemisTranslate: { count: request.instructorCourseCount } }}
-                            } @else {
-                                {{ 'artemisApp.courseRequest.admin.instructorCourseCountNo' | artemisTranslate }}
-                            }
-                        </span>
+                            </span>
+                        } @else {
+                            <span>{{ 'artemisApp.courseRequest.admin.instructorCourseCountNo' | artemisTranslate }}</span>
+                        }
                     </td>
                     <td class="break-words">{{ request.reason }}</td>
                     <td class="text-end">

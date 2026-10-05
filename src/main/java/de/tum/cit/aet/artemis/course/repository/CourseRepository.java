@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -764,18 +765,23 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     Optional<String> getTimeZoneOfCourseById(@Param("courseId") long courseId);
 
     /**
-     * Counts the number of courses where the user has the instructor role.
+     * Lists the courses where the user has the instructor role, newest first.
+     * <p>
+     * Selects only the scalars the course request overview shows. The user, course and role form the key of
+     * {@code UserCourseRole}, so a course appears at most once.
      *
      * @param userId the id of the user
-     * @return the count of courses where the user is an instructor
+     * @return the courses where the user is an instructor
      */
     @Query("""
-            SELECT COUNT(DISTINCT ucr.course.id)
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseDTO(c.id, c.title, c.shortName, c.semester)
             FROM UserCourseRole ucr
+                JOIN ucr.course c
             WHERE ucr.user.id = :userId
-            AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+            ORDER BY c.startDate DESC, c.title ASC, c.id ASC
             """)
-    long countCoursesForInstructor(@Param("userId") Long userId);
+    List<CourseRequestInstructorCourseDTO> findInstructorCoursesForUser(@Param("userId") Long userId);
 
     /**
      * Projects the fields the course overview container renders.

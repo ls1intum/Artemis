@@ -3,11 +3,12 @@
  * Tests the admin view for managing course creation requests including
  * accept, reject, edit functionality and form validation.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -94,6 +95,7 @@ describe('CourseRequestsComponent', () => {
                 { provide: CourseRequestService, useValue: mockCourseRequestService },
                 { provide: AlertService, useValue: mockAlertService },
                 provideTranslateService(),
+                provideRouter([]),
             ],
         }).compileComponents();
 
@@ -121,6 +123,76 @@ describe('CourseRequestsComponent', () => {
 
             expect(component.decidedPage()).toBe(3);
             expect(mockCourseRequestService.findAdminOverview).toHaveBeenCalledWith(2, component.decidedPageSize);
+        });
+    });
+
+    describe('previous instructor courses', () => {
+        const instructorCourses = [
+            { id: 11, title: 'Introduction to Programming', shortName: 'EIST', semester: 'WS24/25' },
+            { id: 12, title: 'Software Engineering', shortName: 'SE', semester: 'SS25' },
+        ];
+
+        function render(request: CourseRequest) {
+            mockCourseRequestService.findAdminOverview.mockReturnValue(of({ pendingRequests: [request], decidedRequests: [], totalDecidedCount: 0 }));
+            const fixture = TestBed.createComponent(CourseRequestsComponent);
+            fixture.detectChanges();
+            return fixture;
+        }
+
+        afterEach(() => {
+            document.querySelectorAll('.cdk-overlay-container').forEach((container) => (container.innerHTML = ''));
+        });
+
+        it('lists the courses of the requester in a popover opened from the count', async () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 2, instructorCourses });
+            const trigger = fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement;
+
+            expect(trigger).not.toBeNull();
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+            expect(document.querySelector('[data-testid="instructor-courses-popover"]')).toBeNull();
+
+            trigger.click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(trigger.getAttribute('aria-expanded')).toBe('true');
+            const entries = Array.from(document.querySelectorAll('[data-testid="instructor-course"]'));
+            expect(entries).toHaveLength(2);
+            expect(entries[0].textContent).toContain('Introduction to Programming');
+            expect(entries[0].textContent).toContain('EIST');
+            expect(entries[0].textContent).toContain('WS24/25');
+            expect(entries[1].textContent).toContain('Software Engineering');
+            expect(entries[0].querySelector('a')?.getAttribute('href')).toBe('/course-management/11');
+        });
+
+        it('keeps the course list scrollable', async () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 2, instructorCourses });
+
+            (fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const list = document.querySelector('[data-testid="instructor-courses-list"]') as HTMLElement;
+            expect(list.classList).toContain('overflow-y-auto');
+            expect(list.classList).toContain('max-h-64');
+        });
+
+        it('shows no popover trigger when the requester instructs no course', () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 0 });
+
+            expect(fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="pending-table"] tbody td:nth-child(5)').textContent).toContain(
+                'artemisApp.courseRequest.admin.instructorCourseCountNo',
+            );
+        });
+
+        it('falls back to the plain count when only the count is known', () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 3 });
+
+            expect(fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="pending-table"] tbody td:nth-child(5)').textContent).toContain(
+                'artemisApp.courseRequest.admin.instructorCourseCountYes',
+            );
         });
     });
 

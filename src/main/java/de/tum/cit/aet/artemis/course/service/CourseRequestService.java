@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseRequest;
 import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestRequesterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRequestRepository;
@@ -417,16 +418,17 @@ public class CourseRequestService {
         return toDto(courseRequest, null);
     }
 
-    private CourseRequestDTO toDto(CourseRequest courseRequest, Integer instructorCourseCount) {
+    private CourseRequestDTO toDto(CourseRequest courseRequest, List<CourseRequestInstructorCourseDTO> instructorCourses) {
         CourseRequestRequesterDTO requesterDto = courseRequest.getRequester() != null ? new CourseRequestRequesterDTO(courseRequest.getRequester()) : null;
         Long createdCourseId = courseRequest.getCreatedCourseId();
         return new CourseRequestDTO(courseRequest.getId(), courseRequest.getTitle(), courseRequest.getShortName(), courseRequest.getSemester(), courseRequest.getStartDate(),
                 courseRequest.getEndDate(), courseRequest.isTestCourse(), courseRequest.getReason(), courseRequest.getStatus(), courseRequest.getCreatedDate(),
-                courseRequest.getProcessedDate(), courseRequest.getDecisionReason(), requesterDto, createdCourseId, instructorCourseCount);
+                courseRequest.getProcessedDate(), courseRequest.getDecisionReason(), requesterDto, createdCourseId, instructorCourses != null ? instructorCourses.size() : null,
+                instructorCourses);
     }
 
     /**
-     * Retrieves the admin overview of course requests with pending requests (including instructor course count)
+     * Retrieves the admin overview of course requests with pending requests (including the courses their requester instructs)
      * and decided requests with pagination.
      *
      * @param decidedPage     the page number for decided requests (0-indexed)
@@ -434,14 +436,11 @@ public class CourseRequestService {
      * @return the admin overview DTO containing pending and decided requests
      */
     public CourseRequestsAdminOverviewDTO getAdminOverview(int decidedPage, int decidedPageSize) {
-        // Get pending requests with instructor course count
+        // Get pending requests with the courses their requester instructs
         List<CourseRequest> pendingRequests = courseRequestRepository.findAllByStatusOrderByCreatedDateDesc(CourseRequestStatus.PENDING);
-        List<CourseRequestDTO> pendingDtos = pendingRequests.stream().map(request -> {
-            Integer instructorCount = computeInstructorCourseCount(request.getRequester());
-            return toDto(request, instructorCount);
-        }).toList();
+        List<CourseRequestDTO> pendingDtos = pendingRequests.stream().map(request -> toDto(request, findInstructorCourses(request.getRequester()))).toList();
 
-        // Get decided requests with pagination (without instructor course count)
+        // Get decided requests with pagination (without instructor courses)
         var pageable = PageRequest.of(decidedPage, decidedPageSize);
         var decidedPageResult = courseRequestRepository.findAllByStatusNotOrderByProcessedDateDesc(CourseRequestStatus.PENDING, pageable);
         List<CourseRequestDTO> decidedDtos = decidedPageResult.getContent().stream().map(this::toDto).toList();
@@ -449,10 +448,13 @@ public class CourseRequestService {
         return new CourseRequestsAdminOverviewDTO(pendingDtos, decidedDtos, decidedPageResult.getTotalElements());
     }
 
-    private Integer computeInstructorCourseCount(User requester) {
+    /**
+     * The count shown next to the list is the size of this list, so the two cannot disagree.
+     */
+    private List<CourseRequestInstructorCourseDTO> findInstructorCourses(User requester) {
         if (requester == null) {
             return null;
         }
-        return (int) courseRepository.countCoursesForInstructor(requester.getId());
+        return courseRepository.findInstructorCoursesForUser(requester.getId());
     }
 }

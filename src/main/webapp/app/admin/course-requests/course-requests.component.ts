@@ -2,9 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
     TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
     TumAetUiDialogComponent,
     TumAetUiInputDirective,
     TumAetUiPaginatorComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
     TumAetUiTableDirective,
     TumAetUiTagComponent,
     TumAetUiTooltipDirective,
@@ -52,6 +55,9 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         CourseRequestFormComponent,
         TumAetUiDialogComponent,
         TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
         TumAetUiTableDirective,
         TumAetUiTagComponent,
         TumAetUiInputDirective,

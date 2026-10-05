@@ -21,6 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.CourseRequestsAdminOverviewDTO;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestDecisionDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRequestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -428,6 +430,52 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(result.pendingRequests()).hasSizeGreaterThanOrEqualTo(3);
         List<String> shortNames = result.pendingRequests().stream().map(CourseRequestDTO::shortName).toList();
         assertThat(shortNames).containsAll(List.of("FIRST1", "SECOND1", "THIRD1"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void getAdminOverview_listsCoursesTheRequesterInstructs_andCountMatchesList() throws Exception {
+        User requester = userUtilService.createAndSaveUser(TEST_PREFIX + "previousinstructor");
+        Course instructedOne = courseUtilService.createCourseWithShortName("PREVINSA");
+        Course instructedTwo = courseUtilService.createCourseWithShortName("PREVINSB");
+        Course taughtAsTutor = courseUtilService.createCourseWithShortName("PREVTUTOR");
+        Course unrelated = courseUtilService.createCourseWithShortName("PREVOTHER");
+        userUtilService.enrollUserInCourse(requester, instructedOne, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(requester, instructedTwo, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(requester, taughtAsTutor, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(student, unrelated, CourseRole.INSTRUCTOR);
+        CourseRequest pending = createTestCourseRequest("Previous Instructor", "PREVREQ");
+        pending.setRequester(requester);
+        courseRequestRepository.save(pending);
+
+        CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
+
+        CourseRequestDTO dto = result.pendingRequests().stream().filter(candidate -> "PREVREQ".equals(candidate.shortName())).findFirst().orElseThrow();
+        assertThat(dto.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::id).containsExactlyInAnyOrder(instructedOne.getId(), instructedTwo.getId());
+        assertThat(dto.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::shortName).containsExactlyInAnyOrder(instructedOne.getShortName(),
+                instructedTwo.getShortName());
+        assertThat(dto.instructorCourses()).allSatisfy(course -> {
+            assertThat(course.title()).isNotBlank();
+            assertThat(course.semester()).isNotBlank();
+        });
+        assertThat(dto.instructorCourseCount()).isEqualTo(dto.instructorCourses().size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void getAdminOverview_requesterWithoutInstructorCourses_hasZeroCountAndNoCourses() throws Exception {
+        User requester = userUtilService.createAndSaveUser(TEST_PREFIX + "noinstructor");
+        Course tutorCourse = courseUtilService.createCourseWithShortName("NOINSTTUT");
+        userUtilService.enrollUserInCourse(requester, tutorCourse, CourseRole.TEACHING_ASSISTANT);
+        CourseRequest pending = createTestCourseRequest("No Instructor", "NOINSREQ");
+        pending.setRequester(requester);
+        courseRequestRepository.save(pending);
+
+        CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
+
+        CourseRequestDTO dto = result.pendingRequests().stream().filter(candidate -> "NOINSREQ".equals(candidate.shortName())).findFirst().orElseThrow();
+        assertThat(dto.instructorCourseCount()).isZero();
+        assertThat(dto.instructorCourses()).isNullOrEmpty();
     }
 
     @Test
