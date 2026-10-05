@@ -80,7 +80,7 @@ export function checkViteOverride({ resolveFrom } = {}) {
 
 /**
  * Runs the check and reports the outcome on the console, exiting non-zero on a mismatch. Shared by
- * this script's standalone entry point and by `prebuild.mjs`, so both behave identically.
+ * this script's standalone entry point and by `supporting_scripts/client/prebuild.mjs`, so both behave identically.
  *
  * @param {object} [options] Forwarded to {@link checkViteOverride}.
  */

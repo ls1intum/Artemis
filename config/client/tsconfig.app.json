@@ -1,0 +1,12 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../../build/resources/main/static/app",
+        // Keep the project root at the repository root after relocating this config. TypeScript 6
+        // defaults rootDir to the config directory, even for this check-only project.
+        "rootDir": "../..",
+        "noEmit": true,
+        "types": ["node"]
+    },
+    "files": ["../../src/main/webapp/app/app.main.ts"]
+}
