@@ -173,6 +173,15 @@ describe('IrisCitationTextComponent', () => {
             expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7, page: 3 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         });
 
+        it('opens the lecture without query parameters when the cited unit id cannot be used', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 0, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+
+            (render('[cite:L:0:3:::Key:]', citationInfo).querySelector('.iris-citation--clickable') as HTMLElement).click();
+
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['/courses', '1', 'lectures', '1']);
+        });
+
         it('drops a page a citation cannot be honoured with, as a URL carrying the same value would be', () => {
             const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 

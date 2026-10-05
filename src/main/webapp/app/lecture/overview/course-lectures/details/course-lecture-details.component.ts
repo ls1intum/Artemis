@@ -44,6 +44,7 @@ import { InformationBox, InformationBoxComponent, InformationBoxContent } from '
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { LectureDeepLink, isLectureDeepLinkNavigationState, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { isPdfAttachment } from 'app/lecture/overview/course-lectures/attachment-pdf.util';
 
 /** Shown when a deep link points at a lecture unit that no longer exists. */
 const DEEP_LINK_UNIT_GONE_ERROR_KEY = 'artemisApp.lectureUnit.deepLink.unitGone';
@@ -266,7 +267,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
         const previous = this.lastDeepLinkNavigation;
         const current = this.currentDeepLinkNavigation(event.urlAfterRedirects);
-        const isMarkedDeepLinkNavigation = isLectureDeepLinkNavigationState(this.router.currentNavigation()?.extras?.state);
+        const navigation = this.router.currentNavigation();
+        // Back and Forward restore the state of the history entry, marker included. That is the browser returning to
+        // an earlier page, not a student clicking a citation again, so it must not move media the student has watched on.
+        const isMarkedDeepLinkNavigation = navigation?.trigger !== 'popstate' && isLectureDeepLinkNavigationState(navigation?.extras?.state);
         this.lastDeepLinkNavigation = current;
         return (
             !previous ||
@@ -382,13 +386,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             const attachmentUnit = targetUnit as AttachmentVideoUnit;
             const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
-            const attachment = attachmentUnit.attachment;
-            const pdfCandidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
-            const isPdf = pdfCandidate?.toLowerCase().endsWith('.pdf');
             if (!hasVideo) {
                 timestamp = undefined;
             }
-            if (!isPdf) {
+            if (!isPdfAttachment(attachmentUnit.attachment)) {
                 page = undefined;
             }
         } else {

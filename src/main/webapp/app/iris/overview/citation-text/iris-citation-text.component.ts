@@ -426,12 +426,16 @@ export class IrisCitationTextComponent {
             timestamp: includeExactPosition && pinnedKind !== 'attachment' ? element.getAttribute('data-timestamp') : undefined,
             page: includeExactPosition && pinnedKind !== 'video' ? element.getAttribute('data-page') : undefined,
         });
-        if (deepLink) {
-            void this.router.navigate(['/courses', courseId, 'lectures', lectureId], {
-                queryParams: lectureDeepLinkQueryParams(deepLink),
-                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
-            });
+        const lectureRoute = ['/courses', courseId, 'lectures', lectureId];
+        if (!deepLink) {
+            // A citation whose unit cannot be parsed still names its lecture; open that rather than doing nothing.
+            void this.router.navigate(lectureRoute);
+            return;
         }
+        void this.router.navigate(lectureRoute, {
+            queryParams: lectureDeepLinkQueryParams(deepLink),
+            state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+        });
     }
 
     /**

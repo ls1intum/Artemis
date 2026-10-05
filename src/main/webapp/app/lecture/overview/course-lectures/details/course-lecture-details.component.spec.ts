@@ -625,11 +625,12 @@ describe('CourseLectureDetailsComponent', () => {
             eventId = ++navigationId,
             urlAfterRedirects = `/courses/1/lectures/${lectureId}`,
             state?: unknown,
+            trigger: Navigation['trigger'] = 'imperative',
         ) => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.snapshot.params = { lectureId };
             activatedRoute.snapshot.queryParams = queryParams as Params;
-            currentNavigation.set({ id: eventId, extras: { state } } as Navigation);
+            currentNavigation.set({ id: eventId, extras: { state }, trigger } as Navigation);
             routerEvents.next(new NavigationEnd(eventId, urlAfterRedirects, urlAfterRedirects));
         };
 
@@ -778,6 +779,32 @@ describe('CourseLectureDetailsComponent', () => {
             const second = courseLecturesDetailsComponent.deepLink();
             expect(second).not.toBe(first);
             expect(second).toEqual(first);
+        });
+
+        it('should not replay a marked deep link when Back restores it after an unrelated query change', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            // A citation, then the student opens a discussion post (the URL gains a postId), then presses Back.
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20' }, '1', 20, '/courses/1/lectures/1?unit=7&timestamp=20', LECTURE_DEEP_LINK_NAVIGATION_STATE);
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20', postId: '5' }, '1', 21, '/courses/1/lectures/1?unit=7&timestamp=20&postId=5');
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20' }, '1', 22, '/courses/1/lectures/1?unit=7&timestamp=20', LECTURE_DEEP_LINK_NAVIGATION_STATE, 'popstate');
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
+        });
+
+        it('should still follow Back to a different deep link, as the URL names another target', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20' }, '1', 23, '/courses/1/lectures/1?unit=7&timestamp=20', LECTURE_DEEP_LINK_NAVIGATION_STATE);
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '90' }, '1', 24, '/courses/1/lectures/1?unit=7&timestamp=90', LECTURE_DEEP_LINK_NAVIGATION_STATE);
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20' }, '1', 25, '/courses/1/lectures/1?unit=7&timestamp=20', LECTURE_DEEP_LINK_NAVIGATION_STATE, 'popstate');
+
+            expect(courseLecturesDetailsComponent.deepLink()).not.toBe(first);
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(first);
         });
 
         it('should not publish the current activation NavigationEnd a second time', () => {

@@ -595,6 +595,17 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.hasPdf()).toBe(false);
         });
 
+        it('hasPdf: follows the student version over the stored link', () => {
+            // A fresh unit: the shared fixture's attachment is mutated by neighbouring tests and must not keep this version.
+            fixture.componentRef.setInput('lectureUnit', {
+                ...attachmentVideoUnit,
+                attachment: { ...attachmentVideoUnit.attachment, link: '/path/to/file/test.docx', studentVersion: '/path/to/file/student.pdf' },
+            });
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(true);
+        });
+
         it('hasPdf: returns false when attachment is not PDF', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
             fixture.detectChanges();
