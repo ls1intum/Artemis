@@ -1,4 +1,4 @@
-<div class="container py-4">
+<div class="container py-4 overflow-x-auto">
     <h5 *adminTitleBarTitle id="course-requests-heading" class="mb-0" jhiTranslate="artemisApp.courseRequest.admin.title"></h5>
     <div *adminTitleBarActions>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="load()" [disabled]="loading()" data-testid="refresh-button">
@@ -13,12 +13,12 @@
     <table tumAetUiTable size="small" [striped]="true" class="mb-5" data-testid="pending-table">
         <thead>
             <tr>
-                <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
+                <th scope="col" class="min-w-64" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.semester"></th>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.dates"></th>
-                <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
+                <th scope="col" class="min-w-44" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.previousInstructor"></th>
-                <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
+                <th scope="col" class="w-full min-w-56" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
                 <th scope="col" class="text-end" jhiTranslate="artemisApp.courseRequest.admin.actions"></th>
             </tr>
         </thead>
@@ -27,24 +27,22 @@
                 <tr>
                     <td>
                         <div class="font-semibold">{{ request.title }}</div>
-                        <div class="text-muted-color">{{ request.shortName }}</div>
-                        @if (request.testCourse) {
-                            <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
-                        }
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span class="text-muted-color">{{ request.shortName }}</span>
+                            @if (request.testCourse) {
+                                <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
+                            }
+                        </div>
                     </td>
-                    <td>{{ request.semester }}</td>
+                    <td class="whitespace-nowrap">{{ request.semester }}</td>
                     <td>
-                        <div>
-                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.startDate"></span>:
-                            {{ request.startDate | artemisDate: 'short' }}
-                        </div>
-                        <div>
-                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.endDate"></span>:
-                            {{ request.endDate | artemisDate: 'short' }}
-                        </div>
-                        <div class="text-muted-color">
-                            <span jhiTranslate="artemisApp.courseRequest.admin.created"></span>:
-                            {{ request.createdDate | artemisDate: 'short' }}
+                        <div class="grid grid-cols-[auto_auto] justify-start gap-x-2 whitespace-nowrap">
+                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.startDate"></span>
+                            <span>{{ request.startDate | artemisDate: 'short' }}</span>
+                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.endDate"></span>
+                            <span>{{ request.endDate | artemisDate: 'short' }}</span>
+                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.admin.created"></span>
+                            <span class="text-muted-color">{{ request.createdDate | artemisDate: 'short' }}</span>
                         </div>
                     </td>
                     <td>
@@ -56,7 +54,7 @@
                         } @else {
                             <div class="font-semibold">{{ requester?.name || requester?.login }}</div>
                         }
-                        <div class="text-muted-color">{{ requester?.email }}</div>
+                        <div class="text-muted-color wrap-anywhere">{{ requester?.email }}</div>
                     </td>
                     <td>
                         <span
@@ -122,12 +120,12 @@
     <table tumAetUiTable size="small" [striped]="true" data-testid="decided-table">
         <thead>
             <tr>
-                <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
+                <th scope="col" class="min-w-64" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.semester"></th>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.dates"></th>
-                <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
-                <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
-                <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.decision"></th>
+                <th scope="col" class="min-w-44" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
+                <th scope="col" class="w-full min-w-56" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
+                <th scope="col" class="min-w-36" jhiTranslate="artemisApp.courseRequest.admin.decision"></th>
             </tr>
         </thead>
         <tbody>
@@ -135,30 +133,26 @@
                 <tr>
                     <td>
                         <div class="font-semibold">{{ request.title }}</div>
-                        <div class="text-muted-color">{{ request.shortName }}</div>
-                        @if (request.testCourse) {
-                            <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
-                        }
-                        <div class="mt-1">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span class="text-muted-color">{{ request.shortName }}</span>
+                            @if (request.testCourse) {
+                                <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
+                            }
                             <tumaet-ui-tag
                                 [severity]="badgeSeverity(request.status)"
                                 [value]="'artemisApp.courseRequest.status.' + (request.status ?? 'PENDING') | artemisTranslate"
                             />
                         </div>
                     </td>
-                    <td>{{ request.semester }}</td>
+                    <td class="whitespace-nowrap">{{ request.semester }}</td>
                     <td>
-                        <div>
-                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.startDate"></span>:
-                            {{ request.startDate | artemisDate: 'short' }}
-                        </div>
-                        <div>
-                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.endDate"></span>:
-                            {{ request.endDate | artemisDate: 'short' }}
-                        </div>
-                        <div class="text-muted-color">
-                            <span jhiTranslate="artemisApp.courseRequest.admin.processed"></span>:
-                            {{ request.processedDate | artemisDate: 'short' }}
+                        <div class="grid grid-cols-[auto_auto] justify-start gap-x-2 whitespace-nowrap">
+                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.startDate"></span>
+                            <span>{{ request.startDate | artemisDate: 'short' }}</span>
+                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.endDate"></span>
+                            <span>{{ request.endDate | artemisDate: 'short' }}</span>
+                            <span class="text-muted-color" jhiTranslate="artemisApp.courseRequest.admin.processed"></span>
+                            <span class="text-muted-color">{{ request.processedDate | artemisDate: 'short' }}</span>
                         </div>
                     </td>
                     <td>
@@ -170,7 +164,7 @@
                         } @else {
                             <div class="font-semibold">{{ requester?.name || requester?.login }}</div>
                         }
-                        <div class="text-muted-color">{{ requester?.email }}</div>
+                        <div class="text-muted-color wrap-anywhere">{{ requester?.email }}</div>
                     </td>
                     <td class="break-words">{{ request.reason }}</td>
                     <td class="break-words">
@@ -180,7 +174,7 @@
                             </div>
                             <div>{{ request.decisionReason }}</div>
                         } @else if (request.status === CourseRequestStatus.ACCEPTED && request.createdCourseId) {
-                            <a [routerLink]="['/course-management', request.createdCourseId]" class="no-underline">
+                            <a [routerLink]="['/course-management', request.createdCourseId]" class="no-underline whitespace-nowrap">
                                 <fa-icon [icon]="faExternalLinkAlt" class="me-1" />
                                 <span jhiTranslate="artemisApp.courseRequest.admin.link"></span>
                             </a>
