@@ -263,13 +263,24 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     List<Long> lockThreadsWithContentBy(@Param("userId") long userId);
 
     /**
+     * Locks the user's account row until the transaction ends. Writing a post or an answer by the user checks the foreign
+     * key to this row and has to wait for the lock.
+     *
+     * @param userId the user
+     * @return the user id, or empty if the account does not exist
+     */
+    @Query(value = "SELECT id FROM jhi_user WHERE id = :userId FOR UPDATE", nativeQuery = true)
+    Optional<Long> lockAuthor(@Param("userId") long userId);
+
+    /**
      * Applies an account change that takes the user's messages out of Course Memory (an opt-out from AI, a deactivation)
      * and outdates the entries holding those messages, in one transaction.
      * <p>
-     * Every thread with a message by the user is locked first, tracked or not. A rebuild mints its version on that row
-     * before it reads the thread, so a rebuild that starts now waits for this commit and then reads the changed account;
-     * one that minted before has a lower version than the bump below. Either way no entry built from the old account
-     * state keeps the thread's latest version, and the nightly sync retracts whatever a failed rebuild leaves behind.
+     * The account row is locked first, so the user cannot add a message to another thread until this commits. Then every
+     * thread with a message by the user is locked, tracked or not. A rebuild mints its version on that row before it reads
+     * the thread, so a rebuild that starts now waits for this commit and then reads the changed account; one that minted
+     * before has a lower version than the bump below. Either way no entry built from the old account state keeps the
+     * thread's latest version, and the nightly sync retracts whatever a failed rebuild leaves behind.
      *
      * @param userId        the user
      * @param accountChange the account change, run inside this transaction; its repository calls join it
@@ -277,6 +288,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      */
     @Transactional // ok because the account change and the version bump have to commit together
     default List<Long> changeAccountAndInvalidateCourseMemory(long userId, Runnable accountChange) {
+        lockAuthor(userId);
         lockThreadsWithContentBy(userId);
         List<Long> postIds = findCourseMemoryThreadIdsWithContentBy(userId);
         if (!postIds.isEmpty()) {

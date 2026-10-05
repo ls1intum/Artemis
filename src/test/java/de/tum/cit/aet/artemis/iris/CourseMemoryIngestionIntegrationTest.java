@@ -7,6 +7,12 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1403,6 +1409,41 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         })).hasMessageContaining("account change failed");
 
         assertThat(conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow()).isEqualTo(before);
+    }
+
+    @Test
+    void aMessageTheUserWritesDuringTheAccountChange_waitsForItsCommit() throws Exception {
+        // A thread the user has not written in is not among the locked threads. A reply they add while the account change
+        // runs would let a rebuild read the old account state; it has to wait until the change has committed instead.
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Post othersThread = createQuestion("Thread student2 has not written in yet");
+        markAsStoredInCourseMemory(othersThread);
+        CountDownLatch insideTheChange = new CountDownLatch(1);
+        CountDownLatch finishTheChange = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<List<Long>> change = executor.submit(() -> courseMemoryIngestionService.changeAccountAndInvalidate(student2.getId(), () -> {
+                insideTheChange.countDown();
+                try {
+                    finishTheChange.await(30, TimeUnit.SECONDS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }));
+            assertThat(insideTheChange.await(30, TimeUnit.SECONDS)).isTrue();
+
+            Future<AnswerPost> reply = executor.submit(() -> saveAnswer(othersThread, student2, "Written during the account change.", false));
+
+            assertThatThrownBy(() -> reply.get(2, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
+            finishTheChange.countDown();
+            change.get(30, TimeUnit.SECONDS);
+            assertThat(reply.get(30, TimeUnit.SECONDS).getId()).isNotNull();
+        }
+        finally {
+            finishTheChange.countDown();
+            executor.shutdownNow();
+        }
     }
 
     @Test
