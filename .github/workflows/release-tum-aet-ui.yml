@@ -55,7 +55,7 @@ jobs:
             git merge-base --is-ancestor HEAD origin/develop
           fi
       - run: pnpm run tum-aet-ui:lint && pnpm run tum-aet-ui:stylelint
-      - run: pnpm exec vitest run --config rules/vitest.config.mjs rules/tum-aet-ui-package.spec.mjs rules/tum-aet-ui-release.spec.mjs
+      - run: pnpm exec vitest run --config config/eslint/rules/vitest.config.mjs config/eslint/rules/tum-aet-ui-package.spec.mjs config/eslint/rules/tum-aet-ui-release.spec.mjs
       - run: pnpm run tum-aet-ui:test:coverage
       - run: pnpm --dir packages/tum-aet-ui exec playwright install --with-deps --only-shell chromium
       - run: pnpm --dir packages/tum-aet-ui run storybook:validate

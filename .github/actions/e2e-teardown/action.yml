@@ -71,4 +71,4 @@ runs:
       shell: bash
       # Best-effort: tearing down containers/networks must not flip the E2E job result.
       continue-on-error: true
-      run: .ci/E2E-tests/cleanup.sh
+      run: supporting_scripts/ci/E2E-tests/cleanup.sh
