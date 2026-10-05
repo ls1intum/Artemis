@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { User } from 'app/account/user/user.model';
 import { UserCourseRole } from 'app/account/user/shared/user-course-role.model';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -67,6 +68,7 @@ describe('AdminUserService', () => {
 
             const req = httpMock.expectOne({ method: 'GET' });
             expect(req.request.url).toBe(`${resourceUrl}/user/course-roles`);
+            expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
             req.flush(courseRoles);
             expect(received).toEqual(courseRoles);
         });

@@ -1,7 +1,8 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { User } from 'app/account/user/user.model';
 import { UserCourseRole } from 'app/account/user/shared/user-course-role.model';
@@ -92,11 +93,12 @@ export class AdminUserService {
 
     /**
      * Get the courses in which a user holds a role, with one entry per course and role.
+     * The caller shows a failure next to the course roles, so no separate error alert is raised.
      * @param login The login of the user.
      * @return Observable<UserCourseRole[]> with the course roles of the user, ordered by course title.
      */
     getCourseRoles(login: string): Observable<UserCourseRole[]> {
-        return this.http.get<UserCourseRole[]>(`${this.resourceUrl}/${login}/course-roles`);
+        return this.http.get<UserCourseRole[]>(`${this.resourceUrl}/${login}/course-roles`, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
     }
 
     /**
