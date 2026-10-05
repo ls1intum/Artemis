@@ -971,7 +971,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     // --- Websocket status reported to the acting user ---
 
     private String courseMemoryTopic() {
-        return CourseMemoryIngestionService.COURSE_MEMORY_TOPIC_PREFIX + course.getId();
+        return "course-memory/" + course.getId();
     }
 
     private ArgumentMatcher<Object> status(CourseMemoryOperation operation, CourseMemoryStage stage, Post post) {

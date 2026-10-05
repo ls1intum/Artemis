@@ -17,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 @Entity
 @Table(name = "standardized_competency")
 public class StandardizedCompetency extends BaseCompetency {
@@ -37,8 +39,9 @@ public class StandardizedCompetency extends BaseCompetency {
     private String version;
 
     @ManyToOne
-    @JoinColumn(name = "knowledge_area_id")
+    @JoinColumn(name = "knowledge_area_id", nullable = false)
     @JsonIgnoreProperties("competencies")
+    @Parent
     private KnowledgeArea knowledgeArea;
 
     @ManyToOne

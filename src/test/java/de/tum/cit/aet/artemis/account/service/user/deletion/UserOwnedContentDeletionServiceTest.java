@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -167,14 +168,15 @@ class UserOwnedContentDeletionServiceTest extends AbstractSpringIntegrationIndep
         registration.setSigningImagePath("exam-user/signatures/1/signature.png");
         registration.setStudentImagePath("exam-user/1/photo.png");
         registration = examUserRepository.save(registration);
+        long registrationId = registration.getId();
 
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
         examUtilService.addExamSessionToStudentExam(studentExam, "token", "192.0.2.1", "fingerprint", "instance", "agent");
 
         List<Path> imagePaths = userOwnedContentDeletionService.deleteExamAttendance(user.getId());
 
-        assertThat(imagePaths).as("both personal images are reported so the files can be removed as well").hasSize(2);
-        assertThat(imagePaths).allSatisfy(path -> assertThat(path).isNotNull());
+        assertThat(imagePaths).as("both personal images are reported so the files can be removed as well")
+                .containsExactly(new FileSystemLocation.ExamUserSignature("signature.png").path(), new FileSystemLocation.ExamUserImage(registrationId, "photo.png").path());
         assertThat(examUserRepository.findById(registration.getId())).isEmpty();
         assertThat(studentExamTestRepository.findById(studentExam.getId())).as("the sitting cannot outlive the exam it belongs to").isEmpty();
     }

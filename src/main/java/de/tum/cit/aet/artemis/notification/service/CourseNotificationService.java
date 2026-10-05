@@ -14,7 +14,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -22,9 +21,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
@@ -92,12 +93,16 @@ public class CourseNotificationService {
 
         courseNotification.notificationId = courseNotificationEntityId;
 
+        // Read every recipient's settings once rather than per recipient per channel: the filter below runs for each
+        // supported channel, and asking per user made a course-wide announcement cost a lookup per student per channel.
+        var recipientSettings = courseNotificationSettingService.loadSettingsFor(courseNotification.courseId, recipients);
+
         for (var supportedChannel : supportedChannels) {
             var service = serviceMap.get(supportedChannel);
             if (service == null) {
                 continue;
             }
-            var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
+            var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel, recipientSettings);
             var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
             // One count per notification that actually reached somebody on this channel, which is what answers whether a
             // channel is worth maintaining. Sends that every recipient has switched off are not usage.
@@ -135,7 +140,8 @@ public class CourseNotificationService {
     }
 
     private void recordChannelUsage(String feature, boolean failed, long durationMs) {
-        featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, feature, Role.ANONYMOUS, failed, durationMs);
+        featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, feature, UserFeature.NOTIFICATION_DELIVERY, FeatureInteraction.ACTION, Role.ANONYMOUS,
+                failed, durationMs);
     }
 
     private static long elapsedMillis(long startNanos) {
@@ -161,9 +167,6 @@ public class CourseNotificationService {
      * @param userId   The ID of the user
      * @return A paginated list of {@link CourseNotificationDTO} objects
      */
-    @Cacheable(cacheNames = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE, key = "'user_course_notification_' + #userId + '_' " + "+ #courseId + '_' "
-            + "+ (#pageable != null ? (#pageable.isPaged() ? #pageable.pageNumber : 'unpaged') : 'null') + '_' "
-            + "+ (#pageable != null ? (#pageable.isPaged() ? #pageable.pageSize : 'unpaged') : 'null')", unless = "#result.totalElements() == 0")
     public CourseNotificationPageableDTO<CourseNotificationDTO> getCourseNotifications(Pageable pageable, long courseId, long userId) {
         var courseNotificationPage = courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable);
 

@@ -23,11 +23,11 @@ import io.weaviate.client6.v1.api.collections.WeaviateObject;
  * properties and vectors are never reused. For each of those exercises that is not already present in
  * {@code SearchableEntities}, the exercise is loaded fresh from the database (the source of truth) and indexed via
  * {@link ExerciseSearchableEntityDTO#fromExercise}, so the migrated data is current rather than a stale v0 snapshot.
- * Exercises already present are left untouched. This is a best-effort skip: it avoids needlessly re-vectorizing
- * already-indexed exercises and usually avoids overwriting a newer version the live indexing path wrote. It is not a hard
- * concurrency guarantee — the batch insert upserts, so a live write that lands in the brief window between the existence
- * check and the batch insert could still be overwritten (with current database data, since the migration also reads from
- * the database); this is bounded to the one-time run and self-heals on the exercise's next edit. Exercises that no longer
+ * Exercises already present are left untouched, which avoids needlessly re-vectorizing already-indexed exercises and
+ * overwriting a newer version the outbox dispatcher wrote. The batch insert upserts, so a dispatcher write landing between
+ * the existence check and the batch insert would be overwritten with the older content loaded here; the caller prevents
+ * that by pausing outbox drains for the whole migration ({@code WeaviateOutboxDispatcher#runWithDrainsPaused}), so any
+ * change made meanwhile is applied after this write, re-derived from the database. Exercises that no longer
  * exist in the database are skipped, so deleted exercises are not re-created. Each page is written with a single gRPC
  * batch insert that re-vectorizes through the target collection's
  * configured vectorizer. The legacy collection is deleted only after a fully successful run, and re-runs are idempotent
@@ -47,7 +47,7 @@ public class V0ToV1Migration implements WeaviateMigration {
     /**
      * Page and batch size. Each page is written in one gRPC batch insert that re-embeds the objects through the target
      * collection's configured vectorizer, so the size is kept moderate to keep a batch's total embedding time within the
-     * client's 120s gRPC insert timeout even when the embedding backend is under load.
+     * client's 120s gRPC insert timeout even when the embedding service is under load.
      */
     private static final int PAGE_SIZE = 50;
 
@@ -90,9 +90,8 @@ public class V0ToV1Migration implements WeaviateMigration {
 
         // Cursor-based pagination over the legacy collection, which is used only to enumerate the v0-searchable exercise
         // ids (its stored properties/vectors are never reused). For each page we skip ids already present in the target
-        // (a best-effort skip that avoids re-vectorizing already-indexed exercises and usually avoids overwriting a newer
-        // live-indexed version; the batch insert upserts, so a write in the brief check-to-insert window can still be
-        // overwritten with current database data), load the remaining exercises
+        // (so already-indexed exercises are neither re-vectorized nor overwritten; outbox drains are paused for the whole
+        // migration, so no dispatcher write can land between this check and the insert), load the remaining exercises
         // fresh from the database, and write them with a single gRPC batch insert that re-vectorizes through the target
         // collection's configured vectorizer. The gRPC batch path uses the client's 120s insert timeout rather than the
         // 30s the original per-object REST upserts hit, and on a single node with back-to-back batches only the first

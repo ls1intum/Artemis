@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -39,6 +40,18 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
 public class KubernetesBuildArchiveService {
 
     private static final Logger log = LoggerFactory.getLogger(KubernetesBuildArchiveService.class);
+
+    /** The characters a relative checkout path may consist of. */
+    private static final Pattern SAFE_RELATIVE_PATH = Pattern.compile("[a-zA-Z0-9_./-]+");
+
+    /** A leading current-directory marker, removed from a relative path. */
+    private static final Pattern LEADING_CURRENT_DIRECTORY = Pattern.compile("^\\./");
+
+    /** A trailing slash, removed from a relative path. */
+    private static final Pattern TRAILING_SLASH = Pattern.compile("/$");
+
+    /** Everything a file name may not contain, replaced by a hyphen. */
+    private static final Pattern UNSAFE_FILENAME_CHARACTER = Pattern.compile("[^a-zA-Z0-9_.-]");
 
     private static final String TESTING_DIRECTORY = "testing-dir";
 
@@ -196,13 +209,13 @@ public class KubernetesBuildArchiveService {
     }
 
     static String validateRelativePath(String path) {
-        if (path == null || path.isBlank() || path.startsWith("/") || path.contains("..") || !path.matches("[a-zA-Z0-9_./-]+")) {
+        if (path == null || path.isBlank() || path.startsWith("/") || path.contains("..") || !SAFE_RELATIVE_PATH.matcher(path).matches()) {
             throw new LocalCIException("Invalid checkout path for Kubernetes build execution: " + path);
         }
-        return path.replaceAll("^\\./", "").replaceAll("/$", "");
+        return TRAILING_SLASH.matcher(LEADING_CURRENT_DIRECTORY.matcher(path).replaceAll("")).replaceAll("");
     }
 
     private String safeFileName(String value) {
-        return value.replaceAll("[^a-zA-Z0-9_.-]", "-");
+        return UNSAFE_FILENAME_CHARACTER.matcher(value).replaceAll("-");
     }
 }

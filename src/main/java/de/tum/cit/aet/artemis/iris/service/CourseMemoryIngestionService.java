@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.COURSE_MEMORY;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -106,12 +108,6 @@ public class CourseMemoryIngestionService {
      * thread finds it and gives up.
      */
     static final long FINAL_VERSION = Long.MAX_VALUE;
-
-    /**
-     * Websocket topic suffix; the course id is appended. Resolves to
-     * {@code /topic/iris/course-memory/{courseId}}, consumed client-side under {@code /user/...}.
-     */
-    public static final String COURSE_MEMORY_TOPIC_PREFIX = "course-memory/";
 
     private final PyrisConnectorService pyrisConnectorService;
 
@@ -594,7 +590,7 @@ public class CourseMemoryIngestionService {
         if (actorLogin == null) {
             return;
         }
-        irisWebsocketService.send(actorLogin, COURSE_MEMORY_TOPIC_PREFIX + status.courseId(), status);
+        irisWebsocketService.send(actorLogin, COURSE_MEMORY.at(status.courseId()), status);
     }
 
     private PyrisPipelineExecutionSettingsDTO executionSettings(String jobToken, Course course, AiSelectionDecision aiSelection) {

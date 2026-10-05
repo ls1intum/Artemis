@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
@@ -53,6 +54,8 @@ public class CourseArchiveService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseArchiveService.class);
 
+    public static final int TOTAL_ARCHIVE_STEPS = 4;
+
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
 
@@ -72,9 +75,11 @@ public class CourseArchiveService {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
+    private final CourseOperationProgressService progressService;
+
     public CourseArchiveService(CourseRepository courseRepository, CourseExamExportService courseExamExportService, AuthorizationCheckService authCheckService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExamApi> examApi,
-            ExerciseDeletionService exerciseDeletionService) {
+            ExerciseDeletionService exerciseDeletionService, CourseOperationProgressService progressService) {
         this.courseRepository = courseRepository;
         this.courseExamExportService = courseExamExportService;
         this.authCheckService = authCheckService;
@@ -83,6 +88,7 @@ public class CourseArchiveService {
         this.examRepositoryApi = examRepositoryApi;
         this.examApi = examApi;
         this.exerciseDeletionService = exerciseDeletionService;
+        this.progressService = progressService;
     }
 
     /**
@@ -100,16 +106,17 @@ public class CourseArchiveService {
      * Archives the course by creating a zip file will student submissions for
      * both the course exercises and exams.
      *
-     * @param course the course to archive
+     * @param course         the course to archive
+     * @param operationClaim the claim acquired before crossing the asynchronous boundary
      */
     @Async("longRunningJobExecutor")
-    public void archiveCourse(Course course) {
-        archiveCourseSynchronously(course);
+    public void archiveCourse(Course course, CourseOperationClaim operationClaim) {
+        archiveCourseSynchronously(course, operationClaim);
     }
 
     /**
      * Synchronously archives the course by creating a zip file with student submissions for both the course exercises
-     * and exams, storing the resulting archive path on the course. Unlike {@link #archiveCourse(Course)} this runs on the
+     * and exams, storing the resulting archive path on the course. Unlike {@link #archiveCourse(Course, CourseOperationClaim)} this runs on the
      * calling thread, so callers can rely on {@link Course#hasCourseArchive()} being up to date once it returns. This is
      * required by the data-privacy retention flow, which must ensure an archive exists (instructor backup) before it may
      * reset a course's student data.
@@ -119,18 +126,26 @@ public class CourseArchiveService {
      *         export failed)
      */
     public boolean archiveCourseSynchronously(Course course) {
-        long start = System.nanoTime();
-        SecurityUtils.setAuthorizationObject();
-
         // Archiving a course is only possible after the course is over
-        if (course.getEndDate() == null || ZonedDateTime.now().isBefore(course.getEndDate())) {
+        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
             return false;
         }
+
+        ZonedDateTime startedAt = ZonedDateTime.now();
+        CourseOperationClaim operationClaim = progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS, startedAt);
+        return archiveCourseSynchronously(course, operationClaim);
+    }
+
+    private boolean archiveCourseSynchronously(Course course, CourseOperationClaim operationClaim) {
+        long start = System.nanoTime();
 
         // This contains possible errors encountered during the archive process
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         try {
+            SecurityUtils.setAuthorizationObject();
+            progressService.verifyOperationClaim(operationClaim);
+
             // Create course archives directory if it doesn't exist
             Files.createDirectories(courseArchivesDirPath);
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
@@ -140,20 +155,29 @@ public class CourseArchiveService {
             Map<Long, ExamScoresDTO> examScoresData = fetchExamScoresForCourse(course.getId(), exportErrors);
 
             // Export the course to the archives' directory.
-            var archivedCoursePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, examScoresData);
+            var archivedCoursePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, examScoresData, operationClaim);
 
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
+                progressService.verifyOperationClaim(operationClaim);
                 course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
                 courseRepository.saveAndFlush(course);
-                log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
-                return true;
+                progressService.completeOperation(operationClaim, TOTAL_ARCHIVE_STEPS, exportErrors.size());
             }
+            else {
+                progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, exportErrors.size(), "No course archive was created", 0);
+            }
+            log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
+            return archivedCoursePath.isPresent();
         }
         catch (Exception e) {
             var error = "Failed to create course archives directory " + courseArchivesDirPath + ": " + e.getMessage();
             exportErrors.add(error);
             log.info(error);
+            progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, 0, e.getMessage(), 0);
+        }
+        finally {
+            progressService.releaseOperationClaim(operationClaim);
         }
 
         log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));

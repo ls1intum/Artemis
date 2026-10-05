@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -230,7 +231,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
 
         String response = request
                 .performMvcRequest(put("/api/fileupload/file-upload-submissions/" + submission.getId() + "/feedback").param("submit", "true")
-                        .contentType(MediaType.APPLICATION_JSON).content(new ObjectMapper().writeValueAsString(assessment)))
+                        .contentType(MediaType.APPLICATION_JSON).content(new JsonMapper().writeValueAsString(assessment)))
                 .andExpect(status().isForbidden()).andReturn().getResponse().getContentAsString();
 
         assertThat(response).contains(ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING);
@@ -242,12 +243,12 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     void testTheAssessmentDashboardTellsTheClientWhenAssessmentBecomesPossible() throws Exception {
         TextExercise textExercise = exerciseOfType(TextExercise.class);
 
-        var exerciseForDashboard = request.get("/api/exercise/exercises/" + textExercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, TextExercise.class);
+        var exerciseForDashboard = request.get("/api/exercise/exercises/" + textExercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, ExerciseResponseDTO.class);
 
         ZonedDateTime expectedLatestExamEndDate = exam.getEndDate().plusSeconds(exam.getGracePeriod());
-        assertThat(exerciseForDashboard.getLatestExamEndDate()).isCloseTo(expectedLatestExamEndDate, within(1, ChronoUnit.SECONDS));
+        assertThat(exerciseForDashboard.latestExamEndDate()).isCloseTo(expectedLatestExamEndDate, within(1, ChronoUnit.SECONDS));
         // a text exercise has no build to wait for, so both dates are the same
-        assertThat(exerciseForDashboard.getAssessmentPossibleFrom()).isCloseTo(expectedLatestExamEndDate, within(1, ChronoUnit.SECONDS));
+        assertThat(exerciseForDashboard.assessmentPossibleFrom()).isCloseTo(expectedLatestExamEndDate, within(1, ChronoUnit.SECONDS));
     }
 
     @Test
@@ -258,9 +259,9 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepository.save(textExercise);
 
-        var exerciseForDashboard = request.get("/api/exercise/exercises/" + textExercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, TextExercise.class);
+        var exerciseForDashboard = request.get("/api/exercise/exercises/" + textExercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, ExerciseResponseDTO.class);
 
-        assertThat(exerciseForDashboard.getLatestExamEndDate()).isNull();
-        assertThat(exerciseForDashboard.getAssessmentPossibleFrom()).isNull();
+        assertThat(exerciseForDashboard.latestExamEndDate()).isNull();
+        assertThat(exerciseForDashboard.assessmentPossibleFrom()).isNull();
     }
 }

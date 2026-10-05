@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -458,6 +459,10 @@ public class BuildAgentDockerService {
                     checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
                 }
                 catch (InterruptedException ie) {
+                    // Wrapping in another exception type loses the interruption, so restore it for whoever catches
+                    // LocalCIException: a build agent thread that keeps running after a shutdown request is the failure
+                    // this guards against.
+                    Thread.currentThread().interrupt();
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
                 }
                 catch (Exception ex) {
@@ -477,6 +482,8 @@ public class BuildAgentDockerService {
                             checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
                         }
                         catch (InterruptedException ie) {
+                            // See the primary pull above: the wrapper does not carry the interrupt status.
+                            Thread.currentThread().interrupt();
                             throw new LocalCIException("Interrupted while pulling docker image " + imageName + " with amd64 fallback", ie);
                         }
                         catch (Exception fallbackEx) {
@@ -796,7 +803,7 @@ public class BuildAgentDockerService {
      */
     private boolean isMacOS() {
         String osName = System.getProperty("os.name");
-        return osName != null && osName.toLowerCase().contains("mac");
+        return osName != null && osName.toLowerCase(Locale.ROOT).contains("mac");
     }
 
     /**

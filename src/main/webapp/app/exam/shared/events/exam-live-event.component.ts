@@ -9,6 +9,7 @@ import {
     WorkingTimeUpdateEvent,
 } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { NgClass } from '@angular/common';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { WorkingTimeChangeComponent } from '../working-time-change/working-time-change.component';
@@ -20,7 +21,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
     selector: 'jhi-exam-live-event',
     templateUrl: './exam-live-event.component.html',
     styleUrls: ['./exam-live-event.component.scss'],
-    imports: [NgClass, TranslateDirective, FaIconComponent, WorkingTimeChangeComponent, ArtemisDatePipe, ArtemisTranslatePipe, MarkdownDirective],
+    imports: [NgClass, TumAetUiButtonDirective, TranslateDirective, FaIconComponent, WorkingTimeChangeComponent, ArtemisDatePipe, ArtemisTranslatePipe, MarkdownDirective],
 })
 export class ExamLiveEventComponent {
     event = input.required<ExamLiveEvent>();

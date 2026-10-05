@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
@@ -23,9 +25,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.AdditionalAnswers;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -52,6 +56,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -212,7 +217,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().plusHours(1));
         StudentParticipation studentParticipationReceived = participationService.startExercise(programmingExercise, participant, true);
 
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         assertThat(studentParticipationReceived.getId()).isNotEqualTo(practiceParticipation.getId());
         assertThat(programmingExercise.getStudentParticipations()).hasSize(2);
@@ -242,6 +247,92 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(studentParticipationReceived.getInitializationDate()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(10));
         assertThat(studentParticipationReceived.getInitializationDate()).isBeforeOrEqualTo(ZonedDateTime.now().plusSeconds(10));
         assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExercise_overlappingStartOfTheSameSideReusesTheParticipationOfTheFirst() {
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        Exercise exercise = course.getExercises().iterator().next();
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        // The first of two overlapping test run starts has inserted its participation, but has not got further than that. The second one passed the lookup before
+        // that insert, so it goes on to create one as well.
+        StudentParticipation firstStart = new StudentParticipation();
+        firstStart.setParticipant(instructor);
+        firstStart.setExercise(exercise);
+        firstStart.setTestRun(true);
+        firstStart.setAttempt(0);
+        firstStart.setInitializationState(InitializationState.UNINITIALIZED);
+        long firstStartId = studentParticipationRepository.saveAndFlush(firstStart).getId();
+
+        // The second start must collide with the row of the first on the unique attempt and take that row over. Taking the next free attempt instead would let it
+        // insert a second participation of the same side, and the lookup of that side returns exactly one.
+        ReflectionTestUtils.invokeMethod(participationService, "createParticipationOrFetchConcurrentlyCreatedOne", exercise, instructor, true);
+
+        assertThat(studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()))
+                .as("the overlapping start created no participation of its own").singleElement()
+                .satisfies(participation -> assertThat(participation.getId()).isEqualTo(firstStartId));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExercise_newTestRunParticipationIsStoredOnItsSideFromTheFirstInsert() {
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        StudentParticipation gradedParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
+
+        // Nothing but the insert has happened yet, which is the state a test run setup that fails during its repository copy leaves behind. A retry looks for the
+        // participation of its own side, so the row has to be on that side already. Stored as a graded one, it would not be found again and the retry would insert a
+        // second one, and the graded lookup of the instructor would return two rows.
+        StudentParticipation created = ReflectionTestUtils.invokeMethod(participationService, "createNewParticipation", programmingExercise, instructor, true);
+
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(programmingExercise.getId(), instructor.getId(), true))
+                .as("the new participation is found by the lookup of the test run side")
+                .hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(created.getId()));
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(programmingExercise.getId(), instructor.getId(), false))
+                .as("and the graded participation is still the only one of its side")
+                .hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(gradedParticipation.getId()));
+        assertThat(created.getAttempt()).as("it does not collide with the attempt of the graded participation").isNotEqualTo(gradedParticipation.getAttempt());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExercise_startOfTheOtherSideThatInsertedFirstIsNotAFailure() {
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        Exercise exercise = course.getExercises().iterator().next();
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        // A graded start has inserted its participation, but has not got further than that
+        StudentParticipation gradedStart = new StudentParticipation();
+        gradedStart.setParticipant(instructor);
+        gradedStart.setExercise(exercise);
+        gradedStart.setTestRun(false);
+        gradedStart.setAttempt(0);
+        gradedStart.setInitializationState(InitializationState.UNINITIALIZED);
+        long gradedStartId = studentParticipationRepository.saveAndFlush(gradedStart).getId();
+
+        // The test run start read the attempts of the other side before that insert, so it still picks the attempt that the graded start took
+        var attemptLookups = new AtomicInteger();
+        Object repository = ReflectionTestUtils.getField(participationService, "studentParticipationRepository");
+        var delegate = AdditionalAnswers.delegatesTo(repository);
+        var repositoryThatReadBeforeTheInsert = mock(StudentParticipationRepository.class, invocation -> {
+            if (invocation.getMethod().getName().equals("findAttemptsByExerciseIdAndStudentIdAndTestRun") && attemptLookups.getAndIncrement() == 0) {
+                return Set.of();
+            }
+            return delegate.answer(invocation);
+        });
+        ReflectionTestUtils.setField(participationService, "studentParticipationRepository", repositoryThatReadBeforeTheInsert);
+        try {
+            // Its insert collides with the row of the graded start, which is not a participation of its own side. It has to pick the attempt again instead of failing.
+            ReflectionTestUtils.invokeMethod(participationService, "createParticipationOrFetchConcurrentlyCreatedOne", exercise, instructor, true);
+        }
+        finally {
+            ReflectionTestUtils.setField(participationService, "studentParticipationRepository", repository);
+        }
+
+        assertThat(attemptLookups).as("the attempt was picked a second time").hasValue(2);
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), instructor.getId(), true))
+                .as("the test run start has a participation of its own side").hasValueSatisfying(participation -> assertThat(participation.getAttempt()).isNotZero());
+        assertThat(studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), instructor.getId(), false))
+                .as("and the graded start keeps its own").hasValueSatisfying(participation -> assertThat(participation.getId()).isEqualTo(gradedStartId));
     }
 
     private void setUpProgrammingExerciseMocks() {
@@ -498,23 +589,23 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         User gradedStudent = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
         User practiceStudent = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
 
-        assertThat(participationService.findOneByExerciseAndStudentLoginAnyState(programmingExercise, TEST_PREFIX + "student1")).as("the participation is found by login")
-                .map(StudentParticipation::getId).contains(gradedParticipation.getId());
+        assertThat(participationService.findOneByExerciseAndStudentAnyState(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")))
+                .as("the participation is found by login").map(StudentParticipation::getId).contains(gradedParticipation.getId());
         assertThat(participationService.findOneGradedByExerciseAndParticipant(programmingExercise, gradedStudent)).as("the graded participation is found")
                 .map(StudentParticipation::getId).contains(gradedParticipation.getId());
         assertThat(participationService.findOneGradedByExerciseAndParticipant(programmingExercise, practiceStudent)).as("a practice participation is not a graded one").isEmpty();
         assertThat(participationService.findOnePracticeByExerciseAndParticipant(programmingExercise, practiceStudent)).as("the practice participation is found")
                 .map(StudentParticipation::getId).contains(practiceParticipation.getId());
         assertThat(participationService.findOnePracticeByExerciseAndParticipant(programmingExercise, gradedStudent)).as("a graded participation is not a practice one").isEmpty();
-        assertThat(participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise, TEST_PREFIX + "student1"))
+        assertThat(participationService.findOneByExerciseAndStudentWithEagerSubmissionsAnyState(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")))
                 .as("the participation is found with its submissions").map(StudentParticipation::getId).contains(gradedParticipation.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow_withoutAParticipation_saysWhichStudentAndExercise() {
-        assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(programmingExercise, TEST_PREFIX + "student3"))
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(
+                () -> participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3")))
                 .withMessageContaining(String.valueOf(programmingExercise.getId())).withMessageContaining(TEST_PREFIX + "student3");
     }
 

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -36,9 +36,7 @@ type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
 type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
 type CompetencyProgressResponseDTOType = HttpResponse<CompetencyProgressDTO>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseCompetencyService {
     protected httpClient = inject(HttpClient);
     protected entityTitleService = inject(EntityTitleService);

@@ -33,9 +33,4 @@ describe('AdditionalFeedbackComponent', () => {
         fixture.detectChanges();
         expect(comp).toBeDefined();
     });
-
-    it('should translate points', () => {
-        expect(comp.pointTranslation(1.5)).toBe('artemisApp.assessment.detail.points.many');
-        expect(comp.pointTranslation(1)).toBe('artemisApp.assessment.detail.points.one');
-    });
 });

@@ -53,6 +53,25 @@ public interface SolutionProgrammingExerciseParticipationRepository
         return getValueElseThrow(findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId));
     }
 
+    /**
+     * The id of the solution participation of the exercise a project key identifies.
+     *
+     * <p>
+     * Reads one column and loads no entity, for callers that only have to point at the participation, such as an access
+     * log entry being attributed to a repository. The solution repository and the test repository of an exercise share
+     * this participation, and the test repository has none of its own, which is why this resolves by project key rather
+     * than by repository uri.
+     *
+     * @param projectKey the project key of the programming exercise
+     * @return the id of the solution participation, or empty if the project key matches no exercise
+     */
+    @Query("""
+            SELECT participation.id
+            FROM SolutionProgrammingExerciseParticipation participation
+            WHERE participation.programmingExercise.projectKey = :projectKey
+            """)
+    Optional<Long> findIdByProjectKey(@Param("projectKey") String projectKey);
+
     @Query("""
             SELECT p
             FROM SolutionProgrammingExerciseParticipation p

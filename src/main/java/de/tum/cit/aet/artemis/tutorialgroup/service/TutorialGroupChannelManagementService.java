@@ -2,11 +2,12 @@ package de.tum.cit.aet.artemis.tutorialgroup.service;
 
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup_;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 
@@ -45,6 +47,9 @@ public class TutorialGroupChannelManagementService {
     private final ChannelRepository channelRepository;
 
     private static final Logger log = LoggerFactory.getLogger(TutorialGroupChannelManagementService.class);
+
+    /** Any whitespace in a tutorial group title, which the channel name spells as a hyphen. */
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
     public TutorialGroupChannelManagementService(ChannelService channelService, ConversationService conversationService, TutorialGroupRepository tutorialGroupRepository,
             TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, ChannelRepository channelRepository) {
@@ -136,7 +141,7 @@ public class TutorialGroupChannelManagementService {
         var teachingAssistantOptional = getTeachingAssistant(tutorialGroup);
         var tutorialGroupChannelOptional = getTutorialGroupChannel(tutorialGroup);
 
-        if (Stream.of(teachingAssistantOptional, tutorialGroupChannelOptional).allMatch(Optional::isPresent)) {
+        if (teachingAssistantOptional.isPresent() && tutorialGroupChannelOptional.isPresent()) {
             var teachingAssistant = teachingAssistantOptional.get();
             var channel = tutorialGroupChannelOptional.get();
             conversationService.registerUsersToConversation(tutorialGroup.getCourse(), Set.of(teachingAssistant), channel, Optional.empty());
@@ -249,7 +254,7 @@ public class TutorialGroupChannelManagementService {
      */
     private String determineUniqueTutorialGroupChannelName(TutorialGroup tutorialGroup) {
         Course course = tutorialGroup.getCourse();
-        String cleanedGroupTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase();
+        String cleanedGroupTitle = WHITESPACE.matcher(tutorialGroup.getTitle()).replaceAll("-").toLowerCase(Locale.ROOT);
         String channelName = "tutorgroup-" + cleanedGroupTitle.substring(0, Math.min(cleanedGroupTitle.length(), 18));
 
         if (!channelRepository.existsChannelByNameAndCourseId(channelName, course.getId())) {
@@ -303,7 +308,7 @@ public class TutorialGroupChannelManagementService {
      * @return the teaching assistant of the tutorial group, if it exists
      */
     private Optional<User> getTeachingAssistant(TutorialGroup tutorialGroup) {
-        if (getPersistenceUtil().isLoaded(tutorialGroup, "teachingAssistant")) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TEACHING_ASSISTANT)) {
             return Optional.ofNullable(tutorialGroup.getTeachingAssistant());
         }
         else {

@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -20,7 +22,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
@@ -31,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.BatchSize;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
 
@@ -41,13 +43,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
-import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -60,6 +64,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @Entity
 @Table(name = "jhi_user")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Account root.")
 public class User extends AbstractAuditingEntity implements Participant {
 
     /**
@@ -82,7 +87,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public static final String IRIS_BOT_LOGIN = "iris_bot";
 
-    @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
@@ -101,7 +105,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String lastName;
 
     @Size(max = 20)
-    @Column(name = "registration_number", length = 20)
+    @Column(name = "registration_number", length = 20, unique = true)
     @JsonIgnore
     private String registrationNumber;
 
@@ -112,7 +116,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Email
     @Size(max = 100)
-    @Column(length = 100)
+    @Column(length = 100, unique = true)
     private String email;
 
     /**
@@ -230,11 +234,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "user", allowSetters = true)
-    @JoinColumn(name = "learner_profile_id")
-    private LearnerProfile learnerProfile;
-
     public User() {
     }
 
@@ -263,7 +262,18 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     // Lowercase the login before saving it in database
     public void setLogin(String login) {
-        this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
+        this.login = canonicalLogin(login);
+    }
+
+    /**
+     * Returns the form in which {@link #setLogin} stores a login. Callers that derive a login from an external source (a SAML2 assertion, an OIDC claim, an LTI launch) look
+     * the account up by that value, and without normalizing it first a login containing an uppercase letter never matches the account that was stored under it.
+     *
+     * @param login the login as it was derived, may be {@code null}
+     * @return the lowercase login, or {@code null} if the input is {@code null}
+     */
+    public static String canonicalLogin(String login) {
+        return StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
     @Override
@@ -296,16 +306,29 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     /**
-     * @return name as a concatenation of first name and last name
+     * The display name: first and last name joined by a space, skipping whichever is blank. Falls back to the login when neither is
+     * set, which happens for accounts an LTI platform provisions without name claims (Open edX sends none by default). The result is
+     * also used as the git committer identity, and JGit rejects a null name there.
+     *
+     * @return the display name, never null for a persisted user
      */
     @Override
     public String getName() {
-        if (lastName != null && !lastName.isEmpty()) {
-            return firstName + " " + lastName;
-        }
-        else {
-            return firstName;
-        }
+        return displayName(firstName, lastName, login);
+    }
+
+    /**
+     * The single owner of the display-name rule, shared with the DTOs that carry a user's name fields without the entity (mail
+     * recipients, student lists, plagiarism cases). Keep every copy on this method so the fallback cannot drift.
+     *
+     * @param firstName the first name, may be null or blank
+     * @param lastName  the last name, may be null or blank
+     * @param login     the login to fall back to when both names are blank
+     * @return the non-blank name parts joined by a space, or the login when there are none
+     */
+    public static @Nullable String displayName(@Nullable String firstName, @Nullable String lastName, @Nullable String login) {
+        String name = Stream.of(firstName, lastName).filter(StringUtils::isNotBlank).collect(Collectors.joining(" "));
+        return name.isEmpty() ? login : name;
     }
 
     public String getEmail() {
@@ -327,12 +350,23 @@ public class User extends AbstractAuditingEntity implements Participant {
         return email == null || email.isBlank() ? null : email.toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * The path the profile picture is served under, relative to {@code api/core/files/}. The column stores only the filename, except for the Iris bot, whose picture is a static
+     * asset shipped with the client and is therefore kept verbatim, see {@link FileSystemLocation#refersToStoredFile}.
+     *
+     * @return the served path of the profile picture, or its filename while the user has no id yet
+     */
     public String getImageUrl() {
-        return imageUrl;
+        return ServedFileUrl.profilePicture(getId(), imageUrl);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param imageUrl the filename of the profile picture, or the URL it is served under
+     */
     public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+        this.imageUrl = FileSystemLocation.storedFilename(imageUrl);
     }
 
     public boolean getActivated() {
@@ -378,7 +412,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * <p>
      * Note for callers that need to know whether the collection was loaded: do NOT test the returned value with
      * {@code Hibernate.isInitialized(...)} — the wrapper is never a {@code PersistentSet}, so it always reports
-     * initialised. Use {@code Persistence.getPersistenceUtil().isLoaded(user, "courseRoles")}, which inspects the
+     * initialised. Use the persistence util's {@code isLoaded} check with {@code User_.COURSE_ROLES}, which inspects the
      * attribute itself.
      *
      * @return an unmodifiable view of this user's course roles
@@ -546,14 +580,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
         this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
-    }
-
-    public LearnerProfile getLearnerProfile() {
-        return learnerProfile;
-    }
-
-    public void setLearnerProfile(LearnerProfile learnerProfile) {
-        this.learnerProfile = learnerProfile;
     }
 
     /**

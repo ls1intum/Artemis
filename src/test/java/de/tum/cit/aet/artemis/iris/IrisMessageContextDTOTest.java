@@ -10,9 +10,10 @@ import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
+import tools.jackson.databind.DefaultTyping;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
@@ -21,16 +22,15 @@ import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 
 class IrisMessageContextDTOTest {
 
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @BeforeEach
     void setup() {
-        // Configure ObjectMapper with polymorphic type handling for sealed interfaces
+        // Configure JsonMapper with polymorphic type handling for sealed interfaces
         PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder().allowIfSubType(IrisMessageContextDTO.class).build();
-        mapper = new ObjectMapper();
-        mapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE);
+        mapper = JsonMapper.builder().activateDefaultTyping(ptv, DefaultTyping.OBJECT_AND_NON_CONCRETE).build();
     }
 
     @Test

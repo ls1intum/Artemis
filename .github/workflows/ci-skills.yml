@@ -1,8 +1,6 @@
 name: Agent Skills
 
-# Validates the agent skills in skills/. Kept out of ci-quality.yml on purpose: that workflow is
-# gated on `build_relevant`, which is false when every changed file is markdown, so a PR editing
-# only skills/ would skip the one check that guards it.
+# Run independently of ci-quality.yml so Markdown-only changes are checked.
 
 on:
   workflow_call:
@@ -12,31 +10,27 @@ on:
         required: true
         type: string
 
-permissions: {}  # default-deny; the job grants only what it needs
+permissions: {}
 
 jobs:
-  skill-references:
-    name: Skill Path References
+  skill-checks:
+    name: Skill Structure and References
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          # A pure source scan (no git diff), so pin the PR head the way the style jobs do.
           ref: ${{ inputs.commit_sha }}
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.14'
-      # The fence state machine decides which lines count as code, so a regression there silently
-      # stops the check below from seeing example commands. Guard it before trusting the scan.
+      # The parsers decide what the check below sees, so a regression there would pass silently.
       - name: Checker self-test
         run: python supporting_scripts/check_skill_references.py --self-test
-      # A skill that cites a file which has since moved is worse than no skill: an agent acts on it
-      # without checking. This is what keeps the citations honest as the code around them changes.
-      - name: Skill path references
+      - name: Skill frontmatter, routing and path references
         if: ${{ !cancelled() }}
         run: python supporting_scripts/check_skill_references.py

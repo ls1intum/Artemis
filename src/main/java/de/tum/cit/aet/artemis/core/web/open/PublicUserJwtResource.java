@@ -27,7 +27,7 @@ import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
+import org.springframework.security.saml2.provider.service.authentication.Saml2AssertionAuthentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
@@ -57,7 +58,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authentication/jwt-tokens")
+@FeatureUsage(UserFeature.SIGN_IN)
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicUserJwtResource {
@@ -117,7 +118,8 @@ public class PublicUserJwtResource {
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
+            // The resolved login rather than what was typed: a login with an email address or an alias of it would not find the user again
+            artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
@@ -162,14 +164,17 @@ public class PublicUserJwtResource {
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof final Saml2AuthenticatedPrincipal principal)) {
+        // Spring Security's SAML2 provider hands out a Saml2AssertionAuthentication whose credentials are the accessor
+        // for the validated response. Reading the attributes from there rather than from the principal is what replaces
+        // the deprecated Saml2AuthenticatedPrincipal.
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication instanceof final Saml2AssertionAuthentication saml2Authentication)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            authentication = saml2Service.get().handleAuthentication(authentication, principal, request);
+            authentication = saml2Service.get().handleAuthentication(authentication, saml2Authentication.getCredentials(), request);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         catch (UserNotActivatedException e) {

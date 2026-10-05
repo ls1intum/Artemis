@@ -190,7 +190,7 @@ public class DataExportExamCreationService {
      * @param gradingScaleOptional the optional grading scale of the exam
      * @return a stream of information that should be included in the exam results CSV file
      */
-    private Stream<?> getExamResultsStreamToPrint(ExamScoresDTO.StudentResult studentResult, List<String> headers, Optional<GradingScale> gradingScaleOptional) {
+    private Stream<?> getExamResultsStreamToPrint(ExamScoresDTO.StudentResultDTO studentResult, List<String> headers, Optional<GradingScale> gradingScaleOptional) {
         var builder = Stream.builder();
         if (studentResult.overallPointsAchieved() != null) {
             builder.add(studentResult.overallPointsAchieved());

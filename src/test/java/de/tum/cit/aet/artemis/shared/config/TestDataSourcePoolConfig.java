@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.shared.config;
 
 import java.sql.SQLException;
+import java.util.Locale;
 
 import javax.sql.DataSource;
 
@@ -55,7 +56,7 @@ public class TestDataSourcePoolConfig {
      */
     private static String getDatabaseProductName(DataSource ds) {
         try (var conn = ds.getConnection()) {
-            return conn.getMetaData().getDatabaseProductName().toLowerCase();
+            return conn.getMetaData().getDatabaseProductName().toLowerCase(Locale.ROOT);
         }
         catch (SQLException e) {
             log.warn("Could not determine database type", e);

@@ -4,8 +4,8 @@
         <fa-icon [icon]="faSpinner" animation="spin" />
     </div>
 } @else {
-    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.categories.IDE_PREFERENCES' | artemisTranslate">
-        <li tumUiListItem>
+    <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.categories.IDE_PREFERENCES' | artemisTranslate">
+        <li tumAetUiListItem>
             <p class="ide-preferences-description">
                 <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></span>
                 <jhi-help-icon placement="right auto" text="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp" />
@@ -15,12 +15,12 @@
         </li>
         <!-- Display each customized Programming Language -->
         @for (programmingLanguage of assignedProgrammingLanguages(); track programmingLanguage) {
-            <li tumUiListItem>
+            <li tumAetUiListItem>
                 <div class="item-container flex flex-row items-center justify-between pb-2">
                     <h5 [id]="'ide-preference-label-' + programmingLanguage">
                         {{ programmingLanguage }}
                     </h5>
-                    <tum-ui-button
+                    <tumaet-ui-button
                         severity="danger"
                         variant="outlined"
                         size="small"
@@ -34,31 +34,31 @@
         }
         <!-- Display plus button to add Programming Language with drop down menu -->
         @if (remainingProgrammingLanguages().length) {
-            <li tumUiListItem>
+            <li tumAetUiListItem>
                 <!-- self-start: a stacked list row stretches its children, which would blow this up into a
                      full-width primary bar. -->
-                <button type="button" tumUiButton size="small" class="self-start" id="dropdown" [tumUiMenuTrigger]="languageMenu">
+                <button type="button" tumAetUiButton size="small" class="self-start" id="dropdown" [tumAetUiMenuTrigger]="languageMenu">
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.addNewLanguage"></span>
                 </button>
                 <ng-template #languageMenu>
-                    <tum-ui-menu aria-labelledby="dropdown">
+                    <tumaet-ui-menu aria-labelledby="dropdown">
                         @for (programmingLanguage of remainingProgrammingLanguages(); track programmingLanguage) {
-                            <button tumUiMenuItem (triggered)="addProgrammingLanguage(programmingLanguage)">
+                            <button type="button" tumAetUiMenuItem (triggered)="addProgrammingLanguage(programmingLanguage)">
                                 {{ programmingLanguage }}
                             </button>
                         }
-                    </tum-ui-menu>
+                    </tumaet-ui-menu>
                 </ng-template>
             </li>
         }
-    </tum-ui-list>
+    </tumaet-ui-list>
 }
 
 <!-- The row heading names the group: without it a screen reader reaches six IDE buttons with no idea which
      language they belong to, and the rows are otherwise indistinguishable from one another. -->
 <ng-template #ideButtonRow let-programmingLanguage="language" let-labelId="labelId">
-    <tum-ui-select-button
+    <tumaet-ui-select-button
         [attr.aria-labelledby]="labelId"
         [options]="PREDEFINED_IDE()"
         optionLabel="name"

@@ -27,9 +27,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -112,7 +114,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new PlagiarismResult();
-        textPlagiarismResult.setComparisons(Set.of(new PlagiarismComparison()));
+        textPlagiarismResult.setComparisons(Set.of(createPlagiarismComparison(11, 1, 2)));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
         var programmingPlagiarismResult = new PlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
@@ -295,7 +297,8 @@ class ContinuousPlagiarismControlServiceTest {
 
         service.executeChecks();
 
-        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("plagiarism"), eq("continuous-plagiarism-control/text"), eq(Role.ANONYMOUS), eq(true), anyLong());
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("plagiarism"), eq("continuous-plagiarism-control/text"),
+                eq(UserFeature.CONTINUOUS_PLAGIARISM_CONTROL), eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(true), anyLong());
     }
 
     /**
@@ -310,8 +313,8 @@ class ContinuousPlagiarismControlServiceTest {
 
         service.executeChecks();
 
-        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("plagiarism"), eq("continuous-plagiarism-control/modeling"), eq(Role.ANONYMOUS), eq(false),
-                anyLong());
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("plagiarism"), eq("continuous-plagiarism-control/modeling"),
+                eq(UserFeature.CONTINUOUS_PLAGIARISM_CONTROL), eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     private static User createUser(long id) {

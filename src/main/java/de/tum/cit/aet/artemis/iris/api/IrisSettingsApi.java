@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.iris.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.iris.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Conditional(IrisEnabled.class)
@@ -28,11 +30,14 @@ public class IrisSettingsApi extends AbstractIrisApi {
 
     private final IrisChatSessionRepository irisChatSessionRepository;
 
-    public IrisSettingsApi(IrisSettingsService irisSettingsService, IrisCourseSettingsRepository irisCourseSettingsRepository,
-            IrisChatSessionRepository irisChatSessionRepository) {
+    private final IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
+
+    public IrisSettingsApi(IrisSettingsService irisSettingsService, IrisCourseSettingsRepository irisCourseSettingsRepository, IrisChatSessionRepository irisChatSessionRepository,
+            IrisProactiveEpisodeRepository irisProactiveEpisodeRepository) {
         this.irisSettingsService = irisSettingsService;
         this.irisCourseSettingsRepository = irisCourseSettingsRepository;
         this.irisChatSessionRepository = irisChatSessionRepository;
+        this.irisProactiveEpisodeRepository = irisProactiveEpisodeRepository;
     }
 
     public IrisCourseSettingsWithRateLimitDTO getSettingsForCourse(long courseId) {
@@ -41,6 +46,17 @@ public class IrisSettingsApi extends AbstractIrisApi {
 
     public boolean isIrisEnabledForCourse(long courseId) {
         return irisSettingsService.isEnabledForCourse(courseId);
+    }
+
+    /**
+     * Keeps only the course IDs whose Iris course settings are enabled. Resolved in a single query, so a caller asking
+     * about many courses does not turn into one lookup per course.
+     *
+     * @param courseIds the course IDs to filter
+     * @return the subset whose Iris settings are enabled, in the order of the input
+     */
+    public List<Long> filterCourseIdsWithIrisEnabled(Collection<Long> courseIds) {
+        return irisSettingsService.filterCourseIdsWithIrisEnabled(courseIds);
     }
 
     /**
@@ -59,6 +75,24 @@ public class IrisSettingsApi extends AbstractIrisApi {
      */
     public void deleteCourseChatSessions(long courseId) {
         irisChatSessionRepository.deleteAllByCourseId(courseId);
+    }
+
+    /**
+     * Deletes the proactive struggle episodes of a course's own exercises.
+     *
+     * <p>
+     * Separate from the chat sessions because an episode is not one: it is registered when a struggle trigger is
+     * accepted, outlives the session it was decided in, and is keyed on the exercise rather than the session. A
+     * student-data reset preserves the course's exercises, so nothing else would remove these rows.
+     *
+     * <p>
+     * The scope is the delete query's, see {@code IrisProactiveEpisodeRepository#deleteAllByCourseId}.
+     *
+     * @param courseId the ID of the course
+     * @return number of episodes deleted
+     */
+    public int deleteCourseProactiveEpisodes(long courseId) {
+        return irisProactiveEpisodeRepository.deleteAllByCourseId(courseId);
     }
 
     /**

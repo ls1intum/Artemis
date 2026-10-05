@@ -11,11 +11,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.jspecify.annotations.NonNull;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +74,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     /**
      * Tracks the previously known connected clients for detecting disconnections.
      */
-    private volatile Set<String> previouslyKnownClients = new HashSet<>();
+    private final AtomicReference<Set<String>> previouslyKnownClients = new AtomicReference<>(new HashSet<>());
 
     /**
      * Scheduled executor for polling client connections.
@@ -241,6 +243,22 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
      * {@inheritDoc}
      *
      * <p>
+     * Redis answers both views from the same {@code CLIENT LIST}, so this resolves it once instead of issuing the
+     * query twice. {@code CLIENT LIST} is O(connections) on the server and returns a line per connection that the
+     * client then parses, which made it the second most expensive command this deployment ran.
+     */
+    @Override
+    @NonNull
+    public ClusterMembership getClusterMembership() {
+        var snapshot = redisClientListResolver.resolveClients();
+        Set<String> names = snapshot.complete() ? snapshot.clientNames() : Set.of();
+        return new ClusterMembership(names, names);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
      * Redis reports the address it accepted each connection from in {@code CLIENT LIST}. Empty when that query failed or, in Redis Cluster mode, covered only part of the
      * deployment: the caller concludes from a name's absence that the client disconnected, so a partial answer would clear the addresses of every agent attached to a node that
      * did not answer. That must stay distinguishable from a complete answer that found no clients.
@@ -324,8 +342,9 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
                 });
 
                 // Initialize with current clients to avoid false disconnection events on startup
-                previouslyKnownClients = new HashSet<>(redisClientListResolver.getUniqueClients());
-                log.info("Starting Redis client disconnection polling with interval of {} seconds. Initial clients: {}", CLIENT_POLLING_INTERVAL_SECONDS, previouslyKnownClients);
+                previouslyKnownClients.set(new HashSet<>(redisClientListResolver.getUniqueClients()));
+                log.info("Starting Redis client disconnection polling with interval of {} seconds. Initial clients: {}", CLIENT_POLLING_INTERVAL_SECONDS,
+                        previouslyKnownClients.get());
 
                 clientPollingFuture = clientPollingExecutor.scheduleAtFixedRate(this::checkForDisconnectedClients, CLIENT_POLLING_INTERVAL_SECONDS, CLIENT_POLLING_INTERVAL_SECONDS,
                         TimeUnit.SECONDS);
@@ -377,7 +396,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
                 return;
             }
             Set<String> currentClients = snapshot.clientNames();
-            Set<String> disconnectedClients = new HashSet<>(previouslyKnownClients);
+            Set<String> disconnectedClients = new HashSet<>(previouslyKnownClients.get());
             disconnectedClients.removeAll(currentClients);
 
             for (String disconnectedClient : disconnectedClients) {
@@ -386,7 +405,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
             }
 
             // Update the known clients for the next check
-            previouslyKnownClients = new HashSet<>(currentClients);
+            previouslyKnownClients.set(new HashSet<>(currentClients));
         }
         catch (Exception e) {
             log.warn("Error checking for disconnected Redis clients: {}", e.getMessage());

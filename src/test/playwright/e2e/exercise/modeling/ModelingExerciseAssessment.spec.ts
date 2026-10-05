@@ -14,6 +14,7 @@ const course = { id: SEED_COURSES.exerciseAssessment.id } as any;
 
 test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
     let modelingExercise: ModelingExercise;
+    let participationId: number;
 
     test.beforeAll('Create course and make a submission', async ({ browser }) => {
         const page = await newBrowserPage(browser);
@@ -24,6 +25,7 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
         await Commands.login(page, studentOne);
         const response = await exerciseAPIRequests.startExerciseParticipation(modelingExercise.id!);
         const participation = await response.json();
+        participationId = participation.id;
         await exerciseAPIRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation);
         await Commands.login(page, instructor);
         // Use current time (not past) to ensure submissionDate < dueDate for rated result
@@ -36,7 +38,9 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await login(tutor, '/courses');
             await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
             await toggleSidebar();
-            await courseManagement.checkIfStudentSubmissionExists(studentOne.displayName!);
+            await expect(page.getByRole('columnheader', { name: 'Participation ID', exact: true })).toBeVisible();
+            await expect(page.getByRole('cell', { name: String(participationId), exact: true })).toBeVisible();
+            await expect(page.getByRole('row').filter({ hasText: studentOne.displayName! })).toHaveCount(0);
             await login(tutor, `/course-management/${course.id}/assessment-dashboard/${modelingExercise.id!}`);
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();

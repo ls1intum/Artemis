@@ -304,7 +304,28 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint, AccessDeniedHandler deniedHandler) throws Exception {
         // @formatter:off
         http
-            // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
+            // Disables Spring Security's CSRF token protection. Note what does and does not make that safe here:
+            // Artemis authenticates the client with a JWT in an httpOnly cookie (see JWTCookieService), not with a
+            // bearer header, so it is NOT a stateless API that has nothing to forge against. What actually protects it
+            // is the cookie's SameSite=Lax attribute.
+            //
+            // That defence has two preconditions, and they are the things to check before trusting this line:
+            //
+            //  1. Every state-changing endpoint uses an unsafe method. Lax withholds the cookie on cross-site POST,
+            //     PUT and DELETE, and on cross-site subresource GETs — but it SENDS it on a top-level GET navigation,
+            //     which an attacker can cause with nothing more than a link. A state-changing GET is therefore
+            //     forgeable, and adding one silently removes this protection for that endpoint. The three that used
+            //     to break this rule — `pullChanges` in TestRepositoryResource, AuxiliaryRepositoryResource and
+            //     RepositoryProgrammingExerciseParticipationResource, all reaching RepositoryService.pullChanges —
+            //     are POST as of #13824. A GET that writes anything is a bug in this design, not a style preference.
+            //  2. Every same-SITE origin is trusted. SameSite is evaluated per site — registrable domain plus scheme —
+            //     and not per origin, so a page on any other origin of the same site can send this cookie: a sibling
+            //     subdomain of the deployment, or anything else served under it. So the requirement is not merely that
+            //     Artemis serves nothing attacker-controlled as HTML (its file endpoints are same-origin, which is why
+            //     that part matters); it is that no host sharing the site does either.
+            //
+            // Consequence: relaxing the attribute to SameSite=None removes the only CSRF defence this application has.
+            // Do not change it without adding token-based protection here first.
             .csrf(CsrfConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
@@ -367,7 +388,6 @@ public class SecurityConfiguration {
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
-                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll() // Deprecated, to be removed Oct 2026
                     .requestMatchers("/api/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth

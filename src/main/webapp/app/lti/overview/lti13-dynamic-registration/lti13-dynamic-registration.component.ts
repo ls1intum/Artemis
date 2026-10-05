@@ -50,7 +50,35 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
             })
             .add(() => {
                 this.isRegistering.set(false);
-                (window.opener || window.parent).postMessage({ subject: 'org.imsglobal.lti.close' }, '*');
+                this.notifyPlatformToClose(openIdConfiguration);
             });
+    }
+
+    /**
+     * Sends the LTI close signal to the platform that opened this page.
+     *
+     * The target origin is derived from the platform's OpenID configuration URL rather than left as a wildcard.
+     * Dynamic registration is always started by the platform, and that URL is the platform's own issuer endpoint, so
+     * it identifies where this message belongs. The payload is only the close constant the specification defines and
+     * says nothing about the course or the registration.
+     *
+     * @param openIdConfiguration the platform's OpenID configuration URL, as the platform passed it
+     */
+    private notifyPlatformToClose(openIdConfiguration: string): void {
+        let platformOrigin: string;
+        try {
+            platformOrigin = new URL(openIdConfiguration).origin;
+        } catch {
+            // Without a parseable platform URL there is no origin to address. The registration has already been
+            // persisted by the request above, so the only cost is that the window does not close by itself.
+            return;
+        }
+        // A URL with an opaque origin, such as a data: or blob: configuration URL, parses but serializes its origin
+        // as the string 'null', which postMessage rejects as a target with a SyntaxError. Since the parameter comes
+        // from the query string, that would let a crafted link throw inside this callback.
+        if (platformOrigin === 'null') {
+            return;
+        }
+        (window.opener || window.parent).postMessage({ subject: 'org.imsglobal.lti.close' }, platformOrigin);
     }
 }

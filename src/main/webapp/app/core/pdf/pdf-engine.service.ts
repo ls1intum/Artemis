@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 
 /**
  * Type of the EmbedPDF PDFium engine, derived without a static runtime import so that the (large)
@@ -10,14 +10,14 @@ type WorkerPdfEngine = Awaited<ReturnType<(typeof import('@embedpdf/engines/pdfi
  * Singleton accessor for the EmbedPDF PDFium engine (PDFium compiled to WebAssembly).
  *
  * The engine runs in a dedicated Web Worker that EmbedPDF spawns from an inlined blob (so no separate
- * worker asset is shipped), and it loads the self-hosted `pdfium.wasm` delivered by the Artemis backend
+ * worker asset is shipped), and it loads the self-hosted `pdfium.wasm` delivered by the Artemis server
  * under `assets/embedpdf/`. This is the single PDF engine for both the lecture viewer and the instructor
  * preview/editor; it replaces the previous pdf.js engines (ngx-extended-pdf-viewer + pdfjs-dist).
  *
  * The engine module is loaded via a dynamic import, so it forms its own lazy chunk and never enters the
  * initial bundle (it is fetched during the idle preload or on first PDF use).
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PdfEngineService {
     private enginePromise?: Promise<WorkerPdfEngine>;
 

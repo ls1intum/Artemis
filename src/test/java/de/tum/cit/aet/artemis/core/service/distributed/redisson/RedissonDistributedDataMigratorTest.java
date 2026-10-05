@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -20,14 +21,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
+import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.config.Config;
 import org.redisson.connection.CRC16;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.DockerClientFactory;
 
-import com.redis.testcontainers.RedisStackContainer;
+import com.redis.testcontainers.RedisContainer;
+
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.CarriedOverStructure;
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.StructureKind;
+import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 /**
  * Covers the namespace migration against a real Redis, which is the only way to exercise the drain: the semantics that
@@ -37,7 +44,7 @@ import com.redis.testcontainers.RedisStackContainer;
 @EnabledIf("isDockerAvailable")
 class RedissonDistributedDataMigratorTest {
 
-    private static RedisStackContainer redis;
+    private static RedisContainer valkey;
 
     private static RedissonClient redissonClient;
 
@@ -52,12 +59,12 @@ class RedissonDistributedDataMigratorTest {
 
     @BeforeAll
     static void beforeAll() {
-        redis = new RedisStackContainer(RedisStackContainer.DEFAULT_IMAGE_NAME.withTag("7.4.0-v8"));
-        redis.start();
+        valkey = ValkeyTestContainerFactory.create();
+        valkey.start();
         Config config = new Config();
         // The same codec the provider installs, so values written here round-trip exactly as production ones do.
         config.setCodec(new BackwardCompatibleSerializationCodec());
-        config.useSingleServer().setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
+        config.useSingleServer().setAddress("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379));
         redissonClient = Redisson.create(config);
     }
 
@@ -66,8 +73,8 @@ class RedissonDistributedDataMigratorTest {
         if (redissonClient != null) {
             redissonClient.shutdown();
         }
-        if (redis != null) {
-            redis.stop();
+        if (valkey != null) {
+            valkey.stop();
         }
     }
 
@@ -263,10 +270,41 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).add("must-remain-unversioned");
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> migrationServiceFor(VERSION + 1).migrateToCurrentVersion())
-                .withMessageContaining("no migration step from 1").withMessageContaining("explicit adjacent-version migration");
+                .withMessageContaining("no migration step from " + VERSION).withMessageContaining("explicit adjacent-version migration");
         assertThat(storedVersion()).isNull();
         assertThat(redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).readAll()).containsExactly("must-remain-unversioned");
         assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue"))).isEmpty();
         assertThat(redissonClient.getQueue(keyFor(VERSION + 1, "buildResultQueue"))).isEmpty();
+    }
+
+    /**
+     * No set is carried over by the unversioned-to-first migration, so the set drain is reached through the private
+     * drain step. More members than one batch hold, so the iteration has to restart and finish what the first pass left.
+     */
+    @Test
+    void testDrainsASetLargerThanOneBatchWithoutLosingMembers() {
+        int memberCount = 2500;
+        RSet<byte[]> source = redissonClient.getSet(keyFor(UNVERSIONED, "someSet"), ByteArrayCodec.INSTANCE);
+        List<byte[]> members = new ArrayList<>();
+        for (int i = 0; i < memberCount; i++) {
+            members.add(("member-" + i).getBytes(StandardCharsets.UTF_8));
+        }
+        source.addAll(members);
+
+        Long moved = ReflectionTestUtils.invokeMethod(migrationService(), "drain", UNVERSIONED, VERSION, new CarriedOverStructure("someSet", StructureKind.SET));
+
+        assertThat(moved).isEqualTo(memberCount);
+        assertThat(source.isEmpty()).isTrue();
+        RSet<String> target = redissonClient.getSet(keyFor(VERSION, "someSet"), StringCodec.INSTANCE);
+        assertThat(target.size()).isEqualTo(memberCount);
+        assertThat(target.contains("member-0")).isTrue();
+        assertThat(target.contains("member-" + (memberCount - 1))).isTrue();
+    }
+
+    @Test
+    void testDrainingAnEmptySetMovesNothing() {
+        Long moved = ReflectionTestUtils.invokeMethod(migrationService(), "drain", UNVERSIONED, VERSION, new CarriedOverStructure("emptySet", StructureKind.SET));
+
+        assertThat(moved).isZero();
     }
 }

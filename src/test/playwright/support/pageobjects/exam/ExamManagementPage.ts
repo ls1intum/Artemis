@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { Dayjs } from 'dayjs';
-import { EXAM_DASHBOARD_TIMEOUT } from '../../timeouts';
+import { EXAM_DASHBOARD_TIMEOUT, RELOAD_RENDER_TIMEOUT } from '../../timeouts';
 import { setMonacoEditorContentByLocator } from '../../utils';
 
 /**
@@ -17,7 +17,7 @@ export async function navigateToExamSubpage(page: Page, subpage: string, examId?
     }
     const panel = page.locator(`#exam-${id}`);
     await panel.waitFor({ state: 'visible', timeout: 30_000 });
-    const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+    const toggler = panel.locator('.tumaet-ui-panel-toggler[aria-expanded="false"]');
     if (await toggler.isVisible()) {
         await toggler.click();
     }
@@ -132,29 +132,15 @@ export class ExamManagementPage {
         await this.navigateToSubpage('scores', examId);
     }
 
+    /**
+     * Asserts that the student's exam counts as submitted on the exam's student list.
+     * The hand-in has already been acknowledged by the server when this is called, so the row has to say "Submitted" on the first load:
+     * only the first render after the navigation gets the longer budget, and a wrong state fails instead of being reloaded away.
+     */
     async verifySubmitted(courseID: number, examID: number, username: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
         const row = this.page.locator('tbody tr', { hasText: username }).first();
-        const visibleWithin = async (timeout: number): Promise<boolean> =>
-            row
-                .waitFor({ state: 'visible', timeout })
-                .then(() => true)
-                .catch(() => false);
-        // The exam-students endpoint joins across submissions; under heavy multi-node CI load
-        // the row for a just-handed-in student can take >30s to surface in the first response
-        // (the participation-state propagation lags behind the submit POST). Try up to four
-        // reload attempts with progressively shorter per-attempt waits — totalling ~90s — so
-        // the test does not give up on a slow but eventually-correct backend state.
-        let visible = await visibleWithin(30_000);
-        for (let attempt = 0; !visible && attempt < 3; attempt++) {
-            await this.page.reload();
-            await this.page.waitForLoadState('load');
-            visible = await visibleWithin(20_000);
-        }
-        if (!visible) {
-            // One last wait so the assertion error surfaces with the locator's call log.
-            await row.waitFor({ state: 'visible', timeout: 10_000 });
-        }
+        await expect(row).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
         await expect(row).toContainText('Submitted');
     }
 
@@ -164,7 +150,7 @@ export class ExamManagementPage {
         const row = this.page.locator('tbody tr', { hasText: username }).first();
         await row.waitFor({ state: 'visible' });
         await row.getByRole('link', { name: 'View exam' }).click();
-        await this.page.locator('.summery').click();
+        await this.page.getByTestId('student-exam-summary-link').click();
         await expect(this.page.locator('[data-testid="exercise-result-score"]')).toHaveText(score, { useInnerText: true });
     }
 

@@ -75,10 +75,14 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         }
 
         OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
-        String username = oidcUser.getAttribute(usernameClaimKey);
-        if (username == null || username.isBlank()) {
+        String rawUsername = oidcUser.getAttribute(usernameClaimKey);
+        if (rawUsername == null || rawUsername.isBlank()) {
             throw new IllegalStateException("OIDC authentication succeeded but required username claim '" + usernameClaimKey + "' is missing.");
         }
+
+        // User#setLogin stores logins in their canonical lowercase form. The service that provisions the account
+        // applies the same normalization, so the success handler must use it as well when resolving the account.
+        final String username = User.canonicalLogin(rawUsername);
 
         User user = userRepository.findOneWithAuthoritiesByLogin(username)
                 .orElseThrow(() -> new IllegalStateException("Authenticated OIDC user " + username + " could not be found in the database."));
@@ -96,7 +100,7 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         }
 
         // Handle redirect based on parameter: generate code strictly for recognized VS Code client
-        if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equalsIgnoreCase(redirectTarget)) {
+        if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equals(redirectTarget)) {
             // If code challenge is invalid, then reject the native redirect request
             if (!oidcExchangeCodeService.isValidCodeChallenge(codeChallenge)) {
                 renderCallbackPage(response, OIDCConstants.VS_CODE_DEEP_LINK_BASE + "?error=invalid_request", true, "Invalid authentication request parameters.");
@@ -112,6 +116,21 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
             String vscodeDeepLink = OIDCConstants.VS_CODE_DEEP_LINK_BASE + "?code=" + exchangeCode;
             renderCallbackPage(response, vscodeDeepLink, false, null);
+        }
+        else if (OIDCConstants.IOS_REDIRECT_TARGET.equals(redirectTarget)) {
+            if (!oidcExchangeCodeService.isValidCodeChallenge(codeChallenge)) {
+                response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=invalid_request");
+                return;
+            }
+
+            String jwtToken = jwtCookie.getValue();
+            String exchangeCode = oidcExchangeCodeService.storeJwtAndGenerateCode(jwtToken, codeChallenge);
+            if (exchangeCode == null) {
+                response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=server_error");
+                return;
+            }
+
+            response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?code=" + exchangeCode);
         }
         else {
             response.sendRedirect("/");

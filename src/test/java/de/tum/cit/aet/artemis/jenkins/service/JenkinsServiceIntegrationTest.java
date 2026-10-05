@@ -265,8 +265,8 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
         course.addExercises(sourceExercise);
         sourceExercise.generateAndSetProjectKey();
         var buildConfig = new ProgrammingExerciseBuildConfig();
-        sourceExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfig));
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, sourceExercise);
         String buildPlanContent = "sample text";
         buildPlanRepository.setBuildPlanForExercise(buildPlanContent, sourceExercise);
 
@@ -274,8 +274,8 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
         course.addExercises(targetExercise);
         targetExercise.generateAndSetProjectKey();
         var buildConfigTarget = new ProgrammingExerciseBuildConfig();
-        targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfigTarget, targetExercise);
 
         jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), BuildPlanType.TEMPLATE.getName());
 
@@ -298,8 +298,8 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
         sourceExercise.setShortName("source");
         sourceExercise.generateAndSetProjectKey();
         var buildConfig = new ProgrammingExerciseBuildConfig();
-        sourceExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfig));
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, sourceExercise);
 
         Optional<BuildPlan> sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(sourceExercise.getId());
         assertThat(sourceBuildPlan).isEmpty();
@@ -309,8 +309,8 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
         targetExercise.setShortName("target");
         targetExercise.generateAndSetProjectKey();
         var buildConfigTarget = new ProgrammingExerciseBuildConfig();
-        targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfigTarget, targetExercise);
         String targetPlanName = targetExercise.getProjectKey() + "-" + TEMPLATE.getName();
         jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), targetPlanName);
 

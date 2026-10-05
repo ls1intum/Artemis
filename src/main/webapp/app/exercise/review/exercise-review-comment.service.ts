@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { OnDestroy, Service, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
@@ -20,13 +20,14 @@ type CommentThreadResponseType = HttpResponse<CommentThread>;
 type CommentResponseType = HttpResponse<Comment>;
 type ReviewCommentSuccessCallback = () => void;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseReviewCommentService implements OnDestroy {
-    public readonly resourceUrl = 'api/exercise/exercises';
-
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
     private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
+
+    public readonly resourceUrl = 'api/exercise/exercises';
+
     private activeExerciseId?: number;
     private synchronizationSubscription?: Subscription;
     private subscribedExerciseId?: number;
@@ -153,7 +154,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * Creates a thread in the active exercise and reconciles local thread state.
      *
      * @param thread The thread payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after the server has persisted it.
      */
     createThreadInContext(thread: CreateCommentThread, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -213,7 +214,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      *
      * @param threadId The target thread id.
      * @param comment The reply payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after the server has persisted it.
      */
     createReplyInContext(threadId: number, comment: CreateComment, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -246,7 +247,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      *
      * @param commentId The comment id to update.
      * @param content The updated content payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after the server has persisted it.
      */
     updateCommentInContext(commentId: number, content: UpdateCommentContent, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -278,7 +279,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * Marks an inline-fix suggestion as applied for a consistency-check comment in the active exercise context.
      *
      * @param commentId The consistency comment id.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after the server has persisted it.
      */
     markInlineFixAppliedInContext(commentId: number, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;

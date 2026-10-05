@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { test as baseTest } from '@playwright/test';
 import type { Dayjs as ModelDayjs } from 'dayjs/esm';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,7 +20,7 @@ import { ExamNavigationBar } from './pageobjects/exam/ExamNavigationBar';
 import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { Commands } from './commands';
-import { admin, studentOne } from './users';
+import { admin, studentOne, UserCredentials } from './users';
 import cPartiallySuccessful from '../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from './pageobjects/assessment/CourseAssessmentDashboardPage';
@@ -336,6 +337,65 @@ export async function readResponseJson<T = any>(response: Response, recoverIdemp
 }
 
 /**
+ * Records that a test had to recover from a page that did not settle (typically a lazy chunk that failed to load under heavy load and
+ * left the router on the wrong route). The recovery is bounded to one attempt and shows up as an annotation in the report, so a test
+ * that only passes thanks to it stays visible instead of turning into a silent flake.
+ */
+export function annotateRecovery(what: string) {
+    console.warn(`[recovery] ${what}`);
+    try {
+        baseTest.info().annotations.push({ type: 'recovered-navigation', description: what });
+    } catch {
+        // Not running inside a test (e.g. a plain script): the console warning above is all there is to record.
+    }
+}
+
+/**
+ * Creates a running exam (see {@link ExamAPIRequests.createRunningExam}) with one text exercise in one group, registers the given students
+ * (student one by default) and prepares their exams, so that they can start right away.
+ */
+export async function prepareRunningTextExam(
+    examAPIRequests: ExamAPIRequests,
+    exerciseAPIRequests: ExerciseAPIRequests,
+    options: { course: Course; students?: UserCredentials[]; examOptions?: Omit<Parameters<ExamAPIRequests['createRunningExam']>[0], 'course'> },
+) {
+    const exam = await examAPIRequests.createRunningExam({ ...options.examOptions, course: options.course });
+    // The caller only learns of the exam when this returns, so a failed setup deletes it again instead of leaving it in the shared course.
+    try {
+        const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
+        const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+        for (const student of options.students ?? [studentOne]) {
+            await examAPIRequests.registerStudentForExam(exam, student);
+        }
+        await examAPIRequests.generateMissingIndividualExams(exam);
+        await examAPIRequests.prepareExerciseStartForExam(exam);
+        return { exam, exerciseGroup, exercise };
+    } catch (error) {
+        await deleteQuietly(examAPIRequests.page, examAPIRequests, exam);
+        throw error;
+    }
+}
+
+/**
+ * Runs a callback with exam API requests of the given user in a browser context of its own, so that a test can change an exam
+ * (for example shorten it) while a student is logged in on the test's own page.
+ */
+export async function asUser<T>(browser: Browser, user: UserCredentials, callback: (examAPIRequests: ExamAPIRequests) => Promise<T>): Promise<T> {
+    const userPage = await newBrowserPage(browser);
+    try {
+        await Commands.login(userPage, user);
+        return await callback(new ExamAPIRequests(userPage));
+    } finally {
+        await userPage.context().close();
+    }
+}
+
+/** {@link asUser} for the admin. */
+export async function asAdmin<T>(browser: Browser, callback: (examAPIRequests: ExamAPIRequests) => Promise<T>): Promise<T> {
+    return await asUser(browser, admin, callback);
+}
+
+/**
  * Generates a unique identifier.
  */
 export function generateUUID() {
@@ -351,7 +411,7 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
 }
 
 /**
- * Types a date into a PrimeNG p-datepicker input (the `jhi-date-time-picker` wrapper).
+ * Types a date into the input of a date picker: PrimeNG's p-datepicker (the `jhi-date-time-picker` wrapper) or the TUM AET UI date picker.
  *
  * The picker must be driven with real keystrokes: its `onUserInput` handler ignores any `input`
  * event that is not preceded by a `keydown` (an `isKeydown` guard), so Playwright's `fill()` — which
@@ -476,11 +536,12 @@ export function getExercise(page: Page, exerciseId: number) {
 
 /**
  * Converts a title to lowercase and replaces spaces with hyphens.
+ * Truncated to 20 chars so callers can prepend a prefix and still fit the server's 31-char channel name cap.
  * @param title - The title to be converted to lowercase with hyphens.
  * @returns The converted title in lowercase with hyphens.
  */
 export function titleLowercase(title: string) {
-    return title.replace(' ', '-').toLowerCase();
+    return title.replace(/\s+/g, '-').toLowerCase().slice(0, 20).replace(/-+$/g, '');
 }
 
 /**
@@ -720,12 +781,13 @@ export async function addE2EInitScript(page: Page) {
         // Hide the notification popup overlay
         const injectStyle = () => {
             const style = document.createElement('style');
-            style.textContent = [
-                'jhi-course-notification-popup-overlay { display: none !important; }',
-                // Hide the passkey setup modal overlay (PrimeNG appends it to <body>).
-                // CSS backup for the localStorage suppression below.
-                '.p-dialog-mask:has(.passkey-setup-dialog) { display: none !important; }',
-            ].join('\n');
+            // The passkey setup modal is not hidden here. It used to have a CSS backup, but that rule
+            // named PrimeNG classes and stopped matching anything when the modal moved to tumaet-ui-dialog,
+            // so it sat here as dead code while reading like a safety net. It cannot be reinstated as
+            // written either: the replacement renders through the CDK, whose backdrop carries the same
+            // cdk-overlay-dark-backdrop class as every other dialog, so hiding it would also hide the
+            // dialogs tests legitimately drive. The localStorage suppression below is the mechanism.
+            style.textContent = ['jhi-course-notification-popup-overlay { display: none !important; }'].join('\n');
             document.head.appendChild(style);
         };
         if (document.head) {
@@ -776,7 +838,53 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
  * Exam utility functions
  */
 
-export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page, numberOfCorrectionRounds: number = 1): Promise<Exam> {
+/**
+ * Creates an exam with one exercise of the given type, lets student one take it and hand in early, and then ends the exam so that it
+ * can be assessed: the exam is over including its grace period and its results are published when this returns.
+ * <p>
+ * The participation runs in a generous window and the deadline is only set afterwards (see {@link ExamAPIRequests.concludeExam}),
+ * so a slow or loaded run cannot cut the participation short and a fast one does not wait for a guessed end date. With
+ * `publishResults: false` the results stay unpublished until the test publishes them. The page is left logged in as admin.
+ */
+export async function prepareEndedExam(
+    course: Course,
+    exerciseType: ExerciseType,
+    page: Page,
+    numberOfCorrectionRounds: number = 1,
+    publishResults: boolean = true,
+): Promise<Exam> {
+    const exam = await prepareExam(course, dayjs().add(EXAM_PARTICIPATION_WINDOW_IN_MINUTES, 'minutes'), exerciseType, page, numberOfCorrectionRounds, false);
+    await Commands.login(page, admin);
+    const examAPIRequests = new ExamAPIRequests(page);
+    try {
+        return await examAPIRequests.concludeExam(exam, { publishResults });
+    } catch (error) {
+        await deleteQuietly(page, examAPIRequests, exam);
+        throw error;
+    }
+}
+
+/** Deletes an exam of a failed preparation as admin; a failure to delete must not hide the failure of the preparation. */
+async function deleteQuietly(page: Page, examAPIRequests: ExamAPIRequests, exam: Exam) {
+    try {
+        await Commands.login(page, admin);
+        await examAPIRequests.deleteExam(exam);
+    } catch (deleteError) {
+        console.warn(`[cleanup] could not delete exam ${exam.id} after a failed preparation: ${deleteError}`);
+    }
+}
+
+/** How long an exam stays open while a test participates in it, before {@link prepareEndedExam} ends it. */
+const EXAM_PARTICIPATION_WINDOW_IN_MINUTES = 30;
+
+export async function prepareExam(
+    course: Course,
+    end: dayjs.Dayjs,
+    exerciseType: ExerciseType,
+    page: Page,
+    numberOfCorrectionRounds: number = 1,
+    publishResultsAtEnd: boolean = true,
+): Promise<Exam> {
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
@@ -803,40 +911,44 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         startDate: dayjs(),
         endDate: end,
         numberOfCorrectionRoundsInExam: numberOfCorrectionRounds,
-        examStudentReviewStart: resultDate,
-        examStudentReviewEnd: resultDate.add(5, 'minutes'),
-        publishResultsDate: resultDate,
+        ...(publishResultsAtEnd ? { examStudentReviewStart: resultDate, examStudentReviewEnd: resultDate.add(5, 'minutes'), publishResultsDate: resultDate } : {}),
         gracePeriod: EXAM_GRACE_PERIOD_IN_SECONDS,
     };
     const exam = await examAPIRequests.createExam(examConfig);
-    let additionalData = {};
-    switch (exerciseType) {
-        case ExerciseType.PROGRAMMING:
-            additionalData = {
-                submission: cPartiallySuccessful,
-                progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
-                programmingLanguage: ProgrammingLanguage.C,
-                skipBuildResultCheck: true,
-            };
-            break;
-        case ExerciseType.TEXT:
-            additionalData = { textFixture: 'loremIpsum-short.txt' };
-            break;
-        case ExerciseType.QUIZ:
-            additionalData = { quizExerciseID: 0 };
-            break;
-        case ExerciseType.FILE_UPLOAD:
-            additionalData = { fileUploadFixture: 'pdf-test-file.pdf' };
-            break;
-    }
+    // The exam is deleted again when the preparation fails, so that a failed setup does not leave it behind for the next run.
+    try {
+        let additionalData = {};
+        switch (exerciseType) {
+            case ExerciseType.PROGRAMMING:
+                additionalData = {
+                    submission: cPartiallySuccessful,
+                    progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                    programmingLanguage: ProgrammingLanguage.C,
+                    skipBuildResultCheck: true,
+                };
+                break;
+            case ExerciseType.TEXT:
+                additionalData = { textFixture: 'loremIpsum-short.txt' };
+                break;
+            case ExerciseType.QUIZ:
+                additionalData = { quizExerciseID: 0 };
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                additionalData = { fileUploadFixture: 'pdf-test-file.pdf' };
+                break;
+        }
 
-    const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
-    await examAPIRequests.registerStudentForExam(exam, studentOne);
-    await examAPIRequests.generateMissingIndividualExams(exam);
-    await examAPIRequests.prepareExerciseStartForExam(exam);
-    exercise.additionalData = additionalData;
-    await makeExamSubmission(course, exam, exercise, page, examParticipation, examNavigation, examStartEnd);
-    return exam;
+        const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
+        await examAPIRequests.registerStudentForExam(exam, studentOne);
+        await examAPIRequests.generateMissingIndividualExams(exam);
+        await examAPIRequests.prepareExerciseStartForExam(exam);
+        exercise.additionalData = additionalData;
+        await makeExamSubmission(course, exam, exercise, page, examParticipation, examNavigation, examStartEnd);
+        return exam;
+    } catch (error) {
+        await deleteQuietly(page, examAPIRequests, exam);
+        throw error;
+    }
 }
 
 export async function makeExamSubmission(
@@ -851,27 +963,8 @@ export async function makeExamSubmission(
     await examParticipation.startParticipation(studentOne, course, exam);
     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-    await page.waitForTimeout(1000);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
-}
-
-/**
- * Waits for the exam to end if it hasn't already, including its grace period.
- * This is necessary because the assessment dashboard button only appears after the exam ends, and because the server
- * refuses to open an assessment until the last student can no longer hand in, which is the exam end plus the grace
- * period (see SubmissionService#checkThatAssessmentIsPossibleElseThrow). The grace period is read from the exam itself,
- * so that exams which do not configure one (and therefore get the server default of 180s) are waited out correctly.
- * @param exam - The exam to wait for, as returned by the create call
- * @param page - The Playwright page object (used for waitForTimeout)
- */
-export async function waitForExamEnd(exam: Exam, page: Page) {
-    const assessableFrom = getExamEndDateWithGrace(exam);
-    if (assessableFrom.isAfter(dayjs())) {
-        const timeToWait = assessableFrom.diff(dayjs()) + 2000; // Add 2 second buffer
-        console.log(`Waiting ${timeToWait}ms for exam (including its ${exam.gracePeriod ?? 0}s grace period) to end...`);
-        await page.waitForTimeout(timeToWait);
-    }
 }
 
 export async function startAssessing(

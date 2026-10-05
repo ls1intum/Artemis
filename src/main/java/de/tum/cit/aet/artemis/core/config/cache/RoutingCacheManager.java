@@ -11,8 +11,7 @@ import org.springframework.cache.CacheManager;
  * Sends each cache to the manager that suits its value shape.
  *
  * <p>
- * Blob caches (see {@link BlobCacheConfiguration#BLOB_CACHE_NAMES}) and title caches (see
- * {@link TitleCacheConfiguration#TITLE_CACHE_NAMES}) go to a bounded per-node cache, because a network round trip buys
+ * Blob caches (see {@link BlobCacheConfiguration#BLOB_CACHE_NAMES}) go to a bounded per-node cache, because a network round trip buys
  * nothing for a rendered file or for one column found by primary key. Everything else goes to the distributed cache
  * manager, which is what a cache whose entries must be identical on every node needs.
  *
@@ -26,12 +25,9 @@ public class RoutingCacheManager implements CacheManager {
 
     private final CacheManager blobCacheManager;
 
-    private final CacheManager titleCacheManager;
-
-    public RoutingCacheManager(CacheManager distributedCacheManager, CacheManager blobCacheManager, CacheManager titleCacheManager) {
+    public RoutingCacheManager(CacheManager distributedCacheManager, CacheManager blobCacheManager) {
         this.distributedCacheManager = distributedCacheManager;
         this.blobCacheManager = blobCacheManager;
-        this.titleCacheManager = titleCacheManager;
     }
 
     @Override
@@ -45,7 +41,6 @@ public class RoutingCacheManager implements CacheManager {
         // Sorted so the admin cache overview has a stable order regardless of which manager reported a name first.
         Collection<String> names = new TreeSet<>(distributedCacheManager.getCacheNames());
         names.addAll(blobCacheManager.getCacheNames());
-        names.addAll(titleCacheManager.getCacheNames());
         return names;
     }
 
@@ -56,9 +51,6 @@ public class RoutingCacheManager implements CacheManager {
     private CacheManager managerFor(String name) {
         if (BlobCacheConfiguration.BLOB_CACHE_NAMES.contains(name)) {
             return blobCacheManager;
-        }
-        if (TitleCacheConfiguration.TITLE_CACHE_NAMES.contains(name)) {
-            return titleCacheManager;
         }
         return distributedCacheManager;
     }

@@ -26,13 +26,12 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODU
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { CourseAccessStorageService } from '../services/course-access-storage.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 
 /**
  * Type guard that checks whether a route-activated component provides a bar control configuration
@@ -53,14 +52,13 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected courseManagementService = inject(CourseManagementService);
     protected courseStorageService = inject(CourseStorageService);
     protected route = inject(ActivatedRoute);
-    protected metisConversationService = inject(MetisConversationService);
+    protected courseConversationsService = inject(CourseConversationsService);
     protected router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
     protected profileService = inject(ProfileService);
     protected ltiService = inject(LtiService);
     protected courseSidebarService = inject(CourseSidebarService);
     protected localStorageService = inject(LocalStorageService);
-    protected currentCourseContextService = inject(CurrentCourseContextService);
 
     ngUnsubscribe = new Subject<void>();
     protected closeSidebarEventSubscription?: Subscription;
@@ -130,11 +128,18 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         });
 
         effect(() => {
-            this.currentCourseContextService.setCourse(this.course());
+            const courseId = this.course()?.id;
+            if (courseId) {
+                this.courseStorageService.setCurrentCourse(courseId);
+            }
         });
     }
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeBaseCourseContainerComponent();
+    }
+
+    protected async initializeBaseCourseContainerComponent(): Promise<void> {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.isSidebarCollapsed.set(true);
         });
@@ -203,14 +208,14 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.openSidebarEventSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
         this.loadCourseSubscription?.unsubscribe();
-        this.currentCourseContextService.clearCourse();
+        this.courseStorageService.clearCurrentCourse();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
 
     private disableConversationService() {
         this.conversationServiceInstantiated.set(false);
-        this.metisConversationService.disableConversationService();
+        this.courseConversationsService.disableConversationService();
     }
 
     /**
@@ -270,7 +275,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             return;
         }
         if (!this.conversationServiceInstantiated() && this.communicationRouteLoaded()) {
-            this.metisConversationService
+            this.courseConversationsService
                 .setUpConversationService(currentCourse)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe({
@@ -285,14 +290,14 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                     },
                 });
         } else if (!this.checkedForUnreadMessages() && isMessagingEnabled(currentCourse)) {
-            this.metisConversationService.checkForUnreadMessages(currentCourse);
+            this.courseConversationsService.checkForUnreadMessages(currentCourse);
             this.subscribeToHasUnreadMessages();
             this.checkedForUnreadMessages.set(true);
         }
     }
 
     protected subscribeToHasUnreadMessages() {
-        this.metisConversationService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
+        this.courseConversationsService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
             this.hasUnreadMessages.set(hasUnreadMessages ?? false);
         });
     }

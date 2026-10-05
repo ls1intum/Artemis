@@ -21,37 +21,67 @@
             "deleteNotEnrolledUsers": "Gewarnte Nutzer ohne Kurszugehörigkeit löschen",
             "deletePlagiarismCases": "Plagiatsfälle alter Kurse löschen"
         },
+        "description": {
+            "deleteOrphans": "Verwaiste Datensätze jeden Alters. Kein Datumsbereich anwendbar.",
+            "deletePlagiarismComparisons": "Nicht überprüfte Vergleiche von Kursen im ausgewählten Zeitraum.",
+            "deleteNonRatedResults": "Feedback nicht-aktueller, nicht bewerteter Ergebnisse von Kursen im ausgewählten Zeitraum.",
+            "deleteOldRatedResults": "Feedback nicht-aktueller, bewerteter Ergebnisse von Kursen im ausgewählten Zeitraum.",
+            "deleteOldSubmissionVersions": "Teilnahmeversionen, die im ausgewählten Zeitraum erstellt wurden – kursübergreifend.",
+            "deleteOldFeedback": "Feedback nicht-aktueller Ergebnisse von Kursen, die vor dem {{cutoff}} endeten ({{period}} nach Kursende).",
+            "warnOldCoursesReset": "Notenrelevante Kurse, die vor dem {{cutoff}} endeten ({{period}} Aufbewahrung), übrige Kurse vor dem {{secondaryCutoff}} ({{secondaryPeriod}} Aufbewahrung).",
+            "resetOldCourses": "Kurse, deren Dozierende vor dem {{cutoff}} gewarnt wurden ({{period}} Übergangsfrist).",
+            "deleteOldCourseSubmissionVersions": "Kurse, die vor dem {{cutoff}} endeten ({{period}} nach Kursende).",
+            "warnNotEnrolledUsers": "Nutzer, die zuletzt vor dem {{cutoff}} aktiv waren ({{period}} Inaktivität).",
+            "deleteNotEnrolledUsers": "Nutzer, die vor dem {{cutoff}} gewarnt wurden ({{period}} Übergangsfrist) und sich seit ihrer Warnung nicht angemeldet haben.",
+            "deletePlagiarismCases": "Plagiatsfälle von Kursen, die vor dem {{cutoff}} endeten ({{period}} Aufbewahrung)."
+        },
+        "descriptionUnavailable": "Die betroffenen Daten können nicht angezeigt werden: Die Aufräum-Konfiguration konnte nicht geladen werden.",
+        "duration": {
+            "day": "1 Tag",
+            "days": "{{count}} Tage",
+            "week": "1 Woche",
+            "weeks": "{{count}} Wochen",
+            "month": "1 Monat",
+            "months": "{{count}} Monate",
+            "year": "1 Jahr",
+            "years": "{{count}} Jahre"
+        },
         "tooltip": {
             "deleteOrphans": "Löscht verwaiste Entitäten, die nicht mehr mit gültigen Ergebnissen oder Teilnahmen verbunden sind. Dazu gehören Feedback, Textblöcke und Bewertungen, die sich auf ungültige Ergebnisse, Teilnahmen oder Einreichungen beziehen.",
             "deletePlagiarismComparisons": "Löscht Plagiatsvergleiche mit dem Status \"None\", die zu Kursen innerhalb des angegebenen Datumsbereichs gehören. Ein Status von \"None\" bedeutet, dass der Plagiatsfall noch nicht überprüft wurde.",
             "deleteNonRatedResults": "Löscht nicht bewertete Ergebnisse, mit Ausnahme des neuesten nicht bewerteten Ergebnisses für jede Teilnahme (um Kompetenzergebnisse berechnen zu können), innerhalb des angegebenen Datumsbereichs, zusammen mit zugehörigen langen Feedback-Texten, Textblöcken, Feedback-Elementen und Teilnehmerbewertungen.",
             "deleteOldRatedResults": "Löscht bewertete Ergebnisse, mit Ausnahme des neuesten bewerteten Ergebnisses für jede Teilnahme, für Kurse, die innerhalb des angegebenen Datumsbereichs durchgeführt wurden. Löscht auch zugehörige lange Feedback-Texte, Textblöcke, Feedback-Elemente und Teilnehmerbewertungen.",
             "deleteOldSubmissionVersions": "Löscht alte Teilnahmeversionen. Die letzte Teilnahmeversion wird nicht gelöscht, da sie immer in der entsprechenden Unterklasse von Submission gespeichert wird",
-            "deleteOldFeedback": "Löscht das Feedback (Feedback, lange Feedback-Texte, Textblöcke) nicht-aktueller Ergebnisse für Kurse, die vor dem konfigurierten Stichtag endeten. Die Ergebnisse selbst sowie das Feedback des neuesten bewerteten und des neuesten nicht bewerteten Ergebnisses pro Teilnahme bleiben erhalten.",
-            "warnOldCoursesReset": "Archiviert jeden alten Kurs, dessen konfigurierte Aufbewahrungsfrist abgelaufen ist (standardmäßig 1 Jahr bei nicht notenrelevanten und 5 Jahre bei notenrelevanten Kursen), und sendet den Dozierenden einen Download-Link sowie einen Hinweis, dass die Studierendendaten nach der konfigurierten Übergangsfrist gelöscht werden. Die Kursmaterialien bleiben erhalten.",
+            "deleteOldFeedback": "Löscht das Feedback (Feedback, lange Feedback-Texte, Textblöcke) nicht-aktueller Ergebnisse für Kurse, die vor dem unten angezeigten Stichtag endeten. Die Ergebnisse selbst sowie das Feedback des neuesten bewerteten und des neuesten nicht bewerteten Ergebnisses pro Teilnahme bleiben erhalten.",
+            "warnOldCoursesReset": "Archiviert jeden alten Kurs, dessen Aufbewahrungsfrist abgelaufen ist, und sendet den Dozierenden einen Download-Link sowie einen Hinweis, dass die Studierendendaten nach der Übergangsfrist gelöscht werden. Die Kursmaterialien bleiben erhalten. Die Aufbewahrungsfristen werden je Einrichtung konfiguriert; die aktuell geltenden Stichtage stehen unten.",
             "resetOldCourses": "Löscht alle Studierendendaten alter Kurse, die die Übergangsfrist überschritten haben (und bereits archiviert wurden), wobei die Kursmaterialien erhalten bleiben. Diese Aktion kann nicht rückgängig gemacht werden.",
-            "deleteOldCourseSubmissionVersions": "Löscht die Teilnahmeversionen (Editor-Verlauf) von Kursen, die vor dem konfigurierten Stichtag endeten.",
-            "warnNotEnrolledUsers": "Sendet Nutzern, die in keinem Kurs eingeschrieben und über die konfigurierte Frist hinaus inaktiv sind, eine E-Mail mit der Warnung, dass ihr Konto nach der Übergangsfrist gelöscht wird. Eine Anmeldung bricht die Löschung ab. Administratoren sind nicht betroffen.",
+            "deleteOldCourseSubmissionVersions": "Löscht die Teilnahmeversionen (Editor-Verlauf) von Kursen, die vor dem unten angezeigten Stichtag endeten.",
+            "warnNotEnrolledUsers": "Sendet Nutzern, die in keinem Kurs eingeschrieben und über die unten angezeigte Frist hinaus inaktiv sind, eine E-Mail mit der Warnung, dass ihr Konto nach der Übergangsfrist gelöscht wird. Eine Anmeldung bricht die Löschung ab. Administratoren sind nicht betroffen.",
             "deleteNotEnrolledUsers": "Löscht gewarnte Nutzer dauerhaft, die weiterhin in keinem Kurs eingeschrieben sind, deren Übergangsfrist abgelaufen ist, die sich seit der Warnung nicht angemeldet haben und die keine verbleibenden Fachdatenreferenzen besitzen. Blockierte Nutzer bleiben unverändert. Administratoren sind nicht betroffen.",
-            "deletePlagiarismCases": "Löscht die Plagiatsfälle (samt zugehöriger Benachrichtigungsbeiträge) von Kursen, die vor dem notenrelevanten Aufbewahrungsstichtag endeten (standardmäßig 5 Jahre). Plagiatsfälle sind notenrelevante Unterlagen und unterliegen derselben Aufbewahrungsfrist wie andere Prüfungsdaten. Diese Aktion kann nicht rückgängig gemacht werden."
+            "deletePlagiarismCases": "Löscht die Plagiatsfälle (samt zugehöriger Benachrichtigungsbeiträge) von Kursen, die vor dem unten angezeigten notenrelevanten Aufbewahrungsstichtag endeten. Plagiatsfälle sind notenrelevante Unterlagen und unterliegen derselben Aufbewahrungsfrist wie andere Prüfungsdaten. Diese Aktion kann nicht rückgängig gemacht werden."
         },
         "execute": {
             "question": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> für den Zeitraum von {{deleteFrom}} bis {{deleteTo}} ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
-            "questionWithoutDates": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
+            "questionWithoutDates": {
+                "delete": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "warn": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Die E-Mails lassen sich nicht zurücknehmen, und mit der Warnung beginnt die Übergangsfrist, nach der die betroffenen Daten gelöscht werden.",
+                "reset": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Die Studierendendaten der betroffenen Kurse werden endgültig gelöscht, die Kursmaterialien bleiben erhalten."
+            },
             "typeOperationNameToConfirm": "Bitte gib den Namen der Operation ein, um zu bestätigen."
         },
         "modal": {
-            "affectedEntities": "Diese Operation wird die folgenden Entitäten löschen:",
-            "noEntriesToDelete": "Keine Einträge zum Löschen vorhanden"
+            "affectedEntities": {
+                "delete": "Diese Operation wird die folgenden Entitäten löschen:",
+                "warn": "Diese Operation wird für die folgenden Entitäten eine Warnung versenden:",
+                "reset": "Diese Operation wird die folgenden Entitäten zurücksetzen:"
+            },
+            "noAffectedEntities": "Keine betroffenen Entitäten"
         },
         "notRunYet": "Diese Operation wurde noch nicht ausgeführt",
         "error": {
             "datesInvalid": "'Löschen bis' muss nach 'Löschen von' liegen"
         },
         "entities": {
-            "orphanFeedback": "Verwaistes Feedback",
-            "orphanLongFeedbackText": "Verwaister langer Feedback-Text",
-            "orphanTextBlock": "Verwaister Textblock",
             "orphanStudentScore": "Verwaiste Studentenbewertung",
             "orphanTeamScore": "Verwaiste Teambewertung",
             "orphanFeedbackForOrphanResults": "Verwaistes Feedback für verwaiste Ergebnisse",
@@ -74,7 +104,6 @@
             "blockedUsers": "Durch verbleibende Referenzen blockierte Nutzer"
         },
         "button": {
-            "execute": "Ausführen",
             "close": "Schließen"
         }
     }

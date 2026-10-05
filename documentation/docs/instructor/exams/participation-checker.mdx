@@ -1,16 +1,18 @@
+---
+id: participation-checker
+title: Exam Participation Checker
+sidebar_label: Exam Participation Checker
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import uploadImages from './assets/upload_images.png';
-import verifyAttendance from './assets/buttons/verify_attendance.png';
-import verifyAttendanceVerificationMissing from './assets/verify_attendance_verification_missing.png';
-import verifyAttendanceVerificationSuccessful from './assets/verify_attendance_verification_successful.png';
+import verifyAttendanceMissing from './assets/verify-attendance-missing.png';
+import verifyAttendanceComplete from './assets/verify-attendance-complete.png';
 import examOverview from './assets/exam_overview.png';
 import studentListView from './assets/student_list_view.png';
 import studentListViewExportSignatures from './assets/student_list_view_export_signatures.png';
 import studentDetailView from './assets/student_detail_view.png';
-
-# Exam Participation Checker
 
 The Artemis Exam Participation Checker iPad application streamlines the process of checking student attendance during on-site exams conducted with the Artemis platform.
 The application replaces the traditional paper-based method with a digitalized process, making tracking and managing student attendance easier.
@@ -21,27 +23,32 @@ The Artemis web platform was adapted to additionally support exam management tas
 ## Requirements and Web Functionality
 
 <Callout variant={CalloutVariant.info}>
-  For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in [exam configuration](/instructor/exams/exam-timeline#1-creation-and-configuration).
+  For information regarding creating the exam, its exercises and how to register students, please follow the instructions as described in [Create an Exam](/instructor/exams/create-an-exam).
 </Callout>
 
 Using the Artemis Exam Participation Checker iPad application requires additional setup on the *Students* page before the exam.
 
-1. To upload images, click on the <img src={uploadImages} alt="Upload Images" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `pdf` file in the Upload Images dialog. This `pdf` file should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the `registrationNumber`, and the lower text box needs to include the `login`. An exemplary file can be found at `docs/user/exams/instructor/example_upload_images.pdf`.
-2. Setting up the room and seating information via the `CSV` import. For more information, see: [register students](/instructor/exams/exam-timeline#15-register-students).
+1. To upload images, choose **Upload images** in the **Logistics** menu of the exam's **Students** page and provide a PDF file in the Upload Images dialog. This PDF file should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the `registrationNumber`, and the lower text box needs to include the `login`. You can download [an example PDF file](./assets/example_upload_images.pdf) to see the expected layout.
+2. Set up the room and seating information through the CSV import. For more information, see: [register students](/instructor/exams/prepare-and-test#register-students).
 
 <Callout variant={CalloutVariant.info}>
   Each student must have a matriculation number assigned to upload the images. The matriculation number is needed to match the image with the corresponding student.
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  Seats and rooms can currently only be assigned via the `CSV` import of students by defining the `seat` and `room` in the `CSV` file.
+  Seats and rooms can currently only be assigned via the CSV import of students by defining the `seat` and `room` in the CSV file.
 </Callout>
 
-You can also verify the attendance in the web application by pressing the <img src={verifyAttendance} alt="Verify Attendance" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. This button opens a new view that shows which students have started the exam in Artemis but still need to complete the check-in with a teaching assistant.
+**Verify attendance**, in the same **Logistics** menu, opens the web counterpart of the app: the list of students who
+have started the exam in Artemis but whose check-in is not finished. A student leaves the list once all four
+identity checks are ticked and a signature has been recorded, so the count beside the heading is the work the room
+has left.
 
-<Image src={verifyAttendanceVerificationMissing} alt="Verify Attendance View: One student did not complete the check-in" size={ImageSize.large} caption="Verify Attendance View: One student did not complete the check-in" />
+<Image src={verifyAttendanceMissing} alt="Verify attendance list with one student still to check in" size={ImageSize.large} caption="One student has still to be checked in" />
 
-<Image src={verifyAttendanceVerificationSuccessful} alt="Verify Attendance View: All students have been successfully checked in" size={ImageSize.large} caption="Verify Attendance View: All students have been successfully checked in" />
+Once the last student is done the list is empty and says so, which is the state to look for before the exam starts.
+
+<Image src={verifyAttendanceComplete} alt="Verify attendance view reporting that every student has been checked" size={ImageSize.large} caption="Every student checked in" />
 
 ## Download App
 
@@ -50,17 +57,17 @@ To test the beta version, install Apple's TestFlight app and follow the link [Te
 
 ## App Usage
 
-### 1.1 Login
+### Login
 
 You can log in to the app with your usual Artemis credentials. Via the 'Select University' button at the bottom, you can select your respective University instance or a custom Artemis instance of your choice.
 
-### 1.2 Exam Overview
+### Exam Overview
 
 The Exam Overview consists of a list of all currently available exams. The overview only shows exams where the start date is +/- one week from now, and your account has the right to access the exam. Each list cell consists of basic exam information, like the name and the start and end date of the respective exam. A tap on the cell opens up the Student List View.
 
 <Image src={examOverview} alt="Exam Overview" size={ImageSize.large} caption="Exam Overview" />
 
-### 1.3 Student List View
+### Student List View
 
 The sidebar hosts a list of all registered students.
 The list can easily be filtered by room with a clickable picker or by typing a custom search query into the search bar.
@@ -73,7 +80,7 @@ Below the list is an 'Export Signatures' button to export all local signatures t
 <Image src={studentListView} alt="Student List View" size={ImageSize.small} caption="Student List View" />
 <Image src={studentListViewExportSignatures} alt="Export Signatures" size={ImageSize.small} caption="Export Signatures" />
 
-### 1.4 Student Detail View
+### Student Detail View
 
 The detail view contains all given information about the student.
 The upper part of the screen displays this information.

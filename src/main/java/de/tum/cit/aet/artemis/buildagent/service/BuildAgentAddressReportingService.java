@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -69,7 +69,7 @@ public class BuildAgentAddressReportingService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).followRedirects(HttpClient.Redirect.NORMAL).build();
 
@@ -79,7 +79,7 @@ public class BuildAgentAddressReportingService {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
-    public BuildAgentAddressReportingService(DistributedDataAccessService distributedDataAccessService, ObjectMapper objectMapper) {
+    public BuildAgentAddressReportingService(DistributedDataAccessService distributedDataAccessService, JsonMapper objectMapper) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.objectMapper = objectMapper;
     }
@@ -132,7 +132,7 @@ public class BuildAgentAddressReportingService {
             log.warn("Asking {} for the address it sees this build agent at returned {}", uri, response.statusCode());
             return null;
         }
-        return objectMapper.readTree(response.body()).path("address").asText(null);
+        return objectMapper.readTree(response.body()).path("address").asString(null);
     }
 
     /**

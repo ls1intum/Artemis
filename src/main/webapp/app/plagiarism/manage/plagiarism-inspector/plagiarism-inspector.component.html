@@ -2,7 +2,18 @@
     <div class="plagiarism-header">
         <div class="plagiarism-header-top">
             <div class="plagiarism-header-top-left">
-                <h4 class="plagiarism-page-title fw-medium" (click)="showOptions = !showOptions" [class.active]="showOptions">
+                <h4
+                    class="plagiarism-page-title fw-medium"
+                    (click)="showOptions = !showOptions"
+                    [class.active]="showOptions"
+                    [attr.aria-expanded]="showOptions"
+                    #keyboardAction5
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
+                >
                     <fa-icon class="plagiarism-options-toggle" [icon]="faChevronRight" />
                     <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection"></span>
                 </h4>
@@ -13,11 +24,12 @@
             </div>
             <div class="plagiarism-header-top-right">
                 @if (chartFilterApplied()) {
-                    <button class="check-plagiarism btn btn-info" (click)="resetFilter()">
+                    <button type="button" class="check-plagiarism btn btn-info" (click)="resetFilter()">
                         <span jhiTranslate="artemisApp.plagiarism.resetFilter"></span>
                     </button>
                 }
                 <button
+                    type="button"
                     [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                     class="check-plagiarism btn btn-primary"
                     (click)="checkPlagiarism()"
@@ -57,6 +69,7 @@
                 </p-dialog>
                 @if (exercise().isAtLeastInstructor && plagiarismResult()) {
                     <button
+                        type="button"
                         [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                         class="check-plagiarism btn btn-danger"
                         (click)="openCleanUpModal()"
@@ -67,7 +80,7 @@
                 }
                 @if (plagiarismResult()) {
                     <div ngbDropdown>
-                        <button class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
+                        <button type="button" class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
                             <span>Download</span>
                         </button>
                         <div ngbDropdownMenu aria-labelledby="download-plagiarism">

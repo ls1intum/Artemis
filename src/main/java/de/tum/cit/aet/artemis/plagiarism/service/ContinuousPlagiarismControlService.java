@@ -24,9 +24,11 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -135,7 +137,8 @@ public class ContinuousPlagiarismControlService {
 
     private void recordUsage(Exercise exercise, long durationMs, boolean failed) {
         featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, PLAGIARISM_MODULE,
-                "continuous-plagiarism-control/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT), Role.ANONYMOUS, failed, durationMs));
+                "continuous-plagiarism-control/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT), UserFeature.CONTINUOUS_PLAGIARISM_CONTROL, FeatureInteraction.ACTION,
+                Role.ANONYMOUS, failed, durationMs));
     }
 
     /**
@@ -201,8 +204,8 @@ public class ContinuousPlagiarismControlService {
     }
 
     private void createOrUpdatePlagiarismCases(PlagiarismComparison comparison, User author) {
-        var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
-                plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
+        var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionAElseThrow(), true),
+                plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionBElseThrow(), true));
 
         plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null && plagiarismCase.getStudent() != null)
                 .map(plagiarismCase -> buildCpcPost(plagiarismCase, author)).forEach(post -> {

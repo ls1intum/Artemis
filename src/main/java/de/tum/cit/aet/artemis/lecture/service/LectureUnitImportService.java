@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -138,12 +138,16 @@ public class LectureUnitImportService {
 
     /**
      * This function imports the {@code importedAttachment}, and duplicates its file and returns it
+     * <p>
+     * The copy always lands in the directory of the attachment video unit it is created for, whatever directory the original lies in. An attachment video unit created for an
+     * attachment that used to hang off a lecture directly still has its file under that lecture's directory, and the copy is not written there: importing finishes the
+     * migration for it, so the copy is found under its own unit from the moment it exists.
      *
-     * @param entityId           The id of the new entity to which the attachment is linked
-     * @param importedAttachment The original attachment to be copied
+     * @param attachmentVideoUnitId The id of the attachment video unit the attachment is created for
+     * @param importedAttachment    The original attachment to be copied
      * @return The imported attachment with the file also duplicated to the temp directory on disk
      */
-    public Attachment importAttachment(Long entityId, final Attachment importedAttachment) {
+    private Attachment importAttachment(Long attachmentVideoUnitId, final Attachment importedAttachment) {
         log.debug("Creating a new Attachment from attachment {}", importedAttachment);
 
         Attachment attachment = new Attachment();
@@ -153,22 +157,21 @@ public class LectureUnitImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath;
-        Path newPath;
-        FilePathType filePathType;
-        if (importedAttachment.getLink().contains("/attachment-unit/")) {
-            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
-            newPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(entityId.toString());
-            filePathType = FilePathType.ATTACHMENT_UNIT;
+        // Where the original lies follows from the attachment itself. Reading it off the stored link instead put a file in the wrong directory whenever that link was written in
+        // the other of the two spellings the same endpoint answers to.
+        Optional<FileSystemLocation> originalLocation = importedAttachment.fileLocation();
+        if (originalLocation.isEmpty()) {
+            // The original points at a document hosted elsewhere, so there is no file to copy. The link carries the reference and is what the copy has to keep verbatim;
+            // resolving it would copy whichever unrelated file happens to share its last segment.
+            attachment.setLink(importedAttachment.getLink());
+            return attachment;
         }
-        else {
-            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
-            newPath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(entityId.toString());
-            filePathType = FilePathType.LECTURE_ATTACHMENT;
-        }
+
+        Path oldPath = originalLocation.get().path();
+        Path newPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
-        Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, filePathType);
-        attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
+        Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, FilePathType.ATTACHMENT_UNIT);
+        attachment.setLink(savePath.getFileName().toString());
         return attachment;
     }
 }

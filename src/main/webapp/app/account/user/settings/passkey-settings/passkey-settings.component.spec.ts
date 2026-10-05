@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
+import { DialogService } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { PasskeySettingsComponent } from 'app/account/user/settings/passkey-settings/passkey-settings.component';
 import { PasskeySettingsApiService } from 'app/account/user/settings/passkey-settings/passkey-settings-api.service';
@@ -14,13 +16,11 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PasskeyDTO } from 'app/account/user/settings/passkey-settings/dto/passkey.dto';
 
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
-import { TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 describe('PasskeySettingsComponent', () => {
     let component: PasskeySettingsComponent;
@@ -55,7 +55,7 @@ describe('PasskeySettingsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                DialogService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 WebauthnApiService,
@@ -256,7 +256,7 @@ describe('PasskeySettingsComponent', () => {
         fixture.detectChanges();
 
         // The approval state is carried by the tag's severity, which is a component input rather than a class.
-        const tag = fixture.debugElement.query(By.directive(TumUiTagComponent));
+        const tag = fixture.debugElement.query(By.directive(TumAetUiTagComponent));
         expect(tag).not.toBeNull();
         expect(tag.componentInstance.severity()).toBe('success');
     });
@@ -278,7 +278,7 @@ describe('PasskeySettingsComponent', () => {
         component.currentUser.set(adminUser);
         fixture.detectChanges();
 
-        const tag = fixture.debugElement.query(By.directive(TumUiTagComponent));
+        const tag = fixture.debugElement.query(By.directive(TumAetUiTagComponent));
         expect(tag).not.toBeNull();
         expect(tag.componentInstance.severity()).toBe('danger');
     });
@@ -301,6 +301,6 @@ describe('PasskeySettingsComponent', () => {
         fixture.detectChanges();
 
         // Check that the approval tag does not exist
-        expect(fixture.debugElement.query(By.directive(TumUiTagComponent))).toBeNull();
+        expect(fixture.debugElement.query(By.directive(TumAetUiTagComponent))).toBeNull();
     });
 });

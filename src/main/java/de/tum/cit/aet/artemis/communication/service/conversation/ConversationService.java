@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service.conversation;
 
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.CONVERSATION_MEMBERSHIP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
@@ -31,11 +32,11 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationSummary;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.communication.dto.GeneralConversationInfo;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.UserConversationInfo;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -60,15 +61,6 @@ import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 public class ConversationService {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationService.class);
-
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
-
-    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
-    // Deployed mobile and external clients may still be subscribed here.
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     private final ConversationDTOService conversationDTOService;
 
@@ -309,8 +301,8 @@ public class ConversationService {
         }
         if (!newConversationParticipants.isEmpty()) {
             conversationParticipantRepository.saveAll(newConversationParticipants);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToBeRegistered);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, existingUsers);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, conversation, usersToBeRegistered);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.UPDATE, conversation, existingUsers);
         }
     }
 
@@ -322,7 +314,7 @@ public class ConversationService {
     public void notifyAllConversationMembersAboutUpdate(Conversation conversation) {
         var usersToContact = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
-        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
+        broadcastOnConversationMembershipChannel(conversation.getCourse(), CommunicationCrudAction.UPDATE, conversation, usersToContact);
     }
 
     /**
@@ -341,8 +333,8 @@ public class ConversationService {
                 usersToBeDeregistered.stream().map(User::getId).collect(Collectors.toSet()));
         if (!participantsToRemove.isEmpty()) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersToBeDeregistered);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingUsers);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.DELETE, conversation, usersToBeDeregistered);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.UPDATE, conversation, remainingUsers);
         }
     }
 
@@ -408,41 +400,19 @@ public class ConversationService {
     /**
      * Broadcasts a message on the conversation membership channel of users
      *
-     * @param course          the course in which the conversation is located
-     * @param metisCrudAction the action that was performed
-     * @param conversation    the conversation that was affected
-     * @param recipients      the users to be messaged
+     * @param course       the course in which the conversation is located
+     * @param crudAction   the action that was performed
+     * @param conversation the conversation that was affected
+     * @param recipients   the users to be messaged
      */
     // TODO: this should be Async
-    @SuppressWarnings("deprecation")
-    public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
-        String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
-        String legacyConversationParticipantTopicName = getLegacyConversationParticipantTopicName(course.getId());
-        recipients.forEach(
-                user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName, legacyConversationParticipantTopicName));
+    public void broadcastOnConversationMembershipChannel(Course course, CommunicationCrudAction crudAction, Conversation conversation, Set<User> recipients) {
+        recipients.forEach(user -> sendToConversationMembershipChannel(crudAction, conversation, user, course.getId()));
     }
 
-    @NonNull
-    public static String getConversationParticipantTopicName(Long courseId) {
-        return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
-    }
-
-    /**
-     * Legacy variant of {@link #getConversationParticipantTopicName(Long)} kept for the deprecation window.
-     *
-     * @param courseId the id of the course
-     * @return the legacy STOMP destination prefix that the server still mirrors notifications onto
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    @NonNull
-    public static String getLegacyConversationParticipantTopicName(Long courseId) {
-        return LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
-    }
-
-    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName,
-            String legacyConversationParticipantTopicName) {
+    private void sendToConversationMembershipChannel(CommunicationCrudAction crudAction, Conversation conversation, User user, long courseId) {
         ConversationDTO dto;
-        if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
+        if (crudAction.equals(CommunicationCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
             dto = conversationDTOService.convertToDTOWithNoExtraDBCalls(conversation);
         }
@@ -452,10 +422,8 @@ public class ConversationService {
             conversationDTOService.fillSubTypeReferenceDates(List.of(dto));
         }
 
-        var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
-        websocketMessagingService.sendMessageToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
-        // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
-        websocketMessagingService.sendMessageToUser(user.getLogin(), legacyConversationParticipantTopicName + user.getId(), websocketDTO);
+        var websocketDTO = new ConversationWebsocketDTO(dto, crudAction);
+        websocketMessagingService.sendMessageToUser(user.getLogin(), CONVERSATION_MEMBERSHIP.at(courseId, user.getId()), websocketDTO);
     }
 
     /**
@@ -566,16 +534,43 @@ public class ConversationService {
         List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
         List<ConversationParticipant> participants = new ArrayList<>();
         for (Channel channel : courseWideChannelsWithoutParticipants) {
-            var newParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-            newParticipant.setUnreadMessagesCount(0L);
-            newParticipant.setLastRead(now);
-            participants.add(newParticipant);
+            participants.add(createReadParticipant(requestingUser, channel, now));
         }
         // save all new conversation participants (i.e. for course-wide channels that the user has not yet accessed)
         if (!participants.isEmpty()) {
-            conversationParticipantRepository.saveAll(participants);
+            try {
+                conversationParticipantRepository.saveAll(participants);
+            }
+            catch (DataIntegrityViolationException e) {
+                // A concurrent request (e.g. opening one of these channels) created a participant in the meantime, which rolled back the whole batch.
+                // Save them one by one instead, with new instances as the batch may have assigned ids that were rolled back, and mark the participants
+                // created concurrently as read as well.
+                List<Long> concurrentlyCreatedConversationIds = new ArrayList<>();
+                for (Channel channel : courseWideChannelsWithoutParticipants) {
+                    try {
+                        conversationParticipantRepository.save(createReadParticipant(requestingUser, channel, now));
+                    }
+                    catch (DataIntegrityViolationException saveFailed) {
+                        // Only a participant that exists by now was created concurrently; any other integrity violation is a real error
+                        if (!conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), userId)) {
+                            throw saveFailed;
+                        }
+                        concurrentlyCreatedConversationIds.add(channel.getId());
+                    }
+                }
+                if (!concurrentlyCreatedConversationIds.isEmpty()) {
+                    conversationParticipantRepository.updateMultipleLastReadAsync(userId, concurrentlyCreatedConversationIds, now);
+                }
+            }
         }
         log.debug("Marking all conversations without participants (i.e. creating new ones) as read took {} ms", TimeLogUtil.formatDurationFrom(start));
+    }
+
+    private static ConversationParticipant createReadParticipant(User user, Channel channel, ZonedDateTime lastRead) {
+        var participant = ConversationParticipant.createWithDefaultValues(user, channel);
+        participant.setUnreadMessagesCount(0L);
+        participant.setLastRead(lastRead);
+        return participant;
     }
 
     /**
@@ -650,13 +645,7 @@ public class ConversationService {
      * @return true if the channel is visible to students
      */
     public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
-        if (channel.getExercise() != null) {
-            return channel.getExercise().isVisibleToStudents();
-        }
-        else if (channel.getExam() != null) {
-            return channel.getExam().isVisibleToStudents();
-        }
-        return true;
+        return channel.isVisibleToStudents();
     }
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {

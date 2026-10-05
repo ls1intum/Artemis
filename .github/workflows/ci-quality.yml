@@ -18,8 +18,8 @@ on:
         description: 'Whether Java sources changed — gates the Java-specific analyses.'
         required: true
         type: boolean
-      has_tum_ui:
-        description: 'Whether TUM UI or its application integration changed.'
+      has_tum_aet_ui:
+        description: 'Whether TUM AET UI or its application integration changed.'
         required: true
         type: boolean
 
@@ -40,11 +40,11 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
@@ -55,6 +55,8 @@ jobs:
         run: ./gradlew spotlessCheck
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
+      - name: Java Test Code Style
+        run: ./gradlew checkstyleTest -x webapp
         if: ${{ !cancelled() }}
       # Tightly-coupled dependency families (HttpComponents, Bouncy Castle, JGit, SSHD) must not resolve to mixed or
       # downgraded versions: that is a runtime LinkageError rather than a build failure, so nothing else catches it.
@@ -80,7 +82,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
@@ -88,7 +90,7 @@ jobs:
         with:
           run_install: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
@@ -101,9 +103,9 @@ jobs:
       - name: TypeScript Code Style
         run: pnpm run lint
         if: ${{ !cancelled() }}
-      - name: TUM UI Styles
-        run: pnpm run tum-ui:stylelint
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: TUM AET UI Styles
+        run: pnpm run tum-aet-ui:stylelint
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright
@@ -124,7 +126,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
@@ -132,7 +134,7 @@ jobs:
         with:
           run_install: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
@@ -140,33 +142,47 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
-      - name: Compile Artemis With TUM UI Source
-        run: pnpm run tum-ui:source:check:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI in Isolation
-        run: pnpm run tum-ui:test:coverage
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Prepare TUM UI Storybook
-        run: pnpm --dir packages/tum-ui run storybook:prepare
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Type Check TUM UI Stories
-        run: pnpm --dir packages/tum-ui run storybook:typecheck:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Install TUM UI Storybook Browser
-        run: pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI Stories
-        run: pnpm --dir packages/tum-ui run storybook:test:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Build TUM UI Storybook
-        run: pnpm --dir packages/tum-ui run storybook:build:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI AutoDocs
-        run: pnpm --dir packages/tum-ui run storybook:docs:test:built
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Validate TUM UI Package Artifact
-        run: pnpm run tum-ui:pack:check
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Compile Artemis With TUM AET UI Source
+        run: pnpm run tum-aet-ui:source:check:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI in Isolation
+        run: pnpm run tum-aet-ui:test:coverage
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Prepare TUM AET UI Storybook
+        run: pnpm --dir packages/tum-aet-ui run storybook:prepare
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Type Check TUM AET UI Stories
+        run: pnpm --dir packages/tum-aet-ui run storybook:typecheck:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Install TUM AET UI Storybook Browser
+        run: pnpm --dir packages/tum-aet-ui exec playwright install --with-deps --only-shell chromium
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI Stories
+        run: pnpm --dir packages/tum-aet-ui run storybook:test:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Build TUM AET UI Storybook
+        run: pnpm --dir packages/tum-aet-ui run storybook:build:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI AutoDocs
+        run: pnpm --dir packages/tum-aet-ui run storybook:docs:test:built
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Validate TUM AET UI Package Artifact
+        id: tum-aet-ui-package
+        run: pnpm run tum-aet-ui:pack:check
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI With Minimum Peer Versions
+        run: pnpm run tum-aet-ui:test:consumer minimum
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
+      - name: Test TUM AET UI With Latest Compatible Peer Versions
+        run: pnpm run tum-aet-ui:test:consumer latest
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure() && inputs.has_tum_aet_ui
+        with:
+          name: tum-aet-ui-consumer
+          path: build/test-results/tum-aet-ui-consumer/
+          if-no-files-found: ignore
+          retention-days: 7
 
   code-quality:
     name: Server Code Quality
@@ -180,11 +196,11 @@ jobs:
         # No `ref: commit_sha` (unlike the style jobs): analyze_java_files.py diffs against the
         # base via `git diff origin/<base>...HEAD`, so this job keeps the default checkout +
         # full history rather than a detached PR-head checkout.
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.14'
       - name: Check LOC and number of class dependencies
@@ -199,6 +215,10 @@ jobs:
           # points, which put both over the ten-dependency line. Pushing them back under it means extracting
           # ExerciseService.reEvaluateExercise and the grading service's score calculation into services of their own,
           # which is a refactoring of its own rather than part of the table split.
+          # NOTE on max_large_classes: LearningPathRecommendationService still crosses a thousand lines since #13864.
+          # Getting it back under the line means extracting the recommendation state it threads through most of its
+          # methods, which is a refactoring of its own. The count is back at seventeen because GitService dropped off
+          # the list when the bare-repository handling moved into BareGitRepositoryService.
           max_large_classes=17
           max_complex_beans=20
 
@@ -217,13 +237,13 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           # find_slow_queries.py is a pure source scan (no git diff), so pin the PR head to
           # match the style jobs and exercise exactly the tree Build/Test do.
           ref: ${{ inputs.commit_sha }}
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.14'
       - name: Query quality check

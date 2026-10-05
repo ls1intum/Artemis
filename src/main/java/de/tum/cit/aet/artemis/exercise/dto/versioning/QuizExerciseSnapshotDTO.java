@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.util.CollectionUtil;
@@ -19,10 +20,12 @@ import de.tum.cit.aet.artemis.quiz.dto.question.MultipleChoiceQuestionWithSoluti
 import de.tum.cit.aet.artemis.quiz.dto.question.ShortAnswerQuestionWithMappingDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer allowedNumberOfAttempts, QuizMode quizMode, Integer duration,
         List<QuizQuestionSnapshotDTO> quizQuestions) implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record QuizQuestionSnapshotDTO(ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO,
             MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO, DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO)
             implements Serializable {

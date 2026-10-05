@@ -32,9 +32,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
@@ -93,7 +93,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfigurationDTO> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
-            // Empty block intended for type inference by Jackson's ObjectMapper
+            // Empty block intended for type inference by Jackson's JsonMapper
         });
 
         assertThat(actualPlatforms).containsExactlyInAnyOrderElementsOf(expectedPlatforms.getContent().stream().map(LtiPlatformConfigurationDTO::of).toList());

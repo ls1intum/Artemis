@@ -15,12 +15,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -32,7 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
 @Conditional(IrisEnabled.class)
 @Lazy
-@FeatureUsage("chat/availability")
+@FeatureUsage(UserFeature.IRIS_CHAT)
 @RestController
 @RequestMapping("api/iris/")
 public class IrisResource {
@@ -67,6 +70,7 @@ public class IrisResource {
      * @param courseId the ID of the course
      * @return the ResponseEntity with status 200 (OK) and the health status of Iris with course-specific rate limits
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/{courseId}/status")
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -92,6 +96,7 @@ public class IrisResource {
      * @param faqId    the ID of the FAQ for which the ingestion state is being requested
      * @return a {@link ResponseEntity} containing a map with the {@link IngestionState} of the FAQ,
      */
+    @FeatureUsage(UserFeature.IRIS_CONTENT_INGESTION)
     @GetMapping("courses/{courseId}/faqs/{faqId}/ingestion-state")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Map<Long, IngestionState>> getStatusOfFaqIngestion(@PathVariable long courseId, @PathVariable long faqId) {

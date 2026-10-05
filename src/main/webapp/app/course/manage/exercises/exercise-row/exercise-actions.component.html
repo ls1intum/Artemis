@@ -5,3 +5,11 @@
         }
     </ng-container>
 </jhi-exercise-action-bar>
+
+<!-- Placement happens server-side in FINALIZING; the wizard's "Open in Editor" navigates on its own. -->
+<jhi-exercise-variant-ai-modal-wizard
+    [visible]="aiVariantModalVisible()"
+    (visibleChange)="aiVariantModalVisible.set($event)"
+    [sourceExercise]="exercise()"
+    [courseId]="courseId()"
+/>

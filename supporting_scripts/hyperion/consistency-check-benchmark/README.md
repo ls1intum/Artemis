@@ -49,13 +49,13 @@ Once the virtual environment is activated, you will see the `(venv)` prefix in y
 
 ## 2. Install the Required Packages
 ```shell
-pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements.txt
 ```
 
 - On **Windows**:
    ```shell
       python -m pip install --upgrade pip
-      python -m pip install -r requirements.txt
+      python -m pip install --require-hashes -r requirements.txt
    ```
 
    make patch.exe available (Git for Windows)

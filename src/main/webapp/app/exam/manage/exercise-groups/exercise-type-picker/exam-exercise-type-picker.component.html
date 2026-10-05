@@ -1,4 +1,4 @@
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="visible"
     [header]="'artemisApp.exerciseManagement.addModal.header' | artemisTranslate"
     [closable]="true"
@@ -26,7 +26,7 @@
     </div>
 
     <p
-        class="text-muted-color text-sm mb-3"
+        class="text-muted-color text-sm mb-3!"
         [jhiTranslate]="activeTab() === 'import' ? 'artemisApp.exerciseManagement.addModal.importHint' : 'artemisApp.exerciseManagement.addModal.createHint'"
     ></p>
     <div class="exercise-grid">
@@ -51,4 +51,4 @@
             </button>
         }
     </div>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

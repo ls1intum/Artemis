@@ -60,7 +60,7 @@ class WebsocketBrokerReconnectionMessagingServiceTest {
 
     /**
      * Delivers a message through the captured listener, which now receives the payload directly rather than a
-     * backend-specific message wrapper.
+     * provider-specific message wrapper.
      *
      * @param message the reconnect message to deliver
      */

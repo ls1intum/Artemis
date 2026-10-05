@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "conversation_participant")
@@ -26,12 +27,14 @@ public class ConversationParticipant extends DomainObject {
     @ManyToOne
     @JsonIgnore
     @JoinColumn(nullable = false)
+    @Parent
     private Conversation conversation;
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "firstName", "lastName" })
     @JoinColumn(nullable = false)
     @NonNull
+    @Parent
     private User user;
 
     /**

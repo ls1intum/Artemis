@@ -6,9 +6,18 @@ children + one required status check**.
 ## Entry point — `ci.yml`
 
 `ci.yml` is the single CI entry point. It registers every trigger that should run the main
-CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, published
+CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, published Artemis
 releases, merge-queue runs, and a manual `workflow_dispatch`) so that the answer to "what
-runs on event X?" is in exactly one file.
+runs on event X?" is in exactly one file. Scoped package releases (`@tumaet/*`)
+do not run Artemis builds or Android tests. TUM AET UI uses `release-tum-aet-ui.yml`: a manual run on a
+branch validates; a run on an `@tumaet/ui-angular@<version>` tag validates and stages for npm approval.
+
+The one deliberate exception is `ci-gradle-wrapper.yml`: besides being called by `ci.yml` for
+Gradle-related pull requests, it also runs directly on pushes to `develop`, `main`, and `release/*`.
+OpenSSF Scorecard only treats the committed `gradle-wrapper.jar` as a verified binary when it can
+associate a successful Gradle wrapper validation workflow with the latest commit, which it cannot do
+reliably through a reusable-workflow call alone. The direct push trigger provides that evidence while
+the reusable call keeps wrapper validation inside the existing required PR gate.
 
 ```text
 ci.yml                                                            (single entry workflow)
@@ -19,11 +28,14 @@ ci.yml                                                            (single entry 
 ├── test            ── uses ci-test.yml           (server + client test suites)
 ├── quality         ── uses ci-quality.yml        (server + client style/lint/type-check, Java analyses)
 ├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle; wrapper-jar integrity)
-├── docs            ── uses ci-docs.yml           (if has_docs)
+├── docs            ── uses ci-docs.yml           (if has_docs, or on every develop push)
 ├── translation     ── uses ci-translation.yml    (if has_i18n)
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
+├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
+├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
+├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
 ├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
 │
 │   ADVISORY — runs for signal, never blocks merge:
@@ -33,12 +45,15 @@ ci.yml                                                            (single entry 
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
 ├── coverage-badge               (publishes the README coverage figure to the orphan `badges` branch; needs a GREEN `test`)
+├── sonar           ── uses ci-sonar.yml          (SonarQube Cloud grade; needs a GREEN `test`; also dispatchable standalone)
 │
 ├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
-`ci-summary` is a second terminal job (`needs:` every job, `if: always()`). On the run's
+`ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: always()`).
+The develop-only deploy jobs — `deploy-docs`, `coverage-badge`, `sonar` — are deliberately outside
+its `needs:`, so they never appear in its table and never hold it up. On the run's
 **Summary** page it renders a per-job table (job · required/advisory · result), a failure-only
 local-fix table, and a Gantt timeline (`Kesin11/actions-timeline`) covering the reusable
 children (`Build / …`, `Test / …`), so the critical-path bottleneck is visible at a glance. It
@@ -118,21 +133,20 @@ gate closed.
 
 ## Action pinning policy
 
-- **Third-party actions** (anything outside `actions/*`, `github/*`) are pinned to a
+- **All external actions**, including `actions/*` and `github/*`, are pinned to a
   40-character commit SHA with a `# vX.Y.Z` trailing comment. This is the
   [GitHub-recommended supply-chain mitigation](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions)
   and matches the org policy GitHub now supports enforcing.
-- **First-party `actions/*` and `github/*` actions** may use a major-version tag
-  (`@v6`, `@v9`) because they are governed by GitHub's own release process.
-  `actionlint`'s install script is pinned to a release tag because the script itself
-  is the third party, not the binary it downloads.
+- **Local actions and reusable workflows** use relative paths. The `actionlint` install
+  script uses a release tag and a verified SHA-256 checksum before execution.
 - **Don't hand-bump the SHAs.** Renovate (`renovate.json`) reads the `@<sha> # vX.Y.Z`
   format and opens PRs that update both the SHA and the comment together — keep the comment
   in that exact shape so it stays auto-maintained.
+  The `helpers:pinGitHubActionDigests` preset also pins newly added action references.
 
 ## Reusable workflows — `ci-*.yml`
 
-Each `ci-*.yml` file has `on: workflow_call:` and is invoked only by `ci.yml`. Rules:
+Most `ci-*.yml` files have `on: workflow_call:` and are invoked only by `ci.yml`. `ci-gradle-wrapper.yml` also has the direct push trigger documented above. Rules:
 
 1. **No `concurrency:` block inside a reusable.** The parent's group already applies. A
    child-level `concurrency:` block can cancel a queued child while the parent run stays
@@ -173,6 +187,12 @@ Concurrency lives only on the umbrella. Reusables share the umbrella's `run_id`,
 parent's concurrency lock applies transitively. **Never** add a `concurrency:` block to a
 `ci-*.yml` reusable — it creates a second lock that can deadlock the parent
 ([actions/runner#3205](https://github.com/actions/runner/issues/3205)).
+
+GitHub keeps only one pending run in a concurrency group by default, even when
+`cancel-in-progress` is false. A newer `develop` push can therefore replace an older pending push.
+The documentation build runs on every `develop` push so that a replacement run deploys the full
+current documentation tree instead of losing documentation changes that belonged to the evicted
+run. Pull requests still use `has_docs`, so this recovery guarantee adds no unrelated PR work.
 
 The one exception is the `deploy-docs` **job** in `ci.yml`, which carries a job-level
 `concurrency: { group: pages, cancel-in-progress: false }`. Job-level concurrency is safe (it is
@@ -225,6 +245,64 @@ this repo matches `badges`, and GitHub does not fire workflows for `GITHUB_TOKEN
 
 The logic is unit-tested in `supporting_scripts/code-coverage/coverage-badge/compute-coverage-badge.spec.mjs`,
 which runs as part of `pnpm run test:rules` in the client test job.
+
+## The code quality analyses
+
+Two external services grade the code, and neither one gates a merge. The enforcing checks are
+`ci-quality.yml` and `ci-test.yml`; these two publish a figure.
+
+**Codacy** analyzes every `develop` commit on its own infrastructure — nothing in this repo triggers
+it. It serves the `code quality` badge in the root `README.md` from
+`app.codacy.com/project/badge/Grade/…`, and the badge links to the repository dashboard. Its scope
+comes from `.codacy.yaml`, read from the default branch. Note what that grade is and is not: the
+active pattern set is essentially SAST, so an "A" means very few flagged findings per line — it does
+not reflect Spotless, Checkstyle, Modernizer, the ArchUnit rules, the custom ESLint rules, or the
+coverage floors, all of which are enforced here instead. Codacy's *coverage* figure is separately
+stale, which is why the coverage badge is self-hosted (see above).
+
+**SonarQube Cloud** runs from `ci-sonar.yml` on `develop` pushes, after a green `test`, importing the
+`Server JaCoCo XML` and `Vitest Coverage Report` artifacts that job already uploaded — no suite is
+re-run. It serves five badges in the root `README.md`, straight from `sonarcloud.io/api/project_badges`
+for the `develop` branch: the **quality gate** (which judges the new code of the last 30 days: ratings,
+coverage, duplication, hotspots), the **reliability**, **security** and **maintainability** ratings, and
+the share of **duplicated lines**. Mind what the ratings measure. The badge service reports
+whole-project values and has no badge for the new-code metrics, so the three rating badges grade every
+open finding of the project, including the ones from before the new-code window, while the quality gate
+keeps new code at A. The reliability badge therefore trails the gate until the older bugs are fixed. The
+coverage badge stays the self-hosted one described above. Configuration lives in `gradle/sonar.gradle`.
+
+Three things about it are worth knowing before changing it:
+
+1. **Scope is a contract with `.codacy.yaml`.** `gradle/sonar.gradle`'s exclusion list mirrors that
+   file's repository-wide `exclude_paths` floor. Change one without the other and the two grades
+   quietly stop measuring the same code, which is the entire point of running both. The floor is the
+   shared part and not the whole scope: Sonar narrows further to the roots in `sonar.sources`, while
+   `.codacy.yaml` sets no `include_paths`, so Codacy also grades supported repository tooling outside
+   them.
+2. **`compileJava` is required, not an optimization.** Sonar's Java analyzer needs bytecode, and the
+   Gradle plugin only sets `sonar.java.binaries` if the output directory already exists. Without a
+   prior compile the property is silently omitted and the Java half of the analysis degrades with no
+   error, so the job runs `./gradlew compileJava sonar -x webapp`.
+3. **It is dispatchable on its own.** A full CI run takes ~2 h because of the e2e tail, so
+   `ci-sonar.yml` also accepts `workflow_dispatch` for an on-demand grade. That trigger declares no
+   inputs — the ref it is dispatched on is the commit analysed. A dispatched run has no `test` job of
+   its own, so it looks up the newest `ci.yml` run for exactly that commit that **succeeded** and
+   imports the coverage artifacts of that run; for a pull request branch that is the pull request
+   build. When no such run exists the analysis runs without coverage, and the quality gate then
+   shows 0.0% coverage on new code, which describes the missing report and not the code. Dispatch
+   after the CI run of the commit has finished to get the real figure. Checkov's `CKV_GHA_7` also
+   flags dispatch inputs, so keep that trigger input-free.
+
+The job is `continue-on-error` and never appears in another job's `needs:`, so a Sonar outage, an
+expired `SONAR_TOKEN`, or a missing project cannot fail the run.
+
+That covers the workflow, and only the workflow. SonarQube Cloud's GitHub App posts a second check
+of its own, `SonarCloud Code Analysis`, carrying the quality gate verdict. Nothing in this
+repository produces that check and `continue-on-error` cannot reach it, so a failed gate shows as a
+red X on the `develop` commit while the job beside it is green. It still gates nothing — branch
+protection requires only `All required CI Passed` — but it is the reason `develop` can look red with
+every workflow passing. Which conditions that verdict applies is the quality gate the project is
+assigned in SonarQube Cloud, configured there rather than here.
 
 ## Adding a new CI check
 

@@ -222,6 +222,10 @@
                     "title": "Barrierefreiheit",
                     "description": "Das Ziel WCAG 2.2 Stufe AA, an dem Artemis arbeitet, die zugrunde liegenden Richtlinien und Werkzeuge und eine offene Aussage dazu, was nicht zertifiziert ist."
                 },
+                "performance": {
+                    "title": "Performance",
+                    "description": "Ein veröffentlichter Referenzlauf: 4.000 Studierende in einer Klausur, im Schnitt 0,09 s pro Anfrage und keine einzige fehlgeschlagene Anfrage, auf elf virtuellen Maschinen. Der Lastgenerator ist Teil von Artemis, der Lauf lässt sich also selbst wiederholen."
+                },
                 "releases": {
                     "title": "Releases & Support",
                     "description": "Versionierung, Release-Rhythmus, welche Versionen Sicherheitsupdates erhalten und was ein Upgrade bedeutet."

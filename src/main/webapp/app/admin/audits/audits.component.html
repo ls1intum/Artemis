@@ -2,15 +2,15 @@
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
     <!-- One tab per audit log. Each log is a separate table with its own retention period, so switching tabs queries a
          different, much smaller table instead of filtering one large one. -->
-    <tum-ui-tabs class="mb-4" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
-        <tum-ui-tab-list>
+    <tumaet-ui-tabs class="mb-4" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
+        <tumaet-ui-tab-list>
             @for (tab of logTypeTabs; track tab.value) {
-                <tum-ui-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
+                <tumaet-ui-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
                     <span [jhiTranslate]="tab.labelKey"></span>
-                </tum-ui-tab>
+                </tumaet-ui-tab>
             }
-        </tum-ui-tab-list>
-    </tum-ui-tabs>
+        </tumaet-ui-tab-list>
+    </tumaet-ui-tabs>
     <h4 class="mb-3" jhiTranslate="audits.filter.title"></h4>
     <div class="mb-4 flex flex-wrap items-start gap-4" data-testid="audits-date-filter">
         <div class="flex flex-col gap-2">
@@ -48,7 +48,7 @@
     </div>
     @if (audits().length) {
         <div class="overflow-x-auto" data-testid="audits-table-container">
-            <table tumUiTable size="small" [striped]="true" aria-describedby="audits-page-heading" data-testid="audits-table">
+            <table tumAetUiTable size="small" [striped]="true" aria-describedby="audits-page-heading" data-testid="audits-table">
                 <thead>
                     <!-- Sorting works whether or not a date range is set, so the header is not conditional. -->
                     <tr
@@ -101,7 +101,7 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="flex justify-center">
-                <tum-ui-paginator
+                <tumaet-ui-paginator
                     [page]="page() - 1"
                     [pageSize]="itemsPerPage"
                     [totalRecords]="totalItems()"
@@ -112,8 +112,8 @@
             </div>
         </div>
     } @else {
-        <tum-ui-message severity="warn" data-testid="audits-not-found">
+        <tumaet-ui-message severity="warn" data-testid="audits-not-found">
             <span jhiTranslate="audits.notFound"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
 </div>

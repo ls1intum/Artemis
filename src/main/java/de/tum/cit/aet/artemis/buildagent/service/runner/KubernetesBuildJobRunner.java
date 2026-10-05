@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,6 +71,21 @@ import io.fabric8.kubernetes.client.dsl.LogWatch;
 public class KubernetesBuildJobRunner implements BuildJobRunner {
 
     private static final Logger log = LoggerFactory.getLogger(KubernetesBuildJobRunner.class);
+
+    /** The characters a result path may consist of. */
+    private static final Pattern SAFE_RESULT_PATH = Pattern.compile("[a-zA-Z0-9_*./-]+");
+
+    /** Everything a DNS label may not contain, replaced by a hyphen. */
+    private static final Pattern NON_DNS_LABEL_CHARACTER = Pattern.compile("[^a-z0-9-]");
+
+    /** A run of hyphens in a DNS label, collapsed into one. */
+    private static final Pattern HYPHEN_RUN = Pattern.compile("-+");
+
+    /** Leading characters of a DNS label that may not start it. */
+    private static final Pattern LEADING_NON_ALPHANUMERIC = Pattern.compile("^[^a-z0-9]+");
+
+    /** Trailing characters of a DNS label that may not end it. */
+    private static final Pattern TRAILING_NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]+$");
 
     private static final Duration POLL_INTERVAL = Duration.ofMillis(250);
 
@@ -162,8 +179,8 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
             append(buildJob.id(), "Kubernetes build Pod " + execution.podName + " is running");
 
             BuildLogOutputStream buildLogOutput = new BuildLogOutputStream(buildJob.id(), buildLogsMap, maxLogLineBytes);
-            execution.buildLogOutput = buildLogOutput;
-            execution.logWatch = kubernetesClient.pods().inNamespace(properties.namespace()).withName(execution.podName).inContainer(BUILDER_CONTAINER).watchLog(buildLogOutput);
+            execution.buildLogOutput.set(buildLogOutput);
+            execution.logWatch.set(kubernetesClient.pods().inNamespace(properties.namespace()).withName(execution.podName).inContainer(BUILDER_CONTAINER).watchLog(buildLogOutput));
 
             inputArchive = archiveService.createInputArchive(buildJob, preparedBuildJob);
             uploadInputArchive(execution.podName, inputArchive);
@@ -323,7 +340,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     private static void validateResultPath(String path) {
-        if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
+        if (path == null || path.contains("..") || !SAFE_RESULT_PATH.matcher(path).matches()) {
             throw new LocalCIException("Invalid result path for Kubernetes build execution: " + path);
         }
     }
@@ -361,7 +378,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
 
     private Duration effectiveExecutionWait(BuildJobQueueItem buildJob) {
         // Reuse the capping of the Job factory so that this wait never outlives the activeDeadlineSeconds of the Job it waits for.
-        return Duration.ofSeconds(jobFactory.effectiveBuildTimeout(buildJob) + properties.activeDeadlineGraceSeconds());
+        return Duration.ofSeconds((long) jobFactory.effectiveBuildTimeout(buildJob) + properties.activeDeadlineGraceSeconds());
     }
 
     private boolean containersStarted(Pod pod) {
@@ -506,19 +523,21 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     private void closeLogWatch(ActiveExecution execution) {
-        if (execution.logWatch != null) {
-            execution.logWatch.close();
-            execution.logWatch = null;
+        LogWatch logWatch = execution.logWatch.getAndSet(null);
+        if (logWatch != null) {
+            logWatch.close();
         }
-        if (execution.buildLogOutput != null) {
-            execution.buildLogOutput.flushLine();
+        BuildLogOutputStream buildLogOutput = execution.buildLogOutput.get();
+        if (buildLogOutput != null) {
+            buildLogOutput.flushLine();
         }
     }
 
     private void drainLogWatch(ActiveExecution execution) {
-        if (execution.logWatch != null) {
+        LogWatch logWatch = execution.logWatch.get();
+        if (logWatch != null) {
             try {
-                execution.logWatch.onClose().toCompletableFuture().get(LOG_DRAIN_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+                logWatch.onClose().toCompletableFuture().get(LOG_DRAIN_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -551,7 +570,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     static String jobName(BuildJobQueueItem buildJob, String buildAgentName) {
-        ZonedDateTime buildStartDate = buildJob.jobTimingInfo() != null ? buildJob.jobTimingInfo().buildStartDate() : null;
+        ZonedDateTime buildStartDate = buildJob.jobTimingInfo().buildStartDate();
         String claimIdentity = buildJob.id() + '|' + buildJob.retryCount() + '|' + buildAgentName + '|' + buildStartDate;
         String suffix = "-r" + buildJob.retryCount() + "-" + sha256(claimIdentity).substring(0, 10);
         String base = "local-ci-" + toDnsLabel(buildJob.id());
@@ -567,7 +586,8 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
         if (value == null || value.isBlank()) {
             return "unknown";
         }
-        String normalized = value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9-]", "-").replaceAll("-+", "-");
+        String hyphenated = NON_DNS_LABEL_CHARACTER.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("-");
+        String normalized = HYPHEN_RUN.matcher(hyphenated).replaceAll("-");
         normalized = stripNonAlphanumericEdges(normalized);
         if (normalized.isBlank()) {
             return "unknown";
@@ -579,7 +599,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     private static String stripNonAlphanumericEdges(String value) {
-        return value.replaceAll("^[^a-z0-9]+", "").replaceAll("[^a-z0-9]+$", "");
+        return TRAILING_NON_ALPHANUMERIC.matcher(LEADING_NON_ALPHANUMERIC.matcher(value).replaceAll("")).replaceAll("");
     }
 
     private static String sha256(String value) {
@@ -637,9 +657,9 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
 
         private volatile String podName;
 
-        private volatile LogWatch logWatch;
+        private final AtomicReference<LogWatch> logWatch = new AtomicReference<>();
 
-        private volatile BuildLogOutputStream buildLogOutput;
+        private final AtomicReference<BuildLogOutputStream> buildLogOutput = new AtomicReference<>();
 
         private ActiveExecution(String jobName) {
             this.jobName = jobName;

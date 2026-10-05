@@ -71,6 +71,57 @@ class SubmissionResultAccessorTest {
     }
 
     @Test
+    void addResultAssignsTheRoundAfterTheHighestExistingOne() {
+        // The result of the first round was deleted, so the submission holds only the second round. A new result must
+        // not be handed round 1 again, which counting the results would do.
+        Result secondRound = result(2L, AssessmentType.MANUAL);
+        secondRound.setCorrectionRound(1);
+        Submission submission = submissionWith(secondRound);
+
+        Result added = result(3L, AssessmentType.MANUAL);
+        submission.addResult(added);
+
+        assertThat(added.getCorrectionRound()).isEqualTo(2);
+        assertThat(submission.getResultForCorrectionRound(1)).isEqualTo(secondRound);
+        assertThat(submission.getResultForCorrectionRound(2)).isEqualTo(added);
+    }
+
+    @Test
+    void addResultAssignsRoundZeroWhenNoCorrectionRoundResultExists() {
+        Submission submission = submissionWith(result(1L, AssessmentType.AUTOMATIC), result(2L, AssessmentType.AUTOMATIC_ATHENA));
+
+        Result added = result(3L, AssessmentType.MANUAL);
+        submission.addResult(added);
+
+        assertThat(added.getCorrectionRound()).isZero();
+    }
+
+    @Test
+    void addResultKeepsTheRoundTheCallerSet() {
+        Result firstRound = result(1L, AssessmentType.MANUAL);
+        firstRound.setCorrectionRound(0);
+        Submission submission = submissionWith(firstRound);
+
+        Result added = result(2L, AssessmentType.MANUAL);
+        added.setCorrectionRound(5);
+        submission.addResult(added);
+
+        assertThat(added.getCorrectionRound()).isEqualTo(5);
+    }
+
+    @Test
+    void addResultLeavesAutomaticResultsWithoutARound() {
+        Result firstRound = result(1L, AssessmentType.MANUAL);
+        firstRound.setCorrectionRound(0);
+        Submission submission = submissionWith(firstRound);
+
+        Result automatic = result(2L, AssessmentType.AUTOMATIC);
+        submission.addResult(automatic);
+
+        assertThat(automatic.getCorrectionRound()).isNull();
+    }
+
+    @Test
     void manualResultAccessorsToleratePlaceholdersLeftByDeletedResults() {
         Result manual = result(2L, AssessmentType.MANUAL);
         Submission submission = new TextSubmission();

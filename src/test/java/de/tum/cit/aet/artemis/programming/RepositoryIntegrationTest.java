@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,6 +45,8 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+
+import tools.jackson.core.type.TypeReference;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -155,7 +158,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        projectKey = programmingExercise.getProjectKey().toUpperCase();
+        projectKey = programmingExercise.getProjectKey().toUpperCase(Locale.ROOT);
         deleteExistingProject(projectKey);
         studentLogin = TEST_PREFIX + "student1";
 
@@ -300,7 +303,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
             assertThat(files).isNotEmpty();
             // case-insensitive, because the extension classifier and the decoding both are
-            assertThat(files.keySet()).noneMatch(file -> file.toLowerCase().endsWith(".jar"));
+            assertThat(files.keySet()).noneMatch(file -> file.toLowerCase(Locale.ROOT).endsWith(".jar"));
             assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
             assertThat(appender.list).as("skipping content that is not valid UTF-8 must not be logged as a problem")
                     .noneMatch(event -> event.getLevel().isGreaterOrEqual(Level.WARN) && event.getFormattedMessage().contains("could not be read"));
@@ -931,7 +934,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(studentRepository.workingCopyCommits().getFirst()).isNotEqualTo(studentRepository.bareRepositoryCommits().getFirst());
 
             // Execute the Rest call
-            request.get(participationsBaseUrl + participation.getId() + "/repository/pull", HttpStatus.OK, Void.class);
+            request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/pull", null, HttpStatus.OK, null);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
             assertThat(studentRepository.workingCopyCommits().getFirst()).isEqualTo(studentRepository.bareRepositoryCommits().getFirst());
@@ -1041,24 +1044,65 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithManualResult() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
-        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
         participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
+        var storedLogs = buildLogEntryService.saveBuildLogs(logs, submission, submission.getLatestResult());
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertLogsContent(receivedLogs);
+        assertLogsContent(receivedLogs, storedLogs);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
-        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        var storedLogs = buildLogEntryService.saveBuildLogs(logs, submission, submission.getLatestResult());
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertLogsContent(receivedLogs);
+        assertLogsContent(receivedLogs, storedLogs);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildLogsForMultipleResultsOfOneSubmission() throws Exception {
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        var firstResult = submission.getLatestResult();
+        var firstLogs = List.of(new BuildLogEntry(ZonedDateTime.now(), "first failed result"));
+        buildLogEntryService.saveBuildLogs(firstLogs, submission, firstResult);
+
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        var secondResult = submission.getLatestResult();
+        var secondLogs = List.of(new BuildLogEntry(ZonedDateTime.now().plusSeconds(1), "second failed result"));
+        buildLogEntryService.saveBuildLogs(secondLogs, submission, secondResult);
+
+        var firstReceivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs?resultId=" + firstResult.getId(), HttpStatus.OK, BuildLogEntry.class);
+        var secondReceivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs?resultId=" + secondResult.getId(), HttpStatus.OK, BuildLogEntry.class);
+        var latestReceivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+
+        assertThat(firstReceivedLogs).extracting(BuildLogEntry::getLog).containsExactly("first failed result");
+        assertThat(secondReceivedLogs).extracting(BuildLogEntry::getLog).containsExactly("second failed result");
+        assertThat(latestReceivedLogs).extracting(BuildLogEntry::getLog).containsExactly("second failed result");
+    }
+
+    /**
+     * The build-log route is annotated {@code @AllowedTools(ToolTokenType.SCORPIO)} and read by the out-of-repo
+     * IntelliJ plugin, so its payload must stay a superset of the entity payload it replaced — {@code id} included.
+     * The raw key set is asserted because deserializing into the entity would hide a dropped key.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildLogs_keepsTheScorpioKeySet() throws Exception {
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        buildLogEntryService.saveBuildLogs(logs, submission, submission.getLatestResult());
+
+        String response = request.get(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, String.class);
+        List<Map<String, Object>> body = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(body).isNotEmpty();
+        assertThat(body).allSatisfy(entry -> assertThat(entry).containsOnlyKeys("id", "time", "log"));
     }
 
     @Test
@@ -1068,12 +1112,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class);
     }
 
-    private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
+    /**
+     * Asserts against what the store actually wrote rather than against the fixtures: a stored entry is truncated, and a multi-line one is written as several entries, so the
+     * fixtures are no longer what a read returns.
+     */
+    private void assertLogsContent(List<BuildLogEntry> receivedLogs, List<BuildLogEntry> expectedLogs) {
         for (int i = 0; i < receivedLogs.size(); i++) {
-            assertThat(receivedLogs.get(i).getLog()).isEqualTo(logs.get(i).getLog());
+            assertThat(receivedLogs.get(i).getLog()).isEqualTo(expectedLogs.get(i).getLog());
             // When serializing and deserializing the logs, the time of each BuildLogEntry is converted to UTC.
             // Convert the time in the logs set up above to UTC and round it to milliseconds for comparison.
-            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(logs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
+            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(expectedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
             ZonedDateTime actualTime = receivedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS);
             assertThat(actualTime).isCloseTo(expectedTime, within(1, ChronoUnit.MILLIS));
         }
@@ -1253,7 +1301,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private void initializeStudentParticipation() throws Exception {
-        var studentSlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
+        var studentSlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase(Locale.ROOT);
         studentRepository = createRepositoryForSlug(studentSlug);
         studentFilePath = studentRepository.workingCopyPath().resolve(currentLocalFileName);
         participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);

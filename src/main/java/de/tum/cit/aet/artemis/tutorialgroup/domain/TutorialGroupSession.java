@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "tutorial_group_session")
@@ -91,8 +92,9 @@ public class TutorialGroupSession extends DomainObject {
      * The tutorial group that this session belongs to. Is always set for recurring and non-recurring sessions.
      */
     @ManyToOne
-    @JoinColumn(name = "tutorial_group_id")
+    @JoinColumn(name = "tutorial_group_id", nullable = false)
     @JsonIgnoreProperties(value = "tutorialGroupSessions", allowSetters = true)
+    @Parent
     private TutorialGroup tutorialGroup;
 
     public ZonedDateTime getStart() {
@@ -176,11 +178,11 @@ public class TutorialGroupSession extends DomainObject {
      */
     public static TutorialGroupSession preventCircularJsonConversion(TutorialGroupSession tutorialGroupSession) {
         // prevent circular to json conversion
-        if (getPersistenceUtil().isLoaded(tutorialGroupSession, "tutorialGroupSchedule") && tutorialGroupSession.getTutorialGroupSchedule() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroupSession, TutorialGroupSession_.TUTORIAL_GROUP_SCHEDULE) && tutorialGroupSession.getTutorialGroupSchedule() != null) {
             tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroupSessions(null);
             tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroup(null);
         }
-        if (getPersistenceUtil().isLoaded(tutorialGroupSession, "tutorialGroup") && tutorialGroupSession.getTutorialGroup() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroupSession, TutorialGroupSession_.TUTORIAL_GROUP) && tutorialGroupSession.getTutorialGroup() != null) {
             tutorialGroupSession.getTutorialGroup().setTutorialGroupSessions(null);
             tutorialGroupSession.getTutorialGroup().setTutorialGroupSchedule(null);
         }

@@ -1,9 +1,11 @@
+import { EntitySearchSource } from 'app/core/navbar/global-search/models/entity-search-source.model';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 
 /**
  * WebSocket message pushed by Artemis during an async lecture-search/ask-Iris request.
  *
- * - `isThinking: true`  → Pyris classified the query as a real question; LLM is running. Show thinking animation.
+ * - `isThinking: true`  → Pyris classified the query as a real question; LLM is running. Show thinking animation,
+ *   or the streamed `partialResult` draft once it starts arriving.
  * - `isThinking: false` → Pipeline done. Show `answer` card if non-null, hide everything otherwise.
  */
 export interface IrisSearchStatusUpdate {
@@ -11,4 +13,30 @@ export interface IrisSearchStatusUpdate {
     isThinking: boolean;
     answer?: string;
     sources?: LectureSearchResult[];
+    /** Entity sources (course information) the answer drew on, numbered after `sources`. */
+    entitySources?: EntitySearchSource[];
+    /** Streamed draft of the answer so far (`isThinking: true` updates while the LLM generates). */
+    partialResult?: string;
+    /** Monotonic sequence number of the streamed draft; lower numbers are stale. */
+    partialSeq?: number;
+    /** The provider is retrying and the streamed draft so far is stale; discard it and wait for the next one. */
+    clearDraft?: boolean;
+    /** A genuine Pyris-side failure, distinct from a successful run with no relevant answer. */
+    failed?: boolean;
+    /**
+     * Short stage name ("searching", "generating") sent alongside a thinking update with no
+     * `partialResult` yet, so the strip status can show what is actually happening instead of one
+     * generic message for the whole wait. Undefined for an older Iris that never sends it, or once
+     * the answer starts streaming — the arriving text is its own progress signal by then.
+     */
+    stage?: string;
+    /** Distinct course names found so far, in ranked order — empty before retrieval finishes, populated alongside `stage: 'generating'`. */
+    stageSources?: string[];
+    /**
+     * For marker 1..N in `answer`'s citation numbering (in order), which of `sources`/`entitySources` that marker
+     * resolves into — the two arrays are only ordered relative to their OWN type, so this is the only way to tell
+     * which array a given marker belongs to once citations interleave between lecture and entity sources. Only
+     * ever set on a terminal (`isThinking: false`) update, alongside `sources`/`entitySources`.
+     */
+    citationSourceTypes?: ('lecture' | 'entity')[];
 }

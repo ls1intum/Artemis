@@ -3,13 +3,14 @@ package de.tum.cit.aet.artemis.notification.service.notifications.push_notificat
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,7 +23,6 @@ import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConf
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-@EnableAsync(proxyTargetClass = true)
 public class ApplePushNotificationService extends PushNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(ApplePushNotificationService.class);
@@ -32,8 +32,8 @@ public class ApplePushNotificationService extends PushNotificationService {
     @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String relayServerBaseUrl;
 
-    public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate) {
-        super(restTemplate);
+    public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate, @Qualifier("taskExecutor") Executor taskExecutor) {
+        super(restTemplate, taskExecutor);
         this.repository = repository;
     }
 

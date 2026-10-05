@@ -13,6 +13,10 @@
                 "introText": "This dialog can be used to upload PDF file and extract images for registered students.",
                 "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.\nValues for last and first name are optional.",
                 "pdfExampleText": "Example of a valid PDF file format:",
+                "pdfExampleAlt": "Example PDF page with a header and two columns of student photos and identifying text",
+                "studentPhotoAlt": "Photo of student {{ login }}",
+                "studentPhotoMissingAlt": "No photo available for student {{ login }}",
+                "studentSignatureAlt": "Signature of student {{ login }}",
                 "pdfFile": {
                     "label": "Select PDF file",
                     "tooltip": "Please select a PDF file containing registered students image and matriculation number."
@@ -45,6 +49,7 @@
                     "number": "Room Number",
                     "name": "Name",
                     "building": "Building",
+                    "registeredStudentsUnknown": "The number of registered students is not available yet, or it could not be loaded. You can distribute the students as soon as it is known; if this message stays, close the dialog and open it again.",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
                     "distribute": "Distribute",
@@ -115,7 +120,7 @@
                 "feedbackRequested": "AI Feedback Requested",
                 "feedbackRequestSent": "AI feedback has been requested for all text and modeling exercises. Results will appear shortly.",
                 "feedbackUsageLoadFailed": "Could not load the remaining AI feedback requests. Please refresh the page to try again.",
-                "noFeedbackSuggestionModuleConfigured": "AI feedback is not configured for any of the exercises in this exam.",
+                "noCourseLevelAthenaFormativeEnabled": "AI feedback is not enabled for this course.",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "submissionLinkedToCommit": "The submission is linked to commit",
                 "noCommitHash": "No commit was made",
@@ -503,6 +508,11 @@
             "title": "Exams",
             "createExam": "Create a new exam",
             "importExam": "Import an exam",
+            "empty": {
+                "title": "No exams yet",
+                "description": "Create an exam or import one from another course to get started.",
+                "documentation": "Learn about exams"
+            },
             "editExam": "Edit",
             "courseTitle": "Course Title",
             "examId": "Exam ID",
@@ -575,6 +585,8 @@
                 "setup": "Create a Test Run",
                 "author": "Author",
                 "setWorkingTime": "Set a working time (minutes and seconds):",
+                "workingTimeMinutes": "Working time minutes",
+                "workingTimeSeconds": "Working time seconds",
                 "setupHint": "Select an exercise for every exercise group by clicking on it.\n<strong>Note:</strong> If you have already created a test run with one of the exercises, the exercise will already contain a submission and result.",
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
@@ -651,10 +663,6 @@
                     "DidNotAttend": "Did not attend",
                     "AttendanceNotChecked": "Attendance check failed",
                     "AttendanceChecked": "Attendance check passed"
-                },
-                "filterGroup": {
-                    "progress": "Progress",
-                    "attendance": "Attendance"
                 },
                 "menu": {
                     "manageStudents": "Students",

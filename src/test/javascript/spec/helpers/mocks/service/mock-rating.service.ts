@@ -1,8 +1,10 @@
-import { Rating } from 'app/assessment/shared/entities/rating.model';
 import { Observable, of } from 'rxjs';
 
+/**
+ * Mirrors the signatures of `RatingService`, which works with the rating value itself rather than an entity.
+ */
 export class MockRatingService {
-    createRating = (rating: Rating): Observable<Rating> => of(rating);
-    updateRating = (rating: Rating): Observable<Rating> => of(rating);
-    getRating = (ratingId: number): Observable<Rating | null> => of(null);
+    createRating = (rating: number, resultId: number): Observable<number> => of(rating);
+    updateRating = (rating: number, resultId: number): Observable<number> => of(rating);
+    getRating = (resultId: number): Observable<number | undefined> => of(undefined);
 }

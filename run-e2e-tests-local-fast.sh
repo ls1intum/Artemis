@@ -64,6 +64,17 @@ IRIS_ARTEMIS_CALLBACK_URL="${IRIS_ARTEMIS_CALLBACK_URL:-http://host.docker.inter
 # The Iris-enabled seed course whose course-level Iris settings get turned on.
 IRIS_COURSE_ID="${IRIS_COURSE_ID:-9022}"
 
+# Hyperion (AI exercise-variant generation) e2e support: when RUN_HYPERION=true the
+# runner starts a deterministic OpenAI-compatible mock LLM (a bare Python process, see
+# src/test/playwright/support/hyperion-mock-llm/) and enables Hyperion on the Artemis
+# server pointed at it via spring.ai.openai.*. Unlike Iris, Hyperion talks to the LLM
+# directly through Spring AI, so no microservice is needed — just the mock. Off by
+# default so normal runs are unaffected. Run the variant suite with:
+#     RUN_HYPERION=true ./run-e2e-tests-local-fast.sh --filter "Variant"
+RUN_HYPERION="${RUN_HYPERION:-false}"
+HYPERION_MOCK_LLM_SCRIPT="src/test/playwright/support/hyperion-mock-llm/mock_llm.py"
+HYPERION_MOCK_LLM_PORT="${HYPERION_MOCK_LLM_PORT:-8090}"
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         --stop) STOP=true; shift ;;
@@ -128,6 +139,16 @@ PORT_RELEASE_TIMEOUT="${PORT_RELEASE_TIMEOUT:-30}"
 if ! [[ "$PORT_RELEASE_TIMEOUT" =~ ^[0-9]+$ ]]; then
     echo "Ignoring PORT_RELEASE_TIMEOUT='${PORT_RELEASE_TIMEOUT}': expected a non-negative integer number of seconds. Using 30."
     PORT_RELEASE_TIMEOUT=30
+fi
+
+# How long to wait for the server to report ready, from `./gradlew bootRun` to the readiness probe going green. On a
+# machine that has not built the server yet this covers the Gradle distribution download, dependency resolution and a
+# full compile on top of the Spring Boot start, and CI runners can need much more than a warm laptop; CI raises it.
+SERVER_READY_TIMEOUT="${SERVER_READY_TIMEOUT:-300}"
+# At most six digits, so the value stays far inside what the arithmetic comparison in the wait loop can handle.
+if ! [[ "$SERVER_READY_TIMEOUT" =~ ^[1-9][0-9]{0,5}$ ]]; then
+    echo "Ignoring SERVER_READY_TIMEOUT='${SERVER_READY_TIMEOUT}': expected a positive integer number of seconds below 1000000. Using 300."
+    SERVER_READY_TIMEOUT=300
 fi
 
 check_port_available() {
@@ -203,6 +224,15 @@ if [ "$STOP" = true ]; then
     if docker compose -f "$IRIS_STACK_COMPOSE" ps -q 2>/dev/null | grep -q .; then
         echo "Stopping Iris/Pyris stack..."
         docker compose -f "$IRIS_STACK_COMPOSE" down -v 2>/dev/null || true
+    fi
+
+    # Stop the Hyperion mock LLM if it is running (bare Python process)
+    if [ -f "$LOCAL_DIR/hyperion-mock-llm.pid" ]; then
+        MOCK_PID=$(cat "$LOCAL_DIR/hyperion-mock-llm.pid")
+        if kill -0 "$MOCK_PID" 2>/dev/null; then
+            echo "Stopping Hyperion mock LLM (PID $MOCK_PID)..."
+            kill_tree "$MOCK_PID"
+        fi
     fi
 
     # Stop Postgres
@@ -353,6 +383,47 @@ if [ "$SKIP_SERVER" = false ]; then
         export ARTEMIS_IRIS_SECRETTOKEN="${IRIS_SECRET_TOKEN}"
     fi
 
+    # Optional: start the deterministic mock LLM and enable Hyperion on the server.
+    # Hyperion enablement (artemis.hyperion.enabled=true) also makes management/info
+    # activeModuleFeatures include "hyperion", which the variant e2e suite probes to
+    # decide whether to run. The mock speaks the OpenAI Chat Completions API; Spring AI's
+    # OpenAI client points at it via spring.ai.openai.base-url (note the /v1 suffix — the
+    # SDK appends /chat/completions itself).
+    if [ "$RUN_HYPERION" = true ]; then
+        echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting the mock LLM on port ${HYPERION_MOCK_LLM_PORT}...${NC}"
+        # Kill any stale listener AND wait for the socket to be released — the new process cannot bind before.
+        check_port_available "${HYPERION_MOCK_LLM_PORT}" "Hyperion mock LLM"
+        MOCK_LLM_PORT="${HYPERION_MOCK_LLM_PORT}" python3 "$HYPERION_MOCK_LLM_SCRIPT" > "$LOCAL_DIR/hyperion-mock-llm.log" 2>&1 &
+        MOCK_LLM_PID=$!
+        echo "$MOCK_LLM_PID" > "$LOCAL_DIR/hyperion-mock-llm.pid"
+        # Wait for the mock to accept connections before the server boots against it.
+        MOCK_READY=false
+        for _ in $(seq 1 20); do
+            if curl -sf "http://localhost:${HYPERION_MOCK_LLM_PORT}/health" >/dev/null 2>&1; then
+                MOCK_READY=true
+                break
+            fi
+            sleep 0.5
+        done
+        if [ "$MOCK_READY" = true ]; then
+            echo -e "${GREEN}Mock LLM is listening (PID $MOCK_LLM_PID).${NC}"
+        else
+            # Continuing would enable Hyperion and point Spring AI at a dead port, so the variant suite would
+            # fail later with connection errors that say nothing about the real cause.
+            echo -e "${RED}ERROR: mock LLM did not become ready; aborting instead of running Hyperion against a dead endpoint.${NC}"
+            if kill -0 "$MOCK_LLM_PID" 2>/dev/null; then
+                kill_tree "$MOCK_LLM_PID"
+            fi
+            rm -f "$LOCAL_DIR/hyperion-mock-llm.pid"
+            exit 1
+        fi
+        export ARTEMIS_HYPERION_ENABLED="true"
+        export SPRING_AI_OPENAI_BASE_URL="http://localhost:${HYPERION_MOCK_LLM_PORT}/v1"
+        export SPRING_AI_OPENAI_API_KEY="dummy-key"
+        export SPRING_AI_OPENAI_MICROSOFT_FOUNDRY="false"
+        export SPRING_AI_OPENAI_CHAT_MODEL="mock-model"
+    fi
+
     # Server environment variables
     export SPRING_PROFILES_ACTIVE="artemis,scheduling,localvc,localci,buildagent,core,dev"
     export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/Artemis?sslmode=disable"
@@ -404,6 +475,10 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONALALLOWEDORIGINS="http://localhost:9000"
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
+    # Installation metadata for the About page. Matches docker/artemis/config/playwright.env.
+    export INFO_OPERATORNAME="TUM"
+    export INFO_OPERATORADMINNAME="Artemis E2E Administrator"
+    export INFO_UNIVERSITYNAME="Artemis E2E University"
 
     # ARM64 Macs: use arm64 exercise images for LocalCI
     if [ "$(uname -m)" = "arm64" ]; then
@@ -424,7 +499,7 @@ if [ "$SKIP_SERVER" = false ]; then
 else
     echo ""
     echo -e "${YELLOW}Step 2a: Skipping server (--skip-server)${NC}"
-    if ! curl -sf http://localhost:8080/management/health >/dev/null 2>&1; then
+    if ! curl -sf http://localhost:8080/management/health/readiness >/dev/null 2>&1; then
         echo -e "${RED}WARNING: Server does not appear to be running at http://localhost:8080${NC}"
     fi
 fi
@@ -468,9 +543,12 @@ fi
 if [ "$NEED_WAIT_SERVER" = true ]; then
     echo ""
     echo "Waiting for server to be ready (this may take a few minutes on first run)..."
-    TIMEOUT=300
+    TIMEOUT="$SERVER_READY_TIMEOUT"
     ELAPSED=0
-    until curl -sf http://localhost:8080/management/health >/dev/null 2>&1; do
+    # Gate on the readiness probe, not the aggregate /management/health: the aggregate also
+    # includes external connectors (e.g. the Hermes push relay), so an outage there would keep
+    # a fully started server "not ready" and fail the run before a single test executes.
+    until curl -sf http://localhost:8080/management/health/readiness >/dev/null 2>&1; do
         if ! kill -0 "$SERVER_PID" 2>/dev/null; then
             echo -e "${RED}ERROR: Server process died. Check $LOCAL_DIR/server.log${NC}"
             tail -20 "$LOCAL_DIR/server.log"

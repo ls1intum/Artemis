@@ -2,7 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, model, out
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
@@ -19,12 +26,12 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './exercise-group-edit-modal.component.html',
     imports: [
         FormsModule,
-        TumUiDialogComponent,
-        TumUiInputDirective,
-        TumUiInputNumberComponent,
-        TumUiButtonComponent,
-        TumUiMessageComponent,
-        TumUiTooltipDirective,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         FaIconComponent,
         TimelineComponent,
         ArtemisTranslatePipe,
@@ -56,33 +63,18 @@ export class ExerciseGroupEditModalComponent {
     readonly draftExampleSolutionPublicationDate = signal<dayjs.Dayjs | undefined>(undefined);
 
     readonly headerStringKey = computed(() => (this.isNew() ? 'artemisApp.exerciseManagement.groupEdit.createHeader' : 'artemisApp.exerciseManagement.groupEdit.header'));
+    private readonly assessmentDueDateErrorStringKey = computed(() =>
+        this.draftAssessmentDueDate() !== undefined && this.draftDueDate() === undefined ? 'artemisApp.exercise.assessmentDueDateRequiresDueDate' : undefined,
+    );
 
-    readonly timelineItems = computed<TimelineItem[]>(() => {
-        const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
-        const items: TimelineItem[] = [
-            releaseDateItem,
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
-        ];
-        items.push(
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.assessmentDueDate', date: this.draftAssessmentDueDate },
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
-                date: this.draftExampleSolutionPublicationDate,
-                // The group only requires `>= releaseDate` (see ExerciseVariantGroup#areDatesValid).
-                orderCheckAgainst: [releaseDateItem],
-            },
-        );
-        return items;
-    });
+    readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
     /** Mirrors the server-side constraints: non-blank and at most 255 characters (the title column is varchar(255)). */
     readonly isTitleValid = computed(() => {
         const title = this.draftTitle().trim();
         return title.length > 0 && title.length <= MAX_TITLE_LENGTH;
     });
-    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true, invalidItems: [] });
     readonly isSaveDisabled = computed(() => !this.isTitleValid() || !this.timelineStatus().valid);
 
     constructor() {
@@ -133,6 +125,25 @@ export class ExerciseGroupEditModalComponent {
             datesEqual(updated.assessmentDueDate, toDayjs(g.assessmentDueDate)) &&
             datesEqual(updated.exampleSolutionPublicationDate, toDayjs(g.exampleSolutionPublicationDate))
         );
+    }
+
+    private computeTimelineItems(): TimelineItem[] {
+        return [
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate },
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.assessmentDueDate',
+                date: this.draftAssessmentDueDate,
+                errorStringKey: this.assessmentDueDateErrorStringKey,
+            },
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
+                date: this.draftExampleSolutionPublicationDate,
+            },
+        ];
     }
 }
 

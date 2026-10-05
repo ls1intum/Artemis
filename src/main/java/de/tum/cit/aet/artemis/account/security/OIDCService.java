@@ -78,6 +78,10 @@ public class OIDCService extends OidcUserService {
             throw new OAuth2AuthenticationException("Required username claim is missing from Identity Provider");
         }
 
+        // The claim may carry an uppercase letter, and the lookup below is an exact match. Canonicalize once here so that
+        // the lookup and the account createNewUserFromOidc stores use the same value User#setLogin would persist anyway.
+        username = User.canonicalLogin(username);
+
         // Check if user with given username already exists
         Optional<User> localUser = userRepository.findOneWithAuthoritiesByLogin(username);
         User actualUser;

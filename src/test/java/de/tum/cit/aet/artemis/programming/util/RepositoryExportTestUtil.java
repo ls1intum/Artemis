@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -286,9 +287,9 @@ public final class RepositoryExportTestUtil {
      */
     public static BaseRepositories createAndWireBaseRepositoriesWithHandles(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-        String testsRepositorySlug = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-" + RepositoryType.TESTS.getName();
 
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.TEMPLATE, templateRepositorySlug);
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.SOLUTION, solutionRepositorySlug);
@@ -466,8 +467,8 @@ public final class RepositoryExportTestUtil {
      * @throws IOException if deletion fails
      */
     public static void deleteStudentBareRepo(ProgrammingExercise exercise, String username, Path localVCBasePath) throws IOException {
-        String projectKey = exercise.getProjectKey().toUpperCase();
-        String slug = (exercise.getProjectKey() + "-" + username).toLowerCase();
+        String projectKey = exercise.getProjectKey().toUpperCase(Locale.ROOT);
+        String slug = (exercise.getProjectKey() + "-" + username).toLowerCase(Locale.ROOT);
         Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
         if (Files.exists(bareRepoPath)) {
             FileUtils.deleteDirectory(bareRepoPath.toFile());
@@ -502,7 +503,7 @@ public final class RepositoryExportTestUtil {
      * @throws IOException if deletion fails
      */
     public static void deleteLocalVcProjectIfPresent(Path localVCBasePath, String projectKey) throws IOException {
-        String normalizedProjectKey = projectKey == null ? null : projectKey.toUpperCase();
+        String normalizedProjectKey = projectKey == null ? null : projectKey.toUpperCase(Locale.ROOT);
         Path projectPath = localVCBasePath.resolve(normalizedProjectKey);
         if (Files.exists(projectPath)) {
             FileUtils.deleteDirectory(projectPath.toFile());

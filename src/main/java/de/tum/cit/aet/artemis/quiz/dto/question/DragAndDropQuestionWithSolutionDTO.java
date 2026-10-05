@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -9,6 +10,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.DragAndDropMappingDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record DragAndDropQuestionWithSolutionDTO(@JsonUnwrapped DragAndDropQuestionWithoutSolutionDTO dragAndDropQuestionWithoutSolutionDTO,
         List<DragAndDropMappingDTO> correctMappings) {
 
@@ -22,7 +24,7 @@ public record DragAndDropQuestionWithSolutionDTO(@JsonUnwrapped DragAndDropQuest
         // correctMappings is null on a question that has been masked for students (solutions/mappings stripped before
         // results are published); treat that as no mappings instead of dereferencing null.
         List<DragAndDropMappingDTO> correctMappings = dragAndDropQuestion.getCorrectMappings() == null ? null
-                : dragAndDropQuestion.getCorrectMappings().stream().map(DragAndDropMappingDTO::of).toList();
+                : dragAndDropQuestion.getCorrectMappings().stream().map(mapping -> DragAndDropMappingDTO.of(dragAndDropQuestion.getId(), mapping)).toList();
         return new DragAndDropQuestionWithSolutionDTO(DragAndDropQuestionWithoutSolutionDTO.of(dragAndDropQuestion), correctMappings);
     }
 

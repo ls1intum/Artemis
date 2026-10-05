@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
@@ -41,6 +42,7 @@ public class TestCaseFeedback extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "result_id")
     @JsonIgnore
+    @Parent
     private Result result;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -143,6 +145,11 @@ public class TestCaseFeedback extends DomainObject {
     @Override
     public int hashCode() {
         return TestCaseFeedback.class.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
     }
 
     @Override

@@ -28,9 +28,10 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationDeletionResource {
@@ -123,13 +124,13 @@ public class ParticipationDeletionResource {
     @PutMapping("participations/{participationId}/cleanup-build-plan")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
+    public ResponseEntity<StudentParticipationDTO> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
         participationAuthorizationService.checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationDeletionService.cleanupBuildPlan(participation);
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterUpdate(participation));
     }
 
 }

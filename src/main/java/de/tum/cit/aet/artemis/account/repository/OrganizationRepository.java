@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -69,7 +68,6 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
             FROM Organization o
             WHERE o.id = :organizationId
             """)
-    @Cacheable(cacheNames = "organizationTitle", key = "#organizationId", unless = "#result == null")
     String getOrganizationTitle(@Param("organizationId") Long organizationId);
 
     /**

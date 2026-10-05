@@ -8,14 +8,24 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
@@ -34,10 +44,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
@@ -46,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
 
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
@@ -71,11 +89,16 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     private static final int GIT_TOKEN_PUSH_QUERY_COUNT = 6;
 
+    private static final ReentrantLock RATE_LIMIT_SERVICE_SWAP_LOCK = new ReentrantLock();
+
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private ProxyManager<String> rateLimitProxyManager;
 
     private LocalVCTestRepository assignmentRepository;
 
@@ -311,7 +334,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     void testFetchPush_assignmentRepository_student_noParticipation() throws GitAPIException, IOException, URISyntaxException {
         // Create a new repository, but don't create a participation for student2.
-        String repositorySlug = projectKey1.toLowerCase() + "-" + student2Login;
+        String repositorySlug = projectKey1.toLowerCase(Locale.ROOT) + "-" + student2Login;
         LocalVCTestRepository student2Repository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, repositorySlug);
 
         localVCLocalCITestService.testFetchReturnsError(student2Repository.workingCopy(), student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
@@ -499,16 +522,18 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String login1 = "ab123git";
         String login2 = "git123ab";
 
-        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase() + "-" + login1);
-        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase() + "-" + login2);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase(Locale.ROOT) + "-" + login1);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase(Locale.ROOT) + "-" + login2);
 
         // assert that the URIs are correct
-        assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
-        assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
+        assertThat(studentAssignmentRepositoryUri1.getURI().toString())
+                .isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login1 + ".git");
+        assertThat(studentAssignmentRepositoryUri2.getURI().toString())
+                .isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login2 + ".git");
 
         // assert that the folder names are correct
-        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
-        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
+        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login1);
+        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login2);
     }
 
     // --- Security tests: authentication and authorization for git operations ---
@@ -940,6 +965,61 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testGetHttpStatusForException_unknownException() {
         int status = localVCServletService.getHttpStatusForException(new RuntimeException("unexpected"), "/some-repo");
         assertThat(status).isEqualTo(500);
+    }
+
+    /**
+     * The git servlet runs outside Spring MVC, so the ExceptionTranslator never turns a rate limit rejection into a 429
+     * there: the fetch and push filters have to answer it themselves, or the exception leaves the servlet uncaught.
+     * <p>
+     * Rate limiting is switched off for the shared test context, so a limiting service is swapped into the servlet
+     * service for this test only. It exempts loopback, where every other test's git request comes from, and limits
+     * the documentation address this test presents in X-Forwarded-For, so concurrently running tests are unaffected.
+     * The address is fresh on every run: the buckets live in the shared context, and LocalVCSshIntegrationTest runs
+     * this test a second time, possibly concurrently: the swap is serialized so that neither run restores the other's
+     * limiting service instead of the original.
+     */
+    @Test
+    void testGitRequestsOverAuthenticationRateLimitAreAnsweredWith429() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setAuthenticationRequestsPerMinute(1);
+        properties.setExemptAddresses(List.of("127.0.0.0/8", "::1"));
+        var featureToggleService = mock(FeatureToggleService.class);
+        when(featureToggleService.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limitingRateLimitService = new RateLimitService(rateLimitProxyManager, new RateLimitConfigurationService(properties), featureToggleService);
+
+        Object servletServiceTarget = AopTestUtils.getUltimateTargetObject(localVCServletService);
+        RATE_LIMIT_SERVICE_SWAP_LOCK.lock();
+        Object originalRateLimitService = ReflectionTestUtils.getField(servletServiceTarget, "rateLimitService");
+        ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", limitingRateLimitService);
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            String repositoryUrl = localVCBaseUri + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+            String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+            String clientAddress = "2001:db8::" + Integer.toHexString(ThreadLocalRandom.current().nextInt(1, 0x10000)) + ":"
+                    + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x10000));
+
+            // The first handshake spends the only token and goes through, so the rejections below come from the limit.
+            assertThat(sendInfoRefs(client, repositoryUrl, "git-upload-pack", authorizationHeader, clientAddress).statusCode()).isEqualTo(200);
+
+            for (String service : List.of("git-upload-pack", "git-receive-pack")) {
+                HttpResponse<String> response = sendInfoRefs(client, repositoryUrl, service, authorizationHeader, clientAddress);
+                assertThat(response.statusCode()).as("status for %s", service).isEqualTo(429);
+                assertThat(response.headers().firstValueAsLong(HttpHeaders.RETRY_AFTER).orElse(0)).as("Retry-After for %s", service).isPositive();
+            }
+        }
+        finally {
+            ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", originalRateLimitService);
+            RATE_LIMIT_SERVICE_SWAP_LOCK.unlock();
+        }
+    }
+
+    private static HttpResponse<String> sendInfoRefs(HttpClient client, String repositoryUrl, String service, String authorizationHeader, String clientAddress)
+            throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(repositoryUrl + "/info/refs?service=" + service)).header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+                .header("X-Forwarded-For", clientAddress).GET().build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private void setupLdapToRejectAuth(String login) throws InvalidNameException {

@@ -91,6 +91,7 @@ import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from 
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-selection/iris-context-switch-divider.component';
+import { IrisPointOutMarkerComponent } from 'app/iris/overview/point-out-marker/iris-point-out-marker.component';
 import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -154,6 +155,7 @@ const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_D
         MenuModule,
         ContextSelectionComponent,
         IrisContextSwitchDividerComponent,
+        IrisPointOutMarkerComponent,
         CourseSidebarToggleButtonComponent,
     ],
     providers: [ConfirmationService],
@@ -163,14 +165,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly dialogService = inject(DialogService);
-    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
-
-    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
-    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
-    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
-    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
@@ -179,6 +175,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
     private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+
+    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
+
+    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
+    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
+    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
+    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -307,7 +310,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.awaitingAnswer(),
     );
-    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
+    // Without a session there is nothing to send to: the chat service rejects the message, so sending while the session
+    // is still loading would only lose what the user typed.
+    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled() || this.currentSessionId() === undefined);
     readonly canShowSuggestions = computed(
         () =>
             !!this.suggestions()?.length &&
@@ -362,6 +367,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
+    /**
+     * Whether the user may change the chat topic from the input row. When false, the context selector
+     * (the "+" dropdown and the chip showing the active context) is not rendered, so the session keeps
+     * whatever context its host pinned. The CTXSWAP dividers in the message list stay visible either
+     * way, so the student still sees which topic the chat is on.
+     */
+    readonly isContextSelectionAvailable = input<boolean>(true);
     /** Optional function provider that returns a list of context objects for the current message */
     readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
@@ -898,7 +910,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     onSend(): void {
         this.chatService.messagesRead();
         const content = this.newMessageTextContent().trim();
-        if (content) {
+        // Enter and the suggestion chips reach here without passing the disabled send button, so keep the text for a retry
+        if (content && this.currentSessionId() !== undefined) {
             this.isLoading.set(true);
             const provider = this.contextProvider();
             const context = provider ? provider() : undefined;

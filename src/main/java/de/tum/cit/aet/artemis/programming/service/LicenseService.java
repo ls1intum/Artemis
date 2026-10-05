@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Map;
-import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -53,7 +52,7 @@ public class LicenseService {
      */
     public Map<String, String> getEnvironment(ProgrammingLanguage programmingLanguage, @Nullable ProjectType projectType) {
         if (programmingLanguage == ProgrammingLanguage.MATLAB && projectType == null) {
-            return Map.of("MLM_LICENSE_FILE", Objects.requireNonNull(licenseConfiguration.getMatlabLicenseServer()));
+            return Map.of("MLM_LICENSE_FILE", licenseConfiguration.getMatlabLicenseServer());
         }
 
         return Map.of();

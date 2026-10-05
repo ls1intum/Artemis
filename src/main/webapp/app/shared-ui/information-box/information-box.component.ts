@@ -44,6 +44,14 @@ export interface StringNumberContent {
 
 export type InformationBoxContent = StudentExamContent | DateContent | ExerciseContent | DifficultyLevelContent | StringNumberContent;
 
+/**
+ * How a box arranges its label and its value.
+ *
+ * `stacked` is the default: the label above the value, as the boxes read in a details panel. `inline` puts the two on
+ * one line at a title bar's control height, for the boxes the exercise title bar takes over when it has the room.
+ */
+export type InformationBoxLayout = 'stacked' | 'inline';
+
 @Component({
     imports: [ArtemisTranslatePipe, TranslateDirective, CommonModule, NgbTooltipModule],
     selector: 'jhi-information-box',
@@ -52,4 +60,5 @@ export type InformationBoxContent = StudentExamContent | DateContent | ExerciseC
 })
 export class InformationBoxComponent {
     informationBoxData = input<InformationBox>();
+    readonly layout = input<InformationBoxLayout>('stacked');
 }

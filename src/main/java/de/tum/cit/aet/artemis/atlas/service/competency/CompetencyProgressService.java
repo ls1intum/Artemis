@@ -320,7 +320,7 @@ public class CompetencyProgressService {
      */
     private void calculateProgress(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos,
             CompetencyProgress competencyProgress) {
-        double numberOfLearningObjects = lectureUnitInfos.size() + exerciseInfos.size();
+        double numberOfLearningObjects = (double) lectureUnitInfos.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
             // If nothing is linked to the competency, the competency is considered completed
             competencyProgress.setProgress(100.0);
@@ -487,7 +487,7 @@ public class CompetencyProgressService {
      */
     private double calculateCompetencyLinkWeightConfidenceHeuristic(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos,
             Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos, double progress) {
-        double numberOfLearningObjects = lectureUnitInfos.size() + exerciseInfos.size();
+        double numberOfLearningObjects = (double) lectureUnitInfos.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
             return 0;
         }
@@ -537,7 +537,7 @@ public class CompetencyProgressService {
 
     private void setConfidenceReasonLow(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence,
             double competencyLinkWeightConfidenceHeuristic) {
-        double minConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic).min().getAsDouble();
+        double minConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic).min().orElseThrow();
         if (recencyConfidence == minConfidenceHeuristic) {
             competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_LOWER);
         }
@@ -551,7 +551,7 @@ public class CompetencyProgressService {
 
     private void setConfidenceReasonHigh(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence,
             double competencyLinkWeightConfidenceHeuristic) {
-        double maxConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic).max().getAsDouble();
+        double maxConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic).max().orElseThrow();
         if (recencyConfidence == maxConfidenceHeuristic) {
             competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_HIGHER);
         }

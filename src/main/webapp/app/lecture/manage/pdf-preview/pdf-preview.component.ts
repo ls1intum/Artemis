@@ -1,6 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -9,7 +8,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
@@ -25,7 +24,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { finalize } from 'rxjs/operators';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
@@ -104,14 +104,22 @@ export interface HiddenPageMap {
         DeleteButtonDirective,
         TranslateDirective,
         ConfirmAutofocusButtonComponent,
+        ButtonComponent,
         PdfPreviewDateBoxComponent,
     ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
+    // Injected services
+    private readonly route = inject(ActivatedRoute);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly alertService = inject(AlertService);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly pdfEngineService = inject(PdfEngineService);
+
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     showPopover = viewChild.required<NgbPopover>('showPopover');
 
-    attachmentSub?: Subscription;
     attachmentVideoUnitSub?: Subscription;
 
     FOREVER = dayjs('9999-12-31');
@@ -123,7 +131,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
 
     // Signals
-    attachment = signal<Attachment | undefined>(undefined);
     attachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
     isPdfLoading = signal<boolean>(false);
     attachmentToBeEdited = signal<Attachment | undefined>(undefined);
@@ -159,20 +166,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             .sort((a, b) => a.order - b.order);
     });
 
-    // Injected services
-    private readonly route = inject(ActivatedRoute);
-    private readonly attachmentService = inject(AttachmentService);
-    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly lectureUnitService = inject(LectureUnitService);
-    private readonly alertService = inject(AlertService);
-    private readonly router = inject(Router);
-    private readonly pdfEngineService = inject(PdfEngineService);
+    /** Set once the page is left, after which a request that completes late must not navigate. */
+    private isDestroyed = false;
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
     protected readonly faCancel = faCancel;
+    protected readonly faArrowLeft = faArrowLeft;
     protected readonly faExclamationCircle = faExclamationCircle;
     protected readonly faFileImport = faFileImport;
     protected readonly faEye = faEye;
@@ -185,12 +187,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.isPdfLoading.set(true);
         this.courseId.set(Number(this.route?.parent?.snapshot.paramMap.get('courseId')));
         this.route.data.subscribe((data) => {
-            if ('attachment' in data) {
-                this.attachment.set(data.attachment);
-                this.fetchPdfFile('attachment');
-            } else if ('attachmentVideoUnit' in data) {
+            if ('attachmentVideoUnit' in data) {
                 this.attachmentVideoUnit.set(data.attachmentVideoUnit);
-                const { slides } = data.attachmentVideoUnit;
+                // A unit whose slides were never extracted carries no slides at all, and the response omits empty
+                // collections rather than sending an empty array. An attachment video unit created for an attachment
+                // that used to hang off a lecture directly stays in that state until its file is saved from here, which
+                // is what produces its slides, so the preview has to open on a unit that has none.
+                const slides: Slide[] = data.attachmentVideoUnit.slides ?? [];
 
                 // Store hidden pages information
                 const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
@@ -207,7 +210,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set(deepClone(hiddenPagesMap));
 
-                this.fetchPdfFile('attachmentVideoUnit', slides);
+                this.fetchPdfFile(slides);
             } else {
                 this.isPdfLoading.set(false);
             }
@@ -215,34 +218,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Fetches a PDF file based on the specified file type (attachment or attachmentVideoUnit).
-     * @param fileType The type of file to fetch ('attachment' or 'attachmentVideoUnit')
-     * @param slides Optional array of slides (only used for attachmentVideoUnit)
+     * Fetches the PDF file of the attachment video unit currently being previewed.
+     * @param slides The slides of the attachment video unit
      */
-    private fetchPdfFile(fileType: 'attachment' | 'attachmentVideoUnit', slides?: Slide[]): void {
-        let subscription: Subscription;
-
-        if (fileType === 'attachment') {
-            subscription = this.attachmentService
-                .getAttachmentFile(this.courseId(), this.attachment()!.id!)
-                .pipe(finalize(() => this.isPdfLoading.set(false)))
-                .subscribe({
-                    next: (blob: Blob) => this.processPdfBlob(blob, slides),
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
-
-            this.attachmentSub = subscription;
-        } else {
-            subscription = this.attachmentVideoUnitService
-                .getAttachmentFile(this.courseId(), this.attachmentVideoUnit()!.id!)
-                .pipe(finalize(() => this.isPdfLoading.set(false)))
-                .subscribe({
-                    next: (blob: Blob) => this.processPdfBlob(blob, slides),
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
-
-            this.attachmentVideoUnitSub = subscription;
-        }
+    private fetchPdfFile(slides?: Slide[]): void {
+        this.attachmentVideoUnitSub = this.attachmentVideoUnitService
+            .getAttachmentFile(this.courseId(), this.attachmentVideoUnit()!.id!)
+            .pipe(finalize(() => this.isPdfLoading.set(false)))
+            .subscribe({
+                next: (blob: Blob) => this.processPdfBlob(blob, slides),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
     }
 
     /**
@@ -353,7 +339,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.attachmentSub?.unsubscribe();
+        this.isDestroyed = true;
         this.attachmentVideoUnitSub?.unsubscribe();
 
         const sources = this.sourcePDFs();
@@ -487,10 +473,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.isSaving.set(true);
 
         try {
-            const pdfName = this.attachment()?.name ?? this.attachmentVideoUnit()?.name ?? '';
+            const pdfName = this.attachmentVideoUnit()?.name ?? '';
             const { instructorBytes, studentBytes } = await this.applyOperations(true);
-            const needsPdfContentUpdate = this.attachment() !== undefined || this.hasPdfContentChanges();
-            const instructorPdfFile = needsPdfContentUpdate ? this.bytesToFile(instructorBytes, pdfName) : undefined;
+            const instructorPdfFile = this.hasPdfContentChanges() ? this.bytesToFile(instructorBytes, pdfName) : undefined;
 
             if (instructorPdfFile && instructorPdfFile.size > MAX_FILE_SIZE) {
                 this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
@@ -498,9 +483,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            if (this.attachment()) {
-                await this.updateAttachment(instructorPdfFile!);
-            } else if (this.attachmentVideoUnit()) {
+            if (this.attachmentVideoUnit()) {
                 const hiddenPages = this.getHiddenPages();
                 await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages);
 
@@ -516,29 +499,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const message = getErrorMessage(error);
             this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: message });
         }
-    }
-
-    /**
-     * Updates a regular attachment
-     */
-    private updateAttachment(instructorPdfFile: File): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.attachmentToBeEdited.set(this.attachment());
-            this.attachmentToBeEdited()!.version!++;
-            this.attachmentToBeEdited()!.uploadDate = dayjs();
-
-            this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, instructorPdfFile).subscribe({
-                next: () => {
-                    this.finishSaving();
-                    resolve();
-                },
-                error: (error) => {
-                    this.isSaving.set(false);
-                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                    reject(error);
-                },
-            });
-        });
     }
 
     /**
@@ -642,7 +602,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.hasOperations.set(false);
         this.isFileChanged.set(false);
         this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-        this.navigateToCourseManagement();
+        this.navigateBack();
     }
 
     /**
@@ -679,24 +639,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deletes the attachment file if it exists, or deletes the attachment video unit if it exists.
+     * Deletes the attachment video unit currently being previewed.
      * @returns A Promise that resolves when the deletion process is completed.
      */
     async deleteAttachmentFile() {
-        if (this.attachment()) {
-            this.attachmentService.delete(this.attachment()!.id!).subscribe({
-                next: () => {
-                    this.navigateToCourseManagement();
-                    this.dialogErrorSource.next('');
-                },
-                error: (error) => {
-                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                },
-            });
-        } else if (this.attachmentVideoUnit()) {
+        if (this.attachmentVideoUnit()) {
             this.lectureUnitService.delete(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
                 next: () => {
-                    this.navigateToCourseManagement();
+                    this.navigateBack();
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {
@@ -913,13 +863,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Navigates to the appropriate course management page based on context.
+     * Goes back to the page the user came from, such as the lecture editor, or else to the content page of the lecture the unit belongs to.
+     * A save or deletion that completes after the user left the page does not go back once more from wherever the user is now.
      */
-    navigateToCourseManagement(): void {
-        if (this.attachment()) {
-            void this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachment()!.lecture!.id, 'attachments']);
-        } else {
-            void this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+    navigateBack(): void {
+        if (this.isDestroyed) {
+            return;
         }
+        this.navigationUtilService.navigateBack(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id!, 'unit-management']);
     }
 }

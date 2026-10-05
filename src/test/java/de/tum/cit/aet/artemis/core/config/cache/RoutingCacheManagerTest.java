@@ -21,16 +21,13 @@ class RoutingCacheManagerTest {
 
     private CacheManager blobCacheManager;
 
-    private CacheManager titleCacheManager;
-
     private RoutingCacheManager routingCacheManager;
 
     @BeforeEach
     void setUp() {
-        distributedCacheManager = new ConcurrentMapCacheManager("notificationParameters", "userCourseNotificationSettingPreset");
+        distributedCacheManager = new ConcurrentMapCacheManager("atlas-session-pending-operations", "atlas-execution-plan");
         blobCacheManager = new ConcurrentMapCacheManager(BlobCacheConfiguration.BLOB_CACHE_NAMES.toArray(String[]::new));
-        titleCacheManager = new ConcurrentMapCacheManager(TitleCacheConfiguration.TITLE_CACHE_NAMES.toArray(String[]::new));
-        routingCacheManager = new RoutingCacheManager(distributedCacheManager, blobCacheManager, titleCacheManager);
+        routingCacheManager = new RoutingCacheManager(distributedCacheManager, blobCacheManager);
     }
 
     @Test
@@ -43,27 +40,17 @@ class RoutingCacheManagerTest {
     }
 
     @Test
-    void shouldRouteTitleCachesToThePerNodeManager() {
-        for (String titleCacheName : TitleCacheConfiguration.TITLE_CACHE_NAMES) {
-            Cache cache = routingCacheManager.getCache(titleCacheName);
-
-            assertThat(cache).as("%s must be served by the per-node manager", titleCacheName).isSameAs(titleCacheManager.getCache(titleCacheName));
-        }
-    }
-
-    @Test
     void shouldRouteEveryOtherCacheToTheDistributedManager() {
-        Cache cache = routingCacheManager.getCache("notificationParameters");
+        Cache cache = routingCacheManager.getCache("atlas-session-pending-operations");
 
-        assertThat(cache).isSameAs(distributedCacheManager.getCache("notificationParameters"));
+        assertThat(cache).isSameAs(distributedCacheManager.getCache("atlas-session-pending-operations"));
     }
 
     @Test
     void shouldReportCacheNamesOfEveryManagerSorted() {
         List<String> names = List.copyOf(routingCacheManager.getCacheNames());
 
-        assertThat(names).contains("notificationParameters", "userCourseNotificationSettingPreset").containsAll(BlobCacheConfiguration.BLOB_CACHE_NAMES)
-                .containsAll(TitleCacheConfiguration.TITLE_CACHE_NAMES);
+        assertThat(names).contains("atlas-session-pending-operations", "atlas-execution-plan").containsAll(BlobCacheConfiguration.BLOB_CACHE_NAMES);
         assertThat(names).as("a stable order keeps the admin cache overview from reshuffling").isSorted();
     }
 }

@@ -26,8 +26,7 @@ public class IrisCompetencyApi extends AbstractIrisApi {
 
     public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription, List<IrisCompetencyRecommendationDTO> currentCompetencies) {
         var pyrisCompetencies = currentCompetencies.stream()
-                .map(competency -> new PyrisCompetencyRecommendationDTO(competency.title(), competency.description(), competency.taxonomy()))
-                .toArray(PyrisCompetencyRecommendationDTO[]::new);
+                .map(competency -> new PyrisCompetencyRecommendationDTO(competency.title(), competency.description(), competency.taxonomy())).toList();
         irisCompetencyGenerationService.executeCompetencyExtractionPipeline(user, course, courseDescription, pyrisCompetencies);
     }
 }

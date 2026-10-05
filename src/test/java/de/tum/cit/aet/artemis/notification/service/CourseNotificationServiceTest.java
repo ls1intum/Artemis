@@ -31,9 +31,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
@@ -103,7 +105,7 @@ class CourseNotificationServiceTest {
     void shouldRecordAFailedAsynchronousDeliveryAsAFailure() {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
-        when(courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP)).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(recipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(recipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
         when(webappService.sendCourseNotification(any(CourseNotificationDTO.class), anyList()))
@@ -111,20 +113,22 @@ class CourseNotificationServiceTest {
 
         courseNotificationService.sendCourseNotification(notification, recipients);
 
-        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(Role.ANONYMOUS), eq(true), anyLong());
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(UserFeature.NOTIFICATION_DELIVERY),
+                eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(true), anyLong());
     }
 
     @Test
     void shouldRecordASuccessfulDeliveryAsASuccess() {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
-        when(courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP)).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(recipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(recipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
         courseNotificationService.sendCourseNotification(notification, recipients);
 
-        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(UserFeature.NOTIFICATION_DELIVERY),
+                eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     @Test
@@ -134,8 +138,8 @@ class CourseNotificationServiceTest {
         List<User> webappRecipients = List.of(createTestUser(1L));
         List<User> pushRecipients = List.of(createTestUser(2L));
 
-        when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationChannelOption.WEBAPP)).thenReturn(webappRecipients);
-        when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationChannelOption.PUSH)).thenReturn(pushRecipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(allRecipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(webappRecipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(allRecipients), eq(NotificationChannelOption.PUSH), any())).thenReturn(pushRecipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
@@ -155,7 +159,7 @@ class CourseNotificationServiceTest {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
 
-        when(courseNotificationSettingService.filterRecipientsBy(any(), any(), any())).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(any(), any(), any(), any())).thenReturn(recipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 

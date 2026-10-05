@@ -9,6 +9,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -122,12 +123,12 @@ public class ProgrammingPlagiarismDetectionService {
      */
     public PlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws IOException {
         long start = System.nanoTime();
-        String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
+        var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
 
         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
 
         // Only one plagiarism check per course allowed
-        var courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        var courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
 
         // Claim the course before entering the try block: the finally below releases the course, and a caller that was
         // refused must not release the check somebody else is running.
@@ -137,18 +138,6 @@ public class ProgrammingPlagiarismDetectionService {
 
         try {
             JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
-            if (jPlagResult == null) {
-                log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
-                PlagiarismResult textPlagiarismResult = new PlagiarismResult();
-                textPlagiarismResult.setExercise(programmingExercise);
-                textPlagiarismResult.setSimilarityDistribution(new int[0]);
-
-                log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", textPlagiarismResult.getComparisons().size(),
-                        TimeLogUtil.formatDurationFrom(start));
-                log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
-                return textPlagiarismResult;
-            }
-
             log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", jPlagResult.getAllComparisons().size(), programmingExerciseId);
             PlagiarismResult textPlagiarismResult = new PlagiarismResult();
             textPlagiarismResult.convertJPlagResult(jPlagResult, programmingExercise);
@@ -187,7 +176,8 @@ public class ProgrammingPlagiarismDetectionService {
      * @param programmingExercise the programming exercise to check
      * @param similarityThreshold the similarity threshold (in % between 0 and 100)
      * @param minimumScore        the minimum score
-     * @return the JPlag result or null if there are not enough participations
+     * @return the JPlag result
+     * @throws BadRequestAlertException if there are not enough valid submissions to compare
      */
     @NonNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
@@ -226,7 +216,7 @@ public class ProgrammingPlagiarismDetectionService {
         }
 
         log.info("Start JPlag programming comparison for programming exercise {}", programmingExerciseId);
-        String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
+        var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Running JPlag..."));
 
         JPlagResult result;
@@ -479,7 +469,7 @@ public class ProgrammingPlagiarismDetectionService {
             try (Stream<Path> paths = Files.walk(repoPath)) {
                 List<Path> relevantFiles = paths.filter(Files::isRegularFile).filter(path -> {
                     // Only consider files with the correct file extension
-                    String fileName = path.getFileName().toString().toLowerCase();
+                    String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
                     return fileExtensions.stream().anyMatch(fileName::endsWith);
                 }).toList();
 

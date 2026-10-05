@@ -168,7 +168,7 @@ async function createManualAssessment(client, exercise, exerciseType, assessorLo
     let method = 'put';
     switch (exerciseType) {
         case 'modeling':
-            assessmentUrl = `/api/modeling/modeling-submissions/${submission.id}/result/${result.id}/assessment?submit=true`;
+            assessmentUrl = `/api/modeling/modeling-submissions/${submission.id}/results/${result.id}/assessment?submit=true`;
             break;
         case 'text':
             assessmentUrl = `/api/text/participations/${submission.participation?.id}/results/${result.id}/submit-text-assessment`;

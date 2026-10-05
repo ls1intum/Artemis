@@ -79,7 +79,7 @@ async function expectLoadsOnceAndRefreshesOnReselect(page: Page, courseId: numbe
 
 /** A sidebar entry of a tab's own inner sidebar (lectures, exams, exercises and tutorial groups all use these cards). */
 function sidebarCard(page: Page, title: string) {
-    return page.locator('#test-sidebar-card-title', { hasText: title });
+    return page.getByTestId('sidebar-card-title').filter({ hasText: title });
 }
 
 test.describe('Course overview tabs', { tag: '@fast' }, () => {
@@ -98,7 +98,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 
-    test('Exercises tab lists the seeded exercises and never falls back to the dashboard endpoint', async ({ page, login, exerciseAPIRequests, courseOverview }) => {
+    test('Exercises tab lists the seeded exercises', async ({ page, login, exerciseAPIRequests, courseOverview }) => {
         // Released but not yet due, so the exercises land in the sidebar group a student sees expanded
         const released = dayjs().subtract(2, 'day');
         const due = dayjs().add(2, 'day');
@@ -107,12 +107,10 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
 
         await login(studentOne);
         const exerciseRequests = recordRequests(page, new RegExp(`api/course/courses/${course.id}/exercises-for-overview`));
-        const dashboardRequests = recordRequests(page, new RegExp(`api/course/courses/${course.id}/for-dashboard`));
         await openCourseTab(page, course.id!, 'exercises');
 
         await expect(courseOverview.getExercise(first.title!)).toBeVisible();
         await expect(courseOverview.getExercise(second.title!)).toBeVisible();
-        expect(dashboardRequests, 'the deprecated whole-course endpoint must not be used').toHaveLength(0);
         await expectLoadsOnceAndRefreshesOnReselect(page, course.id!, 'exercises', exerciseRequests);
         // The refresh must not drop what is on screen — the list is replaced, not emptied and refilled
         await expect(courseOverview.getExercise(first.title!)).toBeVisible();
