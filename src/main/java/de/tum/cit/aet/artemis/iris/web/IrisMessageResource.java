@@ -115,7 +115,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(sessionId);
-        return ResponseEntity.ok(messages.stream().map(IrisMessageResponseDTO::of).toList());
+        return ResponseEntity.ok(IrisMessageResponseDTO.ofDisplayed(messages));
     }
 
     /**
@@ -208,7 +208,9 @@ public class IrisMessageResource {
         irisSessionService.checkRateLimit(session, user);
 
         var message = irisMessageRepository.findByIdElseThrow(messageId);
-        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
+        // A stored conversation summary can follow the user message whose run failed. Clients do not show it, so it does not count as the last message.
+        var displayedMessages = session.getMessages().stream().filter(sessionMessage -> sessionMessage.getSender() != IrisMessageSender.SUMMARY).toList();
+        if (displayedMessages.isEmpty() || !displayedMessages.getLast().equals(message)) {
             throw new BadRequestException("Only the last message can be resent");
         }
         if (message.getSender() != IrisMessageSender.USER) {

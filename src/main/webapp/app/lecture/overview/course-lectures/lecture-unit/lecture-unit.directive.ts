@@ -1,13 +1,19 @@
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { input, output } from '@angular/core';
+import { computed, input, output } from '@angular/core';
 import { Directive } from '@angular/core';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 @Directive()
 export class LectureUnitDirective<T extends LectureUnit> {
     courseId = input.required<number>();
     lectureUnit = input.required<T>();
-    initiallyExpanded = input<boolean>(false);
+    readonly deepLink = input<LectureDeepLink | undefined>(undefined);
+
+    readonly matchedDeepLink = computed(() => {
+        const deepLink = this.deepLink();
+        return deepLink?.unitId === this.lectureUnit()?.id ? deepLink : undefined;
+    });
 
     readonly onCompletion = output<LectureUnitCompletionEvent>();
     readonly onCollapse = output<boolean>();

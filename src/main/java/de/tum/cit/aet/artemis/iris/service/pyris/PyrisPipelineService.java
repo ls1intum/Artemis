@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.course.service.CourseLoadService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
@@ -168,10 +170,11 @@ public class PyrisPipelineService {
             ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
-        // Event-triggered runs (e.g. build failure, stalled progress) are not caused by a user message, so they must not
-        // carry a triggering user message id
-        var triggeringUserMessageId = eventVariant.isPresent() || session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
-        var jobToken = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), triggeringUserMessageId, clientId);
+        // The run's user message, which gets the memories the run reports. Event-triggered runs (e.g. build failure, stalled progress) are not caused by a user message, so
+        // they carry no user message id. The last row of a session can be a stored conversation summary, which must not get memories, because that would push it to the client.
+        var userMessageId = eventVariant.isPresent() ? null
+                : session.getMessages().reversed().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).findFirst().map(IrisMessage::getId).orElse(null);
+        var jobToken = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), userMessageId, clientId);
         materialVersionService.capture(jobToken, session.getCourseId());
         // @formatter:off
         executePipeline("chat", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, eventVariant,
