@@ -67,7 +67,7 @@ class LearningObjectImportServiceTest {
     }
 
     @Test
-    void importingAnIndividualProgrammingExerciseCopiesItsStoredSettingsAsWell() {
+    void importingAnIndividualProgrammingExerciseStillReadsBothSettingsBeforeTheImport() {
         var team = new TeamAssignmentConfig();
         team.setMinTeamSize(3);
         team.setMaxTeamSize(4);
@@ -76,10 +76,10 @@ class LearningObjectImportServiceTest {
 
         ProgrammingExercise imported = importWithStoredSettings(ExerciseMode.INDIVIDUAL, team, plagiarism);
 
-        // the settings of an individual exercise wait in its permanent row for the day it becomes a team exercise
-        assertThat(imported.getStoredTeamAssignmentConfig()).isNotNull();
-        assertThat(imported.getStoredTeamAssignmentConfig().getMinTeamSize()).isEqualTo(3);
-        assertThat(imported.getStoredTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(4);
+        // Both reads happen whatever the mode. What the real import then does with the team sizes of an individual exercise (it
+        // drops them, because the team getter reports none) is covered by the integration test of the competency import.
+        verify(exerciseConfigurationService).attachTeamAssignmentConfig(imported);
+        verify(exerciseConfigurationService).attachPlagiarismDetectionConfig(imported);
         assertThat(imported.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(77);
     }
 

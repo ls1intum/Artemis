@@ -229,13 +229,16 @@ public class FileUploadExerciseResource {
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(fileUploadExercise);
         FileUploadExercise savedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        // The configurations hold the key to their exercise, so their permanent rows are created right after the exercise
+        // exists: nothing that can fail in between may leave an exercise without them.
+        exerciseConfigurationService.initialize(savedExercise, fileUploadExercise.getTeamAssignmentConfig(), fileUploadExercise.getPlagiarismDetectionConfig());
         if (!competencyLinks.isEmpty()) {
+            FileUploadExercise firstSave = savedExercise;
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = fileUploadExerciseRepository.save(savedExercise);
+            exerciseConfigurationService.carryOver(firstSave, savedExercise);
         }
         final FileUploadExercise result = savedExercise;
-        // The configuration holds the key to its exercise, so it is stored once the exercise exists.
-        exerciseConfigurationService.initialize(result, fileUploadExercise.getTeamAssignmentConfig(), fileUploadExercise.getPlagiarismDetectionConfig());
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);

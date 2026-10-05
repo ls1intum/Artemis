@@ -257,7 +257,8 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
     void insertingTheDefaultsAgainChangesNothing() {
         long idBefore = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
 
-        plagiarismDetectionConfigRepository.insertDefaultsFor(textExerciseId);
+        exerciseConfigurationService.initialize(exerciseRepository.findByIdElseThrow(textExerciseId));
+        exerciseConfigurationService.initialize(exerciseRepository.findByIdElseThrow(textExerciseId));
 
         List<PlagiarismDetectionConfig> rows = plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(textExerciseId));
         assertThat(rows).hasSize(1);

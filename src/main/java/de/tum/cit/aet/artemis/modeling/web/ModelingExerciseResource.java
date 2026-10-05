@@ -237,13 +237,16 @@ public class ModelingExerciseResource {
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(modelingExercise);
         ModelingExercise savedExercise = modelingExerciseRepository.save(modelingExercise);
+        // The configurations hold the key to their exercise, so their permanent rows are created right after the exercise
+        // exists: nothing that can fail in between may leave an exercise without them.
+        exerciseConfigurationService.initialize(savedExercise, modelingExercise.getTeamAssignmentConfig(), modelingExercise.getPlagiarismDetectionConfig());
         if (!competencyLinks.isEmpty()) {
+            ModelingExercise firstSave = savedExercise;
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = modelingExerciseRepository.save(savedExercise);
+            exerciseConfigurationService.carryOver(firstSave, savedExercise);
         }
         final ModelingExercise result = savedExercise;
-        // The configurations hold the key to their exercise, so their permanent rows are created once the exercise exists.
-        exerciseConfigurationService.initialize(result, modelingExercise.getTeamAssignmentConfig(), modelingExercise.getPlagiarismDetectionConfig());
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);

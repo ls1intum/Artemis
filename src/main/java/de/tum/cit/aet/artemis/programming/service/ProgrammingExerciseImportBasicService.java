@@ -191,9 +191,10 @@ public class ProgrammingExerciseImportBasicService {
         // the test cases and the tasks created below can reference it. Competency links are added afterwards because they
         // must point at the persisted exercise.
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
-        // An exam exercise is always individual and must not keep team settings a client brought along: it gets the defaults.
+        // An exam exercise is always individual: whatever team settings the request brought along are ignored, and its permanent
+        // row keeps the defaults.
         final var desiredTeamAssignmentConfig = newExercise.isExamExercise() ? null : newExercise.getTeamAssignmentConfig();
-        // Likewise an exam exercise starts from the default plagiarism detection settings: setupExerciseForImport already cleared them.
+        // Likewise an exam exercise keeps the default plagiarism detection settings in its permanent row.
         final var desiredPlagiarismDetectionConfig = newExercise.isExamExercise() ? null : newExercise.getPlagiarismDetectionConfig();
         newExercise = programmingExerciseRepository.save(newExercise);
         // The configurations name the exercise, so they are written once that exercise exists.
@@ -497,13 +498,13 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
 
         // only copy the config for team programming exercise in courses
-        if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise()) {
+        if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise() && newExercise.getTeamAssignmentConfig() != null) {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
         }
         // We have to rebuild the auxiliary repositories
         newExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
-        if (newExercise.isTeamMode()) {
+        if (newExercise.isTeamMode() && newExercise.getTeamAssignmentConfig() != null) {
             newExercise.getTeamAssignmentConfig().setId(null);
         }
 

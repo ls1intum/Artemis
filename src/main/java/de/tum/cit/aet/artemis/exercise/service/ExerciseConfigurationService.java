@@ -61,6 +61,18 @@ public class ExerciseConfigurationService {
     }
 
     /**
+     * Hands the stored settings on the slots of one instance of an exercise to another instance of the same exercise, for the
+     * case that a second save returned a merged copy, which does not carry them.
+     *
+     * @param from the instance that carries the stored settings
+     * @param to   the instance of the same exercise that should carry them too
+     */
+    public void carryOver(Exercise from, Exercise to) {
+        to.setTeamAssignmentConfig(from.getStoredTeamAssignmentConfig());
+        to.setPlagiarismDetectionConfig(from.getPlagiarismDetectionConfig());
+    }
+
+    /**
      * Reads the stored team settings of an exercise onto its slot; the exercise is left without them if it has none.
      *
      * @param exercise the exercise, which does not carry its settings after being loaded

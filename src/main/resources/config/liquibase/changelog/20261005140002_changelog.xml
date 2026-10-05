@@ -18,7 +18,7 @@
 
     <changeSet id="20261005140002-01-stop-on-a-configuration-shared-by-several-courses" author="krusche">
         <!-- Two courses cannot share a configuration. If they do, nothing says which one owns it, so the upgrade stops rather than guessing. -->
-        <preConditions onFail="HALT">
+        <preConditions onFail="HALT" onFailMessage="Several courses point at the same row of course_configuration. Give each course its own row (copy the row and update course.course_configuration_id) or remove the duplicate pointer, then start the server again.">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT course_configuration_id FROM course WHERE course_configuration_id IS NOT NULL
                 GROUP BY course_configuration_id HAVING COUNT(*) &gt; 1) shared</sqlCheck>
         </preConditions>
@@ -40,32 +40,11 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261005140002-03-index-the-pointer-of-course-configuration" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <not><indexExists tableName="course" indexName="idx_tmp_course_configuration_pointer"/></not>
-        </preConditions>
-        <comment>Temporary index: without it every configuration would scan the whole course table for the course that points at it.</comment>
-        <createIndex tableName="course" indexName="idx_tmp_course_configuration_pointer">
-            <column name="course_configuration_id"/>
-        </createIndex>
-        <rollback>
-            <dropIndex tableName="course" indexName="idx_tmp_course_configuration_pointer"/>
-        </rollback>
-    </changeSet>
-
     <changeSet id="20261005140002-04-set-course-key-of-course-configuration" author="krusche">
         <comment>The course that pointed at a configuration becomes its key. Only configurations without a key are filled, so a repeated run changes nothing.</comment>
         <sql>UPDATE course_configuration SET course_id =
             (SELECT MIN(course.id) FROM course WHERE course.course_configuration_id = course_configuration.id)
             WHERE course_id IS NULL;</sql>
-        <rollback/>
-    </changeSet>
-
-    <changeSet id="20261005140002-05-drop-the-pointer-index-of-course-configuration" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="course" indexName="idx_tmp_course_configuration_pointer"/>
-        </preConditions>
-        <dropIndex tableName="course" indexName="idx_tmp_course_configuration_pointer"/>
         <rollback/>
     </changeSet>
 

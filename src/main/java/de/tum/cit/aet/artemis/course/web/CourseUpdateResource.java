@@ -221,9 +221,16 @@ public class CourseUpdateResource {
         // Configurations live for the lifetime of the course. Toggling online mode only changes the course flag.
         Course result = courseRepository.save(existingCourse);
 
-        // The course configuration holds the key to its course, so saving the course does not cascade to it: applyTo changed the
-        // attached row in place and this stores it. Toggling online mode only changes the course flag.
-        result.setCourseConfiguration(courseConfigurationRepository.save(existingCourse.getCourseConfiguration()));
+        // The course configuration holds the key to its course, so saving the course does not cascade to it. Only the settings of
+        // this form are written, in place, so the retention bookkeeping a cleanup run wrote meanwhile is not overwritten with the
+        // values read at the start. An omitted retention hold is left as it is.
+        var requestedConfiguration = existingCourse.getCourseConfiguration();
+        courseConfigurationRepository.updateEditableSettings(courseId, requestedConfiguration.isGradeRelevant(), requestedConfiguration.isAutoOrchestratorEnabled(),
+                requestedConfiguration.getDebounceWindowSecondsOverride(), requestedConfiguration.getMaxDailyOrchestrationOverride());
+        if (courseUpdateDTO.dataRetentionHold() != null) {
+            courseConfigurationRepository.updateDataRetentionHold(courseId, courseUpdateDTO.dataRetentionHold());
+        }
+        courseConfigurationRepository.attachTo(result);
 
         // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
         // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).

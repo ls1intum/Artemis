@@ -18,7 +18,7 @@
 
     <changeSet id="20261005140001-01-stop-on-a-configuration-shared-by-several-courses" author="krusche">
         <!-- Two courses cannot share a configuration. If they do, nothing says which one owns it, so the upgrade stops rather than guessing. -->
-        <preConditions onFail="HALT">
+        <preConditions onFail="HALT" onFailMessage="Several courses point at the same row of course_athena_config. Give each course its own row (copy the row and update course.athena_config_id) or remove the duplicate pointer, then start the server again.">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT athena_config_id FROM course WHERE athena_config_id IS NOT NULL
                 GROUP BY athena_config_id HAVING COUNT(*) &gt; 1) shared</sqlCheck>
         </preConditions>
@@ -40,32 +40,11 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261005140001-03-index-the-pointer-of-course-athena-config" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <not><indexExists tableName="course" indexName="idx_tmp_course_athena_config_pointer"/></not>
-        </preConditions>
-        <comment>Temporary index: without it every configuration would scan the whole course table for the course that points at it.</comment>
-        <createIndex tableName="course" indexName="idx_tmp_course_athena_config_pointer">
-            <column name="athena_config_id"/>
-        </createIndex>
-        <rollback>
-            <dropIndex tableName="course" indexName="idx_tmp_course_athena_config_pointer"/>
-        </rollback>
-    </changeSet>
-
     <changeSet id="20261005140001-04-set-course-key-of-course-athena-config" author="krusche">
         <comment>The course that pointed at a configuration becomes its key. Only configurations without a key are filled, so a repeated run changes nothing.</comment>
         <sql>UPDATE course_athena_config SET course_id =
             (SELECT MIN(course.id) FROM course WHERE course.athena_config_id = course_athena_config.id)
             WHERE course_id IS NULL;</sql>
-        <rollback/>
-    </changeSet>
-
-    <changeSet id="20261005140001-05-drop-the-pointer-index-of-course-athena-config" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="course" indexName="idx_tmp_course_athena_config_pointer"/>
-        </preConditions>
-        <dropIndex tableName="course" indexName="idx_tmp_course_athena_config_pointer"/>
         <rollback/>
     </changeSet>
 

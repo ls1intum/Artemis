@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -118,6 +119,7 @@ class CourseDataRetentionServiceTest {
         when(courseArchiveService.archiveCourseSynchronously(due)).thenReturn(true);
         when(mailSendingService.isMailConfigured()).thenReturn(true);
         when(mailSendingService.buildAndSendSyncReporting(any(MailRecipientDTO.class), any(), anyList(), any(), anyMap())).thenReturn(true);
+        when(courseConfigurationRepository.markResetWarningSent(eq(1L), any())).thenReturn(1);
         User instructor = new User();
         instructor.setLogin("instructor1");
         instructor.setEmail("instructor1@artemis.test");
@@ -130,11 +132,9 @@ class CourseDataRetentionServiceTest {
         verify(courseArchiveService).archiveCourseSynchronously(due);
         verify(mailSendingService).buildAndSendSyncReporting(any(MailRecipientDTO.class), eq("email.courseStudentDataResetWarning.title"), anyList(),
                 eq("mail/courseStudentDataResetWarningEmail"), anyMap());
-        verify(courseRepository).save(due);
-        // the configuration holds the key to its course, so saving the course does not store it
-        verify(courseConfigurationRepository).save(due.getCourseConfiguration());
-        assertThat(due.getCourseConfiguration()).isNotNull();
-        assertThat(due.getCourseConfiguration().getResetWarningSentDate()).isNotNull();
+        // the warning date is set by one guarded update; the course entity is not saved
+        verify(courseConfigurationRepository).markResetWarningSent(eq(1L), any());
+        verify(courseRepository, never()).save(any());
     }
 
     @Test
@@ -203,9 +203,8 @@ class CourseDataRetentionServiceTest {
         assertThat(reset).isEqualTo(1);
         verify(courseResetService).resetStudentData(1L);
         verify(courseResetService, never()).resetStudentData(2L);
-        assertThat(due.getCourseConfiguration().getStudentDataResetDate()).isNotNull();
-        verify(courseConfigurationRepository).save(due.getCourseConfiguration());
-        verify(courseConfigurationRepository, never()).save(withinGrace.getCourseConfiguration());
+        verify(courseConfigurationRepository).markStudentDataReset(eq(1L), any());
+        verify(courseConfigurationRepository, never()).markStudentDataReset(eq(2L), any());
     }
 
     @Test
@@ -223,8 +222,8 @@ class CourseDataRetentionServiceTest {
         assertThat(reset).isEqualTo(1);
         verify(courseResetService).resetStudentData(1L);
         verify(courseResetService).resetStudentData(2L);
-        assertThat(failing.getCourseConfiguration().getStudentDataResetDate()).isNull();
-        assertThat(succeeding.getCourseConfiguration().getStudentDataResetDate()).isNotNull();
+        verify(courseConfigurationRepository, never()).markStudentDataReset(eq(1L), any());
+        verify(courseConfigurationRepository).markStudentDataReset(eq(2L), any());
     }
 
     @Test
@@ -240,9 +239,8 @@ class CourseDataRetentionServiceTest {
         assertThat(reset).isZero();
         verifyNoInteractions(courseResetService);
         // The stale warning is withdrawn, so becoming eligible again later requires a new warning and a full grace period.
-        assertThat(extended.getCourseConfiguration().getResetWarningSentDate()).isNull();
-        assertThat(extended.getCourseConfiguration().getStudentDataResetDate()).isNull();
-        verify(courseConfigurationRepository).save(extended.getCourseConfiguration());
+        verify(courseConfigurationRepository).clearResetWarning(1L);
+        verify(courseConfigurationRepository, never()).markStudentDataReset(anyLong(), any());
     }
 
     @Test
@@ -257,8 +255,7 @@ class CourseDataRetentionServiceTest {
 
         assertThat(reset).isZero();
         verifyNoInteractions(courseResetService);
-        assertThat(nowGradeRelevant.getCourseConfiguration().getResetWarningSentDate()).isNull();
-        verify(courseConfigurationRepository).save(nowGradeRelevant.getCourseConfiguration());
+        verify(courseConfigurationRepository).clearResetWarning(1L);
     }
 
     @Test
@@ -283,8 +280,7 @@ class CourseDataRetentionServiceTest {
         assertThat(reset).isZero();
         verifyNoInteractions(courseResetService);
         // Lifting the hold later must not resume a grace period that ran while the proceeding was pending.
-        assertThat(held.getCourseConfiguration().getResetWarningSentDate()).isNull();
-        verify(courseConfigurationRepository).save(held.getCourseConfiguration());
+        verify(courseConfigurationRepository).clearResetWarning(1L);
     }
 
     private Course onHold(Course course) {

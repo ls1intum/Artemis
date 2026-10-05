@@ -42,7 +42,7 @@ public interface TeamAssignmentConfigRepository extends ArtemisJpaRepository<Tea
      * Finds the team assignment configuration of the given exercise, if one exists.
      *
      * @param exerciseId the id of the exercise
-     * @return the configuration, or empty when the exercise is not a team exercise
+     * @return the configuration, or empty if the exercise was stored without going through a creation path that gives it its row
      */
     @Query("""
             SELECT configuration
@@ -66,7 +66,8 @@ public interface TeamAssignmentConfigRepository extends ArtemisJpaRepository<Tea
     List<TeamAssignmentConfig> findAllByExerciseIdIn(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Creates the team settings of a newly stored exercise with the defaults, unless the exercise already has them. The
+     * Creates the team settings of a newly stored exercise with the defaults. A plain insert: callers check {@link #existsByExerciseId(long)} first, so no statement ever locks an
+     * index range. The
      * settings are permanent: they exist for every exercise, whether or not it is in team mode, and are only ever updated
      * afterwards.
      *
@@ -76,11 +77,17 @@ public interface TeamAssignmentConfigRepository extends ArtemisJpaRepository<Tea
     @Transactional // ok because of the insert
     @Query(value = """
             INSERT INTO team_assignment_config (exercise_id, min_team_size, max_team_size)
-            SELECT exercise.id, 1, 1 FROM exercise
-            WHERE exercise.id = :exerciseId
-                AND NOT EXISTS (SELECT 1 FROM team_assignment_config existing WHERE existing.exercise_id = exercise.id)
+            VALUES (:exerciseId, 1, 1)
             """, nativeQuery = true)
     void insertDefaultsFor(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Whether the exercise already has its permanent settings row. A plain read: it takes no lock.
+     *
+     * @param exerciseId the id of the exercise
+     * @return true if the row exists
+     */
+    boolean existsByExerciseId(long exerciseId);
 
     /**
      * Changes the team sizes of an exercise's permanent settings in place.
@@ -137,7 +144,9 @@ public interface TeamAssignmentConfigRepository extends ArtemisJpaRepository<Tea
      * @return the stored settings
      */
     default TeamAssignmentConfig initializeFor(Exercise exercise, @Nullable TeamAssignmentConfig requested) {
-        insertDefaultsFor(exercise.getId());
+        if (!existsByExerciseId(exercise.getId())) {
+            insertDefaultsFor(exercise.getId());
+        }
         return applyTo(exercise, requested);
     }
 

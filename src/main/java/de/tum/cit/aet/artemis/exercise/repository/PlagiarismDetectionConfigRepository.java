@@ -66,8 +66,9 @@ public interface PlagiarismDetectionConfigRepository extends ArtemisJpaRepositor
     List<PlagiarismDetectionConfig> findAllByExerciseIdIn(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Creates the plagiarism detection settings of a newly stored exercise with the defaults, unless the exercise already
-     * has them. The settings are permanent: they exist for every exercise and are only ever updated afterwards.
+     * Creates the plagiarism detection settings of a newly stored exercise with the defaults. A plain insert: callers check
+     * {@link #existsByExerciseId(long)} first, so no statement ever locks an index range. The settings are permanent: they exist for every exercise and are only ever updated
+     * afterwards.
      *
      * @param exerciseId the id of the exercise
      */
@@ -76,11 +77,17 @@ public interface PlagiarismDetectionConfigRepository extends ArtemisJpaRepositor
     @Query(value = """
             INSERT INTO plagiarism_detection_config (exercise_id, continuous_plagiarism_control_enabled, continuous_plagiarism_control_post_due_date_checks_enabled,
                 continuous_plagiarism_control_case_student_response_period, similarity_threshold, minimum_score, minimum_size)
-            SELECT exercise.id, FALSE, FALSE, 7, 90, 0, 50 FROM exercise
-            WHERE exercise.id = :exerciseId
-                AND NOT EXISTS (SELECT 1 FROM plagiarism_detection_config existing WHERE existing.exercise_id = exercise.id)
+            VALUES (:exerciseId, FALSE, FALSE, 7, 90, 0, 50)
             """, nativeQuery = true)
     void insertDefaultsFor(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Whether the exercise already has its permanent settings row. A plain read: it takes no lock.
+     *
+     * @param exerciseId the id of the exercise
+     * @return true if the row exists
+     */
+    boolean existsByExerciseId(long exerciseId);
 
     /**
      * Changes an exercise's permanent plagiarism detection settings in place.
@@ -146,7 +153,9 @@ public interface PlagiarismDetectionConfigRepository extends ArtemisJpaRepositor
      * @return the stored settings
      */
     default PlagiarismDetectionConfig initializeFor(Exercise exercise, @Nullable PlagiarismDetectionConfig requested) {
-        insertDefaultsFor(exercise.getId());
+        if (!existsByExerciseId(exercise.getId())) {
+            insertDefaultsFor(exercise.getId());
+        }
         return applyTo(exercise, requested);
     }
 

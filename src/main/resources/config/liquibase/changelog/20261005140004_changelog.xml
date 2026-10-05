@@ -18,7 +18,7 @@
 
     <changeSet id="20261005140004-01-stop-on-a-configuration-shared-by-several-exercises" author="krusche">
         <!-- Two exercises cannot share a configuration. If they do, nothing says which one owns it, so the upgrade stops rather than guessing. -->
-        <preConditions onFail="HALT">
+        <preConditions onFail="HALT" onFailMessage="Several exercises point at the same row of plagiarism_detection_config. Give each exercise its own row (copy the row and update exercise.plagiarism_detection_config_id) or remove the duplicate pointer, then start the server again.">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT plagiarism_detection_config_id FROM exercise WHERE plagiarism_detection_config_id IS NOT NULL
                 GROUP BY plagiarism_detection_config_id HAVING COUNT(*) &gt; 1) shared</sqlCheck>
         </preConditions>
@@ -40,32 +40,11 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261005140004-03-index-the-pointer-of-plagiarism-detection-config" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <not><indexExists tableName="exercise" indexName="idx_tmp_plagiarism_detection_config_pointer"/></not>
-        </preConditions>
-        <comment>Temporary index: without it every configuration would scan the whole exercise table for the exercise that points at it.</comment>
-        <createIndex tableName="exercise" indexName="idx_tmp_plagiarism_detection_config_pointer">
-            <column name="plagiarism_detection_config_id"/>
-        </createIndex>
-        <rollback>
-            <dropIndex tableName="exercise" indexName="idx_tmp_plagiarism_detection_config_pointer"/>
-        </rollback>
-    </changeSet>
-
     <changeSet id="20261005140004-04-set-exercise-key-of-plagiarism-detection-config" author="krusche">
         <comment>The exercise that pointed at a configuration becomes its key. Only configurations without a key are filled, so a repeated run changes nothing.</comment>
         <sql>UPDATE plagiarism_detection_config SET exercise_id =
             (SELECT MIN(exercise.id) FROM exercise WHERE exercise.plagiarism_detection_config_id = plagiarism_detection_config.id)
             WHERE exercise_id IS NULL;</sql>
-        <rollback/>
-    </changeSet>
-
-    <changeSet id="20261005140004-05-drop-the-pointer-index-of-plagiarism-detection-config" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="exercise" indexName="idx_tmp_plagiarism_detection_config_pointer"/>
-        </preConditions>
-        <dropIndex tableName="exercise" indexName="idx_tmp_plagiarism_detection_config_pointer"/>
         <rollback/>
     </changeSet>
 
@@ -91,7 +70,7 @@
     </changeSet>
 
     <changeSet id="20261005140004-08-give-every-exercise-a-plagiarism-detection-config" author="krusche">
-        <comment>Every exercise owns a permanent row. The earlier backfill gave every existing exercise one, so this only closes the window in which a exercise was created by a server that does not know the new rule; the unique key makes it safe to repeat.</comment>
+        <comment>Every exercise owns a permanent row. The earlier backfill gave every existing exercise one, so this only closes the window in which an exercise was created by a server that does not know the new rule; the unique key makes it safe to repeat.</comment>
         <sql>INSERT INTO plagiarism_detection_config (exercise_id, continuous_plagiarism_control_enabled, continuous_plagiarism_control_post_due_date_checks_enabled, continuous_plagiarism_control_case_student_response_period, similarity_threshold, minimum_score, minimum_size)
             SELECT exercise.id, FALSE, FALSE, 7, 90, 0, 50 FROM exercise
             WHERE NOT EXISTS (SELECT 1 FROM plagiarism_detection_config existing WHERE existing.exercise_id = exercise.id);</sql>

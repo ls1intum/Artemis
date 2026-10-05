@@ -100,15 +100,18 @@ public class TextExerciseImportService extends ExerciseImportService {
         // second save operates on a detached entity and therefore merges into a new instance, so its result must be used:
         // otherwise the freshly added competency links keep their unset embedded id on the returned graph.
         TextExercise savedExercise = textExerciseRepository.save(newExercise);
+        // The permanent configuration rows are created right after the exercise exists, before anything else can fail.
+        initializeConfigurations(savedExercise, newExercise);
         if (!competencyLinks.isEmpty()) {
+            TextExercise firstSave = savedExercise;
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = textExerciseRepository.save(savedExercise);
+            exerciseConfigurationService.carryOver(firstSave, savedExercise);
         }
         final TextExercise persistedExercise = savedExercise;
         // The channel name is transient, so a merged copy does not carry it. Restore it so the serialized import response
         // reports the channel the caller asked for.
         persistedExercise.setChannelName(newExercise.getChannelName());
-        initializeConfigurations(persistedExercise, newExercise);
 
         channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(persistedExercise.getChannelName()));
         persistedExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, persistedExercise, gradingInstructionCopyTracker));

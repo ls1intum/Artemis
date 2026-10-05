@@ -58,8 +58,8 @@ unchecked, so a `catch (IOException)` no longer catches a parse failure.
 Course and exercise settings use permanent default rows. Create courses with
 `CourseRepository.saveWithDefaultConfigurations`; this initializes settings even when an optional module is disabled.
 Every path that stores a new exercise (creation, every kind of import, copies) calls
-`ExerciseConfigurationService.initialize` right after the first save; it inserts the team and plagiarism rows with an
-idempotent statement and applies the request's settings in place, and nothing creates a missing row later. Programming
+`ExerciseConfigurationService.initialize` right after the first save; it inserts the team and plagiarism rows with a plain
+INSERT after an unlocked existence read, and applies the request's settings in place, and nothing creates a missing row later. Programming
 creation/import also persists build settings.
 Use modifying queries for feature switches and settings endpoints, preserving configuration ids. Do not recreate or
 remove settings when disabling a feature. Backfill existing owners with the Liquibase migration skill. See

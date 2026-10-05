@@ -234,7 +234,8 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
     void insertingTheDefaultsAgainChangesNothing() {
         long idBefore = teamAssignmentConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
 
-        teamAssignmentConfigRepository.insertDefaultsFor(textExerciseId);
+        exerciseConfigurationService.initialize(exerciseRepository.findByIdElseThrow(textExerciseId));
+        exerciseConfigurationService.initialize(exerciseRepository.findByIdElseThrow(textExerciseId));
 
         List<TeamAssignmentConfig> rows = teamAssignmentConfigRepository.findAllByExerciseIdIn(List.of(textExerciseId));
         assertThat(rows).hasSize(1);

@@ -187,13 +187,16 @@ public class TextExerciseCreationUpdateResource {
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(textExercise);
         TextExercise savedExercise = textExerciseRepository.save(textExercise);
+        // The configurations hold the key to their exercise, so their permanent rows are created right after the exercise
+        // exists: nothing that can fail in between may leave an exercise without them.
+        exerciseConfigurationService.initialize(savedExercise, textExercise.getTeamAssignmentConfig(), textExercise.getPlagiarismDetectionConfig());
         if (!competencyLinks.isEmpty()) {
+            TextExercise firstSave = savedExercise;
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = textExerciseRepository.save(savedExercise);
+            exerciseConfigurationService.carryOver(firstSave, savedExercise);
         }
         final TextExercise result = savedExercise;
-        // The configurations hold the key to their exercise, so they are stored once the exercise exists.
-        exerciseConfigurationService.initialize(result, textExercise.getTeamAssignmentConfig(), textExercise.getPlagiarismDetectionConfig());
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());

@@ -148,13 +148,13 @@ public class CourseDataRetentionService {
                             dueCourse.getId());
                     continue;
                 }
-                // Persist the warning timestamp on the config-bearing instance (dueCourse has the configuration fetched),
-                // syncing the archive path set during archiving so saving this instance does not clobber it.
-                configuration.setResetWarningSentDate(ZonedDateTime.now());
-                dueCourse.setCourseArchivePath(courseWithExercises.getCourseArchivePath());
-                courseRepository.save(dueCourse);
-                // The configuration holds the key to its course, so saving the course does not cascade to it.
-                courseConfigurationRepository.save(configuration);
+                // The archive path was stored when the archive was written. The warning date is set by a guarded update, so a
+                // hold or a reset that happened during the (long) archive and mail steps is not overwritten with stale values.
+                if (courseConfigurationRepository.markResetWarningSent(dueCourse.getId(), ZonedDateTime.now()) == 0) {
+                    log.warn("Course {} left the data-privacy cleanup while it was being archived (hold, reset or an earlier warning); its warning is not recorded",
+                            dueCourse.getId());
+                    continue;
+                }
                 warned++;
             }
             catch (Exception e) {
@@ -180,9 +180,7 @@ public class CourseDataRetentionService {
             try {
                 log.info("Resetting student data of old course {} for data-privacy reasons", course.getId());
                 courseResetService.resetStudentData(course.getId());
-                CourseConfiguration configuration = course.getCourseConfiguration();
-                configuration.setStudentDataResetDate(ZonedDateTime.now());
-                courseConfigurationRepository.save(configuration);
+                courseConfigurationRepository.markStudentDataReset(course.getId(), ZonedDateTime.now());
                 reset++;
             }
             catch (Exception e) {
@@ -209,9 +207,7 @@ public class CourseDataRetentionService {
         List<Course> staleCourses = warnedCoursesAwaitingReset().filter(course -> !isEligibleForReset(course, now)).toList();
         for (Course staleCourse : staleCourses) {
             log.info("Withdrawing the student-data reset warning of course {}: it is no longer due for a reset", staleCourse.getId());
-            CourseConfiguration configuration = staleCourse.getCourseConfiguration();
-            configuration.setResetWarningSentDate(null);
-            courseConfigurationRepository.save(configuration);
+            courseConfigurationRepository.clearResetWarning(staleCourse.getId());
         }
         return staleCourses.size();
     }
