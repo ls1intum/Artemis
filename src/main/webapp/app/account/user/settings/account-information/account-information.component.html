@@ -11,36 +11,46 @@
     <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.accountInformation' | artemisTranslate">
         @if (user.name) {
             <li tumAetUiListItem>
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></dt>
-                <dd>{{ user.name }}</dd>
+                <dl class="mb-0">
+                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></dt>
+                    <dd>{{ user.name }}</dd>
+                </dl>
             </li>
         }
         @if (user.login) {
             <li tumAetUiListItem>
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></dt>
-                <dd>{{ user.login }}</dd>
+                <dl class="mb-0">
+                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></dt>
+                    <dd>{{ user.login }}</dd>
+                </dl>
             </li>
         }
         @if (user.email) {
             <li tumAetUiListItem>
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></dt>
-                <dd>{{ user.email }}</dd>
+                <dl class="mb-0">
+                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></dt>
+                    <dd>{{ user.email }}</dd>
+                </dl>
             </li>
         }
         @if (user.visibleRegistrationNumber) {
             <li tumAetUiListItem>
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></dt>
-                <dd>{{ user.visibleRegistrationNumber }}</dd>
+                <dl class="mb-0">
+                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></dt>
+                    <dd>{{ user.visibleRegistrationNumber }}</dd>
+                </dl>
             </li>
         }
         @if (user.createdDate) {
             <li tumAetUiListItem>
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></dt>
-                <dd>{{ user.createdDate | artemisDate }}</dd>
+                <dl class="mb-0">
+                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></dt>
+                    <dd>{{ user.createdDate | artemisDate }}</dd>
+                </dl>
             </li>
         }
         <li tumAetUiListItem>
-            <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></dt>
+            <span class="font-medium" jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></span>
             <input
                 [attr.aria-label]="'artemisApp.userSettings.accountInformationPage.profilePicture' | artemisTranslate"
                 type="file"
