@@ -35,9 +35,10 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
     private TextExerciseRepository textExerciseRepository;
 
     @Test
-    void aFailingSettingsInsertIsReportedToTheCaller() throws SQLException {
+    void aFailingSettingsInsertIsReportedToTheCallerAndTheNextSaveRepairsIt() throws SQLException {
         var course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
         course.setShortName("failingdefaultstest");
+        var jdbc = new JdbcTemplate(dataSource);
 
         // A constraint scoped to this test's prefix forces a real database failure of one of the settings inserts. There is no
         // transaction around the statements, so the course is not rolled back; the caller gets the error and decides.
@@ -48,6 +49,34 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         finally {
             setConfigurationInsertFailure(false);
         }
+        assertThat(course.getId()).as("the course itself was stored").isNotNull();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM online_course_configuration WHERE course_id = ?", Long.class, course.getId())).isZero();
+
+        // the next save adds what the failed creation left out
+        courseRepository.saveWithDefaultConfigurations(course);
+        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void aSaveAddsOnlyTheMissingSettingsAndNeverDuplicatesOrReplacesAny() {
+        var course = courseUtilService.createCourse();
+        var jdbc = new JdbcTemplate(dataSource);
+        var onlineId = jdbc.queryForObject("SELECT id FROM online_course_configuration WHERE course_id = ?", Long.class, course.getId());
+        assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("a complete course needs nothing").isZero();
+
+        // an incomplete creation: the tutorial group and Iris settings are missing
+        deleteRows("tutorial_groups_configuration", course.getId());
+        deleteRows("course_iris_settings", course.getId());
+        assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).isEqualTo(2);
+        assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("repairing twice adds nothing").isZero();
+
+        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
+        }
+        assertThat(jdbc.queryForObject("SELECT id FROM online_course_configuration WHERE course_id = ?", Long.class, course.getId())).as("an existing row is kept")
+                .isEqualTo(onlineId);
     }
 
     @Test
@@ -144,6 +173,18 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         assertThat(copyIds.get("team_assignment_config_id")).isNotEqualTo(sourceIds.get("team_assignment_config_id"));
         assertThat(copyIds.get("plagiarism_detection_config_id")).isNotEqualTo(sourceIds.get("plagiarism_detection_config_id"));
         assertThat(jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", source.getId())).isEqualTo(sourceIds);
+    }
+
+    private void deleteRows(String table, long courseId) {
+        // The test pool disables auto-commit, so the delete is committed on a connection of its own.
+        try (var connection = dataSource.getConnection(); var statement = connection.prepareStatement("DELETE FROM " + table + " WHERE course_id = ?")) {
+            connection.setAutoCommit(true);
+            statement.setLong(1, courseId);
+            statement.executeUpdate();
+        }
+        catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private void setConfigurationInsertFailure(boolean enabled) throws SQLException {

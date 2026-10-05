@@ -9,11 +9,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -57,21 +59,78 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * <p>
      * There is deliberately no transaction around the statements: each one commits on its own, so no lock is held across
      * them. If one of the later inserts fails, the exception reaches the caller and the course stays without the settings
-     * that were not inserted yet; nothing repairs that, and creating the course again is refused until it is deleted.
+     * that were not inserted yet. The next save through this method repairs that (see
+     * {@link #ensureDefaultConfigurations(long)}); creating the course again is refused until then, because its short name
+     * is taken.
      *
      * @param course the course to store
      * @return the stored course
      */
     default Course saveWithDefaultConfigurations(Course course) {
-        boolean newCourse = course.getId() == null;
         Course saved = save(course);
-        if (newCourse) {
-            initializeOnlineCourseConfiguration(saved.getId());
-            initializeTutorialGroupsConfiguration(saved.getId());
-            initializeIrisCourseSettings(saved.getId());
-        }
+        ensureDefaultConfigurations(saved.getId());
         return saved;
     }
+
+    /**
+     * Inserts the default settings a stored course is missing, which is what a creation that failed half-way leaves behind.
+     * For a course that has all its settings this is three unlocked reads and nothing else.
+     * <p>
+     * It takes no lock and needs no transaction: a missing row is found by a plain read and added by a plain insert. If two
+     * saves repair the same course at the same moment, the unique key lets one insert win and the other finds the row
+     * already there. Settings of a course are never removed or replaced here, only added where they are missing.
+     *
+     * @param courseId the id of the stored course
+     * @return the number of settings rows that had to be added; greater than zero means an earlier creation was incomplete
+     */
+    default int ensureDefaultConfigurations(long courseId) {
+        int added = 0;
+        if (!hasOnlineCourseConfiguration(courseId)) {
+            added += insertUnlessAlreadyThere(() -> initializeOnlineCourseConfiguration(courseId), () -> hasOnlineCourseConfiguration(courseId));
+        }
+        if (!hasTutorialGroupsConfiguration(courseId)) {
+            added += insertUnlessAlreadyThere(() -> initializeTutorialGroupsConfiguration(courseId), () -> hasTutorialGroupsConfiguration(courseId));
+        }
+        if (!hasIrisCourseSettings(courseId)) {
+            added += insertUnlessAlreadyThere(() -> initializeIrisCourseSettings(courseId), () -> hasIrisCourseSettings(courseId));
+        }
+        return added;
+    }
+
+    private static int insertUnlessAlreadyThere(Runnable insert, BooleanSupplier exists) {
+        try {
+            insert.run();
+            return 1;
+        }
+        catch (DataIntegrityViolationException e) {
+            // a concurrent save adding the same row first is what was wanted; any other violation is a real failure
+            if (exists.getAsBoolean()) {
+                return 0;
+            }
+            throw e;
+        }
+    }
+
+    @Query("""
+            SELECT COUNT(configuration) > 0
+            FROM OnlineCourseConfiguration configuration
+            WHERE configuration.course.id = :courseId
+            """)
+    boolean hasOnlineCourseConfiguration(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT COUNT(configuration) > 0
+            FROM TutorialGroupsConfiguration configuration
+            WHERE configuration.course.id = :courseId
+            """)
+    boolean hasTutorialGroupsConfiguration(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT COUNT(settings) > 0
+            FROM IrisCourseSettingsEntity settings
+            WHERE settings.courseId = :courseId
+            """)
+    boolean hasIrisCourseSettings(@Param("courseId") long courseId);
 
     /**
      * Creates the default LTI settings for a newly stored course, independently of whether online mode is enabled.

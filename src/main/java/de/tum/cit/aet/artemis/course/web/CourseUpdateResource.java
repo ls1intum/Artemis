@@ -220,6 +220,11 @@ public class CourseUpdateResource {
 
         // Configurations live for the lifetime of the course. Toggling online mode only changes the course flag.
         Course result = courseRepository.save(existingCourse);
+        // A creation that failed half-way left the course without some settings rows; every later save adds the missing ones.
+        int repairedSettings = courseRepository.ensureDefaultConfigurations(courseId);
+        if (repairedSettings > 0) {
+            log.warn("Course {} was missing {} default settings row(s) from an incomplete creation; added them", courseId, repairedSettings);
+        }
 
         // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
         // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).

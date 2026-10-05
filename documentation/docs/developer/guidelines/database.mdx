@@ -224,9 +224,11 @@ feature: update its flag and keep its settings for the next time it is enabled.
 
 Create courses through `CourseRepository.saveWithDefaultConfigurations`. It stores the course and then inserts the
 default settings with plain statements, without a transaction around them, so no lock is held across the statements. A
-failure between two of them leaves the course without the settings not yet inserted; the caller sees the exception and
-nothing repairs the course, which has to be deleted before the creation can be repeated. Course edits and feature toggles
-do not use a course-row lock or a transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
+failure between two of them leaves the course without the settings not yet inserted, and the caller sees the exception.
+Every later save through `saveWithDefaultConfigurations` and every course update adds the missing rows
+(`CourseRepository.ensureDefaultConfigurations`), so the course repairs itself without being deleted. A row that
+already exists is never replaced, and a concurrent save that inserts the same row first is tolerated. Course edits and
+feature toggles do not use a course-row lock or a transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
 is true. Tutorial-group settings remain inactive until both tutorial-period dates are configured; configure those defaults
 through the configuration repository's modifying query.
 

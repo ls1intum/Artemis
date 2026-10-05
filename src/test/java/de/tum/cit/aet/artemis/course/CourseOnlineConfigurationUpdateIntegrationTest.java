@@ -3,11 +3,14 @@ package de.tum.cit.aet.artemis.course;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -24,6 +27,9 @@ class CourseOnlineConfigurationUpdateIntegrationTest extends AbstractSpringInteg
     @Autowired
     private OnlineCourseConfigurationTestRepository configurationRepository;
 
+    @Autowired
+    private DataSource dataSource;
+
     private Course course;
 
     @BeforeEach
@@ -32,6 +38,26 @@ class CourseOnlineConfigurationUpdateIntegrationTest extends AbstractSpringInteg
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course.setEnrollmentEnabled(false);
         course = courseRepository.save(course);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourseAddsTheSettingsAnIncompleteCreationLeftOut() throws Exception {
+        var jdbc = new JdbcTemplate(dataSource);
+        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
+            // The test pool disables auto-commit, so the delete is committed on a connection of its own.
+            try (var connection = dataSource.getConnection(); var statement = connection.prepareStatement("DELETE FROM " + table + " WHERE course_id = ?")) {
+                connection.setAutoCommit(true);
+                statement.setLong(1, course.getId());
+                statement.executeUpdate();
+            }
+        }
+
+        updateCourse(false);
+
+        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
+        }
     }
 
     @Test
