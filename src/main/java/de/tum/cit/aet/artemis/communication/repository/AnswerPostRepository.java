@@ -278,16 +278,22 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * {@code @ManyToOne} that the thread-loading query does not fetch, and adding it there would put an extra user join
      * on a hot read path.
      *
+     * <p>
+     * Only an active account counts: closing an account (deactivation, or the first step of deleting it) withdraws its
+     * approvals at once, in the transaction that also outdates the Course Memory entries involving it. An approval that
+     * arrives later, or a reference cleared later, then changes nothing Course Memory relies on.
+     *
      * @param answerPostId the ID of the {@link AnswerPost} to check
-     * @return {@code true} if a user is recorded as the verifier, {@code false} if none is or the answer post does not exist
+     * @return {@code true} if an active user is recorded as the verifier, {@code false} otherwise or if the answer post does
+     *         not exist
      */
     @Query("""
             SELECT CASE WHEN COUNT(answerPost) > 0 THEN TRUE ELSE FALSE END
             FROM AnswerPost answerPost
             WHERE answerPost.id = :answerPostId
-                AND answerPost.verifiedBy IS NOT NULL
+                AND answerPost.verifiedBy.activated = TRUE
             """)
-    boolean hasHumanVerifier(@Param("answerPostId") long answerPostId);
+    boolean hasActiveHumanVerifier(@Param("answerPostId") long answerPostId);
 
     /**
      * Returns, for every resolving answer of a thread that records an endorser, who marked it resolving.
@@ -298,16 +304,19 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * endorser was recorded are absent from the result and are treated as community-resolved.
      * <p>
      * Queried as a projection: {@code resolvedBy} is lazy and not part of the eager thread fetch. One query for the whole thread rather than one per answer.
+     * <p>
+     * Only active endorsers are returned, for the same reason as in {@link #hasActiveHumanVerifier}: closing an account
+     * withdraws its endorsements together with outdating the entries involving it.
      *
      * @param postId the id of the thread's root post
-     * @return one entry per resolving answer that carries an endorser
+     * @return one entry per resolving answer that carries an active endorser
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO(answerPost.id, answerPost.resolvedBy.login)
             FROM AnswerPost answerPost
             WHERE answerPost.post.id = :postId
                 AND answerPost.resolvesPost = TRUE
-                AND answerPost.resolvedBy IS NOT NULL
+                AND answerPost.resolvedBy.activated = TRUE
             """)
     List<ResolvingAnswerEndorserDTO> findResolvingAnswerEndorsersByPostId(@Param("postId") long postId);
 

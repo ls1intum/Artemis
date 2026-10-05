@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
+import de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -1453,7 +1454,39 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(conversationMessageRepository.findCourseMemoryVersion(resolved.getId()).orElseThrow()).isEqualTo(resolvedBefore + 1);
         assertThat(conversationMessageRepository.findCourseMemoryVersion(approved.getId()).orElseThrow()).isEqualTo(approvedBefore + 1);
-        assertThat(answerPostRepository.hasHumanVerifier(draft.getId())).isFalse();
+        assertThat(answerPostRepository.hasActiveHumanVerifier(draft.getId())).isFalse();
+    }
+
+    @Test
+    void signOffsOfAClosedAccount_noLongerCount() {
+        // Closing an account withdraws its endorsements and approvals at once, so a late approval request or a reference
+        // cleared later cannot keep or create a tutor-verified entry.
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Post endorsed = createQuestion("Endorsed by an account that is then closed");
+        AnswerPost endorsedAnswer = saveResolvingAnswer(endorsed, student2, "A student's answer.", true, tutor);
+        Post approved = createQuestion("Approved by an account that is then closed");
+        AnswerPost draft = saveAnswer(approved, botUser, "An Iris answer.", false);
+        answerPostRepository.verifyIfUnverified(draft.getId(), tutor, ZonedDateTime.now(), null);
+        List<PyrisWebhookCourseMemoryIngestionExecutionDTO> ingested = new ArrayList<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(ingested::add, ExpectedCount.times(2));
+        courseMemoryIngestionService.refreshThread(endorsed.getId(), null, course);
+        assertThat(ingested.getFirst().source()).isEqualTo(PyrisCourseMemorySource.TUTOR_WRITTEN);
+        assertThat(answerPostRepository.findResolvingAnswerEndorsersByPostId(endorsed.getId())).extracting(ResolvingAnswerEndorserDTO::answerPostId)
+                .containsExactly(endorsedAnswer.getId());
+        assertThat(answerPostRepository.hasActiveHumanVerifier(draft.getId())).isTrue();
+
+        tutor.setActivated(false);
+        userTestRepository.save(tutor);
+        try {
+            assertThat(answerPostRepository.findResolvingAnswerEndorsersByPostId(endorsed.getId())).isEmpty();
+            assertThat(answerPostRepository.hasActiveHumanVerifier(draft.getId())).isFalse();
+            courseMemoryIngestionService.refreshThread(endorsed.getId(), null, course);
+            assertThat(ingested.getLast().source()).isEqualTo(PyrisCourseMemorySource.THREAD_RESOLVED);
+        }
+        finally {
+            tutor.setActivated(true);
+            userTestRepository.save(tutor);
+        }
     }
 
     @Test

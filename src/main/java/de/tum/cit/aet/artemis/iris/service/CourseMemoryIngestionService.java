@@ -345,17 +345,17 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Whether a tutor approved this Iris answer in the verification dashboard. An Iris answer published automatically on
-     * a high confidence score is also {@code verified}, but records no human verifier.
+     * Whether a tutor approved this Iris answer in the verification dashboard, with an account that is still active. An Iris
+     * answer published automatically on a high confidence score is also {@code verified}, but records no human verifier.
      */
     private boolean isDashboardVerifiedIrisAnswer(AnswerPost answer) {
-        return isBot(answer.getAuthor()) && answer.isVerified() && answerPostRepository.hasHumanVerifier(answer.getId());
+        return isBot(answer.getAuthor()) && answer.isVerified() && answerPostRepository.hasActiveHumanVerifier(answer.getId());
     }
 
     /**
      * Whether each resolving answer of the thread was marked resolving by someone with teaching authority in the course.
      * The role is resolved now rather than stored with the endorsement: someone who has since left the course's staff no
-     * longer lends their answers the tutor tier.
+     * longer lends their answers the tutor tier, and neither does a closed account, whose endorsements are not returned.
      */
     private Map<Long, Boolean> loadTutorEndorsements(Post fullPost, Course course) {
         Map<String, Boolean> tutorByLogin = new HashMap<>();
