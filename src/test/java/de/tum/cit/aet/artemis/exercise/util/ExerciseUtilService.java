@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.fail;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -71,6 +73,9 @@ public class ExerciseUtilService {
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
 
     @Autowired
     private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
@@ -130,7 +135,9 @@ public class ExerciseUtilService {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
-        return exerciseTestRepository.save(exercise);
+        var savedExercise = exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -345,6 +352,7 @@ public class ExerciseUtilService {
             ((ProgrammingExercise) exercise).setBuildAndTestStudentSubmissionsAfterDueDate(newDueDate);
         }
         exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
     }
 
     /**
@@ -358,6 +366,7 @@ public class ExerciseUtilService {
                 .orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setAssessmentDueDate(newDueDate);
         exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
     }
 
     /**
@@ -501,18 +510,43 @@ public class ExerciseUtilService {
     }
 
     /**
-     * Stores a team assignment configuration for an exercise that is saved already. The configuration holds the key to its
-     * exercise and the exercise carries no mapped association to it, so saving an exercise that carries one in its slot does
-     * not store it.
+     * Gives an exercise that is saved already its permanent configuration rows, as the flows that create exercises do, and
+     * applies the given team settings to its row. The rows hold the key to their exercise and the exercise carries no mapped
+     * association to them, so saving an exercise through its repository does not create them. Calling this again is safe.
      *
      * @param exercise the saved exercise
-     * @param config   the configuration to store for it, or null for none
+     * @param config   the team settings to apply, or null to keep the stored ones (the defaults for a new row)
      * @param <E>      the exercise type
      * @return the exercise, whose slot now carries the stored configuration
      */
     public <E extends Exercise> E saveTeamAssignmentConfig(E exercise, TeamAssignmentConfig config) {
-        teamAssignmentConfigRepository.replaceFor(exercise, config);
+        exerciseConfigurationService.initialize(exercise, config, null);
         return exercise;
+    }
+
+    /**
+     * Gives an exercise that is saved already its permanent configuration rows with the default settings, exactly as the
+     * flows that create exercises do. Calling this again is safe.
+     *
+     * @param exercise the saved exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slots now carry the stored configurations
+     */
+    public <E extends Exercise> E initializeConfigurations(E exercise) {
+        exerciseConfigurationService.initialize(exercise);
+        return exercise;
+    }
+
+    /**
+     * Asserts that an exercise created or imported through the application owns its permanent configuration rows: one team
+     * assignment configuration and one plagiarism detection configuration, whatever its type and mode.
+     *
+     * @param exerciseId the id of the created or imported exercise
+     */
+    public void assertHasPermanentConfigurations(long exerciseId) {
+        assertThat(teamAssignmentConfigRepository.findAllByExerciseIdIn(List.of(exerciseId))).as("team assignment configuration rows of exercise " + exerciseId).hasSize(1);
+        assertThat(plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(exerciseId))).as("plagiarism detection configuration rows of exercise " + exerciseId)
+                .hasSize(1);
     }
 
     /**
@@ -529,17 +563,16 @@ public class ExerciseUtilService {
     }
 
     /**
-     * Stores a plagiarism detection configuration for an exercise that is saved already. The configuration holds the key to
-     * its exercise and the exercise carries no mapped association to it, so saving an exercise that carries one in its slot
-     * does not store it.
+     * Gives an exercise that is saved already its permanent configuration rows, as the flows that create exercises do, and
+     * applies the given plagiarism detection settings to its row. Calling this again is safe.
      *
      * @param exercise the saved exercise
-     * @param config   the configuration to store for it, or null for none
+     * @param config   the plagiarism detection settings to apply, or null to keep the stored ones (the defaults for a new row)
      * @param <E>      the exercise type
      * @return the exercise, whose slot now carries the stored configuration
      */
     public <E extends Exercise> E savePlagiarismDetectionConfig(E exercise, PlagiarismDetectionConfig config) {
-        plagiarismDetectionConfigRepository.replaceFor(exercise, config);
+        exerciseConfigurationService.initialize(exercise, null, config);
         return exercise;
     }
 

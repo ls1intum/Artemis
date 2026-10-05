@@ -1,49 +1,21 @@
 package de.tum.cit.aet.artemis.plagiarism.domain;
 
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.ContinuousPlagiarismControlService;
 
 /**
- * A config class containing logic for filling missing PlagiarismDetectionConfig for exercises created before deployment of the cpc.
+ * Applies and validates settings of permanent plagiarism detection configurations.
  *
  * @see ContinuousPlagiarismControlService
  * @see PlagiarismDetectionConfig
  */
 public final class PlagiarismDetectionConfigHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(PlagiarismDetectionConfigHelper.class);
-
     private PlagiarismDetectionConfigHelper() {
-    }
-
-    /**
-     * Ads missing plagiarism checks config for course exercises.
-     * <p>
-     * The exercise's slot has to reflect what is stored: a caller that did not just store or attach the configuration
-     * attaches it first, otherwise a stored configuration would look missing and be replaced by the default.
-     *
-     * @param exercise   saved exercise whose slot carries its stored plagiarism checks config, or none
-     * @param repository repository used for storing the default configuration
-     */
-    public static void createAndSaveDefaultIfNullAndCourseExercise(Exercise exercise, PlagiarismDetectionConfigRepository repository) {
-        if (exercise.isCourseExercise() && exercise.getPlagiarismDetectionConfig() == null) {
-            log.info("Filling missing plagiarisms checks config: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
-            try {
-                repository.replaceFor(exercise, PlagiarismDetectionConfig.createDefault());
-            }
-            catch (DataIntegrityViolationException e) {
-                // A concurrent request filled the same legacy exercise first. Its configuration is the one to report.
-                repository.attachTo(exercise);
-            }
-        }
     }
 
     /**
@@ -71,8 +43,8 @@ public final class PlagiarismDetectionConfigHelper {
      * - a missing config is created from the DTO and attached to the exercise's slot.
      *
      * Nothing is stored here: the configuration holds the key to its exercise and is not part of it, so after saving the
-     * exercise the caller stores the slot's configuration with {@code PlagiarismDetectionConfigRepository.replaceOrAttach},
-     * which updates the stored row of that exercise in place and never leaves a replaced one behind.
+     * exercise the caller applies the slot's configuration with {@code PlagiarismDetectionConfigRepository.applyTo}, which
+     * updates the permanent row of that exercise in place.
      *
      * @param exercise  the managed exercise to update
      * @param configDto the submitted plagiarism detection config (or {@code null})

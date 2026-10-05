@@ -13,6 +13,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -42,14 +43,14 @@ public class TutorialGroupsConfiguration extends DomainObject {
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "tutorial_period_start_inclusive")
-    @NonNull
+    @Nullable
     private String tutorialPeriodStartInclusive;
 
     /**
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "tutorial_period_end_inclusive")
-    @NonNull
+    @Nullable
     private String tutorialPeriodEndInclusive;
 
     /**

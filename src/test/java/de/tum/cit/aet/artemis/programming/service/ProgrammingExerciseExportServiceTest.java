@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -766,6 +767,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseForDownload_writesNoConfigurationIds() throws Exception {
         createAndSeedBaseRepositories();
+        programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseUtilService.savePlagiarismDetectionConfig(programmingExercise, PlagiarismDetectionConfig.createDefault());
         exerciseUtilService.saveTeamAssignmentConfig(programmingExercise, teamAssignmentConfig());
@@ -795,6 +797,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseForDownload_detailsImportUnderAnIdCopyingImporter() throws Exception {
         createAndSeedBaseRepositories();
+        programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseUtilService.savePlagiarismDetectionConfig(programmingExercise, PlagiarismDetectionConfig.createDefault());
         exerciseUtilService.saveTeamAssignmentConfig(programmingExercise, teamAssignmentConfig());
@@ -874,6 +877,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
+        programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExercise.setGradingCriteria(new HashSet<>(Set.of(criterionWithInstruction())));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseUtilService.savePlagiarismDetectionConfig(programmingExercise, PlagiarismDetectionConfig.createDefault());

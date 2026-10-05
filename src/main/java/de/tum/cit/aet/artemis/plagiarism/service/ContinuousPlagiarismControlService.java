@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepos
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
@@ -123,8 +122,6 @@ public class ContinuousPlagiarismControlService {
 
             log.info("Started continuous plagiarism control for exercise: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
             final long startTime = System.nanoTime();
-
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, plagiarismDetectionConfigRepository);
 
             var outcome = executeChecksForExerciseSilencingExceptions(exercise);
             updatePlagiarismCases(outcome.result(), exercise, author.get());

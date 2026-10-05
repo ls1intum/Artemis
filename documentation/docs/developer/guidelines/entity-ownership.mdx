@@ -500,6 +500,14 @@ which is what `CourseConfigurationLoadProfileTest` measures. So each configurati
 with its readers, onto its own repository read at the decision point — the shape
 `CourseConfigurationRepository` and `CourseAthenaConfigRepository` already have.
 
+Moving the key does not make the row optional. Every course and every exercise owns exactly one row of each
+configuration, created together with its owner and updated in place from then on, so a setting that changes never
+inserts or deletes anything and no flow needs a lock or a transaction around it. A course gets its rows from
+`CourseRepository.saveWithDefaultConfigurations`; an exercise gets its team assignment and plagiarism detection rows from
+`ExerciseConfigurationService.initialize`, which every path that stores a new exercise calls right after the first save.
+The rows are inserted with an idempotent statement, so a path that already ran it is not an error, and a row that is
+missing is reported with an `EntityNotFoundException` rather than created behind the caller's back.
+
 Two of them carry a further constraint. `BuildPlan` is shared rather than owned: several
 programming exercises point at one build plan, so there is no single parent for it to name, and "at
 least one exercise still points at this row" is not a foreign key — it needs a cleanup instead.

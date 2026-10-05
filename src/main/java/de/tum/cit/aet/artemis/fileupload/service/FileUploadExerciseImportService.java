@@ -16,10 +16,9 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -43,8 +42,8 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService,
             Optional<CompetencyProgressApi> competencyProgressApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
+            ExerciseConfigurationService exerciseConfigurationService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, exerciseConfigurationService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
@@ -80,8 +79,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         // The channel name is transient, so a merged copy does not carry it. Restore it so the serialized import response
         // reports the channel the caller asked for.
         persistedExercise.setChannelName(newExercise.getChannelName());
-        saveTeamAssignmentConfig(persistedExercise, newExercise);
-        savePlagiarismDetectionConfig(persistedExercise, newExercise);
+        initializeConfigurations(persistedExercise, newExercise);
 
         channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(persistedExercise.getChannelName()));
 

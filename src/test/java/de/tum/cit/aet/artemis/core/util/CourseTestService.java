@@ -642,7 +642,7 @@ public class CourseTestService {
         course.setStartDate(ZonedDateTime.now().minusDays(5));
         course.setEndDate(ZonedDateTime.now().plusDays(5));
         course.setTimeZone("Legacy/Zone");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         course.setTitle("Renamed with a legacy time zone");
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
         Course updatedCourse = courseRepo.findByIdElseThrow(course.getId());
@@ -995,8 +995,9 @@ public class CourseTestService {
 
     // Test
     public void testEditCourseWithPermission() throws Exception {
-        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
-        course = courseRepo.save(course);
+        // A new course (no preset id): merging a hand-built course onto an existing row would overwrite its configuration links with null
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
         course.setTitle("Test Course");
@@ -1023,12 +1024,12 @@ public class CourseTestService {
         Set<Competency> competencies = new HashSet<>();
         competencies.add(competencyService.createCompetency(course));
         course.setCompetencies(competencies);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         Set<Prerequisite> prerequisites = new HashSet<>();
         prerequisites.add(prerequisiteService.createPrerequisite(course));
         course.setPrerequisites(prerequisites);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
 
@@ -1404,7 +1405,7 @@ public class CourseTestService {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
         course.setEnrollmentEnabled(enrollmentEnabled);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         return course;
     }
 
@@ -1505,7 +1506,7 @@ public class CourseTestService {
         User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
@@ -2042,7 +2043,7 @@ public class CourseTestService {
 
             // Assert that course properties on courseWithExercises match those of courseOnly
             assertThat(courseWithExercises.course()).as("courseWithExercises same as courseOnly").usingRecursiveComparison()
-                    .ignoringFields("numberOfStudents", "numberOfTeachingAssistants", "numberOfEditors", "numberOfInstructors").isEqualTo(courseOnly);
+                    .ignoringFields("numberOfStudents", "numberOfTeachingAssistants", "numberOfEditors", "numberOfInstructors", "courseConfiguration").isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
@@ -2171,8 +2172,8 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourse_instructorNotInCourse() throws Exception {
-        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
-        course = courseRepo.save(course);
+        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isForbidden());
     }
@@ -2267,7 +2268,7 @@ public class CourseTestService {
     public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setLearningPathsEnabled(true);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
         course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(course.getLearningPaths()).isNotEmpty();
@@ -2665,7 +2666,7 @@ public class CourseTestService {
 
     private Course createCourseForUserSearchTest() {
         var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
@@ -2882,7 +2883,7 @@ public class CourseTestService {
         // Generate a course that has an archive
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA, userPrefix);
         course.setCourseArchivePath("some-archive-path");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         final ProgrammingExercise courseExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
@@ -2912,7 +2913,7 @@ public class CourseTestService {
     public void testGetCourseIncludesArchivePathWhenCourseIsArchived() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setCourseArchivePath("some-archive-path");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         CourseManagementDTO courseDTO = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
         assertThat(courseDTO.courseArchivePath()).isEqualTo(course.getCourseArchivePath());
@@ -2922,7 +2923,7 @@ public class CourseTestService {
     public void testGetCourseTitle() throws Exception {
         Course course = courseUtilService.createCourse();
         course.setTitle("Test Course");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         final var title = request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(course.getTitle());
@@ -2965,7 +2966,7 @@ public class CourseTestService {
         userUtilService.createAndSaveUser(userPrefix + "user2");
 
         var instructor2 = userUtilService.createAndSaveUser(otherPrefix + "instructor2");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         userUtilService.enrollUserInCourse(instructor2, course, CourseRole.INSTRUCTOR);
 
@@ -3242,10 +3243,10 @@ public class CourseTestService {
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         var courseId = course.getId();
         // the configuration exists, but a course does not carry it, so the list of courses cannot contain it
-        onlineCourseConfigurationRepository.save(CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null));
+        saveOnlineConfiguration(course, "prefix");
 
         List<CourseManagementDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseManagementDTO.class);
 
@@ -3291,8 +3292,8 @@ public class CourseTestService {
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        course = courseRepo.save(course);
-        OnlineCourseConfiguration configuration = onlineCourseConfigurationRepository.save(CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null));
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration configuration = saveOnlineConfiguration(course, "prefix");
 
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
@@ -3319,8 +3320,8 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        course = courseRepo.save(course);
-        OnlineCourseConfiguration configuration = onlineCourseConfigurationRepository.save(CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null));
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration configuration = saveOnlineConfiguration(course, "prefix");
 
         String courseId = course.getId().toString();
 
@@ -3353,8 +3354,8 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfiguration() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        course = courseRepo.save(course);
-        OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.save(CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null));
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration ocConfiguration = saveOnlineConfiguration(course, "prefix");
         ocConfiguration.setUserPrefix("prefix");
 
         String courseId = course.getId().toString();
@@ -3385,8 +3386,9 @@ public class CourseTestService {
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
 
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        onlineCourseConfiguration.setId(onlineCourseConfigurationRepository.findStoredByCourseId(course.getId()).orElseThrow().getId());
         OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
         String clientId = ocConfiguration.getLtiPlatformConfiguration().getRegistrationId();
 
@@ -3499,7 +3501,7 @@ public class CourseTestService {
     public void testUpdateCourseEnableLearningPaths() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
         course.setLearningPathsEnabled(false);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
         userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
 
@@ -3980,4 +3982,11 @@ public class CourseTestService {
                 params);
         assertThat(result).extracting(UserForRegistrationDTO::login).containsExactly(userPrefix + "student1");
     }
+
+    private OnlineCourseConfiguration saveOnlineConfiguration(Course course, String prefix) {
+        var configuration = onlineCourseConfigurationRepository.findStoredByCourseId(course.getId()).orElseThrow();
+        configuration.setUserPrefix(prefix);
+        return onlineCourseConfigurationRepository.save(configuration);
+    }
+
 }

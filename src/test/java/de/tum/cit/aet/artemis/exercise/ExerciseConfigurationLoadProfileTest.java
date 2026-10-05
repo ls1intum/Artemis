@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.JsonNode;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -23,9 +24,12 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -62,6 +66,12 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
 
     @Autowired
     private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -103,15 +113,18 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
 
         Exam exam = examUtilService.addExamWithExerciseGroup(courseRepository.findByIdElseThrow(courseId), true);
         examId = exam.getId();
-        examExerciseId = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst())).getId();
+        examExerciseId = exerciseUtilService.initializeConfigurations(exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst())))
+                .getId();
     }
 
     private <E extends Exercise> E withTeamConfig(E exercise) {
         TeamAssignmentConfig config = new TeamAssignmentConfig();
         config.setMinTeamSize(2);
         config.setMaxTeamSize(4);
-        teamAssignmentConfigRepository.replaceFor(exercise, config);
-        return exercise;
+        // the settings are reported for team exercises only
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise = exerciseRepository.save(exercise);
+        return exerciseUtilService.saveTeamAssignmentConfig(exercise, config);
     }
 
     @Test
@@ -174,7 +187,7 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
             return exercises;
         }).hasBeenCalledTimes(1);
 
-        assertThat(exercises).allSatisfy(exercise -> assertThat(exercise.getTeamAssignmentConfig()).isNotNull());
+        assertThat(exercises).allSatisfy(exercise -> assertThat(exercise.getStoredTeamAssignmentConfig()).isNotNull());
     }
 
     @Test
@@ -189,32 +202,67 @@ class ExerciseConfigurationLoadProfileTest extends AbstractSpringIntegrationInde
     }
 
     @Test
-    void replacingTheConfigurationLeavesExactlyOneRow() {
+    void updatingTheSettingsKeepsTheSameRow() {
         Exercise exercise = exerciseRepository.findByIdElseThrow(textExerciseId);
         long idBefore = teamAssignmentConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
 
         TeamAssignmentConfig replacement = new TeamAssignmentConfig();
         replacement.setMinTeamSize(3);
         replacement.setMaxTeamSize(6);
-        teamAssignmentConfigRepository.replaceFor(exercise, replacement);
-        teamAssignmentConfigRepository.replaceFor(exercise, replacement);
+        teamAssignmentConfigRepository.applyTo(exercise, replacement);
+        teamAssignmentConfigRepository.applyTo(exercise, replacement);
 
         List<TeamAssignmentConfig> rows = teamAssignmentConfigRepository.findAllByExerciseIdIn(List.of(textExerciseId));
         assertThat(rows).hasSize(1);
-        assertThat(rows.getFirst().getId()).as("the stored row is updated in place, not replaced").isEqualTo(idBefore);
+        assertThat(rows.getFirst().getId()).as("the permanent row is updated in place, never replaced").isEqualTo(idBefore);
         assertThat(rows.getFirst().getMinTeamSize()).isEqualTo(3);
         assertThat(rows.getFirst().getMaxTeamSize()).isEqualTo(6);
-        assertThat(exercise.getTeamAssignmentConfig().getId()).isEqualTo(idBefore);
+        assertThat(exercise.getStoredTeamAssignmentConfig().getId()).isEqualTo(idBefore);
     }
 
     @Test
-    void switchingTeamModeOffRemovesTheRow() {
+    void requestingNoSettingsKeepsTheStoredOnes() {
         Exercise exercise = exerciseRepository.findByIdElseThrow(textExerciseId);
 
-        teamAssignmentConfigRepository.replaceFor(exercise, null);
+        TeamAssignmentConfig reported = teamAssignmentConfigRepository.applyTo(exercise, null);
 
-        assertThat(teamAssignmentConfigRepository.findByExerciseId(textExerciseId)).isEmpty();
-        assertThat(exercise.getTeamAssignmentConfig()).isNull();
+        assertThat(reported.getMinTeamSize()).isEqualTo(2);
+        assertThat(reported.getMaxTeamSize()).isEqualTo(4);
+    }
+
+    @Test
+    void insertingTheDefaultsAgainChangesNothing() {
+        long idBefore = teamAssignmentConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
+
+        teamAssignmentConfigRepository.insertDefaultsFor(textExerciseId);
+
+        List<TeamAssignmentConfig> rows = teamAssignmentConfigRepository.findAllByExerciseIdIn(List.of(textExerciseId));
+        assertThat(rows).hasSize(1);
+        assertThat(rows.getFirst().getId()).isEqualTo(idBefore);
+        assertThat(rows.getFirst().getMinTeamSize()).as("the stored settings are not reset by the idempotent insert").isEqualTo(2);
+    }
+
+    @Test
+    void anExerciseStoredWithoutItsRowIsReportedInsteadOfHealedBehindTheCallersBack() {
+        Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(examExercise().getExerciseGroup()));
+
+        assertThatThrownBy(() -> teamAssignmentConfigRepository.applyTo(exercise, null)).isInstanceOf(EntityNotFoundException.class);
+        assertThat(teamAssignmentConfigRepository.findByExerciseId(exercise.getId())).isEmpty();
+    }
+
+    @Test
+    void anExerciseOfEveryTypeGetsDefaultsWhenNoSettingsAreRequested() {
+        Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(examExercise().getExerciseGroup()));
+
+        exerciseConfigurationService.initialize(exercise);
+
+        TeamAssignmentConfig stored = teamAssignmentConfigRepository.findByExerciseId(exercise.getId()).orElseThrow();
+        assertThat(stored.getMinTeamSize()).isEqualTo(1);
+        assertThat(stored.getMaxTeamSize()).isEqualTo(1);
+    }
+
+    private Exercise examExercise() {
+        return exerciseRepository.findByIdElseThrow(examExerciseId);
     }
 
     @Test

@@ -17,6 +17,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -25,7 +26,9 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
  * Spring Data JPA repository for the {@link PlagiarismDetectionConfig} entity. The configuration holds the key to its
  * exercise and the exercise carries no mapped association to it, so loading an exercise never reads the configuration. A
  * flow that needs it reads it here and may attach it to the exercise it already holds with {@link #attachTo(Exercise)} or
- * {@link #attachTo(Collection)}; a flow that writes it goes through {@link #replaceFor(Exercise, PlagiarismDetectionConfig)}.
+ * {@link #attachTo(Collection)}. Every exercise owns exactly one row, created together with the exercise by
+ * {@link #insertDefaultsFor(long)}; a flow that changes the settings updates that row in place with
+ * {@link #applyTo(Exercise, PlagiarismDetectionConfig)}.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -63,17 +66,47 @@ public interface PlagiarismDetectionConfigRepository extends ArtemisJpaRepositor
     List<PlagiarismDetectionConfig> findAllByExerciseIdIn(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Removes the plagiarism detection configuration of an exercise.
+     * Creates the plagiarism detection settings of a newly stored exercise with the defaults, unless the exercise already
+     * has them. The settings are permanent: they exist for every exercise and are only ever updated afterwards.
      *
      * @param exerciseId the id of the exercise
      */
     @Modifying
-    @Transactional // ok because of delete
+    @Transactional // ok because of the insert
+    @Query(value = """
+            INSERT INTO plagiarism_detection_config (exercise_id, continuous_plagiarism_control_enabled, continuous_plagiarism_control_post_due_date_checks_enabled,
+                continuous_plagiarism_control_case_student_response_period, similarity_threshold, minimum_score, minimum_size)
+            SELECT exercise.id, FALSE, FALSE, 7, 90, 0, 50 FROM exercise
+            WHERE exercise.id = :exerciseId
+                AND NOT EXISTS (SELECT 1 FROM plagiarism_detection_config existing WHERE existing.exercise_id = exercise.id)
+            """, nativeQuery = true)
+    void insertDefaultsFor(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Changes an exercise's permanent plagiarism detection settings in place.
+     *
+     * @param exerciseId               the id of the exercise
+     * @param controlEnabled           whether continuous plagiarism control is enabled
+     * @param postDueDateChecksEnabled whether continuous plagiarism control also checks after the due date
+     * @param studentResponsePeriod    the days a student has to respond to a plagiarism case
+     * @param similarityThreshold      the similarity from which submissions are reported
+     * @param minimumScore             the score a submission needs to be considered
+     * @param minimumSize              the size a submission needs to be considered
+     * @return the number of updated rows: 1, or 0 if the exercise has no settings row
+     */
+    @Modifying
+    @Transactional // ok because of the update
     @Query("""
-            DELETE FROM PlagiarismDetectionConfig configuration
+            UPDATE PlagiarismDetectionConfig configuration
+            SET configuration.continuousPlagiarismControlEnabled = :controlEnabled,
+                configuration.continuousPlagiarismControlPostDueDateChecksEnabled = :postDueDateChecksEnabled,
+                configuration.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod = :studentResponsePeriod,
+                configuration.similarityThreshold = :similarityThreshold, configuration.minimumScore = :minimumScore, configuration.minimumSize = :minimumSize
             WHERE configuration.exercise.id = :exerciseId
             """)
-    void deleteByExerciseId(@Param("exerciseId") long exerciseId);
+    int updateSettings(@Param("exerciseId") long exerciseId, @Param("controlEnabled") boolean controlEnabled, @Param("postDueDateChecksEnabled") boolean postDueDateChecksEnabled,
+            @Param("studentResponsePeriod") int studentResponsePeriod, @Param("similarityThreshold") int similarityThreshold, @Param("minimumScore") int minimumScore,
+            @Param("minimumSize") int minimumSize);
 
     /**
      * Puts the configuration of an exercise onto it, for a flow that reads or maps it through the exercise. An exercise
@@ -105,49 +138,38 @@ public interface PlagiarismDetectionConfigRepository extends ArtemisJpaRepositor
     }
 
     /**
-     * Stores the plagiarism detection configuration an update carried, or, when it carried none, reads the stored one onto
-     * the exercise. An omitted configuration leaves the stored one untouched, which is why it must not be replaced by
-     * "none" here, and the exercise reports what is stored either way.
+     * Gives a newly stored exercise its permanent plagiarism detection row and applies the requested settings to it. Calling
+     * this again for the same exercise is safe.
      *
-     * @param saved   the saved exercise, whose slot ends up carrying the stored configuration
-     * @param carried the configuration the update carried, or null when it carried none
-     * @return the stored configuration, or null when the exercise has none
+     * @param exercise  the exercise that was just stored
+     * @param requested the settings the creating request carried, or null for the defaults
+     * @return the stored settings
      */
-    default @Nullable PlagiarismDetectionConfig replaceOrAttach(Exercise saved, @Nullable PlagiarismDetectionConfig carried) {
-        if (carried != null) {
-            return replaceFor(saved, carried);
-        }
-        attachTo(saved);
-        return saved.getPlagiarismDetectionConfig();
+    default PlagiarismDetectionConfig initializeFor(Exercise exercise, @Nullable PlagiarismDetectionConfig requested) {
+        insertDefaultsFor(exercise.getId());
+        return applyTo(exercise, requested);
     }
 
     /**
-     * Makes the stored plagiarism detection configuration of a saved exercise equal to the desired one, and leaves the
-     * stored configuration on the exercise's slot. The exercise has to be saved already, because the configuration holds the
-     * key to it.
-     * <p>
-     * A configuration that exists is updated in place and a replaced one is never left behind; null removes it.
+     * Applies the requested plagiarism detection settings to a saved exercise's permanent row and leaves the stored settings
+     * on the exercise's slot. The row is updated in place and never replaced; requesting nothing keeps what is stored.
      *
-     * @param exercise the saved exercise
-     * @param desired  the configuration the exercise should have afterwards, or null for none
-     * @return the stored configuration, or null when the exercise has none
+     * @param exercise  the saved exercise
+     * @param requested the settings the exercise should have afterwards, or null to keep the stored ones
+     * @return the stored settings
+     * @throws EntityNotFoundException if the exercise has no settings row, which means it was stored without its defaults
      */
-    default @Nullable PlagiarismDetectionConfig replaceFor(Exercise exercise, @Nullable PlagiarismDetectionConfig desired) {
-        if (desired == null) {
-            deleteByExerciseId(exercise.getId());
-            exercise.setPlagiarismDetectionConfig(null);
-            return null;
+    default PlagiarismDetectionConfig applyTo(Exercise exercise, @Nullable PlagiarismDetectionConfig requested) {
+        if (requested != null && updateSettings(exercise.getId(), requested.isContinuousPlagiarismControlEnabled(),
+                requested.isContinuousPlagiarismControlPostDueDateChecksEnabled(), requested.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(),
+                requested.getSimilarityThreshold(), requested.getMinimumScore(), requested.getMinimumSize()) != 1) {
+            throw new EntityNotFoundException("PlagiarismDetectionConfig", exercise.getId());
         }
-        PlagiarismDetectionConfig stored = findByExerciseId(exercise.getId()).orElseGet(PlagiarismDetectionConfig::new);
-        stored.setContinuousPlagiarismControlEnabled(desired.isContinuousPlagiarismControlEnabled());
-        stored.setContinuousPlagiarismControlPostDueDateChecksEnabled(desired.isContinuousPlagiarismControlPostDueDateChecksEnabled());
-        stored.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(desired.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod());
-        stored.setSimilarityThreshold(desired.getSimilarityThreshold());
-        stored.setMinimumScore(desired.getMinimumScore());
-        stored.setMinimumSize(desired.getMinimumSize());
-        stored.setExercise(exercise);
-        stored = save(stored);
-        exercise.setPlagiarismDetectionConfig(stored);
+        attachTo(exercise);
+        PlagiarismDetectionConfig stored = exercise.getPlagiarismDetectionConfig();
+        if (stored == null) {
+            throw new EntityNotFoundException("PlagiarismDetectionConfig", exercise.getId());
+        }
         return stored;
     }
 }

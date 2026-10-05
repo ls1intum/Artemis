@@ -12,9 +12,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
@@ -31,7 +30,7 @@ export enum ExerciseButtonStatus {
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
-    imports: [ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule, TranslateDirective],
+    imports: [ArtemisTranslatePipe, FontAwesomeModule, TumAetUiTooltipDirective, TranslateDirective],
     templateUrl: './exam-navigation-sidebar.component.html',
     styleUrl: './exam-navigation-sidebar.component.scss',
 })

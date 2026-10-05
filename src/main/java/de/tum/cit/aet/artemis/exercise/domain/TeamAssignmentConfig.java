@@ -52,19 +52,11 @@ public class TeamAssignmentConfig extends DomainObject {
     @Min(1)
     @NonNull
     @Column(name = "min_team_size")
-    private Integer minTeamSize;
+    private Integer minTeamSize = 1;
 
     @Min(1)
     @Column(name = "max_team_size")
-    private Integer maxTeamSize;
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
+    private Integer maxTeamSize = 1;
 
     public Integer getMinTeamSize() {
         return minTeamSize;

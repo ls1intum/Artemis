@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepos
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
@@ -164,10 +163,8 @@ public class ProgrammingExerciseRetrievalResource {
     private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
         if (includePlagiarismDetectionConfig) {
-            // The plagiarism detection configuration is not part of the exercise, so it is read here, and filled with the
-            // default for a course exercise that predates it.
+            // The plagiarism detection configuration is not part of the exercise, so it is read here.
             plagiarismDetectionConfigRepository.attachTo(programmingExercise);
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, plagiarismDetectionConfigRepository);
         }
         return programmingExercise;
     }

@@ -3,21 +3,10 @@ package de.tum.cit.aet.artemis.plagiarism;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
@@ -31,75 +20,6 @@ class PlagiarismDetectionConfigHelperTest {
         var exercise = new ModelingExercise();
         exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         return exercise;
-    }
-
-    @Test
-    void shouldDoNothingIfCourseExerciseHasPlagiarismDetectionConfig() {
-        // given: course exercise with PlagiarismDetectionConfig
-        var exercise = new ModelingExercise();
-        exercise.setCourse(new Course());
-        var config = PlagiarismDetectionConfig.createDefault();
-        exercise.setPlagiarismDetectionConfig(config);
-
-        // and
-        var repository = mock(PlagiarismDetectionConfigRepository.class);
-
-        // when
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, repository);
-
-        // then
-        verifyNoMoreInteractions(repository);
-        assertThat(exercise.getPlagiarismDetectionConfig()).isSameAs(config);
-    }
-
-    @Test
-    void shouldDoNothingIfExamExercise() {
-        // given: exam exercise without PlagiarismDetectionConfig
-        var exercise = new ModelingExercise();
-        exercise.setExerciseGroup(new ExerciseGroup());
-
-        // and
-        var repository = mock(PlagiarismDetectionConfigRepository.class);
-
-        // when
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, repository);
-
-        // then
-        verifyNoMoreInteractions(repository);
-        assertThat(exercise.getPlagiarismDetectionConfig()).isNull();
-    }
-
-    @Test
-    void shouldAddDefaultConfigIfExerciseDoesNotHavePlagiarismDetectionConfig() {
-        // given: course exercise without PlagiarismDetectionConfig
-        var exercise = new ModelingExercise();
-        exercise.setCourse(new Course());
-
-        // and
-        var repository = mock(PlagiarismDetectionConfigRepository.class);
-
-        // when
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, repository);
-
-        // then: the default is stored for the exercise, as a row of its own, rather than hung onto the exercise
-        var stored = ArgumentCaptor.forClass(PlagiarismDetectionConfig.class);
-        verify(repository).replaceFor(eq(exercise), stored.capture());
-        assertThat(stored.getValue()).usingRecursiveComparison().isEqualTo(PlagiarismDetectionConfig.createDefault());
-    }
-
-    @Test
-    void shouldReportTheStoredConfigIfAConcurrentRequestFilledTheExerciseFirst() {
-        // given: a course exercise without PlagiarismDetectionConfig whose default another request stores at the same time
-        var exercise = new ModelingExercise();
-        exercise.setCourse(new Course());
-        var repository = mock(PlagiarismDetectionConfigRepository.class);
-        doThrow(new DataIntegrityViolationException("unique key on exercise_id")).when(repository).replaceFor(eq(exercise), any());
-
-        // when
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, repository);
-
-        // then: the lost race is not an error, the stored configuration is the one to report
-        verify(repository).attachTo(exercise);
     }
 
     @Test

@@ -3,24 +3,18 @@ package de.tum.cit.aet.artemis.course.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "course_athena_config")
-public class CourseAthenaConfig {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class CourseAthenaConfig extends DomainObject {
 
     /**
      * The course this configuration belongs to. The key lives here rather than on the course: the course carries no
@@ -38,10 +32,6 @@ public class CourseAthenaConfig {
 
     @Column(name = "formative_feedback_enabled", nullable = false)
     private boolean formativeFeedbackEnabled = false;
-
-    public Long getId() {
-        return id;
-    }
 
     public Course getCourse() {
         return course;

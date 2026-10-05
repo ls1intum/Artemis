@@ -170,23 +170,23 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getProgrammingExercise_withPlagiarismDetectionConfig_createsExactlyOneDefaultRow() throws Exception {
+    void getProgrammingExercise_withPlagiarismDetectionConfig_reportsThePermanentRowAndCreatesNone() throws Exception {
         String path = EXERCISE_BASE + exercise.getId() + "?withPlagiarismDetectionConfig=true";
 
         ProgrammingExerciseResponseDTO first = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
         ProgrammingExerciseResponseDTO second = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
         ProgrammingExerciseResponseDTO third = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
 
-        // The flagged GET writes a default config row when the exercise has none; the config must be on the wire.
+        // The flagged GET only reads the permanent row of the exercise; the config must be on the wire.
         assertThat(first.plagiarismDetectionConfig()).isNotNull();
         assertThat(second.plagiarismDetectionConfig()).isNotNull();
-        // Every later GET must reuse the row written by the first one instead of creating another.
-        assertThat(second.plagiarismDetectionConfig().id()).isNotNull().isEqualTo(third.plagiarismDetectionConfig().id());
+        // Every GET reports the same row: reading never inserts another.
+        assertThat(first.plagiarismDetectionConfig().id()).isNotNull().isEqualTo(second.plagiarismDetectionConfig().id()).isEqualTo(third.plagiarismDetectionConfig().id());
 
-        // The configuration is a row of its own, so the exercise has exactly one stored configuration, the one on the wire.
-        var stored = plagiarismDetectionConfigRepository.findByExerciseId(exercise.getId());
-        assertThat(stored).isPresent();
-        assertThat(stored.orElseThrow().getId()).isEqualTo(second.plagiarismDetectionConfig().id());
+        // The exercise has exactly one stored configuration, the one on the wire.
+        var stored = plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(exercise.getId()));
+        assertThat(stored).hasSize(1);
+        assertThat(stored.getFirst().getId()).isEqualTo(second.plagiarismDetectionConfig().id());
     }
 
     @Test

@@ -235,6 +235,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-modeling-exercise");
 
         assertModelingExerciseExistsInWeaviate(weaviateService, modelingExerciseTestRepository.findById(receivedModelingExercise.id()).orElseThrow());
+        exerciseUtilService.assertHasPermanentConfigurations(receivedModelingExercise.id());
 
         modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
         request.post("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), HttpStatus.BAD_REQUEST);
@@ -295,6 +296,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExerciseTestRepository.save(modelingExercise);
+        exerciseUtilService.initializeConfigurations(modelingExercise);
 
         modelingExercise.setProblemStatement("New problem statement");
         var params = new LinkedMultiValueMap<String, String>();
@@ -581,6 +583,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
 
         assertModelingExerciseExistsInWeaviate(weaviateService, importedExercise);
+        exerciseUtilService.assertHasPermanentConfigurations(importedExercise.getId());
     }
 
     @Test
@@ -1045,7 +1048,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exerciseToBeImported.setCourse(course2);
 
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exerciseToBeImported);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1075,7 +1077,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 course1);
         sourceExercise.setMode(ExerciseMode.TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(sourceExercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1649,6 +1650,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise = modelingExerciseTestRepository.save(modelingExercise);
+        exerciseUtilService.initializeConfigurations(modelingExercise);
 
         ModelingExerciseResponseDTO response = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, ModelingExerciseResponseDTO.class);
 

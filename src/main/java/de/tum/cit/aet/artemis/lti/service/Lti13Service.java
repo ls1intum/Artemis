@@ -169,7 +169,7 @@ public class Lti13Service {
 
         Course course = targetCourse.get();
         OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository.findByCourseId(course.getId()).orElse(null);
-        if (onlineCourseConfiguration == null) {
+        if (!course.isOnlineCourse() || onlineCourseConfiguration == null) {
             String message = "LTI is not configured for course with target link URL: " + targetLinkUrl;
             log.error(message);
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");

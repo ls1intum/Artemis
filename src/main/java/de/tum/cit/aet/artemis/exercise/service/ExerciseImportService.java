@@ -22,9 +22,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 public abstract class ExerciseImportService {
@@ -37,21 +35,17 @@ public abstract class ExerciseImportService {
 
     private final FeedbackService feedbackService;
 
-    protected final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
-
-    protected final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+    protected final ExerciseConfigurationService exerciseConfigurationService;
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
     protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FeedbackService feedbackService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+            FeedbackService feedbackService, ExerciseConfigurationService exerciseConfigurationService) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.feedbackService = feedbackService;
-        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
-        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.exerciseConfigurationService = exerciseConfigurationService;
     }
 
     /**
@@ -140,7 +134,7 @@ public abstract class ExerciseImportService {
         // The source comes straight from a query, which does not carry the configuration: read it explicitly, and only
         // here, because only an exercise that brought none of its own needs it.
         if (!hasPlagiarismDetectionConfig(newExercise)) {
-            plagiarismDetectionConfigRepository.attachTo(sourceExercise);
+            exerciseConfigurationService.attachPlagiarismDetectionConfig(sourceExercise);
         }
         Exercise plagiarismSource = hasPlagiarismDetectionConfig(newExercise) ? newExercise : sourceExercise;
         if (hasPlagiarismDetectionConfig(plagiarismSource)) {
@@ -162,12 +156,12 @@ public abstract class ExerciseImportService {
                 // The source comes straight from a query, which does not carry the configuration: read it explicitly, and
                 // only here, because only a team exercise that brought none of its own needs it.
                 if (!hasTeamAssignmentConfig(newExercise)) {
-                    teamAssignmentConfigRepository.attachTo(sourceExercise);
+                    exerciseConfigurationService.attachTeamAssignmentConfig(sourceExercise);
                 }
                 Exercise teamConfigSource = hasTeamAssignmentConfig(newExercise) ? newExercise : sourceExercise;
                 if (hasTeamAssignmentConfig(teamConfigSource)) {
                     // Always a fresh copy: a caller-supplied configuration may still carry the source's id.
-                    newExercise.setTeamAssignmentConfig(teamConfigSource.getTeamAssignmentConfig().copyTeamAssignmentConfig());
+                    newExercise.setTeamAssignmentConfig(teamConfigSource.getStoredTeamAssignmentConfig().copyTeamAssignmentConfig());
                 }
             }
             else {
@@ -199,31 +193,19 @@ public abstract class ExerciseImportService {
     }
 
     private static boolean hasTeamAssignmentConfig(Exercise exercise) {
-        return exercise.getTeamAssignmentConfig() != null;
+        return exercise.getStoredTeamAssignmentConfig() != null;
     }
 
     /**
-     * Stores the team assignment configuration {@link #copyExerciseBasis} left on {@code newExercise}, now that the
-     * exercise is saved: the configuration holds the key to its exercise, so it can only be written afterwards, and the
-     * merged copy a second save returns does not carry the slot, so it receives the stored configuration here.
+     * Gives the saved copy its permanent configuration rows and applies the settings {@link #copyExerciseBasis} left on
+     * {@code newExercise}: the rows hold the key to their exercise, so they can only be written once it is saved. Call it for
+     * every exercise this service saved as a new one.
      *
      * @param persistedExercise the saved exercise that the caller goes on to return
-     * @param newExercise       the exercise {@link #copyExerciseBasis} prepared, which carries the configuration to store
+     * @param newExercise       the exercise {@link #copyExerciseBasis} prepared, which carries the settings to apply
      */
-    protected void saveTeamAssignmentConfig(Exercise persistedExercise, Exercise newExercise) {
-        teamAssignmentConfigRepository.replaceFor(persistedExercise, newExercise.getTeamAssignmentConfig());
-    }
-
-    /**
-     * Stores the plagiarism detection configuration {@link #copyExerciseBasis} left on {@code newExercise}, now that the
-     * exercise is saved, for the same reason as {@link #saveTeamAssignmentConfig}: the configuration holds the key to its
-     * exercise, so it can only be written afterwards.
-     *
-     * @param persistedExercise the saved exercise that the caller goes on to return
-     * @param newExercise       the exercise {@link #copyExerciseBasis} prepared, which carries the configuration to store
-     */
-    protected void savePlagiarismDetectionConfig(Exercise persistedExercise, Exercise newExercise) {
-        plagiarismDetectionConfigRepository.replaceFor(persistedExercise, newExercise.getPlagiarismDetectionConfig());
+    protected void initializeConfigurations(Exercise persistedExercise, Exercise newExercise) {
+        exerciseConfigurationService.initialize(persistedExercise, newExercise.getStoredTeamAssignmentConfig(), newExercise.getPlagiarismDetectionConfig());
     }
 
     /**

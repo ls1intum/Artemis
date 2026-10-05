@@ -191,15 +191,17 @@ public class ProgrammingExerciseImportBasicService {
         // the test cases and the tasks created below can reference it. Competency links are added afterwards because they
         // must point at the persisted exercise.
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
-        // An exam exercise is always individual and must not keep a team assignment configuration a client brought along.
+        // An exam exercise is always individual and must not keep team settings a client brought along: it gets the defaults.
         final var desiredTeamAssignmentConfig = newExercise.isExamExercise() ? null : newExercise.getTeamAssignmentConfig();
-        // Likewise an exam exercise has none: setupExerciseForImport already cleared it, and a course exercise has at least the default.
+        // Likewise an exam exercise starts from the default plagiarism detection settings: setupExerciseForImport already cleared them.
         final var desiredPlagiarismDetectionConfig = newExercise.isExamExercise() ? null : newExercise.getPlagiarismDetectionConfig();
         newExercise = programmingExerciseRepository.save(newExercise);
         // The configurations name the exercise, so they are written once that exercise exists.
         programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
-        final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.replaceFor(newExercise, desiredTeamAssignmentConfig);
-        final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.replaceFor(newExercise, desiredPlagiarismDetectionConfig);
+        // The same two calls ExerciseConfigurationService.initialize makes; this service goes to the repositories because it
+        // is already at the limit of constructor dependencies the code quality check allows.
+        final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.initializeFor(newExercise, desiredTeamAssignmentConfig);
+        final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.initializeFor(newExercise, desiredPlagiarismDetectionConfig);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
@@ -229,10 +231,9 @@ public class ProgrammingExerciseImportBasicService {
             staticCodeAnalysisService.createDefaultCategories(newExercise);
         }
 
-        // Exam exercises are always individual and must not carry a team assignment configuration.
+        // Exam exercises are always individual; their stored team settings stay unused (the getter hides them outside team mode).
         if (newExercise.isExamExercise()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
-            newExercise.setTeamAssignmentConfig(null);
         }
 
         // Copy the auxiliary repositories.

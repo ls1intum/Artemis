@@ -220,6 +220,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(receivedFileUploadExercise.channelName()).isEqualTo(channelFromDB.getName());
 
         assertFileUploadExerciseExistsInWeaviate(weaviateService, fileUploadExerciseRepository.findByIdElseThrow(receivedFileUploadExercise.id()));
+        exerciseUtilService.assertHasPermanentConfigurations(receivedFileUploadExercise.id());
     }
 
     @Test
@@ -1171,6 +1172,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedFileUploadExercise));
         assertFileUploadExerciseExistsInWeaviate(weaviateService, importedFileUploadExercise);
+        exerciseUtilService.assertHasPermanentConfigurations(importedFileUploadExercise.getId());
     }
 
     @Test

@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -143,10 +144,11 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        // Attach the course configuration so applyTo updates it in place instead of creating a duplicate, and so the
-        // admin-only auto-orchestration change detection below compares against the persisted values. The course carries
-        // no mapped association to it, so it is read through its own repository.
-        courseConfigurationRepository.attachTo(existingCourse);
+        // Attach the (lazily-stored) course configuration so applyTo can update its permanent row,
+        // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
+        // via its own repository to keep the course update entity graph small.
+        existingCourse
+                .setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("CourseConfiguration", courseId)));
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -212,29 +214,16 @@ public class CourseUpdateResource {
             fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
         }
 
-        // The online course configuration holds the key to its course, so the course does not carry it.
-        boolean wasOnlineCourse = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).isPresent();
-        boolean onlineCourseChanged = courseUpdateDTO.onlineCourse() != null && courseUpdateDTO.onlineCourse() != wasOnlineCourse;
-
         if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), oldCodeOfConduct)) {
             conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
+        // Configurations live for the lifetime of the course. Toggling online mode only changes the course flag.
         Course result = courseRepository.save(existingCourse);
 
-        // The course configuration holds the key to its course, so saving the course does not cascade to it (applyTo
-        // updated it in place, or created it for a course that never had one).
+        // The course configuration holds the key to its course, so saving the course does not cascade to it: applyTo changed the
+        // attached row in place and this stores it. Toggling online mode only changes the course flag.
         result.setCourseConfiguration(courseConfigurationRepository.save(existingCourse.getCourseConfiguration()));
-
-        // The course exists by now, which is what the configuration's key to it needs.
-        if (onlineCourseChanged) {
-            if (courseUpdateDTO.onlineCourse() && ltiApi.isPresent()) {
-                ltiApi.get().createOnlineCourseConfiguration(result);
-            }
-            else {
-                ltiApi.ifPresent(api -> api.deleteOnlineCourseConfiguration(courseId));
-            }
-        }
 
         // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
         // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).

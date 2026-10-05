@@ -21,8 +21,6 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -40,7 +38,7 @@ class ExerciseImportServiceTest {
     private static final class TestableExerciseImport extends ExerciseImportService {
 
         private TestableExerciseImport() {
-            super(null, null, null, null, mock(TeamAssignmentConfigRepository.class), mock(PlagiarismDetectionConfigRepository.class));
+            super(null, null, null, null, mock(ExerciseConfigurationService.class));
         }
 
         private void copyBasis(Exercise newExercise, Exercise sourceExercise) {

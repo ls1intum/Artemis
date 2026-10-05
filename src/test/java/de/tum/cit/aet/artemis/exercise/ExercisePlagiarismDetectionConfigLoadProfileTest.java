@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -21,11 +22,12 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -63,10 +65,16 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
     private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -108,14 +116,14 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
 
         Exam exam = examUtilService.addExamWithExerciseGroup(courseRepository.findByIdElseThrow(courseId), true);
         examId = exam.getId();
-        examExerciseId = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst())).getId();
+        examExerciseId = exerciseUtilService.initializeConfigurations(exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst())))
+                .getId();
     }
 
     private <E extends Exercise> E withConfig(E exercise, int similarityThreshold) {
         PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
         config.setSimilarityThreshold(similarityThreshold);
-        plagiarismDetectionConfigRepository.replaceFor(exercise, config);
-        return exercise;
+        return exerciseUtilService.savePlagiarismDetectionConfig(exercise, config);
     }
 
     @Test
@@ -214,19 +222,19 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
     }
 
     @Test
-    void replacingTheConfigurationLeavesExactlyOneRow() {
+    void updatingTheSettingsKeepsTheSameRow() {
         Exercise exercise = exerciseRepository.findByIdElseThrow(textExerciseId);
         long idBefore = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
 
         PlagiarismDetectionConfig replacement = PlagiarismDetectionConfig.createDefault();
         replacement.setSimilarityThreshold(55);
         replacement.setMinimumSize(12);
-        plagiarismDetectionConfigRepository.replaceFor(exercise, replacement);
-        plagiarismDetectionConfigRepository.replaceFor(exercise, replacement);
+        plagiarismDetectionConfigRepository.applyTo(exercise, replacement);
+        plagiarismDetectionConfigRepository.applyTo(exercise, replacement);
 
         List<PlagiarismDetectionConfig> rows = plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(textExerciseId));
         assertThat(rows).hasSize(1);
-        assertThat(rows.getFirst().getId()).as("the stored row is updated in place, not replaced").isEqualTo(idBefore);
+        assertThat(rows.getFirst().getId()).as("the permanent row is updated in place, never replaced").isEqualTo(idBefore);
         assertThat(rows.getFirst().getSimilarityThreshold()).isEqualTo(55);
         assertThat(rows.getFirst().getMinimumSize()).isEqualTo(12);
         assertThat(exercise.getPlagiarismDetectionConfig().getId()).isEqualTo(idBefore);
@@ -237,7 +245,7 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
         Exercise exercise = exerciseRepository.findByIdElseThrow(textExerciseId);
         long idBefore = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
 
-        var reported = plagiarismDetectionConfigRepository.replaceOrAttach(exercise, null);
+        var reported = plagiarismDetectionConfigRepository.applyTo(exercise, null);
 
         assertThat(reported).isNotNull();
         assertThat(reported.getId()).isEqualTo(idBefore);
@@ -246,28 +254,37 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
     }
 
     @Test
-    void aCourseExerciseWithoutAConfigurationGetsTheDefaultOnce() {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(textExerciseId);
-        plagiarismDetectionConfigRepository.deleteByExerciseId(textExerciseId);
-        exercise.setPlagiarismDetectionConfig(null);
+    void insertingTheDefaultsAgainChangesNothing() {
+        long idBefore = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
 
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, plagiarismDetectionConfigRepository);
-        long filledId = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow().getId();
-        // the second call finds it on the slot and does nothing
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, plagiarismDetectionConfigRepository);
+        plagiarismDetectionConfigRepository.insertDefaultsFor(textExerciseId);
 
-        assertThat(plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(textExerciseId))).hasSize(1).first().extracting(PlagiarismDetectionConfig::getId)
-                .isEqualTo(filledId);
-        assertThat(exercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(PlagiarismDetectionConfig.createDefault().getSimilarityThreshold());
+        List<PlagiarismDetectionConfig> rows = plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(textExerciseId));
+        assertThat(rows).hasSize(1);
+        assertThat(rows.getFirst().getId()).isEqualTo(idBefore);
+        assertThat(rows.getFirst().getSimilarityThreshold()).as("the stored settings are not reset by the idempotent insert").isEqualTo(90);
     }
 
     @Test
-    void anExamExerciseGetsNoDefaultConfiguration() {
-        Exercise examExercise = exerciseRepository.findByIdElseThrow(examExerciseId);
+    void anExerciseStoredWithoutItsRowIsReportedInsteadOfHealedBehindTheCallersBack() {
+        Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseRepository.findByIdElseThrow(examExerciseId).getExerciseGroup()));
 
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(examExercise, plagiarismDetectionConfigRepository);
+        assertThatThrownBy(() -> plagiarismDetectionConfigRepository.applyTo(exercise, null)).isInstanceOf(EntityNotFoundException.class);
+        assertThat(plagiarismDetectionConfigRepository.findByExerciseId(exercise.getId())).isEmpty();
+    }
 
-        assertThat(plagiarismDetectionConfigRepository.findByExerciseId(examExerciseId)).isEmpty();
+    @Test
+    void initializingAnExerciseGivesItTheDefaultsExactlyOnceAndAppliesTheRequestedSettings() {
+        Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseRepository.findByIdElseThrow(examExerciseId).getExerciseGroup()));
+        PlagiarismDetectionConfig requested = PlagiarismDetectionConfig.createDefault();
+        requested.setSimilarityThreshold(42);
+
+        exerciseConfigurationService.initialize(exercise, null, requested);
+        exerciseConfigurationService.initialize(exercise);
+
+        List<PlagiarismDetectionConfig> rows = plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(exercise.getId()));
+        assertThat(rows).hasSize(1);
+        assertThat(rows.getFirst().getSimilarityThreshold()).as("the second call keeps what the request asked for").isEqualTo(42);
     }
 
     @Test

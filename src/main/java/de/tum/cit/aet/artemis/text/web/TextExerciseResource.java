@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -170,12 +169,8 @@ public class TextExerciseResource {
     private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
         var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId);
         if (includePlagiarismDetectionConfig) {
-            // The plagiarism detection configuration is not part of the exercise, so it is read here, and filled with the
-            // default for a course exercise that predates it.
-            textExercise.ifPresent(it -> {
-                plagiarismDetectionConfigRepository.attachTo(it);
-                PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, plagiarismDetectionConfigRepository);
-            });
+            // The plagiarism detection configuration is not part of the exercise, so it is read here.
+            textExercise.ifPresent(plagiarismDetectionConfigRepository::attachTo);
         }
         return textExercise;
     }

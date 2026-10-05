@@ -443,7 +443,7 @@ public class Course extends DomainObject {
      * grade-relevant, matching the safe default. The course carries no mapped association to its configuration, so it only
      * reflects the flag when a flow attached the configuration.
      *
-     * @return {@code true} if the course is grade-relevant or has no explicit configuration, {@code false} if an
+     * @return {@code true} if the course is grade-relevant or its configuration was not loaded, {@code false} if an
      *         instructor opted out
      */
     public boolean isGradeRelevant() {

@@ -17,6 +17,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
@@ -25,7 +26,9 @@ import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
  * Spring Data JPA repository for the {@link TeamAssignmentConfig} entity. The configuration holds the key to its exercise
  * and the exercise carries no mapped association to it, so loading an exercise never reads the configuration. A flow that
  * needs it reads it here and may attach it to the exercise it already holds with {@link #attachTo(Exercise)} or
- * {@link #attachTo(Collection)}; a flow that writes it goes through {@link #replaceFor(Exercise, TeamAssignmentConfig)}.
+ * {@link #attachTo(Collection)}. Every exercise owns exactly one row, created together with the exercise by
+ * {@link #insertDefaultsFor(long)}; a flow that changes the settings updates that row in place with
+ * {@link #applyTo(Exercise, TeamAssignmentConfig)}.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -63,17 +66,38 @@ public interface TeamAssignmentConfigRepository extends ArtemisJpaRepository<Tea
     List<TeamAssignmentConfig> findAllByExerciseIdIn(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Removes the team assignment configuration of an exercise, e.g. when team mode is switched off.
+     * Creates the team settings of a newly stored exercise with the defaults, unless the exercise already has them. The
+     * settings are permanent: they exist for every exercise, whether or not it is in team mode, and are only ever updated
+     * afterwards.
      *
      * @param exerciseId the id of the exercise
      */
     @Modifying
-    @Transactional // ok because of delete
+    @Transactional // ok because of the insert
+    @Query(value = """
+            INSERT INTO team_assignment_config (exercise_id, min_team_size, max_team_size)
+            SELECT exercise.id, 1, 1 FROM exercise
+            WHERE exercise.id = :exerciseId
+                AND NOT EXISTS (SELECT 1 FROM team_assignment_config existing WHERE existing.exercise_id = exercise.id)
+            """, nativeQuery = true)
+    void insertDefaultsFor(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Changes the team sizes of an exercise's permanent settings in place.
+     *
+     * @param exerciseId  the id of the exercise
+     * @param minTeamSize the smallest allowed team
+     * @param maxTeamSize the largest allowed team
+     * @return the number of updated rows: 1, or 0 if the exercise has no settings row
+     */
+    @Modifying
+    @Transactional // ok because of the update
     @Query("""
-            DELETE FROM TeamAssignmentConfig configuration
+            UPDATE TeamAssignmentConfig configuration
+            SET configuration.minTeamSize = :minTeamSize, configuration.maxTeamSize = :maxTeamSize
             WHERE configuration.exercise.id = :exerciseId
             """)
-    void deleteByExerciseId(@Param("exerciseId") long exerciseId);
+    int updateSizes(@Param("exerciseId") long exerciseId, @Param("minTeamSize") Integer minTeamSize, @Param("maxTeamSize") Integer maxTeamSize);
 
     /**
      * Puts the configuration of an exercise onto it, for a flow that reads or maps it through the exercise. An exercise
@@ -105,29 +129,36 @@ public interface TeamAssignmentConfigRepository extends ArtemisJpaRepository<Tea
     }
 
     /**
-     * Makes the stored team assignment configuration of a saved exercise equal to the desired one, and leaves the stored
-     * configuration on the exercise's slot. The exercise has to be saved already, because the configuration holds the key
-     * to it.
-     * <p>
-     * A configuration that exists is updated in place and a replaced one is never left behind; null removes it, which is
-     * what switching team mode off means.
+     * Gives a newly stored exercise its permanent team settings row and applies the requested settings to it. Calling this
+     * again for the same exercise is safe.
      *
-     * @param exercise the saved exercise
-     * @param desired  the configuration the exercise should have afterwards, or null for none
-     * @return the stored configuration, or null when the exercise has none
+     * @param exercise  the exercise that was just stored
+     * @param requested the settings the creating request carried, or null for the defaults
+     * @return the stored settings
      */
-    default @Nullable TeamAssignmentConfig replaceFor(Exercise exercise, @Nullable TeamAssignmentConfig desired) {
-        if (desired == null) {
-            deleteByExerciseId(exercise.getId());
-            exercise.setTeamAssignmentConfig(null);
-            return null;
+    default TeamAssignmentConfig initializeFor(Exercise exercise, @Nullable TeamAssignmentConfig requested) {
+        insertDefaultsFor(exercise.getId());
+        return applyTo(exercise, requested);
+    }
+
+    /**
+     * Applies the requested team settings to a saved exercise's permanent row and leaves the stored settings on the
+     * exercise's slot. The row is updated in place and never replaced; requesting nothing keeps what is stored.
+     *
+     * @param exercise  the saved exercise
+     * @param requested the settings the exercise should have afterwards, or null to keep the stored ones
+     * @return the stored settings
+     * @throws EntityNotFoundException if the exercise has no settings row, which means it was stored without its defaults
+     */
+    default TeamAssignmentConfig applyTo(Exercise exercise, @Nullable TeamAssignmentConfig requested) {
+        if (requested != null && updateSizes(exercise.getId(), requested.getMinTeamSize(), requested.getMaxTeamSize()) != 1) {
+            throw new EntityNotFoundException("TeamAssignmentConfig", exercise.getId());
         }
-        TeamAssignmentConfig stored = findByExerciseId(exercise.getId()).orElseGet(TeamAssignmentConfig::new);
-        stored.setMinTeamSize(desired.getMinTeamSize());
-        stored.setMaxTeamSize(desired.getMaxTeamSize());
-        stored.setExercise(exercise);
-        stored = save(stored);
-        exercise.setTeamAssignmentConfig(stored);
+        attachTo(exercise);
+        TeamAssignmentConfig stored = exercise.getStoredTeamAssignmentConfig();
+        if (stored == null) {
+            throw new EntityNotFoundException("TeamAssignmentConfig", exercise.getId());
+        }
         return stored;
     }
 }

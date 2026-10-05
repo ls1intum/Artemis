@@ -342,7 +342,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercise.setCategories(new HashSet<>(Set.of("homework", "bonus")));
         exercise.setMode(ExerciseMode.TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
         teamAssignmentConfig.setMinTeamSize(2);
         teamAssignmentConfig.setMaxTeamSize(4);
         exerciseRepository.save(exercise);
@@ -480,7 +479,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise.setMode(ExerciseMode.TEAM);
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
         teamAssignmentConfig.setMinTeamSize(2);
         teamAssignmentConfig.setMaxTeamSize(4);
         exercise.setSecondCorrectionEnabled(true);

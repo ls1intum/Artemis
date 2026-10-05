@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -115,6 +116,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
+    private final ExerciseConfigurationService exerciseConfigurationService;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     /**
@@ -148,9 +151,11 @@ public class ProgrammingExerciseCreationUpdateService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseConfigurationService exerciseConfigurationService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.exerciseConfigurationService = exerciseConfigurationService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -238,8 +243,9 @@ public class ProgrammingExerciseCreationUpdateService {
         // Like the build configuration, the team assignment and plagiarism detection configuration name the exercise, so they
         // are written afterwards. The re-fetches below do not carry them, so the stored ones are put back on the exercise
         // that is returned.
-        final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.replaceFor(savedProgrammingExercise, programmingExercise.getTeamAssignmentConfig());
-        final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.replaceFor(savedProgrammingExercise, programmingExercise.getPlagiarismDetectionConfig());
+        exerciseConfigurationService.initialize(savedProgrammingExercise, programmingExercise.getTeamAssignmentConfig(), programmingExercise.getPlagiarismDetectionConfig());
+        final var storedTeamAssignmentConfig = savedProgrammingExercise.getStoredTeamAssignmentConfig();
+        final var storedPlagiarismDetectionConfig = savedProgrammingExercise.getPlagiarismDetectionConfig();
 
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
         savedProgrammingExercise.generateAndSetProjectKey();
@@ -402,7 +408,7 @@ public class ProgrammingExerciseCreationUpdateService {
         // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration. The
         // plagiarism detection configuration is stored when the update carried one and read otherwise.
         teamAssignmentConfigRepository.attachTo(savedProgrammingExercise);
-        plagiarismDetectionConfigRepository.replaceOrAttach(savedProgrammingExercise, updatedProgrammingExercise.getPlagiarismDetectionConfig());
+        plagiarismDetectionConfigRepository.applyTo(savedProgrammingExercise, updatedProgrammingExercise.getPlagiarismDetectionConfig());
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 

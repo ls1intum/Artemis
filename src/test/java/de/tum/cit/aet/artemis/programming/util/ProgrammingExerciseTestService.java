@@ -581,6 +581,7 @@ public class ProgrammingExerciseTestService {
         var importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
                 ImportProgrammingExerciseRequestDTO.of(exercise, buildConfig), "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
         assertThat(importedExercise).isNotNull();
+        exerciseUtilService.assertHasPermanentConfigurations(importedExercise.getId());
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
         assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(importedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
@@ -878,6 +879,7 @@ public class ProgrammingExerciseTestService {
         // Traced read contract of the import response: the client navigates to the new exercise and renders it from
         // the nested course, so id, title, the discriminator and the nested course identity are needed.
         assertThat(importResponse.getId()).isNotNull();
+        exerciseUtilService.assertHasPermanentConfigurations(importResponse.getId());
         assertThat(importResponse.getTitle()).isEqualTo("ImportTitle");
         assertThat(importResponse.getShortName()).isEqualTo("imported");
         assertThat(importResponse.getProgrammingLanguage()).isEqualTo(programmingLanguage);
@@ -1026,7 +1028,6 @@ public class ProgrammingExerciseTestService {
                 courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setMode(TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exerciseToBeImported);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1059,7 +1060,6 @@ public class ProgrammingExerciseTestService {
         programmingExerciseRepository.save(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(sourceExercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1698,9 +1698,9 @@ public class ProgrammingExerciseTestService {
 
     public void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
+        exercise.setMode(ExerciseMode.TEAM);
         exercise = saveWithBuildConfig(exercise);
         exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         programmingExerciseUtilService.saveBuildConfigIfMissing(exercise);
@@ -2607,6 +2607,7 @@ public class ProgrammingExerciseTestService {
 
     private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
         exercise.setId(generatedExercise.getId());
+        exerciseUtilService.assertHasPermanentConfigurations(generatedExercise.getId());
         exercise.setTemplateParticipation(generatedExercise.getTemplateParticipation());
         exercise.setSolutionParticipation(generatedExercise.getSolutionParticipation());
         assertThat(exercise).isEqualTo(generatedExercise);

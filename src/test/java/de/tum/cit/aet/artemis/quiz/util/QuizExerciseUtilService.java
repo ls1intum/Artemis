@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -63,6 +64,9 @@ public class QuizExerciseUtilService {
     private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
 
     @Autowired
     private CourseTestRepository courseRepo;
@@ -135,8 +139,9 @@ public class QuizExerciseUtilService {
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
         assertThat(quizExercise.isValid()).isTrue();
         course.addExercises(quizExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         quizExercise = exerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
         return course;
     }
@@ -180,6 +185,7 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
         quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
 
         return quizExercise;
     }
@@ -196,6 +202,7 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveSynchronizedQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime startTime, int duration) {
         QuizExercise synchronizedQuiz = QuizExerciseFactory.createSynchronizedQuiz(course, releaseDate, startTime, duration);
         quizExerciseRepository.save(synchronizedQuiz);
+        exerciseConfigurationService.initialize(synchronizedQuiz);
 
         return synchronizedQuiz;
     }
@@ -249,6 +256,7 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveEnrolledQuiz(String userPrefix, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = createEnrolledQuiz(userPrefix, releaseDate, dueDate, quizMode);
         quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
         return quizExercise;
     }
 
@@ -263,7 +271,7 @@ public class QuizExerciseUtilService {
      */
     public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
         Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         return course;
     }
 
@@ -289,6 +297,7 @@ public class QuizExerciseUtilService {
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
 
         return quizExercise;
     }
@@ -302,6 +311,7 @@ public class QuizExerciseUtilService {
     public void renameAndSaveQuiz(QuizExercise quizExercise, String newTitle) {
         quizExercise.setTitle(newTitle);
         quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
     }
 
     /**
@@ -420,11 +430,13 @@ public class QuizExerciseUtilService {
         studentParticipation.addSubmission(quizSubmission);
         quizQuestionRepository.save(dragAndDropQuestion);
         quizExercise = quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
         studentParticipationRepository.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);
         quizExercise.addParticipation(studentParticipation);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
         return quizSubmission;
     }
 
@@ -442,6 +454,8 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quizExercise);
-        return quizExerciseRepository.save(quizExercise);
+        var savedExercise = quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 }

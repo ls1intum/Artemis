@@ -176,21 +176,18 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCourse_courseWithoutConfig_leavesItAloneAndALaterSwitchSurvives() throws Exception {
-        // A course from before the configuration existed has none. The configuration holds the key to its course, so
-        // saving the course never reads or writes it: the update neither creates one nor can it detach one that a
-        // concurrent first switch created in between.
-        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+    void updateCourse_preservesDefaultConfigurationAndLaterSwitch() throws Exception {
+        var originalConfigId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
+        assertThat(originalConfigId).isPresent();
 
         Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
         updateCourse(loaded);
 
-        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
-
-        // The first switch creates the configuration, and saving the course again leaves it as it is.
-        updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
         var configId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
-        assertThat(configId).isPresent();
+        assertThat(configId).isEqualTo(originalConfigId);
+
+        // The switch reuses that configuration, and saving the course again leaves it attached.
+        updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
         JsonNode updated = updateCourse(loaded);
 
         assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEqualTo(configId);
@@ -199,13 +196,13 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
-    void updateCourse_asInstructorOfAnotherCourse_isForbiddenAndCreatesNoConfig() throws Exception {
-        // An instructor of another course is rejected without leaving state.
+    void updateCourse_asInstructorOfAnotherCourse_isForbiddenAndPreservesConfig() throws Exception {
         userUtilService.addInstructor(TEST_PREFIX + "instructor2");
-        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+        var originalConfigId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
+        assertThat(originalConfigId).isPresent();
 
         updateCourse(course, HttpStatus.FORBIDDEN);
 
-        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEqualTo(originalConfigId);
     }
 }

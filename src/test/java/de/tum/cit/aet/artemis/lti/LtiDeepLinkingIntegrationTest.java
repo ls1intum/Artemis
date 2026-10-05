@@ -92,7 +92,6 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     void deepLinkingFailsForNonOnlineCourse() throws Exception {
         course.setOnlineCourse(false);
         courseRepository.save(course);
-        onlineCourseConfigurationRepository.deleteByCourseId(course.getId());
 
         var params = getDeepLinkingRequestParamsForExercise();
 

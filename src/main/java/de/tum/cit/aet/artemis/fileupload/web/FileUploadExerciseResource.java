@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
@@ -113,6 +114,8 @@ public class FileUploadExerciseResource {
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
     private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    private final ExerciseConfigurationService exerciseConfigurationService;
 
     private final ExerciseService exerciseService;
 
@@ -164,9 +167,10 @@ public class FileUploadExerciseResource {
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
             Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService,
             ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.exerciseConfigurationService = exerciseConfigurationService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -231,8 +235,7 @@ public class FileUploadExerciseResource {
         }
         final FileUploadExercise result = savedExercise;
         // The configuration holds the key to its exercise, so it is stored once the exercise exists.
-        teamAssignmentConfigRepository.replaceFor(result, fileUploadExercise.getTeamAssignmentConfig());
-        plagiarismDetectionConfigRepository.replaceFor(result, fileUploadExercise.getPlagiarismDetectionConfig());
+        exerciseConfigurationService.initialize(result, fileUploadExercise.getTeamAssignmentConfig(), fileUploadExercise.getPlagiarismDetectionConfig());
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);

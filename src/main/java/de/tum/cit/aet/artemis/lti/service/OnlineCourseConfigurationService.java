@@ -19,13 +19,11 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
-import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantType;
 
 /**
@@ -43,15 +41,11 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
-    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
-
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    public OnlineCourseConfigurationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
-            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository) {
+    public OnlineCourseConfigurationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
-        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
     }
 
     public List<ClientRegistration> getAllClientRegistrations() {
@@ -63,20 +57,6 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     public ClientRegistration findByRegistrationId(String registrationId) {
         Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(registrationId);
         return ltiPlatformConfiguration.map(this::getClientRegistration).orElse(null);
-    }
-
-    /**
-     * Creates and stores an initial configuration for an online course with default values. The configuration holds the
-     * key to its course, so the course has to be stored already.
-     *
-     * @param course the stored online course we create a configuration for
-     * @return the stored configuration
-     */
-    public OnlineCourseConfiguration createOnlineCourseConfiguration(Course course) {
-        OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
-        ocConfiguration.setCourse(course);
-        ocConfiguration.setUserPrefix(course.getShortName());
-        return onlineCourseConfigurationRepository.save(ocConfiguration);
     }
 
     /**
@@ -125,25 +105,4 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         }
     }
 
-    /**
-     * Associates an online course configuration with an LTI platform configuration.
-     * If the provided online course configuration has a linked LTI platform configuration,
-     * it is added to the platform's list of online course configurations.
-     *
-     * @param onlineCourseConfiguration The online course configuration to be associated.
-     */
-    public void addOnlineCourseConfigurationToLtiConfigurations(OnlineCourseConfiguration onlineCourseConfiguration) {
-        LtiPlatformConfiguration linkedPlatform = onlineCourseConfiguration.getLtiPlatformConfiguration();
-        if (linkedPlatform != null) {
-            Long platformId = linkedPlatform.getId();
-            if (platformId == null) {
-                throw new IllegalStateException("The LTI platform configuration linked to the online course configuration has not been persisted");
-            }
-            LtiPlatformConfiguration platformConfiguration = ltiPlatformConfigurationRepository.findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(platformId);
-
-            var setOfOnlineCourses = platformConfiguration.getOnlineCourseConfigurations();
-            setOfOnlineCourses.add(onlineCourseConfiguration);
-            onlineCourseConfiguration.setLtiPlatformConfiguration(platformConfiguration);
-        }
-    }
 }

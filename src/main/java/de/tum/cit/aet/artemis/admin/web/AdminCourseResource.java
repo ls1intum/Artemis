@@ -45,13 +45,9 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
-import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
-import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
-import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAdminService;
 import de.tum.cit.aet.artemis.course.service.CourseDeletionService;
@@ -60,7 +56,6 @@ import de.tum.cit.aet.artemis.course.service.CourseResetService;
 import de.tum.cit.aet.artemis.course.service.CourseValidator;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
-import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
  * REST controller for administrative course management operations.
@@ -107,8 +102,6 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
-    private final Optional<LtiApi> ltiApi;
-
     private final CourseDeletionService courseDeletionService;
 
     private final CourseResetService courseResetService;
@@ -117,27 +110,19 @@ public class AdminCourseResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
-    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
-
-    private final CourseConfigurationRepository courseConfigurationRepository;
-
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService,
-            CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService,
-            CourseAthenaConfigRepository courseAthenaConfigRepository, CourseConfigurationRepository courseConfigurationRepository) {
+            FileService fileService, ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService,
+            CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.ltiApi = ltiApi;
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
         this.courseResetService = courseResetService;
         this.progressService = progressService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
-        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
-        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -152,7 +137,7 @@ public class AdminCourseResource {
      * <li>Date range validation (start date before end date)</li>
      * </ul>
      * <p>
-     * For online courses with LTI enabled, an online course configuration is automatically created.
+     * Permanent default configurations are created for every course, including offline courses.
      * Default channels (announcements, general, etc.) are created for the course.
      *
      * @param courseDTO the DTO containing the course data to create (multipart form part "course")
@@ -192,21 +177,7 @@ public class AdminCourseResource {
         CourseValidator.validateSemester(course);
         CourseValidator.validateTimeZone(course.getTimeZone());
 
-        // The configurations hold the key to their course, so the course does not cascade to them: they are stored once the
-        // course is. A new course starts with a disabled Athena configuration and its course configuration.
-        CourseAthenaConfig athenaConfig = course.getAthenaConfig();
-        CourseConfiguration courseConfiguration = course.getCourseConfiguration();
-
-        Course createdCourse = courseRepository.save(course);
-
-        athenaConfig.setCourse(createdCourse);
-        courseAthenaConfigRepository.save(athenaConfig);
-        courseConfiguration.setCourse(createdCourse);
-        courseConfigurationRepository.save(courseConfiguration);
-
-        if (createdCourse.isOnlineCourse() && ltiApi.isPresent()) {
-            ltiApi.get().createOnlineCourseConfiguration(createdCourse);
-        }
+        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
 
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
