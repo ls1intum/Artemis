@@ -28,9 +28,10 @@ public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content
         @Valid @Nullable IrisPendingContextDTO pendingContext, @Nullable List<@Valid IrisMessageContextDTO> context, @Size(max = 64) @Nullable String clientId) {
 
     /**
-     * Compact constructor that normalizes null uncommittedFiles to an empty map.
+     * Compact constructor that normalizes null content and uncommittedFiles to empty collections.
      */
     public IrisMessageRequestDTO {
+        content = content != null ? content : List.of();
         uncommittedFiles = uncommittedFiles != null ? uncommittedFiles : Map.of();
     }
 

@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 150 features, 1052 REST endpoints in 29 modules, and 62 interaction overrides.
+Currently 20 product areas, 151 features, 1060 REST endpoints in 29 modules, and 62 interaction overrides.
 
 ## Courses
 
@@ -749,7 +749,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | lecture | `AttachmentVideoUnitResource` | 2 | 1 | 0 | 0 |
 | lecture | `ExerciseUnitResource` | 1 | 1 | 0 | 0 |
 | lecture | `LectureResource` | 5 | 2 | 0 | 0 |
-| lecture | `LectureUnitResource` | 2 | 0 | 0 | 0 |
+| lecture | `LectureUnitResource` | 2 | 1 | 0 | 0 |
 | lecture | `OnlineUnitResource` | 2 | 2 | 0 | 0 |
 | lecture | `TextUnitResource` | 2 | 1 | 0 | 0 |
 
@@ -1440,6 +1440,15 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | iris | `IrisAdminDashboardResource` | 0 | 4 | 0 | 0 |
+
+### Index dashboard
+
+`INGESTION_DASHBOARD`: Coverage of the global search index against what the database expects.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| globalsearch | `IngestionBrowserResource` | 0 | 3 | 0 | 0 |
+| globalsearch | `IngestionCoverageResource` | 1 | 3 | 0 | 0 |
 
 ### Upcoming exams and exercises
 

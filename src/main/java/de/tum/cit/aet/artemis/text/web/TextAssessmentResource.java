@@ -525,15 +525,13 @@ public class TextAssessmentResource extends AssessmentResource {
         if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             // Restricted result: the id is null so the client knows it is restricted, and only id/reference/type of the
             // (non-general, referenced) feedbacks are exposed; the submission text/blocks are still included so the tutor can assess.
-            final List<FeedbackDTO> maskedFeedbacks = result.getFeedbacks() == null ? List.of()
-                    : result.getFeedbacks().stream()
-                            .filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
-                            .map(feedback -> new FeedbackDTO(feedback.getId(), null, null, false, feedback.getReference(), null, null, feedback.getType(), null, null, null))
-                            .toList();
+            final List<FeedbackDTO> maskedFeedbacks = result.getFeedbacks().stream()
+                    .filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
+                    .map(feedback -> new FeedbackDTO(feedback.getId(), null, null, false, feedback.getReference(), null, null, feedback.getType(), null, null, null)).toList();
             return ResponseEntity.ok().body(new TextExampleResultDTO(null, maskedFeedbacks, submissionDTO));
         }
 
-        final List<FeedbackDTO> feedbackDTOs = result.getFeedbacks() == null ? List.of() : result.getFeedbacks().stream().map(FeedbackDTO::of).toList();
+        final List<FeedbackDTO> feedbackDTOs = result.getFeedbacks().stream().map(FeedbackDTO::of).toList();
         return ResponseEntity.ok().body(new TextExampleResultDTO(result.getId(), feedbackDTOs, submissionDTO));
     }
 

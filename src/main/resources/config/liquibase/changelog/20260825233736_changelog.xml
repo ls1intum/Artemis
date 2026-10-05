@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Widen searchable_entity_sync_state.content_hash so it can hold a version-prefixed hash.
+
+        A bare SHA-256 hex digest is exactly 64 characters, which the column was sized for. Hashes are now
+        prefixed with the version of the algorithm that produced them (currently "v1:"), so that deliberately
+        changing how the hash is computed stays distinguishable from data corruption: without the prefix every
+        stored hash would simply stop matching at once, and the reconcile pass would treat a code change as a
+        corpus-wide repair. 80 characters holds the current 67 and leaves room for a longer prefix later.
+
+        modifyDataType drops the NOT NULL constraint on MySQL, so it is re-added explicitly afterwards.
+    -->
+    <changeSet id="20260825233736-1" author="nayerkotry">
+        <modifyDataType tableName="searchable_entity_sync_state" columnName="content_hash" newDataType="varchar(80)"/>
+        <addNotNullConstraint tableName="searchable_entity_sync_state" columnName="content_hash" columnDataType="varchar(80)"/>
+    </changeSet>
+</databaseChangeLog>

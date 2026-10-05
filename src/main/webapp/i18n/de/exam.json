@@ -585,6 +585,8 @@
                 "setup": "Testlauf Erstellen",
                 "author": "Autor:in",
                 "setWorkingTime": "Lege eine Bearbeitungszeit fest (Minuten und Sekunden):",
+                "workingTimeMinutes": "Bearbeitungszeit Minuten",
+                "workingTimeSeconds": "Bearbeitungszeit Sekunden",
                 "setupHint": "Wähle für jede Aufgabengruppe eine Aufgabe aus, indem du auf die Aufgabe klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Aufgaben erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis enthalten.",
                 "assess": "Deine Testläufe Bewerten",
                 "manage": "Arbeitszeit verwalten",
