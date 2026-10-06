@@ -503,7 +503,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         Course instructed = createCourseStartingAt("UPDINSA", FIXED_START.minusMonths(1));
         userUtilService.enrollUserInCourse(requester, instructed, CourseRole.INSTRUCTOR);
         CourseRequest pending = createTestCourseRequestFor(requester, "Update Instructor", "UPDINSREQ");
-        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDINSREQ", "SS2025", FIXED_START, FIXED_START.plusMonths(3), false, "Updated reason.");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDINSREQ", "SS2025", FIXED_START, FIXED_START.plusMonths(3), false, null,
+                "Updated reason.");
 
         CourseRequestDTO result = request.putWithResponseBody("/api/admin/course-requests/" + pending.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
 
@@ -782,7 +783,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", shortName, "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), testCourse,
                 gradeRelevant, "Reason for request.");
         return request.postWithResponseBody("/api/course/course-requests", createDTO, CourseRequestDTO.class, HttpStatus.CREATED);
-=======
+    }
+
     private Course createCourseStartingAt(String shortName, ZonedDateTime startDate) {
         Course course = courseUtilService.createCourseWithShortName(shortName);
         course.setStartDate(startDate);
