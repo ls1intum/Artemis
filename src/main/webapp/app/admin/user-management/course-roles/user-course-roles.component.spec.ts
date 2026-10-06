@@ -349,6 +349,30 @@ describe('UserCourseRolesComponent', () => {
             expect(element().querySelector('[data-testid="user-course-role-add"]')).not.toBeNull();
         });
 
+        it('cannot retry a failed load while a role is being added, because the reload would destroy the form that reports the end of the request', async () => {
+            fixture.detectChanges();
+            httpMock.expectOne(courseRolesUrl).flush('error', { status: 500, statusText: 'Server Error' });
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const retry = () => element().querySelector('[data-testid="user-course-roles-retry"] button') as HTMLButtonElement;
+            expect(retry().disabled).toBe(false);
+
+            const addForm = fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance;
+            addForm.changing.emit(true);
+            fixture.detectChanges();
+
+            expect(retry().disabled).toBe(true);
+            retry().click();
+            httpMock.expectNone({ method: 'GET', url: courseRolesUrl });
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).not.toBeNull();
+
+            addForm.changing.emit(false);
+            fixture.detectChanges();
+
+            expect(retry().disabled).toBe(false);
+            expect(inProgress).toEqual([true, false]);
+        });
+
         it('does not emit after it was destroyed', async () => {
             await respondWith(courseRoles);
             removeButtons()[0].click();

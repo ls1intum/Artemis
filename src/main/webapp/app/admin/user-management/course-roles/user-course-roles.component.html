@@ -11,7 +11,7 @@
         @if (courseRolesResource.error()) {
             <div class="flex flex-col items-start gap-2">
                 <tumaet-ui-message severity="error" [text]="'artemisApp.userManagement.courseRoles.loadError' | artemisTranslate" data-testid="user-course-roles-error" />
-                <tumaet-ui-button size="small" variant="outlined" data-testid="user-course-roles-retry" (clicked)="courseRolesResource.reload()">
+                <tumaet-ui-button size="small" variant="outlined" data-testid="user-course-roles-retry" [disabled]="busy()" (clicked)="courseRolesResource.reload()">
                     {{ 'artemisApp.userManagement.courseRoles.retry' | artemisTranslate }}
                 </tumaet-ui-button>
             </div>
