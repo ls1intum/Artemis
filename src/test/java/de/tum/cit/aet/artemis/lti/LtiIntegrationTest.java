@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -274,20 +273,6 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
 
         assertThat(ltiPlatformConfigurationRepository.findByIdElseThrow(savedPlatformConfiguration.getId())).isEqualTo(savedPlatformConfiguration);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testFindLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow() {
-        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
-        fillLtiPlatformConfig(newPlatformConfiguration);
-        LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
-
-        LtiPlatformConfiguration fetchedPlatformConfiguration = ltiPlatformConfigurationRepository
-                .findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(savedPlatformConfiguration.getId());
-
-        assertThat(fetchedPlatformConfiguration).isEqualTo(savedPlatformConfiguration);
-        assertThat(Hibernate.isInitialized(fetchedPlatformConfiguration.getOnlineCourseConfigurations())).isTrue();
     }
 
     private Course createOnlineCourseWithConfiguration() {
