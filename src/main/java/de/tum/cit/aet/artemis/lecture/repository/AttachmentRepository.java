@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -83,4 +85,39 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             """)
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
 
+    /**
+     * Stores the filename of a newly written student version. Only this column is written, so a concurrent change to other attachment fields is not overwritten.
+     *
+     * @param attachmentId           the id of the attachment
+     * @param studentVersionFilename the stored filename of the new student version
+     * @return the number of updated attachments
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = :studentVersionFilename
+            WHERE a.id = :attachmentId
+            """)
+    int updateStudentVersion(@Param("attachmentId") long attachmentId, @Param("studentVersionFilename") String studentVersionFilename);
+
+    /**
+     * Removes the student version reference, but only if the attachment still points at the given file.
+     * <p>
+     * Student version filenames are unique per write, so a concurrent writer that has published a newer student version changes the value and this statement matches nothing.
+     * The caller must delete the old file only when this returns 1.
+     *
+     * @param attachmentId                   the id of the attachment
+     * @param expectedStudentVersionFilename the stored filename the caller wants to remove
+     * @return the number of updated attachments
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = NULL
+            WHERE a.id = :attachmentId
+                AND a.studentVersion = :expectedStudentVersionFilename
+            """)
+    int clearStudentVersionIfUnchanged(@Param("attachmentId") long attachmentId, @Param("expectedStudentVersionFilename") String expectedStudentVersionFilename);
 }

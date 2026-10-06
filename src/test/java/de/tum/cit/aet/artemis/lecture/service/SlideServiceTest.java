@@ -1,129 +1,163 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
-import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
-class SlideServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
+class SlideServiceTest {
 
-    private static final String TEST_PREFIX = "slideservicetest";
-
-    @Autowired
-    private SlideService slideService;
-
-    @Autowired
     private SlideTestRepository slideRepository;
 
-    @Autowired
-    private CourseUtilService courseUtilService;
+    private SlideUnhideService slideUnhideService;
 
-    @Autowired
-    private LectureUtilService lectureUtilService;
+    private AttachmentService attachmentService;
 
-    private Course testCourse;
+    private LectureUnitVisibilitySyncService visibilitySyncService;
 
-    private Exercise testExercise;
+    private SlideService slideService;
 
     @BeforeEach
-    void initTestCase() {
-        // Create a test exercise
-        var lecture = lectureUtilService.createCourseWithLecture(true);
-        testCourse = lecture.getCourse();
-        testExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7), ZonedDateTime.now().plusDays(8), testCourse);
-
-        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
-        List<Slide> testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
-        testSlides.getFirst().setHidden(testExercise.getDueDate());
-        slideRepository.save(testSlides.getFirst());
+    void setUp() {
+        slideRepository = mock(SlideTestRepository.class);
+        slideUnhideService = mock(SlideUnhideService.class);
+        attachmentService = mock(AttachmentService.class);
+        visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
+        slideService = new SlideService(slideRepository, slideUnhideService, attachmentService, visibilitySyncService);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testHandleDueDateChange_withNewDueDate() {
-        Exercise originalExercise = testExercise;
-        ZonedDateTime newDueDate = testExercise.getDueDate().plusDays(3);
-        testExercise.setDueDate(newDueDate);
-        Exercise updatedTextExercise = exerciseRepository.save(testExercise);
+    void futureDueDateHidesSlidesThenUpdatesIrisThenRegeneratesStudentVersion() {
+        var dueDate = ZonedDateTime.now().plusDays(7);
+        var exercise = exercise(dueDate);
+        var attachment = attachment(10L, 100L);
+        var slide = slide(attachment, null, false);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(slide));
 
-        slideService.handleDueDateChange(originalExercise, updatedTextExercise);
+        slideService.updateSlidesHiddenDate(exercise);
 
-        // Verify the slides were updated with the new due date
-        List<Slide> updatedSlides = slideRepository.findByExerciseId(testExercise.getId());
-        for (Slide slide : updatedSlides) {
-            assertThat(slide.getHidden()).isEqualTo(newDueDate);
-        }
+        assertThat(slide.getHidden()).isEqualTo(dueDate);
+        var order = inOrder(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        order.verify(slideRepository).saveAll(List.of(slide));
+        order.verify(slideUnhideService).handleSlideHiddenUpdate(slide);
+        order.verify(visibilitySyncService).markVisibilityDirty(Set.of(100L));
+        order.verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testHandleDueDateChange_withNullOriginalDueDate() {
-        // Create an exercise with null due date
-        Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), null, ZonedDateTime.now().plusDays(8), testCourse);
-        originalExercise = exerciseRepository.save(originalExercise);
+    void missingDueDateMakesSlidesVisible() {
+        var exercise = exercise(null);
+        var attachment = attachment(10L, 100L);
+        var slide = slide(attachment, ZonedDateTime.now().plusDays(1), false);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(slide));
 
-        // Create updated version with a due date
-        ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(5);
-        Exercise updatedExercise = TextExerciseFactory.generateTextExercise(originalExercise.getReleaseDate(), newDueDate, originalExercise.getAssessmentDueDate(), testCourse);
-        updatedExercise.setId(originalExercise.getId());
-        updatedExercise.setTitle(originalExercise.getTitle());
-        updatedExercise = exerciseRepository.save(updatedExercise);
+        slideService.updateSlidesHiddenDate(exercise);
 
-        // Create slides linked to this exercise
-        Slide slide = slideRepository.findAll().getFirst();
-        slide.setExercise(originalExercise);
-        slideRepository.save(slide);
-
-        // Handle due date change
-        slideService.handleDueDateChange(originalExercise, updatedExercise);
-
-        // Verify the slide was updated
-        Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(slide.getHidden()).isNull();
+        verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testHandleDueDateChange_withUnchangedDueDate() {
-        // Create original exercise
-        ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
-        Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), dueDate, ZonedDateTime.now().plusDays(8), testCourse);
-        originalExercise = exerciseRepository.save(originalExercise);
+    void pastDueDateMakesSlidesVisible() {
+        var exercise = exercise(ZonedDateTime.now().minusDays(1));
+        var slide = slide(attachment(10L, 100L), ZonedDateTime.now().plusDays(1), false);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(slide));
 
-        // Create updated exercise with same due date
-        Exercise updatedExercise = TextExerciseFactory.generateTextExercise(originalExercise.getReleaseDate(), originalExercise.getDueDate(),
-                originalExercise.getAssessmentDueDate(), testCourse);
-        updatedExercise.setId(originalExercise.getId());
-        updatedExercise.setTitle(originalExercise.getTitle());
-        updatedExercise = exerciseRepository.save(updatedExercise);
+        slideService.updateSlidesHiddenDate(exercise);
 
-        // Create slide with original due date as hidden date
-        Slide slide = slideRepository.findAll().getFirst();
-        slide.setExercise(originalExercise); // Using persisted Exercise
-        slide.setHidden(dueDate);
-        Slide savedSlide = slideRepository.save(slide);
+        assertThat(slide.getHidden()).isNull();
+    }
 
-        // Handle due date change (which shouldn't change anything)
-        slideService.handleDueDateChange(originalExercise, updatedExercise);
+    @Test
+    void movedHiddenDateUpdatesIrisWithoutRegeneratingStudentVersion() {
+        var exercise = exercise(ZonedDateTime.now().plusDays(7));
+        var slide = slide(attachment(10L, 100L), ZonedDateTime.now().plusDays(1), false);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(slide));
 
-        // Verify the slide hasn't changed
-        Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(dueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        slideService.updateSlidesHiddenDate(exercise);
+
+        verify(visibilitySyncService).markVisibilityDirty(Set.of(100L));
+        verify(attachmentService, never()).regenerateStudentVersionOrRemoveOutdated(any());
+    }
+
+    @Test
+    void supersededSlideIsUpdatedButAffectsNeitherIrisNorStudentVersion() {
+        var exercise = exercise(ZonedDateTime.now().plusDays(7));
+        var currentAttachment = attachment(10L, 100L);
+        var currentSlide = slide(currentAttachment, null, false);
+        var supersededSlide = slide(attachment(11L, 101L), null, true);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(currentSlide, supersededSlide));
+
+        slideService.updateSlidesHiddenDate(exercise);
+
+        assertThat(supersededSlide.getHidden()).isNotNull();
+        verify(visibilitySyncService).markVisibilityDirty(Set.of(100L));
+        verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(currentAttachment);
+        verify(attachmentService, never()).regenerateStudentVersionOrRemoveOutdated(supersededSlide.getAttachmentVideoUnit().getAttachment());
+    }
+
+    @Test
+    void severalSlidesOfOneAttachmentRegenerateItOnce() {
+        var exercise = exercise(ZonedDateTime.now().plusDays(7));
+        var attachment = attachment(10L, 100L);
+        var firstSlide = slide(attachment, null, false);
+        var secondSlide = slide(attachment, null, false);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(firstSlide, secondSlide));
+
+        slideService.updateSlidesHiddenDate(exercise);
+
+        verify(visibilitySyncService).markVisibilityDirty(Set.of(100L));
+        verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
+    }
+
+    @Test
+    void unchangedDueDateDoesNothing() {
+        var dueDate = ZonedDateTime.now().plusDays(7);
+
+        slideService.handleDueDateChange(dueDate, exercise(dueDate));
+
+        verifyNoInteractions(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+    }
+
+    private static TextExercise exercise(ZonedDateTime dueDate) {
+        var exercise = new TextExercise();
+        exercise.setId(42L);
+        exercise.setDueDate(dueDate);
+        return exercise;
+    }
+
+    private static Attachment attachment(long attachmentId, long unitId) {
+        var unit = new AttachmentVideoUnit();
+        unit.setId(unitId);
+        var attachment = new Attachment();
+        attachment.setId(attachmentId);
+        attachment.setAttachmentVideoUnit(unit);
+        unit.setAttachment(attachment);
+        return attachment;
+    }
+
+    private static Slide slide(Attachment attachment, ZonedDateTime hidden, boolean superseded) {
+        var slide = new Slide();
+        slide.setAttachmentVideoUnit(attachment.getAttachmentVideoUnit());
+        slide.setHidden(hidden);
+        slide.setSuperseded(superseded);
+        return slide;
     }
 }

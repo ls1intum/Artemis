@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -9,8 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
@@ -67,10 +70,13 @@ public class AttachmentVideoUnitService {
 
     private final Optional<LectureContentProcessingService> contentProcessingService;
 
+    private final AttachmentService attachmentService;
+
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
             Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService,
-            LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService) {
+            LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService,
+            AttachmentService attachmentService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -82,6 +88,7 @@ public class AttachmentVideoUnitService {
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.contentProcessingService = contentProcessingService;
+        this.attachmentService = attachmentService;
     }
 
     /**
@@ -116,6 +123,7 @@ public class AttachmentVideoUnitService {
      * @param updateUnitDTO               The DTO with the new attachment video unit data.
      * @param updateAttachment            The new attachment data.
      * @param updateFile                  The optional file.
+     * @param studentVersionFile          The optional student PDF matching the updated file and visibility.
      * @param keepFilename                Whether to keep the original filename or not.
      * @param hiddenPages                 The hidden pages of attachment video unit.
      * @param pageOrder                   The new order of the edited attachment video unit
@@ -123,7 +131,33 @@ public class AttachmentVideoUnitService {
      * @return The updated attachment video unit.
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
-            MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
+            MultipartFile updateFile, MultipartFile studentVersionFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
+            Set<Long> originalCompetencyIds) {
+        // Written before anything else changes, so an invalid or unwritable student version fails the request without side effects. It is only referenced at the end.
+        boolean acceptsStudentVersion = studentVersionFile != null && !studentVersionFile.isEmpty() && existingAttachmentVideoUnit.getAttachment() != null
+                && updateAttachment != null;
+        String stagedStudentVersion = acceptsStudentVersion ? stageStudentVersionFile(studentVersionFile, existingAttachmentVideoUnit.getId()) : null;
+        boolean stagedStudentVersionHandedOver = false;
+        try {
+            AttachmentVideoUnit savedAttachmentVideoUnit = applyUpdate(existingAttachmentVideoUnit, updateUnitDTO, updateAttachment, updateFile, stagedStudentVersion != null,
+                    keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
+            if (stagedStudentVersion != null) {
+                stagedStudentVersionHandedOver = true;
+                publishStagedStudentVersion(savedAttachmentVideoUnit, stagedStudentVersion);
+            }
+            prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
+            return savedAttachmentVideoUnit;
+        }
+        finally {
+            if (stagedStudentVersion != null && !stagedStudentVersionHandedOver) {
+                attachmentService.discardStagedStudentVersionFile(existingAttachmentVideoUnit.getId(), stagedStudentVersion);
+            }
+        }
+    }
+
+    private AttachmentVideoUnit applyUpdate(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
+            MultipartFile updateFile, boolean hasStudentVersionFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
+            Set<Long> originalCompetencyIds) {
         LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
@@ -135,6 +169,8 @@ public class AttachmentVideoUnitService {
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
         AttachmentFileUpdateResult fileUpdateResult = AttachmentFileUpdateResult.unchanged(existingAttachment != null ? existingAttachment.getVersion() : null);
         boolean createdNewAttachment = false;
+        boolean regenerateStudentVersion = false;
+        boolean visibilitySyncDeferredToSlideSplit = false;
         Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber = null;
 
         if (existingAttachment == null && updateAttachment != null) {
@@ -154,10 +190,11 @@ public class AttachmentVideoUnitService {
                 if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                     slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null));
                     projectedSlideHiddenUntilBySlideNumber = Map.of();
+                    visibilitySyncDeferredToSlideSplit = true;
                 }
             }
             else if (existingAttachment != null) {
-                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
+                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit);
 
                 if (hasUploadedFile) {
                     fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
@@ -171,26 +208,34 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
-                if (!hasUploadedFile && hiddenPages != null) {
-                    slideSplitterService.updateSlideVisibility(savedAttachmentVideoUnit, hiddenPages);
+                if (!hasStudentVersionFile && fileUpdateResult.fileBytesChanged()) {
+                    // A student version derived from the replaced file no longer matches it. A submitted one replaces it at the end of the request instead.
+                    attachmentService.removeStudentVersionFile(savedAttachment);
                 }
 
-                // Slide splitting is intentionally identical to develop: it runs on every uploaded file. The SHA-256 comparison only gates the version bump (and therefore the
-                // Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
-                if (updateFile != null) {
-                    // Split PDF into slides, respecting custom page order if provided
-                    if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                        if (pageOrder == null) {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null));
-                            if (fileUpdateResult.fileBytesChanged()) {
-                                projectedSlideHiddenUntilBySlideNumber = Map.of();
-                            }
-                        }
-                        else {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder));
-                            projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
-                        }
+                boolean isPdfUpload = hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()));
+                // The same bytes again need no new slides, unless the saved deck does not match them: a split that failed after a re-upload leaves an empty deck, or the
+                // previous deck after an editor change, and uploading the file again is how an instructor retries it.
+                boolean splitsSlides = isPdfUpload && (fileUpdateResult.fileBytesChanged() || !currentDeckMatches(savedAttachmentVideoUnit.getId(), pageOrder));
+                if (splitsSlides) {
+                    // Split the PDF into slides, respecting a custom page order if provided
+                    if (pageOrder == null) {
+                        AttachmentVideoUnitSlideSplitJob job = AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null);
+                        retireSlidesOfReplacedFile(job);
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(job);
+                        projectedSlideHiddenUntilBySlideNumber = Map.of();
                     }
+                    else {
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder));
+                        projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
+                    }
+                    visibilitySyncDeferredToSlideSplit = true;
+                }
+                else if (!fileUpdateResult.fileBytesChanged() && hiddenPages != null) {
+                    // No file, or one with the same bytes as the stored file: the slides stay as they are, so this is at most a visibility change. Visibility is only
+                    // touched when the request carries it; an omitted part leaves slides and student version unchanged.
+                    slideSplitterService.updateSlideVisibility(savedAttachmentVideoUnit, hiddenPages);
+                    regenerateStudentVersion = !hasStudentVersionFile;
                 }
             }
         }
@@ -200,14 +245,66 @@ public class AttachmentVideoUnitService {
 
         LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
         var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
-        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
-        prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
-
+        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds, visibilitySyncDeferredToSlideSplit);
+        // Only after Iris was told about the new visibility: a failure here must not leave Iris with the old one. It cannot fail the request either, because the slide
+        // visibility is already saved.
+        if (regenerateStudentVersion) {
+            attachmentService.regenerateStudentVersionOrRemoveOutdated(savedAttachmentVideoUnit.getAttachment());
+        }
         return savedAttachmentVideoUnit;
     }
 
+    /**
+     * Checks whether the saved current deck already is the one the request describes, so the stored file needs no new split.
+     *
+     * @param attachmentVideoUnitId the id of the attachment video unit
+     * @param pageOrder             the submitted page order, or null when the request describes none
+     * @return whether the unit has current slides and, if a page order was submitted, exactly those slides in that order
+     */
+    private boolean currentDeckMatches(long attachmentVideoUnitId, List<SlideOrderDTO> pageOrder) {
+        List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
+        if (currentSlides.isEmpty()) {
+            return false;
+        }
+        if (pageOrder == null) {
+            return true;
+        }
+        Map<String, Integer> slideNumberBySlideId = currentSlides.stream().collect(Collectors.toMap(slide -> String.valueOf(slide.getId()), Slide::getSlideNumber));
+        return pageOrder.size() == currentSlides.size() && pageOrder.stream().allMatch(page -> Objects.equals(slideNumberBySlideId.get(page.slideId()), page.order()));
+    }
+
+    private String stageStudentVersionFile(MultipartFile studentVersionFile, long attachmentVideoUnitId) {
+        try {
+            return attachmentService.stageUploadedStudentVersionFile(studentVersionFile.getBytes(), attachmentVideoUnitId, studentVersionFile.getOriginalFilename());
+        }
+        catch (IOException e) {
+            throw new InternalServerErrorException("Could not store the student version file", e);
+        }
+    }
+
+    /**
+     * References the student version staged at the start of the request. Everything else the request changes is already done, so a failure here only concerns the student
+     * version: a previous student version of a replaced file no longer matches it and is removed, so downloads fail closed rather than serve it.
+     */
+    private void publishStagedStudentVersion(AttachmentVideoUnit savedAttachmentVideoUnit, String stagedStudentVersion) {
+        Attachment attachment = savedAttachmentVideoUnit.getAttachment();
+        try {
+            attachmentService.publishStudentVersionFile(attachment, savedAttachmentVideoUnit.getId(), stagedStudentVersion);
+        }
+        catch (RuntimeException exception) {
+            attachmentService.removeStudentVersionFile(attachment);
+            throw exception;
+        }
+    }
+
+    /**
+     * Starts the follow-up work for what the update changed.
+     * <p>
+     * When the update scheduled a slide split, Iris is not told about the projected visibility here: the split may already have finished, or failed and been undone, and
+     * it tells Iris the visibility of the slides it actually saved once it is done.
+     */
     private void triggerContentProcessingForUpdateKinds(AttachmentVideoUnit savedAttachmentVideoUnit, LectureContentUpdateSnapshot afterSnapshot,
-            Set<LectureContentUpdateKind> updateKinds) {
+            Set<LectureContentUpdateKind> updateKinds, boolean visibilitySyncDeferredToSlideSplit) {
         if (updateKinds.isEmpty()) {
             return;
         }
@@ -220,9 +317,24 @@ public class AttachmentVideoUnitService {
             irisLectureUnitSyncService.markMetadataDirty(afterSnapshot);
         }
 
-        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
+        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY) && !visibilitySyncDeferredToSlideSplit) {
             irisLectureUnitSyncService.markVisibilityDirty(afterSnapshot);
         }
+    }
+
+    /**
+     * Retires the slides of the file a basic upload just replaced, before the new file is split asynchronously.
+     * <p>
+     * Until the split finishes, the old slides would otherwise still count as the current deck, so their hidden pages would block the download of the new, fully visible
+     * file. The update only applies while the unit still holds the revision of this upload, so it never retires the deck of a newer upload. The split restores only current
+     * slides when it fails, so it cannot bring the retired deck back.
+     *
+     * @param job the split job of the upload, carrying the revision it replaced the file with
+     */
+    private void retireSlidesOfReplacedFile(AttachmentVideoUnitSlideSplitJob job) {
+        int retiredSlides = slideRepository.supersedeCurrentSlidesIfAttachmentRevisionMatches(job.attachmentVideoUnitId(), job.attachmentId(), job.attachmentVersion(),
+                job.attachmentSha256Hash());
+        log.debug("Retired {} slides of the replaced file of attachment video unit {}", retiredSlides, job.attachmentVideoUnitId());
     }
 
     private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit) {
@@ -316,14 +428,6 @@ public class AttachmentVideoUnitService {
     }
 
     /**
-     * Sets the required parameters for an attachment on update
-     *
-     * @param existingAttachment  the existing attachment
-     * @param updateAttachment    the new attachment containing updated information
-     * @param attachmentVideoUnit the attachment video unit to update
-     * @param hiddenPages         the hidden pages in the attachment
-     */
-    /**
      * Gives the attachment the name and the release date of its unit after an update that sends no attachment metadata, such as the automatic save of an item edited in
      * place. Access to the file and the release date Iris sees are decided on the attachment, so a unit whose release date was cleared or moved would otherwise keep its file
      * hidden or show it early. The file and its student version stay as they are: the student version leaves out the hidden slides.
@@ -342,15 +446,20 @@ public class AttachmentVideoUnitService {
         attachmentVideoUnit.setAttachment(attachmentRepository.saveAndFlush(existingAttachment));
     }
 
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages) {
+    /**
+     * Sets the required parameters for an attachment on update. The student version is left alone: whether it still matches is decided by the file and visibility handling of
+     * the update.
+     *
+     * @param existingAttachment  the existing attachment
+     * @param updateAttachment    the new attachment containing updated information
+     * @param attachmentVideoUnit the attachment video unit to update
+     */
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
-        if (CollectionUtils.isEmpty(hiddenPages) && existingAttachment.getStudentVersion() != null) {
-            existingAttachment.setStudentVersion(null);
-        }
     }
 
     /**
@@ -381,19 +490,12 @@ public class AttachmentVideoUnitService {
      */
     public void handleStudentVersionFile(MultipartFile studentVersionFile, Attachment attachment, Long attachmentVideoUnitId) {
         if (studentVersionFile != null) {
-            // Delete the old student version
-            if (attachment.getStudentVersion() != null) {
-                Path localPath = new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, attachment.getStudentVersion()).path();
-
-                fileService.schedulePathForDeletion(localPath, 0);
-                this.fileService.evictCacheForPath(localPath);
+            try {
+                attachmentService.replaceUploadedStudentVersionFile(studentVersionFile.getBytes(), attachment, attachmentVideoUnitId, studentVersionFile.getOriginalFilename());
             }
-
-            // Update student version of attachment
-            Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
-            Path savePath = FileUtil.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
-            attachment.setStudentVersion(savePath.getFileName().toString());
-            attachmentRepository.save(attachment);
+            catch (IOException e) {
+                throw new InternalServerErrorException("Could not store the student version file", e);
+            }
         }
     }
 

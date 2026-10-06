@@ -56,10 +56,12 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -90,6 +92,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private LectureTestRepository lectureRepo;
 
     @Autowired
+    private SlideTestRepository slideRepository;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -114,6 +119,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
         }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
@@ -306,6 +313,31 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Unit 2 (index 1) is an image and not included in the merged pdf
         var nonCompletedUnit = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(units.get(1).getId(), student.getId());
         assertThat(nonCompletedUnit).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLecturePdfAttachmentsMerged_HiddenSlidesWithoutStudentVersionReturnsNotFound() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        AttachmentVideoUnit unit = lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(AttachmentVideoUnit.class::cast)
+                .filter(lectureUnit -> lectureUnit.getAttachment().getLink().endsWith(".pdf")).findFirst().orElseThrow();
+        // The upload schedules slide splitting asynchronously. Create the relevant slide explicitly so this test does
+        // not depend on the background processor winning a race with the assertion.
+        Slide slide = new Slide();
+        slide.setAttachmentVideoUnit(unit);
+        slide.setSlideNumber(1);
+        slide.setSlideImagePath("attachments/attachment-unit/" + unit.getId() + "/slide/1.png");
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(slide);
+        unit.getAttachment().setStudentVersion(null);
+        attachmentRepo.save(unit.getAttachment());
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance)
+                .forEach(lectureUnit -> assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), student.getId())).isEmpty());
     }
 
     @Test
@@ -563,6 +595,46 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
 
         assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionFailsClosedWhileRegenerationIsPending() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion("unrestricted instructor content".getBytes());
+        saveSlide(attachmentVideoUnit, 1, ZonedDateTime.now().plusDays(1), false);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        mockMvc.perform(get(url)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionIgnoresHiddenSlidesOfReplacedFile() throws Exception {
+        byte[] content = "replacement without hidden slides".getBytes();
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion(content);
+        saveSlide(attachmentVideoUnit, 1, ZonedDateTime.now().plusDays(1), true);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+
+        assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(content);
+    }
+
+    private AttachmentVideoUnit createAttachmentVideoUnitWithoutStudentVersion(byte[] content) throws IOException {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(content);
+        attachmentVideoUnit.getAttachment().setStudentVersion(null);
+        attachmentRepo.save(attachmentVideoUnit.getAttachment());
+        return attachmentVideoUnit;
+    }
+
+    private void saveSlide(AttachmentVideoUnit attachmentVideoUnit, int slideNumber, ZonedDateTime hidden, boolean superseded) {
+        var slide = new Slide();
+        slide.setAttachmentVideoUnit(attachmentVideoUnit);
+        slide.setSlideNumber(slideNumber);
+        slide.setSlideImagePath("attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/slide/" + slideNumber + ".png");
+        slide.setHidden(hidden);
+        slide.setSuperseded(superseded);
+        slideRepository.save(slide);
     }
 
     @Test

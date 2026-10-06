@@ -8,6 +8,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,11 +19,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -39,10 +42,12 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -73,6 +78,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
 
     private AttachmentVideoUnit testAttachmentVideoUnit;
 
@@ -113,6 +121,46 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             assertThat(slide.getAttachmentVideoUnit()).isEqualTo(testAttachmentVideoUnit);
             assertThat(slide.getSlideImagePath()).isNotNull();
         }
+    }
+
+    /**
+     * The update request tells Iris the visibility it expects the asynchronous split to produce. Once the split has run, Iris is told the visibility of the slides that are
+     * actually saved.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void splitJobMarksIrisVisibilityDirtyFromSavedSlides() {
+        long unitId = testAttachmentVideoUnit.getId();
+        irisLectureUnitSyncStateRepository.findByLectureUnitId(unitId).ifPresent(irisLectureUnitSyncStateRepository::delete);
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)).join();
+
+        await().untilAsserted(() -> assertThat(irisLectureUnitSyncStateRepository.findByLectureUnitId(unitId)).get().extracting(IrisLectureUnitSyncState::getVisibilityHash)
+                .isEqualTo(expectedVisibilityHash(unitId)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void failedSplitJobMarksIrisVisibilityDirtyFromSavedSlides() throws IOException {
+        long unitId = testAttachmentVideoUnit.getId();
+        irisLectureUnitSyncStateRepository.findByLectureUnitId(unitId).ifPresent(irisLectureUnitSyncStateRepository::delete);
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
+        // A file that is not a PDF makes the split fail after the job has started.
+        FileUtils.writeStringToFile(unit.getAttachment().fileLocation().orElseThrow().path().toFile(), "not a pdf", StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)).join())
+                .isInstanceOf(CompletionException.class);
+
+        await().untilAsserted(() -> assertThat(irisLectureUnitSyncStateRepository.findByLectureUnitId(unitId)).get().extracting(IrisLectureUnitSyncState::getVisibilityHash)
+                .isEqualTo(expectedVisibilityHash(unitId)));
+    }
+
+    private String expectedVisibilityHash(long unitId) {
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
+        var snapshot = new LectureContentUpdateSnapshot(unitId, null, null, null, null, null, null, null, unit.resolveReleaseDate(),
+                SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(unitId)));
+        return IrisLectureUnitSyncService.visibilityHash(snapshot);
     }
 
     /**

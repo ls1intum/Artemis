@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -32,6 +33,9 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     private SlideTestRepository slideRepository;
 
     @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     private Attachment testAttachment1;
@@ -44,8 +48,10 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         // AttachmentVideoUnit with no hidden slides
         AttachmentVideoUnit testAttachmentVideoUnit1 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         testAttachment1 = testAttachmentVideoUnit1.getAttachment();
-        testAttachment1.setStudentVersion("attachments/attachment-unit/" + testAttachmentVideoUnit1.getId() + "/student/example.pdf"); // Set an existing version to verify it
-        // gets removed
+        // Store an existing student version to verify it gets removed. It has to be stored, not only set on the entity: the reference is removed only while the database
+        // still holds it.
+        testAttachment1.setStudentVersion("example.pdf");
+        testAttachment1 = attachmentRepository.save(testAttachment1);
 
         // AttachmentVideoUnit with hidden slides
         AttachmentVideoUnit testAttachmentVideoUnit2 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
