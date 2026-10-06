@@ -32,7 +32,7 @@ public class ModelingSubmissionExportService extends SubmissionExportService {
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
         if (((ModelingSubmission) submission).getModel() == null) {
             if (!file.exists()) {
-                file.createNewFile(); // create empty file if submission is empty
+                Files.createFile(file.toPath()); // create empty file if submission is empty
             }
         }
         else {

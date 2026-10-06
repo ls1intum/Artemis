@@ -14,12 +14,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
@@ -68,7 +70,7 @@ public class IrisTutorSuggestionSessionResource {
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
-        var course = post.getCoursePostingBelongsTo();
+        var course = courseOfPostElseThrow(post);
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -93,7 +95,7 @@ public class IrisTutorSuggestionSessionResource {
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 
-        var course = post.getCoursePostingBelongsTo();
+        var course = courseOfPostElseThrow(post);
         var user = userRepository.getUserWithAuthorities();
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -106,4 +108,11 @@ public class IrisTutorSuggestionSessionResource {
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 
+    private static Course courseOfPostElseThrow(Post post) {
+        var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("The course of post " + post.getId() + " cannot be resolved");
+        }
+        return course;
+    }
 }

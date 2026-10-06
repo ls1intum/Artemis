@@ -21,7 +21,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
@@ -54,7 +53,6 @@ describe('Test Run Management Component', () => {
                 MockDirective(TranslateDirective),
                 { provide: AccountService, useClass: MockAccountService },
                 // the delete button directive injects the shared PrimeNG dialog service
-                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
         })
             .compileComponents()

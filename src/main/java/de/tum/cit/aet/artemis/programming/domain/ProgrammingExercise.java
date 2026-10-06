@@ -532,7 +532,11 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnore
     public String getProjectName() {
         // this is the name used for VC service and CI service
-        return getCourseViaExerciseGroupOrCourseMember().getShortName() + " " + this.getTitle();
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("Cannot determine the project name of programming exercise " + getId() + " because its course cannot be resolved");
+        }
+        return course.getShortName() + " " + this.getTitle();
     }
 
     @JsonIgnore

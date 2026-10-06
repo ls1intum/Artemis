@@ -155,8 +155,8 @@ public class PlagiarismPostService extends PostingService {
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.plagiarismCaseId());
 
         // checks
-        if (authorizationCheckService.isAtLeastInstructorInCourse(plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember(), user)
-                || plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+        final Course exerciseCourse = plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        if (authorizationCheckService.isAtLeastInstructorInCourse(exerciseCourse, user) || plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             // retrieve posts
             List<Post> plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.plagiarismCaseId());
 
