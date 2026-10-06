@@ -4,11 +4,9 @@ import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.COURSE_MEMORY;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -36,14 +33,12 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.communication.dto.ResolvingAnswerEndorserDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -234,29 +229,6 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Refreshes several threads in the background, e.g. after a participant opted out of AI. The versions were already
-     * bumped by the caller, so a refresh that never runs leaves entries the nightly sync retracts.
-     *
-     * @param postIds the threads' root post ids
-     */
-    @Async
-    public void refreshThreadsAsync(Collection<Long> postIds) {
-        SecurityUtils.setAuthorizationObject();
-        for (long postId : postIds) {
-            try {
-                Optional<Long> courseId = conversationMessageRepository.findCourseIdOfPost(postId);
-                if (courseId.isEmpty()) {
-                    continue;
-                }
-                refreshThread(postId, null, courseRepository.findByIdElseThrow(courseId.get()));
-            }
-            catch (Exception e) {
-                log.error("Failed to refresh course memory of thread {}", postId, e);
-            }
-        }
-    }
-
-    /**
      * The whole thread was deleted: its entry is retracted for good. Always sent, whatever the stored version, because the
      * row that held it is gone; Pyris turns it into a tombstone nothing can overwrite.
      *
@@ -266,63 +238,6 @@ public class CourseMemoryIngestionService {
      */
     public void retractDeletedThread(long postId, long courseId, @Nullable User actor) {
         retract(courseId, postId, FINAL_VERSION, actor);
-    }
-
-    /**
-     * Bumps the version of every thread with a Course Memory version that contains content by the given user. Called right
-     * before an opt-out from AI, a deactivation or the closing of an account is recorded; pass the result to
-     * {@link #outdateThreadsAfterChange} once it is. A refresh that never runs leaves the outdated
-     * entries for the nightly sync to retract.
-     *
-     * @param userId the user
-     * @return the affected threads' root post ids
-     */
-    public List<Long> invalidateThreadsWithContentBy(long userId) {
-        List<Long> postIds = conversationMessageRepository.findCourseMemoryThreadIdsWithContentBy(userId);
-        if (!postIds.isEmpty()) {
-            conversationMessageRepository.bumpCourseMemoryVersionsOfThreadsWithContentBy(userId);
-        }
-        return postIds;
-    }
-
-    /**
-     * Bumps the threads with content by the user again once the account change is saved, and returns the threads to
-     * rebuild. See {@link ConversationMessageRepository#bumpCourseMemoryVersionIfTracked} for why the threads are bumped
-     * both before and after. The threads are selected again here: a thread stored for the first time during the change was
-     * not tracked yet when {@link #invalidateThreadsWithContentBy} ran, and its refresh may have read the account from
-     * before the change. A refresh that mints its version after this selection reads the saved change.
-     *
-     * @param userId the user
-     * @param before the threads returned by {@link #invalidateThreadsWithContentBy} before the change
-     * @return the threads bumped now, to rebuild
-     */
-    public List<Long> outdateThreadsAfterChange(long userId, Collection<Long> before) {
-        Set<Long> postIds = new LinkedHashSet<>(before);
-        postIds.addAll(conversationMessageRepository.findCourseMemoryThreadIdsWithContentBy(userId));
-        if (!postIds.isEmpty()) {
-            conversationMessageRepository.bumpCourseMemoryVersionsIfTracked(postIds);
-        }
-        return List.copyOf(postIds);
-    }
-
-    /**
-     * Follows up on an account deletion that removed the user's messages: deleted threads are retracted for good. Their
-     * versions were bumped in the transaction that removed the messages.
-     *
-     * @param threads the threads that held content by the deleted account, as captured before the deletion
-     * @return the threads that still exist and need a refresh
-     */
-    public List<Long> retractDeletedThreadsOf(List<CourseMemoryThreadDTO> threads) {
-        List<Long> surviving = new ArrayList<>();
-        for (CourseMemoryThreadDTO thread : threads) {
-            if (conversationMessageRepository.findCourseMemoryVersion(thread.postId()).isPresent()) {
-                surviving.add(thread.postId());
-            }
-            else {
-                retract(thread.courseId(), thread.postId(), FINAL_VERSION, null);
-            }
-        }
-        return surviving;
     }
 
     /**
@@ -416,8 +331,10 @@ public class CourseMemoryIngestionService {
         AnswerPost anchorAnswer = anchor.answer();
         PyrisCourseMemorySource source = sourceOf(anchor);
         List<PyrisCourseMemoryThreadMessageDTO> thread = buildThread(fullPost, course, anchorAnswer.getId());
-        // Every tutor-verified source stores the anchor's text exactly as the tutor read it.
-        String existingAnswer = source == PyrisCourseMemorySource.THREAD_RESOLVED ? null : withoutLogins(anchorAnswer.getContent());
+        // An Iris answer a tutor approved or corrected travels verbatim: the tutor signed off on exactly that text. Every
+        // other answer, a tutor-written or tutor-marked one included, is condensed by the extraction model in Pyris.
+        boolean verbatim = source == PyrisCourseMemorySource.IRIS_AUTO || source == PyrisCourseMemorySource.IRIS_CORRECTED;
+        String existingAnswer = verbatim ? withoutLogins(anchorAnswer.getContent()) : null;
         String verifiedAt = source == PyrisCourseMemorySource.THREAD_RESOLVED ? null
                 : isoInstant(isDashboardVerifiedIrisAnswer(anchorAnswer) ? anchorAnswer.getVerifiedAt() : anchorAnswer.getResolvedAt());
 

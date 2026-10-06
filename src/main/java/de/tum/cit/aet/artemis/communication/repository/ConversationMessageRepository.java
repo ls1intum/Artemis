@@ -10,7 +10,6 @@ import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUn
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnverifiedIrisAnswersSpecification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +45,11 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 @Lazy
 @Repository
 public interface ConversationMessageRepository extends ArtemisJpaRepository<Post, Long>, CustomPostRepository {
+
+    /**
+     * How often {@link #mintCourseMemoryVersion(long)} retries a compare-and-set that lost against a concurrent mint or bump.
+     */
+    int MAX_COURSE_MEMORY_MINT_ATTEMPTS = 20;
 
     Logger log = LoggerFactory.getLogger(ConversationMessageRepository.class);
 
@@ -122,21 +126,24 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     }
 
     /**
-     * Increments a thread's Course Memory version atomically in the database, as the first half of minting the
-     * version of an ingestion or deletion about to be dispatched (see {@code CourseMemoryIngestionService}).
-     * <p>
-     * A native statement rather than an entity save on purpose: the increment has to be atomic across Artemis
-     * nodes, and the row lock it takes serialises concurrent minting so no two operations on a thread ever
-     * share a version. The entity maps the column as neither insertable nor updatable, so this is the only
-     * writer. {@link #mintCourseMemoryVersion(long)} reads the minted value back inside the same transaction,
-     * while the lock is still held; call that rather than this directly.
+     * Sets a thread's Course Memory version to {@code next}, but only if it is still {@code current}. The check in the
+     * {@code WHERE} clause makes the update a compare-and-set: of several callers that read the same version, exactly one
+     * succeeds. {@link #mintCourseMemoryVersion(long)} retries the others.
      *
-     * @param postId the id of the thread's root post
+     * @param postId  the id of the thread's root post
+     * @param current the version the caller read
+     * @param next    the version to set
+     * @return 1 if the version was set, 0 if it had changed in the meantime or the post does not exist
      */
     @Transactional // ok because of modifying query
     @Modifying
-    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id = :postId", nativeQuery = true)
-    void incrementCourseMemoryVersion(@Param("postId") long postId);
+    @Query("""
+            UPDATE Post post
+            SET post.courseMemoryVersion = :next
+            WHERE post.id = :postId
+                AND post.courseMemoryVersion = :current
+            """)
+    int compareAndSetCourseMemoryVersion(@Param("postId") long postId, @Param("current") long current, @Param("next") long next);
 
     /**
      * Reads a thread's current Course Memory version straight from the database, bypassing any loaded entity
@@ -153,19 +160,26 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     Optional<Long> findCourseMemoryVersion(@Param("postId") long postId);
 
     /**
-     * Mints the next Course Memory version of a thread: increments the counter and reads the result back in one
-     * transaction, so the row lock taken by the increment still serialises concurrent minting when the value is
-     * read. Two operations on one thread can therefore never share a version, on however many nodes they run. This is
-     * the one Course Memory operation that needs a transaction: there is no portable single statement that increments
-     * and returns the value (MySQL has no {@code RETURNING}).
+     * Mints the next Course Memory version of a thread. Two operations on one thread never share a version, on however
+     * many nodes they run: the version is read and then set with a compare-and-set, which fails if anyone minted or bumped
+     * in between, and is then retried. No transaction is needed, because each attempt is one read and one single-statement
+     * update.
      *
      * @param postId the id of the thread's root post
      * @return the minted version, or empty if the post no longer exists
      */
-    @Transactional // ok because the increment and the read-back of the minted value have to share the row lock
     default Optional<Long> mintCourseMemoryVersion(long postId) {
-        incrementCourseMemoryVersion(postId);
-        return findCourseMemoryVersion(postId);
+        for (int attempt = 0; attempt < MAX_COURSE_MEMORY_MINT_ATTEMPTS; attempt++) {
+            Optional<Long> current = findCourseMemoryVersion(postId);
+            if (current.isEmpty()) {
+                return Optional.empty();
+            }
+            long next = current.get() + 1;
+            if (compareAndSetCourseMemoryVersion(postId, current.get(), next) == 1) {
+                return Optional.of(next);
+            }
+        }
+        throw new IllegalStateException("Could not mint a Course Memory version for post " + postId);
     }
 
     /**
@@ -186,54 +200,13 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      */
     @Transactional // ok because of modifying query
     @Modifying
-    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id = :postId AND course_memory_version > 0", nativeQuery = true)
-    int bumpCourseMemoryVersionIfTracked(@Param("postId") long postId);
-
-    /**
-     * The threads with a Course Memory version that contain a message by the given user, as root post or as answer.
-     *
-     * @param userId the user
-     * @return the threads' root post ids
-     */
     @Query("""
-            SELECT DISTINCT post.id
-            FROM Post post
-            WHERE post.courseMemoryVersion > 0
-                AND (post.author.id = :userId
-                    OR EXISTS (SELECT answer.id FROM AnswerPost answer WHERE answer.post.id = post.id AND answer.author.id = :userId))
+            UPDATE Post post
+            SET post.courseMemoryVersion = post.courseMemoryVersion + 1
+            WHERE post.id = :postId
+                AND post.courseMemoryVersion > 0
             """)
-    List<Long> findCourseMemoryThreadIdsWithContentBy(@Param("userId") long userId);
-
-    /**
-     * Bumps the Course Memory version of every thread with a version that contains a message by the given user. Called
-     * before an account change after which the user's messages may no longer be stored (an opt-out from AI, a
-     * deactivation, closing the account for deletion): if the rebuild after the change never reaches Pyris, the nightly
-     * sync retracts the outdated entries. After the change, the same threads are bumped again with
-     * {@link #bumpCourseMemoryVersionsIfTracked}; see {@link #bumpCourseMemoryVersionIfTracked} for why both are needed.
-     *
-     * @param userId the user
-     * @return how many versions were bumped
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query(value = """
-            UPDATE post SET course_memory_version = course_memory_version + 1
-            WHERE course_memory_version > 0
-                AND (author_id = :userId OR id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.author_id = :userId))
-            """, nativeQuery = true)
-    int bumpCourseMemoryVersionsOfThreadsWithContentBy(@Param("userId") long userId);
-
-    /**
-     * Bumps the Course Memory version of each given thread that has one. Called right after an account change, for the
-     * threads bumped right before it; see {@link #bumpCourseMemoryVersionIfTracked} for why both bumps are needed.
-     *
-     * @param postIds the threads' root post ids
-     * @return how many versions were bumped
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id IN (:postIds) AND course_memory_version > 0", nativeQuery = true)
-    int bumpCourseMemoryVersionsIfTracked(@Param("postIds") Collection<Long> postIds);
+    int bumpCourseMemoryVersionIfTracked(@Param("postId") long postId);
 
     /**
      * @param postId the id of a post

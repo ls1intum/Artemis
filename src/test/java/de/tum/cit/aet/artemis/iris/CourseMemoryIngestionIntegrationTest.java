@@ -1,21 +1,23 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -38,8 +40,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
-import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.CourseMemoryOperation;
 import de.tum.cit.aet.artemis.iris.domain.CourseMemoryStage;
@@ -325,8 +325,8 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.TUTOR_WRITTEN);
         assertThat(dto.postId()).isEqualTo(String.valueOf(post.getId()));
         assertThat(dto.messageId()).isEqualTo(String.valueOf(answer.getId()));
-        // The tutor vouched for exactly this text, so it travels verbatim.
-        assertThat(dto.existingAnswer()).isEqualTo("The latest push before the deadline is graded.");
+        // Only answers of Iris that a tutor approved travel verbatim; this one is condensed by the extraction in Pyris.
+        assertThat(dto.existingAnswer()).isNull();
         assertThat(dto.thread()).hasSize(2);
         var tutorAnswer = dto.thread().get(1);
         assertThat(tutorAnswer.id()).isEqualTo("answer-" + answer.getId());
@@ -1217,6 +1217,26 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void concurrentMints_neverShareAVersion() throws Exception {
+        Post post = createQuestion("Minted from several threads at once");
+        int mints = 8;
+        List<Future<Optional<Long>>> futures = new ArrayList<>();
+        try (ExecutorService executor = Executors.newFixedThreadPool(mints)) {
+            for (int i = 0; i < mints; i++) {
+                futures.add(executor.submit(() -> conversationMessageRepository.mintCourseMemoryVersion(post.getId())));
+            }
+        }
+        Set<Long> versions = new HashSet<>();
+        for (Future<Optional<Long>> future : futures) {
+            versions.add(future.get().orElseThrow());
+        }
+
+        // Without a transaction the compare-and-set alone keeps the versions apart.
+        assertThat(versions).hasSize(mints);
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(post.getId())).contains((long) mints);
+    }
+
+    @Test
     void verificationAndResolution_shareOneVersionCounterPerThread() {
         Post post = createQuestion("Does Trigger A share the counter?");
         AnswerPost irisAnswer = saveDashboardVerifiedIrisAnswer(post, "It has to.", false);
@@ -1370,7 +1390,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void mentionsReachPyrisWithoutTheLogin() {
         Post post = createQuestion("Who grades the exercise?");
-        saveResolvingAnswer(post, tutor, "Ask [user]Tutor One(" + tutor.getLogin() + ")[/user] about it.", true, tutor);
+        AnswerPost answer = saveResolvingAnswer(post, tutor, "Ask [user]Tutor One(" + tutor.getLogin() + ")[/user] about it.", true, tutor);
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
@@ -1378,7 +1398,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         courseMemoryIngestionService.refreshThread(post.getId(), tutor, course);
 
         var dto = captured.get();
-        assertThat(dto.existingAnswer()).isEqualTo("Ask Tutor One about it.");
+        assertThat(messageWithId(dto.thread(), "answer-" + answer.getId()).content()).isEqualTo("Ask Tutor One about it.");
         assertThat(dto.thread()).allSatisfy(message -> assertThat(message.content()).doesNotContain(tutor.getLogin()));
     }
 
@@ -1417,123 +1437,6 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(redacted.content()).isNullOrEmpty();
         student2.setActivated(true);
         userTestRepository.save(student2);
-    }
-
-    @Test
-    void invalidatingTheThreadsOfAUser_bumpsExactlyTheThreadsWithTheirContent() {
-        Post withReply = createQuestion("Thread with a reply by student2");
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        saveAnswer(withReply, student2, "Reply.", false);
-        markAsStoredInCourseMemory(withReply);
-        Post unrelated = createQuestion("Thread without student2");
-        markAsStoredInCourseMemory(unrelated);
-        long withReplyBefore = conversationMessageRepository.findCourseMemoryVersion(withReply.getId()).orElseThrow();
-        long unrelatedBefore = conversationMessageRepository.findCourseMemoryVersion(unrelated.getId()).orElseThrow();
-        List<Long> affected = courseMemoryIngestionService.invalidateThreadsWithContentBy(student2.getId());
-
-        assertThat(affected).contains(withReply.getId()).doesNotContain(unrelated.getId());
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(withReply.getId()).orElseThrow()).isEqualTo(withReplyBefore + 1);
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(unrelated.getId()).orElseThrow()).isEqualTo(unrelatedBefore);
-    }
-
-    @Test
-    void outdatingAfterAnAccountChange_includesAThreadStoredForTheFirstTimeDuringTheChange() {
-        // The user's thread is not stored yet when the account change starts, so the selection before the change misses it.
-        User changed = userUtilService.createAndSaveUser(TEST_PREFIX + "firststore");
-        Post thread = createQuestion("Stored for the first time during the change");
-        saveAnswer(thread, changed, "Reply by the user.", false);
-        List<Long> before = courseMemoryIngestionService.invalidateThreadsWithContentBy(changed.getId());
-        assertThat(before).doesNotContain(thread.getId());
-        // A tutor resolves it at that moment: its refresh mints the first version and reads the account from before the change.
-        long firstVersion = conversationMessageRepository.mintCourseMemoryVersion(thread.getId()).orElseThrow();
-
-        List<Long> rebuild = courseMemoryIngestionService.outdateThreadsAfterChange(changed.getId(), before);
-
-        // Selected again after the change, so that entry is outdated and rebuilt too.
-        assertThat(rebuild).contains(thread.getId());
-        assertThat(conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow()).isGreaterThan(firstVersion);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "optingout", roles = "USER")
-    void optingOutOfAi_isRecordedTogetherWithTheBump() throws Exception {
-        // An account of its own: the shared test users have content in the threads of other tests, all of which an
-        // opt-out would rebuild in the background.
-        User optingOut = userUtilService.createAndSaveUser(TEST_PREFIX + "optingout");
-        userUtilService.clearAiSelectionDecision(optingOut);
-        Post thread = new Post();
-        thread.setAuthor(optingOut);
-        thread.setContent("Thread before the opt-out");
-        thread.setConversation(channel);
-        thread.setVisibleForStudents(true);
-        thread = conversationMessageRepository.save(thread);
-        markAsStoredInCourseMemory(thread);
-        long before = conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow();
-        // The rebuild runs in the background. The thread has no answer, so it retracts the entry; wait for it, so that it
-        // cannot reach the mocked Pyris during a later test.
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> retraction = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(retraction::set);
-
-        request.put("/api/account/users/select-llm-usage", new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI), HttpStatus.OK);
-
-        assertThat(userAiPreferenceService.findDecision(optingOut.getId())).isEqualTo(AiSelectionDecision.NO_AI);
-        await().until(() -> retraction.get() != null);
-        // Bumped before and after the change, then minted once more by the rebuild: a refresh that read the old state in
-        // between minted a version below the stored one, so it can never stay current.
-        assertThat(retraction.get().version()).isEqualTo(before + 3);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deactivatingAnAccount_outdatesAndRebuildsItsThreads(boolean throughDeactivateEndpoint) throws Exception {
-        // An account of its own: the shared test users have content in the threads of other tests, all of which a
-        // deactivation would rebuild in the background.
-        // Short logins: the admin update validates the full name, which the test user derives from the login.
-        User deactivated = userUtilService.createAndSaveUser(TEST_PREFIX + (throughDeactivateEndpoint ? "dea1" : "dea2"));
-        Post othersThread = createQuestion("Thread with a reply by an account that will be deactivated");
-        saveAnswer(othersThread, deactivated, "Reply that will be redacted.", false);
-        markAsStoredInCourseMemory(othersThread);
-        long before = conversationMessageRepository.findCourseMemoryVersion(othersThread.getId()).orElseThrow();
-        // With the reply redacted the thread has nothing left to store, so its rebuild retracts the entry.
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> retraction = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(retraction::set);
-
-        if (throughDeactivateEndpoint) {
-            request.patch("/api/account/admin/users/" + deactivated.getId() + "/deactivate", null, HttpStatus.OK);
-        }
-        else {
-            ManagedUserVM update = new ManagedUserVM(deactivated);
-            update.setActivated(false);
-            request.put("/api/account/admin/users", update, HttpStatus.OK);
-        }
-
-        await().until(() -> retraction.get() != null);
-        // Bumped before and after the change, then minted once more by the rebuild: a refresh that read the old state in
-        // between minted a version below the stored one, so it can never stay current.
-        assertThat(retraction.get().version()).isEqualTo(before + 3);
-    }
-
-    @Test
-    void accountContentDeletion_deletesTheMessagesAndRebuildsTheSurvivingThreads() {
-        // An account of its own: the shared test users have content in the threads of other tests, all of which a deletion
-        // would rebuild in the background.
-        User deleted = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedcontent");
-        Post othersThread = createQuestion("Thread with a reply by the deleted account");
-        AnswerPost reply = saveAnswer(othersThread, deleted, "Reply that will be deleted.", false);
-        markAsStoredInCourseMemory(othersThread);
-        long before = conversationMessageRepository.findCourseMemoryVersion(othersThread.getId()).orElseThrow();
-        // Without the reply the thread has nothing left to store, so its rebuild retracts the entry.
-        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> retraction = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(retraction::set);
-
-        userOwnedContentDeletionService.deleteCommunicationContent(deleted.getId());
-
-        assertThat(answerPostRepository.findById(reply.getId())).isEmpty();
-        await().until(() -> retraction.get() != null);
-        // Bumped before and after the change, then minted once more by the rebuild: a refresh that read the old state in
-        // between minted a version below the stored one, so it can never stay current.
-        assertThat(retraction.get().version()).isEqualTo(before + 3);
     }
 
     @Test

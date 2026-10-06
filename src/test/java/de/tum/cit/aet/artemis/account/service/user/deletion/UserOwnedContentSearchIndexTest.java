@@ -53,7 +53,7 @@ class UserOwnedContentSearchIndexTest {
         searchableEntityWeaviateService = mock(SearchableEntityWeaviateService.class);
         userOwnedContentDeletionService = new UserOwnedContentDeletionService(mock(ParticipationDeletionService.class), communicationDataCleanupRepository,
                 mock(AssessmentDataCleanupRepository.class), mock(ExerciseDataCleanupRepository.class), mock(CourseContextDataCleanupRepository.class),
-                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.of(searchableEntityWeaviateService), Optional.empty());
+                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.of(searchableEntityWeaviateService));
     }
 
     @Test
@@ -110,7 +110,7 @@ class UserOwnedContentSearchIndexTest {
     void aDeploymentWithoutGlobalSearchStillDeletes() {
         UserOwnedContentDeletionService withoutSearch = new UserOwnedContentDeletionService(mock(ParticipationDeletionService.class), communicationDataCleanupRepository,
                 mock(AssessmentDataCleanupRepository.class), mock(ExerciseDataCleanupRepository.class), mock(CourseContextDataCleanupRepository.class),
-                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.empty(), Optional.empty());
+                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.empty());
         when(communicationDataCleanupRepository.findPostIdsAuthoredBy(USER_ID)).thenReturn(List.of(11L));
 
         withoutSearch.deleteCommunicationContent(USER_ID);
