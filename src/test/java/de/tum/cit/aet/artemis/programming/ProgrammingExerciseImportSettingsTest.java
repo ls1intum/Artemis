@@ -45,7 +45,7 @@ class ProgrammingExerciseImportSettingsTest {
             Map.entry("studentParticipations", SET_BY_IMPORT), Map.entry("tutorParticipations", SET_BY_IMPORT), Map.entry("exampleSubmissions", SET_BY_IMPORT),
             Map.entry("plagiarismCases", SET_BY_IMPORT), Map.entry("teams", SET_BY_IMPORT), Map.entry("testCasesChanged", SET_BY_IMPORT),
             Map.entry("gradingCriteria", "The import service deep-copies them from the source, a skeleton passes null to ask for that"),
-            Map.entry("plagiarismDetectionConfig", "The import resets it to the default configuration for a course exercise"),
+            Map.entry("plagiarismDetectionConfig", "The import stores the one a skeleton carries, or the default configuration when it carries none, as a row of its own"),
             Map.entry("buildAndTestStudentSubmissionsAfterDueDate", "The import recomputes it from the build plan phases and the due date"),
             Map.entry("problemStatement", "The import copies it from the source and remaps the test ids inside it, a variant replaces it afterwards"),
             Map.entry("title", CALLER_OWNED), Map.entry("shortName", CALLER_OWNED), Map.entry("maxPoints", CALLER_OWNED), Map.entry("bonusPoints", CALLER_OWNED),
