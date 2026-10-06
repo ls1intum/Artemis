@@ -170,6 +170,9 @@ describe('CourseRequestsComponent', () => {
             const trigger = fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement;
 
             expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+            // A narrow column must not break the label ("Yes" / "(12)") onto two lines.
+            expect(trigger.classList).toContain('whitespace-nowrap');
+            expect(trigger.querySelector('.font-semibold')?.classList).toContain('whitespace-nowrap');
             expect(trigger.querySelector('.sr-only')?.textContent).toContain('artemisApp.courseRequest.admin.instructorCoursesShow');
         });
 

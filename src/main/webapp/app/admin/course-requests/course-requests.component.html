@@ -67,12 +67,12 @@
                                 variant="text"
                                 severity="success"
                                 size="small"
-                                class="cursor-pointer"
+                                class="cursor-pointer whitespace-nowrap"
                                 [tumAetUiPopoverTrigger]="instructorCoursesPopover"
                                 data-testid="instructor-courses-button"
                             >
                                 <!-- The font weight lives on an inner span: the button's own font-weight is set by the kit and wins over a utility here. -->
-                                <span class="font-semibold underline decoration-dotted underline-offset-4">
+                                <span class="font-semibold whitespace-nowrap underline decoration-dotted underline-offset-4">
                                     {{ 'artemisApp.courseRequest.admin.instructorCourseCountYes' | artemisTranslate: { count: instructorCourses.length } }}
                                 </span>
                                 <span class="sr-only">{{ 'artemisApp.courseRequest.admin.instructorCoursesShow' | artemisTranslate }}</span>
