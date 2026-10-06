@@ -178,16 +178,17 @@ describe('SidebarCardDirective', () => {
 
         it('should keep the live conversation so that changes to its unread count reach the card', () => {
             const conversation = { id: 3, type: 'channel', unreadMessagesCount: 2 } as ConversationDTO;
+            const item: SidebarCardElement = { title: 'exercise-Homework', id: '3', size: 'S', conversation };
 
-            const cardItem = renderCard({ title: 'exercise-Homework', id: '3', size: 'S', conversation });
+            const cardItem = renderCard(item);
 
             expect(cardItem.title).toBe('Homework');
             expect(cardItem.conversation).toBe(conversation);
-            conversation.unreadMessagesCount = 0;
-            expect(cardItem.conversation?.unreadMessagesCount).toBe(0);
+            expect(cardItem).not.toBe(item);
+            expect(item.title).toBe('exercise-Homework');
         });
 
-        it('should not give an item without a conversation one', () => {
+        it('should not add a conversation to an item that has none', () => {
             const cardItem = renderCard({ title: 'exercise-Homework', id: '3', size: 'S' });
 
             expect(cardItem.title).toBe('Homework');

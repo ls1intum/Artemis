@@ -79,9 +79,10 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
             this.componentRef.setInput('sidebarType', this.sidebarType());
             const sidebarItem = this.sidebarItem();
             if (sidebarItem) {
-                // Do not mutate the signal input value; pass a copy with the cleaned-up title instead. The copy must not
-                // deep-clone the conversation: its unread state is updated in place, and a private snapshot would keep
-                // showing the count from when the sidebar was built. Override values are taken by reference.
+                // Do not mutate the signal input value; pass a copy with the cleaned-up title instead. The copy must carry
+                // the live conversation rather than a clone of it: the conversation service and the conversation options
+                // update it in place (unread count and marker, mute, favorite and hidden flags), and a private snapshot
+                // would keep showing the state from when the sidebar was built. Override values are taken by reference.
                 const title = this.removeChannelPrefix(sidebarItem.title);
                 this.componentRef.setInput('sidebarItem', cloneWith(sidebarItem, sidebarItem.conversation ? { title, conversation: sidebarItem.conversation } : { title }));
             }
