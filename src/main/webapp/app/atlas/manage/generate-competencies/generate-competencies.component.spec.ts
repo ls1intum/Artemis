@@ -207,7 +207,7 @@ describe('GenerateCompetenciesComponent', () => {
             body: [],
             status: 200,
         });
-        const createBulkSpy = vi.spyOn(competencyService, 'createBulk').mockReturnValue(of(response));
+        const createBulkSpy = vi.spyOn(competencyService, 'createBulkFromCourseDescription').mockReturnValue(of(response));
 
         //create competency recomendations that are VIEWED
         comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
