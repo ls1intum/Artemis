@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -332,29 +331,4 @@ public interface CommunicationDataCleanupRepository extends ArtemisJpaRepository
             """)
     int deletePlagiarismCasePosts(@Param("plagiarismCaseIds") Collection<Long> plagiarismCaseIds);
 
-    /**
-     * The threads with a Course Memory version that contain a message by the given user, as root post or as answer.
-     *
-     * @param userId the account being deleted
-     * @return the threads with their channel, course and current version
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO(post.id, post.conversation.id, post.conversation.course.id, post.courseMemoryVersion)
-            FROM Post post
-            WHERE post.courseMemoryVersion > 0
-                AND (post.author.id = :userId
-                    OR EXISTS (SELECT answer.id FROM AnswerPost answer WHERE answer.post.id = post.id AND answer.author.id = :userId))
-            """)
-    List<CourseMemoryThreadDTO> findCourseMemoryThreadsWithContentBy(@Param("userId") long userId);
-
-    /**
-     * Bumps the Course Memory version of every given thread that still exists and has one.
-     *
-     * @param postIds the ids of the threads' root posts
-     * @return how many versions were bumped
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id IN (:postIds) AND course_memory_version > 0", nativeQuery = true)
-    int bumpCourseMemoryVersions(@Param("postIds") Collection<Long> postIds);
 }

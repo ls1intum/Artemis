@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.iris.api;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -10,7 +7,6 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
-import de.tum.cit.aet.artemis.communication.dto.CourseMemoryThreadDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.CourseMemoryIngestionService;
@@ -65,50 +61,4 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
         courseMemoryIngestionService.retractDeletedThread(postId, courseId, actor);
     }
 
-    /**
-     * Outdates the entries of every thread with content by the user. Call it right before an opt-out from AI, a
-     * deactivation or the closing of an account is recorded, then pass the result to {@link #outdateThreadsAfterChange} once
-     * the change is saved.
-     *
-     * @param userId the user
-     * @return the affected threads' root post ids
-     */
-    public List<Long> invalidateThreadsWithContentBy(long userId) {
-        return courseMemoryIngestionService.invalidateThreadsWithContentBy(userId);
-    }
-
-    /**
-     * Outdates the entries of the user's threads again once an account change is saved, and returns the threads to pass
-     * to {@link #refreshThreadsInBackground}. A refresh that ran during the change read the account from before it; this
-     * makes its entry older than Artemis, so the rebuild or the nightly sync replaces it. The threads are selected again,
-     * so a thread stored for the first time during the change is included. See
-     * {@code ConversationMessageRepository#bumpCourseMemoryVersionIfTracked}.
-     *
-     * @param userId the user
-     * @param before the threads returned by {@link #invalidateThreadsWithContentBy} before the change
-     * @return the threads to rebuild
-     */
-    public List<Long> outdateThreadsAfterChange(long userId, Collection<Long> before) {
-        return courseMemoryIngestionService.outdateThreadsAfterChange(userId, before);
-    }
-
-    /**
-     * Rebuilds the given threads' entries in the background.
-     *
-     * @param postIds the threads' root post ids
-     */
-    public void refreshThreadsInBackground(Collection<Long> postIds) {
-        if (!postIds.isEmpty()) {
-            courseMemoryIngestionService.refreshThreadsAsync(postIds);
-        }
-    }
-
-    /**
-     * An account's messages were deleted: deleted threads are retracted, the others rebuilt without those messages.
-     *
-     * @param threads the threads that held content by the account, as captured before the deletion
-     */
-    public void onAccountContentDeleted(List<CourseMemoryThreadDTO> threads) {
-        refreshThreadsInBackground(courseMemoryIngestionService.retractDeletedThreadsOf(threads));
-    }
 }

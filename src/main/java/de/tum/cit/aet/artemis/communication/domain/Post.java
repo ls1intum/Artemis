@@ -83,8 +83,8 @@ public class Post extends Posting {
      * <p>
      * Deliberately never written through the entity: {@code insertable} and {@code updatable} are off so
      * a {@code save(post)} on an instance loaded before another node minted a version cannot roll the
-     * counter back. The only writer is {@code ConversationMessageRepository#mintCourseMemoryVersion}, which
-     * increments atomically in the database; new rows start at the column default of 0.
+     * counter back. Only the update queries of {@code ConversationMessageRepository} (and the account cleanup) write it,
+     * each as a single statement in the database; new rows start at the column default of 0.
      */
     @Column(name = "course_memory_version", nullable = false, insertable = false, updatable = false)
     @JsonIgnore
