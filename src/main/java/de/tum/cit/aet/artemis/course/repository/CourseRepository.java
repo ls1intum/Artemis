@@ -7,6 +7,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -28,12 +30,14 @@ import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseRowDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -506,6 +510,39 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 )
             """)
     Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * Searches all courses by a part of their title or short name, ignoring case. A blank term finds nothing. The wildcards of the term are matched literally.
+     * Courses whose short name equals the term come first, then those whose short name starts with it, then the others; within each group the most recently started
+     * course comes first. Selects the minimal DTO directly, so no course entity is loaded.
+     *
+     * @param searchTerm the text to look for in the title and the short name
+     * @param pageable   the page to return, without a sort order, because the order is part of the search
+     * @return the matching courses of the requested page
+     */
+    default List<CourseForRoleAssignmentDTO> searchForRoleAssignment(String searchTerm, Pageable pageable) {
+        if (!StringUtils.hasText(searchTerm)) {
+            return List.of();
+        }
+        return searchByEscapedTermForRoleAssignment(StringUtil.escapeForLikeLowerCase(searchTerm), searchTerm.trim().toLowerCase(Locale.ROOT), pageable);
+    }
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO(c.id, c.title, c.shortName, c.semester)
+            FROM Course c
+            WHERE LOWER(c.title) LIKE CONCAT('%', :escapedTerm, '%') ESCAPE '\\'
+                OR LOWER(c.shortName) LIKE CONCAT('%', :escapedTerm, '%') ESCAPE '\\'
+            ORDER BY
+                CASE
+                    WHEN LOWER(c.shortName) = :exactTerm THEN 0
+                    WHEN LOWER(c.shortName) LIKE CONCAT(:escapedTerm, '%') ESCAPE '\\' THEN 1
+                    ELSE 2
+                END ASC,
+                CASE WHEN c.startDate IS NULL THEN 1 ELSE 0 END ASC,
+                c.startDate DESC,
+                c.id DESC
+            """)
+    List<CourseForRoleAssignmentDTO> searchByEscapedTermForRoleAssignment(@Param("escapedTerm") String escapedTerm, @Param("exactTerm") String exactTerm, Pageable pageable);
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
