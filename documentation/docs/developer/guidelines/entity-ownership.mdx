@@ -167,8 +167,8 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
 | `Course` | — | Root | No | The main aggregate root. |
-| `CourseAthenaConfig` | Course `course.athena_config_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
-| `CourseConfiguration` | Course `course.course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `CourseAthenaConfig` | Course `course_id` | Required | No | Cascades on course deletion. The course carries no mapped association to it. |
+| `CourseConfiguration` | Course `course_id` | Required | No | Cascades on course deletion. The course carries no mapped association to it. |
 | `CourseRequest` | User `requester_id` | Required | No | `created_course_id` is a result link, not a parent. |
 
 ### Exam
@@ -199,7 +199,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `Submission` and 5 subclasses | Participation `participation_id` | Optional | **Yes** | Nullable. |
 | `SubmissionVersion` | Submission `submission_id` | Required | No | Cascades on submission deletion. |
 | `Team` | Exercise `exercise_id` | Required | No |  |
-| `TeamAssignmentConfig` | Exercise `exercise.team_assignment_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+| `TeamAssignmentConfig` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. The exercise carries no mapped association to it. |
 
 ### Iris
 
@@ -266,7 +266,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | --- | --- | --- | --- | --- |
 | `PlagiarismCase` | Exercise `exercise_id` | Required | No |  |
 | `PlagiarismComparison` | PlagiarismResult `plagiarism_result_id` | Required | No |  |
-| `PlagiarismDetectionConfig` | Exercise `exercise.plagiarism_detection_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+| `PlagiarismDetectionConfig` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. The exercise carries no mapped association to it. |
 | `PlagiarismResult` | Exercise `exercise_id` | Required | No |  |
 | `PlagiarismSubmission` | PlagiarismComparison `plagiarism_comparison_id` | Required | No | Cascades. `comparison_side` says which half of the pair it is; the plagiarism case is a reference, not a parent. |
 | `PlagiarismSubmissionElement` | PlagiarismSubmission `plagiarism_submission_id` | Optional | **Yes** | Nullable, though it cascades when set. |
@@ -429,12 +429,23 @@ UNION ALL SELECT 'tutorial_group_free_period of those configurations', COUNT(*)
   FROM tutorial_group_free_period WHERE tutorial_groups_configuration_id IN
        (SELECT t.id FROM tutorial_groups_configuration t WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.tutorial_groups_configuration_id = t.id))
 UNION ALL SELECT 'online_course_configuration no course points at', COUNT(*)
-  FROM online_course_configuration o WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.online_course_configuration_id = o.id);
+  FROM online_course_configuration o WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.online_course_configuration_id = o.id)
+UNION ALL SELECT 'course_athena_config no course points at', COUNT(*)
+  FROM course_athena_config a WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.athena_config_id = a.id)
+UNION ALL SELECT 'course_configuration no course points at', COUNT(*)
+  FROM course_configuration cc WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.course_configuration_id = cc.id)
+UNION ALL SELECT 'team_assignment_config no exercise points at', COUNT(*)
+  FROM team_assignment_config t WHERE NOT EXISTS (SELECT 1 FROM exercise e WHERE e.team_assignment_config_id = t.id)
+UNION ALL SELECT 'plagiarism_detection_config no exercise points at', COUNT(*)
+  FROM plagiarism_detection_config p WHERE NOT EXISTS (SELECT 1 FROM exercise e WHERE e.plagiarism_detection_config_id = p.id);
 ```
 
-The last three rows read the pointer a course used to carry to its tutorial groups configuration and its
-online course configuration, so they apply to a database that has not been upgraded yet. A configuration that
-no course points at configures nothing and is removed, together with the free periods below it. A session
+The last seven rows read the pointer a course used to carry to its tutorial groups configuration, its online
+course configuration, its Athena configuration and its course configuration, and the pointer an exercise used to
+carry to its team assignment configuration and its plagiarism detection configuration, so they apply to a database
+that has not been upgraded yet. The old mapping never removed a configuration that an update replaced, so the last
+two rows are not always zero. A configuration that no course points at configures nothing and is removed, together
+with the free periods below a tutorial groups configuration. A session
 cancelled because of one of those free periods keeps existing under its tutorial group and merely loses the
 reference to the period.
 
@@ -450,9 +461,9 @@ name.
 
 ## Where orphans are still possible
 
-Of the 147 tables behind the 186 entities, 90 have a required parent, 24 are roots by design, 18 are
+Of the 147 tables behind the 186 entities, 94 have a required parent, 24 are roots by design, 18 are
 join entities whose parents are all required and five carry a check constraint over alternative
-parents. That leaves **10 tables where the schema permits an orphan**, in two shapes.
+parents. That leaves **6 tables where the schema permits an orphan**, in two shapes.
 
 ### An owning foreign key that is nullable
 
@@ -477,9 +488,8 @@ submission or participation, which is a different orphan and still reachable.
 
 ### One-to-one where the parent holds the pointer
 
-Six tables have no foreign key of their own. Nothing in the schema connects them to anything, and
-the only thing keeping them reachable is a nullable column on the parent: `CourseAthenaConfig`,
-`CourseConfiguration`, `TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy` and
+Two tables have no foreign key of their own. Nothing in the schema connects them to anything, and
+the only thing keeping them reachable is a nullable column on the parent: `SubmissionPolicy` and
 `BuildPlan`.
 
 Moving the key onto the configuration is the fix, and it costs more than the migration. **The
@@ -489,6 +499,14 @@ and a proxy. Leaving four such associations on `Course` turns one query for a co
 which is what `CourseConfigurationLoadProfileTest` measures. So each configuration moves together
 with its readers, onto its own repository read at the decision point — the shape
 `CourseConfigurationRepository` and `CourseAthenaConfigRepository` already have.
+
+Moving the key does not make the row optional. Every course and every exercise owns exactly one row of each
+configuration, created together with its owner and updated in place from then on, so a setting that changes never
+inserts or deletes anything and no flow needs a lock or a transaction around it. A course gets its rows from
+`CourseRepository.saveWithDefaultConfigurations`; an exercise gets its team assignment and plagiarism detection rows from
+`ExerciseConfigurationService.initialize`, which every path that stores a new exercise calls right after the first save.
+The rows are inserted with a plain insert after an unlocked existence read, so a path that already ran it is not an error, and a row that is
+missing is reported with an `EntityNotFoundException` rather than created behind the caller's back.
 
 Two of them carry a further constraint. `BuildPlan` is shared rather than owned: several
 programming exercises point at one build plan, so there is no single parent for it to name, and "at

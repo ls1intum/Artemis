@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.tum.cit.aet.artemis.communication.ConversationSettings;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseConfigurationDefaults;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseDateValidator;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -53,7 +52,6 @@ enum ObjectMethodTestExclusions {
             exclusionEntry(RepositoryType.class, ENUM_TOSTRING_NAME_EQUALITY), // Reason: toString() returns the repository names
             exclusionEntry(ConversationSettings.class, ALL_TESTS), // Reason: This class only contains constants
             exclusionEntry(PlagiarismDetectionConfigHelper.class, ALL_TESTS), // Reason: this is not a persisted entity, but common ground is domain package
-            exclusionEntry(ExerciseConfigurationDefaults.class, ALL_TESTS), // Reason: static helper of the Exercise entity, not a persisted entity
             exclusionEntry(ExerciseDateValidator.class, ALL_TESTS) // Reason: static helper of the Exercise entity, not a persisted entity
     );
 

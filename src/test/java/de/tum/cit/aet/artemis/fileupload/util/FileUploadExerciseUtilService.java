@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -50,6 +51,9 @@ public class FileUploadExerciseUtilService {
     private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
 
     @Autowired
     private CourseTestRepository courseRepo;
@@ -90,7 +94,9 @@ public class FileUploadExerciseUtilService {
      */
     public FileUploadExercise addFileUploadExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(releaseDate, startDate, dueDate, assessmentDueDate, "pdf", course);
-        return exerciseRepository.save(fileUploadExercise);
+        var savedExercise = exerciseRepository.save(fileUploadExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -104,7 +110,9 @@ public class FileUploadExerciseUtilService {
         // TODO: try to refactor this call to avoid using examUtilService here
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime);
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
-        return exerciseRepository.save(fileUploadExercise);
+        var savedExercise = exerciseRepository.save(fileUploadExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -159,6 +167,7 @@ public class FileUploadExerciseUtilService {
         var fileUploadExercises = createEnrolledFileUploadExercisesWithCourse(userPrefix);
         assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
         exerciseRepository.saveAll(fileUploadExercises);
+        fileUploadExercises.forEach(exerciseConfigurationService::initialize);
         long courseId = fileUploadExercises.getFirst().getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
         List<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(courseId).stream().toList();
@@ -205,6 +214,7 @@ public class FileUploadExerciseUtilService {
         fileUploadExercises.add(assessedFileUploadExercise);
         fileUploadExercises.add(noDueDateFileUploadExercise);
         exerciseRepository.saveAll(fileUploadExercises);
+        fileUploadExercises.forEach(exerciseConfigurationService::initialize);
 
         return courseRepo.findByIdWithEagerExercisesElseThrow(course.getId());
     }
@@ -233,6 +243,7 @@ public class FileUploadExerciseUtilService {
         course.addExercises(assessedFileUploadExercise);
         courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(assessedFileUploadExercise);
+        exerciseConfigurationService.initialize(assessedFileUploadExercise);
         return course;
     }
 
@@ -337,6 +348,7 @@ public class FileUploadExerciseUtilService {
                 .orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setFilePattern(filePattern);
         exerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
     }
 
     /**

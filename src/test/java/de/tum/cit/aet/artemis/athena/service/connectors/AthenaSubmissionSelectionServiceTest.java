@@ -67,7 +67,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
         textExercise.setGradingCriteria(Set.of(new GradingCriterion()));

@@ -17,6 +17,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -33,6 +37,18 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     @Test
     void aFailingSettingsInsertIsReportedToTheCallerAndTheNextSaveRepairsIt() throws SQLException {
@@ -54,7 +70,8 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
 
         // the next save adds what the failed creation left out
         courseRepository.saveWithDefaultConfigurations(course);
-        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
+        for (String table : new String[] { "course_configuration", "course_athena_config", "online_course_configuration", "tutorial_groups_configuration",
+                "course_iris_settings" }) {
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
         }
     }
@@ -84,11 +101,10 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         var course = courseUtilService.createCourse();
         var jdbc = new JdbcTemplate(dataSource);
         assertThat(course.isOnlineCourse()).isFalse();
-        for (String table : new String[] { "online_course_configuration", "tutorial_groups_configuration", "course_iris_settings" }) {
+        for (String table : new String[] { "course_configuration", "course_athena_config", "online_course_configuration", "tutorial_groups_configuration",
+                "course_iris_settings" }) {
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE course_id = ?", Long.class, course.getId())).as(table).isEqualTo(1);
         }
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM course WHERE id = ? AND athena_config_id IS NOT NULL AND course_configuration_id IS NOT NULL", Long.class,
-                course.getId())).isEqualTo(1);
         assertThat(jdbc.queryForObject(
                 "SELECT COUNT(*) FROM tutorial_groups_configuration WHERE course_id = ? AND tutorial_period_start_inclusive IS NULL AND tutorial_period_end_inclusive IS NULL",
                 Long.class, course.getId())).isEqualTo(1);
@@ -113,48 +129,53 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    void exerciseSettingsSurviveTeamModeChangesAndRetainTheirIdsOnUpdate() {
+    void exerciseSettingsSurviveTeamModeChangesAndRetainTheirRows() {
         var course = courseUtilService.createCourse();
-        var exercise = textExerciseUtilService.createSampleTextExercise(course);
+        var exercise = exerciseUtilService.initializeConfigurations(textExerciseUtilService.createSampleTextExercise(course));
         var jdbc = new JdbcTemplate(dataSource);
-        var ids = jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", exercise.getId());
-        assertThat(ids.values()).doesNotContainNull();
-        assertThat(exercise.getTeamAssignmentConfig()).isNull();
+        var teamRowId = jdbc.queryForObject("SELECT id FROM team_assignment_config WHERE exercise_id = ?", Long.class, exercise.getId());
+        var plagiarismRowId = jdbc.queryForObject("SELECT id FROM plagiarism_detection_config WHERE exercise_id = ?", Long.class, exercise.getId());
+        assertThat(exercise.getTeamAssignmentConfig()).as("an individual exercise reports no team settings").isNull();
 
-        var loaded = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exercise.getId()).orElseThrow();
+        var loaded = textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(exercise.getId());
         loaded.setMode(ExerciseMode.TEAM);
         var teamSettings = new TeamAssignmentConfig();
         teamSettings.setMinTeamSize(2);
         teamSettings.setMaxTeamSize(5);
-        loaded.setTeamAssignmentConfig(teamSettings);
         var plagiarismSettings = PlagiarismDetectionConfig.createDefault();
         plagiarismSettings.setSimilarityThreshold(77);
-        loaded.setPlagiarismDetectionConfig(plagiarismSettings);
         textExerciseRepository.save(loaded);
-        assertThat(jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", exercise.getId())).isEqualTo(ids);
+        teamAssignmentConfigRepository.applyTo(loaded, teamSettings);
+        plagiarismDetectionConfigRepository.applyTo(loaded, plagiarismSettings);
 
         loaded.setMode(ExerciseMode.INDIVIDUAL);
-        loaded.setTeamAssignmentConfig(null);
-        loaded.setPlagiarismDetectionConfig(null);
         textExerciseRepository.save(loaded);
-        loaded = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exercise.getId()).orElseThrow();
+
+        // switching team mode off removed nothing: the settings wait for the next time it is switched on
+        loaded = textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(exercise.getId());
+        exerciseUtilService.attachTeamAssignmentConfig(loaded);
+        exerciseUtilService.attachPlagiarismDetectionConfig(loaded);
         assertThat(loaded.getTeamAssignmentConfig()).isNull();
         loaded.setMode(ExerciseMode.TEAM);
         assertThat(loaded.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(2);
         assertThat(loaded.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(5);
         assertThat(loaded.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(77);
-        assertThat(jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", exercise.getId())).isEqualTo(ids);
+        assertThat(jdbc.queryForObject("SELECT id FROM team_assignment_config WHERE exercise_id = ?", Long.class, exercise.getId())).isEqualTo(teamRowId);
+        assertThat(jdbc.queryForObject("SELECT id FROM plagiarism_detection_config WHERE exercise_id = ?", Long.class, exercise.getId())).isEqualTo(plagiarismRowId);
     }
 
     @Test
     void anExerciseBuiltFromALoadedOneGetsItsOwnSettingsRowsNotTheSources() {
         var course = courseUtilService.createCourse();
-        var source = textExerciseUtilService.createSampleTextExercise(course);
+        var source = exerciseUtilService.initializeConfigurations(textExerciseUtilService.createSampleTextExercise(course));
         var jdbc = new JdbcTemplate(dataSource);
-        var sourceIds = jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", source.getId());
+        var sourceTeamRowId = jdbc.queryForObject("SELECT id FROM team_assignment_config WHERE exercise_id = ?", Long.class, source.getId());
+        var sourcePlagiarismRowId = jdbc.queryForObject("SELECT id FROM plagiarism_detection_config WHERE exercise_id = ?", Long.class, source.getId());
 
-        // What an import does: a new exercise that still carries the source's stored (detached, id-bearing) settings
-        var loadedSource = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(source.getId()).orElseThrow();
+        // What an import does: a new exercise that carries the source's stored settings to copy
+        var loadedSource = textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(source.getId());
+        exerciseUtilService.attachTeamAssignmentConfig(loadedSource);
+        exerciseUtilService.attachPlagiarismDetectionConfig(loadedSource);
         var copy = new TextExercise();
         copy.setCourse(course);
         copy.setTitle("Imported");
@@ -164,15 +185,14 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
         copy.setMode(ExerciseMode.TEAM);
         copy.setTeamAssignmentConfig(loadedSource.getStoredTeamAssignmentConfig());
         copy.setPlagiarismDetectionConfig(loadedSource.getPlagiarismDetectionConfig());
-        assertThat(copy.getStoredTeamAssignmentConfig().getId()).isEqualTo(sourceIds.get("team_assignment_config_id"));
 
         var saved = textExerciseRepository.save(copy);
+        exerciseConfigurationService.initialize(saved, copy.getStoredTeamAssignmentConfig(), copy.getPlagiarismDetectionConfig());
 
-        var copyIds = jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", saved.getId());
-        assertThat(copyIds.values()).doesNotContainNull();
-        assertThat(copyIds.get("team_assignment_config_id")).isNotEqualTo(sourceIds.get("team_assignment_config_id"));
-        assertThat(copyIds.get("plagiarism_detection_config_id")).isNotEqualTo(sourceIds.get("plagiarism_detection_config_id"));
-        assertThat(jdbc.queryForMap("SELECT team_assignment_config_id, plagiarism_detection_config_id FROM exercise WHERE id = ?", source.getId())).isEqualTo(sourceIds);
+        assertThat(jdbc.queryForObject("SELECT id FROM team_assignment_config WHERE exercise_id = ?", Long.class, saved.getId())).isNotEqualTo(sourceTeamRowId);
+        assertThat(jdbc.queryForObject("SELECT id FROM plagiarism_detection_config WHERE exercise_id = ?", Long.class, saved.getId())).isNotEqualTo(sourcePlagiarismRowId);
+        assertThat(jdbc.queryForObject("SELECT id FROM team_assignment_config WHERE exercise_id = ?", Long.class, source.getId())).isEqualTo(sourceTeamRowId);
+        assertThat(jdbc.queryForObject("SELECT id FROM plagiarism_detection_config WHERE exercise_id = ?", Long.class, source.getId())).isEqualTo(sourcePlagiarismRowId);
     }
 
     private void deleteRows(String table, long courseId) {

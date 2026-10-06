@@ -219,6 +219,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         createdQuizAssert(quizExercise);
         checkCreatedFiles(quizExercise);
         assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise);
+        exerciseUtilService.assertHasPermanentConfigurations(quizExercise.getId());
     }
 
     @Test
@@ -2073,6 +2074,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         assertThat(importedExercise.getId()).as("Imported exercise has different id").isNotEqualTo(quizExercise.getId());
         assertThat(importedExercise.getQuizMode()).as("Imported exercise has different quiz mode").isEqualTo(QuizMode.INDIVIDUAL);
+        exerciseUtilService.assertHasPermanentConfigurations(importedExercise.getId());
     }
 
     /**

@@ -47,9 +47,9 @@ class ModelingExerciseWithSubmissionsExportServiceTest extends AbstractSpringInt
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise(TEST_PREFIX);
         ModelingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         exercise.setMode(ExerciseMode.TEAM);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig());
-        exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         exercise = exerciseRepository.save(exercise);
+        exerciseUtilService.savePlagiarismDetectionConfig(exercise, PlagiarismDetectionConfig.createDefault());
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig());
         assertThat(exercise.getTeamAssignmentConfig().getId()).as("the fixture stores both configurations").isNotNull();
         assertThat(exercise.getPlagiarismDetectionConfig().getId()).isNotNull();
         List<String> exportErrors = new ArrayList<>();

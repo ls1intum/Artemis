@@ -355,6 +355,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             case FileUploadExercise fExercise -> fileUploadExerciseRepository.findForVersioningById(exercise.getId()).orElse(fExercise);
             default -> exercise;
         };
+        // like the versioning service, read the settings an exercise does not carry by itself
+        exerciseUtilService.attachTeamAssignmentConfig(fetched);
+        exerciseUtilService.attachPlagiarismDetectionConfig(fetched);
         var channel = channelRepository.findChannelByExerciseId(fetched.getId());
         if (channel != null) {
             fetched.setChannelName(channel.getName());

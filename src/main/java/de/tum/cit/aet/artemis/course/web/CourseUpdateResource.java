@@ -144,6 +144,13 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
+        // A creation that failed half-way left the course without some settings rows; every later save adds the missing ones. This
+        // runs right after the authorization and before the mandatory configuration lookup below, so such a course stays editable.
+        int repairedSettings = courseRepository.ensureDefaultConfigurations(courseId);
+        if (repairedSettings > 0) {
+            log.warn("Course {} was missing {} default settings row(s) from an incomplete creation; added them", courseId, repairedSettings);
+        }
+
         // Attach the (lazily-stored) course configuration so applyTo can update its permanent row,
         // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
         // via its own repository to keep the course update entity graph small.
@@ -220,11 +227,17 @@ public class CourseUpdateResource {
 
         // Configurations live for the lifetime of the course. Toggling online mode only changes the course flag.
         Course result = courseRepository.save(existingCourse);
-        // A creation that failed half-way left the course without some settings rows; every later save adds the missing ones.
-        int repairedSettings = courseRepository.ensureDefaultConfigurations(courseId);
-        if (repairedSettings > 0) {
-            log.warn("Course {} was missing {} default settings row(s) from an incomplete creation; added them", courseId, repairedSettings);
+
+        // The course configuration holds the key to its course, so saving the course does not cascade to it. Only the settings of
+        // this form are written, in place, so the retention bookkeeping a cleanup run wrote meanwhile is not overwritten with the
+        // values read at the start. An omitted retention hold is left as it is.
+        var requestedConfiguration = existingCourse.getCourseConfiguration();
+        courseConfigurationRepository.updateEditableSettings(courseId, requestedConfiguration.isGradeRelevant(), requestedConfiguration.isAutoOrchestratorEnabled(),
+                requestedConfiguration.getDebounceWindowSecondsOverride(), requestedConfiguration.getMaxDailyOrchestrationOverride());
+        if (courseUpdateDTO.dataRetentionHold() != null) {
+            courseConfigurationRepository.updateDataRetentionHold(courseId, courseUpdateDTO.dataRetentionHold());
         }
+        courseConfigurationRepository.attachTo(result);
 
         // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
         // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).
@@ -246,8 +259,8 @@ public class CourseUpdateResource {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
 
-        // The Athena configuration is lazy and not part of the update, so attach it for the response to report the stored
-        // flags; otherwise the client would cache a course that claims Athena is off.
+        // The Athena configuration is not part of the update and the course carries no mapped association to it, so attach it
+        // for the response to report the stored flags; otherwise the client would cache a course that claims Athena is off.
         courseAthenaConfigRepository.attachTo(result);
         OnlineCourseConfiguration onlineConfiguration = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).orElse(null);
         TutorialGroupsConfiguration tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);

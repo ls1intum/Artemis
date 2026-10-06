@@ -112,7 +112,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
         // Course.athenaConfig is lazy, so an exercise that comes back from a save carries a course without it. In
         // production the entry point resolves it with CourseAthenaConfigRepository before anything asks the exercise;
         // here the course that already holds it is put back, which leaves the service under test the same input.

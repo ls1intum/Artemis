@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
@@ -62,6 +63,8 @@ public class ContinuousPlagiarismControlService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final PlagiarismDetectionService plagiarismDetectionService;
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
@@ -81,11 +84,12 @@ public class ContinuousPlagiarismControlService {
      */
     private final Optional<FeatureUsageCollector> featureUsageCollector;
 
-    public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionService plagiarismDetectionService,
-            PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository,
-            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
-            Optional<FeatureUsageCollector> featureUsageCollector) {
+    public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            PlagiarismDetectionService plagiarismDetectionService, PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService,
+            PlagiarismCaseRepository plagiarismCaseRepository, PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository,
+            UserRepository userRepository, Optional<FeatureUsageCollector> featureUsageCollector) {
         this.exerciseRepository = exerciseRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
@@ -102,6 +106,9 @@ public class ContinuousPlagiarismControlService {
     @Scheduled(cron = "${artemis.scheduling.continuous-plagiarism-control-trigger-time:0 0 5 * * *}")
     public void executeChecks() {
         var exercises = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
+        // The query only filters on the plagiarism detection configuration, and an exercise does not carry it by itself, so
+        // the configurations of all of them are read here in one query, before the checks below look at them.
+        plagiarismDetectionConfigRepository.attachTo(exercises);
         log.info("Starting scheduled continuous plagiarism control for {} exercises: {}", exercises.size(), exercises.stream().map(Exercise::getId).toList());
         exercises.stream().filter(isBeforeDueDateOrAfterWithPostDueDateChecksEnabled).forEach(exercise -> {
             // A check whose findings nobody can act on and whose plagiarism case nobody can be named as the sender of

@@ -1183,7 +1183,7 @@ public class CourseTestService {
         athenaConfig.setGradingFeedbackEnabled(true);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepo.saveWithDefaultConfigurations(course);
+        courseUtilService.saveWithConfigurations(course);
 
         CourseForOverviewDTO overview = request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
 
@@ -1210,7 +1210,7 @@ public class CourseTestService {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepo.saveWithDefaultConfigurations(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // Pin every programming action field read by the overview. The graded participation deliberately differs from
         // the practice participation so the projection cannot accidentally copy the wrong repository.
@@ -1667,8 +1667,10 @@ public class CourseTestService {
     public void testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes() throws Exception {
         Course course = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, false, false, 0).getFirst();
 
+        // The ceiling includes the one query that reads the team assignment configurations of all the exercises together,
+        // which the exercises do not carry by themselves and the response reports.
         CourseWithExercisesDTO withExercises = assertThatDb(queryInterceptor,
-                () -> request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class)).hasBeenCalledAtMostTimes(3);
+                () -> request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class)).hasBeenCalledAtMostTimes(4);
         assertThat(withExercises.exercises()).hasSize(5);
 
         CourseWithContentDTO withContent = assertThatDb(queryInterceptor,

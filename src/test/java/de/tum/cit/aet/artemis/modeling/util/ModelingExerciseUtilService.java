@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -59,6 +60,9 @@ public class ModelingExerciseUtilService {
     private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
 
     @Autowired
     private CourseTestRepository courseRepo;
@@ -105,7 +109,9 @@ public class ModelingExerciseUtilService {
         modelingExercise.setTitle("Modeling Exercise");
         course.addExercises(modelingExercise);
         course.setMaxComplaintTimeDays(14);
-        return exerciseRepository.save(modelingExercise);
+        var savedExercise = exerciseRepository.save(modelingExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -136,6 +142,7 @@ public class ModelingExerciseUtilService {
         course.setMaxComplaintTimeDays(14);
         course = courseRepo.saveWithDefaultConfigurations(course);
         modelingExercise = exerciseRepository.save(modelingExercise);
+        exerciseConfigurationService.initialize(modelingExercise);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return course;
@@ -148,6 +155,7 @@ public class ModelingExerciseUtilService {
         course.addExercises(modelingExercise);
         courseRepo.saveWithDefaultConfigurations(course);
         modelingExercise = exerciseRepository.save(modelingExercise);
+        exerciseConfigurationService.initialize(modelingExercise);
         return modelingExercise;
     }
 
@@ -158,7 +166,9 @@ public class ModelingExerciseUtilService {
      * @return The updated ModelingExercise
      */
     public ModelingExercise updateExercise(ModelingExercise exercise) {
-        return modelingExerciseRepository.save(exercise);
+        var savedExercise = modelingExerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -230,16 +240,27 @@ public class ModelingExerciseUtilService {
 
         course = courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(classExercise);
+        exerciseConfigurationService.initialize(classExercise);
         exerciseRepository.save(activityExercise);
+        exerciseConfigurationService.initialize(activityExercise);
         exerciseRepository.save(objectExercise);
+        exerciseConfigurationService.initialize(objectExercise);
         exerciseRepository.save(useCaseExercise);
+        exerciseConfigurationService.initialize(useCaseExercise);
         exerciseRepository.save(communicationExercise);
+        exerciseConfigurationService.initialize(communicationExercise);
         exerciseRepository.save(componentExercise);
+        exerciseConfigurationService.initialize(componentExercise);
         exerciseRepository.save(deploymentExercise);
+        exerciseConfigurationService.initialize(deploymentExercise);
         exerciseRepository.save(petriNetExercise);
+        exerciseConfigurationService.initialize(petriNetExercise);
         exerciseRepository.save(syntaxTreeExercise);
+        exerciseConfigurationService.initialize(syntaxTreeExercise);
         exerciseRepository.save(flowchartExercise);
+        exerciseConfigurationService.initialize(flowchartExercise);
         exerciseRepository.save(finishedExercise);
+        exerciseConfigurationService.initialize(finishedExercise);
         Course storedCourse = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises).as("eleven exercises got stored").hasSize(11);

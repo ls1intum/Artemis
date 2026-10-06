@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Spring Data JPA repository for the {@link CourseAthenaConfig} entity, which reads a course's Athena settings without
- * the lazy association on the course, as {@link CourseConfigurationRepository} does for the course configuration. The
- * queries start from {@code Course} because the foreign key lives there.
+ * any association on the course, as {@link CourseConfigurationRepository} does for the course configuration. The
+ * configuration holds the key to its course, and every course owns exactly one row, created together with the course.
  * <p>
  * The two feature flags are switched independently and save immediately, so each one is written by its own conditional
  * statement rather than by storing a whole configuration read earlier: two instructors switching the two features at
@@ -38,13 +38,12 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      * Finds the Athena configuration of the given course, if one exists.
      *
      * @param courseId the id of the course
-     * @return the configuration, or empty when the course has none yet
+     * @return the configuration, or empty when there is no such course
      */
     @Query("""
             SELECT athenaConfig
-            FROM Course course
-                JOIN course.athenaConfig athenaConfig
-            WHERE course.id = :courseId
+            FROM CourseAthenaConfig athenaConfig
+            WHERE athenaConfig.course.id = :courseId
             """)
     Optional<CourseAthenaConfig> findByCourseId(@Param("courseId") long courseId);
 
@@ -52,13 +51,12 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      * The two feedback switches of a course, read as flags rather than as the entity.
      *
      * @param courseId the id of the course
-     * @return the switches, both off when the course has no configuration yet, or empty if there is no such course
+     * @return the switches, which read as switched off for a course whose settings row is missing, or empty if there is no such course
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(
-                COALESCE(athenaConfig.gradingFeedbackEnabled, FALSE), COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE))
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(COALESCE(athenaConfig.gradingFeedbackEnabled, FALSE), COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE))
             FROM Course course
-                LEFT JOIN course.athenaConfig athenaConfig
+                LEFT JOIN CourseAthenaConfig athenaConfig ON athenaConfig.course.id = course.id
             WHERE course.id = :courseId
             """)
     Optional<CourseAthenaConfigDTO> findConfigByCourseId(@Param("courseId") long courseId);
@@ -130,9 +128,9 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      * @return the id of the course's Athena configuration, or empty if there is no such course
      */
     @Query("""
-            SELECT course.athenaConfig.id
-            FROM Course course
-            WHERE course.id = :courseId
+            SELECT athenaConfig.id
+            FROM CourseAthenaConfig athenaConfig
+            WHERE athenaConfig.course.id = :courseId
             """)
     Optional<Long> findAthenaConfigIdByCourseId(@Param("courseId") long courseId);
 

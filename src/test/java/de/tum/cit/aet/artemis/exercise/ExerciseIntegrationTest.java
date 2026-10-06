@@ -13,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -343,8 +344,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setMinTeamSize(2);
         teamAssignmentConfig.setMaxTeamSize(4);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exerciseRepository.save(exercise);
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
 
         ExerciseResponseDTO response = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
@@ -480,7 +481,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setMinTeamSize(2);
         teamAssignmentConfig.setMaxTeamSize(4);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exercise.setSecondCorrectionEnabled(true);
         exercise.setPresentationScoreEnabled(true);
         exercise.setAllowComplaintsForAutomaticAssessments(true);
@@ -498,17 +498,24 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setPackageName("de.tum.cit.ase");
         exerciseRepository.save(exercise);
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
 
         Map<String, Object> response = getJsonMap("/api/exercise/exercises/" + exercise.getId());
         // The entity side has to be loaded and filtered exactly as the endpoint did, otherwise a collection the query
         // never fetched shows up as a difference that says nothing about the migration.
-        Exercise reloaded = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exercise.getId());
+        Exercise reloaded = exerciseRepository.findByIdWithCategoriesElseThrow(exercise.getId());
         reloaded.setGradingCriteria(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId()));
         Map<String, Object> entityJson = objectMapper.convertValue(reloaded, new TypeReference<>() {
         });
 
-        assertThat(normalized(response)).as("Complete response against the entity the route used to serialize").isEqualTo(normalized(entityJson));
+        // The team assignment configuration is not part of the entity's JSON: the exercise carries it in a transient slot that
+        // only an explicit read fills. The response reports it, so it is pinned by hand and left out of the comparison.
+        Map<String, Object> responseWithoutTeamConfig = new LinkedHashMap<>(response);
+        Object teamConfigOnTheWire = responseWithoutTeamConfig.remove("teamAssignmentConfig");
+        assertThat(teamConfigOnTheWire).asInstanceOf(InstanceOfAssertFactories.MAP).containsEntry("minTeamSize", 2).containsEntry("maxTeamSize", 4);
+
+        assertThat(normalized(responseWithoutTeamConfig)).as("Complete response against the entity the route used to serialize").isEqualTo(normalized(entityJson));
 
         assertThat(response).as("Values the external client reads, pinned by hand")
                 .containsAllEntriesOf(Map.ofEntries(Map.entry("type", "programming"), Map.entry("exerciseType", "programming"), Map.entry("title", TITLE),

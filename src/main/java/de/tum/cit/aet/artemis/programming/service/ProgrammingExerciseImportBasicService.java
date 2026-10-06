@@ -31,6 +31,8 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -73,6 +75,10 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -102,7 +108,8 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -120,6 +127,8 @@ public class ProgrammingExerciseImportBasicService {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
     }
 
     /**
@@ -182,9 +191,18 @@ public class ProgrammingExerciseImportBasicService {
         // the test cases and the tasks created below can reference it. Competency links are added afterwards because they
         // must point at the persisted exercise.
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        // An exam exercise is always individual: whatever team settings the request brought along are ignored, and its permanent
+        // row keeps the defaults.
+        final var desiredTeamAssignmentConfig = newExercise.isExamExercise() ? null : newExercise.getTeamAssignmentConfig();
+        // Likewise an exam exercise keeps the default plagiarism detection settings in its permanent row.
+        final var desiredPlagiarismDetectionConfig = newExercise.isExamExercise() ? null : newExercise.getPlagiarismDetectionConfig();
         newExercise = programmingExerciseRepository.save(newExercise);
-        // The configuration names the exercise, so it is written once that exercise exists.
+        // The configurations name the exercise, so they are written once that exercise exists.
         programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
+        // The same two calls ExerciseConfigurationService.initialize makes; this service goes to the repositories because it
+        // is already at the limit of constructor dependencies the code quality check allows.
+        final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.initializeFor(newExercise, desiredTeamAssignmentConfig);
+        final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.initializeFor(newExercise, desiredPlagiarismDetectionConfig);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
@@ -233,6 +251,8 @@ public class ProgrammingExerciseImportBasicService {
         // than relying on lazy proxies. saveForCreation re-fetches the complete new-exercise graph for exactly this
         // reason, so we reuse it here (the import produces a new exercise just like a regular creation).
         newExercise = programmingExerciseRepository.saveForCreation(newExercise);
+        newExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
+        newExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
         // Restore the transient channel name on the re-fetched exercise, so the serialized import response reports the
         // channel the caller asked for.
         newExercise.setChannelName(channelName);
@@ -478,21 +498,21 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
 
         // only copy the config for team programming exercise in courses
-        if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise()) {
+        if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise() && newExercise.getTeamAssignmentConfig() != null) {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
         }
         // We have to rebuild the auxiliary repositories
         newExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
-        if (newExercise.isTeamMode()) {
+        if (newExercise.isTeamMode() && newExercise.getTeamAssignmentConfig() != null) {
             newExercise.getTeamAssignmentConfig().setId(null);
         }
 
-        if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() != null) {
-            newExercise.getPlagiarismDetectionConfig().setId(null);
-        }
-        else if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() == null) {
-            newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        // The configuration is stored once the new exercise exists, as a row of its own: only its values are carried over.
+        if (newExercise.isCourseExercise()) {
+            if (newExercise.getPlagiarismDetectionConfig() == null) {
+                newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+            }
         }
         else {
             newExercise.setPlagiarismDetectionConfig(null);

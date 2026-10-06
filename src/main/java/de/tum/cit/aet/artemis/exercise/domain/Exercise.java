@@ -26,12 +26,9 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.Nullable;
 
@@ -113,7 +110,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "categories")
     private Set<String> categories = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // Not mapped: the team assignment configuration holds the key to its exercise and nothing ever fills this slot by
+    // itself, so reading an exercise never reads the configuration. Attach it with TeamAssignmentConfigRepository.attachTo
+    // where a flow needs it; an empty slot reads as "no team assignment configuration".
+    @Transient
     @JsonIgnoreProperties("exercise")
     private TeamAssignmentConfig teamAssignmentConfig;
 
@@ -162,8 +162,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "plagiarism_detection_config_id")
+    // Not mapped: the plagiarism detection configuration holds the key to its exercise and nothing ever fills this slot by
+    // itself, so reading an exercise never reads the configuration. Attach it with PlagiarismDetectionConfigRepository.attachTo
+    // where a flow needs it; an empty slot reads as "no plagiarism detection configuration".
+    @Transient
     @JsonIgnoreProperties("exercise")
     private PlagiarismDetectionConfig plagiarismDetectionConfig;
 
@@ -260,13 +262,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.gradingInstructions = gradingInstructions;
     }
 
-    /** Gives every exercise type its own permanent settings rows before its first persistence, never a row of the exercise it was imported from. */
-    @PrePersist
-    void initializeDefaultConfigurations() {
-        teamAssignmentConfig = ExerciseConfigurationDefaults.forNewExercise(teamAssignmentConfig);
-        plagiarismDetectionConfig = ExerciseConfigurationDefaults.forNewExercise(plagiarismDetectionConfig);
-    }
-
     public TeamAssignmentConfig getTeamAssignmentConfig() {
         return isTeamMode() ? teamAssignmentConfig : null;
     }
@@ -281,13 +276,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return teamAssignmentConfig;
     }
 
-    /**
-     * Sets the team settings. On a stored exercise the replacement updates the permanent row and a null is ignored.
-     *
-     * @param teamAssignmentConfig the settings to carry from now on
-     */
     public void setTeamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
-        this.teamAssignmentConfig = ExerciseConfigurationDefaults.replaceKeepingStoredId(this.teamAssignmentConfig, teamAssignmentConfig, getId() != null);
+        this.teamAssignmentConfig = teamAssignmentConfig;
     }
 
     public Set<Team> getTeams() {
@@ -476,13 +466,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return plagiarismDetectionConfig;
     }
 
-    /**
-     * Sets the plagiarism detection settings. On a stored exercise the replacement updates the permanent row and a null is ignored.
-     *
-     * @param plagiarismDetectionConfig the settings to carry from now on
-     */
     public void setPlagiarismDetectionConfig(PlagiarismDetectionConfig plagiarismDetectionConfig) {
-        this.plagiarismDetectionConfig = ExerciseConfigurationDefaults.replaceKeepingStoredId(this.plagiarismDetectionConfig, plagiarismDetectionConfig, getId() != null);
+        this.plagiarismDetectionConfig = plagiarismDetectionConfig;
     }
 
     @Override
@@ -745,10 +730,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public boolean getAllowFeedbackRequests() {
         var course = getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = course == null ? null : course.getAthenaConfig();
-        // athenaConfig can be an uninitialized Hibernate proxy when the course was loaded via an entity graph that
-        // does not include it (see CourseUpdateResource for the same caveat); Hibernate.isInitialized() checks this
-        // without triggering a lazy load, so it stays safe to call once the persistence context has closed.
-        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isFormativeFeedbackEnabled();
+        // The course carries no mapped association to its Athena configuration, so the slot is empty - and this reads as
+        // switched off - unless the flow attached it (CourseAthenaConfigRepository.attachToCourseOf).
+        return athenaConfig != null && athenaConfig.isFormativeFeedbackEnabled();
     }
 
     /**
@@ -768,7 +752,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
         var course = getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = course == null ? null : course.getAthenaConfig();
-        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();
+        return athenaConfig != null && athenaConfig.isGradingFeedbackEnabled();
     }
 
     public Set<GradingCriterion> getGradingCriteria() {

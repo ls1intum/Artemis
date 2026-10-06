@@ -46,8 +46,8 @@ class FileUploadExerciseWithSubmissionsExportServiceTest extends AbstractSpringI
         Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
         FileUploadExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, FileUploadExercise.class);
         exercise.setMode(ExerciseMode.TEAM);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig());
         exercise = exerciseRepository.save(exercise);
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig());
         assertThat(exercise.getTeamAssignmentConfig().getId()).as("the fixture stores the configuration").isNotNull();
         List<String> exportErrors = new ArrayList<>();
 

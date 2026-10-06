@@ -10,22 +10,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
@@ -55,126 +51,31 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
+public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course>, CourseDefaultConfigurationsRepository {
 
     /**
      * Stores a course and initializes its permanent configuration rows on first creation, including rows of disabled
-     * optional modules. Later edits only update the course. Athena and general settings are persisted through the course's
-     * creation cascade; the remaining configurations own the course key and are inserted after the course exists.
+     * optional modules. Later edits only update the course. Every configuration owns the key to its course and is inserted
+     * after the course exists.
      * <p>
      * There is deliberately no transaction around the statements: each one commits on its own, so no lock is held across
-     * them. If one of the later inserts fails, the exception reaches the caller and the course stays without the settings
-     * that were not inserted yet. The next save through this method repairs that (see
-     * {@link #ensureDefaultConfigurations(long)}); creating the course again is refused until then, because its short name
-     * is taken.
+     * them. If one of the inserts fails, the exception reaches the caller and the course stays without the settings that
+     * were not inserted yet, and without the settings the request asked for. The next save through this method repairs the
+     * missing rows with their defaults (see {@link #ensureDefaultConfigurations(long)}); creating the course again is
+     * refused until then, because its short name is taken.
      *
      * @param course the course to store
      * @return the stored course
      */
     default Course saveWithDefaultConfigurations(Course course) {
+        boolean newCourse = course.getId() == null;
         Course saved = save(course);
         ensureDefaultConfigurations(saved.getId());
+        if (newCourse) {
+            applyRequestedConfigurations(course, saved.getId());
+        }
         return saved;
     }
-
-    /**
-     * Inserts the default settings a stored course is missing, which is what a creation that failed half-way leaves behind.
-     * For a course that has all its settings this is three unlocked reads and nothing else.
-     * <p>
-     * It takes no lock and needs no transaction: a missing row is found by a plain read and added by a plain insert. If two
-     * saves repair the same course at the same moment, the unique key lets one insert win and the other finds the row
-     * already there. Settings of a course are never removed or replaced here, only added where they are missing.
-     *
-     * @param courseId the id of the stored course
-     * @return the number of settings rows that had to be added; greater than zero means an earlier creation was incomplete
-     */
-    default int ensureDefaultConfigurations(long courseId) {
-        int added = 0;
-        if (!hasOnlineCourseConfiguration(courseId)) {
-            added += insertUnlessAlreadyThere(() -> initializeOnlineCourseConfiguration(courseId), () -> hasOnlineCourseConfiguration(courseId));
-        }
-        if (!hasTutorialGroupsConfiguration(courseId)) {
-            added += insertUnlessAlreadyThere(() -> initializeTutorialGroupsConfiguration(courseId), () -> hasTutorialGroupsConfiguration(courseId));
-        }
-        if (!hasIrisCourseSettings(courseId)) {
-            added += insertUnlessAlreadyThere(() -> initializeIrisCourseSettings(courseId), () -> hasIrisCourseSettings(courseId));
-        }
-        return added;
-    }
-
-    private static int insertUnlessAlreadyThere(Runnable insert, BooleanSupplier exists) {
-        try {
-            insert.run();
-            return 1;
-        }
-        catch (DataIntegrityViolationException e) {
-            // a concurrent save adding the same row first is what was wanted; any other violation is a real failure
-            if (exists.getAsBoolean()) {
-                return 0;
-            }
-            throw e;
-        }
-    }
-
-    @Query("""
-            SELECT COUNT(configuration) > 0
-            FROM OnlineCourseConfiguration configuration
-            WHERE configuration.course.id = :courseId
-            """)
-    boolean hasOnlineCourseConfiguration(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT COUNT(configuration) > 0
-            FROM TutorialGroupsConfiguration configuration
-            WHERE configuration.course.id = :courseId
-            """)
-    boolean hasTutorialGroupsConfiguration(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT COUNT(settings) > 0
-            FROM IrisCourseSettingsEntity settings
-            WHERE settings.courseId = :courseId
-            """)
-    boolean hasIrisCourseSettings(@Param("courseId") long courseId);
-
-    /**
-     * Creates the default LTI settings for a newly stored course, independently of whether online mode is enabled.
-     *
-     * @param courseId the new course id
-     */
-    @Modifying
-    @Transactional // ok because of the insert
-    @Query(value = """
-            INSERT INTO online_course_configuration (course_id, user_prefix, require_existing_user)
-            SELECT id, COALESCE(short_name, CONCAT('course', id)), FALSE FROM course WHERE id = :courseId
-            """, nativeQuery = true)
-    void initializeOnlineCourseConfiguration(@Param("courseId") long courseId);
-
-    /**
-     * Creates inactive tutorial-group settings; a tutorial period must be configured before the feature becomes available.
-     *
-     * @param courseId the new course id
-     */
-    @Modifying
-    @Transactional // ok because of the insert
-    @Query(value = """
-            INSERT INTO tutorial_groups_configuration (course_id, use_tutorial_group_channels, use_public_tutorial_group_channels)
-            VALUES (:courseId, FALSE, FALSE)
-            """, nativeQuery = true)
-    void initializeTutorialGroupsConfiguration(@Param("courseId") long courseId);
-
-    /**
-     * Creates Iris settings matching the defaults previously used when a course had no settings row.
-     *
-     * @param courseId the new course id
-     */
-    @Modifying
-    @Transactional // ok because of the insert
-    @Query(value = """
-            INSERT INTO course_iris_settings (course_id, settings)
-            VALUES (:courseId, '{"enabled":true,"variant":"default","supportLevel":"moderate"}')
-            """, nativeQuery = true)
-    void initializeIrisCourseSettings(@Param("courseId") long courseId);
 
     /**
      * Answers in one query whether a course has lectures, competencies, tutorial groups, accepted FAQs, quiz questions
@@ -233,42 +134,41 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
     @Query("""
-            SELECT DISTINCT c
+            SELECT c
             FROM Course c
-                LEFT JOIN FETCH c.athenaConfig
             WHERE c.startDate <= :now
                 AND c.endDate >= :now
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
     /**
-     * Finds all courses that ended before the given date, eagerly loading their (otherwise lazy) course configuration so
-     * grade-relevance can be evaluated without extra queries. Used by the data-privacy retention cleanup to determine
-     * which old courses are due for a student-data reset.
+     * Finds all courses that ended before the given date. Used by the data-privacy retention cleanup to determine which
+     * old courses are due for a student-data reset. The course configuration is not part of the result: the cleanup
+     * attaches it with {@code CourseConfigurationRepository.attachTo}, in one query for all of them.
      *
      * @param endDateBefore only courses whose end date is non-null and strictly before this are returned
-     * @return the matching courses with their course configuration initialized
+     * @return the matching courses
      */
     @Query("""
             SELECT c
             FROM Course c
-                LEFT JOIN FETCH c.courseConfiguration
             WHERE c.endDate IS NOT NULL
                 AND c.endDate < :endDateBefore
             """)
-    List<Course> findAllWithCourseConfigurationByEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
+    List<Course> findAllByEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
 
     /**
      * Finds all courses whose data-privacy reset warning has already been sent (i.e. their configuration has a non-null
-     * reset warning date), eagerly loading the configuration. Used by the retention cleanup to determine which warned
-     * courses are past the grace period and due for a student-data reset.
+     * reset warning date) and that have not been reset yet. Used by the retention cleanup to determine which warned
+     * courses are past the grace period and due for a student-data reset. The configuration is not part of the result:
+     * the cleanup attaches it with {@code CourseConfigurationRepository.attachTo}.
      *
-     * @return the matching courses with their course configuration initialized
+     * @return the matching courses
      */
     @Query("""
             SELECT c
             FROM Course c
-                LEFT JOIN FETCH c.courseConfiguration cc
+                JOIN CourseConfiguration cc ON cc.course = c
             WHERE cc.resetWarningSentDate IS NOT NULL
                 AND cc.studentDataResetDate IS NULL
             """)
@@ -374,7 +274,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     // The variant group is LAZY on Exercise, so it must be loaded explicitly here: the exercise management view and the
     // instructor scores page both read it off this response, and an unloaded proxy would serialize as null.
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.exerciseVariantGroup" })
     Course findWithEagerExercisesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
@@ -384,12 +284,13 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     Optional<Course> findWithEagerLecturesById(long courseId);
 
     /**
-     * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
+     * Returns an optional course by id with eagerly loaded exercises, lectures and attachments. The plagiarism detection and team assignment configurations are not part of the
+     * course or its exercises; a caller that reports them reads them through their repositories.
      *
      * @param courseId The id of the course to find
      * @return the populated course or an empty optional if no course was found
      */
-    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup", "lectures" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises.exerciseVariantGroup", "lectures" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites" })
@@ -430,13 +331,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
-
-    // The Athena configuration and the course configuration are fetched here so the (instructor) course management view
-    // exposes the Athena switches, grade-relevance and the per-course Atlas auto-orchestration settings for editing. The
-    // online course configuration and the tutorial groups configuration are not here because they hold the key to their
-    // course: read them through their own repositories.
-    @EntityGraph(type = LOAD, attributePaths = { "athenaConfig", "courseConfiguration" })
-    Course findWithEagerAthenaConfigAndCourseConfigurationById(long courseId);
 
     /**
      * Fetches the online courses of an LTI platform. The configuration holds the key to its course, so the query starts
@@ -664,10 +558,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
-    }
-
-    default Course findByIdWithEagerAthenaConfigAndCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
-        return getValueElseThrow(Optional.ofNullable(findWithEagerAthenaConfigAndCourseConfigurationById(courseId)), courseId);
     }
 
     @NonNull
@@ -970,7 +860,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 COALESCE(athenaConfig.gradingFeedbackEnabled, false),
                 COALESCE(athenaConfig.formativeFeedbackEnabled, false))
             FROM Course course
-                LEFT JOIN course.athenaConfig athenaConfig
+                LEFT JOIN CourseAthenaConfig athenaConfig ON athenaConfig.course = course
             WHERE course.id = :courseId
             """)
     Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);

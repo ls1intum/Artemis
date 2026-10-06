@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
-import static jakarta.persistence.Persistence.getPersistenceUtil;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,7 +21,6 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -38,14 +35,17 @@ public abstract class ExerciseImportService {
 
     private final FeedbackService feedbackService;
 
+    protected final ExerciseConfigurationService exerciseConfigurationService;
+
     private static final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
     protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FeedbackService feedbackService) {
+            FeedbackService feedbackService, ExerciseConfigurationService exerciseConfigurationService) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.feedbackService = feedbackService;
+        this.exerciseConfigurationService = exerciseConfigurationService;
     }
 
     /**
@@ -133,6 +133,11 @@ public abstract class ExerciseImportService {
         }
         newExercise.setCompetencyLinks(copiedLinks);
 
+        // The source comes straight from a query, which does not carry the configuration: read it explicitly, and only
+        // here, because only an exercise that brought none of its own needs it.
+        if (!hasPlagiarismDetectionConfig(newExercise)) {
+            exerciseConfigurationService.attachPlagiarismDetectionConfig(sourceExercise);
+        }
         Exercise plagiarismSource = hasPlagiarismDetectionConfig(newExercise) ? newExercise : sourceExercise;
         if (hasPlagiarismDetectionConfig(plagiarismSource)) {
             newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(plagiarismSource.getPlagiarismDetectionConfig()));
@@ -150,6 +155,11 @@ public abstract class ExerciseImportService {
                 newExercise.setCategories(new HashSet<>(categoriesSource.getCategories()));
             }
             if (newExercise.getMode() == ExerciseMode.TEAM) {
+                // The source comes straight from a query, which does not carry the configuration: read it explicitly, and
+                // only here, because only a team exercise that brought none of its own needs it.
+                if (!hasTeamAssignmentConfig(newExercise)) {
+                    exerciseConfigurationService.attachTeamAssignmentConfig(sourceExercise);
+                }
                 Exercise teamConfigSource = hasTeamAssignmentConfig(newExercise) ? newExercise : sourceExercise;
                 if (hasTeamAssignmentConfig(teamConfigSource)) {
                     // Always a fresh copy: a caller-supplied configuration may still carry the source's id.
@@ -181,12 +191,23 @@ public abstract class ExerciseImportService {
     }
 
     private static boolean hasPlagiarismDetectionConfig(Exercise exercise) {
-        return getPersistenceUtil().isLoaded(exercise, Exercise_.PLAGIARISM_DETECTION_CONFIG) && exercise.getPlagiarismDetectionConfig() != null;
+        return exercise.getPlagiarismDetectionConfig() != null;
     }
 
     private static boolean hasTeamAssignmentConfig(Exercise exercise) {
-        // The stored settings, not the mode-filtered ones: an individual source keeps settings that a team-mode copy should inherit.
-        return getPersistenceUtil().isLoaded(exercise, Exercise_.TEAM_ASSIGNMENT_CONFIG) && exercise.getStoredTeamAssignmentConfig() != null;
+        return exercise.getStoredTeamAssignmentConfig() != null;
+    }
+
+    /**
+     * Gives the saved copy its permanent configuration rows and applies the settings {@link #copyExerciseBasis} left on
+     * {@code newExercise}: the rows hold the key to their exercise, so they can only be written once it is saved. Call it for
+     * every exercise this service saved as a new one.
+     *
+     * @param persistedExercise the saved exercise that the caller goes on to return
+     * @param newExercise       the exercise {@link #copyExerciseBasis} prepared, which carries the settings to apply
+     */
+    protected void initializeConfigurations(Exercise persistedExercise, Exercise newExercise) {
+        exerciseConfigurationService.initialize(persistedExercise, newExercise.getStoredTeamAssignmentConfig(), newExercise.getPlagiarismDetectionConfig());
     }
 
     /**

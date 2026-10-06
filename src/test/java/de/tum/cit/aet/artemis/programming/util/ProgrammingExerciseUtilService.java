@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -77,6 +80,9 @@ public class ProgrammingExerciseUtilService {
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
@@ -130,6 +136,9 @@ public class ProgrammingExerciseUtilService {
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    @Autowired
     private ExamUtilService examUtilService;
 
     @Autowired
@@ -158,7 +167,9 @@ public class ProgrammingExerciseUtilService {
     public ProgrammingExercise createProgrammingExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
             ZonedDateTime assessmentDueDate) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
-        return programmingExerciseRepository.save(programmingExercise);
+        var savedExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -180,6 +191,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setGradingInstructions("Grading instructions");
         programmingExercise.setProblemStatement("Problem statement");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         return programmingExercise;
     }
@@ -229,6 +241,7 @@ public class ProgrammingExerciseUtilService {
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -260,6 +273,7 @@ public class ProgrammingExerciseUtilService {
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -282,6 +296,7 @@ public class ProgrammingExerciseUtilService {
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -306,6 +321,7 @@ public class ProgrammingExerciseUtilService {
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -352,6 +368,7 @@ public class ProgrammingExerciseUtilService {
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -613,6 +630,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -636,6 +654,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -688,6 +707,7 @@ public class ProgrammingExerciseUtilService {
         Course course = addCourseWithOneProgrammingExercise(true, programmingLanguage);
         ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         programmingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).orElseThrow();
         addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
@@ -702,6 +722,7 @@ public class ProgrammingExerciseUtilService {
     public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
         var category1 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Bad Practice", CategoryState.GRADED, 3D, 10D);
         var category2 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Code Style", CategoryState.GRADED, 5D, 10D);
         var category3 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Miscellaneous", CategoryState.INACTIVE, 2D, 10D);
@@ -887,6 +908,7 @@ public class ProgrammingExerciseUtilService {
         policy = submissionPolicyRepository.save(policy);
         programmingExercise.setSubmissionPolicy(policy);
         programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
     }
 
     /**
@@ -1072,6 +1094,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setProblemStatement(problemStatement.toString());
         programmingExerciseTaskRepository.saveAll(tasks);
         programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
     }
 
     /**
@@ -1081,6 +1104,22 @@ public class ProgrammingExerciseUtilService {
      * @return The programming exercise with references.
      */
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
-        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
+        ProgrammingExercise exercise = programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
+        // The plagiarism detection configuration is not part of the exercise, so it is read explicitly.
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+        return exercise;
+    }
+
+    /**
+     * Loads a programming exercise with its grading criteria and the stored plagiarism detection configuration, which an
+     * exercise does not carry by itself.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exercise, whose slot carries the stored plagiarism detection configuration
+     */
+    public Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigAndGradingCriteriaById(long exerciseId) {
+        Optional<ProgrammingExercise> exercise = programmingExerciseRepository.findByIdWithGradingCriteria(exerciseId);
+        exercise.ifPresent(plagiarismDetectionConfigRepository::attachTo);
+        return exercise;
     }
 }
