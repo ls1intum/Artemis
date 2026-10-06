@@ -48,6 +48,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 @Execution(ExecutionMode.SAME_THREAD)
 class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
+    /** A fixed point in time, so the dates rendered into the emails are the same on every run and in every time zone. */
+    private static final ZonedDateTime FIXED_START = ZonedDateTime.parse("2026-01-01T00:00:00Z");
+
     private static final int EMAIL_TIMEOUT_MS = 5000;
 
     @RegisterExtension
@@ -98,7 +101,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void receivedEmailTemplate_shouldRenderRecordFieldsAndDeliver() throws Exception {
-        var courseRequestData = new CourseRequestEmailData("Introduction to Testing", "INTTEST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, true,
+        var courseRequestData = new CourseRequestEmailData("Introduction to Testing", "INTTEST", "WS2025", FIXED_START, FIXED_START.plusMonths(3), false, true,
                 "Need this course for our testing department.", null);
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
@@ -142,7 +145,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     void receivedEmailTemplate_shouldRenderCorrectlyInGerman() throws Exception {
         recipient.setLangKey("de");
-        var courseRequestData = new CourseRequestEmailData("Einführung in Tests", "EINFTEST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true, false,
+        var courseRequestData = new CourseRequestEmailData("Einführung in Tests", "EINFTEST", "WS2025", FIXED_START, FIXED_START.plusMonths(3), true, false,
                 "Kurs wird für die Abteilung benötigt.", null);
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
@@ -156,8 +159,8 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void contactEmailTemplate_shouldRenderRecordFieldsAndDeliver() throws Exception {
-        var contactData = new ContactEmailData("New Course Request", "NEWCRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, true,
-                "We need this course urgently.", "Jane Doe", "jane@example.com");
+        var contactData = new ContactEmailData("New Course Request", "NEWCRS", "WS2025", FIXED_START, FIXED_START.plusMonths(3), false, true, "We need this course urgently.",
+                "Jane Doe", "jane@example.com");
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.contact.title", "mail/courseRequestContactEmail",
                 Map.of("courseRequest", contactData));
@@ -175,8 +178,8 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     void contactEmailTemplate_shouldRenderCorrectlyInGerman() throws Exception {
         recipient.setLangKey("de");
-        var contactData = new ContactEmailData("Neuer Kurs", "NEUKRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true, false, "Dringend benötigt.",
-                "Max Mustermann", "max@example.com");
+        var contactData = new ContactEmailData("Neuer Kurs", "NEUKRS", "WS2025", FIXED_START, FIXED_START.plusMonths(3), true, false, "Dringend benötigt.", "Max Mustermann",
+                "max@example.com");
 
         testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.contact.title", "mail/courseRequestContactEmail",
                 Map.of("courseRequest", contactData));
