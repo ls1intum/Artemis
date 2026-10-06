@@ -67,8 +67,8 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
 
     /**
      * Outdates the entries of every thread with content by the user. Call it right before an opt-out from AI, a
-     * deactivation or the closing of an account is recorded, then pass the result to {@link #outdateThreads} once the change
-     * is saved, and to {@link #refreshThreadsInBackground}.
+     * deactivation or the closing of an account is recorded, then pass the result to {@link #outdateThreadsAfterChange} once
+     * the change is saved.
      *
      * @param userId the user
      * @return the affected threads' root post ids
@@ -78,15 +78,18 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
     }
 
     /**
-     * Outdates the given threads' entries again once an account change is saved. The threads were outdated right before
-     * the change too: a refresh that ran in between read the account from before the change, and this makes its entry
-     * older than Artemis, so the rebuild or the nightly sync replaces it. See
+     * Outdates the entries of the user's threads again once an account change is saved, and returns the threads to pass
+     * to {@link #refreshThreadsInBackground}. A refresh that ran during the change read the account from before it; this
+     * makes its entry older than Artemis, so the rebuild or the nightly sync replaces it. The threads are selected again,
+     * so a thread stored for the first time during the change is included. See
      * {@code ConversationMessageRepository#bumpCourseMemoryVersionIfTracked}.
      *
-     * @param postIds the threads returned by {@link #invalidateThreadsWithContentBy} before the change
+     * @param userId the user
+     * @param before the threads returned by {@link #invalidateThreadsWithContentBy} before the change
+     * @return the threads to rebuild
      */
-    public void outdateThreads(Collection<Long> postIds) {
-        courseMemoryIngestionService.outdateThreads(postIds);
+    public List<Long> outdateThreadsAfterChange(long userId, Collection<Long> before) {
+        return courseMemoryIngestionService.outdateThreadsAfterChange(userId, before);
     }
 
     /**

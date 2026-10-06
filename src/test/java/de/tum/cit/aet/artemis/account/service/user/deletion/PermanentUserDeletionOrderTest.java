@@ -128,7 +128,7 @@ class PermanentUserDeletionOrderTest {
         InOrder order = inOrder(userRepository, userOwnedContentDeletionService);
         order.verify(userOwnedContentDeletionService).invalidateCourseMemoryOf(USER_ID);
         order.verify(userRepository).deactivateForDeletion(USER_ID);
-        order.verify(userOwnedContentDeletionService).outdateCourseMemoryThreads(threads);
+        order.verify(userOwnedContentDeletionService).outdateCourseMemoryThreads(USER_ID, threads);
     }
 
     @Test
