@@ -43,7 +43,8 @@ class ContentChangeAccumulatorServiceTest {
     @BeforeEach
     void setUp() {
         clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", false, DEBOUNCE_WINDOW_SECONDS, DAILY_CAP, 30000L, 10);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", "gpt-5.6-luna", "high", false, DEBOUNCE_WINDOW_SECONDS, DAILY_CAP, 30000L,
+                10);
         courseConfigurationRepository = mock(CourseConfigurationRepository.class);
         // Default: every course resolves to the global defaults (no per-course override).
         lenient().when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(anyLong()))
