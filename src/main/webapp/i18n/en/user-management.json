@@ -80,11 +80,11 @@
                 "title": "User"
             },
             "courseRoles": {
-                "title": "Course roles",
+                "title": "Course Roles",
                 "loadError": "The course roles of this user could not be loaded.",
                 "empty": {
                     "title": "No course roles",
-                    "description": "This user is not a member of any course."
+                    "description": "This user does not have a role in any course."
                 },
                 "roles": {
                     "instructor": "Instructors",
@@ -106,17 +106,22 @@
                     "noCourseFound": "No course found",
                     "role": "Role",
                     "alreadyHasRole": "The user already has this role in the selected course.",
-                    "success": "Added the role {{ role }} of {{ login }} in {{ course }}."
+                    "success": "{{ login }} now has the role {{ role }} in {{ course }}."
                 },
                 "remove": {
                     "label": "Remove {{ role }} role in {{ course }}",
                     "header": "Remove course role",
-                    "message": "Remove the role {{ role }} of {{ login }} in the course {{ course }}? The user loses the access this role grants in the course.",
+                    "message": "Remove the role {{ role }} of {{ login }} in the course {{ course }}? The user loses the access this role grants in the course, and the global roles of the user may change accordingly.",
                     "accept": "Remove",
-                    "success": "Removed the role {{ role }} of {{ login }} in {{ course }}."
+                    "success": "{{ login }} no longer has the role {{ role }} in {{ course }}."
                 },
                 "syncFailed": "The global roles could not be refreshed after the last change of the course roles. Saving is blocked until they are loaded.",
-                "syncRetry": "Load again"
+                "syncRetry": "Load again",
+                "retry": "Try again",
+                "courseCount": "Courses: {{ count }}",
+                "globalRolesChanged": "The global roles of this user changed with the course roles.",
+                "globalRolesAdded": "Added:",
+                "globalRolesRemoved": "Removed:"
             },
             "login": "Login",
             "firstName": "First name",

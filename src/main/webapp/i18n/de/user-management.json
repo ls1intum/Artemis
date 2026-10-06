@@ -81,10 +81,10 @@
             },
             "courseRoles": {
                 "title": "Kursrollen",
-                "loadError": "Die Kursrollen dieser Person konnten nicht geladen werden.",
+                "loadError": "Die Kursrollen dieser Nutzer:in konnten nicht geladen werden.",
                 "empty": {
                     "title": "Keine Kursrollen",
-                    "description": "Diese Person ist in keinem Kurs eingeschrieben."
+                    "description": "Diese:r Nutzer:in hat in keinem Kurs eine Rolle."
                 },
                 "roles": {
                     "instructor": "Lehrende",
@@ -94,10 +94,10 @@
                 },
                 "immediateHint": "Änderungen an den Kursrollen werden sofort gespeichert, unabhängig von der Schaltfläche Speichern unten.",
                 "role": {
-                    "instructor": "Lehrende",
+                    "instructor": "Lehrende:r",
                     "editor": "Editor:in",
                     "tutor": "Tutor:in",
-                    "student": "Studierende"
+                    "student": "Studierende:r"
                 },
                 "add": {
                     "title": "Zu einem Kurs hinzufügen",
@@ -105,18 +105,23 @@
                     "coursePlaceholder": "Nach Titel oder Kurzname suchen",
                     "noCourseFound": "Kein Kurs gefunden",
                     "role": "Rolle",
-                    "alreadyHasRole": "Diese Person hat diese Rolle im ausgewählten Kurs bereits.",
-                    "success": "Die Rolle {{ role }} von {{ login }} in {{ course }} wurde hinzugefügt."
+                    "alreadyHasRole": "Diese:r Nutzer:in hat diese Rolle im ausgewählten Kurs bereits.",
+                    "success": "{{ login }} hat jetzt die Rolle {{ role }} in {{ course }}."
                 },
                 "remove": {
                     "label": "Rolle {{ role }} in {{ course }} entfernen",
                     "header": "Kursrolle entfernen",
-                    "message": "Die Rolle {{ role }} von {{ login }} im Kurs {{ course }} entfernen? Die Person verliert den Zugriff, den diese Rolle im Kurs gewährt.",
+                    "message": "Die Rolle {{ role }} von {{ login }} im Kurs {{ course }} entfernen? Diese:r Nutzer:in verliert den Zugriff, den diese Rolle im Kurs gewährt, und die globalen Rollen können sich entsprechend ändern.",
                     "accept": "Entfernen",
-                    "success": "Die Rolle {{ role }} von {{ login }} in {{ course }} wurde entfernt."
+                    "success": "{{ login }} hat die Rolle {{ role }} in {{ course }} nicht mehr."
                 },
                 "syncFailed": "Die globalen Rollen konnten nach der letzten Änderung der Kursrollen nicht aktualisiert werden. Speichern ist gesperrt, bis sie geladen sind.",
-                "syncRetry": "Erneut laden"
+                "syncRetry": "Erneut laden",
+                "retry": "Erneut versuchen",
+                "courseCount": "Kurse: {{ count }}",
+                "globalRolesChanged": "Die globalen Rollen dieser Nutzer:in haben sich mit den Kursrollen geändert.",
+                "globalRolesAdded": "Hinzugefügt:",
+                "globalRolesRemoved": "Entfernt:"
             },
             "login": "Login",
             "firstName": "Vorname",

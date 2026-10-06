@@ -160,9 +160,15 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly courseRoleChangesInProgress = signal(0);
 
     /** The form cannot be saved while it might still submit authorities that a change of the course roles has made outdated. */
+    /** The global roles cannot be edited while a change of the course roles is about to change them. */
+    protected readonly authorityEditingBlocked = computed(() => this.courseRoleChangesInProgress() > 0 || this.authoritySync() === 'syncing');
+
     protected readonly saveBlockedByCourseRoles = computed(() => this.courseRoleChangesInProgress() > 0 || this.authoritySync() !== 'idle');
 
     private authoritySyncSubscription?: Subscription;
+
+    /** The global roles that the latest change of the course roles added or removed, so the administrator notices that the checkboxes changed on their own. */
+    protected readonly authorityChange = signal<{ added: string[]; removed: string[] } | undefined>(undefined);
 
     /** The global authorities of the edited user as last seen on the server, to tell what a change of course roles did to them. */
     private serverAuthorities = new Set<string>();
@@ -174,6 +180,7 @@ export class UserManagementUpdateComponent implements OnInit {
      * Initializes the component by loading user data, authorities and languages.
      */
     ngOnInit(): void {
+        this.destroyRef.onDestroy(() => this.authoritySyncSubscription?.unsubscribe());
         // create a new user, and only overwrite it if we fetch a user to edit
         this.user.set(new User());
         this.route.parent!.data.subscribe(({ user }) => {
@@ -313,6 +320,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 const added = latest.filter((authority) => !this.serverAuthorities.has(authority));
                 const removed = [...this.serverAuthorities].filter((authority) => !latest.includes(authority));
                 this.serverAuthorities = new Set(latest);
+                this.authorityChange.set(added.length > 0 || removed.length > 0 ? { added, removed } : undefined);
                 const authoritiesControl = this.editForm.get('authorities');
                 const current: string[] = authoritiesControl?.value ?? [];
                 authoritiesControl?.setValue([...current.filter((authority) => !removed.includes(authority)), ...added.filter((authority) => !current.includes(authority))]);

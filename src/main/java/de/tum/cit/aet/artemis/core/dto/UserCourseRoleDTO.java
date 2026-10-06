@@ -13,8 +13,9 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
  * @param courseId        the id of the course
  * @param courseTitle     the title of the course
  * @param courseShortName the short name of the course
+ * @param courseSemester  the semester of the course, if any
  * @param role            the role the user holds in the course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UserCourseRoleDTO(long courseId, @Nullable String courseTitle, @Nullable String courseShortName, CourseRole role) {
+public record UserCourseRoleDTO(long courseId, @Nullable String courseTitle, @Nullable String courseShortName, @Nullable String courseSemester, CourseRole role) {
 }

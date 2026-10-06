@@ -53,15 +53,15 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
      * course yields one row per role.
      *
      * @param userId the id of the user
-     * @return the course roles of the user, ordered by course title, then course id, then role name (cast to a string, because MySQL sorts its native ENUM column by declaration
+     * @return the course roles of the user, ordered by course id; the client sorts them for display
      *         order)
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.UserCourseRoleDTO(c.id, c.title, c.shortName, ucr.role)
+            SELECT new de.tum.cit.aet.artemis.core.dto.UserCourseRoleDTO(c.id, c.title, c.shortName, c.semester, ucr.role)
             FROM UserCourseRole ucr
                 JOIN ucr.course c
             WHERE ucr.user.id = :userId
-            ORDER BY c.title ASC, c.id ASC, CAST(ucr.role AS string) ASC
+            ORDER BY c.id ASC
             """)
     List<UserCourseRoleDTO> findCourseRoleDTOsByUser_Id(@Param("userId") Long userId);
 

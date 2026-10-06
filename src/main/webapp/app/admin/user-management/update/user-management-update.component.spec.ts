@@ -1072,6 +1072,87 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         expect(courseRoles.componentInstance.login()).toBe('test_user');
     });
 
+    describe('after a change of the course roles', () => {
+        const existingUser = () => new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]);
+
+        beforeEach(() => {
+            vi.spyOn(TestBed.inject(AdminUserService), 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.INSTRUCTOR]));
+        });
+
+        it('tells which global roles the change added or removed', async () => {
+            await render(existingUser());
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(
+                of(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.INSTRUCTOR])),
+            );
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change-added"]')?.textContent).toContain('artemisApp.userManagement.roles.instructor');
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change-removed"]')?.textContent).toContain('artemisApp.userManagement.roles.user');
+        });
+
+        it('shows no notice when the change left the global roles alone', async () => {
+            await render(existingUser());
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(of(existingUser()));
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change"]')).toBeNull();
+        });
+
+        it('blocks the global role checkboxes and Save in the DOM while the authorities are refreshed', async () => {
+            await render(existingUser());
+            const reloaded = new Subject<User>();
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(reloaded);
+            const checkboxInputs = () => Array.from<HTMLInputElement>(fixture.nativeElement.querySelectorAll('[data-testid="global-role-item"] input'));
+            const save = () => fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement;
+            expect(checkboxInputs().length).toBeGreaterThan(0);
+            expect(checkboxInputs().some((input) => input.disabled)).toBe(false);
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect(checkboxInputs().every((input) => input.disabled)).toBe(true);
+            expect(save().disabled).toBe(true);
+
+            reloaded.next(existingUser());
+            fixture.detectChanges();
+
+            expect(checkboxInputs().some((input) => input.disabled)).toBe(false);
+            expect(save().disabled).toBe(false);
+        });
+
+        it('keeps Save blocked with a retry when the refresh failed, while the global roles stay editable', async () => {
+            await render(existingUser());
+            const findUser = vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValueOnce(throwError(() => new Error('failed')));
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect((fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement).disabled).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-sync-failed"]')).not.toBeNull();
+
+            findUser.mockReturnValueOnce(of(existingUser()));
+            (fixture.nativeElement.querySelector('[data-testid="authority-sync-retry"] button') as HTMLButtonElement).click();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-sync-failed"]')).toBeNull();
+            expect((fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        it('disables the course role controls while the user is being saved', async () => {
+            await render(existingUser());
+
+            component.isSaving.set(true);
+            fixture.detectChanges();
+
+            const courseRoles = fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-roles');
+            expect(courseRoles.componentInstance.disabled()).toBe(true);
+        });
+    });
+
     it('does not offer course roles while a user is being created', async () => {
         await render(new User(undefined, 'new_user', 'New', 'User', 'new@example.com', true, 'en', [Authority.STUDENT]));
         expect(fixture.nativeElement.querySelector('jhi-user-course-roles')).toBeNull();

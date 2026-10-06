@@ -26,6 +26,8 @@ class AdminUserCourseRolesIntegrationTest extends AbstractSpringIntegrationIndep
 
     private static final String TEST_PREFIX = "admincourseroles";
 
+    private static final String DEFAULT_SEMESTER = "SS25";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -42,9 +44,14 @@ class AdminUserCourseRolesIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     private Course addCourse(String title, String shortName) {
+        return addCourse(title, shortName, DEFAULT_SEMESTER);
+    }
+
+    private Course addCourse(String title, String shortName, String semester) {
         Course course = courseUtilService.addEmptyCourse();
         course.setTitle(title);
         course.setShortName(shortName);
+        course.setSemester(semester);
         return courseRepository.save(course);
     }
 
@@ -56,9 +63,9 @@ class AdminUserCourseRolesIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void getCourseRoles_returnsOneEntryPerCourseAndRoleOrderedByTitle() throws Exception {
+    void getCourseRoles_returnsOneEntryPerCourseAndRole() throws Exception {
         User user = userUtilService.createAndSaveUser(TEST_PREFIX + "multi");
-        Course courseB = addCourse("Bravo course", TEST_PREFIX + "b");
+        Course courseB = addCourse("Bravo course", TEST_PREFIX + "b", "WS25");
         Course courseA = addCourse("Alpha course", TEST_PREFIX + "a");
         userUtilService.enrollUserInCourse(user, courseB, CourseRole.STUDENT);
         userUtilService.enrollUserInCourse(user, courseA, CourseRole.TEACHING_ASSISTANT);
@@ -66,9 +73,36 @@ class AdminUserCourseRolesIntegrationTest extends AbstractSpringIntegrationIndep
 
         List<UserCourseRoleDTO> roles = getCourseRoles(user.getLogin());
 
-        assertThat(roles).containsExactly(new UserCourseRoleDTO(courseA.getId(), "Alpha course", TEST_PREFIX + "a", CourseRole.EDITOR),
-                new UserCourseRoleDTO(courseA.getId(), "Alpha course", TEST_PREFIX + "a", CourseRole.TEACHING_ASSISTANT),
-                new UserCourseRoleDTO(courseB.getId(), "Bravo course", TEST_PREFIX + "b", CourseRole.STUDENT));
+        // The order is not part of the contract, the client sorts for display.
+        assertThat(roles).containsExactlyInAnyOrder(new UserCourseRoleDTO(courseA.getId(), "Alpha course", TEST_PREFIX + "a", DEFAULT_SEMESTER, CourseRole.EDITOR),
+                new UserCourseRoleDTO(courseA.getId(), "Alpha course", TEST_PREFIX + "a", DEFAULT_SEMESTER, CourseRole.TEACHING_ASSISTANT),
+                new UserCourseRoleDTO(courseB.getId(), "Bravo course", TEST_PREFIX + "b", "WS25", CourseRole.STUDENT));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getCourseRoles_coursesWithEqualTitles_areToldApartByShortNameAndSemester() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "equaltitles");
+        Course winter = addCourse("Algorithms", TEST_PREFIX + "algo25", "WS25");
+        Course summer = addCourse("Algorithms", TEST_PREFIX + "algo26", "SS26");
+        userUtilService.enrollUserInCourse(user, winter, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(user, summer, CourseRole.STUDENT);
+
+        assertThat(getCourseRoles(user.getLogin())).containsExactlyInAnyOrder(
+                new UserCourseRoleDTO(winter.getId(), "Algorithms", TEST_PREFIX + "algo25", "WS25", CourseRole.STUDENT),
+                new UserCourseRoleDTO(summer.getId(), "Algorithms", TEST_PREFIX + "algo26", "SS26", CourseRole.STUDENT));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getCourseRoles_loginWithDot_isResolved() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "first.last");
+        Course course = addCourse("Dotted course", TEST_PREFIX + "dot");
+        userUtilService.enrollUserInCourse(user, course, CourseRole.INSTRUCTOR);
+
+        assertThat(user.getLogin()).contains(".");
+        assertThat(getCourseRoles(user.getLogin()))
+                .containsExactly(new UserCourseRoleDTO(course.getId(), "Dotted course", TEST_PREFIX + "dot", DEFAULT_SEMESTER, CourseRole.INSTRUCTOR));
     }
 
     @Test
@@ -80,7 +114,8 @@ class AdminUserCourseRolesIntegrationTest extends AbstractSpringIntegrationIndep
         userUtilService.enrollUserInCourse(user, course, CourseRole.INSTRUCTOR);
         userUtilService.enrollUserInCourse(other, course, CourseRole.STUDENT);
 
-        assertThat(getCourseRoles(user.getLogin())).containsExactly(new UserCourseRoleDTO(course.getId(), "Shared course", TEST_PREFIX + "s", CourseRole.INSTRUCTOR));
+        assertThat(getCourseRoles(user.getLogin()))
+                .containsExactly(new UserCourseRoleDTO(course.getId(), "Shared course", TEST_PREFIX + "s", DEFAULT_SEMESTER, CourseRole.INSTRUCTOR));
     }
 
     @Test

@@ -1,13 +1,20 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, booleanAttribute, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { EMPTY, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent, TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
-import { COURSE_ROLES_DESCENDING, CourseForRoleAssignment, CourseRoleName, UserCourseRole, courseRoleTranslationKey } from 'app/account/user/shared/user-course-role.model';
+import {
+    COURSE_ROLES_DESCENDING,
+    CourseForRoleAssignment,
+    CourseRoleName,
+    UserCourseRole,
+    courseDisplayName,
+    courseRoleTranslationKey,
+} from 'app/account/user/shared/user-course-role.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -21,9 +28,10 @@ interface CourseOption {
     label: string;
 }
 
+/** Short name first, because it is what administrators know a course by: "ALGO25 · Algorithms (WS25)". */
 const toCourseOption = (course: CourseForRoleAssignment): CourseOption => {
-    const details = [course.shortName, course.semester].filter((detail) => !!detail).join(', ');
-    return { course, label: details ? `${course.title ?? course.shortName} (${details})` : `${course.title ?? course.id}` };
+    const name = [course.shortName, course.title].filter((part) => !!part).join(' · ') || String(course.id);
+    return { course, label: course.semester ? `${name} (${course.semester})` : name };
 };
 
 /**
@@ -40,6 +48,8 @@ export class UserCourseRoleAddComponent {
     private readonly adminUserService = inject(AdminUserService);
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
     /** The login of the user who receives the role. */
     readonly login = input.required<string>();
@@ -53,6 +63,9 @@ export class UserCourseRoleAddComponent {
     /** Emits after the role was added on the server. */
     readonly added = output<void>();
 
+    /** Emits when a request to add a role failed. The role may have been added although the response did not arrive, so the host has to look at the server again. */
+    readonly failed = output<void>();
+
     /** Emits `true` when a request to add a role starts and `false` when it ends, so the host can hold back actions that must not overlap with it. */
     readonly changing = output<boolean>();
 
@@ -64,7 +77,9 @@ export class UserCourseRoleAddComponent {
     private readonly searchTexts = new Subject<string>();
 
     /** Either a chosen course or the text typed into the course field. */
-    private readonly courseInput = signal<CourseOption | string | undefined>(undefined);
+    protected readonly courseInput = signal<CourseOption | string | undefined>(undefined);
+
+    private destroyed = false;
 
     protected readonly role = signal<CourseRoleName>('STUDENT');
 
@@ -78,13 +93,11 @@ export class UserCourseRoleAddComponent {
         return [...COURSE_ROLES_DESCENDING].reverse().map((role) => ({ value: role, label: this.translateService.instant(courseRoleTranslationKey(role)) }));
     });
 
-    /** The chosen suggestion. Typing into the field again discards it, because the text no longer names a course. */
-    protected readonly selectedOption = computed(() => {
+    /** The chosen course. Typing into the field again discards it, because the text no longer names a course. */
+    private readonly course = computed(() => {
         const value = this.courseInput();
-        return value && typeof value === 'object' ? value : undefined;
+        return value && typeof value === 'object' ? value.course : undefined;
     });
-
-    private readonly course = computed(() => this.selectedOption()?.course);
 
     protected readonly alreadyHasRole = computed(() => {
         const course = this.course();
@@ -94,12 +107,18 @@ export class UserCourseRoleAddComponent {
     protected readonly canAdd = computed(() => this.course() !== undefined && !this.alreadyHasRole() && !this.isSaving() && !this.disabled());
 
     constructor() {
+        this.destroyRef.onDestroy(() => (this.destroyed = true));
         this.searchTexts
             .pipe(
-                switchMap((searchText) => this.adminUserService.searchCoursesForRoleAssignment(searchText, COURSE_SUGGESTION_COUNT).pipe(catchError(() => EMPTY))),
+                switchMap((searchText) => this.adminUserService.searchCoursesForRoleAssignment(searchText, COURSE_SUGGESTION_COUNT).pipe(catchError(() => of([])))),
                 takeUntilDestroyed(),
             )
             .subscribe((courses) => this.courseSuggestions.set(courses.map(toCourseOption)));
+    }
+
+    /** Moves the focus to the course field, so the next role can be added at once. */
+    focusCourse(): void {
+        this.host.nativeElement.querySelector<HTMLInputElement>('[data-testid="user-course-role-add-course"] input')?.focus();
     }
 
     protected searchCourses(event: TumAetUiAutoCompleteSearchEvent): void {
@@ -129,16 +148,24 @@ export class UserCourseRoleAddComponent {
                 this.courseInput.set(undefined);
                 this.alertService.success('artemisApp.userManagement.courseRoles.add.success', {
                     login: this.login(),
-                    course: course.title ?? course.shortName,
+                    course: courseDisplayName(course),
                     role: this.translateService.instant(courseRoleTranslationKey(role)),
                 });
-                this.added.emit();
-                this.changing.emit(false);
+                this.emitIfAlive(() => this.added.emit());
+                this.emitIfAlive(() => this.changing.emit(false));
             },
             error: () => {
                 this.isSaving.set(false);
-                this.changing.emit(false);
+                this.emitIfAlive(() => this.failed.emit());
+                this.emitIfAlive(() => this.changing.emit(false));
             },
         });
+    }
+
+    /** A response can arrive after the component was destroyed, and an output must not emit then. */
+    private emitIfAlive(emit: () => void): void {
+        if (!this.destroyed) {
+            emit();
+        }
     }
 }

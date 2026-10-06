@@ -213,7 +213,12 @@
                                 [class]="hasAuthority(authority) ? 'border-primary bg-primary/12' : ''"
                                 data-testid="global-role-item"
                             >
-                                <tumaet-ui-checkbox [ngModel]="hasAuthority(authority)" [ngModelOptions]="{ standalone: true }" (changed)="toggleAuthority(authority)" />
+                                <tumaet-ui-checkbox
+                                    [ngModel]="hasAuthority(authority)"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [disabled]="authorityEditingBlocked()"
+                                    (changed)="toggleAuthority(authority)"
+                                />
                                 <span class="font-medium">{{ getAuthorityTranslationKey(authority) | artemisTranslate }}</span>
                             </label>
                         }
@@ -228,6 +233,27 @@
                         (courseRolesChanged)="onCourseRolesChanged()"
                         (changeInProgress)="onCourseRoleChangeInProgress($event)"
                     />
+                    @if (authorityChange(); as change) {
+                        <tumaet-ui-message class="mb-3 block" severity="info" data-testid="authority-change">
+                            <span jhiTranslate="artemisApp.userManagement.courseRoles.globalRolesChanged"></span>
+                            @if (change.added.length > 0) {
+                                <span data-testid="authority-change-added">
+                                    {{ 'artemisApp.userManagement.courseRoles.globalRolesAdded' | artemisTranslate }}
+                                    @for (authority of change.added; track authority; let last = $last) {
+                                        {{ getAuthorityTranslationKey(authority) | artemisTranslate }}{{ last ? '.' : ',' }}
+                                    }
+                                </span>
+                            }
+                            @if (change.removed.length > 0) {
+                                <span data-testid="authority-change-removed">
+                                    {{ 'artemisApp.userManagement.courseRoles.globalRolesRemoved' | artemisTranslate }}
+                                    @for (authority of change.removed; track authority; let last = $last) {
+                                        {{ getAuthorityTranslationKey(authority) | artemisTranslate }}{{ last ? '.' : ',' }}
+                                    }
+                                </span>
+                            }
+                        </tumaet-ui-message>
+                    }
                     @if (authoritySync() === 'failed') {
                         <tumaet-ui-message class="mb-3 block" severity="warn" data-testid="authority-sync-failed">
                             <span jhiTranslate="artemisApp.userManagement.courseRoles.syncFailed"></span>
