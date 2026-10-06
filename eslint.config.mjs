@@ -715,7 +715,9 @@ export default tseslint.config(
             // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
-            'src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.html',
+            'src/main/webapp/app/notification/**/*.html',
+            'src/main/webapp/app/calendar/**/*.html',
+            'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
             'src/main/webapp/app/localci/build-agent-summary/**/*.html',
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
@@ -751,7 +753,7 @@ export default tseslint.config(
     // The exam mode is migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
     // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
     {
-        files: ['src/main/webapp/app/exam/**/*.ts'],
+        files: ['src/main/webapp/app/exam/**/*.ts', 'src/main/webapp/app/notification/**/*.ts', 'src/main/webapp/app/calendar/**/*.ts'],
         rules: {
             'no-restricted-imports': [
                 'error',
@@ -767,7 +769,7 @@ export default tseslint.config(
                         {
                             group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message:
-                                'The exam mode uses TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+                                'The exam mode, the notifications and the calendar use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
                         },
                     ],
                 },

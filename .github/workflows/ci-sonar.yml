@@ -210,4 +210,6 @@ jobs:
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew compileJava sonar -x webapp
+          # Manual dispatches must not publish a feature branch as the main branch.
+          SONAR_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: ./gradlew compileJava sonar -x webapp "-Dsonar.branch.name=${SONAR_BRANCH_NAME}"

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,7 +52,7 @@ public class ReactionResource {
      * @param courseId    id of the course the posting that is reacted on belongs to
      * @param reactionDto reaction to create
      * @return a 201 (Created) with the created ReactionDTO in the body,
-     *         or 204 (No Content) if an identical reaction was already present,
+     *         or 409 (Conflict) if a database constraint prevents creating the reaction,
      *         or 400 (Bad Request) if validation of the DTO, courseId or postingId fails
      */
     @PostMapping("courses/{courseId}/postings/reactions")
@@ -63,9 +64,9 @@ public class ReactionResource {
             return ResponseEntity.created(location).body(new ReactionDTO(createdReaction));
         }
         catch (DataIntegrityViolationException ex) {
-            // this error can occur when multiple reactions are created at the exact same time, we log it, but doe not send it to the client
-            log.warn(ex.getMessage(), ex);
-            return ResponseEntity.noContent().build();
+            // A duplicate reaction or another integrity violation means the requested reaction was not created.
+            log.warn("Could not create reaction because of a database constraint", ex);
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 

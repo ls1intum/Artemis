@@ -13,6 +13,7 @@
         <div class="plagiarism-option">
             <div class="form-check form-check-inline">
                 <input
+                    [attr.aria-label]="'artemisApp.plagiarism.continuousPlagiarismControlEnabled' | artemisTranslate"
                     type="checkbox"
                     id="continuous_plagiarism_control_enabled"
                     class="plagiarism-option-checkbox form-check-input"
@@ -25,6 +26,7 @@
         <div class="plagiarism-option">
             <div class="form-check form-check-inline">
                 <input
+                    [attr.aria-label]="'artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled' | artemisTranslate"
                     type="checkbox"
                     id="continuous_plagiarism_control_post_due_date_checks_enabled"
                     class="plagiarism-option-checkbox form-check-input"
@@ -42,6 +44,7 @@
                         <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate" />
                     </div>
                     <input
+                        [attr.aria-label]="'artemisApp.plagiarism.similarityThreshold' | artemisTranslate"
                         type="number"
                         class="form-control"
                         [class.is-invalid]="form.get('similarityThreshold')?.invalid && form.get('similarityThreshold')?.touched"
@@ -65,6 +68,7 @@
                         <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate" />
                     </div>
                     <input
+                        [attr.aria-label]="'artemisApp.plagiarism.minimumScore' | artemisTranslate"
                         type="number"
                         class="form-control"
                         [class.is-invalid]="form.get('minimumScore')?.invalid && form.get('minimumScore')?.touched"
@@ -88,6 +92,7 @@
                         <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
                     </div>
                     <input
+                        [attr.aria-label]="getMinimumSizeLabel() | artemisTranslate"
                         type="number"
                         class="form-control"
                         [class.is-invalid]="form.get('minimumSize')?.invalid && form.get('minimumSize')?.touched"
@@ -110,6 +115,7 @@
                         <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate" />
                     </div>
                     <input
+                        [attr.aria-label]="'artemisApp.plagiarism.plagiarismCaseResponsePeriod' | artemisTranslate"
                         type="number"
                         class="form-control"
                         [class.is-invalid]="
