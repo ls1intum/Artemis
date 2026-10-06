@@ -62,7 +62,7 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   `localRules/no-navigation-in-guard-or-resolver` bans the navigation calls. [client development](documentation/docs/developer/guidelines/client-development.mdx#redirecting-from-guards-and-resolvers)
 - Do not call `ComponentRef.setInput` in production code; its string input name is not type checked.
   Declare the components in a template (a `@switch` for a closed set) or use `setInputs`.
-  `localRules/no-component-ref-set-input` bans the call. [client development](documentation/docs/developer/guidelines/client-development.mdx#setting-inputs-of-a-component-created-in-code)
+  `localRules/no-component-ref-set-input` bans any use of `setInput`. [client development](documentation/docs/developer/guidelines/client-development.mdx#setting-inputs-of-a-component-created-in-code)
 - In production client TypeScript, do not copy objects with spread, `Object.assign` or
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)

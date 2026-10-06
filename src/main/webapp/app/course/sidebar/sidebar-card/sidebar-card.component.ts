@@ -12,9 +12,12 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
  * input that is passed to them. Only the medium card knows which entity the detail route shows, and only the small card
  * reports that the sidebar has to be reloaded; both are bound where they exist.
  *
- * Like every component in this application it is `OnPush`, which is the default since Angular 22. The cards display a
- * conversation that the conversation service updates in place (unread count, mute and favorite flags); a card shows the
- * current state whenever it is checked, because the item it receives carries the live conversation (see {@link cardItem}).
+ * Like every component in this application it is `OnPush`, which is the default since Angular 22. The card gets a new copy
+ * of the item whenever the item, its group or the selection state changes, as it did when a directive created the card.
+ * Everything a card derives from the item is recomputed then. The conversation service updates a conversation in place
+ * (unread count, mute and favorite flags), and the copy carries the live conversation (see {@link cardItem}), so a template
+ * expression shows that state whenever the card is checked. State that a card derives once from the conversation, such as
+ * the mute flag, is refreshed when the sidebar is rebuilt, which the conversation options trigger.
  */
 @Component({
     selector: 'jhi-sidebar-card',
@@ -42,6 +45,11 @@ export class SidebarCardComponent {
      */
     protected readonly cardItem = computed(() => {
         const sidebarItem = this.sidebarItem();
+        // Read only to hand the card a new copy when the selection state changes, as the directive did on every input change:
+        // the copy deep-clones the exercise, participation or exam of the item, so a card sees their current state again.
+        this.itemSelected();
+        this.sidebarType();
+        this.activeItemId();
         if (!sidebarItem) {
             return undefined;
         }

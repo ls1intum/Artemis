@@ -1193,7 +1193,9 @@ Production code therefore does not call `setInput`. Choose in this order:
 
    The input names and the value types are checked against the component class at compile time. A misspelled name, a value
    of the wrong type and a member that is not an input are all compile errors. Every input that is passed needs a value of
-   its declared type, so `undefined` is only accepted by an input whose type includes it.
+   its declared type, so `undefined` is only accepted by an input whose type includes it. Pass a plain object, not a class
+   instance, and a ref to one component type: a union of components is rejected, because its members can declare the same
+   input differently.
 
 Inputs are named by the class member, and an input that is declared with an `alias` is set under its alias. When the
 component is chosen from data, narrow the data first and tie the two together with one type parameter, so that a component
@@ -1209,9 +1211,10 @@ calls to `setInput`.
 `packages/tum-aet-ui` must not import from the application and keeps its own internal copy of the helper in
 `packages/tum-aet-ui/src/lib/internal/set-inputs.ts`. Keep the two in step.
 
-`localRules/no-component-ref-set-input` (`config/eslint/rules/no-component-ref-set-input.mjs`) bans calls to `setInput` in
-production code under `src/main/webapp` and `packages/tum-aet-ui` at error level. Specs are exempt, because they set inputs
-on fixtures. The two helpers are the only places that disable the rule.
+`localRules/no-component-ref-set-input` (`config/eslint/rules/no-component-ref-set-input.mjs`) bans any use of the `setInput`
+member in production code under `src/main/webapp` and `packages/tum-aet-ui` at error level, so aliasing, destructuring and
+`call`, `apply` or `bind` do not get around it. Specs are exempt, because they set inputs on fixtures. The two helpers are the
+only places that disable the rule.
 
 ## Advanced Topics
 

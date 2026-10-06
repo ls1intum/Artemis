@@ -131,6 +131,44 @@ describe('SidebarCardComponent', () => {
         });
     });
 
+    describe('refresh of the item handed to the card', () => {
+        it('should hand the card a new copy when the item or its group changes', () => {
+            render(item('S', 'exercise-Homework'), 'S');
+            const first = small()!.sidebarItem();
+
+            fixture.componentRef.setInput('groupKey', 'exerciseChannels');
+            fixture.detectChanges();
+            const afterGroupChange = small()!.sidebarItem();
+            render(item('S', 'exercise-Other'), 'S');
+
+            expect(afterGroupChange).not.toBe(first);
+            expect(small()!.sidebarItem()).not.toBe(afterGroupChange);
+        });
+
+        it.each([
+            ['itemSelected', true],
+            ['sidebarType', 'conversation'],
+            ['activeItemId', 42],
+        ])('should hand every card a new copy when %s changes, as the directive did', (name, value) => {
+            render(item('S'), 'S');
+            const before = small()!.sidebarItem();
+
+            fixture.componentRef.setInput(name, value);
+            fixture.detectChanges();
+
+            expect(small()!.sidebarItem()).not.toBe(before);
+        });
+
+        it('should keep the copy while nothing it depends on changes', () => {
+            render(item('S'), 'S');
+            const before = small()!.sidebarItem();
+
+            fixture.detectChanges();
+
+            expect(small()!.sidebarItem()).toBe(before);
+        });
+    });
+
     describe('item handed to the card', () => {
         it.each([
             ['exerciseChannels', 'exercise-Homework', 'Homework'],
@@ -160,7 +198,20 @@ describe('SidebarCardComponent', () => {
             expect(small()?.sidebarItem().title).toBe('Homework');
         });
 
-        it('should keep the live conversation so that changes to it reach the card, and leave the original item alone', () => {
+        it.each([
+            ['empty', ''],
+            ['undefined', undefined],
+            ['null', null],
+        ])('should pass on an %s title unchanged in a channel group', (_description, title) => {
+            fixture.componentRef.setInput('groupKey', 'exerciseChannels');
+
+            // Built explicitly: passing undefined to item() would pick its default title.
+            render({ title: title as unknown as string, id: '7', size: 'S' }, 'S');
+
+            expect(small()?.sidebarItem().title).toBe(title);
+        });
+
+        it('should hand the card the live conversation object and leave the original item alone', () => {
             const conversation = { id: 3, type: 'channel', unreadMessagesCount: 2 } as ConversationDTO;
             const original = item('S', 'exercise-Homework', conversation);
             fixture.componentRef.setInput('groupKey', 'exerciseChannels');

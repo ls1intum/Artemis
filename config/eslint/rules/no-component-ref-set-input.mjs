@@ -3,7 +3,7 @@ import { ESLintUtils } from '@typescript-eslint/utils';
 const createRule = ESLintUtils.RuleCreator(() => '');
 
 /**
- * Forbids calling `setInput` on a component reference in client PRODUCTION code.
+ * Forbids using `setInput` of a component reference in client PRODUCTION code.
  *
  * `ComponentRef.setInput(name: string, value: unknown)` identifies the input by a plain string and accepts any value, so
  * the compiler cannot catch a misspelled or removed input or a value of the wrong type. At runtime Angular only logs
@@ -16,8 +16,10 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  *   2. For a component that has to be created in code, use `setInputs` from `app/foundation/util/set-inputs.util`
  *      (inside `packages/tum-aet-ui` its internal counterpart), which checks the names and value types at compile time.
  *
- * The typed wrappers themselves are the only places that disable this rule. Test code (`*.spec.ts`) is exempt: it sets
- * inputs on fixtures and the blast radius is the test.
+ * Every access to a member named `setInput` is reported, not only direct calls, so that aliasing the method
+ * (`const set = ref.setInput`), destructuring it (`const { setInput } = ref`) and calling it through `call`, `apply` or
+ * `bind` cannot get around the rule. The typed wrappers themselves are the only places that disable this rule. Test code
+ * (`*.spec.ts`) is exempt: it sets inputs on fixtures and the blast radius is the test.
  */
 export default createRule({
     name: 'no-component-ref-set-input',
@@ -25,7 +27,7 @@ export default createRule({
         type: 'problem',
         docs: {
             description:
-                'Forbid calling `setInput` with a string input name on a component reference in client production code, because the name and the value are not type checked. Allowed only in *.spec.ts test files.',
+                'Forbid using the `setInput` member of a component reference in client production code, because the input name and the value are not type checked. Allowed only in *.spec.ts test files.',
         },
         messages: {
             noSetInput:
@@ -41,13 +43,9 @@ export default createRule({
             return {};
         }
 
-        // The name a member access spells out: `x.name`, `x?.name`, `x['name']` and x[`name`]. Undefined for a dynamic key.
-        const staticMemberName = (node) => {
-            if (node.type !== 'MemberExpression') {
-                return undefined;
-            }
-            const property = node.property;
-            if (!node.computed) {
+        // The name a key spells out: `x.name`, `x?.name`, `x['name']` and x[`name`]. Undefined for a dynamic key.
+        const staticName = (property, computed) => {
+            if (!computed) {
                 return property.type === 'Identifier' ? property.name : undefined;
             }
             if (property.type === 'Literal' && typeof property.value === 'string') {
@@ -58,21 +56,18 @@ export default createRule({
             }
             return undefined;
         };
-        const isSetInputMember = (node) => staticMemberName(node) === 'setInput';
-        // The member to report: for `x.setInput` the name of `setInput` itself.
-        const reportTarget = (member) => member.property;
 
         return {
-            CallExpression(node) {
-                const callee = node.callee;
-                // `ref.setInput(...)`, `this.ref.setInput(...)`, `this.ref?.setInput(...)` and `ref['setInput'](...)`.
-                if (isSetInputMember(callee)) {
-                    context.report({ node: reportTarget(callee), messageId: 'noSetInput' });
-                    return;
+            // `ref.setInput`, `ref?.setInput`, `ref['setInput']`, `ref.setInput!` and the targets of `.call`, `.apply` and `.bind`.
+            MemberExpression(node) {
+                if (staticName(node.property, node.computed) === 'setInput') {
+                    context.report({ node: node.property, messageId: 'noSetInput' });
                 }
-                // `ref.setInput.call(...)`, `.apply(...)` and `.bind(...)` call it as well, also spelled `ref.setInput['call'](...)`.
-                if (['call', 'apply', 'bind'].includes(staticMemberName(callee)) && isSetInputMember(callee.object)) {
-                    context.report({ node: reportTarget(callee.object), messageId: 'noSetInput' });
+            },
+            // `const { setInput } = ref` and `({ setInput: set } = ref)`.
+            Property(node) {
+                if (node.parent?.type === 'ObjectPattern' && staticName(node.key, node.computed) === 'setInput') {
+                    context.report({ node: node.key, messageId: 'noSetInput' });
                 }
             },
         };

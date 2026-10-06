@@ -109,8 +109,10 @@ from data, `switch` on the discriminant and pass component and data to one gener
 tie a component to its data. `packages/tum-aet-ui` keeps an internal copy of the helper in
 `packages/tum-aet-ui/src/lib/internal/set-inputs.ts`, because it must not import from the application.
 
-`localRules/no-component-ref-set-input` enforces this at error level in production code of the
-application and the UI kit; specs are exempt. The helpers are the only places that disable it.
+`localRules/no-component-ref-set-input` bans any use of the `setInput` member, also aliased or
+destructured, at error level in production code of the application and the UI kit; specs are
+exempt. The helpers are the only places that disable it. Pass `setInputs` a plain object and a ref to
+one component type; a union of components is rejected.
 `inputBinding`, `ngComponentOutlet` inputs and the PrimeNG `DialogService` `inputValues` use
 string names too and are no substitute; the rule does not cover them.
 
