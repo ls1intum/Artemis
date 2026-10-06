@@ -88,8 +88,8 @@ public class DefaultUserCourseNotificationSettingPreset extends UserCourseNotifi
                         Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
                 Map.entry(IrisResponseNeedsReviewNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)),
-                // Opt-in only: instructors switch the email on per course, so every preset leaves it off.
+                // E-mail only; on by default so instructors hear about automatic changes unless they opt out.
                 Map.entry(AtlasCompetencyUpdateNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)));
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)));
     }
 }

@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
@@ -57,15 +58,17 @@ class AtlasCompetencyUpdateNotificationTest {
         assertThat(notification.getParameters().keySet()).allSatisfy(key -> assertThat(key).hasSizeLessThanOrEqualTo(20));
     }
 
-    static Stream<UserCourseNotificationSettingPreset> presets() {
-        return Stream.of(new DefaultUserCourseNotificationSettingPreset(), new AllActivityUserCourseNotificationSettingPreset(), new IgnoreUserCourseNotificationSettingPreset());
+    static Stream<Arguments> presets() {
+        return Stream.of(Arguments.of(new DefaultUserCourseNotificationSettingPreset(), true), Arguments.of(new AllActivityUserCourseNotificationSettingPreset(), true),
+                Arguments.of(new IgnoreUserCourseNotificationSettingPreset(), false));
     }
 
     @ParameterizedTest
     @MethodSource("presets")
-    void shouldBeSwitchedOffInEveryPreset(UserCourseNotificationSettingPreset preset) {
+    void shouldEnableOnlyEmailAsPresetDefines(UserCourseNotificationSettingPreset preset, boolean emailEnabled) {
         // Every channel key must be present: switching to a custom preset copies all three into non-null booleans.
         assertThat(preset.getPresetMap().get(AtlasCompetencyUpdateNotification.class)).containsOnlyKeys(List.of(NotificationChannelOption.values()))
-                .allSatisfy((channel, enabled) -> assertThat(enabled).isFalse());
+                .containsEntry(NotificationChannelOption.EMAIL, emailEnabled).containsEntry(NotificationChannelOption.WEBAPP, false)
+                .containsEntry(NotificationChannelOption.PUSH, false);
     }
 }

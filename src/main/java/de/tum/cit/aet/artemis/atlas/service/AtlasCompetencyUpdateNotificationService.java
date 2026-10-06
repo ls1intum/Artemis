@@ -29,11 +29,11 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 
 /**
  * Reports the outcome of an automatic competency orchestration run to the course's instructors and to administrators
- * through the {@link AtlasCompetencyUpdateNotification}, which is e-mail only and opt-in per course.
+ * through the {@link AtlasCompetencyUpdateNotification}, which is e-mail only, on by default and can be switched off per course.
  * <p>
  * Runs that changed the course, stopped after partial changes, or failed are reported. Runs that ended without a
  * change ({@code NO_OP}, or {@code SUCCESS} without an applied action) and runs deferred by a concurrent run
- * ({@code IN_PROGRESS}) are not, so an opted-in instructor only hears about runs that need their attention.
+ * ({@code IN_PROGRESS}) are not, so an instructor only hears about runs that need their attention.
  */
 @Conditional(AtlasLLMEnabled.class)
 @Lazy
@@ -121,11 +121,10 @@ public class AtlasCompetencyUpdateNotificationService {
 
     /**
      * The course's activated instructors and all active administrators, each once. Administrators are not course
-     * members, so they are looked up separately and only receive the e-mail if they opted in for this course.
+     * members, so they are looked up separately and receive the e-mail unless they switched it off for this course.
      * <p>
      * Deactivating an account keeps its course roles and notification settings, and the course notification delivery
-     * does not check the account state, so deactivated users are dropped here; otherwise an instructor who opted in
-     * before being deactivated would keep receiving the course's competency changes by e-mail.
+     * does not check the account state, so deactivated users are dropped here; otherwise a deactivated instructor would keep receiving the course's competency changes by e-mail.
      */
     private List<User> findEligibleRecipients(Course course) {
         Map<Long, User> recipientsById = new LinkedHashMap<>();

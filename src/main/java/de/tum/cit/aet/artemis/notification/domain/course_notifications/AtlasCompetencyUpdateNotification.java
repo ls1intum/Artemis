@@ -14,7 +14,8 @@ import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
  * Notification that tells course instructors and administrators what an automatic Atlas competency orchestration run
  * changed, or that it failed.
  * <p>
- * E-mail only and switched off in every preset, so it reaches only the users who opted in for the course. It
+ * E-mail only. The default and all-activity presets switch it on and the ignore preset switches it off, so recipients
+ * can opt out per course. It
  * complements the transient websocket summary of the same run, which only reaches users who have the course open.
  */
 @CourseNotificationType(27)
