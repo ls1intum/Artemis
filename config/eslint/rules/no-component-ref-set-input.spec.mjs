@@ -16,8 +16,8 @@ describe('no-component-ref-set-input', () => {
                 { code: `this.service.setInputs(a, b); this.ref.setInputValue('x', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
                 // A plain function that is not a method call.
                 { code: `setInput('a', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
-                // A computed member access is not the API this rule is about.
-                { code: `this.ref['setInput']('a', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
+                // Another computed member.
+                { code: `this.ref['setInputs']('a', 1); this.ref[name]('a', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
                 // Test code sets inputs on fixtures.
                 { code: `fixture.componentRef.setInput('exercise', exercise);`, filename: 'src/main/webapp/app/exercise/foo.component.spec.ts' },
             ],
@@ -39,6 +39,15 @@ describe('no-component-ref-set-input', () => {
                 { code: `class A { run() { this.componentRef.setInput('detail', detail); } }`, filename: 'src/main/webapp/app/a/b.directive.ts', errors: [error] },
                 // Optional chaining on a possibly missing reference.
                 { code: `class A { run() { this.contentRef?.setInput('text', text); } }`, filename: 'packages/tum-aet-ui/src/lib/tooltip/tooltip.directive.ts', errors: [error] },
+                // The bracket spellings reach the same member.
+                { code: `this.ref['setInput']('a', 1);`, filename: 'src/main/webapp/app/some.service.ts', errors: [error] },
+                { code: "this.ref[`setInput`]('a', 1);", filename: 'src/main/webapp/app/some.service.ts', errors: [error] },
+                // call, apply and bind call it as well.
+                {
+                    code: `ref.setInput.call(ref, 'a', 1); ref.setInput.apply(ref, ['a', 1]); const set = ref.setInput.bind(ref);`,
+                    filename: 'src/main/webapp/app/some.service.ts',
+                    errors: [error, error, error],
+                },
                 // Every call is reported.
                 {
                     code: `ref.setInput('a', 1); ref.setInput('b', 2);`,

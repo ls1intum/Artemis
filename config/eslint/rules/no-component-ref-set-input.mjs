@@ -41,12 +41,32 @@ export default createRule({
             return {};
         }
 
+        // `x.setInput`, `x?.setInput` and the spellings that reach the same member: `x['setInput']` and x[`setInput`].
+        const isSetInputMember = (node) => {
+            if (node.type !== 'MemberExpression') {
+                return false;
+            }
+            const property = node.property;
+            if (!node.computed) {
+                return property.type === 'Identifier' && property.name === 'setInput';
+            }
+            return (
+                (property.type === 'Literal' && property.value === 'setInput') ||
+                (property.type === 'TemplateLiteral' && property.expressions.length === 0 && property.quasis[0].value.cooked === 'setInput')
+            );
+        };
+
         return {
-            // Matches `ref.setInput(...)`, `this.ref.setInput(...)` and the optional-chained `this.ref?.setInput(...)`.
             CallExpression(node) {
                 const callee = node.callee;
-                if (callee.type === 'MemberExpression' && !callee.computed && callee.property.type === 'Identifier' && callee.property.name === 'setInput') {
+                // `ref.setInput(...)`, `this.ref.setInput(...)`, `this.ref?.setInput(...)` and `ref['setInput'](...)`.
+                if (isSetInputMember(callee)) {
                     context.report({ node: callee.property, messageId: 'noSetInput' });
+                    return;
+                }
+                // `ref.setInput.call(...)`, `.apply(...)` and `.bind(...)` call it as well.
+                if (callee.type === 'MemberExpression' && !callee.computed && ['call', 'apply', 'bind'].includes(callee.property.name) && isSetInputMember(callee.object)) {
+                    context.report({ node: callee.object.property, messageId: 'noSetInput' });
                 }
             },
         };

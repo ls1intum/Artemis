@@ -1192,17 +1192,19 @@ Production code therefore does not call `setInput`. Choose in this order:
    ```
 
    The input names and the value types are checked against the component class at compile time. A misspelled name, a value
-   of the wrong type and a member that is not an input are all compile errors.
+   of the wrong type and a member that is not an input are all compile errors. Every input that is passed needs a value of
+   its declared type, so `undefined` is only accepted by an input whose type includes it.
 
-`setInputs` matches inputs by the name of the class member, so an input declared with an `alias` is not supported. When the
+Inputs are named by the class member, and an input that is declared with an `alias` is set under its alias. When the
 component is chosen from data, narrow the data first and tie the two together with one type parameter, so that a component
 is only accepted with the kind of data it declares. `ExerciseDetailDirective` does this with a `switch` on the detail type
-and a `render<D>(component: Type<{ readonly detail: InputSignal<D> }>, detail: D)` method. A lookup table from the type to
+and a `render<D extends ShownDetail>(component: Type<{ readonly detail: InputSignal<D> }>, detail: D)` method. A lookup table from the type to
 the component cannot express that link, and `InputSignal` is invariant, so a map of components to one common input type does
 not compile either.
 
-`inputBinding(...)` and the `inputs` of `ngComponentOutlet` take the name as a string as well and are not type checked, so
-they are no substitute.
+`inputBinding(...)`, the `inputs` of `ngComponentOutlet` and the `inputValues` of the PrimeNG `DialogService` take the name
+as a string as well and are not type checked, so they are no substitute. The rule does not cover them, because they are not
+calls to `setInput`.
 
 `packages/tum-aet-ui` must not import from the application and keeps its own internal copy of the helper in
 `packages/tum-aet-ui/src/lib/internal/set-inputs.ts`. Keep the two in step.

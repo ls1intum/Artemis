@@ -1,4 +1,4 @@
-import { ComponentRef, InputSignalWithTransform } from '@angular/core';
+import { ComponentRef, InputSignalWithTransform, reflectComponentType } from '@angular/core';
 
 /**
  * The type that can be written to a signal input (`input()`, `input.required()`, `model()`), or `never` for any other member.
@@ -10,29 +10,32 @@ type InputWriteType<Member> = Member extends InputSignalWithTransform<infer _Rea
 /** Whether a class member is a signal input. Decided from the member alone, so it also resolves for a generic input type. */
 type IsInput<Member> = Member extends InputSignalWithTransform<infer _Read, infer _Write> ? true : false;
 
-/** The values that can be written to the signal inputs of a component class, keyed by the class member that declares them. */
-type ComponentInputValues<T> = {
-    [K in keyof T as IsInput<T[K]> extends true ? K : never]?: InputWriteType<T[K]>;
-};
+/** The names of the class members of a component that are signal inputs. */
+type InputName<T> = Extract<{ [K in keyof T]-?: IsInput<T[K]> extends true ? K : never }[keyof T], keyof T>;
 
 /**
  * Sets inputs on a component that was created in code (`ViewContainerRef.createComponent`, `createComponent`, a portal).
  *
  * `ComponentRef.setInput` takes the input name as a plain string, so a misspelled or removed input is only logged as NG0303
  * at runtime (it does not throw), and only when that code path runs. This wrapper checks the names and the value types
- * against the component class at compile time. Use it instead of calling `setInput` directly; `localRules/no-component-ref-set-input` enforces that.
+ * against the component class at compile time. Every input that is passed needs a value of its declared type, so `undefined`
+ * is only accepted by an input whose type includes it. Use it instead of calling `setInput` directly;
+ * `localRules/no-component-ref-set-input` enforces that.
  *
- * Inputs are matched by the name of the class member, so an input declared with an `alias` is not supported. When the
- * set of components is closed and known, declare them in a template with a `@switch` instead, which the template
- * compiler checks as well.
+ * Inputs are named by the class member, as in a template binding to the component class. An input that is declared with an
+ * `alias` is set under its alias. When the set of components is closed and known, declare them in a template with a
+ * `@switch` instead, which the template compiler checks as well.
  *
  * @param ref The reference of the created component
- * @param values The inputs to set; omitted inputs keep their current value
+ * @param values The inputs to set, by class member; omitted inputs keep their current value
  */
-export function setInputs<T>(ref: ComponentRef<T>, values: ComponentInputValues<T>): void {
-    for (const [name, value] of Object.entries(values)) {
-        // This is the single place that may call `setInput`; every caller above it is type checked.
+export function setInputs<T, Name extends InputName<T>>(ref: ComponentRef<T>, values: { [K in Name]: InputWriteType<T[K]> }): void {
+    // `setInput` looks an input up by its public (template) name, which differs from the class member for an aliased input.
+    const declaredInputs = reflectComponentType(ref.componentType)?.inputs ?? [];
+    for (const [name, value] of Object.entries<unknown>(values)) {
+        const publicName = declaredInputs.find((input) => input.propName === name)?.templateName ?? name;
+        // This is one of the two places that may call `setInput` (the UI kit has its own copy); every caller is type checked.
         // eslint-disable-next-line localRules/no-component-ref-set-input -- the typed wrapper around the string based API
-        ref.setInput(name, value);
+        ref.setInput(publicName, value);
     }
 }

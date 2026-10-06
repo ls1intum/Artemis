@@ -12,14 +12,15 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
  * input that is passed to them. Only the medium card knows which entity the detail route shows, and only the small card
  * reports that the sidebar has to be reloaded; both are bound where they exist.
  *
- * The component deliberately keeps the default change detection: the cards display a conversation that the conversation
- * service updates in place (unread count, mute and favorite flags), and an `OnPush` wrapper would not check them for that.
+ * Like every component in this application it is `OnPush`, which is the default since Angular 22. The cards display a
+ * conversation that the conversation service updates in place (unread count, mute and favorite flags); a card shows the
+ * current state whenever it is checked, because the item it receives carries the live conversation (see {@link cardItem}).
  */
 @Component({
     selector: 'jhi-sidebar-card',
     templateUrl: './sidebar-card.component.html',
     // The host only wraps the card, so it must not take part in the layout of the list that the card sits in.
-    host: { style: 'display: contents' },
+    styles: [':host { display: contents; }'],
     imports: [SidebarCardSmallComponent, SidebarCardMediumComponent, SidebarCardLargeComponent],
 })
 export class SidebarCardComponent {

@@ -64,6 +64,17 @@ describe('SidebarCardComponent', () => {
             hidden.forEach((other) => expect(other()).toBeUndefined());
         });
 
+        it('should swap the card when the size changes', () => {
+            render(item('S'), 'S');
+            expect(small()).toBeDefined();
+
+            fixture.componentRef.setInput('size', 'L');
+            fixture.detectChanges();
+
+            expect(small()).toBeUndefined();
+            expect(large()).toBeDefined();
+        });
+
         it('should render no card without an item', () => {
             render(undefined, 'S');
 
