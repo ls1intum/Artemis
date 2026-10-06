@@ -10,10 +10,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-calendar-subscription-popover',
-    imports: [NgClass, Popover, Checkbox, SelectButton, TextFieldModule, FormsModule, FaIconComponent, TranslateDirective],
+    imports: [NgClass, Popover, Checkbox, SelectButton, TextFieldModule, FormsModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './calendar-subscription-popover.component.html',
     styleUrl: './calendar-subscription-popover.component.scss',
 })

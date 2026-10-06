@@ -253,7 +253,7 @@ describe('ModelingExamSubmissionComponent', () => {
         });
     });
 
-    it('should update the model on submission version change', async () => {
+    it('should update the model synchronously on submission version change', () => {
         vi.spyOn(comp, 'modelingEditor').mockReturnValue({
             apollonEditor: { nextRender: Promise.resolve(), model: {} } as unknown as ApollonEditor,
         } as unknown as ModelingEditorComponent);
@@ -261,7 +261,7 @@ describe('ModelingExamSubmissionComponent', () => {
             content:
                 'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
         } as unknown as SubmissionVersion;
-        await comp.setSubmissionVersion(submissionVersion);
+        expect(comp.setSubmissionVersion(submissionVersion)).toBeUndefined();
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
         expect(comp.umlModel()).toBeDefined();

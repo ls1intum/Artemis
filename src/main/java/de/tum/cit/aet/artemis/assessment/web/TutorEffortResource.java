@@ -74,7 +74,7 @@ public class TutorEffortResource {
         // check courseId and exerciseId exist and are linked to each other
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+        if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
             return ResponseEntity.noContent().build();
         }
         User user = userRepository.getUserWithAuthorities();

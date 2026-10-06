@@ -113,7 +113,14 @@
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.copyExplanation"></span>
         <div class="subscription-link-copy-section">
             <div class="subscription-link-field">
-                <textarea cdkTextareaAutosize cdkAutosizeMinRows="1" cdkAutosizeMaxRows="10" [ngModel]="subscriptionUrl()" readonly></textarea>
+                <textarea
+                    [attr.aria-label]="'accessibility.calendarSubscriptionUrl' | artemisTranslate"
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="1"
+                    cdkAutosizeMaxRows="10"
+                    [ngModel]="subscriptionUrl()"
+                    readonly
+                ></textarea>
             </div>
             <button class="subscription-link-copy-button" type="button" [class.hover-indication]="!copiedUrl()" (click)="copySubscriptionUrlToClipboard()">
                 @if (copiedUrl()) {

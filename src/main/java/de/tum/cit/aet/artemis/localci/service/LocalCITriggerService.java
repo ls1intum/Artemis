@@ -433,7 +433,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         if (sharedData.resolved()) {
             return sharedData.testCommitHash();
         }
-        return getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+        return getCommitHashOrNull(participation.getProgrammingExerciseElseThrow().getVcsTestRepositoryUri(), "test repository");
     }
 
     private ProgrammingExerciseBuildStatistics loadBuildStatistics(ProgrammingExercise programmingExercise) {
