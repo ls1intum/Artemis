@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * long parameter, which is harmless because only the e-mail renders it and the e-mail receives the full value.
  *
  * @param outcome         how the run ended: {@code COMPLETED}, {@code PARTIAL} or {@code FAILED}
- * @param exerciseCount   the number of changed exercises the run processed
+ * @param exerciseCount   the number of changed learning objects (exercises and lecture units) the run processed
  * @param appliedCount    the number of changes the run applied
  * @param createdCount    the number of competencies the run created
  * @param editedCount     the number of competencies the run edited
